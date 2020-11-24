@@ -307,15 +307,6 @@ public class FrontierTransaction implements Transaction, TypicalTransaction, Typ
   }
 
   /**
-   * Returns whether the transaction is a contract creation
-   *
-   * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
-   */
-  public boolean isContractCreation() {
-    return getTo().isEmpty();
-  }
-
-  /**
    * Calculates the up-front cost for the gas the transaction can use.
    *
    * @return the up-front cost for the gas the transaction can use.

@@ -288,15 +288,6 @@ public class EIP1559Transaction
   }
 
   /**
-   * Returns whether the transaction is a contract creation
-   *
-   * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
-   */
-  public boolean isContractCreation() {
-    return getTo().isEmpty();
-  }
-
-  /**
    * Calculates the up-front cost for the gas the transaction can use.
    *
    * @param gasPrice the gas price to use

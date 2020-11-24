@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
@@ -39,8 +40,6 @@ import org.hyperledger.besu.ethereum.vm.operations.MStoreOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SLoadOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SelfDestructOperation;
 import org.hyperledger.besu.ethereum.vm.operations.Sha3Operation;
-import org.hyperledger.besu.plugin.data.EIP1559Transaction;
-import org.hyperledger.besu.plugin.data.Transaction;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;

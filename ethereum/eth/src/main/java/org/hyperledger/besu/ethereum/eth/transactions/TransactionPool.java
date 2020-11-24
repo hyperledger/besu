@@ -30,6 +30,9 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.BaseFee;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -77,10 +80,6 @@ public class TransactionPool implements BlockAddedObserver {
   private final PeerTransactionTracker peerTransactionTracker;
   private final Optional<PeerPendingTransactionTracker> maybePeerPendingTransactionTracker;
   private final Optional<EIP1559> eip1559;
-  private final TransactionPriceCalculator frontierPriceCalculator =
-      TransactionPriceCalculator.frontier();
-  private final TransactionPriceCalculator eip1559PriceCalculator =
-      TransactionPriceCalculator.eip1559();
   private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
@@ -140,17 +139,14 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
-      final Transaction transaction) {
-    if (transaction.isFrontierTransaction()
-        && (!ExperimentalEIPs.eip1559Enabled || this.eip1559.isEmpty())) {
-      final Wei transactionGasPrice = minTransactionGasPrice(transaction);
-      if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {
-        return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
-      }
-      if (!configuration.getTxFeeCap().isZero()
-          && transactionGasPrice.compareTo(configuration.getTxFeeCap()) > 0) {
-        return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
-      }
+      final FrontierTransaction transaction) {
+    final Wei transactionGasPrice = minTransactionGasPrice(transaction);
+    if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {
+      return ValidationResult.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
+    }
+    if (!configuration.getTxFeeCap().isZero()
+        && transactionGasPrice.compareTo(configuration.getTxFeeCap()) > 0) {
+      return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
     }
 
     final ValidationResult<TransactionInvalidReason> validationResult =
@@ -162,7 +158,7 @@ public class TransactionPool implements BlockAddedObserver {
         duplicateTransactionCounter.labels(LOCAL).inc();
         return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
       }
-      final Collection<Transaction> txs = singletonList(transaction);
+      final Collection<FrontierTransaction> txs = singletonList(transaction);
       transactionBatchAddedListener.onTransactionsAdded(txs);
       pendingTransactionBatchAddedListener.ifPresent(it -> it.onTransactionsAdded(txs));
     }
@@ -170,12 +166,68 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResult;
   }
 
-  public void addRemoteTransactions(final Collection<Transaction> transactions) {
+  public ValidationResult<TransactionInvalidReason> addLocalTransaction(
+      final EIP1559Transaction transaction) {
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validateTransaction(transaction);
+    if (validationResult.isValid()) {
+      final TransactionAddedStatus transactionAddedStatus =
+          pendingTransactions.addLocalTransaction(transaction);
+      if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
+        duplicateTransactionCounter.labels(LOCAL).inc();
+        return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
+      }
+      final Collection<EIP1559Transaction> txs = singletonList(transaction);
+      transactionBatchAddedListener.onTransactionsAdded(txs);
+      pendingTransactionBatchAddedListener.ifPresent(it -> it.onTransactionsAdded(txs));
+    }
+
+    return validationResult;
+  }
+
+  public void addRemoteTransactions(final Collection<FrontierTransaction> transactions) {
     if (!syncState.isInSync(SYNC_TOLERANCE)) {
       return;
     }
-    final Set<Transaction> addedTransactions = new HashSet<>();
-    for (final Transaction transaction : transactions) {
+    final Set<FrontierTransaction> addedTransactions = new HashSet<>();
+    for (final FrontierTransaction transaction : transactions) {
+      pendingTransactions.tryEvictTransactionHash(transaction.getHash());
+      if (pendingTransactions.containsTransaction(transaction.getHash())) {
+        // We already have this transaction, don't even validate it.
+        duplicateTransactionCounter.labels(REMOTE).inc();
+        continue;
+      }
+      final Wei transactionGasPrice = minTransactionGasPrice(transaction);
+      if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {
+        continue;
+      }
+      final ValidationResult<TransactionInvalidReason> validationResult =
+          validateTransaction(transaction);
+      if (validationResult.isValid()) {
+        final boolean added = pendingTransactions.addRemoteTransaction(transaction);
+        if (added) {
+          addedTransactions.add(transaction);
+        } else {
+          duplicateTransactionCounter.labels(REMOTE).inc();
+        }
+      } else {
+        LOG.trace(
+            "Validation failed ({}) for transaction {}. Discarding.",
+            validationResult.getInvalidReason(),
+            transaction);
+      }
+    }
+    if (!addedTransactions.isEmpty()) {
+      transactionBatchAddedListener.onTransactionsAdded(addedTransactions);
+    }
+  }
+
+  public void addRemoteTransactions(final Collection<EIP1559Transaction> transactions) {
+    if (!syncState.isInSync(SYNC_TOLERANCE)) {
+      return;
+    }
+    final Set<? extends TypedTransaction> addedTransactions = new HashSet<>();
+    for (final TypedTransaction transaction : transactions) {
       pendingTransactions.tryEvictTransactionHash(transaction.getHash());
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
         // We already have this transaction, don't even validate it.
@@ -240,10 +292,10 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransaction(
-      final Transaction transaction) {
+      final FrontierTransaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
-        getTransactionValidator().validate(transaction, chainHeadBlockHeader.getBaseFee());
+        getTransactionValidator().validate(transaction);
     if (!basicValidationResult.isValid()) {
       return basicValidationResult;
     }
@@ -269,7 +321,41 @@ public class TransactionPool implements BlockAddedObserver {
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }
 
-  public Optional<Transaction> getTransactionByHash(final Hash hash) {
+  private ValidationResult<TransactionInvalidReason> validateTransaction(
+      final EIP1559Transaction transaction) {
+    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
+    final Long baseFee = chainHeadBlockHeader.getBaseFee().get();
+    final ValidationResult<TransactionInvalidReason> basicValidationResult =
+        getTransactionValidator().validate(transaction, baseFee);
+    if (!basicValidationResult.isValid()) {
+      return basicValidationResult;
+    }
+
+    if (transaction.getGasLimit() > chainHeadBlockHeader.getGasLimit()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT,
+          String.format(
+              "Transaction gas limit of %s exceeds block gas limit of %s",
+              transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
+    }
+
+    return protocolContext
+        .getWorldStateArchive()
+        .get(chainHeadBlockHeader.getStateRoot())
+        .map(
+            worldState -> {
+              final Account senderAccount = worldState.get(transaction.getSender());
+              return getTransactionValidator()
+                  .validateForSender(
+                      transaction,
+                      senderAccount,
+                      TransactionValidationParams.transactionPool(),
+                      baseFee);
+            })
+        .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
+  }
+
+  public Optional<TypedTransaction> getTransactionByHash(final Hash hash) {
     return pendingTransactions.getTransactionByHash(hash);
   }
 
@@ -280,22 +366,23 @@ public class TransactionPool implements BlockAddedObserver {
 
   public interface TransactionBatchAddedListener {
 
-    void onTransactionsAdded(Iterable<Transaction> transactions);
+    void onTransactionsAdded(Iterable<? extends TypedTransaction> transactions);
   }
 
-  private Wei minTransactionGasPrice(final Transaction transaction) {
+  private Wei minTransactionGasPrice(final TypedTransaction transaction) {
     // EIP-1559 enablement guard block
     if (!ExperimentalEIPs.eip1559Enabled || this.eip1559.isEmpty()) {
-      return frontierPriceCalculator.price(transaction, Optional.empty());
+      return TransactionPriceCalculator.frontier().price(transaction);
     }
 
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     // Compute transaction price using EIP-1559 rules if chain head is after fork
-    if (this.eip1559.get().isEIP1559(chainHeadBlockHeader.getNumber())) {
-      return BaseFee.minTransactionPriceInNextBlock(
-          transaction, eip1559PriceCalculator, chainHeadBlockHeader::getBaseFee);
-    } else { // Use frontier rules otherwise
-      return frontierPriceCalculator.price(transaction, Optional.empty());
-    }
+    return eip1559
+        .filter(definitelyEIP1559 -> definitelyEIP1559.isEIP1559(chainHeadBlockHeader.getNumber()))
+        .map(
+            __ ->
+                BaseFee.minTransactionPriceInNextBlock(
+                    transaction, chainHeadBlockHeader::getBaseFee))
+        .orElseGet(() -> TransactionPriceCalculator.frontier().price(transaction));
   }
 }

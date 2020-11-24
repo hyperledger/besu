@@ -52,7 +52,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
 
 /**
@@ -142,7 +141,7 @@ public class PendingTransactions {
         .collect(Collectors.toList());
   }
 
-  public boolean addRemoteTransaction(final Transaction transaction) {
+  public boolean addRemoteTransaction(final TypedTransaction transaction) {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
     final TransactionAddedStatus transactionAddedStatus = addTransaction(transactionInfo);
@@ -164,8 +163,7 @@ public class PendingTransactions {
     return hashAdded;
   }
 
-  @VisibleForTesting
-  public TransactionAddedStatus addLocalTransaction(final Transaction transaction) {
+  public TransactionAddedStatus addLocalTransaction(final TypedTransaction transaction) {
     final TransactionAddedStatus transactionAdded =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     if (transactionAdded.equals(ADDED)) {
@@ -330,7 +328,7 @@ public class PendingTransactions {
     return pendingTransactions.containsKey(transactionHash);
   }
 
-  public Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
+  public Optional<TypedTransaction> getTransactionByHash(final Hash transactionHash) {
     return Optional.ofNullable(pendingTransactions.get(transactionHash))
         .map(TransactionInfo::getTransaction);
   }

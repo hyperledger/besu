@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 
 public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
 
@@ -39,7 +40,7 @@ public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
   private static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE = Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
 
   @Override
-  public Gas transactionIntrinsicGasCost(final Transaction transaction) {
+  public Gas transactionIntrinsicGasCost(final TypicalTransaction transaction) {
     final Bytes payload = transaction.getPayload();
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {

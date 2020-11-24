@@ -14,10 +14,6 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
-
 /**
  * A transaction is a single cryptographically-signed instruction constructed by an actor externally
  * to the scope of Ethereum. While it is assumed that the ultimate external actor will be human in
@@ -34,7 +30,10 @@ public interface Transaction
         ChainIdTransaction,
         SenderTransaction,
         TypedTransaction,
-        GasLimitedTransaction {
+        ToTransaction,
+        GasLimitedTransaction,
+        PayloadTransaction,
+        ValueTransaction {
 
   /**
    * A scalar value equal to the number of Wei to be paid per unit of gas for all computation costs
@@ -43,27 +42,4 @@ public interface Transaction
    * @return the quantity of Wei per gas unit paid.
    */
   Quantity getGasPrice();
-
-  /**
-   * The 160-bit address of the message call’s recipient. For a contract creation transaction this
-   * address will not be present.
-   *
-   * @return address of the recipient
-   */
-  Optional<? extends Address> getTo();
-
-  /**
-   * A scalar value equal to the number of Wei to be transferred to the message call’s recipient or,
-   * in the case of contract creation, as an endowment to the newly created account
-   *
-   * @return value equal to the number of Wei to be transferred
-   */
-  Quantity getValue();
-
-  /**
-   * The data payload of this transaction.
-   *
-   * @return the transaction payload
-   */
-  Bytes getPayload();
 }

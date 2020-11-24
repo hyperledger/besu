@@ -20,18 +20,26 @@ package org.hyperledger.besu.ethereum.core.transaction;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.plugin.data.ChainIdTransaction;
 import org.hyperledger.besu.plugin.data.NoncedTransaction;
+import org.hyperledger.besu.plugin.data.PayloadTransaction;
+import org.hyperledger.besu.plugin.data.ToTransaction;
+import org.hyperledger.besu.plugin.data.ValueTransaction;
 
 import java.math.BigInteger;
 
 /**
  * This is a convenience interface built up of Transaction mixins that lets us make assumptions
- * about transactions. It should change as exotic transaction types that don't use these constructs
- * are introduced.
+ * about transactions. It's purpose is to allow us to treat transactions as having common methods
+ * _insofar as they do_. You the reader of this have a duty to make sure it doesn't get filled with
+ * `Optional`s that only make sense for some transactions, that the interfaces it extends actually
+ * do make sense for all transaction types in the codebase, etc.
  */
 public interface TypicalTransaction
     extends org.hyperledger.besu.plugin.data.ECDSASignedTransaction,
         ChainIdTransaction,
         NoncedTransaction,
+        ToTransaction,
+        ValueTransaction,
+        PayloadTransaction,
         TypedTransaction {
 
   // Used for transactions that are not tied to a specific chain
@@ -39,6 +47,7 @@ public interface TypicalTransaction
   BigInteger REPLAY_UNPROTECTED_V_BASE = BigInteger.valueOf(27);
   BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
   BigInteger TWO = BigInteger.valueOf(2);
+
   /**
    * Returns the signature used to sign the transaction.
    *
@@ -66,5 +75,14 @@ public interface TypicalTransaction
       v = recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(getChainId().get()));
     }
     return v;
+  }
+
+  /**
+   * Returns whether the transaction is a contract creation
+   *
+   * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
+   */
+  default boolean isContractCreation() {
+    return getTo().isEmpty();
   }
 }

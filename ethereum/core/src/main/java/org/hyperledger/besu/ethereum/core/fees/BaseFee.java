@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -34,9 +34,7 @@ public class BaseFee {
   }
 
   public static Wei minTransactionPriceInNextBlock(
-      final TypicalTransaction transaction,
-      final TransactionPriceCalculator calculator,
-      final Supplier<Optional<Long>> baseFeeSupplier) {
+      final TypedTransaction transaction, final Supplier<Optional<Long>> baseFeeSupplier) {
     return baseFeeSupplier
         .get()
         .map(TransactionPriceCalculator::eip1559)
