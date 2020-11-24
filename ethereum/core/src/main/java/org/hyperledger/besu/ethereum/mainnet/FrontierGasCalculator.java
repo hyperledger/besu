@@ -125,8 +125,7 @@ public class FrontierGasCalculator implements GasCalculator {
     final int nonZeros = payload.size() - zeros;
 
     Gas cost =
-        Gas.ZERO
-            .plus(TX_BASE_COST)
+        TX_BASE_COST
             .plus(TX_DATA_ZERO_COST.times(zeros))
             .plus(TX_DATA_NON_ZERO_COST.times(nonZeros));
 
