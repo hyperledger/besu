@@ -41,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiAccount implements MutableAccount, EvmAccount {
-  private final BonsaiPersistedWorldState context;
+  private final BonsaiWorldState context;
   private final boolean mutable;
 
   private final Address address;
@@ -57,7 +57,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private boolean storageWasCleared;
 
   BonsaiAccount(
-      final BonsaiPersistedWorldState context,
+      final BonsaiWorldState context,
       final Address address,
       final Hash addressHash,
       final long nonce,
@@ -79,23 +79,27 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   public BonsaiAccount(final BonsaiAccount toCopy) {
-    this.context = toCopy.context;
-    this.address = toCopy.getAddress();
-    this.addressHash = toCopy.getAddressHash();
-    this.nonce = toCopy.getNonce();
-    this.balance = toCopy.getBalance();
-    this.storageRoot = toCopy.getStorageRoot();
-    this.codeHash = toCopy.getCodeHash();
-    this.code = toCopy.getCode();
-    this.version = toCopy.getVersion();
-    updatedStorage.putAll(toCopy.getUpdatedStorage());
+    this(toCopy, toCopy.context, false);
+  }
+
+  BonsaiAccount(final BonsaiAccount toCopy, final BonsaiWorldState context, final boolean mutable) {
+    this.context = context;
+    this.address = toCopy.address;
+    this.addressHash = toCopy.addressHash;
+    this.nonce = toCopy.nonce;
+    this.balance = toCopy.balance;
+    this.storageRoot = toCopy.storageRoot;
+    this.codeHash = toCopy.codeHash;
+    this.code = toCopy.code;
+    this.version = toCopy.version;
+    updatedStorage.putAll(toCopy.updatedStorage);
     storageWasCleared = toCopy.storageWasCleared;
 
-    this.mutable = false;
+    this.mutable = mutable;
   }
 
   public BonsaiAccount(
-      final BonsaiPersistedWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+      final BonsaiWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
     this.context = context;
     this.address = tracked.getAddress();
     this.addressHash = tracked.getAddressHash();
@@ -112,7 +116,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   static BonsaiAccount fromRLP(
-      final BonsaiPersistedWorldState context,
+      final BonsaiWorldState context,
       final Address address,
       final Bytes encoded,
       final boolean mutable)
@@ -184,7 +188,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public Bytes getCode() {
     if (code == null) {
-      code = context.getCode(address, codeHash);
+      code = context.getCode(address);
     }
     return code;
   }

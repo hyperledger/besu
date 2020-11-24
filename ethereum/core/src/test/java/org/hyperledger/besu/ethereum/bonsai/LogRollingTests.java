@@ -86,15 +86,17 @@ public class LogRollingTests {
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage
-        );
+            newTrieLogStorage);
+    final BonsaiWorldStateUpdater secondUpdater =
+        (BonsaiWorldStateUpdater) secondWorldState.updater();
 
     final Optional<byte[]> value = trieLogStorage.get(hashOne.toArrayUnsafe());
 
     final TrieLogLayer layer =
         TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
 
-    secondWorldState.rollForward(layer);
+    secondUpdater.rollForward(layer);
+    secondUpdater.commit();
     secondWorldState.persist(null);
 
     assertKeyValueStorageEqual(accountStorage, newAccountStorage);
@@ -140,15 +142,18 @@ public class LogRollingTests {
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage
-        );
+            newTrieLogStorage);
+    final BonsaiWorldStateUpdater secondUpdater =
+        (BonsaiWorldStateUpdater) secondWorldState.updater();
 
     final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, hashOne);
-    secondWorldState.rollForward(layerOne);
+    secondUpdater.rollForward(layerOne);
+    secondUpdater.commit();
     secondWorldState.persist(null);
 
     final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, hashTwo);
-    secondWorldState.rollForward(layerTwo);
+    secondUpdater.rollForward(layerTwo);
+    secondUpdater.commit();
     secondWorldState.persist(null);
 
     assertKeyValueStorageEqual(accountStorage, newAccountStorage);
@@ -181,9 +186,11 @@ public class LogRollingTests {
     updater2.commit();
 
     worldState.persist(hashTwo);
+    final BonsaiWorldStateUpdater firstRollbackUpdater =
+        (BonsaiWorldStateUpdater) worldState.updater();
 
     final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, hashTwo);
-    worldState.rollBack(layerTwo);
+    firstRollbackUpdater.rollBack(layerTwo);
 
     worldState.persist(hashTwo);
 
@@ -199,8 +206,7 @@ public class LogRollingTests {
             newCodeStorage,
             newStorageStorage,
             newTrieBranchStorage,
-            newTrieLogStorage
-        );
+            newTrieLogStorage);
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =

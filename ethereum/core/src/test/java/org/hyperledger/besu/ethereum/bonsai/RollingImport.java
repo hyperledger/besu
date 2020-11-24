@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
@@ -39,12 +40,7 @@ public class RollingImport {
     final InMemoryKeyValueStorage trieLogStorage = new InMemoryKeyValueStorage();
     final BonsaiPersistedWorldState bonsaiState =
         new BonsaiPersistedWorldState(
-            accountStorage,
-            codeStorage,
-            storageStorage,
-            trieBranchStorage,
-            trieLogStorage
-        );
+            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
 
     int count = 0;
     while (!reader.isDone()) {
@@ -55,7 +51,10 @@ public class RollingImport {
         }
         final TrieLogLayer layer =
             TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
-        bonsaiState.rollForward(layer);
+        final BonsaiWorldStateUpdater updater = (BonsaiWorldStateUpdater) bonsaiState.updater();
+        updater.rollForward(layer);
+        updater.commit();
+        bonsaiState.persist(Hash.wrap(layer.getBlockHash()));
         if (count % 10000 == 0) {
           System.out.println(". - " + count);
         } else if (count % 100 == 0) {
@@ -80,7 +79,10 @@ public class RollingImport {
         final byte[] bytes = reader.readBytes();
         final TrieLogLayer layer =
             TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
-        bonsaiState.rollBack(layer);
+        final BonsaiWorldStateUpdater updater = (BonsaiWorldStateUpdater) bonsaiState.updater();
+        updater.rollBack(layer);
+        updater.commit();
+        bonsaiState.persist(Hash.wrap(layer.getBlockHash()));
         if (count % 10000 == 0) {
           System.out.println(". - " + count);
         } else if (count % 100 == 0) {

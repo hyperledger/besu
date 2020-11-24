@@ -55,6 +55,10 @@ public class TrieLogLayer {
     frozen = true;
   }
 
+  public Bytes32 getBlockHash() {
+    return blockHash;
+  }
+
   public void setBlockHash(final Bytes32 blockHash) {
     checkState(!frozen, "Layer is Frozen");
     this.blockHash = blockHash;
