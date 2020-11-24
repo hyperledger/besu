@@ -42,9 +42,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class EIP1559Transaction
-    implements org.hyperledger.besu.plugin.data.EIP1559Transaction,
-        TypicalTransaction,
-        TypedTransaction {
+    implements org.hyperledger.besu.plugin.data.EIP1559Transaction, TypicalTransaction {
 
   public static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
 
