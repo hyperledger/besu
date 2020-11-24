@@ -430,8 +430,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getHomesteadBlockNumber(),
             getDaoForkBlock(),
             getTangerineWhistleBlockNumber(),
-            // duplicated for EIP155 and EIP158 handling
-            getSpuriousDragonBlockNumber(),
             getSpuriousDragonBlockNumber(),
             getByzantiumBlockNumber(),
             getConstantinopleBlockNumber(),
