@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.plugin.data.TypedTransaction;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -41,11 +41,11 @@ public interface TransactionRLPDecoder {
   TransactionRLPDecoder FRONTIER = frontierDecoder();
   TransactionRLPDecoder EIP1559 = eip1559Decoder();
 
-  static TypedTransaction decodeTransaction(final RLPInput input) {
+  static TypicalTransaction decodeTransaction(final RLPInput input) {
     return (ExperimentalEIPs.eip1559Enabled ? EIP1559 : FRONTIER).decode(input);
   }
 
-  TypedTransaction decode(RLPInput input);
+  TypicalTransaction decode(RLPInput input);
 
   static TransactionRLPDecoder frontierDecoder() {
     return input -> {

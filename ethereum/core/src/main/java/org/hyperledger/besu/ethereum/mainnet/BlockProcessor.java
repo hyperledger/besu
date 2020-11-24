@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
-import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.List;
 
@@ -81,7 +81,7 @@ public interface BlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
-      final List<Transaction> transactions,
+      final List<TypicalTransaction> transactions,
       final List<BlockHeader> ommers) {
     return processBlock(blockchain, worldState, blockHeader, transactions, ommers, null);
   }
@@ -101,7 +101,7 @@ public interface BlockProcessor {
       Blockchain blockchain,
       MutableWorldState worldState,
       BlockHeader blockHeader,
-      List<Transaction> transactions,
+      List<TypicalTransaction> transactions,
       List<BlockHeader> ommers,
       PrivateMetadataUpdater privateMetadataUpdater);
 

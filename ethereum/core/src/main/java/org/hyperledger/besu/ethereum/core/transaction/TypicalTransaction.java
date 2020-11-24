@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.core.transaction;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.plugin.data.ChainIdTransaction;
+import org.hyperledger.besu.plugin.data.GasLimitedTransaction;
 import org.hyperledger.besu.plugin.data.NoncedTransaction;
 import org.hyperledger.besu.plugin.data.PayloadTransaction;
 import org.hyperledger.besu.plugin.data.ToTransaction;
@@ -37,6 +38,7 @@ public interface TypicalTransaction
     extends org.hyperledger.besu.plugin.data.ECDSASignedTransaction,
         ChainIdTransaction,
         NoncedTransaction,
+        GasLimitedTransaction,
         ToTransaction,
         ValueTransaction,
         PayloadTransaction,

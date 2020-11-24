@@ -25,11 +25,11 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
 import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,13 +116,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
-      final List<Transaction> transactions,
+      final List<TypicalTransaction> transactions,
       final List<BlockHeader> ommers,
       final PrivateMetadataUpdater privateMetadataUpdater) {
 
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
-    for (final Transaction transaction : transactions) {
+    for (final TypicalTransaction transaction : transactions) {
       final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
 
       if (transaction instanceof FrontierTransaction) {
@@ -150,9 +150,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           return AbstractBlockProcessor.Result.failed();
         }
       } else {
-        throw new IllegalStateException(
-            "Developer error. A supported transaction of type %s was found but there was no"
-                + " associated validation/processing logic");
+        complainAboutIllegalTransaction(transaction);
       }
       // calculate gas budget
       // get updaters and mining beneficiary
@@ -165,37 +163,44 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
+      final TransactionProcessingResult transactionProcessingResult;
       if (transaction instanceof FrontierTransaction) {
         final FrontierTransaction frontierTransaction = (FrontierTransaction) transaction;
-        transactionProcessor.processTransaction(
-            blockchain,
-            worldStateUpdater,
-            blockHeader,
-            frontierTransaction,
-            miningBeneficiary,
-            OperationTracer.NO_TRACING,
-            blockHashLookup,
-            true,
-            TransactionValidationParams.processingBlock(),
-            privateMetadataUpdater);
+        transactionProcessingResult =
+            transactionProcessor.processTransaction(
+                blockchain,
+                worldStateUpdater,
+                blockHeader,
+                frontierTransaction,
+                miningBeneficiary,
+                OperationTracer.NO_TRACING,
+                blockHashLookup,
+                true,
+                TransactionValidationParams.processingBlock(),
+                privateMetadataUpdater);
+      } else if (transaction instanceof EIP1559Transaction) {
+        final EIP1559Transaction eip1559Transaction = (EIP1559Transaction) transaction;
+        transactionProcessingResult =
+            transactionProcessor.processTransaction(
+                blockchain,
+                worldStateUpdater,
+                blockHeader,
+                eip1559Transaction,
+                miningBeneficiary,
+                OperationTracer.NO_TRACING,
+                blockHashLookup,
+                true,
+                TransactionValidationParams.processingBlock(),
+                privateMetadataUpdater);
+      } else {
+        complainAboutIllegalTransaction(transaction);
+        transactionProcessingResult = null; // only to stop static analysis from complaining
       }
 
-      final TransactionProcessingResult result =
-          transactionProcessor.processTransaction(
-              blockchain,
-              worldStateUpdater,
-              blockHeader,
-              transaction,
-              miningBeneficiary,
-              OperationTracer.NO_TRACING,
-              blockHashLookup,
-              true,
-              TransactionValidationParams.processingBlock(),
-              privateMetadataUpdater);
-      if (result.isInvalid()) {
+      if (transactionProcessingResult.isInvalid()) {
         LOG.info(
             "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
-            result.getValidationResult().getInvalidReason(),
+            transactionProcessingResult.getValidationResult().getInvalidReason(),
             blockHeader.getHash().toHexString(),
             transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
@@ -203,10 +208,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       worldStateUpdater.commit();
 
-      currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
+      currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
 
       final TransactionReceipt transactionReceipt =
-          transactionReceiptFactory.create(result, worldState, currentGasUsed);
+          transactionReceiptFactory.create(transactionProcessingResult, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
     }
 
@@ -217,6 +222,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     worldState.persist();
     return AbstractBlockProcessor.Result.successful(receipts);
+  }
+
+  private void complainAboutIllegalTransaction(final TypicalTransaction transaction) {
+    throw new IllegalStateException(
+        String.format(
+            "Developer error. A supported transaction of type %s was found but there was no"
+                + " associated validation logic",
+            transaction.getClass().getSimpleName()));
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {
