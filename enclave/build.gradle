@@ -10,7 +10,6 @@ dependencies {
 
   runtimeOnly('org.bouncycastle:bcpkix-jdk15on')
 
-
   // test dependencies.
   testImplementation project(':testutil')
 
@@ -21,8 +20,7 @@ dependencies {
   integrationTestImplementation project(':testutil')
   integrationTestImplementation 'org.bouncycastle:bcpkix-jdk15on'
   integrationTestImplementation 'org.awaitility:awaitility'
-
-
+  integrationTestImplementation 'org.mockito:mockito-core'
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'net.consensys:orion'
