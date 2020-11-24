@@ -24,7 +24,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
 
   private static final Gas TX_DATA_ZERO_COST = Gas.of(4L);
-  private static final Gas TX_DATA_NON_ZERO_COST = Gas.of(16L);
+  private static final Gas ISTANBUL_TX_DATA_NON_ZERO_COST = Gas.of(16L);
   private static final Gas TX_BASE_COST = Gas.of(21_000L);
 
   private static final Gas SLOAD_GAS = Gas.of(800);
@@ -51,10 +51,9 @@ public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
     final int nonZeros = payload.size() - zeros;
 
     Gas cost =
-        Gas.ZERO
-            .plus(TX_BASE_COST)
+        TX_BASE_COST
             .plus(TX_DATA_ZERO_COST.times(zeros))
-            .plus(TX_DATA_NON_ZERO_COST.times(nonZeros));
+            .plus(ISTANBUL_TX_DATA_NON_ZERO_COST.times(nonZeros));
 
     if (transaction.isContractCreation()) {
       cost = cost.plus(txCreateExtraGasCost());
