@@ -43,7 +43,7 @@ public class TransactionRLPDecoderTest {
     final Transaction transaction =
         TransactionRLPDecoder.decodeTransaction(input);
     assertThat(transaction).isNotNull();
-    assertThat(transaction.getV()).isEqualTo(37);
+    assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.getSender()).isEqualByComparingTo(Address.fromHexString("0xed9d02e382b34818e88b88a309c7fe71e65f419d"));
   }
 
