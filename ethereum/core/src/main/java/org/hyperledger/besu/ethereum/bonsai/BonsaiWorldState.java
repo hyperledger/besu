@@ -41,6 +41,7 @@ public interface BonsaiWorldState {
    * Stream all the storage values of a account.
    *
    * @param address the account to stream
+   * @param rootHash the root hash of the account storage trie
    * @return A map that is a copy of the entries. The key is the hashed slot number, and the value
    *     is the Bytes representation of the storage value.
    */

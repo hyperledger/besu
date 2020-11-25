@@ -323,7 +323,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   /**
    * Throws an exception if the two accounts represent different stored states
    *
-   * @param account the account to compare
+   * @param source The bonsai account to compare
+   * @param account The State Trie account to compare
    * @param context a description to be added to the thrown exceptions
    * @throws IllegalStateException if the stored values differ
    */

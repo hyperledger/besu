@@ -25,6 +25,7 @@ public interface MerkleStorage {
   /**
    * Returns an {@code Optional} of the content mapped to the hash if it exists; otherwise empty.
    *
+   * @param location The location in the trie.
    * @param hash The hash for the content.
    * @return an {@code Optional} of the content mapped to the hash if it exists; otherwise empty
    */
@@ -37,6 +38,7 @@ public interface MerkleStorage {
    * <p>Note: if the storage implementation already contains content for the given hash, it will
    * replace the existing content.
    *
+   * @param location The location in the trie.
    * @param hash The hash for the content.
    * @param content The content to store.
    */
