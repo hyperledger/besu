@@ -158,7 +158,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findPrivacyGroup(
+  public PrivacyGroup[] findPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     return enclave.findPrivacyGroup(addresses);
   }
@@ -259,13 +259,23 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOffChainPrivacyGroup(
+  public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
+      final String privacyGroupId, final String enclaveKey) {
+    return findOffChainPrivacyGroupByGroupId(privacyGroupId, enclaveKey)
+        .or(
+            () ->
+                findOnChainPrivacyGroupByGroupId(
+                    Bytes.fromBase64String(privacyGroupId), enclaveKey));
+  }
+
+  @Override
+  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
       final String privacyGroupId, final String enclaveKey) {
     return Optional.ofNullable(enclave.retrievePrivacyGroup(privacyGroupId));
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroup(
+  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     final ArrayList<PrivacyGroup> privacyGroups = new ArrayList<>();
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
@@ -276,7 +286,8 @@ public class DefaultPrivacyController implements PrivacyController {
         .keySet()
         .forEach(
             c -> {
-              final Optional<PrivacyGroup> maybePrivacyGroup = retrieveOnChainPrivacyGroup(c);
+              final Optional<PrivacyGroup> maybePrivacyGroup =
+                  findOnChainPrivacyGroupByGroupId(c, enclavePublicKey);
               if (maybePrivacyGroup.isPresent()
                   && maybePrivacyGroup.get().getMembers().containsAll(addresses)) {
                 privacyGroups.add(maybePrivacyGroup.get());
@@ -285,7 +296,8 @@ public class DefaultPrivacyController implements PrivacyController {
     return privacyGroups;
   }
 
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(final Bytes privacyGroupId) {
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupByGroupId(
+      final Bytes privacyGroupId, final String enclaveKey) {
     // get the privateFor list from the management contract
     final Optional<TransactionProcessingResult> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
@@ -312,7 +324,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupWithToBeAddedMembers(
       final Bytes privacyGroupId,
       final String enclavePublicKey,
       final PrivateTransaction privateTransaction) {
