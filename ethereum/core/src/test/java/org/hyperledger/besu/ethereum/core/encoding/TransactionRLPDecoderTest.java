@@ -23,9 +23,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.junit.Test;
 
 public class TransactionRLPDecoderTest {
@@ -40,11 +40,11 @@ public class TransactionRLPDecoderTest {
   @Test
   public void decodeGoQuorumPrivateTransactionRlp() {
     RLPInput input = RLP.input(Bytes.fromHexString(GOQUORUM_PRIVATE_TX_RLP));
-    final Transaction transaction =
-        TransactionRLPDecoder.decodeTransaction(input);
+    final Transaction transaction = TransactionRLPDecoder.decodeTransaction(input);
     assertThat(transaction).isNotNull();
     assertThat(transaction.getV()).isEqualTo(38);
-    assertThat(transaction.getSender()).isEqualByComparingTo(Address.fromHexString("0xed9d02e382b34818e88b88a309c7fe71e65f419d"));
+    assertThat(transaction.getSender())
+        .isEqualByComparingTo(Address.fromHexString("0xed9d02e382b34818e88b88a309c7fe71e65f419d"));
   }
 
   @Test

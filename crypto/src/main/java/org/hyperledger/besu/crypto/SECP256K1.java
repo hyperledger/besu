@@ -731,8 +731,8 @@ public class SECP256K1 {
      * @throws IllegalArgumentException if any argument is invalid (for instance, {@code v} is
      *     neither 37 or 38).
      */
-    public static Signature create(final BigInteger r, final BigInteger s, final BigInteger v,
-        final byte recId) {
+    public static Signature create(
+        final BigInteger r, final BigInteger s, final BigInteger v, final byte recId) {
       checkNotNull(r);
       checkNotNull(s);
       checkInBounds("r", r);
@@ -742,12 +742,13 @@ public class SECP256K1 {
             "Invalid 'recId' value, should be 0 or 1 but got " + recId);
       }
       // TODO validate v value
-      if (! (v.equals(BigInteger.valueOf(37L)) || v.equals(BigInteger.valueOf(38L)))) {
-        throw new IllegalArgumentException(String.format("v value {} should only be included directly if private GoQuorum transaction", v));
+      if (!(v.equals(BigInteger.valueOf(37L)) || v.equals(BigInteger.valueOf(38L)))) {
+        throw new IllegalArgumentException(
+            String.format(
+                "v value {} should only be included directly if private GoQuorum transaction", v));
       }
       return new Signature(r, s, v, recId);
     }
-
 
     private static void checkInBounds(final String name, final BigInteger i) {
       if (i.compareTo(BigInteger.ONE) < 0) {
