@@ -729,7 +729,7 @@ public class SECP256K1 {
      * @return the created {@link Signature} object.
      * @throws NullPointerException if {@code r} or {@code s} are {@code null}.
      * @throws IllegalArgumentException if any argument is invalid (for instance, {@code v} is
-     *     neither 27 or 28).
+     *     neither 37 or 38).
      */
     public static Signature create(final BigInteger r, final BigInteger s, final BigInteger v,
         final byte recId) {
