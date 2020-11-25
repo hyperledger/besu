@@ -745,7 +745,8 @@ public class SECP256K1 {
       if (!(v.equals(BigInteger.valueOf(37L)) || v.equals(BigInteger.valueOf(38L)))) {
         throw new IllegalArgumentException(
             String.format(
-                "v value '%s' should only be included directly if private GoQuorum transaction", v));
+                "v value '%s' should only be included directly if private GoQuorum transaction",
+                v));
       }
       return new Signature(r, s, v, recId);
     }
