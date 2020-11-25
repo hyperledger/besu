@@ -136,8 +136,12 @@ public class EthPeers {
     return connections.size();
   }
 
+  public Stream<EthPeer> streamAllPeers() {
+    return connections.values().stream();
+  }
+
   public Stream<EthPeer> streamAvailablePeers() {
-    return connections.values().stream().filter(EthPeer::readyForRequests);
+    return streamAllPeers().filter(EthPeer::readyForRequests);
   }
 
   public Stream<EthPeer> streamBestPeers() {

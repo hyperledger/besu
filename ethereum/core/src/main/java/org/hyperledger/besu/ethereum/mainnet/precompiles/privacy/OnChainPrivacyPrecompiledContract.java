@@ -35,12 +35,12 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -171,7 +171,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return Bytes.EMPTY;
     }
 
-    final PrivateTransactionProcessor.Result result =
+    final TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
@@ -285,7 +285,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         disposablePrivateState,
         privateWorldStateUpdater)) {
       LOG.debug(
-          "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom {} is not a member.",
+          "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom"
+              + " {} is not a member.",
           messageFrame.getTransactionHash(),
           privacyGroupId.toBase64String(),
           privateFrom.toBase64String());
@@ -306,7 +307,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
-    final PrivateTransactionProcessor.Result result =
+    final TransactionProcessingResult result =
         simulateTransaction(
             messageFrame,
             currentBlockHeader,
@@ -327,7 +328,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         || participantsFromParameter.contains(privateFrom.toBase64String());
   }
 
-  List<Bytes> getMembersFromResult(final PrivateTransactionProcessor.Result result) {
+  List<Bytes> getMembersFromResult(final TransactionProcessingResult result) {
     List<Bytes> list = Collections.emptyList();
     if (result != null && result.isSuccessful()) {
       final RLPInput rlpInput = RLP.input(result.getOutput());
@@ -370,7 +371,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Blockchain blockchain,
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
-    final PrivateTransactionProcessor.Result result =
+    final TransactionProcessingResult result =
         simulateTransaction(
             messageFrame,
             currentBlockHeader,
@@ -383,7 +384,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     return result.getOutput().toHexString().endsWith("0");
   }
 
-  protected PrivateTransactionProcessor.Result simulateTransaction(
+  protected TransactionProcessingResult simulateTransaction(
       final MessageFrame messageFrame,
       final ProcessableBlockHeader currentBlockHeader,
       final WorldUpdater publicWorldState,
@@ -455,7 +456,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     // call to affect the state
     // privateTransactionProcessor.processTransaction(...) commits the state if the process was
     // successful before it returns
-    final PrivateTransactionProcessor.Result getVersionResult =
+    final TransactionProcessingResult getVersionResult =
         simulateTransaction(
             messageFrame,
             currentBlockHeader,

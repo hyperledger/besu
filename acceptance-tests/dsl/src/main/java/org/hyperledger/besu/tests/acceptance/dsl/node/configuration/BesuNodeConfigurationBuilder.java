@@ -54,7 +54,7 @@ public class BesuNodeConfigurationBuilder {
   private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
-  private boolean metadataEnabled = false;
+  private boolean revertReasonEnabled = false;
   private boolean secp256K1Native = false;
   private boolean altbn128Native = false;
   private final List<String> plugins = new ArrayList<>();
@@ -249,8 +249,8 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder metadataEnabled() {
-    this.metadataEnabled = true;
+  public BesuNodeConfigurationBuilder revertReasonEnabled() {
+    this.revertReasonEnabled = true;
     return this;
   }
 
@@ -300,7 +300,7 @@ public class BesuNodeConfigurationBuilder {
         networkingConfiguration,
         discoveryEnabled,
         bootnodeEligible,
-        metadataEnabled,
+        revertReasonEnabled,
         secp256K1Native,
         altbn128Native,
         plugins,

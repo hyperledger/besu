@@ -24,6 +24,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContextImpl;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
@@ -93,9 +94,9 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
@@ -155,6 +156,7 @@ public class RunnerBuilder {
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
+  private ApiConfiguration apiConfiguration;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
   private MetricsConfiguration metricsConfiguration;
@@ -275,6 +277,11 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder apiConfiguration(final ApiConfiguration apiConfiguration) {
+    this.apiConfiguration = apiConfiguration;
+    return this;
+  }
+
   public RunnerBuilder permissioningConfiguration(
       final PermissioningConfiguration permissioningConfiguration) {
     this.permissioningConfiguration = Optional.of(permissioningConfiguration);
@@ -330,7 +337,11 @@ public class RunnerBuilder {
 
     Preconditions.checkNotNull(besuController);
 
-    final DiscoveryConfiguration discoveryConfiguration;
+    final DiscoveryConfiguration discoveryConfiguration =
+        DiscoveryConfiguration.create()
+            .setBindHost(p2pListenInterface)
+            .setBindPort(p2pListenPort)
+            .setAdvertisedHost(p2pAdvertisedHost);
     if (discovery) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.getBootNodes() == null) {
@@ -338,14 +349,9 @@ public class RunnerBuilder {
       } else {
         bootstrap = ethNetworkConfig.getBootNodes();
       }
-      discoveryConfiguration =
-          DiscoveryConfiguration.create()
-              .setBindHost(p2pListenInterface)
-              .setBindPort(p2pListenPort)
-              .setAdvertisedHost(p2pAdvertisedHost)
-              .setBootnodes(bootstrap);
+      discoveryConfiguration.setBootnodes(bootstrap);
     } else {
-      discoveryConfiguration = DiscoveryConfiguration.create().setActive(false);
+      discoveryConfiguration.setActive(false);
     }
 
     final NodeKey nodeKey = besuController.getNodeKey();
@@ -388,7 +394,7 @@ public class RunnerBuilder {
     final Bytes localNodeId = nodeKey.getPublicKey().getEncodedBytes();
     final Optional<NodePermissioningController> nodePermissioningController =
         buildNodePermissioningController(
-            bootnodes, synchronizer, transactionSimulator, localNodeId);
+            bootnodes, synchronizer, transactionSimulator, localNodeId, context.getBlockchain());
 
     final PeerPermissions peerPermissions =
         nodePermissioningController
@@ -435,7 +441,8 @@ public class RunnerBuilder {
             context.getBlockchain(),
             context.getWorldStateArchive(),
             Optional.of(dataDir.resolve(CACHE_PATH)),
-            Optional.of(besuController.getProtocolManager().ethContext().getScheduler()));
+            Optional.of(besuController.getProtocolManager().ethContext().getScheduler()),
+            apiConfiguration);
 
     final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
 
@@ -474,7 +481,10 @@ public class RunnerBuilder {
 
     final Optional<AccountPermissioningController> accountPermissioningController =
         buildAccountPermissioningController(
-            permissioningConfiguration, besuController, transactionSimulator);
+            permissioningConfiguration,
+            besuController,
+            transactionSimulator,
+            context.getBlockchain());
 
     final Optional<AccountLocalConfigPermissioningController>
         accountLocalConfigPermissioningController =
@@ -600,10 +610,7 @@ public class RunnerBuilder {
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
     }
 
-    Optional<MetricsService> metricsService = Optional.empty();
-    if (metricsConfiguration.isEnabled() || metricsConfiguration.isPushEnabled()) {
-      metricsService = Optional.of(createMetricsService(vertx, metricsConfiguration));
-    }
+    Optional<MetricsService> metricsService = createMetricsService(vertx, metricsConfiguration);
 
     final Optional<EthStatsService> ethStatsService;
     if (!Strings.isNullOrEmpty(ethstatsUrl)) {
@@ -645,7 +652,8 @@ public class RunnerBuilder {
       final List<EnodeURL> bootnodesAsEnodeURLs,
       final Synchronizer synchronizer,
       final TransactionSimulator transactionSimulator,
-      final Bytes localNodeId) {
+      final Bytes localNodeId,
+      final Blockchain blockchain) {
     final Collection<EnodeURL> fixedNodes = getFixedNodes(bootnodesAsEnodeURLs, staticNodes);
 
     if (permissioningConfiguration.isPresent()) {
@@ -658,7 +666,8 @@ public class RunnerBuilder {
                   fixedNodes,
                   localNodeId,
                   transactionSimulator,
-                  metricsSystem);
+                  metricsSystem,
+                  blockchain);
 
       return Optional.of(nodePermissioningController);
     } else {
@@ -669,12 +678,13 @@ public class RunnerBuilder {
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final BesuController besuController,
-      final TransactionSimulator transactionSimulator) {
+      final TransactionSimulator transactionSimulator,
+      final Blockchain blockchain) {
 
     if (permissioningConfiguration.isPresent()) {
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
+              permissioningConfiguration.get(), transactionSimulator, metricsSystem, blockchain);
 
       accountPermissioningController.ifPresent(
           permissioningController ->
@@ -761,7 +771,8 @@ public class RunnerBuilder {
                 metricsConfiguration,
                 natService,
                 namedPlugins,
-                dataDir);
+                dataDir,
+                besuController.getProtocolManager().ethContext().getEthPeers());
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
     return methods;
   }
@@ -792,7 +803,8 @@ public class RunnerBuilder {
     Optional<PrivacyQueries> privacyQueries = Optional.empty();
     if (privacyParameters.isEnabled()) {
       final BlockchainQueries blockchainQueries =
-          new BlockchainQueries(blockchain, worldStateArchive);
+          new BlockchainQueries(
+              blockchain, worldStateArchive, Optional.empty(), Optional.empty(), apiConfiguration);
       privacyQueries =
           Optional.of(
               new PrivacyQueries(
@@ -878,7 +890,7 @@ public class RunnerBuilder {
     return new WebSocketService(vertx, configuration, websocketRequestHandler);
   }
 
-  private MetricsService createMetricsService(
+  private Optional<MetricsService> createMetricsService(
       final Vertx vertx, final MetricsConfiguration configuration) {
     return MetricsService.create(vertx, configuration, metricsSystem);
   }

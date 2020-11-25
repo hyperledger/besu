@@ -4,7 +4,7 @@
 
   "response": {
     "data" : {
-      "gasPrice" : "0x10"
+      "gasPrice" : "0x1"
     }
   },
   "statusCode": 200

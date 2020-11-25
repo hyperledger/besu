@@ -50,7 +50,7 @@ public interface NodeConfiguration {
 
   List<String> getExtraCLIOptions();
 
-  boolean isMetadataEnabled();
+  boolean isRevertReasonEnabled();
 
   List<String> getStaticNodes();
 }

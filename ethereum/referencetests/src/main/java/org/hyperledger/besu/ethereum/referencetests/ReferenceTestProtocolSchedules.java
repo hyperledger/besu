@@ -64,6 +64,7 @@ public class ReferenceTestProtocolSchedules {
     builder.put("MuirGlacier", createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0)));
     if (ExperimentalEIPs.berlinEnabled) {
       builder.put("Berlin", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
+      builder.put("YOLOv2", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
     }
     return new ReferenceTestProtocolSchedules(builder.build());
   }
@@ -80,7 +81,12 @@ public class ReferenceTestProtocolSchedules {
 
   private static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {
     return new ProtocolScheduleBuilder(
-            options, CHAIN_ID, Function.identity(), PrivacyParameters.DEFAULT, false)
+            options,
+            CHAIN_ID,
+            Function.identity(),
+            PrivacyParameters.DEFAULT,
+            false,
+            options.isQuorum())
         .createProtocolSchedule();
   }
 

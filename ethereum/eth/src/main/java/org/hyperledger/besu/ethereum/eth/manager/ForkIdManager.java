@@ -42,16 +42,19 @@ public class ForkIdManager {
   private final boolean onlyZerosForkBlocks;
   private final long highestKnownFork;
   private Bytes genesisHashCrc;
+  private final boolean legacyEth64;
 
-  public ForkIdManager(final Blockchain blockchain, final List<Long> nonFilteredForks) {
+  public ForkIdManager(
+      final Blockchain blockchain, final List<Long> nonFilteredForks, final boolean legacyEth64) {
     checkNotNull(blockchain);
     checkNotNull(nonFilteredForks);
     this.chainHeadSupplier = blockchain::getChainHeadBlockNumber;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     this.forkAndHashList = new ArrayList<>();
+    this.legacyEth64 = legacyEth64;
     this.forks =
         nonFilteredForks.stream()
-            .filter(fork -> fork > 0)
+            .filter(fork -> fork > 0L)
             .distinct()
             .sorted()
             .collect(Collectors.toUnmodifiableList());
@@ -61,6 +64,9 @@ public class ForkIdManager {
   }
 
   public ForkId computeForkId() {
+    if (legacyEth64) {
+      return forkAndHashList.isEmpty() ? null : forkAndHashList.get(forkAndHashList.size() - 1);
+    }
     final long head = chainHeadSupplier.getAsLong();
     for (final ForkId forkId : forkAndHashList) {
       if (head < forkId.getNext()) {

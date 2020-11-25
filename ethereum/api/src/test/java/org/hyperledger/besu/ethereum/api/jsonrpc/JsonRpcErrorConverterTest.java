@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -73,7 +73,8 @@ public class JsonRpcErrorConverterTest {
           {
             TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED,
             JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED
-          }
+          },
+          {TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO, JsonRpcError.GAS_PRICE_MUST_BE_ZERO}
         });
   }
 

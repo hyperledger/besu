@@ -30,13 +30,14 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -56,7 +57,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
   static final int MAX_GENERATION = 6;
 
-  private final TransactionProcessor transactionProcessor;
+  private final MainnetTransactionProcessor transactionProcessor;
   private final PrivateTransactionProcessor privateTransactionProcessor;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   final Wei blockReward;
@@ -64,7 +65,7 @@ public class PrivateGroupRehydrationBlockProcessor {
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
   public PrivateGroupRehydrationBlockProcessor(
-      final TransactionProcessor transactionProcessor,
+      final MainnetTransactionProcessor transactionProcessor,
       final PrivateTransactionProcessor privateTransactionProcessor,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
@@ -100,7 +101,8 @@ public class PrivateGroupRehydrationBlockProcessor {
       final long remainingGasBudget = blockHeader.getGasLimit() - gasUsed;
       if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
         LOG.warn(
-            "Transaction processing error: transaction gas limit {} exceeds available block budget remaining {}",
+            "Transaction processing error: transaction gas limit {} exceeds available block budget"
+                + " remaining {}",
             transaction.getGasLimit(),
             remainingGasBudget);
         return AbstractBlockProcessor.Result.failed();
@@ -128,7 +130,7 @@ public class PrivateGroupRehydrationBlockProcessor {
             disposablePrivateState.rootHash(),
             transactionHash);
 
-        final PrivateTransactionProcessor.Result privateResult =
+        final TransactionProcessingResult privateResult =
             privateTransactionProcessor.processTransaction(
                 blockchain,
                 worldStateUpdater.updater(),
@@ -156,7 +158,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
       // We have to process the public transactions here, because the private transactions can
       // depend on  public state
-      final TransactionProcessor.Result result =
+      final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
               worldStateUpdater,
@@ -190,10 +192,10 @@ public class PrivateGroupRehydrationBlockProcessor {
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final PrivateTransactionProcessor.Result result) {
+      final TransactionProcessingResult result) {
 
     final int txStatus =
-        result.getStatus() == PrivateTransactionProcessor.Result.Status.SUCCESSFUL ? 1 : 0;
+        result.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL ? 1 : 0;
 
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(
@@ -252,7 +254,8 @@ public class PrivateGroupRehydrationBlockProcessor {
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
         LOG.warn(
-            "Block processing error: ommer block number {} more than {} generations current block number {}",
+            "Block processing error: ommer block number {} more than {} generations current block"
+                + " number {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,
             header.getNumber());

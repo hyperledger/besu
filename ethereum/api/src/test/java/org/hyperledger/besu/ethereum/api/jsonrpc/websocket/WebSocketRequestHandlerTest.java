@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
@@ -31,11 +32,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcR
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -101,6 +104,73 @@ public class WebSocketRequestHandlerTest {
               async.complete();
             })
         .completionHandler(v -> handler.handle(websocketId, requestJson.toString()));
+
+    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    // can verify only after async not before
+    verify(jsonRpcMethodMock).response(eq(expectedRequest));
+  }
+
+  @Test
+  public void handlerBatchRequestDeliversResponseSuccessfully(final TestContext context) {
+    final Async async = context.async();
+
+    final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
+    final JsonArray arrayJson = new JsonArray(List.of(requestJson, requestJson));
+    final JsonRpcRequest requestBody = requestJson.mapTo(WebSocketRpcRequest.class);
+    final JsonRpcRequestContext expectedRequest = new JsonRpcRequestContext(requestBody);
+    final JsonRpcSuccessResponse expectedSingleResponse =
+        new JsonRpcSuccessResponse(requestBody.getId(), null);
+
+    final JsonArray expectedBatchResponse =
+        new JsonArray(List.of(expectedSingleResponse, expectedSingleResponse));
+
+    when(jsonRpcMethodMock.response(eq(expectedRequest))).thenReturn(expectedSingleResponse);
+
+    final String websocketId = UUID.randomUUID().toString();
+
+    vertx
+        .eventBus()
+        .consumer(websocketId)
+        .handler(
+            msg -> {
+              context.assertEquals(Json.encode(expectedBatchResponse), msg.body());
+              async.complete();
+            })
+        .completionHandler(v -> handler.handle(websocketId, arrayJson.toString()));
+
+    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    // can verify only after async not before
+    verify(jsonRpcMethodMock, Mockito.times(2)).response(eq(expectedRequest));
+  }
+
+  @Test
+  public void handlerBatchRequestContainingErrorsShouldRespondWithBatchErrors(
+      final TestContext context) {
+    final Async async = context.async();
+
+    final JsonObject requestJson =
+        new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
+    final JsonRpcErrorResponse expectedErrorResponse1 =
+        new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
+
+    final JsonArray arrayJson = new JsonArray(List.of(requestJson, ""));
+    final JsonRpcErrorResponse expectedErrorResponse2 =
+        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+
+    final JsonArray expectedBatchResponse =
+        new JsonArray(List.of(expectedErrorResponse1, expectedErrorResponse2));
+
+    final String websocketId = UUID.randomUUID().toString();
+
+    vertx
+        .eventBus()
+        .consumer(websocketId)
+        .handler(
+            msg -> {
+              context.assertEquals(Json.encode(expectedBatchResponse), msg.body());
+              async.complete();
+            })
+        .completionHandler(v -> handler.handle(websocketId, arrayJson.toString()));
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
   }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.metrics.prometheus;
 
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
+import org.hyperledger.besu.metrics.MetricsProtocol;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 import java.util.Arrays;
@@ -30,12 +31,13 @@ import com.google.common.base.MoreObjects;
 public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PORT = 9545;
-
+  private static final MetricsProtocol DEFAULT_METRICS_PROTOCOL = MetricsProtocol.PROMETHEUS;
   private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;
   public static final Boolean DEFAULT_TIMERS_ENABLED = true;
 
   private final boolean enabled;
+  private final MetricsProtocol protocol;
   private final int port;
   private int actualPort;
   private final String host;
@@ -55,6 +57,7 @@ public class MetricsConfiguration {
   private MetricsConfiguration(
       final boolean enabled,
       final int port,
+      final MetricsProtocol protocol,
       final String host,
       final Set<MetricCategory> metricCategories,
       final boolean pushEnabled,
@@ -66,6 +69,7 @@ public class MetricsConfiguration {
       final boolean timersEnabled) {
     this.enabled = enabled;
     this.port = port;
+    this.protocol = protocol;
     this.host = host;
     this.metricCategories = metricCategories;
     this.pushEnabled = pushEnabled;
@@ -79,6 +83,10 @@ public class MetricsConfiguration {
 
   public boolean isEnabled() {
     return enabled;
+  }
+
+  public MetricsProtocol getProtocol() {
+    return protocol;
   }
 
   public String getHost() {
@@ -139,6 +147,7 @@ public class MetricsConfiguration {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("enabled", enabled)
+        .add("protocol", protocol)
         .add("port", port)
         .add("host", host)
         .add("metricCategories", metricCategories)
@@ -161,6 +170,7 @@ public class MetricsConfiguration {
     }
     final MetricsConfiguration that = (MetricsConfiguration) o;
     return enabled == that.enabled
+        && Objects.equals(protocol, that.protocol)
         && port == that.port
         && pushEnabled == that.pushEnabled
         && pushPort == that.pushPort
@@ -176,6 +186,7 @@ public class MetricsConfiguration {
   public int hashCode() {
     return Objects.hash(
         enabled,
+        protocol,
         port,
         host,
         metricCategories,
@@ -189,6 +200,7 @@ public class MetricsConfiguration {
 
   public static class Builder {
     private boolean enabled = false;
+    private MetricsProtocol protocol = DEFAULT_METRICS_PROTOCOL;
     private int port = DEFAULT_METRICS_PORT;
     private String host = DEFAULT_METRICS_HOST;
     private Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
@@ -204,6 +216,11 @@ public class MetricsConfiguration {
 
     public Builder enabled(final boolean enabled) {
       this.enabled = enabled;
+      return this;
+    }
+
+    public Builder protocol(final MetricsProtocol protocol) {
+      this.protocol = protocol;
       return this;
     }
 
@@ -268,6 +285,7 @@ public class MetricsConfiguration {
       return new MetricsConfiguration(
           enabled,
           port,
+          protocol,
           host,
           metricCategories,
           pushEnabled,

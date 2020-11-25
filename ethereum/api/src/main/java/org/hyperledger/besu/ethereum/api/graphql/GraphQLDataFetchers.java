@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -39,11 +38,11 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.util.ArrayList;
@@ -115,10 +114,13 @@ public class GraphQLDataFetchers {
 
   DataFetcher<Optional<Wei>> getGasPriceDataFetcher() {
     return dataFetchingEnvironment -> {
-      final MiningCoordinator miningCoordinator =
-          ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getMiningCoordinator();
-
-      return Optional.of(miningCoordinator.getMinTransactionGasPrice());
+      final GraphQLDataFetcherContext context =
+          (GraphQLDataFetcherContext) dataFetchingEnvironment.getContext();
+      return (context)
+          .getBlockchainQueries()
+          .gasPrice()
+          .map(Wei::of)
+          .or(() -> Optional.of(context.getMiningCoordinator().getMinTransactionGasPrice()));
     };
   }
 

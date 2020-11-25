@@ -13,7 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -24,6 +23,12 @@ import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
+  private static final BigInteger GQUADDIVISOR = BigInteger.valueOf(20);
+  private static final BigInteger WORD_SIZE = BigInteger.valueOf(32);
+  private static final BigInteger BITS_IN_BYTE = BigInteger.valueOf(8);
+
+  public static final BigInteger MAX_FIRST_EXPONENT_BYTES = BigInteger.valueOf(32);
+  public static final int MAX_GAS_BITS = 255;
 
   @Override
   public Gas modExpGasCost(final Bytes input) {
@@ -35,31 +40,41 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
         BigIntegerModularExponentiationPrecompiledContract.modulusLength(input);
     final BigInteger exponentOffset =
         BigIntegerModularExponentiationPrecompiledContract.BASE_OFFSET.add(baseLength);
-    final int firstExponentBytesCap =
-        exponentLength
-            .min(BigIntegerModularExponentiationPrecompiledContract.MAX_FIRST_EXPONENT_BYTES)
-            .intValue();
+    final int firstExponentBytesCap = exponentLength.min(MAX_FIRST_EXPONENT_BYTES).intValue();
     final BigInteger firstExpBytes =
         BigIntegerModularExponentiationPrecompiledContract.extractParameter(
             input, exponentOffset, firstExponentBytesCap);
-    final BigInteger adjustedExponentLength =
-        BigIntegerModularExponentiationPrecompiledContract.adjustedExponentLength(
-            exponentLength, firstExpBytes);
+    final BigInteger adjustedExponentLength = adjustedExponentLength(exponentLength, firstExpBytes);
     final BigInteger multiplicationComplexity =
         BigIntegerModularExponentiationPrecompiledContract.multiplicationComplexity(
             baseLength.max(modulusLength));
     final BigInteger gasRequirement =
         multiplicationComplexity
             .multiply(adjustedExponentLength.max(BigInteger.ONE))
-            .divide(BigIntegerModularExponentiationPrecompiledContract.GQUADDIVISOR);
+            .divide(GQUADDIVISOR);
 
     // Gas price is so large it will not fit in a Gas type, so an
     // very very very unlikely high gas price is used instead.
-    if (gasRequirement.bitLength()
-        > BigIntegerModularExponentiationPrecompiledContract.MAX_GAS_BITS) {
+    if (gasRequirement.bitLength() > MAX_GAS_BITS) {
       return Gas.of(Long.MAX_VALUE);
     } else {
       return Gas.of(gasRequirement);
     }
+  }
+
+  public static BigInteger adjustedExponentLength(
+      final BigInteger exponentLength, final BigInteger firstExpBytes) {
+    final BigInteger bitLength = bitLength(firstExpBytes);
+    if (exponentLength.compareTo(WORD_SIZE) <= 0) {
+      return bitLength;
+    } else {
+      return BITS_IN_BYTE.multiply(exponentLength.subtract(WORD_SIZE)).add(bitLength);
+    }
+  }
+
+  private static BigInteger bitLength(final BigInteger n) {
+    return n.compareTo(BigInteger.ZERO) == 0
+        ? BigInteger.ZERO
+        : BigInteger.valueOf(n.bitLength() - 1L);
   }
 }
