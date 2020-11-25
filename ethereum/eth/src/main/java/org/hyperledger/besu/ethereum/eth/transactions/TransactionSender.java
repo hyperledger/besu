@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 
 class TransactionSender implements TransactionBatchAddedListener {
 
@@ -33,7 +33,7 @@ class TransactionSender implements TransactionBatchAddedListener {
   }
 
   @Override
-  public void onTransactionsAdded(final Iterable<Transaction> transactions) {
+  public void onTransactionsAdded(final Iterable<? extends TypedTransaction> transactions) {
     ethContext
         .getEthPeers()
         .streamAvailablePeers()

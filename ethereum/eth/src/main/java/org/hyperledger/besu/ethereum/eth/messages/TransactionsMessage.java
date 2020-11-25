@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
+import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -39,12 +42,10 @@ public class TransactionsMessage extends AbstractMessageData {
     return new TransactionsMessage(message.getData());
   }
 
-  public static TransactionsMessage create(final Iterable<Transaction> transactions) {
+  public static TransactionsMessage create(final Iterable<TypedTransaction> transactions) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    for (final Transaction transaction : transactions) {
-      transaction.writeTo(tmp);
-    }
+    transactions.forEach(transaction -> TransactionRLPEncoder.encode(transaction, tmp));
     tmp.endList();
     return new TransactionsMessage(tmp.encoded());
   }
@@ -58,8 +59,8 @@ public class TransactionsMessage extends AbstractMessageData {
     return EthPV62.TRANSACTIONS;
   }
 
-  public Iterator<Transaction> transactions(
-      final Function<RLPInput, Transaction> transactionReader) {
+  public Iterator<TypicalTransaction> transactions(
+      final Function<RLPInput, TypicalTransaction> transactionReader) {
     return new BytesValueRLPInput(data, false).readList(transactionReader).iterator();
   }
 }

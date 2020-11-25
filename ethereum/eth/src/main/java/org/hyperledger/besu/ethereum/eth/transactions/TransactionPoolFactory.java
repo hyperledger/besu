@@ -111,15 +111,6 @@ public class TransactionPoolFactory {
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
-            eth65Enabled
-                ? Optional.of(
-                    new PendingTransactionSender(
-                        pendingTransactionTracker.get(),
-                        pendingTransactionsMessageSender.get(),
-                        ethContext))
-                : Optional.empty(),
-            syncState,
             ethContext,
             transactionTracker,
             pendingTransactionTracker,
@@ -133,6 +124,15 @@ public class TransactionPoolFactory {
             new TransactionsMessageProcessor(
                 transactionTracker,
                 transactionPool,
+                syncState,
+                new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
+                eth65Enabled
+                    ? Optional.of(
+                        new PendingTransactionSender(
+                            pendingTransactionTracker.get(),
+                            pendingTransactionsMessageSender.get(),
+                            ethContext))
+                    : Optional.empty(),
                 metricsSystem.createCounter(
                     BesuMetricCategory.TRANSACTION_POOL,
                     "transactions_messages_skipped_total",

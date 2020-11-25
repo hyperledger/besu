@@ -134,7 +134,7 @@ public class PendingTransactions {
         .forEach(transaction -> removeTransaction(transaction.getTransaction()));
   }
 
-  List<Transaction> getLocalTransactions() {
+  List<TypedTransaction> getLocalTransactions() {
     return pendingTransactions.values().stream()
         .filter(TransactionInfo::isReceivedFromLocalSource)
         .map(TransactionInfo::getTransaction)
