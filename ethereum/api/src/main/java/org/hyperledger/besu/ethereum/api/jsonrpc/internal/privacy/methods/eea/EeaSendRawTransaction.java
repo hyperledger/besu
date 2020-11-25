@@ -14,8 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
+import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
+
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -37,12 +42,8 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
-import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EeaSendRawTransaction implements JsonRpcMethod {
 
@@ -83,7 +84,8 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
 
-      final Optional<PrivacyGroup> maybePrivacyGroup = findPrivacyGroup(
+      final Optional<PrivacyGroup> maybePrivacyGroup =
+          findPrivacyGroup(
               privacyController, maybePrivacyGroupId, enclavePublicKey, privateTransaction);
 
       final ValidationResult<TransactionInvalidReason> validationResult =

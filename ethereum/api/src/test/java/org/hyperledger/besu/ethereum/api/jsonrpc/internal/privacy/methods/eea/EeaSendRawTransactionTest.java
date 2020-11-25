@@ -14,10 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.impl.JWTUser;
-import org.apache.tuweni.bytes.Bytes;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -39,28 +47,21 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.jwt.impl.JWTUser;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EeaSendRawTransactionTest {
@@ -109,8 +110,7 @@ public class EeaSendRawTransactionTest {
   @Before
   public void before() {
     method =
-        new EeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider);
+        new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
   }
 
   @Test
@@ -333,8 +333,7 @@ public class EeaSendRawTransactionTest {
   @Test
   public void onChainPrivacyGroupTransactionFailsWhenFeatureIsNotEnabled() {
     method =
-        new EeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider);
+        new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
 
     when(privacyController.retrieveOffChainPrivacyGroup(any(String.class), any(String.class)))
         .thenThrow(
