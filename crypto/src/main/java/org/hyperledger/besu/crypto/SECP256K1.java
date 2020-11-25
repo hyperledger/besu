@@ -61,7 +61,6 @@ import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
-import org.hyperledger.besu.plugin.data.Transaction;
 
 /*
  * Adapted from the BitcoinJ ECKey (Apache 2 License) implementation:
