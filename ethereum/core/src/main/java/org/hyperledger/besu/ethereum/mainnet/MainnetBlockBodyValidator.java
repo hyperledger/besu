@@ -75,6 +75,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
               LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
       return false;
     }
+
     return true;
   }
 
