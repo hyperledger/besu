@@ -3,13 +3,14 @@
 ## 20.10.2
 
 ### Additions and Improvements
-* Added support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
+* Added support for batched requests in WebSockets. [\#1583](https://github.com/hyperledger/besu/pull/1583)
 * Added a protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
-* Added CLI option `--goquorum-compatibility-enabled` to enable GoQuorum compatibility mode. [#1598](https://github.com/hyperledger/besu/pull/1598)
+* Added CLI option `--goquorum-compatibility-enabled` to enable GoQuorum compatibility mode. [\#1598](https://github.com/hyperledger/besu/pull/1598)
+* Added `memory` as an option to `--key-value-storage`.  This ephemeral storage is intended for sync testing and debugging.  [\#1617](https://github.com/hyperledger/besu/pull/1617) 
 
 ### Bug Fixes
 
-* Ibft2 will discard any received messages targeting a chain height <= current head - this resolves some corner cases in system correctness directly following block import. [#1575](https://github.com/hyperledger/besu/pull/1575)
+* Ibft2 will discard any received messages targeting a chain height <= current head - this resolves some corner cases in system correctness directly following block import. [\#1575](https://github.com/hyperledger/besu/pull/1575)
 * EvmTool now throws `UnsupportedForkException` when there is an unknown fork and is YOLOv2 compatible [\#1584](https://github.com/hyperledger/besu/pull/1584)
 * `eth_newFilter` now supports `blockHash` parameter as per the spec [\#1548](https://github.com/hyperledger/besu/issues/1540). (`blockhash` is also still supported.)
 
