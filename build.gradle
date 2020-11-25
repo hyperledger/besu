@@ -515,7 +515,7 @@ exec "$$JAVACMD" $$TRACING_AGENT /$
   createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace(unixRegex, unixReplacement)
   // OpenTelemetry Wiring for windows scripts
   def windowsRegex = $/"%JAVA_EXE%" %DEFAULT_JVM_OPTS%/$
-  def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:"%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
+  def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:" "%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
   createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace(windowsRegex, windowsReplacement)
 
   // Prevent the error originating from the 8191 chars limit on Windows
