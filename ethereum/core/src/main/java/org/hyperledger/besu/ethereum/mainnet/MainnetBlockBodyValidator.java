@@ -94,6 +94,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
+    if (receipts.size() != 0) {
+      // check receipts
+      LOG.info("found {} receipts to validate", receipts.size());
+    }
     if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }

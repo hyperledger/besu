@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
+import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -59,7 +61,12 @@ public interface TransactionRLPDecoder {
       final BigInteger v = input.readBigIntegerScalar();
       final byte recId;
       Optional<BigInteger> chainId = Optional.empty();
-      if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      if (isGoQuorumPrivateTransaction(v)) {
+        // GoQuorum private TX. No chain ID. Preserve the v value as provided.
+        chainId = Optional.empty();
+        recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX).byteValueExact();
+      } else if (v.equals(REPLAY_UNPROTECTED_V_BASE)
+          || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
         recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
       } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
         chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
@@ -71,12 +78,19 @@ public interface TransactionRLPDecoder {
       }
       final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
       final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
 
       input.leaveList();
 
-      chainId.ifPresent(builder::chainId);
-      return builder.signature(signature).build();
+      if (isGoQuorumPrivateTransaction(v)) {
+        // include v in the signature
+        final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, v, recId);
+        chainId.ifPresent(builder::chainId);
+        return builder.signature(signature).build();
+      } else {
+        final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+        chainId.ifPresent(builder::chainId);
+        return builder.signature(signature).build();
+      }
     };
   }
 
@@ -128,5 +142,10 @@ public interface TransactionRLPDecoder {
       chainId.ifPresent(builder::chainId);
       return builder.signature(signature).build();
     };
+  }
+
+  private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
+    return v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
+        || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
   }
 }

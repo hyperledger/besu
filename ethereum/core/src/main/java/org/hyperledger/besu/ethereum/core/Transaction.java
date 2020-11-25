@@ -45,6 +45,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   public static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
 
+  public static final BigInteger GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX = BigInteger.valueOf(37);
+  public static final BigInteger GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN = BigInteger.valueOf(38);
+
   // The v signature parameter starts at 36 because 1 is the first valid chainId so:
   // chainId > 1 implies that 2 * chainId + V_BASE > 36.
   public static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
@@ -302,7 +305,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               .orElseThrow(
                   () ->
                       new IllegalStateException(
-                          "Cannot recover public key from " + "signature for " + this));
+                          "Cannot recover public key from signature for " + this));
       sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
     }
     return sender;
@@ -347,6 +350,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public BigInteger getV() {
     final BigInteger v;
+    if (signature.getV().isPresent()) {
+      return signature.getV().get();
+    }
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
     if (chainId.isEmpty()) {
       v = recId.add(REPLAY_UNPROTECTED_V_BASE);
