@@ -27,7 +27,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DiscoveryConfiguration {
-  public static List<EnodeURL> MAINNET_BOOTSTRAP_NODES =
+  public static final String GOERLI_DISCOVERY_URL =
+      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.goerli.ethdisco.net";
+  public static final String MAINNET_DISCOVERY_URL =
+      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.mainnet.ethdisco.net";
+  public static final String RINKEBY_DISCOVERY_URL =
+      "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.rinkeby.ethdisco.net";
+
+  public static final List<EnodeURL> MAINNET_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
                   // Ethereum Foundation Bootnodes
@@ -52,7 +59,7 @@ public class DiscoveryConfiguration {
                   )
               .map(EnodeURL::fromString)
               .collect(toList()));
-  public static List<EnodeURL> RINKEBY_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> RINKEBY_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
                   "enode://a24ac7c5484ef4ed0c5eb2d36620ba4e4aa13b8c84684e1b4aab0cebea2ae45cb4d375b77eab56516d34bfbd3c1a833fc51296ff084b770b94fb9028c4d25ccf@52.169.42.101:30303",
@@ -60,7 +67,7 @@ public class DiscoveryConfiguration {
                   "enode://b6b28890b006743680c52e64e0d16db57f28124885595fa03a562be1d2bf0f3a1da297d56b13da25fb992888fd556d4c1a27b1f39d531bde7de1921c90061cc6@159.89.28.211:30303")
               .map(EnodeURL::fromString)
               .collect(toList()));
-  public static List<EnodeURL> ROPSTEN_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> ROPSTEN_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
                   "enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303",
@@ -70,7 +77,7 @@ public class DiscoveryConfiguration {
               .map(EnodeURL::fromString)
               .collect(toList()));
 
-  public static List<EnodeURL> GOERLI_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> GOERLI_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
                   "enode://011f758e6552d105183b1761c5e2dea0111bc20fd5f6422bc7f91e0fabbec9a6595caf6239b37feb773dddd3f87240d99d859431891e4a642cf2a0a9e6cbb98a@51.141.78.53:30303",
@@ -89,7 +96,7 @@ public class DiscoveryConfiguration {
               .map(EnodeURL::fromString)
               .collect(toList()));
 
-  public static List<EnodeURL> CLASSIC_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> CLASSIC_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
                   "enode://158ac5a4817265d0d8b977660b3dbe9abee5694ed212f7091cbf784ddf47623ed015e1cb54594d10c1c46118747ddabe86ebf569cf24ae91f2daa0f1adaae390@159.203.56.33:30303",
@@ -114,7 +121,7 @@ public class DiscoveryConfiguration {
               .map(EnodeURL::fromString)
               .collect(toList()));
 
-  public static List<EnodeURL> KOTTI_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> KOTTI_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
                   // Authority Nodes
@@ -134,7 +141,7 @@ public class DiscoveryConfiguration {
               .map(EnodeURL::fromString)
               .collect(toList()));
 
-  public static List<EnodeURL> MORDOR_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> MORDOR_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
                   "enode://642cf9650dd8869d42525dbf6858012e3b4d64f475e733847ab6f7742341a4397414865d953874e8f5ed91b0e4e1c533dee14ad1d6bb276a5459b2471460ff0d@157.230.152.87:30303", // @meowbits Mordor
@@ -169,7 +176,7 @@ public class DiscoveryConfiguration {
               .map(EnodeURL::fromString)
               .collect(toList()));
 
-  public static List<EnodeURL> YOLO_V2_BOOTSTRAP_NODES =
+  public static final List<EnodeURL> YOLO_V2_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.<String>of(
                   "enode://9e1096aa59862a6f164994cb5cb16f5124d6c992cdbf4535ff7dea43ea1512afe5448dca9df1b7ab0726129603f1a3336b631e4d7a1a44c94daddd03241587f9@3.9.20.133:30303")
@@ -182,6 +189,7 @@ public class DiscoveryConfiguration {
   private String advertisedHost = "127.0.0.1";
   private int bucketSize = 16;
   private List<EnodeURL> bootnodes = new ArrayList<>();
+  private String dnsDiscoveryURL;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -255,6 +263,14 @@ public class DiscoveryConfiguration {
     return this;
   }
 
+  public String getDNSDiscoveryURL() {
+    return dnsDiscoveryURL;
+  }
+
+  public void setDnsDiscoveryURL(final String dnsDiscoveryURL) {
+    this.dnsDiscoveryURL = dnsDiscoveryURL;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (o == this) {
@@ -269,12 +285,14 @@ public class DiscoveryConfiguration {
         && bucketSize == that.bucketSize
         && Objects.equals(bindHost, that.bindHost)
         && Objects.equals(advertisedHost, that.advertisedHost)
-        && Objects.equals(bootnodes, that.bootnodes);
+        && Objects.equals(bootnodes, that.bootnodes)
+        && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(active, bindHost, bindPort, advertisedHost, bucketSize, bootnodes);
+    return Objects.hash(
+        active, bindHost, bindPort, advertisedHost, bucketSize, bootnodes, dnsDiscoveryURL);
   }
 
   @Override
@@ -294,6 +312,8 @@ public class DiscoveryConfiguration {
         + bucketSize
         + ", bootnodes="
         + bootnodes
+        + ", dnsDiscoveryURL="
+        + dnsDiscoveryURL
         + '}';
   }
 }
