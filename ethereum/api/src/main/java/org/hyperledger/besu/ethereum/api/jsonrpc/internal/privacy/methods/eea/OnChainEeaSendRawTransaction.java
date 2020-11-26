@@ -58,15 +58,14 @@ public class OnChainEeaSendRawTransaction extends EeaSendRawTransaction {
 
   @Override
   Transaction createPMT(
-      final Object id,
       final PrivateTransaction privateTransaction,
       final Optional<PrivacyGroup> maybePrivacyGroup,
       final Optional<Bytes> maybePrivacyGroupId,
       final String enclavePublicKey) {
-    final Bytes privacyGroupId =
-        maybePrivacyGroupId.get(); // exists, as it has been checked in findPrivacyGroup
     final String privateTransactionLookupId =
         privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
+    final Bytes privacyGroupId =
+        maybePrivacyGroupId.get(); // exists, as it has been checked in findPrivacyGroup
     final Optional<String> addPayloadPrivateTransactionLookupId =
         privacyController.buildAndSendAddPayload(
             privateTransaction, Bytes32.wrap(privacyGroupId), enclavePublicKey);

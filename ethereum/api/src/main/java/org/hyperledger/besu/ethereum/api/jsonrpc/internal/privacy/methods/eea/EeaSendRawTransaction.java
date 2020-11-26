@@ -96,8 +96,7 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       }
 
       final Transaction privacyMarkerTransaction =
-          createPMT(
-              id, privateTransaction, maybePrivacyGroup, maybePrivacyGroupId, enclavePublicKey);
+          createPMT(privateTransaction, maybePrivacyGroup, maybePrivacyGroupId, enclavePublicKey);
 
       return transactionPool
           .addLocalTransaction(privacyMarkerTransaction)
@@ -125,7 +124,6 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   }
 
   Transaction createPMT(
-      final Object id,
       final PrivateTransaction privateTransaction,
       final Optional<PrivacyGroup> maybePrivacyGroup,
       final Optional<Bytes> maybePrivacyGroupId,

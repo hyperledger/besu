@@ -257,7 +257,6 @@ public class TransactionPool implements BlockAddedObserver {
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
 
-    // TODO: this is where we would use the private state to do the validation against
     return protocolContext
         .getWorldStateArchive()
         .get(chainHeadBlockHeader.getStateRoot())
