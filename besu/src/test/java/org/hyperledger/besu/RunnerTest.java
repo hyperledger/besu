@@ -254,7 +254,10 @@ public final class RunnerTest {
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              EthNetworkConfig.jsonConfig(DEV), DEV_NETWORK_ID, Collections.singletonList(enode));
+              EthNetworkConfig.jsonConfig(DEV),
+              DEV_NETWORK_ID,
+              Collections.singletonList(enode),
+              null);
       runnerBehind =
           runnerBuilder
               .besuController(controllerBehind)
