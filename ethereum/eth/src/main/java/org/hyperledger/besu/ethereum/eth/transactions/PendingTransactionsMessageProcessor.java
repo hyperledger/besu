@@ -18,10 +18,9 @@ import static java.time.Instant.now;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetPooledTransactionsFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.BufferedGetPooledTransactionsFromPeerFetcher;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -32,18 +31,21 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.Logger;
 
-class PendingTransactionsMessageProcessor {
+public class PendingTransactionsMessageProcessor {
 
-  private static final int MAX_HASHES = 256;
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private static final long SYNC_TOLERANCE = 100L;
 
   private static final Logger LOG = getLogger();
+
+  private final ConcurrentHashMap<EthPeer, BufferedGetPooledTransactionsFromPeerFetcher>
+      scheduledTasks;
+
   private final PeerPendingTransactionTracker transactionTracker;
   private final Counter totalSkippedTransactionsMessageCounter;
   private final TransactionPool transactionPool;
@@ -51,13 +53,14 @@ class PendingTransactionsMessageProcessor {
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
 
-  PendingTransactionsMessageProcessor(
+  public PendingTransactionsMessageProcessor(
       final PeerPendingTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final Counter metricsCounter,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final int maxPeers) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.ethContext = ethContext;
@@ -71,6 +74,7 @@ class PendingTransactionsMessageProcessor {
                     "{} expired transaction messages have been skipped.",
                     SKIPPED_MESSAGES_LOGGING_THRESHOLD),
             SKIPPED_MESSAGES_LOGGING_THRESHOLD);
+    this.scheduledTasks = new ConcurrentHashMap<>();
   }
 
   void processNewPooledTransactionHashesMessage(
@@ -86,36 +90,36 @@ class PendingTransactionsMessageProcessor {
     }
   }
 
+  @SuppressWarnings("UnstableApiUsage")
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      LOG.trace("Received pooled transaction hashes message from {}", peer);
+      LOG.trace("[TEST-POOL] Received pooled transaction hashes message from {}", peer);
 
       final List<Hash> pendingHashes = transactionsMessage.pendingTransactions();
       transactionTracker.markTransactionsHashesAsSeen(peer, pendingHashes);
       if (syncState.isInSync(SYNC_TOLERANCE)) {
-        final List<Hash> toRequest = new ArrayList<>();
+
+        boolean unknownTransactionDetected = false;
+
+        final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
+            scheduledTasks.getOrDefault(
+                peer,
+                new BufferedGetPooledTransactionsFromPeerFetcher(
+                    peer, PendingTransactionsMessageProcessor.this));
+
         for (final Hash hash : pendingHashes) {
-          if (transactionPool.addTransactionHash(hash)) {
-            toRequest.add(hash);
+          if (transactionPool.getTransactionByHash(hash).isEmpty()) {
+            if (transactionPool.addTransactionHash(hash)) {
+              bufferedTask.addHash(hash);
+              unknownTransactionDetected = true;
+            }
           }
         }
-        while (!toRequest.isEmpty()) {
-          final List<Hash> messageHashes =
-              toRequest.subList(0, Math.min(toRequest.size(), MAX_HASHES));
-          final GetPooledTransactionsFromPeerTask task =
-              GetPooledTransactionsFromPeerTask.forHashes(ethContext, messageHashes, metricsSystem);
-          task.assignPeer(peer);
+        if (unknownTransactionDetected) {
           ethContext
               .getScheduler()
-              .scheduleSyncWorkerTask(task)
-              .thenAccept(
-                  result -> {
-                    final List<Transaction> txs = result.getResult();
-                    transactionPool.addRemoteTransactions(txs);
-                  });
-
-          toRequest.removeAll(messageHashes);
+              .scheduleFutureTask(new FetcherCreatorTask(peer), Duration.ofMillis(500));
         }
       }
     } catch (final RLPException ex) {
@@ -123,6 +127,33 @@ class PendingTransactionsMessageProcessor {
         LOG.debug(
             "Malformed pooled transaction hashes message received, disconnecting: {}", peer, ex);
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      }
+    }
+  }
+
+  public TransactionPool getTransactionPool() {
+    return transactionPool;
+  }
+
+  public EthContext getEthContext() {
+    return ethContext;
+  }
+
+  public MetricsSystem getMetricsSystem() {
+    return metricsSystem;
+  }
+
+  class FetcherCreatorTask implements Runnable {
+    final EthPeer peer;
+
+    public FetcherCreatorTask(final EthPeer peer) {
+      this.peer = peer;
+    }
+
+    @Override
+    public void run() {
+      if (!this.peer.isDisconnected()) {
+        scheduledTasks.remove(this.peer).requestTransactions();
       }
     }
   }

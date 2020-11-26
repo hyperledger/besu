@@ -26,16 +26,20 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Arrays;
+import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -46,13 +50,29 @@ public class PendingTransactionsMessageProcessorTest {
   @Mock private PeerPendingTransactionTracker transactionTracker;
   @Mock private Counter totalSkippedTransactionsMessageCounter;
   @Mock private EthPeer peer1;
+  @Mock private MetricsSystem metricsSystem;
   @Mock private SyncState syncState;
-  @InjectMocks private PendingTransactionsMessageProcessor messageHandler;
+  @Mock private EthContext ethContext;
+
+  private PendingTransactionsMessageProcessor messageHandler;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Hash hash1 = generator.transaction().getHash();
   private final Hash hash2 = generator.transaction().getHash();
   private final Hash hash3 = generator.transaction().getHash();
+
+  @Before
+  public void setup() {
+    messageHandler =
+        new PendingTransactionsMessageProcessor(
+            transactionTracker,
+            transactionPool,
+            totalSkippedTransactionsMessageCounter,
+            ethContext,
+            metricsSystem,
+            syncState,
+            25);
+  }
 
   @Test
   public void shouldMarkAllReceivedTransactionsAsSeen() {
@@ -76,9 +96,35 @@ public class PendingTransactionsMessageProcessorTest {
         NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
         now(),
         ofMinutes(1));
+
     verify(transactionPool).addTransactionHash(hash1);
     verify(transactionPool).addTransactionHash(hash2);
     verify(transactionPool).addTransactionHash(hash3);
+    verify(transactionPool).getTransactionByHash(hash1);
+    verify(transactionPool).getTransactionByHash(hash2);
+    verify(transactionPool).getTransactionByHash(hash3);
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
+  public void shouldNotAddAlreadyPresentTransactions() {
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+
+    when(transactionPool.getTransactionByHash(hash1))
+        .thenReturn(Optional.of(Transaction.builder().build()));
+    when(transactionPool.getTransactionByHash(hash2))
+        .thenReturn(Optional.of(Transaction.builder().build()));
+
+    messageHandler.processNewPooledTransactionHashesMessage(
+        peer1,
+        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        now(),
+        ofMinutes(1));
+
+    verify(transactionPool).addTransactionHash(hash3);
+    verify(transactionPool).getTransactionByHash(hash1);
+    verify(transactionPool).getTransactionByHash(hash2);
+    verify(transactionPool).getTransactionByHash(hash3);
     verifyNoMoreInteractions(transactionPool);
   }
 

@@ -152,7 +152,8 @@ public class TransactionPoolFactory {
                       "Total number of pending transactions messages skipped by the processor."),
                   ethContext,
                   metricsSystem,
-                  syncState),
+                  syncState,
+                  transactionPoolConfiguration.getMaxPeers()),
               transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
       ethContext
           .getEthMessages()

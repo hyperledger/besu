@@ -37,19 +37,23 @@ public class TransactionPoolConfiguration {
 
   private final Wei txFeeCap;
 
+  private final int maxPeers;
+
   public TransactionPoolConfiguration(
       final int txPoolMaxSize,
       final int pooledTransactionHashesSize,
       final int pendingTxRetentionPeriod,
       final int txMessageKeepAliveSeconds,
       final Percentage priceBump,
-      final Wei txFeeCap) {
+      final Wei txFeeCap,
+      final int maxPeers) {
     this.txPoolMaxSize = txPoolMaxSize;
     this.pooledTransactionHashesSize = pooledTransactionHashesSize;
     this.pendingTxRetentionPeriod = pendingTxRetentionPeriod;
     this.txMessageKeepAliveSeconds = txMessageKeepAliveSeconds;
     this.priceBump = priceBump;
     this.txFeeCap = txFeeCap;
+    this.maxPeers = maxPeers;
   }
 
   public int getTxPoolMaxSize() {
@@ -76,6 +80,10 @@ public class TransactionPoolConfiguration {
     return txFeeCap;
   }
 
+  public int getMaxPeers() {
+    return maxPeers;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -86,6 +94,7 @@ public class TransactionPoolConfiguration {
     }
     final TransactionPoolConfiguration that = (TransactionPoolConfiguration) o;
     return txPoolMaxSize == that.txPoolMaxSize
+        && maxPeers == that.maxPeers
         && Objects.equals(pendingTxRetentionPeriod, that.pendingTxRetentionPeriod)
         && Objects.equals(txMessageKeepAliveSeconds, that.txMessageKeepAliveSeconds)
         && Objects.equals(priceBump, that.priceBump)
@@ -95,7 +104,12 @@ public class TransactionPoolConfiguration {
   @Override
   public int hashCode() {
     return Objects.hash(
-        txPoolMaxSize, pendingTxRetentionPeriod, txMessageKeepAliveSeconds, priceBump, txFeeCap);
+        txPoolMaxSize,
+        pendingTxRetentionPeriod,
+        txMessageKeepAliveSeconds,
+        priceBump,
+        txFeeCap,
+        maxPeers);
   }
 
   @Override
@@ -103,6 +117,8 @@ public class TransactionPoolConfiguration {
     return "TransactionPoolConfiguration{"
         + "txPoolMaxSize="
         + txPoolMaxSize
+        + ", pooledTransactionHashesSize="
+        + pooledTransactionHashesSize
         + ", pendingTxRetentionPeriod="
         + pendingTxRetentionPeriod
         + ", txMessageKeepAliveSeconds="
@@ -111,6 +127,8 @@ public class TransactionPoolConfiguration {
         + priceBump
         + ", txFeeCap="
         + txFeeCap
+        + ", maxPeers="
+        + maxPeers
         + '}';
   }
 
@@ -125,6 +143,7 @@ public class TransactionPoolConfiguration {
     private int pooledTransactionHashesSize = MAX_PENDING_TRANSACTIONS_HASHES;
     private Percentage priceBump = DEFAULT_PRICE_BUMP;
     private Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
+    private int maxPeers;
 
     public Builder txPoolMaxSize(final int txPoolMaxSize) {
       this.txPoolMaxSize = txPoolMaxSize;
@@ -151,6 +170,11 @@ public class TransactionPoolConfiguration {
       return this;
     }
 
+    public Builder maxPeers(final Integer maxPeers) {
+      this.maxPeers = maxPeers;
+      return this;
+    }
+
     public Builder priceBump(final int priceBump) {
       return priceBump(Percentage.fromInt(priceBump));
     }
@@ -167,7 +191,8 @@ public class TransactionPoolConfiguration {
           pendingTxRetentionPeriod,
           txMessageKeepAliveSeconds,
           priceBump,
-          txFeeCap);
+          txFeeCap,
+          maxPeers);
     }
   }
 }

@@ -2047,6 +2047,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
+        .maxPeers(maxPeers)
         .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .priceBump(priceBump)
