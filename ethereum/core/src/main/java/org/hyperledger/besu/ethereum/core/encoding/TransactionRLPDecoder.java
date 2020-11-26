@@ -186,7 +186,7 @@ public interface TransactionRLPDecoder {
 
       input.leaveList();
 
-      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, v, recId);
+      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
       chainId.ifPresent(builder::chainId);
       return builder.signature(signature).build();
     };
