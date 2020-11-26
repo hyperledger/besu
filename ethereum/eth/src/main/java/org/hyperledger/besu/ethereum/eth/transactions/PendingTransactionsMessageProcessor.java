@@ -103,6 +103,7 @@ public class PendingTransactionsMessageProcessor {
             scheduledTasks.computeIfAbsent(
                 peer,
                 ethPeer -> {
+                  LOG.info("[TEST-POOL] Create task for peer {}", peer);
                   ethContext
                       .getScheduler()
                       .scheduleFutureTask(new FetcherCreatorTask(peer), Duration.ofMillis(500));
@@ -148,6 +149,8 @@ public class PendingTransactionsMessageProcessor {
 
     @Override
     public void run() {
+
+      LOG.info("[TEST-POOL] Run task for peer {}", peer);
       if (!this.peer.isDisconnected()) {
         scheduledTasks.remove(this.peer).requestTransactions();
       }
