@@ -99,27 +99,23 @@ public class PendingTransactionsMessageProcessor {
       final List<Hash> pendingHashes = transactionsMessage.pendingTransactions();
       transactionTracker.markTransactionsHashesAsSeen(peer, pendingHashes);
       if (syncState.isInSync(SYNC_TOLERANCE)) {
-
-        boolean unknownTransactionDetected = false;
-
         final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
-            scheduledTasks.getOrDefault(
+            scheduledTasks.computeIfAbsent(
                 peer,
-                new BufferedGetPooledTransactionsFromPeerFetcher(
-                    peer, PendingTransactionsMessageProcessor.this));
+                ethPeer -> {
+                  ethContext
+                      .getScheduler()
+                      .scheduleFutureTask(new FetcherCreatorTask(peer), Duration.ofMillis(500));
+                  return new BufferedGetPooledTransactionsFromPeerFetcher(
+                      peer, PendingTransactionsMessageProcessor.this);
+                });
 
         for (final Hash hash : pendingHashes) {
           if (transactionPool.getTransactionByHash(hash).isEmpty()) {
             if (transactionPool.addTransactionHash(hash)) {
               bufferedTask.addHash(hash);
-              unknownTransactionDetected = true;
             }
           }
-        }
-        if (unknownTransactionDetected) {
-          ethContext
-              .getScheduler()
-              .scheduleFutureTask(new FetcherCreatorTask(peer), Duration.ofMillis(500));
         }
       }
     } catch (final RLPException ex) {
