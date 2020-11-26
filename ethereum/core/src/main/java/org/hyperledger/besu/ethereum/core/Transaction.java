@@ -110,6 +110,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param payload the payload
    * @param sender the transaction sender
    * @param chainId the chain id to apply the transaction to
+   * @param v the v value (only passed in directly for GoQuorum private transactions)
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
@@ -194,6 +195,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param payload the payload
    * @param sender the transaction sender
    * @param chainId the chain id to apply the transaction to
+   * @param v the v value (only passed in directly for GoQuorum private transactions)
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
