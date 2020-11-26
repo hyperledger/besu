@@ -78,16 +78,8 @@ class TransactionsMessageProcessor {
       final Iterator<Transaction> readTransactions =
           transactionsMessage.transactions(Transaction::readFrom);
       final Set<Transaction> transactions = Sets.newHashSet(readTransactions);
-      // transactionTracker.markTransactionsAsSeen(peer, transactions);
-      // transactionPool.addRemoteTransactions(transactions);
-      LOG.trace(
-          transactions.getClass()
-              + " "
-              + peer.getClass()
-              + " "
-              + transactionTracker
-              + " "
-              + transactionPool);
+      transactionTracker.markTransactionsAsSeen(peer, transactions);
+      transactionPool.addRemoteTransactions(transactions);
     } catch (final RLPException ex) {
       if (peer != null) {
         LOG.debug("Malformed transaction message received, disconnecting: {}", peer, ex);
