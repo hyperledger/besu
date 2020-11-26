@@ -14,10 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static java.util.Collections.singletonList;
-import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
-
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -51,7 +48,9 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.Logger;
+import static java.util.Collections.singletonList;
+import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
 /**
  * Maintains the set of pending transactions received from JSON-RPC or other nodes. Transactions are
@@ -257,6 +256,7 @@ public class TransactionPool implements BlockAddedObserver {
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
 
+    // TODO: this is where we would use the private state to do the validation against
     return protocolContext
         .getWorldStateArchive()
         .get(chainHeadBlockHeader.getStateRoot())

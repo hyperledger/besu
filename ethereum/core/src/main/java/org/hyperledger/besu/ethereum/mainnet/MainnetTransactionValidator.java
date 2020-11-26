@@ -217,6 +217,8 @@ public class MainnetTransactionValidator {
     // org.bouncycastle.math.ec.ECCurve.AbstractFp.decompressPoint throws an
     // IllegalArgumentException for "Invalid point compression" for bad signatures.
     try {
+      // TODO: this is where we are checking the signature. We have to fix the v value if this is a
+      // private transaction
       transaction.getSender();
     } catch (final IllegalArgumentException e) {
       return ValidationResult.invalid(
