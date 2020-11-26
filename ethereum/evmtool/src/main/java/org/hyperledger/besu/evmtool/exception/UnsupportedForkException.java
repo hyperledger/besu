@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2018 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,25 +11,13 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.enclave;
+package org.hyperledger.besu.evmtool.exception;
 
-public interface RequestTransmitter {
+public class UnsupportedForkException extends RuntimeException {
 
-  @FunctionalInterface
-  interface ResponseBodyHandler<T> {
-    T convertResponse(final int statusCode, final byte[] body);
+  public UnsupportedForkException(final String forkName) {
+    super(String.format("Fork '%s' not supported", forkName));
   }
-
-  <T> T post(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler);
-
-  <T> T get(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler);
 }

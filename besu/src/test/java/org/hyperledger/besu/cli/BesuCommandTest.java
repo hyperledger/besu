@@ -31,6 +31,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -173,7 +174,8 @@ public class BesuCommandTest extends CommandTestAbstract {
             new EthNetworkConfig(
                 EthNetworkConfig.jsonConfig(MAINNET),
                 EthNetworkConfig.MAINNET_NETWORK_ID,
-                MAINNET_BOOTSTRAP_NODES));
+                MAINNET_BOOTSTRAP_NODES,
+                MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).maxPeers(eq(25));
@@ -784,7 +786,8 @@ public class BesuCommandTest extends CommandTestAbstract {
             new EthNetworkConfig(
                 EthNetworkConfig.jsonConfig(MAINNET),
                 EthNetworkConfig.MAINNET_NETWORK_ID,
-                MAINNET_BOOTSTRAP_NODES));
+                MAINNET_BOOTSTRAP_NODES,
+                MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).maxPeers(eq(25));
@@ -3836,9 +3839,17 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void quorumInteropDisabledDoesNotEnforceZeroGasPrice() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    parseCommand(
+        "--goquorum-compatibility-enabled=false", "--genesis-file", genesisFile.toString());
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
-    parseCommand("--genesis-file", genesisFile.toString());
+    parseCommand("--goquorum-compatibility-enabled", "--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString())
         .contains(
             "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
@@ -3847,7 +3858,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "1");
     assertThat(commandErrorOutput.toString())
         .contains(
             "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
@@ -3856,7 +3872,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void quorumInteropEnabledSucceedsWithGasPriceSetToZero() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }

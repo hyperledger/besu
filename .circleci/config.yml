@@ -1,5 +1,8 @@
 ---
 version: 2.1
+orbs:
+  win: circleci/windows@2.2.0
+
 executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
@@ -99,6 +102,27 @@ jobs:
           path:  build/distributions
           destination: distributions
           when: always
+  testWindows:
+    executor: win/default
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Unzip Windows build
+          no_output_timeout: 20m
+          command: |
+            cd build/distributions
+            unzip besu-*.zip -d besu-tmp
+            cd besu-tmp
+            mv besu-* ../besu
+      - run:
+          name: Test Besu Windows executable
+          no_output_timeout: 10m
+          command: |
+            build\distributions\besu\bin\besu.bat --help
+            build\distributions\besu\bin\besu.bat --version
+
+
 
   unitTests:
     executor: besu_executor_xl
@@ -234,6 +258,9 @@ workflows:
             - assemble
           context:
             - besu-dockerhub-ro            
+      - testWindows:
+          requires:
+            - assemble
       - referenceTests:
           requires:
             - assemble
