@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.apache.logging.log4j.Logger;
+import static java.util.Collections.singletonList;
+import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -48,9 +51,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import static java.util.Collections.singletonList;
-import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Maintains the set of pending transactions received from JSON-RPC or other nodes. Transactions are

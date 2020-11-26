@@ -14,8 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
+import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
+
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -37,12 +42,8 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
-import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EeaSendRawTransaction implements JsonRpcMethod {
 
@@ -96,17 +97,13 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
 
       final Transaction privacyMarkerTransaction =
           createPMT(
-              id,
-              privateTransaction,
-              maybePrivacyGroup,
-              maybePrivacyGroupId,
-              enclavePublicKey);
+              id, privateTransaction, maybePrivacyGroup, maybePrivacyGroupId, enclavePublicKey);
 
       return transactionPool
-              .addLocalTransaction(privacyMarkerTransaction)
-              .either(
-                      () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
-                      errorReason -> getJsonRpcErrorResponse(id, errorReason));
+          .addLocalTransaction(privacyMarkerTransaction)
+          .either(
+              () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
+              errorReason -> getJsonRpcErrorResponse(id, errorReason));
 
     } catch (final JsonRpcErrorResponseException e) {
       return new JsonRpcErrorResponse(id, e.getJsonRpcError());
@@ -128,19 +125,19 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
   }
 
   Transaction createPMT(
-          final Object id,
-          final PrivateTransaction privateTransaction,
-          final Optional<PrivacyGroup> maybePrivacyGroup,
-          final Optional<Bytes> maybePrivacyGroupId,
-          final String enclavePublicKey) {
+      final Object id,
+      final PrivateTransaction privateTransaction,
+      final Optional<PrivacyGroup> maybePrivacyGroup,
+      final Optional<Bytes> maybePrivacyGroupId,
+      final String enclavePublicKey) {
     final String privateTransactionLookupId =
         privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
     return privacyController.createPrivacyMarkerTransaction(
-            privateTransactionLookupId, privateTransaction, Address.DEFAULT_PRIVACY);
+        privateTransactionLookupId, privateTransaction, Address.DEFAULT_PRIVACY);
   }
 
   JsonRpcErrorResponse getJsonRpcErrorResponse(
-          final Object id, final TransactionInvalidReason errorReason) {
+      final Object id, final TransactionInvalidReason errorReason) {
     if (errorReason.equals(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT)) {
       return new JsonRpcErrorResponse(id, JsonRpcError.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);
     }

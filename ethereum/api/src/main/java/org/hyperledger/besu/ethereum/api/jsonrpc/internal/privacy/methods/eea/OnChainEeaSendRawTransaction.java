@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
+
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -27,7 +27,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
 import java.util.Optional;
 
-import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class OnChainEeaSendRawTransaction extends EeaSendRawTransaction {
 
@@ -57,21 +58,22 @@ public class OnChainEeaSendRawTransaction extends EeaSendRawTransaction {
 
   @Override
   Transaction createPMT(
-          final Object id,
-          final PrivateTransaction privateTransaction,
-          final Optional<PrivacyGroup> maybePrivacyGroup,
-          final Optional<Bytes> maybePrivacyGroupId,
-          final String enclavePublicKey) {
-    final Bytes privacyGroupId = maybePrivacyGroupId.get(); // exists, as it has been checked in findPrivacyGroup
+      final Object id,
+      final PrivateTransaction privateTransaction,
+      final Optional<PrivacyGroup> maybePrivacyGroup,
+      final Optional<Bytes> maybePrivacyGroupId,
+      final String enclavePublicKey) {
+    final Bytes privacyGroupId =
+        maybePrivacyGroupId.get(); // exists, as it has been checked in findPrivacyGroup
     final String privateTransactionLookupId =
         privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
     final Optional<String> addPayloadPrivateTransactionLookupId =
         privacyController.buildAndSendAddPayload(
             privateTransaction, Bytes32.wrap(privacyGroupId), enclavePublicKey);
     return privacyController.createPrivacyMarkerTransaction(
-            buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId),
-            privateTransaction,
-            Address.ONCHAIN_PRIVACY);
+        buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId),
+        privateTransaction,
+        Address.ONCHAIN_PRIVACY);
   }
 
   private String buildCompoundLookupId(
