@@ -679,21 +679,12 @@ public class SECP256K1 {
 
     private final BigInteger r;
     private final BigInteger s;
-    private final Optional<BigInteger> v;
 
     private final Supplier<Bytes> encoded = Suppliers.memoize(this::_encodedBytes);
 
     Signature(final BigInteger r, final BigInteger s, final byte recId) {
       this.r = r;
       this.s = s;
-      this.recId = recId;
-      this.v = Optional.empty();
-    }
-
-    Signature(final BigInteger r, final BigInteger s, final BigInteger v, final byte recId) {
-      this.r = r;
-      this.s = s;
-      this.v = Optional.of(v);
       this.recId = recId;
     }
 
@@ -718,37 +709,6 @@ public class SECP256K1 {
             "Invalid 'recId' value, should be 0 or 1 but got " + recId);
       }
       return new Signature(r, s, recId);
-    }
-    /**
-     * Creates a new signature object given its parameters.
-     *
-     * @param r the 'r' part of the signature.
-     * @param s the 's' part of the signature.
-     * @param v the 'v' part of the signature.
-     * @param recId the recovery id part of the signature.
-     * @return the created {@link Signature} object.
-     * @throws NullPointerException if {@code r} or {@code s} are {@code null}.
-     * @throws IllegalArgumentException if any argument is invalid (for instance, {@code v} is
-     *     neither 37 or 38).
-     */
-    public static Signature create(
-        final BigInteger r, final BigInteger s, final BigInteger v, final byte recId) {
-      checkNotNull(r);
-      checkNotNull(s);
-      checkInBounds("r", r);
-      checkInBounds("s", s);
-      if (recId != 0 && recId != 1) {
-        throw new IllegalArgumentException(
-            "Invalid 'recId' value, should be 0 or 1 but got " + recId);
-      }
-      // TODO validate v value
-      if (!(v.equals(BigInteger.valueOf(37L)) || v.equals(BigInteger.valueOf(38L)))) {
-        throw new IllegalArgumentException(
-            String.format(
-                "v value '%s' should only be included directly if private GoQuorum transaction",
-                v));
-      }
-      return new Signature(r, s, v, recId);
     }
 
     private static void checkInBounds(final String name, final BigInteger i) {
@@ -812,17 +772,12 @@ public class SECP256K1 {
       return s;
     }
 
-    public Optional<BigInteger> getV() {
-      return v;
-    }
-
     @Override
     public String toString() {
       final StringBuilder sb = new StringBuilder();
       sb.append("SECP256K1.Signature").append("{");
       sb.append("r=").append(r).append(", ");
       sb.append("s=").append(s).append(", ");
-      sb.append("v=").append(v).append(", "); // TODO handle optional
       sb.append("recId=").append(recId);
       return sb.append("}").toString();
     }

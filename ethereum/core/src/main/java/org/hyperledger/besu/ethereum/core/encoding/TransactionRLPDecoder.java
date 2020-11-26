@@ -167,6 +167,7 @@ public interface TransactionRLPDecoder {
       Optional<BigInteger> chainId = Optional.empty();
       if (isGoQuorumPrivateTransaction(v)) {
         // GoQuorum private TX. No chain ID. Preserve the v value as provided.
+        builder.v(v);
         chainId = Optional.empty();
         recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX).byteValueExact();
       } else if (v.equals(REPLAY_UNPROTECTED_V_BASE)
@@ -185,16 +186,9 @@ public interface TransactionRLPDecoder {
 
       input.leaveList();
 
-      if (isGoQuorumPrivateTransaction(v)) {
-        // include v in the signature
-        final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, v, recId);
-        chainId.ifPresent(builder::chainId);
-        return builder.signature(signature).build();
-      } else {
-        final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-        chainId.ifPresent(builder::chainId);
-        return builder.signature(signature).build();
-      }
+      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, v, recId);
+      chainId.ifPresent(builder::chainId);
+      return builder.signature(signature).build();
     };
   }
 

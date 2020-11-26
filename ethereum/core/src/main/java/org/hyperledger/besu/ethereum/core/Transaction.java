@@ -74,6 +74,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final Optional<BigInteger> chainId;
 
+  private final Optional<BigInteger> v;
+
   // Caches a "hash" of a portion of the transaction used for sender recovery.
   // Note that this hash does not include the transaction signature so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
@@ -124,7 +126,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final SECP256K1.Signature signature,
       final Bytes payload,
       final Address sender,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final Optional<BigInteger> v) {
     this.nonce = nonce;
     this.gasPrice = gasPrice;
     this.gasPremium = gasPremium;
@@ -136,6 +139,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.payload = payload;
     this.sender = sender;
     this.chainId = chainId;
+    this.v = v;
   }
 
   /**
@@ -164,7 +168,48 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId) {
-    this(nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId);
+    this(
+        nonce,
+        gasPrice,
+        null,
+        null,
+        gasLimit,
+        to,
+        value,
+        signature,
+        payload,
+        sender,
+        chainId,
+        Optional.empty());
+  }
+  /**
+   * Instantiates a transaction instance.
+   *
+   * @param nonce the nonce
+   * @param gasPrice the gas price
+   * @param gasLimit the gas limit
+   * @param to the transaction recipient
+   * @param value the value being transferred to the recipient
+   * @param signature the signature
+   * @param payload the payload
+   * @param sender the transaction sender
+   * @param chainId the chain id to apply the transaction to
+   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
+   *     otherwise it should contain an address.
+   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
+   */
+  public Transaction(
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final SECP256K1.Signature signature,
+      final Bytes payload,
+      final Address sender,
+      final Optional<BigInteger> chainId,
+      final Optional<BigInteger> v) {
+    this(nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId, v);
   }
 
   /**
@@ -349,17 +394,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   @Override
   public BigInteger getV() {
-    final BigInteger v;
-    if (signature.getV().isPresent()) {
-      return signature.getV().get();
+    if (this.v.isPresent()) {
+      return this.v.get();
     }
+
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
     if (chainId.isEmpty()) {
-      v = recId.add(REPLAY_UNPROTECTED_V_BASE);
+      return recId.add(REPLAY_UNPROTECTED_V_BASE);
     } else {
-      v = recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
+      return recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
     }
-    return v;
   }
 
   /**
@@ -544,8 +588,15 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected Optional<BigInteger> chainId = Optional.empty();
 
+    protected Optional<BigInteger> v = Optional.empty();
+
     public Builder chainId(final BigInteger chainId) {
       this.chainId = Optional.of(chainId);
+      return this;
+    }
+
+    public Builder v(final BigInteger v) {
+      this.v = Optional.of(v);
       return this;
     }
 
@@ -611,7 +662,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           signature,
           payload,
           sender,
-          chainId);
+          chainId,
+          v);
     }
 
     public Transaction signAndBuild(final SECP256K1.KeyPair keys) {
