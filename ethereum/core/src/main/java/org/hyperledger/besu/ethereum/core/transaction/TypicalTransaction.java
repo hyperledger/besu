@@ -42,6 +42,7 @@ public interface TypicalTransaction
         ToTransaction,
         ValueTransaction,
         PayloadTransaction,
+        SenderTransaction,
         TypedTransaction {
 
   // Used for transactions that are not tied to a specific chain

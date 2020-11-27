@@ -23,9 +23,10 @@ import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -70,7 +71,7 @@ public class PendingTransactions {
   private final NavigableSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
-              .thenComparing(TransactionInfo::getGasPrice)
+              .thenComparing(PendingTransactions::compareFrontierTransactionByGasPrice)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
@@ -125,6 +126,17 @@ public class PendingTransactions {
             "operation");
   }
 
+  private static int compareFrontierTransactionByGasPrice(
+      TransactionInfo transactionInfoA, TransactionInfo transactionInfoB) {
+    try {
+      return ((FrontierTransaction) transactionInfoA.getTransaction())
+          .getGasPrice()
+          .compareTo(((FrontierTransaction) transactionInfoB.getTransaction()).getGasPrice());
+    } catch (ClassCastException __) {
+      return 0;
+    }
+  }
+
   public void evictOldTransactions() {
     final Instant removeTransactionsBefore =
         clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
@@ -141,7 +153,7 @@ public class PendingTransactions {
         .collect(Collectors.toList());
   }
 
-  public boolean addRemoteTransaction(final TypedTransaction transaction) {
+  public boolean addRemoteTransaction(final TypicalTransaction transaction) {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
     final TransactionAddedStatus transactionAddedStatus = addTransaction(transactionInfo);
@@ -163,7 +175,7 @@ public class PendingTransactions {
     return hashAdded;
   }
 
-  public TransactionAddedStatus addLocalTransaction(final TypedTransaction transaction) {
+  public TransactionAddedStatus addLocalTransaction(final TypicalTransaction transaction) {
     final TransactionAddedStatus transactionAdded =
         addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     if (transactionAdded.equals(ADDED)) {
@@ -172,16 +184,17 @@ public class PendingTransactions {
     return transactionAdded;
   }
 
-  void removeTransaction(final Transaction transaction) {
+  void removeTransaction(final TypicalTransaction transaction) {
     doRemoveTransaction(transaction, false);
     notifyTransactionDropped(transaction);
   }
 
-  void transactionAddedToBlock(final Transaction transaction) {
+  void transactionAddedToBlock(final TypicalTransaction transaction) {
     doRemoveTransaction(transaction, true);
   }
 
-  private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
+  private void doRemoveTransaction(
+      final TypicalTransaction transaction, final boolean addedToBlock) {
     synchronized (prioritizedTransactions) {
       final TransactionInfo removedTransactionInfo =
           pendingTransactions.remove(transaction.getHash());
@@ -203,14 +216,14 @@ public class PendingTransactions {
 
   public void selectTransactions(final TransactionSelector selector) {
     synchronized (prioritizedTransactions) {
-      final List<TypedTransaction> transactionsToRemove = new ArrayList<>();
+      final List<TypicalTransaction> transactionsToRemove = new ArrayList<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       for (final TransactionInfo transactionInfo : prioritizedTransactions) {
         final AccountTransactionOrder accountTransactionOrder =
             accountTransactions.computeIfAbsent(
                 transactionInfo.getSender(), this::createSenderTransactionOrder);
 
-        for (final TypedTransaction transactionToProcess :
+        for (final TypicalTransaction transactionToProcess :
             accountTransactionOrder.transactionsToProcess(transactionInfo.getTransaction())) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);
@@ -239,7 +252,7 @@ public class PendingTransactions {
   }
 
   private TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
-    Optional<Transaction> droppedTransaction = Optional.empty();
+    Optional<TypicalTransaction> droppedTransaction = Optional.empty();
     synchronized (prioritizedTransactions) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
         return ALREADY_KNOWN;
@@ -288,7 +301,7 @@ public class PendingTransactions {
     transactionsForSenderInfo.addTransactionToTrack(transactionInfo.getNonce(), transactionInfo);
   }
 
-  private void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
+  private void removeTransactionTrackedBySenderAndNonce(final TypicalTransaction transaction) {
     Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
         .ifPresent(
             transactionsForSender -> {
@@ -308,11 +321,11 @@ public class PendingTransactions {
     return transactionsForSenderInfo.getTransactionsInfos().get(transactionInfo.getNonce());
   }
 
-  private void notifyTransactionAdded(final Transaction transaction) {
+  private void notifyTransactionAdded(final TypicalTransaction transaction) {
     pendingTransactionSubscribers.forEach(listener -> listener.onTransactionAdded(transaction));
   }
 
-  private void notifyTransactionDropped(final Transaction transaction) {
+  private void notifyTransactionDropped(final TypicalTransaction transaction) {
     transactionDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
   }
 
@@ -385,13 +398,13 @@ public class PendingTransactions {
   public static class TransactionInfo {
 
     private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
-    private final Transaction transaction;
+    private final TypicalTransaction transaction;
     private final boolean receivedFromLocalSource;
     private final Instant addedToPoolAt;
     private final long sequence; // Allows prioritization based on order transactions are added
 
     public TransactionInfo(
-        final Transaction transaction,
+        final TypicalTransaction transaction,
         final boolean receivedFromLocalSource,
         final Instant addedToPoolAt) {
       this.transaction = transaction;
@@ -400,12 +413,8 @@ public class PendingTransactions {
       this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
     }
 
-    public Transaction getTransaction() {
+    public TypicalTransaction getTransaction() {
       return transaction;
-    }
-
-    public Wei getGasPrice() {
-      return transaction.getGasPrice();
     }
 
     public long getSequence() {
@@ -442,7 +451,7 @@ public class PendingTransactions {
   @FunctionalInterface
   public interface TransactionSelector {
 
-    TransactionSelectionResult evaluateTransaction(final Transaction transaction);
+    TransactionSelectionResult evaluateTransaction(final TypedTransaction transaction);
   }
 
   public enum TransactionAddedStatus {

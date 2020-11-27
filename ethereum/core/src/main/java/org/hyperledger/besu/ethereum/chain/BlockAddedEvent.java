@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.transaction.TypedTransaction;
+import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,8 +26,8 @@ import java.util.List;
 public class BlockAddedEvent {
 
   private final Block block;
-  private final List<TypedTransaction> addedTransactions;
-  private final List<TypedTransaction> removedTransactions;
+  private final List<TypicalTransaction> addedTransactions;
+  private final List<TypicalTransaction> removedTransactions;
   private final List<TransactionReceipt> transactionReceipts;
   private final EventType eventType;
   private final List<LogWithMetadata> logsWithMetadata;
@@ -42,8 +42,8 @@ public class BlockAddedEvent {
   private BlockAddedEvent(
       final EventType eventType,
       final Block block,
-      final List<TypedTransaction> addedTransactions,
-      final List<TypedTransaction> removedTransactions,
+      final List<TypicalTransaction> addedTransactions,
+      final List<TypicalTransaction> removedTransactions,
       final List<TransactionReceipt> transactionReceipts,
       final List<LogWithMetadata> logsWithMetadata,
       final Hash commonAncestorHash) {
@@ -72,8 +72,8 @@ public class BlockAddedEvent {
 
   public static BlockAddedEvent createForChainReorg(
       final Block block,
-      final List<TypedTransaction> addedTransactions,
-      final List<TypedTransaction> removedTransactions,
+      final List<TypicalTransaction> addedTransactions,
+      final List<TypicalTransaction> removedTransactions,
       final List<TransactionReceipt> transactionReceipts,
       final List<LogWithMetadata> logsWithMetadata,
       final Hash commonAncestorHash) {
@@ -110,11 +110,11 @@ public class BlockAddedEvent {
     return eventType;
   }
 
-  public List<TypedTransaction> getAddedTransactions() {
+  public List<TypicalTransaction> getAddedTransactions() {
     return addedTransactions;
   }
 
-  public List<TypedTransaction> getRemovedTransactions() {
+  public List<TypicalTransaction> getRemovedTransactions() {
     return removedTransactions;
   }
 

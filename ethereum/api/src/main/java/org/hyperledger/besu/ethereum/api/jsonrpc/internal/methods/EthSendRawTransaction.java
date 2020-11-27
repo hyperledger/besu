@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.transaction.EIP1559Transaction;
+import org.hyperledger.besu.ethereum.core.transaction.FrontierTransaction;
 import org.hyperledger.besu.ethereum.core.transaction.TypicalTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -70,8 +72,18 @@ public class EthSendRawTransaction implements JsonRpcMethod {
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final ValidationResult<TransactionInvalidReason> validationResult =
-        transactionPool.get().addLocalTransaction(transaction);
+    final ValidationResult<TransactionInvalidReason> validationResult;
+
+    if (transaction instanceof FrontierTransaction) {
+      validationResult =
+          transactionPool.get().addLocalTransaction((FrontierTransaction) transaction);
+    } else if (transaction instanceof EIP1559Transaction) {
+      validationResult =
+          transactionPool.get().addLocalTransaction((EIP1559Transaction) transaction);
+    } else {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+    }
     return validationResult.either(
         () ->
             new JsonRpcSuccessResponse(
