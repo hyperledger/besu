@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli.options;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
-import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 
 import java.util.Collections;
 import java.util.List;
