@@ -46,7 +46,10 @@ public final class EthHashTest {
     input.enterList();
     final BlockHeader header = BlockHeader.readFrom(input, new MainnetBlockHeaderFunctions());
     final long blockNumber = header.getNumber();
-    final long epoch = EthHash.epoch(blockNumber);
+    // todo ed epochCalculator refactor
+    //    final long epoch = EthHash.epoch(blockNumber);
+    final EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
+    final long epoch = epochCalculator.cacheEpoch(blockNumber);
     final long datasetSize = EthHash.datasetSize(epoch);
     final long cacheSize = EthHash.cacheSize(epoch);
     Assertions.assertThat(datasetSize).isEqualTo(1157627776);

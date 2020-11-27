@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
-import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +39,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
   static final EthHasher HASHER = new EthHasher.Light();
 
   // todo ed epochCalculator refactor
-//  private final Function<Long, Long> epochCalculator;
+  //  private final Function<Long, Long> epochCalculator;
   private final EpochCalculator epochCalculator;
   private final boolean includeBaseFee;
 

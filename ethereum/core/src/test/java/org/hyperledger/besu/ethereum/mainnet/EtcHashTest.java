@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import java.util.function.Function;
-
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -23,12 +21,13 @@ public class EtcHashTest {
 
   @Test
   public void testEpoch() {
-    Function<Long, Long> epochCalculator = EthHash.ecip1099Epoch(2_000_000);
+    // todo ed epochCalculator refactor
+    EpochCalculator epochCalculator = new EpochCalculator.Ecip1099EpochCalculator(2_000_000);
 
     // check before activation block (1,000,000/30,000 = 33)
-    Assertions.assertThat(epochCalculator.apply(1_000_000L)).isEqualTo(33);
+    Assertions.assertThat(epochCalculator.cacheEpoch(1_000_000L)).isEqualTo(33);
 
     // check after activation block (3,000,000/60,000 = 50)
-    Assertions.assertThat(epochCalculator.apply(3_000_000L)).isEqualTo(50);
+    Assertions.assertThat(epochCalculator.cacheEpoch(3_000_000L)).isEqualTo(50);
   }
 }

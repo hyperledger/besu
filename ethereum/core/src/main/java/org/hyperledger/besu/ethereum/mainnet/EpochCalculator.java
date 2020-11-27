@@ -15,32 +15,41 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 public interface EpochCalculator {
-    public long seedEpoch(final long block);
-    public long cacheEpoch(final long block);
+  public long seedEpoch(final long block);
 
-    final class DefaultEpochCalculator implements EpochCalculator {
+  public long cacheEpoch(final long block);
 
-        @Override
-        public long seedEpoch(final long block) {
-            return 0;
-        }
+  final class DefaultEpochCalculator implements EpochCalculator {
 
-        @Override
-        public long cacheEpoch(final long block) {
-            return 0;
-        }
+    @Override
+    public long seedEpoch(final long block) {
+      return 0;
     }
 
-    final class Ecip1099EpochCalculator implements EpochCalculator {
-
-        @Override
-        public long seedEpoch(final long block) {
-            return 0;
-        }
-
-        @Override
-        public long cacheEpoch(final long block) {
-            return 0;
-        }
+    @Override
+    public long cacheEpoch(final long block) {
+      return Long.divideUnsigned(block, EthHash.EPOCH_LENGTH);
     }
+  }
+
+  final class Ecip1099EpochCalculator implements EpochCalculator {
+    private final long activationBlock;
+
+    public Ecip1099EpochCalculator(final long activationBlock) {
+      this.activationBlock = activationBlock;
+    }
+
+    /** calculate start block given epoch */
+    @Override
+    public long seedEpoch(final long epoch) {
+      return (epoch * 60000) + 1; // todo set epoch length (don't hard code)
+    }
+
+    @Override
+    public long cacheEpoch(final long block) {
+      return block < activationBlock
+          ? Long.divideUnsigned(block, EthHash.EPOCH_LENGTH)
+          : Long.divideUnsigned(block, 60000);
+    }
+  }
 }

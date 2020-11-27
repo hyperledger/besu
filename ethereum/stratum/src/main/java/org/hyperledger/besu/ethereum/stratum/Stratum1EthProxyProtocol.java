@@ -60,7 +60,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
       throw new IllegalArgumentException();
     }
     this.miningCoordinator = miningCoordinator;
-    this.epochCalculator = ((EthHashMiningCoordinator)miningCoordinator).getEpochCalculator();
+    this.epochCalculator = ((EthHashMiningCoordinator) miningCoordinator).getEpochCalculator();
   }
 
   @Override
@@ -91,10 +91,11 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
 
   private void sendNewWork(final StratumConnection conn, final Object id) {
     // todo ed epochCalculator refactor / test
-//    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
-    Long epoch = epochCalculator.seedEpoch(currentInput.getBlockNumber()); // todo confirm this is correct?
+    //    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
+    Long epoch =
+        epochCalculator.seedEpoch(currentInput.getBlockNumber()); // todo confirm this is correct?
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch);
-//    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
+    //    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
     final String[] result = {
       "0x" + BaseEncoding.base16().lowerCase().encode(currentInput.getPrePowHash()),
       "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),

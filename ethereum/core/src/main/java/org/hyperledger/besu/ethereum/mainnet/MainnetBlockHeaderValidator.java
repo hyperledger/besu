@@ -28,8 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkVa
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 
-import java.util.function.Function;
-
 import org.apache.tuweni.bytes.Bytes;
 
 public final class MainnetBlockHeaderValidator {
@@ -77,20 +75,21 @@ public final class MainnetBlockHeaderValidator {
   }
 
   // todo ed epochCalculator refactor
-  static BlockHeaderValidator.Builder createOmmerValidator(
-      final EpochCalculator epochCalculator) {
+  static BlockHeaderValidator.Builder createOmmerValidator(final EpochCalculator epochCalculator) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
-        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES)) // todo ed change
-        .addRule(new ProofOfWorkValidationRule(epochCalculator));
+        .addRule(
+            new ExtraDataMaxLengthValidationRule(
+                BlockHeader.MAX_EXTRA_DATA_BYTES)); // todo ed change
+    //        .addRule(new ProofOfWorkValidationRule(epochCalculator));
   }
 
   private static BlockHeaderValidator.Builder createValidator() {
-// todo ed epochCalculator refactor
+    // todo ed epochCalculator refactor
     //    return createBlockHeaderValidator(EthHash::epoch);
     return createBlockHeaderValidator(new EpochCalculator.DefaultEpochCalculator());
   }
@@ -105,8 +104,10 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
-        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES)) //todo ed change
-        .addRule(new ProofOfWorkValidationRule(epochCalculator));
+        .addRule(
+            new ExtraDataMaxLengthValidationRule(
+                BlockHeader.MAX_EXTRA_DATA_BYTES)); // todo ed change
+    //        .addRule(new ProofOfWorkValidationRule(epochCalculator));
   }
 
   static BlockHeaderValidator.Builder createEip1559Validator(final EIP1559 eip1559) {
@@ -118,9 +119,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-            // todo ed epochCalculator refactor
-            .addRule(new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator(), true))
-//        .addRule(new ProofOfWorkValidationRule(EthHash::epoch, true))
+        // todo ed epochCalculator refactor
+        .addRule(new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator(), true))
+        //        .addRule(new ProofOfWorkValidationRule(EthHash::epoch, true))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 
@@ -132,9 +133,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-            // todo ed epochCalculator refactor
-//        .addRule(new ProofOfWorkValidationRule(EthHash::epoch, true))
-            .addRule(new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator(), true))
+        // todo ed epochCalculator refactor
+        //        .addRule(new ProofOfWorkValidationRule(EthHash::epoch, true))
+        .addRule(new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator(), true))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

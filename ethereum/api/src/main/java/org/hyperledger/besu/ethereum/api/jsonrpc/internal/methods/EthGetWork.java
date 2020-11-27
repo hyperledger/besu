@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
-import java.util.function.Function;
 
 import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +45,7 @@ public class EthGetWork implements JsonRpcMethod {
       throw new IllegalArgumentException();
     }
     this.miner = miner;
-    this.epochCalculator = ((EthHashMiningCoordinator)miner).getEpochCalculator();
+    this.epochCalculator = ((EthHashMiningCoordinator) miner).getEpochCalculator();
   }
 
   @Override
@@ -59,17 +58,18 @@ public class EthGetWork implements JsonRpcMethod {
     final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
       final EthHashSolverInputs rawResult = solver.get();
-      //Long testEP = epochCalculator.apply(rawResult.getBlockNumber());
+      // Long testEP = epochCalculator.apply(rawResult.getBlockNumber());
       // todo ed testing epochCalculator refactor
-//      Long epoch = epochCalculator.apply(rawResult.getBlockNumber());
-      Long epoch = epochCalculator.seedEpoch(rawResult.getBlockNumber());  // todo ed should be seed or dag?
+      //      Long epoch = epochCalculator.apply(rawResult.getBlockNumber());
+      Long epoch =
+          epochCalculator.seedEpoch(rawResult.getBlockNumber()); // todo ed should be seed or dag?
       System.out.println("TestEpoch " + epoch);
       System.out.println("RawREsult " + rawResult.getBlockNumber());
-//      Function<Long, Long> ep = ((EthHashMiningCoordinator)miner).getEpochCalculator();
-//      System.out.println("Got Epoch " + ep.apply(2760000l));
-//      Long epoch = ep.apply(rawResult.getBlockNumber());
-      final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch);
-      //final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber());
+      //      Function<Long, Long> ep = ((EthHashMiningCoordinator)miner).getEpochCalculator();
+      //      System.out.println("Got Epoch " + ep.apply(2760000l));
+      //      Long epoch = ep.apply(rawResult.getBlockNumber());
+      //      final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch);
+      final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber());
       final String[] result = {
         "0x" + BaseEncoding.base16().lowerCase().encode(rawResult.getPrePowHash()),
         "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),

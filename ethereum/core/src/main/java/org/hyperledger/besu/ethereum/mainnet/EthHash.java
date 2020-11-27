@@ -24,7 +24,6 @@ import java.nio.ByteOrder;
 import java.security.DigestException;
 import java.security.MessageDigest;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -194,9 +193,9 @@ public final class EthHash {
    * @param block Block Number
    * @return EthHash Epoch
    */
-  public static long epoch(final long block) {
-    return epoch(block, EPOCH_LENGTH);
-  }
+  //  public static long epoch(final long block) {
+  //    return epoch(block, EPOCH_LENGTH);
+  //  }
 
   /**
    * Calculates the EthHash Epoch for a given block number.
@@ -205,9 +204,9 @@ public final class EthHash {
    * @param epochLength The epoch length
    * @return EthHash Epoch
    */
-  public static long epoch(final long block, final long epochLength) {
-    return Long.divideUnsigned(block, epochLength);
-  }
+  //  public static long epoch(final long block, final long epochLength) {
+  //    return Long.divideUnsigned(block, epochLength);
+  //  }
 
   /**
    * Returns a function that returns different epoch lengths on either side of activation block.
@@ -217,10 +216,10 @@ public final class EthHash {
    * @param newLength the length on and after the activation block
    * @return epoch length
    */
-  public static Function<Long, Long> changingEpoch(
-      final long activationBlock, final long oldLength, final long newLength) {
-    return block -> block < activationBlock ? epoch(block, oldLength) : epoch(block, newLength);
-  }
+  //  public static Function<Long, Long> changingEpoch(
+  //      final long activationBlock, final long oldLength, final long newLength) {
+  //    return block -> block < activationBlock ? epoch(block, oldLength) : epoch(block, newLength);
+  //  }
 
   /**
    * Returns a function that returns the ECIP-1099 epoch formula.
@@ -228,9 +227,9 @@ public final class EthHash {
    * @param activationBlock the block that the length changes
    * @return epoch length
    */
-  public static Function<Long, Long> ecip1099Epoch(final long activationBlock) {
-    return changingEpoch(activationBlock, EPOCH_LENGTH, EPOCH_LENGTH * 2);
-  }
+  //  public static Function<Long, Long> ecip1099Epoch(final long activationBlock) {
+  //    return changingEpoch(activationBlock, EPOCH_LENGTH, EPOCH_LENGTH * 2);
+  //  }
 
   /**
    * Generates the EthHash cache for given parameters.
@@ -285,50 +284,51 @@ public final class EthHash {
   }
 
   // todo ed remove, was testing
-//  public static int[] mkCacheEpoch(final int cacheSize, final long epoch) {
-//    final MessageDigest keccak512 = KECCAK_512.get();
-//    keccak512.update(DirectAcyclicGraphSeed.dagSeedEpoch(epoch));
-//    final int rows = cacheSize / HASH_BYTES;
-//    final byte[] cache = new byte[rows * HASH_BYTES];
-//    try {
-//      keccak512.digest(cache, 0, HASH_BYTES);
-//    } catch (final DigestException ex) {
-//      throw new IllegalStateException(ex);
-//    }
-//    for (int i = 1; i < rows; ++i) {
-//      keccak512.update(cache, (i - 1) * HASH_BYTES, HASH_BYTES);
-//      try {
-//        keccak512.digest(cache, i * HASH_BYTES, HASH_BYTES);
-//      } catch (final DigestException ex) {
-//        throw new IllegalStateException(ex);
-//      }
-//    }
-//    final byte[] temp = new byte[HASH_BYTES];
-//    for (int i = 0; i < CACHE_ROUNDS; ++i) {
-//      for (int j = 0; j < rows; ++j) {
-//        final int offset = j * HASH_BYTES;
-//        for (int k = 0; k < HASH_BYTES; ++k) {
-//          temp[k] =
-//                  (byte)
-//                          (cache[(j - 1 + rows) % rows * HASH_BYTES + k]
-//                                  ^ cache[
-//                                  Integer.remainderUnsigned(readLittleEndianInt(cache, offset), rows)
-//                                          * HASH_BYTES
-//                                          + k]);
-//        }
-//        keccak512.update(temp);
-//        try {
-//          keccak512.digest(temp, 0, HASH_BYTES);
-//        } catch (final DigestException ex) {
-//          throw new IllegalStateException(ex);
-//        }
-//        System.arraycopy(temp, 0, cache, offset, HASH_BYTES);
-//      }
-//    }
-//    final int[] result = new int[cache.length / 4];
-//    ByteBuffer.wrap(cache).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(result);
-//    return result;
-//  }
+  //  public static int[] mkCacheEpoch(final int cacheSize, final long epoch) {
+  //    final MessageDigest keccak512 = KECCAK_512.get();
+  //    keccak512.update(DirectAcyclicGraphSeed.dagSeedEpoch(epoch));
+  //    final int rows = cacheSize / HASH_BYTES;
+  //    final byte[] cache = new byte[rows * HASH_BYTES];
+  //    try {
+  //      keccak512.digest(cache, 0, HASH_BYTES);
+  //    } catch (final DigestException ex) {
+  //      throw new IllegalStateException(ex);
+  //    }
+  //    for (int i = 1; i < rows; ++i) {
+  //      keccak512.update(cache, (i - 1) * HASH_BYTES, HASH_BYTES);
+  //      try {
+  //        keccak512.digest(cache, i * HASH_BYTES, HASH_BYTES);
+  //      } catch (final DigestException ex) {
+  //        throw new IllegalStateException(ex);
+  //      }
+  //    }
+  //    final byte[] temp = new byte[HASH_BYTES];
+  //    for (int i = 0; i < CACHE_ROUNDS; ++i) {
+  //      for (int j = 0; j < rows; ++j) {
+  //        final int offset = j * HASH_BYTES;
+  //        for (int k = 0; k < HASH_BYTES; ++k) {
+  //          temp[k] =
+  //                  (byte)
+  //                          (cache[(j - 1 + rows) % rows * HASH_BYTES + k]
+  //                                  ^ cache[
+  //                                  Integer.remainderUnsigned(readLittleEndianInt(cache, offset),
+  // rows)
+  //                                          * HASH_BYTES
+  //                                          + k]);
+  //        }
+  //        keccak512.update(temp);
+  //        try {
+  //          keccak512.digest(temp, 0, HASH_BYTES);
+  //        } catch (final DigestException ex) {
+  //          throw new IllegalStateException(ex);
+  //        }
+  //        System.arraycopy(temp, 0, cache, offset, HASH_BYTES);
+  //      }
+  //    }
+  //    final int[] result = new int[cache.length / 4];
+  //    ByteBuffer.wrap(cache).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(result);
+  //    return result;
+  //  }
 
   /**
    * Calculates EthHash Cache size at a given epoch.

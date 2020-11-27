@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import java.util.function.Function;
-
 public interface EthHasher {
 
   /**
@@ -28,8 +26,7 @@ public interface EthHasher {
    * @param headerHash Block Header (without mix digest and nonce) Hash
    */
   // todo ed epochCalculator refactor
-  void hash(
-      byte[] buffer, long nonce, long number, EpochCalculator epochCalc, byte[] headerHash);
+  void hash(byte[] buffer, long nonce, long number, EpochCalculator epochCalc, byte[] headerHash);
 
   final class Light implements EthHasher {
 

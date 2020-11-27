@@ -46,8 +46,8 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final GasLimitCalculator gasLimitCalculator,
-// todo ed epochCalculator refactor
-//      final Function<Long, Long> epochCalculator) {
+      // todo ed epochCalculator refactor
+      //      final Function<Long, Long> epochCalculator) {
       final EpochCalculator epochCalculator) {
     super(
         protocolContext,
@@ -119,5 +119,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
     return coinbase;
   }
 
-  public EpochCalculator getEpochCalculator() {return epochCalculator; }
+  public EpochCalculator getEpochCalculator() {
+    return epochCalculator;
+  }
 }

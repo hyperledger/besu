@@ -92,7 +92,7 @@ public class Stratum1Protocol implements StratumProtocol {
     this.miningCoordinator = miningCoordinator;
     this.jobIdSupplier = jobIdSupplier;
     this.subscriptionIdCreator = subscriptionIdCreator;
-    this.epochCalculator = ((EthHashMiningCoordinator)miningCoordinator).getEpochCalculator();
+    this.epochCalculator = ((EthHashMiningCoordinator) miningCoordinator).getEpochCalculator();
   }
 
   @Override
@@ -138,10 +138,10 @@ public class Stratum1Protocol implements StratumProtocol {
 
   private void sendNewWork(final StratumConnection conn) {
     // todo ed epochCalculator refactor, check this!!
-//    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
+    //    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
     Long epoch = epochCalculator.seedEpoch(currentInput.getBlockNumber());
-    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch);  // todo confirm epoch or block?
-//    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
+    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch); // todo confirm epoch or block?
+    //    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
     Object[] params =
         new Object[] {
           jobIdSupplier.get(),

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
