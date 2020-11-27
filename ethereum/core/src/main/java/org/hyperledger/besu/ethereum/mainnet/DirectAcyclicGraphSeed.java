@@ -51,20 +51,6 @@ public class DirectAcyclicGraphSeed {
     return seed;
   }
 
-  // todo ed remove, was for testing
-  //  public static byte[] dagSeedEpoch(final long epoch) {
-  //    final byte[] seed = new byte[32];
-  //    if (epoch > 0) {
-  //      final MessageDigest keccak256 = KECCAK_256.get();
-  //      for (int i = 0; i < epoch; ++i) {
-  //        keccak256.update(seed);
-  //        try {
-  //          keccak256.digest(seed, 0, seed.length);
-  //        } catch (final DigestException ex) {
-  //          throw new IllegalStateException(ex);
-  //        }
-  //      }
-  //    }
-  //    return seed;
-  //  }
+  // todo(edwardmack) create dagSeed with epoch method to handle epoch start block rounding
+
 }

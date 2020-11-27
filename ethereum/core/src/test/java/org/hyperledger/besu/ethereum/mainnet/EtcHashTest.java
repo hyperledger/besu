@@ -21,7 +21,6 @@ public class EtcHashTest {
 
   @Test
   public void testEpoch() {
-    // todo ed epochCalculator refactor
     EpochCalculator epochCalculator = new EpochCalculator.Ecip1099EpochCalculator(2_000_000);
 
     // check before activation block (1,000,000/30,000 = 33)

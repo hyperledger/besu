@@ -35,8 +35,6 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
   protected volatile Optional<Address> coinbase;
   protected boolean stratumMiningEnabled;
   protected final Iterable<Long> nonceGenerator;
-  // todo ed epochCalculator refactor
-  //  protected final Function<Long, Long> epochCalculator;
   protected final EpochCalculator epochCalculator;
 
   public EthHashMinerExecutor(
@@ -46,8 +44,6 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final GasLimitCalculator gasLimitCalculator,
-      // todo ed epochCalculator refactor
-      //      final Function<Long, Long> epochCalculator) {
       final EpochCalculator epochCalculator) {
     super(
         protocolContext,

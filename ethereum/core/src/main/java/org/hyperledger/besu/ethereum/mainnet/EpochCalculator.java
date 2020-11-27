@@ -49,7 +49,7 @@ public interface EpochCalculator {
     public long cacheEpoch(final long block) {
       return block < activationBlock
           ? Long.divideUnsigned(block, EthHash.EPOCH_LENGTH)
-          : Long.divideUnsigned(block, 60000);
+          : Long.divideUnsigned(block, EthHash.EPOCH_LENGTH * 2);
     }
   }
 }

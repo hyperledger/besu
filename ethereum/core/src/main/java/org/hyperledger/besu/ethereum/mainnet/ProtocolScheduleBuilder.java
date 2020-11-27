@@ -306,7 +306,8 @@ public class ProtocolScheduleBuilder {
             config.getEvmStackSize(),
             isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
+            quorumCompatibilityMode,
+            config.getThanosBlockNumber()));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;

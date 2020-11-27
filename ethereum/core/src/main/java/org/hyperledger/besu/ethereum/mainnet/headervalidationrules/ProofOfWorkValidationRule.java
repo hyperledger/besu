@@ -38,17 +38,13 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   static final EthHasher HASHER = new EthHasher.Light();
 
-  // todo ed epochCalculator refactor
-  //  private final Function<Long, Long> epochCalculator;
   private final EpochCalculator epochCalculator;
   private final boolean includeBaseFee;
 
-  // todo ed epochCalculator refactor
   public ProofOfWorkValidationRule(final EpochCalculator epochCalculator) {
     this(epochCalculator, false);
   }
 
-  // todo ed epochCalculator refactor
   public ProofOfWorkValidationRule(
       final EpochCalculator epochCalculator, final boolean includeBaseFee) {
     this.epochCalculator = epochCalculator;

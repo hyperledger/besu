@@ -51,8 +51,6 @@ public class ProofOfWorkValidationRuleTest {
       throws IOException {
     blockHeader = ValidationTestUtils.readHeader(parentBlockNum);
     parentHeader = ValidationTestUtils.readHeader(blockNum);
-    // todo ed epochCalculator refactor
-    //    validationRule = new ProofOfWorkValidationRule(EthHash::epoch);
     validationRule = new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator());
   }
 
@@ -93,13 +91,7 @@ public class ProofOfWorkValidationRuleTest {
     final BlockHeader preHeader = headerBuilder.buildBlockHeader();
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = validationRule.hashHeader(preHeader);
-    // todo ed epochCalculator refactor
-    //    ProofOfWorkValidationRule.HASHER.hash(
-    //        hashBuffer,
-    //        preHeader.getNonce(),
-    //        preHeader.getNumber(),
-    //        EthHash::epoch,
-    //        headerHash.toArray());
+
     ProofOfWorkValidationRule.HASHER.hash(
         hashBuffer,
         preHeader.getNonce(),

@@ -71,13 +71,6 @@ import org.apache.tuweni.bytes.Bytes;
 public class RetestethContext {
 
   private static final Logger LOG = LogManager.getLogger();
-  // todo ed epochCalculator refactor
-  //  private static final EthHasher NO_WORK_HASHER =
-  //      (final byte[] buffer,
-  //          final long nonce,
-  //          final long number,
-  //          Function<Long, Long> epochCalc,
-  //          final byte[] headerHash) -> {};
   private static final EthHasher NO_WORK_HASHER =
       (final byte[] buffer,
           final long nonce,
@@ -167,14 +160,6 @@ public class RetestethContext {
             : HeaderValidationMode.FULL;
 
     final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
-    // todo ed epochCalculator refactor
-    //    ethHashSolver =
-    //        ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
-    //            ? new EthHashSolver(
-    //                nonceGenerator, NO_WORK_HASHER, false, Subscribers.none(), EthHash::epoch)
-    //            : new EthHashSolver(
-    //                nonceGenerator, new EthHasher.Light(), false, Subscribers.none(),
-    // EthHash::epoch);
     ethHashSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
             ? new EthHashSolver(

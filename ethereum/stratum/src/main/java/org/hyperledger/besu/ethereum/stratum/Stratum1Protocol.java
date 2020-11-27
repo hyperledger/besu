@@ -65,8 +65,6 @@ public class Stratum1Protocol implements StratumProtocol {
   private final Supplier<String> jobIdSupplier;
   private final Supplier<String> subscriptionIdCreator;
   private final List<StratumConnection> activeConnections = new ArrayList<>();
-  // todo ed epochCalculator refactor
-  //  private Function<Long, Long> epochCalculator;
   private final EpochCalculator epochCalculator;
 
   public Stratum1Protocol(final String extranonce, final MiningCoordinator miningCoordinator) {
@@ -137,7 +135,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   private void sendNewWork(final StratumConnection conn) {
-    // todo ed epochCalculator refactor, check this!!
+    // todo ed epochCalculator change to pass epochCalulator to dagSeed
     //    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
     Long epoch = epochCalculator.seedEpoch(currentInput.getBlockNumber());
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch); // todo confirm epoch or block?

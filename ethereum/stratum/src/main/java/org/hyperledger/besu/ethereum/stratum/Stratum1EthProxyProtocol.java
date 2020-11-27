@@ -51,8 +51,6 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private final MiningCoordinator miningCoordinator;
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
-  // todo ed epochCalculator refactor
-  //  private Function<Long, Long> epochCalculator;
   private final EpochCalculator epochCalculator;
 
   public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
@@ -90,10 +88,11 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   private void sendNewWork(final StratumConnection conn, final Object id) {
-    // todo ed epochCalculator refactor / test
+    // todo ed epochCalculator refactor change this to pass epochCalculator to dagSeed
     //    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
     Long epoch =
-        epochCalculator.seedEpoch(currentInput.getBlockNumber()); // todo confirm this is correct?
+        epochCalculator.seedEpoch(
+            currentInput.getBlockNumber()); // todo ed confirm this is correct?
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch);
     //    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
     final String[] result = {

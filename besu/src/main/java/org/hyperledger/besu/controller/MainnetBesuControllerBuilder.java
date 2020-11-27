@@ -32,8 +32,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
-  // todo ed interface refactor
-  // private Function<Long, Long> epochCalculator = EthHash::epoch;
   private EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
 
   @Override
@@ -94,12 +92,6 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    // todo ed epochCalculator refactor
-    //    genesisConfig
-    //        .getConfigOptions()
-    //        .getThanosBlockNumber()
-    //        .ifPresent(activationBlock -> epochCalculator =
-    // EthHash.ecip1099Epoch(activationBlock));
     genesisConfig
         .getConfigOptions()
         .getThanosBlockNumber()

@@ -25,7 +25,6 @@ public interface EthHasher {
    * @param epochCalc EpochCalculator for calculating epoch
    * @param headerHash Block Header (without mix digest and nonce) Hash
    */
-  // todo ed epochCalculator refactor
   void hash(byte[] buffer, long nonce, long number, EpochCalculator epochCalc, byte[] headerHash);
 
   final class Light implements EthHasher {

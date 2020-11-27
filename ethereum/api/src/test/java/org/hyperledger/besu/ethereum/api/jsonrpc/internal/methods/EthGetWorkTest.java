@@ -50,7 +50,8 @@ public class EthGetWorkTest {
 
   @Before
   public void setUp() {
-    // todo ed epochCalculator refactor
+    // todo (edwardmack) epochCalculator refactor, figure out how to test before and after
+    // activation block
     when(miningCoordinator.getEpochCalculator())
         .thenReturn(new EpochCalculator.Ecip1099EpochCalculator(100000));
     method = new EthGetWork(miningCoordinator);
@@ -98,7 +99,6 @@ public class EthGetWorkTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
-    // todo find way to set epochCalculator for mining coordinater
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
@@ -121,25 +121,6 @@ public class EthGetWorkTest {
 
     seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(2760001));
     System.out.println("Seed 27600001 " + seed);
-
-    //    final JsonRpcRequestContext request = requestWithParams();
-    //    final EthHashSolverInputs values =
-    //            new EthHashSolverInputs(
-    //                    UInt256.fromHexString(hexValue),
-    //                    BaseEncoding.base16().lowerCase().decode(hexValue),
-    //                    30000);
-    //    final String[] expectedValue = {
-    //            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    //            "0x" +
-    // BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(30000)),
-    //            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    //            "0x7530"
-    //    };
-    //    final JsonRpcResponse expectedResponse =
-    //            new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
-    //    when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
-    //    final JsonRpcResponse actualResponse = method.response(request);
-    //    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
   @Test

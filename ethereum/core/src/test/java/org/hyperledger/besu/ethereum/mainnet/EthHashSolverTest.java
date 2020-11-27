@@ -39,10 +39,6 @@ public class EthHashSolverTest {
   @Test
   public void emptyHashRateAndWorkDefinitionIsReportedPriorToSolverStarting() {
     final List<Long> noncesToTry = Arrays.asList(1L, 1L, 1L, 1L, 1L, 1L, 0L);
-    // todo ed epochCalculator refactor
-    //    final EthHashSolver solver =
-    //        new EthHashSolver(
-    //            noncesToTry, new EthHasher.Light(), false, Subscribers.none(), EthHash::epoch);
     final EthHashSolver solver =
         new EthHashSolver(
             noncesToTry,
@@ -71,9 +67,6 @@ public class EthHashSolverTest {
         .when(hasher)
         .hash(any(), anyLong(), anyLong(), any(), any());
 
-    // todo ed epochCalculator refactor
-    //    final EthHashSolver solver =
-    //        new EthHashSolver(noncesToTry, hasher, false, Subscribers.none(), EthHash::epoch);
     final EthHashSolver solver =
         new EthHashSolver(
             noncesToTry,
@@ -135,15 +128,6 @@ public class EthHashSolverTest {
             firstInputs.getPrePowHash());
 
     // Nonces need to have a 0L inserted, as it is a "wasted" nonce in the solver.
-    // todo ed epochCalculator refactor
-    //    final EthHashSolver solver =
-    //        new EthHashSolver(
-    //            Lists.newArrayList(expectedFirstOutput.getNonce(), 0L,
-    // expectedSecondOutput.getNonce()),
-    //            new EthHasher.Light(),
-    //            false,
-    //            Subscribers.none(),
-    //            EthHash::epoch);
     final EthHashSolver solver =
         new EthHashSolver(
             Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),

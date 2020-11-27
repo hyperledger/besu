@@ -220,7 +220,8 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final OptionalLong activationBlock) {
     return phoenixDefinition(
             chainId,
             configContractSizeLimit,
@@ -228,20 +229,12 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             quorumCompatibilityMode)
-        // todo ed epochCalculator refactor
-        //        .blockHeaderValidatorBuilder(
-        //            MainnetBlockHeaderValidator.createBlockHeaderValidator(
-        //                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
         .blockHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createBlockHeaderValidator(
-                new EpochCalculator.DefaultEpochCalculator()))
-        // todo ed epochCalculator refactor
-        //        .ommerHeaderValidatorBuilder(
-        //            MainnetBlockHeaderValidator.createOmmerValidator(
-        //                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+                new EpochCalculator.Ecip1099EpochCalculator(activationBlock.getAsLong())))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createOmmerValidator(
-                new EpochCalculator.DefaultEpochCalculator())) // todo ed should this be static?
+                new EpochCalculator.Ecip1099EpochCalculator(activationBlock.getAsLong())))
         .name("Thanos");
   }
 
