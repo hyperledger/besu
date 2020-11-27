@@ -146,6 +146,7 @@ import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
+import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.File;
@@ -2075,10 +2076,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
-        .maxPeers(maxPeers)
         .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
-        .priceBump(priceBump)
+        .priceBump(Percentage.fromInt(priceBump))
         .txFeeCap(txFeeCap)
         .build();
   }

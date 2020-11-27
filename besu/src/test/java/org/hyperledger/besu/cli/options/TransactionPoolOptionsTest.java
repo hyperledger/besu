@@ -17,12 +17,16 @@ package org.hyperledger.besu.cli.options;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+
+import java.time.Duration;
 
 import org.junit.Test;
 
 public class TransactionPoolOptionsTest
-    extends AbstractCLIOptionsTest<TransactionPoolConfiguration.Builder, TransactionPoolOptions> {
+    extends AbstractCLIOptionsTest<
+        ImmutableTransactionPoolConfiguration.Builder, TransactionPoolOptions> {
 
   @Test
   public void txMessageKeepAliveSeconds() {
@@ -40,20 +44,44 @@ public class TransactionPoolOptionsTest
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
-  @Override
-  TransactionPoolConfiguration.Builder createDefaultDomainObject() {
-    return TransactionPoolConfiguration.builder();
+  @Test
+  public void eth65TrxAnnouncedBufferingPeriod() {
+    final long eth65TrxAnnouncedBufferingPeriod = 999;
+    final TestBesuCommand cmd =
+        parseCommand(
+            "--Xeth65-tx-announced-buffering-period-milliseconds",
+            String.valueOf(eth65TrxAnnouncedBufferingPeriod));
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getEth65TrxAnnouncedBufferingPeriod())
+        .hasMillis(eth65TrxAnnouncedBufferingPeriod);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Override
-  TransactionPoolConfiguration.Builder createCustomizedDomainObject() {
-    return TransactionPoolConfiguration.builder()
-        .txMessageKeepAliveSeconds(TransactionPoolConfiguration.DEFAULT_TX_MSG_KEEP_ALIVE + 1);
+  ImmutableTransactionPoolConfiguration.Builder createDefaultDomainObject() {
+    final ImmutableTransactionPoolConfiguration defaultValue =
+        ImmutableTransactionPoolConfiguration.builder().build();
+    return ImmutableTransactionPoolConfiguration.builder()
+        .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
+        .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod());
+  }
+
+  @Override
+  ImmutableTransactionPoolConfiguration.Builder createCustomizedDomainObject() {
+    return ImmutableTransactionPoolConfiguration.builder()
+        .txMessageKeepAliveSeconds(TransactionPoolConfiguration.DEFAULT_TX_MSG_KEEP_ALIVE + 1)
+        .eth65TrxAnnouncedBufferingPeriod(
+            TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
+                Duration.ofMillis(100)));
   }
 
   @Override
   TransactionPoolOptions optionsFromDomainObject(
-      final TransactionPoolConfiguration.Builder domainObject) {
+      final ImmutableTransactionPoolConfiguration.Builder domainObject) {
     return TransactionPoolOptions.fromConfig(domainObject.build());
   }
 

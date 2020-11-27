@@ -49,6 +49,7 @@ public class PendingTransactionsMessageProcessor {
   private final PeerPendingTransactionTracker transactionTracker;
   private final Counter totalSkippedTransactionsMessageCounter;
   private final TransactionPool transactionPool;
+  private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
@@ -56,13 +57,14 @@ public class PendingTransactionsMessageProcessor {
   public PendingTransactionsMessageProcessor(
       final PeerPendingTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
       final Counter metricsCounter,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final SyncState syncState,
-      final int maxPeers) {
+      final SyncState syncState) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
+    this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
@@ -103,10 +105,15 @@ public class PendingTransactionsMessageProcessor {
             scheduledTasks.computeIfAbsent(
                 peer,
                 ethPeer -> {
-                  LOG.info("[TEST-POOL] Create task for peer {}", peer);
+                  LOG.info(
+                      "[TEST-POOL] Create task for peer {} {}",
+                      peer,
+                      transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
                   ethContext
                       .getScheduler()
-                      .scheduleFutureTask(new FetcherCreatorTask(peer), Duration.ofMillis(500));
+                      .scheduleFutureTask(
+                          new FetcherCreatorTask(peer),
+                          transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
                   return new BufferedGetPooledTransactionsFromPeerFetcher(
                       peer, PendingTransactionsMessageProcessor.this);
                 });
@@ -140,7 +147,7 @@ public class PendingTransactionsMessageProcessor {
     return metricsSystem;
   }
 
-  class FetcherCreatorTask implements Runnable {
+  public class FetcherCreatorTask implements Runnable {
     final EthPeer peer;
 
     public FetcherCreatorTask(final EthPeer peer) {

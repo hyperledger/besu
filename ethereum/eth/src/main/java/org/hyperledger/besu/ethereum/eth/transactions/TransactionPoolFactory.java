@@ -146,14 +146,14 @@ public class TransactionPoolFactory {
               new PendingTransactionsMessageProcessor(
                   pendingTransactionTracker.get(),
                   transactionPool,
+                  transactionPoolConfiguration,
                   metricsSystem.createCounter(
                       BesuMetricCategory.TRANSACTION_POOL,
                       "pending_transactions_messages_skipped_total",
                       "Total number of pending transactions messages skipped by the processor."),
                   ethContext,
                   metricsSystem,
-                  syncState,
-                  transactionPoolConfiguration.getMaxPeers()),
+                  syncState),
               transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
       ethContext
           .getEthMessages()

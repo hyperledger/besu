@@ -167,7 +167,7 @@ public class PrivacyReorgTest {
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
             .privacyParameters(privacyParameters)
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
   }
