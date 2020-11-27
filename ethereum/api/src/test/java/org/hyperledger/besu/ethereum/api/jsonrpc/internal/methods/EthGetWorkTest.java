@@ -23,10 +23,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.blockcreation.EthHashMinerExecutor;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
+import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import com.google.common.io.BaseEncoding;
@@ -49,6 +53,8 @@ public class EthGetWorkTest {
 
   @Before
   public void setUp() {
+    // todo ed epochCalculator refactor
+    when(miningCoordinator.getEpochCalculator()).thenReturn(new EpochCalculator.Ecip1099EpochCalculator());
     method = new EthGetWork(miningCoordinator);
   }
 
@@ -94,8 +100,46 @@ public class EthGetWorkTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
+    // todo find way to set epochCalculator for mining coordinater
+
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldCalculateSeed() {
+    String seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(29000));
+    System.out.println("Seed 29 " + seed);
+
+    seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(30000));
+    System.out.println("Seed 30 " + seed);
+
+    seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(2759999));
+    System.out.println("Seed 27599999 " + seed);
+
+    seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(2760000));
+    System.out.println("Seed 27600000 " + seed);
+
+    seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(2760001));
+    System.out.println("Seed 27600001 " + seed);
+
+    //    final JsonRpcRequestContext request = requestWithParams();
+//    final EthHashSolverInputs values =
+//            new EthHashSolverInputs(
+//                    UInt256.fromHexString(hexValue),
+//                    BaseEncoding.base16().lowerCase().decode(hexValue),
+//                    30000);
+//    final String[] expectedValue = {
+//            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+//            "0x" + BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(30000)),
+//            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+//            "0x7530"
+//    };
+//    final JsonRpcResponse expectedResponse =
+//            new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
+//    when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
+//    final JsonRpcResponse actualResponse = method.response(request);
+//    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
   @Test

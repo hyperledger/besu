@@ -228,12 +228,20 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             quorumCompatibilityMode)
-        .blockHeaderValidatorBuilder(
+            // todo ed epochCalculator refactor
+//        .blockHeaderValidatorBuilder(
+//            MainnetBlockHeaderValidator.createBlockHeaderValidator(
+//                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+            .blockHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createBlockHeaderValidator(
-                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
-        .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createOmmerValidator(
-                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+                new EpochCalculator.DefaultEpochCalculator()))
+// todo ed epochCalculator refactor
+//        .ommerHeaderValidatorBuilder(
+//            MainnetBlockHeaderValidator.createOmmerValidator(
+//                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+            .ommerHeaderValidatorBuilder(
+                    MainnetBlockHeaderValidator.createOmmerValidator(
+                            new EpochCalculator.DefaultEpochCalculator()))  // todo ed should this be static?
         .name("Thanos");
   }
 

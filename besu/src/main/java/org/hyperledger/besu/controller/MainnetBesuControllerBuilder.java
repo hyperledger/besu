@@ -24,17 +24,19 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.EthHash;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.function.Function;
 
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
-  private Function<Long, Long> epochCalculator = EthHash::epoch;
+  // todo ed interface refactor
+  //private Function<Long, Long> epochCalculator = EthHash::epoch;
+  private EpochCalculator epochCalculator;
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
@@ -94,9 +96,14 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
+// todo ed epochCalculator refactor
+    //    genesisConfig
+//        .getConfigOptions()
+//        .getThanosBlockNumber()
+//        .ifPresent(activationBlock -> epochCalculator = EthHash.ecip1099Epoch(activationBlock));
     genesisConfig
         .getConfigOptions()
         .getThanosBlockNumber()
-        .ifPresent(activationBlock -> epochCalculator = EthHash.ecip1099Epoch(activationBlock));
+        .ifPresent(activationBlock -> epochCalculator = new EpochCalculator.Ecip1099EpochCalculator());
   }
 }

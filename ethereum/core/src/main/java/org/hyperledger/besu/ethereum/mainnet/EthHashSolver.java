@@ -84,7 +84,9 @@ public class EthHashSolver {
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
   private final Boolean stratumMiningEnabled;
   private final Subscribers<EthHashObserver> ethHashObservers;
-  private final Function<Long, Long> epochCalculator;
+// todo ed epochCalculator refactor
+  //  private final Function<Long, Long> epochCalculator;
+  private final EpochCalculator epochCalculator;
   private volatile Optional<EthHashSolverJob> currentJob = Optional.empty();
 
   public EthHashSolver(
@@ -92,7 +94,9 @@ public class EthHashSolver {
       final EthHasher ethHasher,
       final Boolean stratumMiningEnabled,
       final Subscribers<EthHashObserver> ethHashObservers,
-      final Function<Long, Long> epochCalculator) {
+// todo ed epochCalculator refactor
+//      final Function<Long, Long> epochCalculator) {
+      final EpochCalculator epochCalculator) {
     this.nonceGenerator = nonceGenerator;
     this.ethHasher = ethHasher;
     this.stratumMiningEnabled = stratumMiningEnabled;

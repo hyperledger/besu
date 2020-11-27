@@ -21,11 +21,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.mainnet.EthHash;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -51,7 +51,9 @@ public class ProofOfWorkValidationRuleTest {
       throws IOException {
     blockHeader = ValidationTestUtils.readHeader(parentBlockNum);
     parentHeader = ValidationTestUtils.readHeader(blockNum);
-    validationRule = new ProofOfWorkValidationRule(EthHash::epoch);
+// todo ed epochCalculator refactor
+    //    validationRule = new ProofOfWorkValidationRule(EthHash::epoch);
+    validationRule = new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator());
   }
 
   @Parameters(name = "block {1}")
@@ -91,12 +93,20 @@ public class ProofOfWorkValidationRuleTest {
     final BlockHeader preHeader = headerBuilder.buildBlockHeader();
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = validationRule.hashHeader(preHeader);
+// todo ed epochCalculator refactor
+    //    ProofOfWorkValidationRule.HASHER.hash(
+//        hashBuffer,
+//        preHeader.getNonce(),
+//        preHeader.getNumber(),
+//        EthHash::epoch,
+//        headerHash.toArray());
     ProofOfWorkValidationRule.HASHER.hash(
-        hashBuffer,
-        preHeader.getNonce(),
-        preHeader.getNumber(),
-        EthHash::epoch,
-        headerHash.toArray());
+            hashBuffer,
+            preHeader.getNonce(),
+            preHeader.getNumber(),
+            new EpochCalculator.DefaultEpochCalculator(),
+            headerHash.toArray());
+
 
     final BlockHeader header =
         headerBuilder

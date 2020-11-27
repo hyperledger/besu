@@ -284,6 +284,52 @@ public final class EthHash {
     return result;
   }
 
+  // todo ed remove, was testing
+//  public static int[] mkCacheEpoch(final int cacheSize, final long epoch) {
+//    final MessageDigest keccak512 = KECCAK_512.get();
+//    keccak512.update(DirectAcyclicGraphSeed.dagSeedEpoch(epoch));
+//    final int rows = cacheSize / HASH_BYTES;
+//    final byte[] cache = new byte[rows * HASH_BYTES];
+//    try {
+//      keccak512.digest(cache, 0, HASH_BYTES);
+//    } catch (final DigestException ex) {
+//      throw new IllegalStateException(ex);
+//    }
+//    for (int i = 1; i < rows; ++i) {
+//      keccak512.update(cache, (i - 1) * HASH_BYTES, HASH_BYTES);
+//      try {
+//        keccak512.digest(cache, i * HASH_BYTES, HASH_BYTES);
+//      } catch (final DigestException ex) {
+//        throw new IllegalStateException(ex);
+//      }
+//    }
+//    final byte[] temp = new byte[HASH_BYTES];
+//    for (int i = 0; i < CACHE_ROUNDS; ++i) {
+//      for (int j = 0; j < rows; ++j) {
+//        final int offset = j * HASH_BYTES;
+//        for (int k = 0; k < HASH_BYTES; ++k) {
+//          temp[k] =
+//                  (byte)
+//                          (cache[(j - 1 + rows) % rows * HASH_BYTES + k]
+//                                  ^ cache[
+//                                  Integer.remainderUnsigned(readLittleEndianInt(cache, offset), rows)
+//                                          * HASH_BYTES
+//                                          + k]);
+//        }
+//        keccak512.update(temp);
+//        try {
+//          keccak512.digest(temp, 0, HASH_BYTES);
+//        } catch (final DigestException ex) {
+//          throw new IllegalStateException(ex);
+//        }
+//        System.arraycopy(temp, 0, cache, offset, HASH_BYTES);
+//      }
+//    }
+//    final int[] result = new int[cache.length / 4];
+//    ByteBuffer.wrap(cache).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(result);
+//    return result;
+//  }
+
   /**
    * Calculates EthHash Cache size at a given epoch.
    *

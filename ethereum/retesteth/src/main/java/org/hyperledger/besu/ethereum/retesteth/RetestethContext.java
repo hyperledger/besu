@@ -41,15 +41,15 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
-import org.hyperledger.besu.ethereum.mainnet.EthHash;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
@@ -72,11 +72,18 @@ import org.apache.tuweni.bytes.Bytes;
 public class RetestethContext {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final EthHasher NO_WORK_HASHER =
+// todo ed epochCalculator refactor
+  //  private static final EthHasher NO_WORK_HASHER =
+//      (final byte[] buffer,
+//          final long nonce,
+//          final long number,
+//          Function<Long, Long> epochCalc,
+//          final byte[] headerHash) -> {};
+private static final EthHasher NO_WORK_HASHER =
       (final byte[] buffer,
           final long nonce,
           final long number,
-          Function<Long, Long> epochCalc,
+          EpochCalculator epochCalc,
           final byte[] headerHash) -> {};
 
   private final ReentrantLock contextLock = new ReentrantLock();
@@ -161,12 +168,20 @@ public class RetestethContext {
             : HeaderValidationMode.FULL;
 
     final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
+// todo ed epochCalculator refactor
+    //    ethHashSolver =
+//        ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
+//            ? new EthHashSolver(
+//                nonceGenerator, NO_WORK_HASHER, false, Subscribers.none(), EthHash::epoch)
+//            : new EthHashSolver(
+//                nonceGenerator, new EthHasher.Light(), false, Subscribers.none(), EthHash::epoch);
     ethHashSolver =
-        ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
-            ? new EthHashSolver(
-                nonceGenerator, NO_WORK_HASHER, false, Subscribers.none(), EthHash::epoch)
-            : new EthHashSolver(
-                nonceGenerator, new EthHasher.Light(), false, Subscribers.none(), EthHash::epoch);
+            ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
+                    ? new EthHashSolver(
+                    nonceGenerator, NO_WORK_HASHER, false, Subscribers.none(), new EpochCalculator.DefaultEpochCalculator())
+                    : new EthHashSolver(
+                    nonceGenerator, new EthHasher.Light(), false, Subscribers.none(), new EpochCalculator.DefaultEpochCalculator());
+
 
     blockReplay =
         new BlockReplay(

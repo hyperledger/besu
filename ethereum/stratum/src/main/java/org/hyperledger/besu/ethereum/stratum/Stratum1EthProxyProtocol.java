@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
@@ -50,7 +51,9 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private final MiningCoordinator miningCoordinator;
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
-  private Function<Long, Long> epochCalculator;
+  // todo ed epochCalculator refactor
+  //  private Function<Long, Long> epochCalculator;
+  private final EpochCalculator epochCalculator;
 
   public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
     if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
@@ -87,7 +90,11 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   private void sendNewWork(final StratumConnection conn, final Object id) {
-    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
+    // todo ed epochCalculator refactor / test
+//    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
+    Long epoch = epochCalculator.seedEpoch(currentInput.getBlockNumber()); // todo confirm this is correct?
+    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch);
+//    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
     final String[] result = {
       "0x" + BaseEncoding.base16().lowerCase().encode(currentInput.getPrePowHash()),
       "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),

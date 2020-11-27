@@ -71,27 +71,33 @@ public final class MainnetBlockHeaderValidator {
   }
 
   static BlockHeaderValidator.Builder createOmmerValidator() {
-    return createOmmerValidator(EthHash::epoch);
+    // todo ed epochCalculator refactor
+    //    return createOmmerValidator(EthHash::epoch);
+    return createOmmerValidator(new EpochCalculator.DefaultEpochCalculator());
   }
 
+  // todo ed epochCalculator refactor
   static BlockHeaderValidator.Builder createOmmerValidator(
-      final Function<Long, Long> epochCalculator) {
+      final EpochCalculator epochCalculator) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
-        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
+        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES)) // todo ed change
         .addRule(new ProofOfWorkValidationRule(epochCalculator));
   }
 
   private static BlockHeaderValidator.Builder createValidator() {
-    return createBlockHeaderValidator(EthHash::epoch);
+// todo ed epochCalculator refactor
+    //    return createBlockHeaderValidator(EthHash::epoch);
+    return createBlockHeaderValidator(new EpochCalculator.DefaultEpochCalculator());
   }
 
+  // todo ed epochCalculator refactor
   static BlockHeaderValidator.Builder createBlockHeaderValidator(
-      final Function<Long, Long> epochCalculator) {
+      final EpochCalculator epochCalculator) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
@@ -99,7 +105,7 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
-        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
+        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES)) //todo ed change
         .addRule(new ProofOfWorkValidationRule(epochCalculator));
   }
 
@@ -112,7 +118,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(EthHash::epoch, true))
+            // todo ed epochCalculator refactor
+            .addRule(new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator(), true))
+//        .addRule(new ProofOfWorkValidationRule(EthHash::epoch, true))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 
@@ -124,7 +132,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(EthHash::epoch, true))
+            // todo ed epochCalculator refactor
+//        .addRule(new ProofOfWorkValidationRule(EthHash::epoch, true))
+            .addRule(new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator(), true))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

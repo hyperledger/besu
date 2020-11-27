@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -34,7 +35,9 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
   protected volatile Optional<Address> coinbase;
   protected boolean stratumMiningEnabled;
   protected final Iterable<Long> nonceGenerator;
-  protected final Function<Long, Long> epochCalculator;
+  // todo ed epochCalculator refactor
+  //  protected final Function<Long, Long> epochCalculator;
+  protected final EpochCalculator epochCalculator;
 
   public EthHashMinerExecutor(
       final ProtocolContext protocolContext,
@@ -43,7 +46,9 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final GasLimitCalculator gasLimitCalculator,
-      final Function<Long, Long> epochCalculator) {
+// todo ed epochCalculator refactor
+//      final Function<Long, Long> epochCalculator) {
+      final EpochCalculator epochCalculator) {
     super(
         protocolContext,
         protocolSchedule,
@@ -114,5 +119,5 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
     return coinbase;
   }
 
-  public Function<Long, Long> getEpochCalculator() {return epochCalculator; }
+  public EpochCalculator getEpochCalculator() {return epochCalculator; }
 }

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
@@ -38,7 +39,7 @@ public class EthGetWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
   private static final Logger LOG = getLogger();
-  private Function<Long, Long> epochCalculator;
+  private final EpochCalculator epochCalculator;
 
   public EthGetWork(final MiningCoordinator miner) {
     if (!(miner instanceof EthHashMiningCoordinator)) {
@@ -58,7 +59,17 @@ public class EthGetWork implements JsonRpcMethod {
     final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
       final EthHashSolverInputs rawResult = solver.get();
-      final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber());
+      //Long testEP = epochCalculator.apply(rawResult.getBlockNumber());
+      // todo ed testing epochCalculator refactor
+//      Long epoch = epochCalculator.apply(rawResult.getBlockNumber());
+      Long epoch = epochCalculator.seedEpoch(rawResult.getBlockNumber());  // todo ed should be seed or dag?
+      System.out.println("TestEpoch " + epoch);
+      System.out.println("RawREsult " + rawResult.getBlockNumber());
+//      Function<Long, Long> ep = ((EthHashMiningCoordinator)miner).getEpochCalculator();
+//      System.out.println("Got Epoch " + ep.apply(2760000l));
+//      Long epoch = ep.apply(rawResult.getBlockNumber());
+      final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch);
+      //final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber());
       final String[] result = {
         "0x" + BaseEncoding.base16().lowerCase().encode(rawResult.getPrePowHash()),
         "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
