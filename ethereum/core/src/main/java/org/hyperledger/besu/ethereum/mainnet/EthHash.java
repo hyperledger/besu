@@ -188,16 +188,6 @@ public final class EthHash {
   }
 
   /**
-   * Returns a function that returns the ECIP-1099 epoch formula.
-   *
-   * @param activationBlock the block that the length changes
-   * @return epoch length
-   */
-  //  public static Function<Long, Long> ecip1099Epoch(final long activationBlock) {
-  //    return changingEpoch(activationBlock, EPOCH_LENGTH, EPOCH_LENGTH * 2);
-  //  }
-
-  /**
    * Generates the EthHash cache for given parameters.
    *
    * @param cacheSize Size of the cache to generate
