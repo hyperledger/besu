@@ -50,10 +50,8 @@ public class EthGetWorkTest {
 
   @Before
   public void setUp() {
-    // todo (edwardmack) epochCalculator refactor, figure out how to test before and after
-    // activation block
     when(miningCoordinator.getEpochCalculator())
-        .thenReturn(new EpochCalculator.Ecip1099EpochCalculator(100000));
+        .thenReturn(new EpochCalculator.DefaultEpochCalculator());
     method = new EthGetWork(miningCoordinator);
   }
 
@@ -90,9 +88,14 @@ public class EthGetWorkTest {
             UInt256.fromHexString(hexValue),
             BaseEncoding.base16().lowerCase().decode(hexValue),
             30000);
+
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x" + BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(30000)),
+      "0x"
+          + BaseEncoding.base16()
+              .lowerCase()
+              .encode(
+                  DirectAcyclicGraphSeed.dagSeed(30000, miningCoordinator.getEpochCalculator())),
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x7530"
     };
@@ -104,23 +107,64 @@ public class EthGetWorkTest {
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
-  // todo ed epochCalculator refactor, testing, remove below.
   @Test
-  public void shouldCalculateSeed() {
-    String seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(29000));
-    System.out.println("Seed 29 " + seed);
+  public void shouldReturnCorrectResultECIP1099CalculatorBeforeActivation() {
+    when(miningCoordinator.getEpochCalculator())
+        .thenReturn(new EpochCalculator.Ecip1099EpochCalculator(100000));
+    method = new EthGetWork(miningCoordinator);
+    final JsonRpcRequestContext request = requestWithParams();
+    final EthHashSolverInputs values =
+        new EthHashSolverInputs(
+            UInt256.fromHexString(hexValue),
+            BaseEncoding.base16().lowerCase().decode(hexValue),
+            60000);
 
-    seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(30000));
-    System.out.println("Seed 30 " + seed);
+    final String[] expectedValue = {
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0x"
+          + BaseEncoding.base16()
+              .lowerCase()
+              .encode(
+                  DirectAcyclicGraphSeed.dagSeed(60000, miningCoordinator.getEpochCalculator())),
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0xea60"
+    };
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
+    when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
 
-    seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(2759999));
-    System.out.println("Seed 27599999 " + seed);
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
 
-    seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(2760000));
-    System.out.println("Seed 27600000 " + seed);
+  @Test
+  public void shouldReturnCorrectResultECIP1099CalculatorAfterActivation() {
+    when(miningCoordinator.getEpochCalculator())
+        .thenReturn(new EpochCalculator.Ecip1099EpochCalculator(100000));
+    method = new EthGetWork(miningCoordinator);
+    final JsonRpcRequestContext request = requestWithParams();
+    final EthHashSolverInputs values =
+        new EthHashSolverInputs(
+            UInt256.fromHexString(hexValue),
+            BaseEncoding.base16().lowerCase().decode(hexValue),
+            150000);
 
-    seed = BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(2760001));
-    System.out.println("Seed 27600001 " + seed);
+    final String[] expectedValue = {
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0x"
+          + BaseEncoding.base16()
+              .lowerCase()
+              .encode(
+                  DirectAcyclicGraphSeed.dagSeed(150000, miningCoordinator.getEpochCalculator())),
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0x249f0"
+    };
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
+    when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
+
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
   @Test

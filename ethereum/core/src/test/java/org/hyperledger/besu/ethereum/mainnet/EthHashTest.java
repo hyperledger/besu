@@ -52,7 +52,7 @@ public final class EthHashTest {
     final long cacheSize = EthHash.cacheSize(epoch);
     Assertions.assertThat(datasetSize).isEqualTo(1157627776);
     Assertions.assertThat(cacheSize).isEqualTo(18087488);
-    final int[] cache = EthHash.mkCache((int) cacheSize, blockNumber);
+    final int[] cache = EthHash.mkCache((int) cacheSize, blockNumber, epochCalculator);
     Assertions.assertThat(
             Hash.wrap(
                 Bytes32.wrap(
@@ -65,7 +65,7 @@ public final class EthHashTest {
 
   @Test
   public void hashimotoLightExample() {
-    final int[] cache = EthHash.mkCache(1024, 1L);
+    final int[] cache = EthHash.mkCache(1024, 1L, new EpochCalculator.DefaultEpochCalculator());
     Assertions.assertThat(
             Hex.toHexString(
                 EthHash.hashimotoLight(
@@ -80,7 +80,7 @@ public final class EthHashTest {
 
   @Test
   public void prepareCache() {
-    final int[] cache = EthHash.mkCache(1024, 1L);
+    final int[] cache = EthHash.mkCache(1024, 1L, new EpochCalculator.DefaultEpochCalculator());
     final ByteBuffer buffer =
         ByteBuffer.allocate(cache.length * Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN);
     for (final int i : cache) {

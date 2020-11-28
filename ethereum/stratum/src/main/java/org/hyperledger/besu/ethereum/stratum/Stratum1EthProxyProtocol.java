@@ -88,13 +88,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   private void sendNewWork(final StratumConnection conn, final Object id) {
-    // todo ed epochCalculator refactor change this to pass epochCalculator to dagSeed
-    //    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
-    Long epoch =
-        epochCalculator.seedEpoch(
-            currentInput.getBlockNumber()); // todo ed confirm this is correct?
-    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch);
-    //    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
+    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);
     final String[] result = {
       "0x" + BaseEncoding.base16().lowerCase().encode(currentInput.getPrePowHash()),
       "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),

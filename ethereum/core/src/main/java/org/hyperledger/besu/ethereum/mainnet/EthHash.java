@@ -232,17 +232,18 @@ public final class EthHash {
   //    return changingEpoch(activationBlock, EPOCH_LENGTH, EPOCH_LENGTH * 2);
   //  }
 
-  // todo(edwardmack) figure out how to pass epochCalculator to this for dagSeed
   /**
    * Generates the EthHash cache for given parameters.
    *
    * @param cacheSize Size of the cache to generate
    * @param block Block Number to generate cache for
+   * @param epochCalculator EpochCalculator used to determine current epoch length
    * @return EthHash Cache
    */
-  public static int[] mkCache(final int cacheSize, final long block) {
+  public static int[] mkCache(
+      final int cacheSize, final long block, final EpochCalculator epochCalculator) {
     final MessageDigest keccak512 = KECCAK_512.get();
-    keccak512.update(DirectAcyclicGraphSeed.dagSeed(block));
+    keccak512.update(DirectAcyclicGraphSeed.dagSeed(block, epochCalculator));
     final int rows = cacheSize / HASH_BYTES;
     final byte[] cache = new byte[rows * HASH_BYTES];
     try {

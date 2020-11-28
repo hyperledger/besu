@@ -135,11 +135,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   private void sendNewWork(final StratumConnection conn) {
-    // todo ed epochCalculator change to pass epochCalulator to dagSeed
-    //    Long epoch = epochCalculator.apply(currentInput.getBlockNumber());
-    Long epoch = epochCalculator.seedEpoch(currentInput.getBlockNumber());
-    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(epoch); // todo confirm epoch or block?
-    //    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
+    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);
     Object[] params =
         new Object[] {
           jobIdSupplier.get(),

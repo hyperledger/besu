@@ -46,15 +46,18 @@ public class EthHashCacheFactory {
       final long blockNumber, final EpochCalculator epochCalc) {
     final long epochIndex = epochCalc.cacheEpoch(blockNumber);
     try {
-      return descriptorCache.get(epochIndex, () -> createHashCache(epochIndex, blockNumber));
+      return descriptorCache.get(
+          epochIndex, () -> createHashCache(epochIndex, epochCalc, blockNumber));
     } catch (final ExecutionException ex) {
       throw new RuntimeException("Failed to create a suitable cache for EthHash calculations.", ex);
     }
   }
 
-  private EthHashDescriptor createHashCache(final long epochIndex, final long blockNumber) {
+  private EthHashDescriptor createHashCache(
+      final long epochIndex, final EpochCalculator epochCalculator, final long blockNumber) {
     final int[] cache =
-        EthHash.mkCache(Ints.checkedCast(EthHash.cacheSize(epochIndex)), blockNumber);
+        EthHash.mkCache(
+            Ints.checkedCast(EthHash.cacheSize(epochIndex)), blockNumber, epochCalculator);
     return new EthHashDescriptor(EthHash.datasetSize(epochIndex), cache);
   }
 }

@@ -58,12 +58,8 @@ public class EthGetWork implements JsonRpcMethod {
     final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
       final EthHashSolverInputs rawResult = solver.get();
-
-      // TODO(edwardmack) call dagSeed with epochCalculator
-      Long epoch =
-          epochCalculator.seedEpoch(rawResult.getBlockNumber()); // todo ed should be seed or dag?
-      System.out.println("TestEpoch " + epoch);
-      final byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber());
+      final byte[] dagSeed =
+          DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber(), epochCalculator);
       final String[] result = {
         "0x" + BaseEncoding.base16().lowerCase().encode(rawResult.getPrePowHash()),
         "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),

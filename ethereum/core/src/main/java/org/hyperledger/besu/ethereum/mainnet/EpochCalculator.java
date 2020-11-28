@@ -15,15 +15,15 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 public interface EpochCalculator {
-  public long seedEpoch(final long block);
+  public long epochStartBlock(final long block);
 
   public long cacheEpoch(final long block);
 
   final class DefaultEpochCalculator implements EpochCalculator {
 
     @Override
-    public long seedEpoch(final long block) {
-      return 0;
+    public long epochStartBlock(final long block) {
+      return cacheEpoch(block) * EthHash.EPOCH_LENGTH + 1;
     }
 
     @Override
@@ -41,8 +41,11 @@ public interface EpochCalculator {
 
     /** calculate start block given epoch */
     @Override
-    public long seedEpoch(final long epoch) {
-      return (epoch * 60000) + 1; // todo set epoch length (don't hard code)
+    public long epochStartBlock(final long block) {
+      long epoch = cacheEpoch(block);
+      return block < activationBlock
+          ? epoch * EthHash.EPOCH_LENGTH + 1
+          : epoch * (EthHash.EPOCH_LENGTH * 2) + 1;
     }
 
     @Override

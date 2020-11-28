@@ -35,7 +35,7 @@ public class DirectAcyclicGraphSeed {
             }
           });
 
-  public static byte[] dagSeed(final long block) {
+  private static byte[] dagSeed(final long block) {
     final byte[] seed = new byte[32];
     if (Long.compareUnsigned(block, EPOCH_LENGTH) >= 0) {
       final MessageDigest keccak256 = KECCAK_256.get();
@@ -51,6 +51,15 @@ public class DirectAcyclicGraphSeed {
     return seed;
   }
 
-  // todo(edwardmack) create dagSeed with epoch method to handle epoch start block rounding
-
+  /**
+   * Calculates dog seed to use for generating a verification cache and the mining dataset.
+   *
+   * @param block that the dag seed is calculated for
+   * @param epochCalculator used to determine starting block for epoch
+   * @return dag seed
+   */
+  public static byte[] dagSeed(final long block, final EpochCalculator epochCalculator) {
+    long startBlock = epochCalculator.epochStartBlock(block);
+    return dagSeed(startBlock);
+  }
 }
