@@ -35,22 +35,6 @@ public class DirectAcyclicGraphSeed {
             }
           });
 
-  private static byte[] dagSeed(final long block) {
-    final byte[] seed = new byte[32];
-    if (Long.compareUnsigned(block, EPOCH_LENGTH) >= 0) {
-      final MessageDigest keccak256 = KECCAK_256.get();
-      for (int i = 0; i < Long.divideUnsigned(block, EPOCH_LENGTH); ++i) {
-        keccak256.update(seed);
-        try {
-          keccak256.digest(seed, 0, seed.length);
-        } catch (final DigestException ex) {
-          throw new IllegalStateException(ex);
-        }
-      }
-    }
-    return seed;
-  }
-
   /**
    * Calculates dog seed to use for generating a verification cache and the mining dataset.
    *
@@ -60,6 +44,18 @@ public class DirectAcyclicGraphSeed {
    */
   public static byte[] dagSeed(final long block, final EpochCalculator epochCalculator) {
     long startBlock = epochCalculator.epochStartBlock(block);
-    return dagSeed(startBlock);
+    final byte[] seed = new byte[32];
+    if (Long.compareUnsigned(startBlock, EPOCH_LENGTH) >= 0) {
+      final MessageDigest keccak256 = KECCAK_256.get();
+      for (int i = 0; i < Long.divideUnsigned(startBlock, EPOCH_LENGTH); ++i) {
+        keccak256.update(seed);
+        try {
+          keccak256.digest(seed, 0, seed.length);
+        } catch (final DigestException ex) {
+          throw new IllegalStateException(ex);
+        }
+      }
+    }
+    return seed;
   }
 }
