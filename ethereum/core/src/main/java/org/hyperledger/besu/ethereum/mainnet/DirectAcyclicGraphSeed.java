@@ -36,7 +36,7 @@ public class DirectAcyclicGraphSeed {
           });
 
   /**
-   * Calculates dog seed to use for generating a verification cache and the mining dataset.
+   * Calculates dag seed to use for generating a verification cache and the mining dataset.
    *
    * @param block that the dag seed is calculated for
    * @param epochCalculator used to determine starting block for epoch
