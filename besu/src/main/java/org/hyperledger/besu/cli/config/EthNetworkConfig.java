@@ -25,6 +25,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MO
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.YOLO_V2_BOOTSTRAP_NODES;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -131,7 +132,10 @@ public class EthNetworkConfig {
     switch (networkName) {
       case ROPSTEN:
         return new EthNetworkConfig(
-            jsonConfig(ROPSTEN_GENESIS), ROPSTEN_NETWORK_ID, ROPSTEN_BOOTSTRAP_NODES, null);
+            jsonConfig(ROPSTEN_GENESIS),
+            ROPSTEN_NETWORK_ID,
+            ROPSTEN_BOOTSTRAP_NODES,
+            ROPSTEN_DISCOVERY_URL);
       case RINKEBY:
         return new EthNetworkConfig(
             jsonConfig(RINKEBY_GENESIS),
