@@ -84,7 +84,9 @@ public class Stratum1Protocol implements StratumProtocol {
       final Supplier<String> jobIdSupplier,
       final Supplier<String> subscriptionIdCreator) {
     if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException(
+          "Stratum1 requires an EthHashMiningCoordinator not "
+              + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
     }
     this.extranonce = extranonce;
     this.miningCoordinator = miningCoordinator;

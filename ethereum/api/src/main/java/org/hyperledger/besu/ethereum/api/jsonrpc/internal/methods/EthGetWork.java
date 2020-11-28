@@ -41,11 +41,12 @@ public class EthGetWork implements JsonRpcMethod {
   private final EpochCalculator epochCalculator;
 
   public EthGetWork(final MiningCoordinator miner) {
-    if (!(miner instanceof EthHashMiningCoordinator)) {
-      throw new IllegalArgumentException();
-    }
     this.miner = miner;
-    this.epochCalculator = ((EthHashMiningCoordinator) miner).getEpochCalculator();
+    if (miner instanceof EthHashMiningCoordinator) {
+      this.epochCalculator = ((EthHashMiningCoordinator) miner).getEpochCalculator();
+    } else {
+      this.epochCalculator = new EpochCalculator.DefaultEpochCalculator();
+    }
   }
 
   @Override

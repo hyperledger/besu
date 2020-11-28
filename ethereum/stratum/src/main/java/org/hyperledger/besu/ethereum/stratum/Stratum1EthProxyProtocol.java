@@ -55,7 +55,9 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
 
   public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
     if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException(
+          "Stratum1 Proxies require an EthHashMiningCoordinator not "
+              + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
     }
     this.miningCoordinator = miningCoordinator;
     this.epochCalculator = ((EthHashMiningCoordinator) miningCoordinator).getEpochCalculator();
