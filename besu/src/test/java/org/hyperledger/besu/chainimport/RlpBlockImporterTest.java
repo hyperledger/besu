@@ -101,13 +101,6 @@ public final class RlpBlockImporterTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
-    //    try {
-    //      RlpBlockImporter.ImportResult ir = rlpBlockImporter.importBlockchain(source,
-    // targetController, false);
-    //      System.out.println("IR " + ir);
-    //    } catch (Exception e) {
-    //      System.out.println("Exc " + e);
-    //    }
 
     assertThatThrownBy(
         () -> rlpBlockImporter.importBlockchain(source, targetController, false),
