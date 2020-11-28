@@ -20,13 +20,24 @@ import org.junit.Test;
 public class EtcHashTest {
 
   @Test
-  public void testEpoch() {
-    EpochCalculator epochCalculator = new EpochCalculator.Ecip1099EpochCalculator(2_000_000);
+  public void testDefaultEpochCalculator() {
+    EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
 
-    // check before activation block (1,000,000/30,000 = 33)
-    Assertions.assertThat(epochCalculator.cacheEpoch(1_000_000L)).isEqualTo(33);
+    // check before epoch 1
+    Assertions.assertThat(epochCalculator.cacheEpoch(29_999L)).isEqualTo(0);
 
-    // check after activation block (3,000,000/60,000 = 50)
-    Assertions.assertThat(epochCalculator.cacheEpoch(3_000_000L)).isEqualTo(50);
+    // check at epoch 1
+    Assertions.assertThat(epochCalculator.cacheEpoch(30_000L)).isEqualTo(1);
+  }
+
+  @Test
+  public void testEcip1099EpochCalculator() {
+    EpochCalculator epochCalculator = new EpochCalculator.Ecip1099EpochCalculator();
+
+    // check before epoch 1
+    Assertions.assertThat(epochCalculator.cacheEpoch(59_999L)).isEqualTo(0);
+
+    // check at epoch 1
+    Assertions.assertThat(epochCalculator.cacheEpoch(60_000L)).isEqualTo(1);
   }
 }

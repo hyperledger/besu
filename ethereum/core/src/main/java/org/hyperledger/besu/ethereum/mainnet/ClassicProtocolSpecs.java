@@ -231,14 +231,10 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createBlockHeaderValidator(
-                (activationBlock.isPresent()
-                    ? new EpochCalculator.Ecip1099EpochCalculator(activationBlock.getAsLong())
-                    : new EpochCalculator.DefaultEpochCalculator())))
+                new EpochCalculator.Ecip1099EpochCalculator()))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createOmmerValidator(
-                (activationBlock.isPresent()
-                    ? new EpochCalculator.Ecip1099EpochCalculator(activationBlock.getAsLong())
-                    : new EpochCalculator.DefaultEpochCalculator())))
+                new EpochCalculator.Ecip1099EpochCalculator()))
         .name("Thanos");
   }
 

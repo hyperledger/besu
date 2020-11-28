@@ -108,9 +108,9 @@ public class EthGetWorkTest {
   }
 
   @Test
-  public void shouldReturnCorrectResultECIP1099CalculatorBeforeActivation() {
+  public void shouldReturnCorrectResultOnHighBlockSeedEcip1099() {
     when(miningCoordinator.getEpochCalculator())
-        .thenReturn(new EpochCalculator.Ecip1099EpochCalculator(100000));
+        .thenReturn(new EpochCalculator.Ecip1099EpochCalculator());
     method = new EthGetWork(miningCoordinator);
     final JsonRpcRequestContext request = requestWithParams();
     final EthHashSolverInputs values =
@@ -128,36 +128,6 @@ public class EthGetWorkTest {
                   DirectAcyclicGraphSeed.dagSeed(60000, miningCoordinator.getEpochCalculator())),
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0xea60"
-    };
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
-    when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
-
-    final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-  }
-
-  @Test
-  public void shouldReturnCorrectResultECIP1099CalculatorAfterActivation() {
-    when(miningCoordinator.getEpochCalculator())
-        .thenReturn(new EpochCalculator.Ecip1099EpochCalculator(100000));
-    method = new EthGetWork(miningCoordinator);
-    final JsonRpcRequestContext request = requestWithParams();
-    final EthHashSolverInputs values =
-        new EthHashSolverInputs(
-            UInt256.fromHexString(hexValue),
-            BaseEncoding.base16().lowerCase().decode(hexValue),
-            150000);
-
-    final String[] expectedValue = {
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x"
-          + BaseEncoding.base16()
-              .lowerCase()
-              .encode(
-                  DirectAcyclicGraphSeed.dagSeed(150000, miningCoordinator.getEpochCalculator())),
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x249f0"
     };
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);

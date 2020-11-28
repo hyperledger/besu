@@ -33,26 +33,22 @@ public interface EpochCalculator {
   }
 
   final class Ecip1099EpochCalculator implements EpochCalculator {
-    private final long activationBlock;
+    // private final long activationBlock;
 
-    public Ecip1099EpochCalculator(final long activationBlock) {
-      this.activationBlock = activationBlock;
-    }
+    //    public Ecip1099EpochCalculator(final long activationBlock) {
+    //      this.activationBlock = activationBlock;
+    //    }
 
     /** calculate start block given epoch */
     @Override
     public long epochStartBlock(final long block) {
       long epoch = cacheEpoch(block);
-      return block < activationBlock
-          ? epoch * EthHash.EPOCH_LENGTH + 1
-          : epoch * (EthHash.EPOCH_LENGTH * 2) + 1;
+      return epoch * (EthHash.EPOCH_LENGTH * 2) + 1;
     }
 
     @Override
     public long cacheEpoch(final long block) {
-      return block < activationBlock
-          ? Long.divideUnsigned(block, EthHash.EPOCH_LENGTH)
-          : Long.divideUnsigned(block, EthHash.EPOCH_LENGTH * 2);
+      return Long.divideUnsigned(block, EthHash.EPOCH_LENGTH * 2);
     }
   }
 }
