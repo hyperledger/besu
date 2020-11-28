@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
@@ -41,7 +40,7 @@ public class StratumConnectionTest {
   public void setup() {
     miningCoordinator = Mockito.mock(EthHashMiningCoordinator.class);
     when(miningCoordinator.getEpochCalculator())
-            .thenReturn(new EpochCalculator.DefaultEpochCalculator());
+        .thenReturn(new EpochCalculator.DefaultEpochCalculator());
   }
 
   @Test
