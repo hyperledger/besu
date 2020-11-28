@@ -243,7 +243,8 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
+            # temporarily commented out because AWS credentials are broken
+            # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
 workflows:
