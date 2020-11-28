@@ -44,9 +44,17 @@ public class VertxRequestTransmitter implements RequestTransmitter {
   }
 
   @Override
-  public <T> T get(final String endpoint, final ResponseBodyHandler<T> responseHandler) {
+  public <T> T get(
+      final String contentType,
+      final String content,
+      final String endpoint,
+      final ResponseBodyHandler<T> responseHandler) {
     return sendRequest(
-        HttpMethod.GET, Optional.empty(), Optional.empty(), endpoint, responseHandler);
+        HttpMethod.GET,
+        Optional.ofNullable(contentType),
+        Optional.ofNullable(content),
+        endpoint,
+        responseHandler);
   }
 
   protected <T> T sendRequest(

@@ -350,6 +350,7 @@ public class RunnerBuilder {
         bootstrap = ethNetworkConfig.getBootNodes();
       }
       discoveryConfiguration.setBootnodes(bootstrap);
+      discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.getDnsDiscoveryUrl());
     } else {
       discoveryConfiguration.setActive(false);
     }
