@@ -12,24 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.enclave;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-public interface RequestTransmitter {
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 
-  @FunctionalInterface
-  interface ResponseBodyHandler<T> {
-    T convertResponse(final int statusCode, final byte[] body);
+public class JsonRpcErrorResponseException extends RuntimeException {
+
+  private final JsonRpcError jsonRpcError;
+
+  public JsonRpcErrorResponseException(final JsonRpcError error) {
+    super();
+    this.jsonRpcError = error;
   }
 
-  <T> T post(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler);
-
-  <T> T get(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler);
+  public JsonRpcError getJsonRpcError() {
+    return jsonRpcError;
+  }
 }
