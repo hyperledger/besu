@@ -220,8 +220,7 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final boolean quorumCompatibilityMode,
-      final OptionalLong activationBlock) {
+      final boolean quorumCompatibilityMode) {
     return phoenixDefinition(
             chainId,
             configContractSizeLimit,
