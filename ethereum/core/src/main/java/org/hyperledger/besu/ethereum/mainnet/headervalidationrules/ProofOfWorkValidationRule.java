@@ -18,11 +18,11 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
-import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,15 +38,15 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   static final EthHasher HASHER = new EthHasher.Light();
 
-  private final Function<Long, Long> epochCalculator;
+  private final EpochCalculator epochCalculator;
   private final boolean includeBaseFee;
 
-  public ProofOfWorkValidationRule(final Function<Long, Long> epochCalculator) {
+  public ProofOfWorkValidationRule(final EpochCalculator epochCalculator) {
     this(epochCalculator, false);
   }
 
   public ProofOfWorkValidationRule(
-      final Function<Long, Long> epochCalculator, final boolean includeBaseFee) {
+      final EpochCalculator epochCalculator, final boolean includeBaseFee) {
     this.epochCalculator = epochCalculator;
     this.includeBaseFee = includeBaseFee;
   }
