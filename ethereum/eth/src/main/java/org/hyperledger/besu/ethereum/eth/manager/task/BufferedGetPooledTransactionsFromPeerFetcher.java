@@ -26,7 +26,6 @@ import java.util.Queue;
 
 import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.Queues;
-import org.apache.logging.log4j.LogManager;
 
 @SuppressWarnings("UnstableApiUsage")
 public class BufferedGetPooledTransactionsFromPeerFetcher {
