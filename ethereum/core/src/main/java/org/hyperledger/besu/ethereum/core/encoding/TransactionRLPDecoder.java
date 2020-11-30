@@ -140,19 +140,6 @@ public interface TransactionRLPDecoder {
   static TransactionRLPDecoder goQuorumPrivateTransactionDecoder() {
     return input -> {
       input.enterList();
-      // TODO clean this up - not sure why but the GoQuorum private tx has extra nesting
-      if (input.nextIsList()) {
-        input.enterList();
-      }
-      if (input.nextIsList()) {
-        input.enterList();
-      }
-      if (input.nextIsList()) {
-        input.enterList();
-      }
-      if (input.nextIsList()) {
-        input.enterList();
-      }
       final Transaction.Builder builder =
           Transaction.builder()
               .nonce(input.readLongScalar())
