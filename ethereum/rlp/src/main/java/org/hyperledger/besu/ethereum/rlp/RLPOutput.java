@@ -260,23 +260,23 @@ public interface RLPOutput {
    * more efficient in that it saves most of that decoding/re-encoding work. Please note however
    * that this method <b>does</b> validate that the input is a valid RLP encoding. If you can
    * guaranteed that the input is valid and do not want this validation step, please have a look at
-   * {@link #writeRLPUnsafe(Bytes)}.
+   * {@link #writeRaw(Bytes)}.
    *
    * @param rlpEncodedValue An already RLP encoded value to write as next item of this output.
    */
-  default void writeRLP(final Bytes rlpEncodedValue) {
+  default void writeRLPBytes(final Bytes rlpEncodedValue) {
     RLP.validate(rlpEncodedValue);
-    writeRLPUnsafe(rlpEncodedValue);
+    writeRaw(rlpEncodedValue);
   }
 
   /**
    * Writes an already RLP encoded item to the output.
    *
-   * <p>This method is equivalent to {@link #writeRLP(Bytes)}, but is unsafe in that it does not do
-   * any validation of the its input. As such, it is faster but can silently yield invalid RLP
-   * output if misused.
+   * <p>This method is equivalent to {@link #writeRLPBytes(Bytes)}, but is unsafe in that it does
+   * not do any validation of the its input. As such, it is faster but can silently yield invalid
+   * RLP output if misused.
    *
-   * @param rlpEncodedValue An already RLP encoded value to write as next item of this output.
+   * @param bytes An already RLP encoded value to write as next item of this output.
    */
-  void writeRLPUnsafe(Bytes rlpEncodedValue);
+  void writeRaw(Bytes bytes);
 }

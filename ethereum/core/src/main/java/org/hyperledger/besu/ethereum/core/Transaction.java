@@ -334,6 +334,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     TransactionRLPEncoder.encode(this, out);
   }
 
+  public Bytes encode() {
+    return TransactionRLPEncoder.encode(this);
+  }
+
   @Override
   public BigInteger getR() {
     return signature.getR();

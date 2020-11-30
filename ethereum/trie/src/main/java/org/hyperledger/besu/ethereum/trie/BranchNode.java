@@ -98,7 +98,7 @@ class BranchNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     for (int i = 0; i < RADIX; ++i) {
-      out.writeRLPUnsafe(children.get(i).getRlpRef());
+      out.writeRaw(children.get(i).getRlpRef());
     }
     if (value.isPresent()) {
       out.writeBytes(valueSerializer.apply(value.get()));

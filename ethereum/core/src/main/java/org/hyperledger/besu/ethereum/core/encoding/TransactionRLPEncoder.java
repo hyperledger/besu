@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -34,6 +35,18 @@ public class TransactionRLPEncoder {
 
   public static void encode(final Transaction transaction, final RLPOutput output) {
     ENCODERS.getOrDefault(transaction.getType(), FRONTIER).encode(transaction, output);
+  }
+
+  public static Bytes encode(final Transaction transaction) {
+    final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
+    if (transaction.getType() == TransactionType.FRONTIER) {
+      FRONTIER.encode(transaction, bytesValueRLPOutput);
+      return bytesValueRLPOutput.encoded();
+    }
+
+    encode(transaction, bytesValueRLPOutput);
+    return Bytes.concatenate(
+        Bytes.of(transaction.getType().getSerializedType()), bytesValueRLPOutput.encoded());
   }
 
   static Encoder frontierEncoder() {
