@@ -79,9 +79,10 @@ public interface TransactionRLPDecoder {
       }
       final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
       final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
 
       input.leaveList();
-      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+
       chainId.ifPresent(builder::chainId);
       return builder.signature(signature).build();
     };
@@ -170,10 +171,9 @@ public interface TransactionRLPDecoder {
       }
       final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
       final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
 
       input.leaveList();
-
-      final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
       chainId.ifPresent(builder::chainId);
       return builder.signature(signature).build();
     };
