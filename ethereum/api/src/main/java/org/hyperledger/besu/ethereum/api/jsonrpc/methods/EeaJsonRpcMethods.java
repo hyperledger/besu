@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.EeaSendRawTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.OnChainEeaSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetEeaTransactionCount;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -42,13 +43,17 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    return mapOf(
-        new EeaSendRawTransaction(
-            getTransactionPool(),
-            privacyController,
-            enclavePublicKeyProvider,
-            getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
-        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider));
+    if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+      return mapOf(
+          new OnChainEeaSendRawTransaction(
+              getTransactionPool(), privacyController, enclavePublicKeyProvider),
+          new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider));
+    } else { // off chain privacy
+      return mapOf(
+          new EeaSendRawTransaction(
+              getTransactionPool(), privacyController, enclavePublicKeyProvider),
+          new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider));
+    }
   }
 
   @Override
