@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.util.Collection;
 import java.util.function.BiConsumer;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -243,8 +242,7 @@ public interface RLPOutput {
    *     writes this value to the output.
    * @param <T> The type of values to write.
    */
-  default <T> void writeList(
-      final Collection<T> values, final BiConsumer<T, RLPOutput> valueWriter) {
+  default <T> void writeList(final Iterable<T> values, final BiConsumer<T, RLPOutput> valueWriter) {
     startList();
     for (final T v : values) {
       valueWriter.accept(v, this);
