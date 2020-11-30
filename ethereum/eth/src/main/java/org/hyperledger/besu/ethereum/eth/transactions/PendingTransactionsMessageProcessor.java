@@ -96,7 +96,7 @@ public class PendingTransactionsMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      LOG.trace("[TEST-POOL] Received pooled transaction hashes message from {}", peer);
+      LOG.trace("Received pooled transaction hashes message from {}", peer);
 
       final List<Hash> pendingHashes = transactionsMessage.pendingTransactions();
       transactionTracker.markTransactionsHashesAsSeen(peer, pendingHashes);
@@ -105,10 +105,6 @@ public class PendingTransactionsMessageProcessor {
             scheduledTasks.computeIfAbsent(
                 peer,
                 ethPeer -> {
-                  LOG.info(
-                      "[TEST-POOL] Create task for peer {} {}",
-                      peer,
-                      transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
                   ethContext
                       .getScheduler()
                       .scheduleFutureTask(
@@ -156,8 +152,6 @@ public class PendingTransactionsMessageProcessor {
 
     @Override
     public void run() {
-
-      LOG.info("[TEST-POOL] Run task for peer {}", peer);
       if (!this.peer.isDisconnected()) {
         scheduledTasks.remove(this.peer).requestTransactions();
       }

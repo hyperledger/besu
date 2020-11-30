@@ -55,7 +55,7 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
     return sendRequestToPeer(
         peer -> {
           LOG.debug(
-              "[TEST-POOL]  Requesting {} transaction pool entries from peer {}.",
+              "Requesting {} transaction pool entries from peer {}.",
               hashes.size(),
               peer);
           return peer.getPooledTransactions(hashes);

@@ -49,9 +49,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   }
 
   public void requestTransactions() {
-    LOG.info("[TEST-POOL] BufferedGetPooledTransactionsFromPeerTask running {}", peer);
     for (List<Hash> txAnnounces; !(txAnnounces = getTxAnnounces()).isEmpty(); ) {
-      LOG.info("[TEST-POOL] transaction to send " + txAnnounces.size());
       final GetPooledTransactionsFromPeerTask task =
           GetPooledTransactionsFromPeerTask.forHashes(
               processor.getEthContext(), txAnnounces, processor.getMetricsSystem());
@@ -61,13 +59,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
           .getScheduler()
           .scheduleSyncWorkerTask(task)
           .thenAccept(
-              result -> {
-                final List<Transaction> txs = result.getResult();
-                LOG.info("[TEST-POOL] thenAccept{} {}", txs.size(), peer);
-                processor.getTransactionPool().addRemoteTransactions(txs);
-              });
-
-      LOG.info("[TEST-POOL] transaction received " + txAnnounces.size());
+              result -> processor.getTransactionPool().addRemoteTransactions(result.getResult()));
     }
   }
 
