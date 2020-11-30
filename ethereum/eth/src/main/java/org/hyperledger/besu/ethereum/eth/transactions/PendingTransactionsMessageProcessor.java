@@ -115,10 +115,9 @@ public class PendingTransactionsMessageProcessor {
                 });
 
         for (final Hash hash : pendingHashes) {
-          if (transactionPool.getTransactionByHash(hash).isEmpty()) {
-            if (transactionPool.addTransactionHash(hash)) {
-              bufferedTask.addHash(hash);
-            }
+          if (transactionPool.getTransactionByHash(hash).isEmpty()
+              && transactionPool.addTransactionHash(hash)) {
+            bufferedTask.addHash(hash);
           }
         }
       }

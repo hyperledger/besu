@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor;
 
@@ -27,15 +26,11 @@ import java.util.Queue;
 
 import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.Queues;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 @SuppressWarnings("UnstableApiUsage")
 public class BufferedGetPooledTransactionsFromPeerFetcher {
 
   private static final int MAX_HASHES = 256;
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final EthPeer peer;
   private final PendingTransactionsMessageProcessor processor;
