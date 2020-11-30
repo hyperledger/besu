@@ -154,12 +154,6 @@ public class PendingTransactionsMessageProcessor {
     public void run() {
       if (peer != null) {
         final BufferedGetPooledTransactionsFromPeerFetcher fetcher = scheduledTasks.remove(peer);
-        LogManager.getLogger()
-            .info(
-                "[TEST-POOL] fetcher started {} {} {}",
-                peer,
-                scheduledTasks.size(),
-                peer.isDisconnected());
         if (!peer.isDisconnected()) {
           fetcher.requestTransactions();
         }

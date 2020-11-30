@@ -45,7 +45,6 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   }
 
   public void requestTransactions() {
-    LogManager.getLogger().info("[TEST-POOL] requestTransactions started");
     for (List<Hash> txAnnounces; !(txAnnounces = getTxAnnounces()).isEmpty(); ) {
       final GetPooledTransactionsFromPeerTask task =
           GetPooledTransactionsFromPeerTask.forHashes(
