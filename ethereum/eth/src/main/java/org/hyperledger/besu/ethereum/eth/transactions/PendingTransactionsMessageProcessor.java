@@ -151,7 +151,7 @@ public class PendingTransactionsMessageProcessor {
 
     @Override
     public void run() {
-      if (!this.peer.isDisconnected()) {
+      if (this.peer != null && !this.peer.isDisconnected()) {
         scheduledTasks.remove(this.peer).requestTransactions();
       }
     }
