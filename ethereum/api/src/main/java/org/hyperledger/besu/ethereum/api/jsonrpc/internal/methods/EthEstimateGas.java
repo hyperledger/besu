@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.EstimateGasOperationTracer;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 public class EthEstimateGas implements JsonRpcMethod {
@@ -89,7 +90,7 @@ public class EthEstimateGas implements JsonRpcMethod {
         callParams.getFrom(),
         callParams.getTo(),
         gasLimit,
-        Wei.ZERO,
+        Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
         callParams.getGasPremium(),
         callParams.getFeeCap(),
         callParams.getValue(),
