@@ -26,6 +26,7 @@ import java.util.Queue;
 
 import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.Queues;
+import org.apache.logging.log4j.LogManager;
 
 @SuppressWarnings("UnstableApiUsage")
 public class BufferedGetPooledTransactionsFromPeerFetcher {
@@ -44,6 +45,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   }
 
   public void requestTransactions() {
+    LogManager.getLogger().info("[TEST-POOL] requestTransactions started");
     for (List<Hash> txAnnounces; !(txAnnounces = getTxAnnounces()).isEmpty(); ) {
       final GetPooledTransactionsFromPeerTask task =
           GetPooledTransactionsFromPeerTask.forHashes(

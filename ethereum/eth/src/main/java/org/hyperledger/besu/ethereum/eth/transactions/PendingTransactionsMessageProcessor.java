@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class PendingTransactionsMessageProcessor {
@@ -151,8 +152,17 @@ public class PendingTransactionsMessageProcessor {
 
     @Override
     public void run() {
-      if (this.peer != null && !this.peer.isDisconnected()) {
-        scheduledTasks.remove(this.peer).requestTransactions();
+      if (peer != null) {
+        final BufferedGetPooledTransactionsFromPeerFetcher fetcher = scheduledTasks.remove(peer);
+        LogManager.getLogger()
+            .info(
+                "[TEST-POOL] fetcher started {} {} {}",
+                peer,
+                scheduledTasks.size(),
+                peer.isDisconnected());
+        if (!peer.isDisconnected()) {
+          fetcher.requestTransactions();
+        }
       }
     }
   }
