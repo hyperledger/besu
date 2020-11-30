@@ -44,7 +44,9 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   }
 
   public void requestTransactions() {
-    for (List<Hash> txAnnounces; !(txAnnounces = getTxAnnounces()).isEmpty(); ) {
+    for (List<Hash> txAnnounces = getTxAnnounces();
+        !txAnnounces.isEmpty();
+        txAnnounces = getTxAnnounces()) {
       final GetPooledTransactionsFromPeerTask task =
           GetPooledTransactionsFromPeerTask.forHashes(
               processor.getEthContext(), txAnnounces, processor.getMetricsSystem());

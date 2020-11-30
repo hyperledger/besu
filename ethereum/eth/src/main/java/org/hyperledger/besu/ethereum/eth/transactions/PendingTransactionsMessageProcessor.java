@@ -31,7 +31,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.Logger;
@@ -98,8 +97,8 @@ public class PendingTransactionsMessageProcessor {
     try {
       LOG.trace("Received pooled transaction hashes message from {}", peer);
 
-      final List<Hash> pendingHashes = transactionsMessage.pendingTransactions();
-      transactionTracker.markTransactionsHashesAsSeen(peer, pendingHashes);
+      transactionTracker.markTransactionsHashesAsSeen(
+          peer, transactionsMessage.pendingTransactions());
       if (syncState.isInSync(SYNC_TOLERANCE)) {
         final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
             scheduledTasks.computeIfAbsent(
@@ -110,11 +109,10 @@ public class PendingTransactionsMessageProcessor {
                       .scheduleFutureTask(
                           new FetcherCreatorTask(peer),
                           transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
-                  return new BufferedGetPooledTransactionsFromPeerFetcher(
-                      peer, PendingTransactionsMessageProcessor.this);
+                  return new BufferedGetPooledTransactionsFromPeerFetcher(peer, this);
                 });
 
-        for (final Hash hash : pendingHashes) {
+        for (final Hash hash : transactionsMessage.pendingTransactions()) {
           if (transactionPool.getTransactionByHash(hash).isEmpty()
               && transactionPool.addTransactionHash(hash)) {
             bufferedTask.addHash(hash);
