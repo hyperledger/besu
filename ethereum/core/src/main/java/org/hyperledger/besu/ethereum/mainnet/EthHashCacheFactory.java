@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -44,18 +43,21 @@ public class EthHashCacheFactory {
   Cache<Long, EthHashDescriptor> descriptorCache = CacheBuilder.newBuilder().maximumSize(5).build();
 
   public EthHashDescriptor ethHashCacheFor(
-      final long blockNumber, final Function<Long, Long> epochCalc) {
-    final long epochIndex = epochCalc.apply(blockNumber);
+      final long blockNumber, final EpochCalculator epochCalc) {
+    final long epochIndex = epochCalc.cacheEpoch(blockNumber);
     try {
-      return descriptorCache.get(epochIndex, () -> createHashCache(epochIndex, blockNumber));
+      return descriptorCache.get(
+          epochIndex, () -> createHashCache(epochIndex, epochCalc, blockNumber));
     } catch (final ExecutionException ex) {
       throw new RuntimeException("Failed to create a suitable cache for EthHash calculations.", ex);
     }
   }
 
-  private EthHashDescriptor createHashCache(final long epochIndex, final long blockNumber) {
+  private EthHashDescriptor createHashCache(
+      final long epochIndex, final EpochCalculator epochCalculator, final long blockNumber) {
     final int[] cache =
-        EthHash.mkCache(Ints.checkedCast(EthHash.cacheSize(epochIndex)), blockNumber);
+        EthHash.mkCache(
+            Ints.checkedCast(EthHash.cacheSize(epochIndex)), blockNumber, epochCalculator);
     return new EthHashDescriptor(EthHash.datasetSize(epochIndex), cache);
   }
 }

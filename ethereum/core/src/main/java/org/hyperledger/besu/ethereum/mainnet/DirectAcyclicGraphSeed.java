@@ -35,11 +35,19 @@ public class DirectAcyclicGraphSeed {
             }
           });
 
-  public static byte[] dagSeed(final long block) {
+  /**
+   * Calculates dag seed to use for generating a verification cache and the mining dataset.
+   *
+   * @param block that the dag seed is calculated for
+   * @param epochCalculator used to determine starting block for epoch
+   * @return dag seed
+   */
+  public static byte[] dagSeed(final long block, final EpochCalculator epochCalculator) {
+    long startBlock = epochCalculator.epochStartBlock(block);
     final byte[] seed = new byte[32];
-    if (Long.compareUnsigned(block, EPOCH_LENGTH) >= 0) {
+    if (Long.compareUnsigned(startBlock, EPOCH_LENGTH) >= 0) {
       final MessageDigest keccak256 = KECCAK_256.get();
-      for (int i = 0; i < Long.divideUnsigned(block, EPOCH_LENGTH); ++i) {
+      for (int i = 0; i < Long.divideUnsigned(startBlock, EPOCH_LENGTH); ++i) {
         keccak256.update(seed);
         try {
           keccak256.digest(seed, 0, seed.length);
