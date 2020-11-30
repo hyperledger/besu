@@ -17,7 +17,7 @@ package org.hyperledger.besu.config.experimental;
 import picocli.CommandLine.Option;
 
 /**
- * Flags defined in those class must be used with cautious, and strictly reserved to experimental
+ * Flags defined in this class must be used with caution, and strictly reserved to experimental
  * EIPs.
  */
 public class ExperimentalEIPs {

@@ -20,23 +20,23 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 public abstract class MinerDataResult implements JsonRpcResult {
-  abstract String getNetBlockReward();
+  public abstract String getNetBlockReward();
 
-  abstract String getStaticBlockReward();
+  public abstract String getStaticBlockReward();
 
-  abstract String getTransactionFee();
+  public abstract String getTransactionFee();
 
-  abstract String getUncleInclusionReward();
+  public abstract String getUncleInclusionReward();
 
-  abstract List<UncleRewardResult> getUncleRewards();
+  public abstract List<UncleRewardResult> getUncleRewards();
 
-  abstract String getCoinbase();
+  public abstract String getCoinbase();
 
-  abstract String getExtraData();
+  public abstract String getExtraData();
 
-  abstract String getDifficulty();
+  public abstract String getDifficulty();
 
-  abstract String getTotalDifficulty();
+  public abstract String getTotalDifficulty();
 
   @Value.Immutable
   public interface UncleRewardResult {
