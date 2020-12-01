@@ -25,7 +25,6 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -44,11 +43,10 @@ public interface TransactionRLPDecoder {
     if (transactionType.equals(TransactionType.FRONTIER)) {
       return frontierDecoder().decode(rlpInput);
     } else {
-      final RLPInput transactionPayloadRLP =
-          new BytesValueRLPInput(typedTransactionBytes.slice(1), false);
+      rlpInput.skipNext(); // throw away the type byte
       if (transactionType.equals(TransactionType.EIP1559)) {
         ExperimentalEIPs.eip1559MustBeEnabled();
-        return eip1559Decoder().decode(transactionPayloadRLP);
+        return eip1559Decoder().decode(rlpInput);
       } else {
         throw new IllegalStateException(
             String.format(
