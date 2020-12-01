@@ -87,7 +87,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionRLPDecoder.decodeTransaction(rlpInput);
+    return TransactionRLPDecoder.decode(rlpInput);
   }
 
   /**

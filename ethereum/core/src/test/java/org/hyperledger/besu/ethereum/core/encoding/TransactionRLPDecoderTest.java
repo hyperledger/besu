@@ -35,7 +35,7 @@ public class TransactionRLPDecoderTest {
   @Test
   public void decodeFrontierNominalCase() {
     final Transaction transaction =
-        TransactionRLPDecoder.decodeTransaction(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        TransactionRLPDecoder.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPrice()).isEqualByComparingTo(Wei.of(50L));
     assertThat(transaction.getGasPremium()).isEmpty();
@@ -46,7 +46,7 @@ public class TransactionRLPDecoderTest {
   public void decodeEIP1559NominalCase() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction transaction =
-        TransactionRLPDecoder.decodeTransaction(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        TransactionRLPDecoder.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPremium()).hasValue(Wei.of(527L));
     assertThat(transaction.getFeeCap()).hasValue(Wei.of(369L));
@@ -57,9 +57,7 @@ public class TransactionRLPDecoderTest {
   public void decodeEIP1559FailureWhenNotEnabled() {
     ExperimentalEIPs.eip1559Enabled = false;
     assertThatThrownBy(
-            () ->
-                TransactionRLPDecoder.decodeTransaction(
-                    RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))))
+            () -> TransactionRLPDecoder.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("EIP-1559 feature flag");
     ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
