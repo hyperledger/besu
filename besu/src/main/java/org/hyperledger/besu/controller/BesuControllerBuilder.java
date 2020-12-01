@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
@@ -247,7 +248,8 @@ public abstract class BesuControllerBuilder {
                     new MarkSweepPruner(
                         ((DefaultWorldStateArchive) worldStateArchive).getWorldStateStorage(),
                         blockchain,
-                        storageProvider.createPruningStorage(),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.PRUNING_STATE),
                         metricsSystem),
                     blockchain,
                     prunerConfiguration));

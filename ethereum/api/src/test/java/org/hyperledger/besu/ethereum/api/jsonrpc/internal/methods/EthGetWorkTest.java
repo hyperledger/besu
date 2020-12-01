@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
 import java.util.Optional;
@@ -49,6 +50,8 @@ public class EthGetWorkTest {
 
   @Before
   public void setUp() {
+    when(miningCoordinator.getEpochCalculator())
+        .thenReturn(new EpochCalculator.DefaultEpochCalculator());
     method = new EthGetWork(miningCoordinator);
   }
 
@@ -85,15 +88,51 @@ public class EthGetWorkTest {
             UInt256.fromHexString(hexValue),
             BaseEncoding.base16().lowerCase().decode(hexValue),
             30000);
+
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x" + BaseEncoding.base16().lowerCase().encode(DirectAcyclicGraphSeed.dagSeed(30000)),
+      "0x"
+          + BaseEncoding.base16()
+              .lowerCase()
+              .encode(
+                  DirectAcyclicGraphSeed.dagSeed(30000, miningCoordinator.getEpochCalculator())),
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x7530"
     };
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
+
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnCorrectResultOnHighBlockSeedEcip1099() {
+    when(miningCoordinator.getEpochCalculator())
+        .thenReturn(new EpochCalculator.Ecip1099EpochCalculator());
+    method = new EthGetWork(miningCoordinator);
+    final JsonRpcRequestContext request = requestWithParams();
+    final EthHashSolverInputs values =
+        new EthHashSolverInputs(
+            UInt256.fromHexString(hexValue),
+            BaseEncoding.base16().lowerCase().decode(hexValue),
+            60000);
+
+    final String[] expectedValue = {
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0x"
+          + BaseEncoding.base16()
+              .lowerCase()
+              .encode(
+                  DirectAcyclicGraphSeed.dagSeed(60000, miningCoordinator.getEpochCalculator())),
+      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "0xea60"
+    };
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedValue);
+    when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
+
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }

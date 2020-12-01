@@ -20,7 +20,7 @@ executors:
       - image: circleci/openjdk:11.0.8-jdk-buster
         auth:
           username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO      
+          password: $DOCKER_PASSWORD_RO
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -121,8 +121,6 @@ jobs:
           command: |
             build\distributions\besu\bin\besu.bat --help
             build\distributions\besu\bin\besu.bat --version
-
-
 
   unitTests:
     executor: besu_executor_xl
@@ -245,7 +243,8 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
+            # temporarily commented out because AWS credentials are broken
+            # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
 
 workflows:
@@ -257,7 +256,7 @@ workflows:
           requires:
             - assemble
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
       - testWindows:
           requires:
             - assemble
