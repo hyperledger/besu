@@ -38,24 +38,19 @@ import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.util.io.RollingFileReader;
 
-import java.io.Closeable;
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.xerial.snappy.Snappy;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -280,71 +275,7 @@ public class RestoreState implements Runnable {
     trieNodeCount++;
   }
 
-  static class RollingFileReader implements Closeable {
-    final BiFunction<Integer, Boolean, Path> filenameGenerator;
-    final boolean compressed;
-    int currentPosition;
-    int fileNumber;
-    FileInputStream in;
-    final DataInputStream index;
-    boolean done = false;
-
-    RollingFileReader(
-        final BiFunction<Integer, Boolean, Path> filenameGenerator, final boolean compressed)
-        throws IOException {
-      this.filenameGenerator = filenameGenerator;
-      this.compressed = compressed;
-      final Path firstInputFile = filenameGenerator.apply(fileNumber, compressed);
-      in = new FileInputStream(firstInputFile.toFile());
-      index =
-          new DataInputStream(
-              new FileInputStream(StateBackupService.dataFileToIndex(firstInputFile).toFile()));
-      fileNumber = index.readInt();
-      currentPosition = index.readUnsignedShort();
-    }
-
-    byte[] readBytes() throws IOException {
-      byte[] raw;
-      try {
-        final int start = currentPosition;
-        final int nextFile = index.readUnsignedShort();
-        currentPosition = index.readInt();
-        if (nextFile == fileNumber) {
-          final int len = currentPosition - start;
-          raw = new byte[len];
-          //noinspection ResultOfMethodCallIgnored
-          in.read(raw);
-        } else {
-          raw = in.readAllBytes();
-          in.close();
-          fileNumber = nextFile;
-          in = new FileInputStream(filenameGenerator.apply(fileNumber, compressed).toFile());
-          if (currentPosition != 0) {
-            //noinspection ResultOfMethodCallIgnored
-            in.skip(currentPosition);
-          }
-        }
-      } catch (final EOFException eofe) {
-        // this happens when we read the last value, where there is no next index.
-        raw = in.readAllBytes();
-        done = true;
-      }
-      return compressed ? Snappy.uncompress(raw) : raw;
-    }
-
-    @Override
-    public void close() throws IOException {
-      in.close();
-      index.close();
-    }
-
-    public boolean isDone() {
-      return done;
-    }
-  }
-
-  @SuppressWarnings("unused")
-  BesuController createBesuController() {
+  private BesuController createBesuController() {
     return parentCommand.parentCommand.buildController();
   }
 }
