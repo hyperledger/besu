@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -135,6 +136,16 @@ public class EthEstimateGasTest {
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnGasEstimateErrorWhenGasPricePresentForEip1559Transaction() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(eip1559TransactionCallParameter(Optional.of(Wei.of(10))));
+    mockTransientProcessorResultGasEstimate(1L, false, false);
+    Assertions.assertThatThrownBy(() -> method.response(request))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("gasPrice cannot be used with baseFee or feeCap");
   }
 
   @Test
@@ -296,11 +307,15 @@ public class EthEstimateGasTest {
   }
 
   private CallParameter eip1559TransactionCallParameter() {
+    return eip1559TransactionCallParameter(Optional.empty());
+  }
+
+  private CallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
     return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         null,
-        Wei.ZERO,
+        gasPrice.orElse(Wei.ZERO),
         Wei.fromHexString("0x10"),
         Wei.fromHexString("0x10"),
         Wei.ZERO,

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -56,7 +57,7 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final CallParameter callParams = requestContext.getRequiredParameter(0, CallParameter.class);
+    final CallParameter callParams = validateAndGetCallParams(requestContext);
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {
@@ -150,5 +151,14 @@ public class EthEstimateGas implements JsonRpcMethod {
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
+  }
+
+  private CallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
+    final CallParameter callParams = request.getRequiredParameter(0, CallParameter.class);
+    if (callParams.getGasPrice() != null
+        && (callParams.getFeeCap().isPresent() || callParams.getGasPremium().isPresent())) {
+      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or feeCap");
+    }
+    return callParams;
   }
 }
