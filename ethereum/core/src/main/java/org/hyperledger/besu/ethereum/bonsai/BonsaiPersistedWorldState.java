@@ -52,14 +52,17 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   private Bytes32 worldStateRootHash;
 
+  private final BonsaiWorldStateArchive archive;
   private BonsaiWorldStateUpdater updater;
 
   public BonsaiPersistedWorldState(
+      final BonsaiWorldStateArchive archive,
       final KeyValueStorage accountStorage,
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
+    this.archive = archive;
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
@@ -70,9 +73,13 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             trieBranchStorage.get(WORLD_ROOT_KEY).map(Bytes::wrap).orElse(Hash.EMPTY_TRIE_HASH));
   }
 
+  public BonsaiWorldStateArchive getArchive() {
+    return archive;
+  }
+
   @Override
   public MutableWorldState copy() {
-    throw new RuntimeException("LOL no");
+    throw new UnsupportedOperationException("LOL no");
   }
 
   @Override
@@ -213,8 +220,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       // for manicured tries and composting, trim and compost branches here
 
       if (blockHash != null) {
+        final TrieLogLayer trieLog = updater.generateTrieLog(blockHash);
+        trieLog.freeze();
+        // FIXME add to archive her, but only once we get persisted follow distance implemented
+        // archive.addLayeredWorldState(new BonsaiLayeredWorldState(this, trieLog));
         final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-        updater.generateTrieLog(blockHash).writeTo(rlpLog);
+        trieLog.writeTo(rlpLog);
         trieLogTx.put(blockHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
       }
 
@@ -332,10 +343,5 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             Function.identity(),
             Function.identity());
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
-  }
-
-  @Override
-  public void setCode(final Address address, final Bytes code) {
-    throw new UnsupportedOperationException("Cannot write code to persisted state directly");
   }
 }

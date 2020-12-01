@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -32,7 +33,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -44,7 +44,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class TrieLogLayer {
 
-  private Bytes32 blockHash;
+  private Hash blockHash;
   private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts = new TreeMap<>();
   private final Map<Address, BonsaiValue<Bytes>> code = new TreeMap<>();
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage = new TreeMap<>();
@@ -52,14 +52,14 @@ public class TrieLogLayer {
 
   /** Locks the layer so no new changes can be added; */
   public void freeze() {
-    frozen = true;
+    frozen = true; // The code never bothered me anyway
   }
 
-  public Bytes32 getBlockHash() {
+  public Hash getBlockHash() {
     return blockHash;
   }
 
-  public void setBlockHash(final Bytes32 blockHash) {
+  public void setBlockHash(final Hash blockHash) {
     checkState(!frozen, "Layer is Frozen");
     this.blockHash = blockHash;
   }
@@ -92,7 +92,7 @@ public class TrieLogLayer {
     final TrieLogLayer newLayer = new TrieLogLayer();
 
     input.enterList();
-    newLayer.blockHash = input.readBytes32();
+    newLayer.blockHash = Hash.wrap(input.readBytes32());
 
     while (!input.isEndOfCurrentList()) {
       input.enterList();
@@ -203,6 +203,10 @@ public class TrieLogLayer {
     return storage.entrySet().stream();
   }
 
+  Stream<Map.Entry<Hash, BonsaiValue<UInt256>>> streamStorageChanges(final Address address) {
+    return storage.getOrDefault(address, Map.of()).entrySet().stream();
+  }
+
   private static <T> T nullOrValue(final RLPInput input, final Function<RLPInput, T> reader) {
     if (input.nextIsNull()) {
       input.skipNext();
@@ -210,5 +214,23 @@ public class TrieLogLayer {
     } else {
       return reader.apply(input);
     }
+  }
+
+  public boolean isFrozen() {
+    return frozen;
+  }
+
+  public Optional<Bytes> getCode(final Address address) {
+    return Optional.ofNullable(code.get(address)).map(BonsaiValue::getUpdated);
+  }
+
+  public Optional<UInt256> getStorageBySlotHash(final Address address, final Hash slotHash) {
+    return Optional.ofNullable(storage.get(address))
+        .map(i -> i.get(slotHash))
+        .map(BonsaiValue::getUpdated);
+  }
+
+  public Optional<StateTrieAccountValue> getAccount(final Address address) {
+    return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getUpdated);
   }
 }

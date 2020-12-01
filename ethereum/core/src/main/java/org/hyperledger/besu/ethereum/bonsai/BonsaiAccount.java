@@ -78,6 +78,23 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
+  BonsaiAccount(
+      final BonsaiWorldState context,
+      final Address address,
+      final StateTrieAccountValue stateTrieAccount,
+      final boolean mutable) {
+    this(
+        context,
+        address,
+        Hash.hash(address),
+        stateTrieAccount.getNonce(),
+        stateTrieAccount.getBalance(),
+        stateTrieAccount.getStorageRoot(),
+        stateTrieAccount.getCodeHash(),
+        stateTrieAccount.getVersion(),
+        mutable);
+  }
+
   public BonsaiAccount(final BonsaiAccount toCopy) {
     this(toCopy, toCopy.context, false);
   }
@@ -199,12 +216,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
       throw new UnsupportedOperationException("Account is immutable");
     }
     this.code = code;
-    if (code == null) {
+    if (code == null || code.isEmpty()) {
       this.codeHash = Hash.EMPTY;
     } else {
       this.codeHash = Hash.hash(code);
     }
-    context.setCode(address, code);
   }
 
   @Override

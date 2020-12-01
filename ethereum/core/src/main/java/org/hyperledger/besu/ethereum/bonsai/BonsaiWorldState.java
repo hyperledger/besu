@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.WorldView;
 
 import java.util.Map;
 import java.util.Optional;
@@ -26,10 +27,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public interface BonsaiWorldState {
-  Bytes getCode(Address address);
+public interface BonsaiWorldState extends WorldView {
 
-  void setCode(Address address, Bytes code);
+  Bytes getCode(Address address);
 
   UInt256 getStorageValue(Address address, UInt256 key);
 

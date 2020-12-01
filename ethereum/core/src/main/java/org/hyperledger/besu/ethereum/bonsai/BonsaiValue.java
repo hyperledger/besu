@@ -30,6 +30,10 @@ public class BonsaiValue<T> {
     this.updated = updated;
   }
 
+  public BonsaiValue(final T unchanged) {
+    this(unchanged, unchanged);
+  }
+
   public T getOriginal() {
     return original;
   }

@@ -20,10 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -37,11 +39,19 @@ import org.junit.Test;
 
 public class LogRollingTests {
 
+  private BonsaiWorldStateArchive archive;
   private InMemoryKeyValueStorage accountStorage;
   private InMemoryKeyValueStorage codeStorage;
   private InMemoryKeyValueStorage storageStorage;
   private InMemoryKeyValueStorage trieBranchStorage;
   private InMemoryKeyValueStorage trieLogStorage;
+
+  private BonsaiWorldStateArchive secondArchive;
+  private InMemoryKeyValueStorage secondAccountStorage;
+  private InMemoryKeyValueStorage secondCodeStorage;
+  private InMemoryKeyValueStorage secondStorageStorage;
+  private InMemoryKeyValueStorage secondTrieBranchStorage;
+  private InMemoryKeyValueStorage secondTrieLogStorage;
 
   private static final Address addressOne =
       Address.fromHexString("0x1111111111111111111111111111111111111111");
@@ -53,18 +63,55 @@ public class LogRollingTests {
 
   @Before
   public void createStorage() {
-    accountStorage = new InMemoryKeyValueStorage();
-    codeStorage = new InMemoryKeyValueStorage();
-    storageStorage = new InMemoryKeyValueStorage();
-    trieBranchStorage = new InMemoryKeyValueStorage();
-    trieLogStorage = new InMemoryKeyValueStorage();
+    final InMemoryStorageProvider provider = new InMemoryStorageProvider();
+    archive = new BonsaiWorldStateArchive(provider);
+    accountStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
+    codeStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
+    storageStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
+    trieBranchStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+    trieLogStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+
+    final InMemoryStorageProvider secondProvider = new InMemoryStorageProvider();
+    secondArchive = new BonsaiWorldStateArchive(secondProvider);
+    secondAccountStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
+    secondCodeStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
+    secondStorageStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
+    secondTrieBranchStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+    secondTrieLogStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
   }
 
   @Test
   public void simpleRollForwardTest() {
     final BonsaiPersistedWorldState worldState =
         new BonsaiPersistedWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+            archive,
+            accountStorage,
+            codeStorage,
+            storageStorage,
+            trieBranchStorage,
+            trieLogStorage);
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -74,19 +121,14 @@ public class LogRollingTests {
     updater.commit();
     worldState.persist(hashOne);
 
-    final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newStorageStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newTrieBranchStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newTrieLogStorage = new InMemoryKeyValueStorage();
-
     final BonsaiPersistedWorldState secondWorldState =
         new BonsaiPersistedWorldState(
-            newAccountStorage,
-            newCodeStorage,
-            newStorageStorage,
-            newTrieBranchStorage,
-            newTrieLogStorage);
+            secondArchive,
+            secondAccountStorage,
+            secondCodeStorage,
+            secondStorageStorage,
+            secondTrieBranchStorage,
+            secondTrieLogStorage);
     final BonsaiWorldStateUpdater secondUpdater =
         (BonsaiWorldStateUpdater) secondWorldState.updater();
 
@@ -99,12 +141,12 @@ public class LogRollingTests {
     secondUpdater.commit();
     secondWorldState.persist(null);
 
-    assertKeyValueStorageEqual(accountStorage, newAccountStorage);
-    assertKeyValueStorageEqual(codeStorage, newCodeStorage);
-    assertKeyValueStorageEqual(storageStorage, newStorageStorage);
-    assertKeyValueStorageEqual(trieBranchStorage, newTrieBranchStorage);
+    assertKeyValueStorageEqual(accountStorage, secondAccountStorage);
+    assertKeyValueStorageEqual(codeStorage, secondCodeStorage);
+    assertKeyValueStorageEqual(storageStorage, secondStorageStorage);
+    assertKeyValueStorageEqual(trieBranchStorage, secondTrieBranchStorage);
     // trie logs won't be the same, we shouldn't generate logs on rolls.
-    assertKeyValueSubset(trieLogStorage, newTrieLogStorage);
+    assertKeyValueSubset(trieLogStorage, secondTrieLogStorage);
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 
@@ -112,7 +154,12 @@ public class LogRollingTests {
   public void rollForwardTwice() {
     final BonsaiPersistedWorldState worldState =
         new BonsaiPersistedWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+            archive,
+            accountStorage,
+            codeStorage,
+            storageStorage,
+            trieBranchStorage,
+            trieLogStorage);
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -130,19 +177,14 @@ public class LogRollingTests {
 
     worldState.persist(hashTwo);
 
-    final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newStorageStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newTrieBranchStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newTrieLogStorage = new InMemoryKeyValueStorage();
-
     final BonsaiPersistedWorldState secondWorldState =
         new BonsaiPersistedWorldState(
-            newAccountStorage,
-            newCodeStorage,
-            newStorageStorage,
-            newTrieBranchStorage,
-            newTrieLogStorage);
+            secondArchive,
+            secondAccountStorage,
+            secondCodeStorage,
+            secondStorageStorage,
+            secondTrieBranchStorage,
+            secondTrieLogStorage);
     final BonsaiWorldStateUpdater secondUpdater =
         (BonsaiWorldStateUpdater) secondWorldState.updater();
 
@@ -156,12 +198,12 @@ public class LogRollingTests {
     secondUpdater.commit();
     secondWorldState.persist(null);
 
-    assertKeyValueStorageEqual(accountStorage, newAccountStorage);
-    assertKeyValueStorageEqual(codeStorage, newCodeStorage);
-    assertKeyValueStorageEqual(storageStorage, newStorageStorage);
-    assertKeyValueStorageEqual(trieBranchStorage, newTrieBranchStorage);
+    assertKeyValueStorageEqual(accountStorage, secondAccountStorage);
+    assertKeyValueStorageEqual(codeStorage, secondCodeStorage);
+    assertKeyValueStorageEqual(storageStorage, secondStorageStorage);
+    assertKeyValueStorageEqual(trieBranchStorage, secondTrieBranchStorage);
     // trie logs won't be the same, we shouldn't generate logs on rolls.
-    assertKeyValueSubset(trieLogStorage, newTrieLogStorage);
+    assertKeyValueSubset(trieLogStorage, secondTrieLogStorage);
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 
@@ -169,7 +211,12 @@ public class LogRollingTests {
   public void rollBackOnce() {
     final BonsaiPersistedWorldState worldState =
         new BonsaiPersistedWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+            archive,
+            accountStorage,
+            codeStorage,
+            storageStorage,
+            trieBranchStorage,
+            trieLogStorage);
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -194,19 +241,14 @@ public class LogRollingTests {
 
     worldState.persist(hashTwo);
 
-    final InMemoryKeyValueStorage newAccountStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newCodeStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newStorageStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newTrieBranchStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage newTrieLogStorage = new InMemoryKeyValueStorage();
-
     final BonsaiPersistedWorldState secondWorldState =
         new BonsaiPersistedWorldState(
-            newAccountStorage,
-            newCodeStorage,
-            newStorageStorage,
-            newTrieBranchStorage,
-            newTrieLogStorage);
+            secondArchive,
+            secondAccountStorage,
+            secondCodeStorage,
+            secondStorageStorage,
+            secondTrieBranchStorage,
+            secondTrieLogStorage);
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =
@@ -217,12 +259,12 @@ public class LogRollingTests {
 
     secondWorldState.persist(null);
 
-    assertKeyValueStorageEqual(accountStorage, newAccountStorage);
-    assertKeyValueStorageEqual(codeStorage, newCodeStorage);
-    assertKeyValueStorageEqual(storageStorage, newStorageStorage);
-    assertKeyValueStorageEqual(trieBranchStorage, newTrieBranchStorage);
+    assertKeyValueStorageEqual(accountStorage, secondAccountStorage);
+    assertKeyValueStorageEqual(codeStorage, secondCodeStorage);
+    assertKeyValueStorageEqual(storageStorage, secondStorageStorage);
+    assertKeyValueStorageEqual(trieBranchStorage, secondTrieBranchStorage);
     // trie logs won't be the same, we don't delete the roll back log
-    assertKeyValueSubset(trieLogStorage, newTrieLogStorage);
+    assertKeyValueSubset(trieLogStorage, secondTrieLogStorage);
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 

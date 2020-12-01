@@ -17,7 +17,9 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
@@ -33,14 +35,32 @@ public class RollingImport {
         new RollingFileReader(
             (i, c) -> Path.of(String.format("/tmp/goerli/fill/besu-layer-%04d.rdat", i)), false);
 
-    final InMemoryKeyValueStorage accountStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage codeStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage storageStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage trieBranchStorage = new InMemoryKeyValueStorage();
-    final InMemoryKeyValueStorage trieLogStorage = new InMemoryKeyValueStorage();
+    final InMemoryStorageProvider provider = new InMemoryStorageProvider();
+    final BonsaiWorldStateArchive archive = new BonsaiWorldStateArchive(provider);
+    final InMemoryKeyValueStorage accountStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
+    final InMemoryKeyValueStorage codeStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
+    final InMemoryKeyValueStorage storageStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
+    final InMemoryKeyValueStorage trieBranchStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+    final InMemoryKeyValueStorage trieLogStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     final BonsaiPersistedWorldState bonsaiState =
         new BonsaiPersistedWorldState(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+            archive,
+            accountStorage,
+            codeStorage,
+            storageStorage,
+            trieBranchStorage,
+            trieLogStorage);
 
     int count = 0;
     while (!reader.isDone()) {

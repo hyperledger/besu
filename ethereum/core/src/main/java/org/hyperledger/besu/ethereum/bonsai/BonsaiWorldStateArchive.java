@@ -25,40 +25,52 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final BonsaiPersistedWorldState persistedState;
+  private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStates;
 
   public BonsaiWorldStateArchive(final StorageProvider provider) {
-    // FIXME not for production
     persistedState =
         new BonsaiPersistedWorldState(
+            this,
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
             provider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+    layeredWorldStates = new HashMap<>();
   }
 
   @Override
   public Optional<WorldState> get(final Hash rootHash) {
-    if (rootHash.equals(persistedState.rootHash())) {
+    if (layeredWorldStates.containsKey(rootHash)) {
+      return Optional.of(layeredWorldStates.get(rootHash));
+    } else if (rootHash.equals(persistedState.rootHash())) {
       return Optional.of(persistedState);
     } else {
       return Optional.empty();
     }
   }
 
+  public void addLayeredWorldState(final BonsaiLayeredWorldState worldState) {
+    layeredWorldStates.put(worldState.rootHash(), worldState);
+  }
+
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash) {
-    return false;
+    return layeredWorldStates.containsKey(rootHash)
+        || persistedState.rootHash().equals(rootHash) /* || check disk storage */;
   }
 
   @Override

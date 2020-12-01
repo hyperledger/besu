@@ -213,6 +213,7 @@ public class BonsaiWorldStateUpdater
         tracked.setWrappedAccount(updatedAccount);
         if (updatedAccountValue == null) {
           accountsToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount));
+          codeToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount.getCode()));
         } else {
           updatedAccountValue.setUpdated(updatedAccount);
         }
@@ -226,9 +227,12 @@ public class BonsaiWorldStateUpdater
         tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
       }
 
-      final BonsaiValue<Bytes> pendingCode =
-          codeToUpdate.computeIfAbsent(updatedAddress, __ -> new BonsaiValue<>(null, null));
-      pendingCode.setUpdated(updatedAccount.getCode());
+      if (tracked.codeWasUpdated()) {
+        final BonsaiValue<Bytes> pendingCode =
+            codeToUpdate.computeIfAbsent(
+                updatedAddress, addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr), null));
+        pendingCode.setUpdated(updatedAccount.getCode());
+      }
 
       final Map<Hash, BonsaiValue<UInt256>> pendingStorageUpdates =
           storageToUpdate.computeIfAbsent(updatedAddress, __ -> new HashMap<>());
@@ -268,16 +272,6 @@ public class BonsaiWorldStateUpdater
       return wrappedWorldView().getCode(address);
     } else {
       return localCode.getUpdated();
-    }
-  }
-
-  @Override
-  public void setCode(final Address address, final Bytes code) {
-    if (codeToUpdate.containsKey(address)) {
-      codeToUpdate.get(address).setUpdated(code);
-    } else {
-      final Bytes existingCode = wrappedWorldView().getCode(address);
-      codeToUpdate.put(address, new BonsaiValue<>(existingCode, code));
     }
   }
 
@@ -332,7 +326,7 @@ public class BonsaiWorldStateUpdater
     return results;
   }
 
-  public TrieLogLayer generateTrieLog(final Bytes32 blockHash) {
+  public TrieLogLayer generateTrieLog(final Hash blockHash) {
     final TrieLogLayer layer = new TrieLogLayer();
     layer.setBlockHash(blockHash);
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
@@ -453,18 +447,7 @@ public class BonsaiWorldStateUpdater
       if (expectedValue == null && replacementValue != null) {
         accountsToUpdate.put(
             address,
-            new BonsaiValue<>(
-                null,
-                new BonsaiAccount(
-                    this,
-                    address,
-                    Hash.hash(address),
-                    replacementValue.getNonce(),
-                    replacementValue.getBalance(),
-                    replacementValue.getStorageRoot(),
-                    replacementValue.getCodeHash(),
-                    replacementValue.getVersion(),
-                    true)));
+            new BonsaiValue<>(null, new BonsaiAccount(this, address, replacementValue, true)));
       } else {
         throw new IllegalStateException(
             "Expected to update account, but the account does not exist");
