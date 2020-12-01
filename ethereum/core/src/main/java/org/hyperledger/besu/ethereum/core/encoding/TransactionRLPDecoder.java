@@ -82,7 +82,6 @@ public interface TransactionRLPDecoder {
       final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
 
       input.leaveList();
-
       chainId.ifPresent(builder::chainId);
       return builder.signature(signature).build();
     };
@@ -141,6 +140,7 @@ public interface TransactionRLPDecoder {
   static TransactionRLPDecoder goQuorumPrivateTransactionDecoder() {
     return input -> {
       input.enterList();
+
       final Transaction.Builder builder =
           Transaction.builder()
               .nonce(input.readLongScalar())
