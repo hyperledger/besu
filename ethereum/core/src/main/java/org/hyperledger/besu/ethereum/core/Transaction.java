@@ -112,7 +112,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param chainId the chain id to apply the transaction to
    * @param v the v value. This is only passed in directly for GoQuorum private transactions
    *     (v=37|38). For all other transactions, the v value is derived from the signature. If v is
-   *     provided here, the chain id is empty.
+   *     provided here, the chain id must be empty.
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
@@ -131,6 +131,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v) {
+    if (v.isPresent() && chainId.isPresent()) {
+      throw new IllegalStateException(
+          String.format("chainId {} and v {} cannot both be provided", chainId.get(), v.get()));
+    }
     this.nonce = nonce;
     this.gasPrice = gasPrice;
     this.gasPremium = gasPremium;
@@ -535,13 +539,14 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         && this.payload.equals(that.payload)
         && this.signature.equals(that.signature)
         && this.to.equals(that.to)
-        && this.value.equals(that.value);
+        && this.value.equals(that.value)
+        && this.v.equals(that.v);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId);
+        nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId, v);
   }
 
   @Override
@@ -559,6 +564,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append("value=").append(getValue()).append(", ");
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
+    if (v.isPresent()) sb.append("v=").append(v.get()).append(", ");
     sb.append("payload=").append(getPayload());
     return sb.append("}").toString();
   }
