@@ -90,7 +90,8 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
         .getStateRootByBlockNumber(privacyGroupId, enclavePublicKey, blockNumber)
         .<JsonRpcResponse>map(
             stateRootHash ->
-                new JsonRpcSuccessResponse(requestContext.getRequest().getId(), stateRootHash))
+                new JsonRpcSuccessResponse(
+                    requestContext.getRequest().getId(), stateRootHash.toString()))
         .orElse(
             new JsonRpcErrorResponse(
                 requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
