@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -32,19 +32,24 @@ public class TransactionRLPEncoder {
   private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
       ImmutableMap.of(TransactionType.EIP1559, TransactionRLPEncoder::encodeEIP1559);
 
-  public static void encode(final Transaction transaction, final RLPOutput output) {
+  public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
     if (transaction.getType().equals(TransactionType.FRONTIER)) {
-      encodeFrontier(transaction, output);
+      encodeFrontier(transaction, rlpOutput);
     } else {
-      final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-      Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(transaction.getType()))
-          // TODO message in this or else throw
-          .orElseThrow()
-          .encode(transaction, bytesValueRLPOutput);
-      output.writeRaw(
+      final TransactionType type = transaction.getType();
+      final Encoder encoder =
+          Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(type))
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          String.format(
+                              "Developer Error. A supported transaction type %s has no associated"
+                                  + " encoding logic",
+                              type)));
+      rlpOutput.writeRaw(
           Bytes.concatenate(
-              Bytes.of((byte) transaction.getType().getSerializedType()),
-              bytesValueRLPOutput.encoded()));
+              Bytes.of((byte) type.getSerializedType()),
+              RLP.encode(output -> encoder.encode(transaction, output))));
     }
   }
 

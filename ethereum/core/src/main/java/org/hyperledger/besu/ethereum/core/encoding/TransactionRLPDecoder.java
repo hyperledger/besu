@@ -31,9 +31,14 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionRLPDecoder {
+
+  private static final ImmutableMap<TransactionType, TransactionRLPDecoder.Decoder>
+      TYPED_TRANSACTION_DECODERS =
+          ImmutableMap.of(TransactionType.EIP1559, TransactionRLPDecoder::decodeEIP1559);
 
   public static Transaction decode(final RLPInput rlpInput) {
     final Bytes typedTransactionBytes = rlpInput.raw();
@@ -43,15 +48,16 @@ public class TransactionRLPDecoder {
       return decodeFrontier(rlpInput);
     } else {
       rlpInput.skipNext(); // throw away the type byte
-      if (transactionType.equals(TransactionType.EIP1559)) {
-        ExperimentalEIPs.eip1559MustBeEnabled();
-        return decodeEIP1559(rlpInput);
-      } else {
-        throw new IllegalStateException(
-            String.format(
-                "Developer Error. A supported transaction type %s has no associated decoding logic",
-                transactionType));
-      }
+      final Decoder decoder =
+          Optional.ofNullable(TYPED_TRANSACTION_DECODERS.get(transactionType))
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          String.format(
+                              "Developer Error. A supported transaction type %s has no associated"
+                                  + " decoding logic",
+                              transactionType)));
+      return decoder.decode(rlpInput);
     }
   }
 
@@ -89,6 +95,7 @@ public class TransactionRLPDecoder {
   }
 
   static Transaction decodeEIP1559(final RLPInput input) {
+    ExperimentalEIPs.eip1559MustBeEnabled();
     input.enterList();
 
     final Transaction.Builder builder =
@@ -120,5 +127,10 @@ public class TransactionRLPDecoder {
     input.leaveList();
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();
+  }
+
+  @FunctionalInterface
+  interface Decoder {
+    Transaction decode(RLPInput input);
   }
 }
