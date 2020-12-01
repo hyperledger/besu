@@ -30,8 +30,12 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -345,6 +349,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             .setNetworkId(BigInteger.valueOf(42))
             .setGenesisConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
             .setBootNodes(nodes)
+            .setDnsDiscoveryUrl(null)
             .build();
     verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any());
@@ -889,6 +894,72 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void testGenesisPathEthOptions() throws Exception {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--genesis-file", genesisFile.toString());
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).isEmpty();
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(3141592));
+  }
+
+  @Test
+  public void testGenesisPathMainnetEthConfig() throws Exception {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--network", "mainnet");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
+    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1));
+  }
+
+  @Test
+  public void testGenesisPathGoerliEthConfig() throws Exception {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--network", "goerli");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).isEqualTo(GOERLI_BOOTSTRAP_NODES);
+    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(GOERLI_DISCOVERY_URL);
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(5));
+  }
+
+  @Test
+  public void testGenesisPathRinkebyEthConfig() throws Exception {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--network", "rinkeby");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
+    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
   }
 
   @Test
@@ -3409,6 +3480,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "Invalid value for option '--Xincoming-tx-messages-keep-alive-seconds': 'acbd' is not an int");
+  }
+
+  @Test
+  public void eth65TrxAnnouncedBufferingPeriodWithInvalidInputShouldFail() {
+    parseCommand("--Xeth65-tx-announced-buffering-period-milliseconds", "acbd");
+
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Invalid value for option '--Xeth65-tx-announced-buffering-period-milliseconds': 'acbd' is not a long");
   }
 
   @Test

@@ -16,16 +16,22 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
 import picocli.CommandLine;
 
-public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration.Builder> {
+public class TransactionPoolOptions
+    implements CLIOptions<ImmutableTransactionPoolConfiguration.Builder> {
   private static final String TX_MESSAGE_KEEP_ALIVE_SEC_FLAG =
       "--Xincoming-tx-messages-keep-alive-seconds";
+
+  private static final String ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG =
+      "--Xeth65-tx-announced-buffering-period-milliseconds";
 
   @CommandLine.Option(
       names = {TX_MESSAGE_KEEP_ALIVE_SEC_FLAG},
@@ -37,6 +43,16 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private Integer txMessageKeepAliveSeconds =
       TransactionPoolConfiguration.DEFAULT_TX_MSG_KEEP_ALIVE;
 
+  @CommandLine.Option(
+      names = {ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG},
+      paramLabel = "<LONG>",
+      hidden = true,
+      description =
+          "The period for which the announced transactions remain in the buffer before being requested from the peers in milliseconds (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private long eth65TrxAnnouncedBufferingPeriod =
+      TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.toMillis();
+
   private TransactionPoolOptions() {}
 
   public static TransactionPoolOptions create() {
@@ -46,18 +62,24 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   public static TransactionPoolOptions fromConfig(final TransactionPoolConfiguration config) {
     final TransactionPoolOptions options = TransactionPoolOptions.create();
     options.txMessageKeepAliveSeconds = config.getTxMessageKeepAliveSeconds();
+    options.eth65TrxAnnouncedBufferingPeriod =
+        config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     return options;
   }
 
   @Override
-  public TransactionPoolConfiguration.Builder toDomainObject() {
-    return TransactionPoolConfiguration.builder()
-        .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds);
+  public ImmutableTransactionPoolConfiguration.Builder toDomainObject() {
+    return ImmutableTransactionPoolConfiguration.builder()
+        .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
+        .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod));
   }
 
   @Override
   public List<String> getCLIOptions() {
     return Arrays.asList(
-        TX_MESSAGE_KEEP_ALIVE_SEC_FLAG, OptionParser.format(txMessageKeepAliveSeconds));
+        TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
+        OptionParser.format(txMessageKeepAliveSeconds),
+        ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
+        OptionParser.format(eth65TrxAnnouncedBufferingPeriod));
   }
 }
