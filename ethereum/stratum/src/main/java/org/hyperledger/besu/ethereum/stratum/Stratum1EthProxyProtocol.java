@@ -20,9 +20,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
 
@@ -49,9 +51,16 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private final MiningCoordinator miningCoordinator;
   private EthHashSolverInputs currentInput;
   private Function<EthHashSolution, Boolean> submitCallback;
+  private final EpochCalculator epochCalculator;
 
   public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
+    if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
+      throw new IllegalArgumentException(
+          "Stratum1 Proxies require an EthHashMiningCoordinator not "
+              + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
+    }
     this.miningCoordinator = miningCoordinator;
+    this.epochCalculator = ((EthHashMiningCoordinator) miningCoordinator).getEpochCalculator();
   }
 
   @Override
@@ -81,7 +90,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   private void sendNewWork(final StratumConnection conn, final Object id) {
-    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber());
+    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);
     final String[] result = {
       "0x" + BaseEncoding.base16().lowerCase().encode(currentInput.getPrePowHash()),
       "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),

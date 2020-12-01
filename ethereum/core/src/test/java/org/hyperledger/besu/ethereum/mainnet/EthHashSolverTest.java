@@ -41,7 +41,11 @@ public class EthHashSolverTest {
     final List<Long> noncesToTry = Arrays.asList(1L, 1L, 1L, 1L, 1L, 1L, 0L);
     final EthHashSolver solver =
         new EthHashSolver(
-            noncesToTry, new EthHasher.Light(), false, Subscribers.none(), EthHash::epoch);
+            noncesToTry,
+            new EthHasher.Light(),
+            false,
+            Subscribers.none(),
+            new EpochCalculator.DefaultEpochCalculator());
 
     assertThat(solver.hashesPerSecond()).isEqualTo(Optional.empty());
     assertThat(solver.getWorkDefinition()).isEqualTo(Optional.empty());
@@ -64,7 +68,12 @@ public class EthHashSolverTest {
         .hash(any(), anyLong(), anyLong(), any(), any());
 
     final EthHashSolver solver =
-        new EthHashSolver(noncesToTry, hasher, false, Subscribers.none(), EthHash::epoch);
+        new EthHashSolver(
+            noncesToTry,
+            hasher,
+            false,
+            Subscribers.none(),
+            new EpochCalculator.DefaultEpochCalculator());
 
     final Stopwatch operationTimer = Stopwatch.createStarted();
     final EthHashSolverInputs inputs = new EthHashSolverInputs(UInt256.ONE, new byte[0], 5);
@@ -125,7 +134,7 @@ public class EthHashSolverTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     EthHashSolution soln =
         solver.solveFor(EthHashSolver.EthHashSolverJob.createFromInputs(firstInputs));

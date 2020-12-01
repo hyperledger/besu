@@ -70,7 +70,7 @@ public final class RlpBlockImporterTest {
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
     final RlpBlockImporter.ImportResult result =
@@ -98,7 +98,7 @@ public final class RlpBlockImporterTest {
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
 
@@ -126,7 +126,7 @@ public final class RlpBlockImporterTest {
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
 
@@ -166,7 +166,7 @@ public final class RlpBlockImporterTest {
             .privacyParameters(PrivacyParameters.DEFAULT)
             .dataDirectory(dataDir)
             .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
     final RlpBlockImporter.ImportResult result =

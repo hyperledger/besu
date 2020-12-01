@@ -209,7 +209,7 @@ public class EthNetworkConfig {
 
   public static class Builder {
 
-    private final String dnsDiscoveryUrl;
+    private String dnsDiscoveryUrl;
     private String genesisConfig;
     private BigInteger networkId;
     private List<EnodeURL> bootNodes;
@@ -233,6 +233,11 @@ public class EthNetworkConfig {
 
     public Builder setBootNodes(final List<EnodeURL> bootNodes) {
       this.bootNodes = bootNodes;
+      return this;
+    }
+
+    public Builder setDnsDiscoveryUrl(final String dnsDiscoveryUrl) {
+      this.dnsDiscoveryUrl = dnsDiscoveryUrl;
       return this;
     }
 
