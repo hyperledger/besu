@@ -68,10 +68,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     input.enterList();
     // TODO: Support multiple hard fork transaction formats.
-    final List<Transaction> transactions = input.readList(Transaction::readFrom);
     final BlockBody body =
         new BlockBody(
-            transactions, input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+            input.readList(Transaction::readFrom),
+            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
     input.leaveList();
     return body;
   }
