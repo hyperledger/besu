@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import java.util.Set;
-
 public enum TransactionType {
-  FRONTIER(0xf8),
-  EIP1559(0x3 /* placeholder value until we know what the real type byte will be*/);
+  FRONTIER(0xf8 /* doesn't end up being used as we don't serialize legacy txs with their type */),
+  EIP1559(0x3 /* placeholder value until we know what the real type byte will be */);
 
   private final int typeValue;
-  private static final Set<Integer> FRONTIER_COMPATIBILITY_TYPE_VALUES = Set.of(0xf9, 0xfa);
 
   TransactionType(final int typeValue) {
     this.typeValue = typeValue;
@@ -32,10 +29,8 @@ public enum TransactionType {
   }
 
   public static TransactionType of(final int serializedTypeValue) {
-    for (int frontierCompatibilityType : TransactionType.FRONTIER_COMPATIBILITY_TYPE_VALUES) {
-      if (serializedTypeValue == frontierCompatibilityType) {
-        return FRONTIER;
-      }
+    if (serializedTypeValue >= 0xc0 && serializedTypeValue <= 0xfe) {
+      return FRONTIER;
     }
     for (TransactionType transactionType : TransactionType.values()) {
       if (transactionType.typeValue == serializedTypeValue) {
