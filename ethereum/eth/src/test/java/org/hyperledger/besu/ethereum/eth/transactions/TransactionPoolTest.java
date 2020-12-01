@@ -683,7 +683,7 @@ public class TransactionPoolTest {
             Wei.ZERO,
             metricsSystem,
             Optional.empty(),
-            TransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
+            ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
         .thenReturn(valid());
     when(transactionValidator.validateForSender(
@@ -722,7 +722,7 @@ public class TransactionPoolTest {
             Wei.ZERO,
             metricsSystem,
             Optional.empty(),
-            TransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
+            ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transactionLocal =
