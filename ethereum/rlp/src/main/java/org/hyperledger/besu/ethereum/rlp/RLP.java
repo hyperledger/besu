@@ -52,7 +52,11 @@ public abstract class RLP {
    *     read.
    */
   public static RLPInput input(final Bytes encoded) {
-    return new BytesValueRLPInput(encoded, false);
+    return input(encoded, false);
+  }
+
+  public static RLPInput input(final Bytes encoded, final boolean lenient) {
+    return new BytesValueRLPInput(encoded, lenient);
   }
 
   /**

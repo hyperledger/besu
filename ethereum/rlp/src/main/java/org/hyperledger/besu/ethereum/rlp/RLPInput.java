@@ -294,7 +294,11 @@ public interface RLPInput {
    *
    * @return The current element as a standalone RLP input element.
    */
-  RLPInput readAsRlp();
+  default RLPInput readAsRlp() {
+    return readAsRlp(false);
+  }
+
+  RLPInput readAsRlp(boolean lenient);
 
   /**
    * Returns a raw {@link Bytes} representation of this RLP.

@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
-import com.google.common.collect.Range;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -38,28 +37,25 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 @FunctionalInterface
 public interface TransactionRLPDecoder {
 
-  static Transaction decodeTransaction(Bytes bytes) {
-    final int firstByte = bytes.get(0) & 0xff;
-
-    if (Range.closed(0x00, 0x7f).contains(firstByte)) {
-      // EIP-2718 transaction, the first byte is the type, the rest is the payload
-      final Bytes payload = bytes.slice(1);
-      final TransactionType transactionType = TransactionType.of(firstByte);
-      switch (transactionType) {
-        case EIP1559:
-          ExperimentalEIPs.eip1559MustBeEnabled();
-          eip1559Decoder().decode(new BytesValueRLPInput(payload, false));
-        default:
-          throw new IllegalStateException(
-              String.format("Developer error. %s doesn't have decoding logic", transactionType));
+  static Transaction decodeTransaction(final RLPInput rlpInput) {
+    final Bytes typedTransactionBytes = rlpInput.raw();
+    final int firstByte = typedTransactionBytes.get(0) & 0xff;
+    final TransactionType transactionType = TransactionType.of(firstByte);
+    if (transactionType.equals(TransactionType.FRONTIER)) {
+      return frontierDecoder().decode(rlpInput);
+    } else {
+      final RLPInput transactionPayloadRLP =
+          new BytesValueRLPInput(typedTransactionBytes.slice(1), false);
+      if (transactionType.equals(TransactionType.EIP1559)) {
+        ExperimentalEIPs.eip1559MustBeEnabled();
+        return eip1559Decoder().decode(transactionPayloadRLP);
+      } else {
+        throw new IllegalStateException(
+            String.format(
+                "Developer Error. A supported transaction type %s has no associated decoding logic",
+                transactionType));
       }
-    } else if (!Range.atLeast(0xc0).contains(firstByte)) {
-      // not a frontier transaction either
-      throw new IllegalArgumentException(
-          String.format("Transaction type byte %x is not supported", firstByte));
     }
-
-    return frontierDecoder().decode(new BytesValueRLPInput(bytes, false));
   }
 
   Transaction decode(RLPInput input);

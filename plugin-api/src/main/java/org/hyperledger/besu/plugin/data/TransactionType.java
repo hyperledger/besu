@@ -20,7 +20,7 @@ public enum TransactionType {
   FRONTIER(0xf8),
   EIP1559(0x3);
 
-  private int typeValue;
+  private final int typeValue;
   private static final Set<Integer> FRONTIER_COMPATIBILITY_TYPE_VALUES = Set.of(0xf9, 0xfa);
 
   TransactionType(final int typeValue) {
@@ -31,7 +31,7 @@ public enum TransactionType {
     return this.typeValue;
   }
 
-  public static TransactionType of(int serializedTypeValue) {
+  public static TransactionType of(final int serializedTypeValue) {
     for (int frontierCompatibilityType : TransactionType.FRONTIER_COMPATIBILITY_TYPE_VALUES) {
       if (serializedTypeValue == frontierCompatibilityType) {
         return FRONTIER;

@@ -414,7 +414,7 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
-  public RLPInput readAsRlp() {
+  public RLPInput readAsRlp(final boolean lenient) {
     if (currentItem >= size) {
       throw error("Cannot read current element as RLP, input is fully consumed");
     }
