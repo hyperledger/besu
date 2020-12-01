@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.EthHash;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -85,7 +85,7 @@ public class EthHashBlockCreatorTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -145,7 +145,7 @@ public class EthHashBlockCreatorTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -200,7 +200,7 @@ public class EthHashBlockCreatorTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -271,7 +271,7 @@ public class EthHashBlockCreatorTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

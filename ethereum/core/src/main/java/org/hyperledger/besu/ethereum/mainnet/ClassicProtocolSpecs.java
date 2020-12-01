@@ -230,10 +230,10 @@ public class ClassicProtocolSpecs {
             quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createBlockHeaderValidator(
-                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+                new EpochCalculator.Ecip1099EpochCalculator()))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createOmmerValidator(
-                block -> EthHash.epoch(block, EthHash.EPOCH_LENGTH * 2)))
+                new EpochCalculator.Ecip1099EpochCalculator()))
         .name("Thanos");
   }
 
