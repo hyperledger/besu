@@ -133,7 +133,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Optional<BigInteger> v) {
     if (v.isPresent() && chainId.isPresent()) {
       throw new IllegalStateException(
-          String.format("chainId {} and v {} cannot both be provided", chainId.get(), v.get()));
+          String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
     }
     this.nonce = nonce;
     this.gasPrice = gasPrice;
