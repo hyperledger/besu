@@ -136,7 +136,7 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            TransactionPoolConfiguration.builder().build(),
+            TransactionPoolConfiguration.DEFAULT,
             true,
             Optional.empty());
 

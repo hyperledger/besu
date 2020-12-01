@@ -18,7 +18,10 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -26,16 +29,24 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor.FetcherCreatorTask;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -43,16 +54,37 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class PendingTransactionsMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
+  @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
   @Mock private PeerPendingTransactionTracker transactionTracker;
   @Mock private Counter totalSkippedTransactionsMessageCounter;
   @Mock private EthPeer peer1;
+  @Mock private MetricsSystem metricsSystem;
   @Mock private SyncState syncState;
-  @InjectMocks private PendingTransactionsMessageProcessor messageHandler;
+  @Mock private EthContext ethContext;
+  @Mock private EthScheduler ethScheduler;
+
+  private PendingTransactionsMessageProcessor messageHandler;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Hash hash1 = generator.transaction().getHash();
   private final Hash hash2 = generator.transaction().getHash();
   private final Hash hash3 = generator.transaction().getHash();
+
+  @Before
+  public void setup() {
+    when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
+        .thenReturn(Duration.ofMillis(500));
+    messageHandler =
+        new PendingTransactionsMessageProcessor(
+            transactionTracker,
+            transactionPool,
+            transactionPoolConfiguration,
+            totalSkippedTransactionsMessageCounter,
+            ethContext,
+            metricsSystem,
+            syncState);
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
+  }
 
   @Test
   public void shouldMarkAllReceivedTransactionsAsSeen() {
@@ -76,9 +108,35 @@ public class PendingTransactionsMessageProcessorTest {
         NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
         now(),
         ofMinutes(1));
+
     verify(transactionPool).addTransactionHash(hash1);
     verify(transactionPool).addTransactionHash(hash2);
     verify(transactionPool).addTransactionHash(hash3);
+    verify(transactionPool).getTransactionByHash(hash1);
+    verify(transactionPool).getTransactionByHash(hash2);
+    verify(transactionPool).getTransactionByHash(hash3);
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
+  public void shouldNotAddAlreadyPresentTransactions() {
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+
+    when(transactionPool.getTransactionByHash(hash1))
+        .thenReturn(Optional.of(Transaction.builder().build()));
+    when(transactionPool.getTransactionByHash(hash2))
+        .thenReturn(Optional.of(Transaction.builder().build()));
+
+    messageHandler.processNewPooledTransactionHashesMessage(
+        peer1,
+        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        now(),
+        ofMinutes(1));
+
+    verify(transactionPool).addTransactionHash(hash3);
+    verify(transactionPool).getTransactionByHash(hash1);
+    verify(transactionPool).getTransactionByHash(hash2);
+    verify(transactionPool).getTransactionByHash(hash3);
     verifyNoMoreInteractions(transactionPool);
   }
 
@@ -116,5 +174,43 @@ public class PendingTransactionsMessageProcessorTest {
     verifyNoInteractions(transactionPool);
     verify(totalSkippedTransactionsMessageCounter).inc(1);
     verifyNoMoreInteractions(totalSkippedTransactionsMessageCounter);
+  }
+
+  @Test
+  public void shouldScheduleGetPooledTransactionsTaskWhenNewTransactionAdded() {
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
+    when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
+
+    messageHandler.processNewPooledTransactionHashesMessage(
+        peer1, NewPooledTransactionHashesMessage.create(asList(hash1, hash2)), now(), ofMinutes(1));
+
+    verify(ethScheduler, times(1))
+        .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
+  }
+
+  @Test
+  public void shouldNotScheduleGetPooledTransactionsTaskTwice() {
+    when(syncState.isInSync(anyLong())).thenReturn(true);
+
+    when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
+    when(transactionPool.addTransactionHash(hash2)).thenReturn(true);
+
+    messageHandler.processNewPooledTransactionHashesMessage(
+        peer1,
+        NewPooledTransactionHashesMessage.create(Collections.singletonList(hash1)),
+        now(),
+        ofMinutes(1));
+
+    messageHandler.processNewPooledTransactionHashesMessage(
+        peer1,
+        NewPooledTransactionHashesMessage.create(Collections.singletonList(hash2)),
+        now(),
+        ofMinutes(1));
+
+    verify(ethScheduler, times(1))
+        .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
   }
 }
