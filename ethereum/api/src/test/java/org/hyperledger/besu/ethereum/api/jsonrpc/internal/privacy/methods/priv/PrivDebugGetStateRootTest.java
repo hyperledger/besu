@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
@@ -101,7 +102,7 @@ public class PrivDebugGetStateRootTest {
   public void shouldReturnErrorIfPrivacyGroupDoesNotExist() {
     when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
         .thenReturn(Optional.empty());
-    final String invalidGroupId = Base64.toBase64String("invalid_group_id".getBytes());
+    final String invalidGroupId = Base64.toBase64String("invalid_group_id".getBytes(UTF_8));
     final JsonRpcResponse response = method.response(request(invalidGroupId, "latest"));
     assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
