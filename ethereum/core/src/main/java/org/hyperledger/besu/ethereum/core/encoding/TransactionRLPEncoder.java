@@ -66,10 +66,7 @@ public class TransactionRLPEncoder {
   }
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
-    if (!ExperimentalEIPs.eip1559Enabled
-        || !TransactionType.EIP1559.equals(transaction.getType())) {
-      throw new RuntimeException("Invalid transaction format");
-    }
+    ExperimentalEIPs.eip1559MustBeEnabled();
 
     out.startList();
     out.writeLongScalar(transaction.getNonce());
