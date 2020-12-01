@@ -110,8 +110,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param payload the payload
    * @param sender the transaction sender
    * @param chainId the chain id to apply the transaction to
-   * @param v the v value. This is only passed in directly for GoQuorum private transactions. For
-   *     all other transactions, the v value is derived from the signature.
+   * @param v the v value. This is only passed in directly for GoQuorum private transactions
+   *     (v=37|38). For all other transactions, the v value is derived from the signature. If v is
+   *     provided here, the chain id is empty.
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise

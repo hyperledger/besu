@@ -15,8 +15,8 @@
 package org.hyperledger.besu.config;
 
 /**
- * Flag to determine whether we are processing in GoQuorum mode.
- * Note that this mode is incompatible with MainNet.
+ * Flag to determine whether we are processing in GoQuorum mode. Note that this mode is incompatible
+ * with MainNet.
  */
 public class GoQuorumOptions {
   // To make it easier for tests to reset the value to default
