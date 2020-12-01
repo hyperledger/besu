@@ -58,8 +58,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   public void writeTo(final RLPOutput output) {
     output.startList();
 
-    output.writeList(
-        getTransactions(), (transaction, rlpOutput) -> rlpOutput.writeRaw(transaction.encode()));
+    output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
 
     output.endList();

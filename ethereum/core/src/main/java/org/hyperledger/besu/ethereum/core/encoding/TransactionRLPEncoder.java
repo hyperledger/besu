@@ -25,28 +25,27 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
+import java.util.Optional;
+
 public class TransactionRLPEncoder {
 
-  private static final Encoder FRONTIER = frontierEncoder();
-  private static final Encoder EIP1559 = eip1559Encoder();
-
-  private static final ImmutableMap<TransactionType, Encoder> ENCODERS =
-      ImmutableMap.of(TransactionType.FRONTIER, FRONTIER, TransactionType.EIP1559, EIP1559);
+  private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
+      ImmutableMap.of(TransactionType.EIP1559, eip1559Encoder());
 
   public static void encode(final Transaction transaction, final RLPOutput output) {
-    ENCODERS.getOrDefault(transaction.getType(), FRONTIER).encode(transaction, output);
-  }
-
-  public static Bytes encode(final Transaction transaction) {
-    final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    if (transaction.getType() == TransactionType.FRONTIER) {
-      FRONTIER.encode(transaction, bytesValueRLPOutput);
-      return bytesValueRLPOutput.encoded();
+    if (transaction.getType().equals(TransactionType.FRONTIER)) {
+      frontierEncoder().encode(transaction, output);
+    } else {
+      final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
+      Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(transaction.getType()))
+          // TODO message in this or else throw
+          .orElseThrow()
+          .encode(transaction, bytesValueRLPOutput);
+      output.writeRaw(
+          Bytes.concatenate(
+              Bytes.of((byte) transaction.getType().getSerializedType()),
+              bytesValueRLPOutput.encoded()));
     }
-
-    encode(transaction, bytesValueRLPOutput);
-    return Bytes.concatenate(
-        Bytes.of(transaction.getType().getSerializedType()), bytesValueRLPOutput.encoded());
   }
 
   static Encoder frontierEncoder() {
