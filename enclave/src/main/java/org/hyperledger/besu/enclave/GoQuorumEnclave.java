@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.enclave;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hyperledger.besu.enclave.RequestTransmitter.ResponseBodyHandler;
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.enclave.types.GoQuorumSendRequest;
@@ -26,6 +24,9 @@ import org.hyperledger.besu.enclave.types.SendResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class GoQuorumEnclave {
 
@@ -58,7 +59,8 @@ public class GoQuorumEnclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class, 201));
   }
 
-  public SendResponse sendSignedTransaction(final byte[] txLookupId, final List<String> privateFor) {
+  public SendResponse sendSignedTransaction(
+      final byte[] txLookupId, final List<String> privateFor) {
     final GoQuorumSendSignedRequest request = new GoQuorumSendSignedRequest(txLookupId, privateFor);
     return post(
         JSON,
