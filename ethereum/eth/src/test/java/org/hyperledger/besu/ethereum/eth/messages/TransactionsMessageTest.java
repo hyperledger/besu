@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -23,8 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class TransactionsMessageTest {
 
