@@ -2257,6 +2257,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // than a useless one that may make user think that it can work when it can't.
         builder.setBootNodes(new ArrayList<>());
       }
+      builder.setDnsDiscoveryUrl(null);
     }
 
     if (networkId != null) {
