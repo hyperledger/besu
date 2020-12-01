@@ -35,11 +35,18 @@ dependencies {
   implementation project(':nat')
 
   implementation 'com.google.guava:guava'
+  implementation 'dnsjava:dnsjava'
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:bytes'
+  implementation 'org.apache.tuweni:crypto'
+  implementation 'org.apache.tuweni:devp2p'
+  implementation 'org.apache.tuweni:dns-discovery'
+  implementation 'org.apache.tuweni:io'
+  implementation 'org.apache.tuweni:rlp'
   implementation 'org.apache.tuweni:units'
+  implementation 'org.jetbrains.kotlin:kotlin-stdlib'
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor "org.immutables:value"

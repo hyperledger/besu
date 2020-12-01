@@ -515,7 +515,7 @@ exec "$$JAVACMD" $$TRACING_AGENT /$
   createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace(unixRegex, unixReplacement)
   // OpenTelemetry Wiring for windows scripts
   def windowsRegex = $/"%JAVA_EXE%" %DEFAULT_JVM_OPTS%/$
-  def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:"%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
+  def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:" "%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
   createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace(windowsRegex, windowsReplacement)
 
   // Prevent the error originating from the 8191 chars limit on Windows
@@ -670,7 +670,8 @@ task dockerUpload {
       def cmd = "docker push '${image}'"
       additionalTags.each { tag ->
         cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
-        cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
+        // temporarily commented out because AWS credentials are broken
+        // cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
       }
       executable "sh"
       args "-c", cmd
