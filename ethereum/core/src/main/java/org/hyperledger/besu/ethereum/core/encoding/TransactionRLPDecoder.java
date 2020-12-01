@@ -156,7 +156,6 @@ public interface TransactionRLPDecoder {
       if (isGoQuorumPrivateTransaction(v)) {
         // GoQuorum private TX. No chain ID. Preserve the v value as provided.
         builder.v(v);
-        chainId = Optional.empty();
         recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
       } else if (v.equals(REPLAY_UNPROTECTED_V_BASE)
           || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
