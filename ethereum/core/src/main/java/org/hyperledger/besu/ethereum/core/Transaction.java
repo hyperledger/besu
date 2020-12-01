@@ -87,8 +87,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return new Builder();
   }
 
-  public static Transaction readFrom(final RLPInput input) throws RLPException {
-    return TransactionRLPDecoder.decodeTransaction(input);
+  public static Transaction decode(final Bytes bytes) {
+    return TransactionRLPDecoder.decodeTransaction(bytes);
   }
 
   /**

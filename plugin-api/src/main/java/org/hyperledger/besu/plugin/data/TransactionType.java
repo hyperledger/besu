@@ -31,7 +31,7 @@ public enum TransactionType {
     return this.typeValue;
   }
 
-  static TransactionType of(int serializedTypeValue) {
+  public static TransactionType of(int serializedTypeValue) {
     for (int frontierCompatibilityType : TransactionType.FRONTIER_COMPATIBILITY_TYPE_VALUES) {
       if (serializedTypeValue == frontierCompatibilityType) {
         return FRONTIER;

@@ -20,26 +20,46 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
+import com.google.common.collect.Range;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 @FunctionalInterface
 public interface TransactionRLPDecoder {
 
-  TransactionRLPDecoder FRONTIER = frontierDecoder();
-  TransactionRLPDecoder EIP1559 = eip1559Decoder();
+  static Transaction decodeTransaction(Bytes bytes) {
+    final int firstByte = bytes.get(0) & 0xff;
 
-  static Transaction decodeTransaction(final RLPInput input) {
-    return (ExperimentalEIPs.eip1559Enabled ? EIP1559 : FRONTIER).decode(input);
+    if (Range.closed(0x00, 0x7f).contains(firstByte)) {
+      // EIP-2718 transaction, the first byte is the type, the rest is the payload
+      final Bytes payload = bytes.slice(1);
+      final TransactionType transactionType = TransactionType.of(firstByte);
+      switch (transactionType) {
+        case EIP1559:
+          ExperimentalEIPs.eip1559MustBeEnabled();
+          eip1559Decoder().decode(new BytesValueRLPInput(payload, false));
+        default:
+          throw new IllegalStateException(
+              String.format("Developer error. %s doesn't have decoding logic", transactionType));
+      }
+    } else if (!Range.atLeast(0xc0).contains(firstByte)) {
+      // not a frontier transaction either
+      throw new IllegalArgumentException(
+          String.format("Transaction type byte %x is not supported", firstByte));
+    }
+
+    return frontierDecoder().decode(new BytesValueRLPInput(bytes, false));
   }
 
   Transaction decode(RLPInput input);
@@ -91,26 +111,13 @@ public interface TransactionRLPDecoder {
               .gasLimit(input.readLongScalar())
               .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
               .value(Wei.of(input.readUInt256Scalar()))
-              .payload(input.readBytes());
+              .payload(input.readBytes())
+              .gasPremium(Wei.of(input.readBytes().toBigInteger()))
+              .feeCap(Wei.of(input.readBytes().toBigInteger()));
 
-      final Bytes maybeGasPremiumOrV = input.readBytes();
-      final Bytes maybeFeeCapOrR = input.readBytes();
-      final Bytes maybeVOrS = input.readBytes();
-      final BigInteger v, r, s;
-      // if this is the end of the list we are processing a legacy transaction
-      if (input.isEndOfCurrentList()) {
-        v = maybeGasPremiumOrV.toUnsignedBigInteger();
-        r = maybeFeeCapOrR.toUnsignedBigInteger();
-        s = maybeVOrS.toUnsignedBigInteger();
-      } else {
-        // otherwise this is an EIP-1559 transaction
-        builder
-            .gasPremium(Wei.of(maybeGasPremiumOrV.toBigInteger()))
-            .feeCap(Wei.of(maybeFeeCapOrR.toBigInteger()));
-        v = maybeVOrS.toBigInteger();
-        r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-        s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-      }
+      final BigInteger v = input.readBytes().toBigInteger();
+      final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+      final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
       final byte recId;
       Optional<BigInteger> chainId = Optional.empty();
       if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
