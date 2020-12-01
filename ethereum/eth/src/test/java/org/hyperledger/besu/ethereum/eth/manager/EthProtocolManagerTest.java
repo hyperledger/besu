@@ -987,7 +987,7 @@ public final class EthProtocolManagerTest {
           metricsSystem,
           mock(SyncState.class),
           Wei.ZERO,
-          TransactionPoolConfiguration.builder().build(),
+          TransactionPoolConfiguration.DEFAULT,
           true,
           Optional.empty());
 

@@ -66,7 +66,7 @@ public class RollingFileReader implements Closeable {
           in.seek(currentPosition);
         }
       }
-    } catch (final EOFException eofe) {
+    } catch (final EOFException e) {
       // this happens when we read the last value, where there is no next index.
       raw = new byte[(int) (in.length() - in.getFilePointer())];
       in.read(raw);

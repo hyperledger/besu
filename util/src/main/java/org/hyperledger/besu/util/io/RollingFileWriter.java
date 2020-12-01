@@ -47,6 +47,7 @@ public class RollingFileWriter implements Closeable {
     final Path firstOutputFile = filenameGenerator.apply(fileNumber, compressed);
     final File parentDir = firstOutputFile.getParent().toFile();
     if (!parentDir.exists()) {
+      //noinspection ResultOfMethodCallIgnored
       parentDir.mkdirs();
     }
     out = new FileOutputStream(firstOutputFile.toFile());

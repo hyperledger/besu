@@ -69,7 +69,7 @@ public class StateBackupService {
     ACCOUNT_END_MARKER = endMarker.encoded();
   }
 
-  private final String besuVesion;
+  private final String besuVersion;
   private final Lock submissionLock = new ReentrantLock();
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
@@ -80,12 +80,12 @@ public class StateBackupService {
   private RollingFileWriter accountFileWriter;
 
   public StateBackupService(
-      final String besuVesion,
+      final String besuVersion,
       final Blockchain blockchain,
       final Path backupDir,
       final EthScheduler scheduler,
       final WorldStateStorage worldStateStorage) {
-    this.besuVesion = besuVesion;
+    this.besuVersion = besuVersion;
     this.blockchain = blockchain;
     this.backupDir = backupDir;
     this.scheduler = scheduler;
@@ -188,7 +188,7 @@ public class StateBackupService {
       backupStatus.compressed = compress;
       backupStatus.currentAccount = Bytes32.ZERO;
 
-      backupChaindata();
+      backupChainData();
       backupLeaves();
 
       writeManifest();
@@ -202,7 +202,7 @@ public class StateBackupService {
 
   private void writeManifest() throws IOException {
     final Map<String, Object> manifest = new HashMap<>();
-    manifest.put("clientVersion", besuVesion);
+    manifest.put("clientVersion", besuVersion);
     manifest.put("compressed", backupStatus.compressed);
     manifest.put("targetBlock", backupStatus.targetBlock);
     manifest.put("accountCount", backupStatus.accountCount);
@@ -290,7 +290,7 @@ public class StateBackupService {
     return State.CONTINUE;
   }
 
-  private void backupChaindata() throws IOException {
+  private void backupChainData() throws IOException {
     try (final RollingFileWriter headerWriter =
             new RollingFileWriter(this::headerFileName, backupStatus.compressed);
         final RollingFileWriter bodyWriter =
