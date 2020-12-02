@@ -43,7 +43,7 @@ import org.junit.Test;
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-public class RLPFormatTest {
+public class BerlinRLPFormatTest {
   private static final String FRONTIER_TX_RLP =
       "0xf901fc8032830138808080b901ae60056013565b6101918061001d6000396000f35b3360008190555056006001600060e060020a6000350480630a874df61461003a57806341c0e1b514610058578063a02b161e14610066578063dbbdf0831461007757005b610045600435610149565b80600160a060020a031660005260206000f35b610060610161565b60006000f35b6100716004356100d4565b60006000f35b61008560043560243561008b565b60006000f35b600054600160a060020a031632600160a060020a031614156100ac576100b1565b6100d0565b8060018360005260205260406000208190555081600060005260206000a15b5050565b600054600160a060020a031633600160a060020a031614158015610118575033600160a060020a0316600182600052602052604060002054600160a060020a031614155b61012157610126565b610146565b600060018260005260205260406000208190555080600060005260206000a15b50565b60006001826000526020526040600020549050919050565b600054600160a060020a031633600160a060020a0316146101815761018f565b600054600160a060020a0316ff5b561ca0c5689ed1ad124753d54576dfb4b571465a41900a1dff4058d8adf16f752013d0a01221cbd70ec28c94a3b55ec771bcbc70778d6ee0b51ca7ea9514594c861b1884";
   private static final String EIP1559_TX_RLP =
@@ -54,9 +54,9 @@ public class RLPFormatTest {
   @Test
   public void encodeFrontierTxNominalCase() {
     final Transaction transaction =
-        RLPFormat.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    RLPFormat.encode(transaction, output);
+    BerlinRLPFormat.encode(transaction, output);
     assertThat(FRONTIER_TX_RLP).isEqualTo(output.encoded().toHexString());
   }
 
@@ -64,9 +64,9 @@ public class RLPFormatTest {
   public void encodeEIP1559TxNominalCase() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction transaction =
-        RLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    RLPFormat.encode(transaction, output);
+    BerlinRLPFormat.encode(transaction, output);
     assertThat(
             "0x03f902028080830138808080b901ae60056013565b6101918061001d6000396000f35b3360008190555056006001600060e060020a6000350480630a874df61461003a57806341c0e1b514610058578063a02b161e14610066578063dbbdf0831461007757005b610045600435610149565b80600160a060020a031660005260206000f35b610060610161565b60006000f35b6100716004356100d4565b60006000f35b61008560043560243561008b565b60006000f35b600054600160a060020a031632600160a060020a031614156100ac576100b1565b6100d0565b8060018360005260205260406000208190555081600060005260206000a15b5050565b600054600160a060020a031633600160a060020a031614158015610118575033600160a060020a0316600182600052602052604060002054600160a060020a031614155b61012157610126565b610146565b600060018260005260205260406000208190555080600060005260206000a15b50565b60006001826000526020526040600020549050919050565b600054600160a060020a031633600160a060020a0316146101815761018f565b600054600160a060020a0316ff5b5682020f8201711ca0c5689ed1ad124753d54576dfb4b571465a41900a1dff4058d8adf16f752013d0a01221cbd70ec28c94a3b55ec771bcbc70778d6ee0b51ca7ea9514594c861b1884")
         .isEqualTo(output.encoded().toHexString());
@@ -78,8 +78,8 @@ public class RLPFormatTest {
     ExperimentalEIPs.eip1559Enabled = false;
     assertThatThrownBy(
             () ->
-                RLPFormat.encode(
-                    RLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))),
+                BerlinRLPFormat.encode(
+                    BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))),
                     new BytesValueRLPOutput()))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("EIP-1559 feature flag");
@@ -91,7 +91,7 @@ public class RLPFormatTest {
     GoQuorumOptions.goquorumCompatibilityMode = true;
     RLPInput input = RLP.input(Bytes.fromHexString(GOQUORUM_PRIVATE_TX_RLP));
 
-    final Transaction transaction = RLPFormat.decode(input);
+    final Transaction transaction = BerlinRLPFormat.decode(input);
     assertThat(transaction).isNotNull();
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.getSender())
@@ -103,7 +103,7 @@ public class RLPFormatTest {
   @Test
   public void decodeFrontierNominalCase() {
     final Transaction transaction =
-        RLPFormat.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPrice()).isEqualByComparingTo(Wei.of(50L));
     assertThat(transaction.getGasPremium()).isEmpty();
@@ -114,7 +114,7 @@ public class RLPFormatTest {
   public void decodeEIP1559NominalCase() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction transaction =
-        RLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPremium()).hasValue(Wei.of(527L));
     assertThat(transaction.getFeeCap()).hasValue(Wei.of(369L));
@@ -124,7 +124,7 @@ public class RLPFormatTest {
   @Test
   public void decodeEIP1559FailureWhenNotEnabled() {
     ExperimentalEIPs.eip1559Enabled = false;
-    assertThatThrownBy(() -> RLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))))
+    assertThatThrownBy(() -> BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("EIP-1559 feature flag");
     ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
