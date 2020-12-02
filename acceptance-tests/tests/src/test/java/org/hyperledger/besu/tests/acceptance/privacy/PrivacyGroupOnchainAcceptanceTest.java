@@ -16,11 +16,12 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
+import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -29,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PrivacyGroupOffchainAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class PrivacyGroupOnchainAcceptanceTest extends OnChainPrivacyAcceptanceTestBase {
 
   private PrivacyNode aliceNode;
   private PrivacyNode bobNode;
@@ -37,20 +38,17 @@ public class PrivacyGroupOffchainAcceptanceTest extends PrivacyAcceptanceTestBas
   @Before
   public void setUp() throws IOException, URISyntaxException {
     aliceNode =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "alice-node", PrivacyAccountResolver.ALICE);
+        privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
+            "alice-node", PrivacyAccountResolver.ALICE, Address.PRIVACY, false);
     bobNode =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "bob-node", PrivacyAccountResolver.BOB);
+        privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
+            "bob-node", PrivacyAccountResolver.BOB, Address.PRIVACY, false);
     privacyCluster.start(aliceNode, bobNode);
   }
 
   @Test
   public void nodesInGroupShouldHaveSameStateRoot() {
-    final String privacyGroupId =
-        aliceNode.execute(
-            privacyTransactions.createPrivacyGroup(
-                "testGroup", "A group for everyone", aliceNode, bobNode));
+    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode, bobNode);
 
     final Hash aliceStateRootId =
         aliceNode
@@ -66,10 +64,8 @@ public class PrivacyGroupOffchainAcceptanceTest extends PrivacyAcceptanceTestBas
   }
 
   @Test
-  public void nodeNotInGroupShouldReturnError() {
-    final String privacyGroupId =
-        aliceNode.execute(
-            privacyTransactions.createPrivacyGroup("testGroup", "A group for Alice", aliceNode));
+  public void nodesNotInGroupShouldReturnError() {
+    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode);
 
     final PrivacyRequestFactory.DebugGetStateRoot aliceResult =
         aliceNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "latest"));

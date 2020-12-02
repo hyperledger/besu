@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -261,11 +262,13 @@ public class DefaultPrivacyController implements PrivacyController {
   @Override
   public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
       final String privacyGroupId, final String enclaveKey) {
-    return findOffChainPrivacyGroupByGroupId(privacyGroupId, enclaveKey)
-        .or(
-            () ->
-                findOnChainPrivacyGroupByGroupId(
-                    Bytes.fromBase64String(privacyGroupId), enclaveKey));
+    try {
+      return findOffChainPrivacyGroupByGroupId(privacyGroupId, enclaveKey);
+    } catch (final EnclaveClientException ex) {
+      // An exception is thrown if the offchain group cannot be found
+      LOG.debug("Offchain privacy group not found: {}", privacyGroupId);
+    }
+    return findOnChainPrivacyGroupByGroupId(Bytes.fromBase64String(privacyGroupId), enclaveKey);
   }
 
   @Override
