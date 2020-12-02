@@ -73,6 +73,7 @@ import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -1399,6 +1400,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateGoQuorumCompatibilityModeParam() {
     if (isGoQuorumCompatibilityMode) {
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      // this static flag is read by the RLP decoder
+      GoQuorumOptions.goquorumCompatibilityMode = true;
 
       if (!genesisConfigOptions.isQuorum()) {
         throw new IllegalStateException(
