@@ -14,21 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.encoding;
 
-import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
-import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
-import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
-
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -37,16 +32,88 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-public class TransactionRLPDecoder {
+import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
+import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
+import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
+
+public class RLPFormat {
+
+  @FunctionalInterface
+  interface Encoder {
+    void encode(Transaction transaction, RLPOutput output);
+  }
+
+  private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
+      ImmutableMap.of(TransactionType.EIP1559, RLPFormat::encodeEIP1559);
+
+  public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
+    if (transaction.getType().equals(TransactionType.FRONTIER)) {
+      encodeFrontier(transaction, rlpOutput);
+    } else {
+      final TransactionType type = transaction.getType();
+      final Encoder encoder =
+          Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(type))
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          String.format(
+                              "Developer Error. A supported transaction type %s has no associated"
+                                  + " encoding logic",
+                              type)));
+      rlpOutput.writeRaw(
+          Bytes.concatenate(
+              Bytes.of((byte) type.getSerializedType()),
+              RLP.encode(output -> encoder.encode(transaction, output))));
+    }
+  }
+
+  static void encodeFrontier(final Transaction transaction, final RLPOutput out) {
+    out.startList();
+    out.writeLongScalar(transaction.getNonce());
+    out.writeUInt256Scalar(transaction.getGasPrice());
+    out.writeLongScalar(transaction.getGasLimit());
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeUInt256Scalar(transaction.getValue());
+    out.writeBytes(transaction.getPayload());
+    writeSignature(transaction, out);
+    out.endList();
+  }
+
+  static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
+    ExperimentalEIPs.eip1559MustBeEnabled();
+
+    out.startList();
+    out.writeLongScalar(transaction.getNonce());
+    out.writeNull();
+    out.writeLongScalar(transaction.getGasLimit());
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeUInt256Scalar(transaction.getValue());
+    out.writeBytes(transaction.getPayload());
+    out.writeUInt256Scalar(
+        transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+    out.writeUInt256Scalar(
+        transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+    writeSignature(transaction, out);
+    out.endList();
+  }
+
+  private static void writeSignature(final Transaction transaction, final RLPOutput out) {
+    out.writeBigIntegerScalar(transaction.getV());
+    out.writeBigIntegerScalar(transaction.getSignature().getR());
+    out.writeBigIntegerScalar(transaction.getSignature().getS());
+  }
 
   @FunctionalInterface
   interface Decoder {
     Transaction decode(RLPInput input);
   }
 
-  private static final ImmutableMap<TransactionType, TransactionRLPDecoder.Decoder>
-      TYPED_TRANSACTION_DECODERS =
-          ImmutableMap.of(TransactionType.EIP1559, TransactionRLPDecoder::decodeEIP1559);
+  private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
+      ImmutableMap.of(TransactionType.EIP1559, RLPFormat::decodeEIP1559);
 
   public static Transaction decode(final RLPInput rlpInput) {
     if (GoQuorumOptions.goquorumCompatibilityMode) {
