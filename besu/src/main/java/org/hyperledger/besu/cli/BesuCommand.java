@@ -1327,7 +1327,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
-    validateGoQuorumCompatibilityModeParam();
 
     return this;
   }
@@ -1394,29 +1393,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
               + " or specify dns is enabled (--Xdns-enabled)");
-    }
-  }
-
-  private void validateGoQuorumCompatibilityModeParam() {
-    if (isGoQuorumCompatibilityMode) {
-      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
-      // this static flag is read by the RLP decoder
-      GoQuorumOptions.goquorumCompatibilityMode = true;
-
-      if (!genesisConfigOptions.isQuorum()) {
-        throw new IllegalStateException(
-            "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
-      }
-      genesisConfigOptions
-          .getChainId()
-          .ifPresent(chainId -> ensureGoQuorumCompatibilityModeNotUsedOnMainnet(chainId));
-    }
-  }
-
-  private void ensureGoQuorumCompatibilityModeNotUsedOnMainnet(final BigInteger chainId) {
-    if (chainId.equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
-      throw new IllegalStateException(
-          "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
     }
   }
 
@@ -2409,16 +2385,41 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
-    if (genesisFile != null
-        && getGenesisConfigFile().getConfigOptions().isQuorum()
-        && !minTransactionGasPrice.isZero()) {
-      throw new ParameterException(
-          this.commandLine,
-          "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+    if (isGoQuorumCompatibilityMode) {
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      // this static flag is read by the RLP decoder
+      GoQuorumOptions.goquorumCompatibilityMode = true;
+
+      if (!genesisConfigOptions.isQuorum()) {
+        throw new IllegalStateException(
+            "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
+      }
+      genesisConfigOptions
+          .getChainId()
+          .ifPresent(
+              chainId ->
+                  ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
+                      chainId, isGoQuorumCompatibilityMode));
+
+      if (genesisFile != null
+          && getGenesisConfigFile().getConfigOptions().isQuorum()
+          && !minTransactionGasPrice.isZero()) {
+        throw new ParameterException(
+            this.commandLine,
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+      }
+      if (ethNetworkConfig.getNetworkId().equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
+        throw new ParameterException(
+            this.commandLine, "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
+      }
     }
-    if (ethNetworkConfig.getNetworkId().equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
-      throw new ParameterException(
-          this.commandLine, "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
+  }
+
+  private void ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
+      final BigInteger chainId, final boolean isGoQuorumCompatibilityMode) {
+    if (isGoQuorumCompatibilityMode && chainId.equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
+      throw new IllegalStateException(
+          "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
     }
   }
 
