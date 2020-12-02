@@ -132,9 +132,9 @@ public class PrivDebugGetStateRootTest {
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) method.response(request(ENCLAVE_PUBLIC_KEY, "latest"));
-    final Hash result = (Hash) response.getResult();
+    final String result = (String) response.getResult();
 
-    assertThat(result).isEqualTo(hash);
+    assertThat(result).isEqualTo(hash.toString());
   }
 
   private JsonRpcRequestContext request(final String privacyGroupId, final String params) {
