@@ -27,7 +27,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
@@ -75,8 +75,7 @@ class TransactionsMessageProcessor {
     try {
       LOG.trace("Received transactions message from {}", peer);
 
-      final Iterator<Transaction> readTransactions =
-          transactionsMessage.transactions(Transaction::readFrom);
+      final List<Transaction> readTransactions = transactionsMessage.transactions();
       final Set<Transaction> transactions = Sets.newHashSet(readTransactions);
       transactionTracker.markTransactionsAsSeen(peer, transactions);
       transactionPool.addRemoteTransactions(transactions);

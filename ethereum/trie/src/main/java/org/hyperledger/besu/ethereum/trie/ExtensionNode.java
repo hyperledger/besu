@@ -90,7 +90,7 @@ class ExtensionNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeBytes(CompactEncoding.encode(path));
-    out.writeRLPUnsafe(child.getRlpRef());
+    out.writeRaw(child.getRlpRef());
     out.endList();
     final Bytes encoded = out.encoded();
     rlp = new WeakReference<>(encoded);
