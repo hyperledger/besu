@@ -320,9 +320,7 @@ public class MessageFrame {
     this.transactionHash = transactionHash;
     this.revertReason = revertReason;
 
-    this.warmedUpAddresses = new HashSet<>();
-    warmedUpAddresses.add(sender);
-    warmedUpAddresses.add(contract);
+    this.warmedUpAddresses = new HashSet<>(List.of(sender, contract));
     this.warmedUpStorage = HashMultimap.create();
   }
 

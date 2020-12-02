@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -40,6 +41,7 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateU
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -122,84 +124,70 @@ public class PrivateTransactionProcessor {
           previousNonce,
           sender.getNonce());
 
-      final MessageFrame initialFrame;
-      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-
       final WorldUpdater mutablePrivateWorldStateUpdater =
           new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
+      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+      final MessageFrame.Builder commonMessageFrameBuilder =
+          MessageFrame.builder()
+              .messageFrameStack(messageFrameStack)
+              .maxStackSize(maxStackSize)
+              .returnStack(new ReturnStack())
+              .blockchain(blockchain)
+              .worldState(mutablePrivateWorldStateUpdater)
+              .initialGas(Gas.MAX_VALUE)
+              .originator(senderAddress)
+              .gasPrice(transaction.getGasPrice())
+              .sender(senderAddress)
+              .value(transaction.getValue())
+              .apparentValue(transaction.getValue())
+              .blockHeader(blockHeader)
+              .depth(0)
+              .completer(__ -> {})
+              .miningBeneficiary(miningBeneficiary)
+              .blockHashLookup(blockHashLookup)
+              .transactionHash(pmtHash);
 
-      final ReturnStack returnStack = new ReturnStack();
+      final MessageFrame initialFrame =
+          transaction
+              .getTo()
+              .map(
+                  to -> {
+                    final Optional<Account> maybeContract =
+                        Optional.ofNullable(privateWorldState.get(to));
+                    return commonMessageFrameBuilder
+                        .type(MessageFrame.Type.MESSAGE_CALL)
+                        .address(to)
+                        .contract(to)
+                        .contractAccountVersion(
+                            maybeContract
+                                .map(AccountState::getVersion)
+                                .orElse(Account.DEFAULT_VERSION))
+                        .inputData(transaction.getPayload())
+                        .code(
+                            new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)));
+                  })
+              .orElseGet(
+                  () -> {
+                    final Address privateContractAddress =
+                        Address.privateContractAddress(
+                            senderAddress, previousNonce, privacyGroupId);
 
-      if (transaction.isContractCreation()) {
-        final Address privateContractAddress =
-            Address.privateContractAddress(senderAddress, previousNonce, privacyGroupId);
+                    LOG.debug(
+                        "Calculated contract address {} from sender {} with nonce {} and privacy group {}",
+                        privateContractAddress.toString(),
+                        senderAddress,
+                        previousNonce,
+                        privacyGroupId.toString());
 
-        LOG.debug(
-            "Calculated contract address {} from sender {} with nonce {} and privacy group {}",
-            privateContractAddress.toString(),
-            senderAddress,
-            previousNonce,
-            privacyGroupId.toString());
-
-        initialFrame =
-            MessageFrame.builder()
-                .type(MessageFrame.Type.CONTRACT_CREATION)
-                .messageFrameStack(messageFrameStack)
-                .returnStack(returnStack)
-                .blockchain(blockchain)
-                .worldState(mutablePrivateWorldStateUpdater)
-                .address(privateContractAddress)
-                .originator(senderAddress)
-                .contract(privateContractAddress)
-                .contractAccountVersion(createContractAccountVersion)
-                .initialGas(Gas.MAX_VALUE)
-                .gasPrice(transaction.getGasPrice())
-                .inputData(Bytes.EMPTY)
-                .sender(senderAddress)
-                .value(transaction.getValue())
-                .apparentValue(transaction.getValue())
-                .code(new Code(transaction.getPayload()))
-                .blockHeader(blockHeader)
-                .depth(0)
-                .completer(c -> {})
-                .miningBeneficiary(miningBeneficiary)
-                .blockHashLookup(blockHashLookup)
-                .maxStackSize(maxStackSize)
-                .transactionHash(pmtHash)
-                .build();
-
-      } else {
-        final Address to = transaction.getTo().get();
-        final Account contract = privateWorldState.get(to);
-
-        initialFrame =
-            MessageFrame.builder()
-                .type(MessageFrame.Type.MESSAGE_CALL)
-                .messageFrameStack(messageFrameStack)
-                .returnStack(returnStack)
-                .blockchain(blockchain)
-                .worldState(mutablePrivateWorldStateUpdater)
-                .address(to)
-                .originator(senderAddress)
-                .contract(to)
-                .contractAccountVersion(
-                    contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
-                .initialGas(Gas.MAX_VALUE)
-                .gasPrice(transaction.getGasPrice())
-                .inputData(transaction.getPayload())
-                .sender(senderAddress)
-                .value(transaction.getValue())
-                .apparentValue(transaction.getValue())
-                .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
-                .blockHeader(blockHeader)
-                .depth(0)
-                .completer(c -> {})
-                .miningBeneficiary(miningBeneficiary)
-                .blockHashLookup(blockHashLookup)
-                .maxStackSize(maxStackSize)
-                .transactionHash(pmtHash)
-                .build();
-      }
+                    return commonMessageFrameBuilder
+                        .type(MessageFrame.Type.CONTRACT_CREATION)
+                        .address(privateContractAddress)
+                        .contract(privateContractAddress)
+                        .contractAccountVersion(createContractAccountVersion)
+                        .inputData(Bytes.EMPTY)
+                        .code(new Code(transaction.getPayload()));
+                  })
+              .build();
 
       messageFrameStack.addFirst(initialFrame);
 
