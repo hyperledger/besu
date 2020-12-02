@@ -319,38 +319,34 @@ public class MainnetTransactionProcessor {
               .transactionHash(transaction.getHash())
               .privateMetadataUpdater(privateMetadataUpdater);
 
-      final MessageFrame initialFrame =
-          transaction
-              .getTo()
-              .map(
-                  to -> {
-                    final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
-                    return commonMessageFrameBuilder
-                        .type(MessageFrame.Type.MESSAGE_CALL)
-                        .address(to)
-                        .contract(to)
-                        .contractAccountVersion(
-                            maybeContract
-                                .map(AccountState::getVersion)
-                                .orElse(Account.DEFAULT_VERSION))
-                        .inputData(transaction.getPayload())
-                        .code(
-                            new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)));
-                  })
-              .orElseGet(
-                  () -> {
-                    final Address contractAddress =
-                        Address.contractAddress(senderAddress, sender.getNonce() - 1L);
+      final MessageFrame initialFrame;
+      if (transaction.isContractCreation()) {
+        final Address contractAddress =
+            Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
-                    return commonMessageFrameBuilder
-                        .type(MessageFrame.Type.CONTRACT_CREATION)
-                        .address(contractAddress)
-                        .contract(contractAddress)
-                        .contractAccountVersion(createContractAccountVersion)
-                        .inputData(Bytes.EMPTY)
-                        .code(new Code(transaction.getPayload()));
-                  })
-              .build();
+        initialFrame =
+            commonMessageFrameBuilder
+                .type(MessageFrame.Type.CONTRACT_CREATION)
+                .address(contractAddress)
+                .contract(contractAddress)
+                .contractAccountVersion(createContractAccountVersion)
+                .inputData(Bytes.EMPTY)
+                .code(new Code(transaction.getPayload()))
+                .build();
+      } else {
+        final Address to = transaction.getTo().get();
+        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
+        initialFrame =
+            commonMessageFrameBuilder
+                .type(MessageFrame.Type.MESSAGE_CALL)
+                .address(to)
+                .contract(to)
+                .contractAccountVersion(
+                    maybeContract.map(AccountState::getVersion).orElse(Account.DEFAULT_VERSION))
+                .inputData(transaction.getPayload())
+                .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
+                .build();
+      }
 
       messageFrameStack.addFirst(initialFrame);
 

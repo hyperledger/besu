@@ -147,47 +147,41 @@ public class PrivateTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .transactionHash(pmtHash);
 
-      final MessageFrame initialFrame =
-          transaction
-              .getTo()
-              .map(
-                  to -> {
-                    final Optional<Account> maybeContract =
-                        Optional.ofNullable(privateWorldState.get(to));
-                    return commonMessageFrameBuilder
-                        .type(MessageFrame.Type.MESSAGE_CALL)
-                        .address(to)
-                        .contract(to)
-                        .contractAccountVersion(
-                            maybeContract
-                                .map(AccountState::getVersion)
-                                .orElse(Account.DEFAULT_VERSION))
-                        .inputData(transaction.getPayload())
-                        .code(
-                            new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)));
-                  })
-              .orElseGet(
-                  () -> {
-                    final Address privateContractAddress =
-                        Address.privateContractAddress(
-                            senderAddress, previousNonce, privacyGroupId);
+      final MessageFrame initialFrame;
+      if (transaction.isContractCreation()) {
+        final Address privateContractAddress =
+            Address.privateContractAddress(senderAddress, previousNonce, privacyGroupId);
 
-                    LOG.debug(
-                        "Calculated contract address {} from sender {} with nonce {} and privacy group {}",
-                        privateContractAddress.toString(),
-                        senderAddress,
-                        previousNonce,
-                        privacyGroupId.toString());
+        LOG.debug(
+            "Calculated contract address {} from sender {} with nonce {} and privacy group {}",
+            privateContractAddress.toString(),
+            senderAddress,
+            previousNonce,
+            privacyGroupId.toString());
 
-                    return commonMessageFrameBuilder
-                        .type(MessageFrame.Type.CONTRACT_CREATION)
-                        .address(privateContractAddress)
-                        .contract(privateContractAddress)
-                        .contractAccountVersion(createContractAccountVersion)
-                        .inputData(Bytes.EMPTY)
-                        .code(new Code(transaction.getPayload()));
-                  })
-              .build();
+        initialFrame =
+            commonMessageFrameBuilder
+                .type(MessageFrame.Type.CONTRACT_CREATION)
+                .address(privateContractAddress)
+                .contract(privateContractAddress)
+                .contractAccountVersion(createContractAccountVersion)
+                .inputData(Bytes.EMPTY)
+                .code(new Code(transaction.getPayload()))
+                .build();
+      } else {
+        final Address to = transaction.getTo().get();
+        final Optional<Account> maybeContract = Optional.ofNullable(privateWorldState.get(to));
+        initialFrame =
+            commonMessageFrameBuilder
+                .type(MessageFrame.Type.MESSAGE_CALL)
+                .address(to)
+                .contract(to)
+                .contractAccountVersion(
+                    maybeContract.map(AccountState::getVersion).orElse(Account.DEFAULT_VERSION))
+                .inputData(transaction.getPayload())
+                .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
+                .build();
+      }
 
       messageFrameStack.addFirst(initialFrame);
 
