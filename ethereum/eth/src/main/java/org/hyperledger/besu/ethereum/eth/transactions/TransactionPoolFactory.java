@@ -146,6 +146,7 @@ public class TransactionPoolFactory {
               new PendingTransactionsMessageProcessor(
                   pendingTransactionTracker.get(),
                   transactionPool,
+                  transactionPoolConfiguration,
                   metricsSystem.createCounter(
                       BesuMetricCategory.TRANSACTION_POOL,
                       "pending_transactions_messages_skipped_total",

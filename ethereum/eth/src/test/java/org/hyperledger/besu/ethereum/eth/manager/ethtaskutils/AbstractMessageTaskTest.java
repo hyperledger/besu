@@ -99,7 +99,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             metricsSystem,
             syncState,
             Wei.of(1),
-            TransactionPoolConfiguration.builder().build(),
+            TransactionPoolConfiguration.DEFAULT,
             true,
             Optional.empty());
     ethProtocolManager =
