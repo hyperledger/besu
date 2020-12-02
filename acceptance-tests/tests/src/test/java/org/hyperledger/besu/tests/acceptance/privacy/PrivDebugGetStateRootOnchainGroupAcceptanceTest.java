@@ -30,7 +30,8 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PrivacyGroupOnchainAcceptanceTest extends OnChainPrivacyAcceptanceTestBase {
+public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
+    extends OnChainPrivacyAcceptanceTestBase {
 
   private PrivacyNode aliceNode;
   private PrivacyNode bobNode;
@@ -94,5 +95,48 @@ public class PrivacyGroupOnchainAcceptanceTest extends OnChainPrivacyAcceptanceT
     assertThat(aliceResult.hasError()).isTrue();
     assertThat(aliceResult.getError()).isNotNull();
     assertThat(aliceResult.getError().getMessage()).contains("Error finding privacy group");
+  }
+
+  @Test
+  public void blockParamShouldBeApplied() {
+    waitForBlockHeight(aliceNode, 2);
+    waitForBlockHeight(bobNode, 2);
+
+    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode, bobNode);
+
+    waitForBlockHeight(aliceNode, 10);
+    waitForBlockHeight(bobNode, 10);
+
+    final Hash aliceResult1 =
+        aliceNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "1")).getResult();
+    final Hash bobResultInt1 =
+        bobNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "1")).getResult();
+    final Hash aliceResult2 =
+        aliceNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "2")).getResult();
+    final Hash bobResult2 =
+        bobNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "2")).getResult();
+    final Hash aliceResult6 =
+        aliceNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "6")).getResult();
+    final Hash bobResult6 =
+        bobNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "6")).getResult();
+
+    assertThat(aliceResult1).isEqualTo(bobResultInt1);
+    assertThat(aliceResult2).isEqualTo(bobResult2);
+    assertThat(aliceResult6).isEqualTo(bobResult6);
+    assertThat(aliceResult1).isEqualTo(aliceResult2);
+    assertThat(aliceResult1).isNotEqualTo(aliceResult6);
+
+    final Hash aliceResultLatest =
+        aliceNode
+            .execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "latest"))
+            .getResult();
+
+    final Hash bobResultLatest =
+        bobNode
+            .execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "latest"))
+            .getResult();
+
+    assertThat(aliceResultLatest).isEqualTo(bobResultLatest);
+    assertThat(aliceResult1).isNotEqualTo(aliceResultLatest);
   }
 }

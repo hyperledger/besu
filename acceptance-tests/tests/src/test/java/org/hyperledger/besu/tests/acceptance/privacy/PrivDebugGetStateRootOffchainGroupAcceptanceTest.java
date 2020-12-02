@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PrivacyGroupOffchainAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private PrivacyNode aliceNode;
   private PrivacyNode bobNode;
