@@ -209,7 +209,7 @@ public class PrivacyBlockProcessorTest {
     when(protocolSpec.getPrivateTransactionProcessor()).thenReturn(mockPrivateTransactionProcessor);
     final AbstractBlockProcessor.TransactionReceiptFactory mockTransactionReceiptFactory =
         mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
-    when(mockTransactionReceiptFactory.create(any(), any(), anyLong()))
+    when(mockTransactionReceiptFactory.create(any(), any(), any(), anyLong()))
         .thenReturn(new TransactionReceipt(0, 0, Collections.emptyList(), Optional.empty()));
     when(protocolSpec.getTransactionReceiptFactory()).thenReturn(mockTransactionReceiptFactory);
     when(protocolSpec.getBlockReward()).thenReturn(Wei.ZERO);
