@@ -111,20 +111,8 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
         aliceNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "1")).getResult();
     final Hash bobResultInt1 =
         bobNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "1")).getResult();
-    final Hash aliceResult2 =
-        aliceNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "2")).getResult();
-    final Hash bobResult2 =
-        bobNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "2")).getResult();
-    final Hash aliceResult6 =
-        aliceNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "6")).getResult();
-    final Hash bobResult6 =
-        bobNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "6")).getResult();
 
     assertThat(aliceResult1).isEqualTo(bobResultInt1);
-    assertThat(aliceResult2).isEqualTo(bobResult2);
-    assertThat(aliceResult6).isEqualTo(bobResult6);
-    assertThat(aliceResult1).isEqualTo(aliceResult2);
-    assertThat(aliceResult1).isNotEqualTo(aliceResult6);
 
     final Hash aliceResultLatest =
         aliceNode
