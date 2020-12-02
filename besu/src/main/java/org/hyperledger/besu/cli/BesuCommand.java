@@ -1327,7 +1327,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
-    validateGoQuorumCompatibilityModeParam();
 
     return this;
   }
@@ -1397,19 +1396,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void validateGoQuorumCompatibilityModeParam() {
-    if (isGoQuorumCompatibilityMode) {
-      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
-      // this static flag is read by the RLP decoder
-      GoQuorumOptions.goquorumCompatibilityMode = true;
-
-      if (!genesisConfigOptions.isQuorum()) {
-        throw new IllegalStateException(
-            "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
-      }
-    }
-  }
-
   private GenesisConfigOptions readGenesisConfigOptions() {
     final GenesisConfigOptions genesisConfigOptions;
     try {
@@ -1471,10 +1457,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuCommand configure() throws Exception {
     checkPortClash();
 
-    if (isGoQuorumCompatibilityMode) {
-      checkGoQuorumCompatibilityConfig();
-    }
-
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
@@ -1483,6 +1465,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     : SyncMode.FULL);
 
     ethNetworkConfig = updateNetworkConfig(getNetwork());
+    if (isGoQuorumCompatibilityMode) {
+      checkGoQuorumCompatibilityConfig(ethNetworkConfig);
+    }
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
@@ -2281,7 +2266,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(commandLine, e.getMessage());
       }
     }
-
     return builder.build();
   }
 
@@ -2400,13 +2384,42 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
-  private void checkGoQuorumCompatibilityConfig() {
-    if (genesisFile != null
-        && getGenesisConfigFile().getConfigOptions().isQuorum()
-        && !minTransactionGasPrice.isZero()) {
-      throw new ParameterException(
-          this.commandLine,
-          "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+  private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
+    if (isGoQuorumCompatibilityMode) {
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      // this static flag is read by the RLP decoder
+      GoQuorumOptions.goquorumCompatibilityMode = true;
+
+      if (!genesisConfigOptions.isQuorum()) {
+        throw new IllegalStateException(
+            "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
+      }
+      genesisConfigOptions
+          .getChainId()
+          .ifPresent(
+              chainId ->
+                  ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
+                      chainId, isGoQuorumCompatibilityMode));
+
+      if (genesisFile != null
+          && getGenesisConfigFile().getConfigOptions().isQuorum()
+          && !minTransactionGasPrice.isZero()) {
+        throw new ParameterException(
+            this.commandLine,
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+      }
+      if (ethNetworkConfig.getNetworkId().equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
+        throw new ParameterException(
+            this.commandLine, "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
+      }
+    }
+  }
+
+  private void ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
+      final BigInteger chainId, final boolean isGoQuorumCompatibilityMode) {
+    if (isGoQuorumCompatibilityMode && chainId.equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
+      throw new IllegalStateException(
+          "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
     }
   }
 
