@@ -88,7 +88,7 @@ public interface PrivacyController {
       final Hash blockHash,
       final String enclavePublicKey);
 
-  Optional<PrivacyGroup> findOnChainPrivacyGroupWithToBeAddedMembers(
+  Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
       Bytes privacyGroupId, String enclavePublicKey, final PrivateTransaction privateTransaction);
 
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);

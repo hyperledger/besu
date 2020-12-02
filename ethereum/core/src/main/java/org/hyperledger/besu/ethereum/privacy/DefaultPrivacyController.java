@@ -327,7 +327,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> findOnChainPrivacyGroupWithToBeAddedMembers(
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String enclavePublicKey,
       final PrivateTransaction privateTransaction) {
