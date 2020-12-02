@@ -29,6 +29,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionRLPEncoder {
 
+  @FunctionalInterface
+  interface Encoder {
+    void encode(Transaction transaction, RLPOutput output);
+  }
+
   private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
       ImmutableMap.of(TransactionType.EIP1559, TransactionRLPEncoder::encodeEIP1559);
 
@@ -87,10 +92,5 @@ public class TransactionRLPEncoder {
     out.writeBigIntegerScalar(transaction.getV());
     out.writeBigIntegerScalar(transaction.getSignature().getR());
     out.writeBigIntegerScalar(transaction.getSignature().getS());
-  }
-
-  @FunctionalInterface
-  interface Encoder {
-    void encode(Transaction transaction, RLPOutput output);
   }
 }

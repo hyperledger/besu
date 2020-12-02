@@ -39,6 +39,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionRLPDecoder {
 
+  @FunctionalInterface
+  interface Decoder {
+    Transaction decode(RLPInput input);
+  }
+
   private static final ImmutableMap<TransactionType, TransactionRLPDecoder.Decoder>
       TYPED_TRANSACTION_DECODERS =
           ImmutableMap.of(TransactionType.EIP1559, TransactionRLPDecoder::decodeEIP1559);
@@ -133,11 +138,6 @@ public class TransactionRLPDecoder {
     input.leaveList();
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();
-  }
-
-  @FunctionalInterface
-  interface Decoder {
-    Transaction decode(RLPInput input);
   }
 
   static Transaction decodeGoQuorum(final RLPInput input) {
