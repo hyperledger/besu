@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -566,7 +567,10 @@ public class BlockTransactionSelectorTest {
 
   // This is a duplicate of the MainnetProtocolSpec::frontierTransactionReceiptFactory
   private TransactionReceipt createReceipt(
-      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
+      final TransactionType __,
+      final TransactionProcessingResult result,
+      final WorldState worldState,
+      final long gasUsed) {
     return new TransactionReceipt(
         worldState.rootHash(), gasUsed, Lists.newArrayList(), Optional.empty());
   }
