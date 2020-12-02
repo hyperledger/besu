@@ -95,7 +95,7 @@ public class PrivDebugGetStateRootTest {
     final JsonRpcResponse response = method.response(request("not_base64", "latest"));
     assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
-        .contains(INVALID_PARAMS.getMessage());
+        .contains(FIND_PRIVACY_GROUP_ERROR.getMessage());
   }
 
   @Test
