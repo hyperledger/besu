@@ -56,7 +56,7 @@ public class BonsaiWorldStateUpdater
   // alternative was to keep a giant pre-image cache of the entire trie.
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate = new HashMap<>();
 
-  protected BonsaiWorldStateUpdater(final BonsaiPersistedWorldState world) {
+  BonsaiWorldStateUpdater(final BonsaiPersistedWorldState world) {
     super(world);
   }
 

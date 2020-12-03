@@ -52,7 +52,7 @@ public class KeyValueStorageWorldStateStorageTest {
   @Test
   public void getNodeData_returnsEmptyValue() {
     final WorldStateKeyValueStorage storage = emptyStorage();
-    assertThat(storage.getNodeData(null /*FIXME*/, Hash.EMPTY)).contains(Bytes.EMPTY);
+    assertThat(storage.getNodeData(null, Hash.EMPTY)).contains(Bytes.EMPTY);
   }
 
   @Test
@@ -87,10 +87,8 @@ public class KeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStateTrieNode(
-            null /*FIXME*/,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
-        .putAccountStateTrieNode(null /*FIXME*/, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+            null, Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE), MerklePatriciaTrie.EMPTY_TRIE_NODE)
+        .putAccountStateTrieNode(null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
     assertThat(
@@ -103,7 +101,7 @@ public class KeyValueStorageWorldStateStorageTest {
   public void getAccountStateTrieNode_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final WorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putAccountStateTrieNode(null /*FIXME*/, Hash.hash(bytes), bytes).commit();
+    storage.updater().putAccountStateTrieNode(null, Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Hash.hash(bytes))).contains(bytes);
   }
@@ -114,10 +112,8 @@ public class KeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStorageTrieNode(
-            null /*FIXME*/,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
-        .putAccountStorageTrieNode(null /*FIXME*/, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+            null, Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE), MerklePatriciaTrie.EMPTY_TRIE_NODE)
+        .putAccountStorageTrieNode(null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
     assertThat(
@@ -130,7 +126,7 @@ public class KeyValueStorageWorldStateStorageTest {
   public void getAccountStorageTrieNode_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final WorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putAccountStorageTrieNode(null /*FIXME*/, Hash.hash(bytes), bytes).commit();
+    storage.updater().putAccountStorageTrieNode(null, Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Hash.hash(bytes))).contains(bytes);
   }
@@ -141,10 +137,8 @@ public class KeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStorageTrieNode(
-            null /*FIXME*/,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
-        .putAccountStorageTrieNode(null /*FIXME*/, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+            null, Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE), MerklePatriciaTrie.EMPTY_TRIE_NODE)
+        .putAccountStorageTrieNode(null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
     assertThat(storage.getNodeData(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
@@ -156,9 +150,9 @@ public class KeyValueStorageWorldStateStorageTest {
   public void getNodeData_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final WorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putAccountStorageTrieNode(null /*FIXME*/, Hash.hash(bytes), bytes).commit();
+    storage.updater().putAccountStorageTrieNode(null, Hash.hash(bytes), bytes).commit();
 
-    assertThat(storage.getNodeData(null /*FIXME*/, Hash.hash(bytes))).contains(bytes);
+    assertThat(storage.getNodeData(null, Hash.hash(bytes))).contains(bytes);
   }
 
   @Test

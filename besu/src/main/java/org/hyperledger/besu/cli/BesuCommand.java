@@ -138,7 +138,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuEventsImpl;
@@ -2038,22 +2037,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private PrivacyKeyValueStorageFactory privacyKeyValueStorageFactory(final String name) {
-    return (PrivacyKeyValueStorageFactory) storageFactory(name);
+    return (PrivacyKeyValueStorageFactory)
+        storageService
+            .getByName(name)
+            .orElseThrow(
+                () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
   private KeyValueStorageProvider keyStorageProvider(final String name) {
     return new KeyValueStorageProviderBuilder()
-        .withStorageFactory(storageFactory(name))
+        .withStorageFactory(
+            storageService
+                .getByName(name)
+                .orElseThrow(
+                    () -> new StorageException("No KeyValueStorageFactory found for key: " + name)))
         .withCommonConfiguration(pluginCommonConfiguration)
         .withMetricsSystem(getMetricsSystem())
         .build();
-  }
-
-  private KeyValueStorageFactory storageFactory(final String name) {
-    return storageService
-        .getByName(name)
-        .orElseThrow(
-            () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
   private SynchronizerConfiguration buildSyncConfig() {

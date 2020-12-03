@@ -54,7 +54,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private int version;
 
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
-  private boolean storageWasCleared;
 
   BonsaiAccount(
       final BonsaiWorldState context,
@@ -95,7 +94,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
         mutable);
   }
 
-  public BonsaiAccount(final BonsaiAccount toCopy) {
+  BonsaiAccount(final BonsaiAccount toCopy) {
     this(toCopy, toCopy.context, false);
   }
 
@@ -110,12 +109,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.code = toCopy.code;
     this.version = toCopy.version;
     updatedStorage.putAll(toCopy.updatedStorage);
-    storageWasCleared = toCopy.storageWasCleared;
 
     this.mutable = mutable;
   }
 
-  public BonsaiAccount(
+  BonsaiAccount(
       final BonsaiWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
     this.context = context;
     this.address = tracked.getAddress();
@@ -127,7 +125,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.code = tracked.getCode();
     this.version = tracked.getVersion();
     updatedStorage.putAll(tracked.getUpdatedStorage());
-    storageWasCleared = tracked.getStorageWasCleared();
 
     this.mutable = true;
   }
@@ -286,11 +283,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public void clearStorage() {
     updatedStorage.clear();
-    storageWasCleared = true;
-  }
-
-  public boolean getStorageWasCleared() {
-    return storageWasCleared;
   }
 
   @Override
@@ -344,7 +336,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
    * @param context a description to be added to the thrown exceptions
    * @throws IllegalStateException if the stored values differ
    */
-  public static void assertCloseEnoughForDiffing(
+  static void assertCloseEnoughForDiffing(
       final BonsaiAccount source, final StateTrieAccountValue account, final String context) {
     if (source == null) {
       if (account != null) {

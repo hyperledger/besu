@@ -25,13 +25,9 @@ public class BonsaiValue<T> {
   private T original;
   private T updated;
 
-  public BonsaiValue(final T original, final T updated) {
+  BonsaiValue(final T original, final T updated) {
     this.original = original;
     this.updated = updated;
-  }
-
-  public BonsaiValue(final T unchanged) {
-    this(unchanged, unchanged);
   }
 
   public T getOriginal() {

@@ -73,7 +73,8 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
-    return worldStateStorage.getNodeData(null /*FIXME*/, hash);
+    // query by location is not supported, only query by content
+    return worldStateStorage.getNodeData(null, hash);
   }
 
   public WorldStateStorage getWorldStateStorage() {

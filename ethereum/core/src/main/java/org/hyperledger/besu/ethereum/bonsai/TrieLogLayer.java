@@ -51,7 +51,7 @@ public class TrieLogLayer {
   private boolean frozen = false;
 
   /** Locks the layer so no new changes can be added; */
-  public void freeze() {
+  void freeze() {
     frozen = true; // The code never bothered me anyway
   }
 
@@ -72,7 +72,7 @@ public class TrieLogLayer {
     accounts.put(address, new BonsaiValue<>(oldValue, newValue));
   }
 
-  public void addCodeChange(final Address address, final Bytes oldValue, final Bytes newValue) {
+  void addCodeChange(final Address address, final Bytes oldValue, final Bytes newValue) {
     checkState(!frozen, "Layer is Frozen");
     code.put(
         address,
@@ -80,7 +80,7 @@ public class TrieLogLayer {
             oldValue == null ? Bytes.EMPTY : oldValue, newValue == null ? Bytes.EMPTY : newValue));
   }
 
-  public void addStorageChange(
+  void addStorageChange(
       final Address address, final Hash slotHash, final UInt256 oldValue, final UInt256 newValue) {
     checkState(!frozen, "Layer is Frozen");
     storage
@@ -216,7 +216,7 @@ public class TrieLogLayer {
     }
   }
 
-  public boolean isFrozen() {
+  boolean isFrozen() {
     return frozen;
   }
 
@@ -224,7 +224,7 @@ public class TrieLogLayer {
     return Optional.ofNullable(code.get(address)).map(BonsaiValue::getUpdated);
   }
 
-  public Optional<UInt256> getStorageBySlotHash(final Address address, final Hash slotHash) {
+  Optional<UInt256> getStorageBySlotHash(final Address address, final Hash slotHash) {
     return Optional.ofNullable(storage.get(address))
         .map(i -> i.get(slotHash))
         .map(BonsaiValue::getUpdated);

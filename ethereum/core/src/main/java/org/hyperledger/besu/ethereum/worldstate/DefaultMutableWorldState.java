@@ -218,12 +218,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
   protected class WorldStateAccount implements Account {
 
     private final Address address;
-
     private final Hash addressHash;
 
     final StateTrieAccountValue accountValue;
-    // Lazily initialized since we don't always access storage.
 
+    // Lazily initialized since we don't always access storage.
     private volatile MerklePatriciaTrie<Bytes32, Bytes> storageTrie;
 
     private WorldStateAccount(

@@ -37,7 +37,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
       return Stream.empty();
     }
 
-    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(null /*FIXME*/, getData());
+    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(null, getData());
     return nodes.stream()
         .flatMap(
             node -> {

@@ -111,7 +111,7 @@ public class WorldStateDownloaderTest {
               .setNameFormat(WorldStateDownloaderTest.class.getSimpleName() + "-persistence-%d")
               .build());
 
-  private final EthProtocolManager ethProtocolManager =
+  final EthProtocolManager ethProtocolManager =
       EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
 
   @After
@@ -464,7 +464,7 @@ public class WorldStateDownloaderTest {
     allNodes.forEach(
         (nodeHash, node) -> {
           if (storeNode.get()) {
-            localStorageUpdater.putAccountStateTrieNode(null /*FIXME*/, nodeHash, node);
+            localStorageUpdater.putAccountStateTrieNode(null, nodeHash, node);
             knownNodes.add(nodeHash);
           } else {
             unknownNodes.add(nodeHash);
@@ -560,7 +560,7 @@ public class WorldStateDownloaderTest {
       final Bytes32 hash = entry.getKey();
       final Bytes data = entry.getValue();
       if (storeNode) {
-        localStorageUpdater.putAccountStorageTrieNode(null /*FIXME*/, hash, data);
+        localStorageUpdater.putAccountStorageTrieNode(null, hash, data);
         knownNodes.add(hash);
       } else {
         unknownNodes.add(hash);
@@ -670,7 +670,7 @@ public class WorldStateDownloaderTest {
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
-    final List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, 10);
+    List<Account> accounts = dataGen.createRandomAccounts(remoteWorldState, 10);
     final Hash stateRoot = remoteWorldState.rootHash();
     assertThat(stateRoot).isNotEqualTo(EMPTY_TRIE_ROOT); // Sanity check
     final BlockHeader header =
@@ -679,9 +679,9 @@ public class WorldStateDownloaderTest {
     // Add some nodes to the taskCollection
     final CachingTaskCollection<NodeDataRequest> taskCollection =
         spy(new CachingTaskCollection<>(new InMemoryTaskQueue<>()));
-    final List<Bytes32> queuedHashes = getFirstSetOfChildNodeRequests(remoteStorage, stateRoot);
+    List<Bytes32> queuedHashes = getFirstSetOfChildNodeRequests(remoteStorage, stateRoot);
     assertThat(queuedHashes.size()).isGreaterThan(0); // Sanity check
-    for (final Bytes32 bytes32 : queuedHashes) {
+    for (Bytes32 bytes32 : queuedHashes) {
       taskCollection.add(new AccountTrieNodeDataRequest(Hash.wrap(bytes32)));
     }
     // Sanity check
@@ -708,7 +708,7 @@ public class WorldStateDownloaderTest {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.wrapResponderWithCollector(blockChainResponder, sentMessages);
 
-    final CompletableFuture<Void> result = downloader.run(header);
+    CompletableFuture<Void> result = downloader.run(header);
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
     assertThat(localStorage.isWorldStateAvailable(stateRoot)).isTrue();
 
@@ -723,7 +723,7 @@ public class WorldStateDownloaderTest {
     assertThat(requestedHashes).containsAll(queuedHashes);
 
     // Check that already enqueued requests were not enqueued more than once
-    for (final Bytes32 bytes32 : queuedHashes) {
+    for (Bytes32 bytes32 : queuedHashes) {
       final Hash hash = Hash.wrap(bytes32);
       verify(taskCollection, times(1)).add(argThat((r) -> r.getHash().equals(hash)));
     }

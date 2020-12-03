@@ -113,7 +113,7 @@ public class RlpBlockImporter implements Closeable {
         if (previousHeader == null) {
           previousHeader = lookupPreviousHeader(blockchain, header);
         }
-        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
         final BlockHeader lastHeader = previousHeader;
 
         final CompletableFuture<Void> validationFuture =
@@ -200,7 +200,9 @@ public class RlpBlockImporter implements Closeable {
           blockImporter.importBlock(
               context,
               block,
-              HeaderValidationMode.NONE,
+              skipPowValidation
+                  ? HeaderValidationMode.LIGHT_SKIP_DETACHED
+                  : HeaderValidationMode.SKIP_DETACHED,
               skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
       if (!blockImported) {
         throw new IllegalStateException(

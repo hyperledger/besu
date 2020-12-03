@@ -23,7 +23,7 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   WORLD_STATE(new byte[] {2}, new int[] {0, 1}),
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
-  PRUNING_STATE(new byte[] {5}),
+  PRUNING_STATE(new byte[] {5}, new int[] {0, 1}),
   ACCOUNT_INFO_STATE(new byte[] {6}, new int[] {2}),
   CODE_STORAGE(new byte[] {7}, new int[] {2}),
   ACCOUNT_STORAGE_STORAGE(new byte[] {8}, new int[] {2}),
