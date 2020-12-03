@@ -76,7 +76,7 @@ public class MainnetTransactionProcessorTest {
         transactionValidationParamCaptor();
 
     final TransactionValidationParams expectedValidationParams =
-        new TransactionValidationParams.Builder().build();
+        ImmutableTransactionValidationParams.builder().build();
 
     transactionProcessor.processTransaction(
         blockchain,
@@ -86,7 +86,7 @@ public class MainnetTransactionProcessorTest {
         Address.fromHexString("1"),
         blockHashLookup,
         false,
-        new TransactionValidationParams.Builder().build());
+        ImmutableTransactionValidationParams.builder().build());
 
     assertThat(txValidationParamCaptor.getValue())
         .isEqualToComparingFieldByField(expectedValidationParams);

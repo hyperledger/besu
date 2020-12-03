@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -26,6 +27,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -57,7 +60,7 @@ public class EthEstimateGas implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final CallParameter callParams = validateAndGetCallParams(requestContext);
+    final JsonCallParameter callParams = validateAndGetCallParams(requestContext);
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {
@@ -75,7 +78,14 @@ public class EthEstimateGas implements JsonRpcMethod {
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
 
     return transactionSimulator
-        .process(modifiedCallParams, operationTracer, blockHeader.getNumber())
+        .process(
+            modifiedCallParams,
+            ImmutableTransactionValidationParams.builder()
+                .from(TransactionValidationParams.transactionSimulator())
+                .isAllowExceedBalance(!callParams.isStrict())
+                .build(),
+            operationTracer,
+            blockHeader.getNumber())
         .map(gasEstimateResponse(requestContext, operationTracer))
         .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
   }
@@ -86,7 +96,7 @@ public class EthEstimateGas implements JsonRpcMethod {
   }
 
   private CallParameter overrideGasLimitAndPrice(
-      final CallParameter callParams, final long gasLimit) {
+      final JsonCallParameter callParams, final long gasLimit) {
     return new CallParameter(
         callParams.getFrom(),
         callParams.getTo(),
@@ -153,8 +163,8 @@ public class EthEstimateGas implements JsonRpcMethod {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
   }
 
-  private CallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final CallParameter callParams = request.getRequiredParameter(0, CallParameter.class);
+  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
+    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getGasPrice() != null
         && (callParams.getFeeCap().isPresent() || callParams.getGasPremium().isPresent())) {
       throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or feeCap");

@@ -171,7 +171,7 @@ public class MainnetTransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        new TransactionValidationParams.Builder().build());
+        ImmutableTransactionValidationParams.builder().build());
   }
 
   /**

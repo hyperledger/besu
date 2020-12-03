@@ -222,7 +222,7 @@ public class MainnetTransactionValidatorTest {
     validator.setTransactionFilter(transactionFilter);
 
     final TransactionValidationParams validationParams =
-        new TransactionValidationParams.Builder().checkOnchainPermissions(true).build();
+        ImmutableTransactionValidationParams.builder().checkOnchainPermissions(true).build();
 
     validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
 
@@ -240,7 +240,7 @@ public class MainnetTransactionValidatorTest {
     validator.setTransactionFilter(transactionFilter);
 
     final TransactionValidationParams validationParams =
-        new TransactionValidationParams.Builder()
+        ImmutableTransactionValidationParams.builder()
             .checkOnchainPermissions(false)
             .checkLocalPermissions(false)
             .build();

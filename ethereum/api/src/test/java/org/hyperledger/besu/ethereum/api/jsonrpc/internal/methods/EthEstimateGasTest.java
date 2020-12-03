@@ -18,11 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -34,6 +36,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -85,9 +89,10 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnErrorWhenTransientLegacyTransactionProcessorReturnsEmpty() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO));
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     when(transactionSimulator.process(
             eq(modifiedLegacyTransactionCallParameter(Wei.ZERO)),
+            any(TransactionValidationParams.class),
             any(OperationTracer.class),
             eq(1L)))
         .thenReturn(Optional.empty());
@@ -103,7 +108,10 @@ public class EthEstimateGasTest {
   public void shouldReturnErrorWhenTransientEip1559TransactionProcessorReturnsEmpty() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
     when(transactionSimulator.process(
-            eq(modifiedEip1559TransactionCallParameter()), any(OperationTracer.class), eq(1L)))
+            eq(modifiedEip1559TransactionCallParameter()),
+            any(TransactionValidationParams.class),
+            any(OperationTracer.class),
+            eq(1L)))
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
@@ -116,7 +124,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnGasEstimateWhenTransientLegacyTransactionProcessorReturnsResultSuccess() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO));
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultGasEstimate(1L, true, false);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
@@ -129,7 +137,7 @@ public class EthEstimateGasTest {
   public void shouldUseGasPriceParameterWhenIsPresent() {
     final Wei gasPrice = Wei.of(1000);
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(gasPrice));
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(gasPrice));
     mockTransientProcessorResultGasEstimate(1L, true, false, gasPrice);
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
@@ -163,7 +171,7 @@ public class EthEstimateGasTest {
   public void
       shouldReturnGasEstimateErrorWhenTransientLegacyTransactionProcessorReturnsResultFailure() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO));
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
@@ -189,7 +197,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnErrorWhenLegacyTransactionProcessorReturnsTxInvalidReason() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO));
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultTxInvalidReason(
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
 
@@ -217,7 +225,7 @@ public class EthEstimateGasTest {
   public void shouldReturnErrorWhenWorldStateIsNotAvailable() {
     when(worldStateArchive.isWorldStateAvailable(any())).thenReturn(false);
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO));
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
@@ -230,7 +238,7 @@ public class EthEstimateGasTest {
   @Test
   public void shouldReturnErrorWhenTransactionReverted() {
     final JsonRpcRequestContext request =
-        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO));
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultGasEstimate(1L, false, true);
 
     final JsonRpcResponse expectedResponse =
@@ -238,6 +246,46 @@ public class EthEstimateGasTest {
 
     Assertions.assertThat(method.response(request))
         .isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldIgnoreSenderBalanceAccountWhenStrictModeDisabled() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
+    mockTransientProcessorResultGasEstimate(1L, false, true);
+
+    method.response(request);
+
+    verify(transactionSimulator)
+        .process(
+            eq(modifiedLegacyTransactionCallParameter(Wei.ZERO)),
+            eq(
+                ImmutableTransactionValidationParams.builder()
+                    .from(TransactionValidationParams.transactionSimulator())
+                    .isAllowExceedBalance(true)
+                    .build()),
+            any(OperationTracer.class),
+            eq(1L));
+  }
+
+  @Test
+  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeDisabled() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO, true));
+    mockTransientProcessorResultGasEstimate(1L, false, true);
+
+    method.response(request);
+
+    verify(transactionSimulator)
+        .process(
+            eq(modifiedLegacyTransactionCallParameter(Wei.ZERO)),
+            eq(
+                ImmutableTransactionValidationParams.builder()
+                    .from(TransactionValidationParams.transactionSimulator())
+                    .isAllowExceedBalance(false)
+                    .build()),
+            any(OperationTracer.class),
+            eq(1L));
   }
 
   private void mockTransientProcessorResultTxInvalidReason(final TransactionInvalidReason reason) {
@@ -267,11 +315,15 @@ public class EthEstimateGasTest {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
     when(transactionSimulator.process(
             eq(modifiedLegacyTransactionCallParameter(gasPrice)),
+            any(TransactionValidationParams.class),
             any(OperationTracer.class),
             eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
     when(transactionSimulator.process(
-            eq(modifiedEip1559TransactionCallParameter()), any(OperationTracer.class), eq(1L)))
+            eq(modifiedEip1559TransactionCallParameter()),
+            any(TransactionValidationParams.class),
+            any(OperationTracer.class),
+            eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
     final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
@@ -282,8 +334,13 @@ public class EthEstimateGasTest {
     return mockTxSimResult;
   }
 
-  private CallParameter legacyTransactionCallParameter(final Wei gasPrice) {
-    return new CallParameter(
+  private JsonCallParameter defaultLegacyTransactionCallParameter(final Wei gasPrice) {
+    return legacyTransactionCallParameter(gasPrice, false);
+  }
+
+  private JsonCallParameter legacyTransactionCallParameter(
+      final Wei gasPrice, final boolean isStrict) {
+    return new JsonCallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         Gas.ZERO,
@@ -291,7 +348,8 @@ public class EthEstimateGasTest {
         null,
         null,
         Wei.ZERO,
-        Bytes.EMPTY);
+        Bytes.EMPTY,
+        isStrict);
   }
 
   private CallParameter modifiedLegacyTransactionCallParameter(final Wei gasPrice) {
@@ -310,16 +368,17 @@ public class EthEstimateGasTest {
     return eip1559TransactionCallParameter(Optional.empty());
   }
 
-  private CallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
-    return new CallParameter(
+  private JsonCallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
+    return new JsonCallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         null,
-        gasPrice.orElse(Wei.ZERO),
+        gasPrice.orElse(null),
         Wei.fromHexString("0x10"),
         Wei.fromHexString("0x10"),
         Wei.ZERO,
-        Bytes.EMPTY);
+        Bytes.EMPTY,
+        false);
   }
 
   private CallParameter modifiedEip1559TransactionCallParameter() {
