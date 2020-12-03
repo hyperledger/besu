@@ -17,6 +17,7 @@ package org.hyperledger.besu.enclave;
 import org.hyperledger.besu.enclave.RequestTransmitter.ResponseBodyHandler;
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.enclave.types.GoQuorumSendRequest;
+import org.hyperledger.besu.enclave.types.GoQuorumSendSignedRequest;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.SendResponse;
 
@@ -55,6 +56,16 @@ public class GoQuorumEnclave {
         JSON,
         request,
         "/send",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class, 201));
+  }
+
+  public SendResponse sendSignedTransaction(
+      final byte[] txLookupId, final List<String> privateFor) {
+    final GoQuorumSendSignedRequest request = new GoQuorumSendSignedRequest(txLookupId, privateFor);
+    return post(
+        JSON,
+        request,
+        "/sendsignedtx",
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class, 201));
   }
 

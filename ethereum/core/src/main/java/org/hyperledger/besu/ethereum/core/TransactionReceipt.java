@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 import java.util.Objects;
@@ -41,6 +42,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
 
   private static final int NONEXISTENT = -1;
 
+  private final TransactionType transactionType;
   private final Hash stateRoot;
   private final long cumulativeGasUsed;
   private final List<Log> logs;
@@ -63,6 +65,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final List<Log> logs,
       final Optional<Bytes> revertReason) {
     this(
+        TransactionType.FRONTIER,
         stateRoot,
         NONEXISTENT,
         cumulativeGasUsed,
@@ -72,12 +75,20 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   }
 
   private TransactionReceipt(
+      final TransactionType transactionType,
       final Hash stateRoot,
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
       final Optional<Bytes> revertReason) {
-    this(stateRoot, NONEXISTENT, cumulativeGasUsed, logs, bloomFilter, revertReason);
+    this(
+        transactionType,
+        stateRoot,
+        NONEXISTENT,
+        cumulativeGasUsed,
+        logs,
+        bloomFilter,
+        revertReason);
   }
 
   /**
@@ -94,6 +105,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final List<Log> logs,
       final Optional<Bytes> revertReason) {
     this(
+        TransactionType.FRONTIER,
         null,
         status,
         cumulativeGasUsed,
@@ -103,21 +115,39 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   }
 
   private TransactionReceipt(
+      final TransactionType transactionType,
       final int status,
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
       final Optional<Bytes> revertReason) {
-    this(null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
+    this(transactionType, null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
+  }
+
+  public TransactionReceipt(
+      final TransactionType transactionType,
+      final int status,
+      final long cumulativeGasUsed,
+      final List<Log> logs,
+      final Optional<Bytes> maybeRevertReason) {
+    this(
+        transactionType,
+        status,
+        cumulativeGasUsed,
+        logs,
+        LogsBloomFilter.builder().insertLogs(logs).build(),
+        maybeRevertReason);
   }
 
   private TransactionReceipt(
+      final TransactionType transactionType,
       final Hash stateRoot,
       final int status,
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
       final Optional<Bytes> revertReason) {
+    this.transactionType = transactionType;
     this.stateRoot = stateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
     this.status = status;
@@ -142,6 +172,9 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   }
 
   private void writeTo(final RLPOutput out, final boolean withRevertReason) {
+    if (!transactionType.equals(TransactionType.FRONTIER)) {
+      out.writeRaw(Bytes.of((byte) transactionType.getSerializedType()));
+    }
     out.startList();
 
     // Determine whether it's a state root-encoded transaction receipt
@@ -179,7 +212,18 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    */
   public static TransactionReceipt readFrom(
       final RLPInput input, final boolean revertReasonAllowed) {
-    input.enterList();
+    TransactionType transactionType = TransactionType.FRONTIER;
+    try {
+      input.enterList();
+    } catch (RLPException rlpe) {
+      if (rlpe.getMessage().contains("Expected current item to be a list")) {
+        // This is an EIP-2718 receipt
+        transactionType = TransactionType.of(input.readByte());
+        input.enterList();
+      } else {
+        throw rlpe;
+      }
+    }
 
     try {
       // Get the first element to check later to determine the
@@ -204,10 +248,12 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       // byte for success (0x01) or failure (0x80).
       if (firstElement.raw().size() == 1) {
         final int status = firstElement.readIntScalar();
-        return new TransactionReceipt(status, cumulativeGas, logs, bloomFilter, revertReason);
+        return new TransactionReceipt(
+            transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
       } else {
         final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-        return new TransactionReceipt(stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
+        return new TransactionReceipt(
+            transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
       }
     } finally {
       input.leaveList();

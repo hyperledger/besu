@@ -174,7 +174,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
       gasUsed = transaction.getGasLimit() - result.getGasRemaining() + gasUsed;
       final TransactionReceipt transactionReceipt =
-          transactionReceiptFactory.create(result, worldState, gasUsed);
+          transactionReceiptFactory.create(transaction.getType(), result, worldState, gasUsed);
       receipts.add(transactionReceipt);
     }
 
