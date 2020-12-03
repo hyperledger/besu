@@ -140,40 +140,41 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         final BonsaiValue<BonsaiAccount> accountValue =
             updater.getAccountsToUpdate().get(updatedAddress);
         final BonsaiAccount accountOriginal = accountValue.getOriginal();
+        final Hash storageRoot =
+            (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
+        final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+            new StoredMerklePatriciaTrie<>(
+                (location, key) -> getStorageTrieNode(updatedAddress, location, key),
+                storageRoot,
+                Function.identity(),
+                Function.identity());
+
+        // for manicured tries and composting, collect branches here (not implemented)
+
+        for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
+            storageAccountUpdate.getValue().entrySet()) {
+          final Hash keyHash = storageUpdate.getKey();
+          final byte[] writeAddress = Bytes.concatenate(updatedAddress, keyHash).toArrayUnsafe();
+          final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
+          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+            storageTx.remove(writeAddress);
+            storageTrie.remove(keyHash);
+          } else {
+            final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
+            storageTx.put(writeAddress, updatedStorageBytes.toArrayUnsafe());
+            storageTrie.put(keyHash, rlpEncode(updatedStorageBytes));
+          }
+        }
+
         final BonsaiAccount accountUpdated = accountValue.getUpdated();
         if (accountUpdated != null) {
-          final Hash storageRoot =
-              (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
-          final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-              new StoredMerklePatriciaTrie<>(
-                  (location, key) -> getStorageTrieNode(updatedAddress, location, key),
-                  storageRoot,
-                  Function.identity(),
-                  Function.identity());
-
-          // for manicured tries and composting, collect branches here (not implemented)
-
-          for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
-              storageAccountUpdate.getValue().entrySet()) {
-            final Hash keyHash = storageUpdate.getKey();
-            final byte[] writeAddress = Bytes.concatenate(updatedAddress, keyHash).toArrayUnsafe();
-            final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
-            if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-              storageTx.remove(writeAddress);
-              storageTrie.remove(keyHash);
-            } else {
-              final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
-              storageTx.put(writeAddress, updatedStorageBytes.toArrayUnsafe());
-              storageTrie.put(keyHash, rlpEncode(updatedStorageBytes));
-            }
-          }
           storageTrie.commit(
               (location, key, value) ->
                   writeStorageTrieNode(trieBranchTx, updatedAddress, location, key, value));
           final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
-          accountValue.getUpdated().setStorageRoot(newStorageRoot);
-          // for manicured tries and composting, trim and compost here
+          accountUpdated.setStorageRoot(newStorageRoot);
         }
+        // for manicured tries and composting, trim and compost here
       }
 
       // Third update the code.  This has the side effect of ensuring a code hash is calculated.
@@ -222,8 +223,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (blockHash != null) {
         final TrieLogLayer trieLog = updater.generateTrieLog(blockHash);
         trieLog.freeze();
-        // FIXME add to archive her, but only once we get persisted follow distance implemented
+        // FIXME add to archive here, but only once we get persisted follow distance implemented
         // archive.addLayeredWorldState(new BonsaiLayeredWorldState(this, trieLog));
+
         final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
         trieLog.writeTo(rlpLog);
         trieLogTx.put(blockHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());

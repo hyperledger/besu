@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -31,9 +33,10 @@ import org.apache.tuweni.bytes.Bytes;
 public class RollingImport {
 
   public static void main(final String[] arg) throws IOException {
+    checkArgument(arg.length == 1, "Single argument is file prefix, like `./layer/besu-layer`");
+
     final RollingFileReader reader =
-        new RollingFileReader(
-            (i, c) -> Path.of(String.format("/tmp/goerli/fill/besu-layer-%04d.rdat", i)), false);
+        new RollingFileReader((i, c) -> Path.of(String.format(arg[0] + "-%04d.rdat", i)), false);
 
     final InMemoryStorageProvider provider = new InMemoryStorageProvider();
     final BonsaiWorldStateArchive archive = new BonsaiWorldStateArchive(provider);

@@ -450,11 +450,14 @@ public class BonsaiWorldStateUpdater
             new BonsaiValue<>(null, new BonsaiAccount(this, address, replacementValue, true)));
       } else {
         throw new IllegalStateException(
-            "Expected to update account, but the account does not exist");
+            String.format(
+                "Expected to update account, but the account does not exist. Address=%s", address));
       }
     } else {
       if (expectedValue == null) {
-        throw new IllegalStateException("Expected to create account, but the account exists");
+        throw new IllegalStateException(
+            String.format(
+                "Expected to create account, but the account exists.  Address=%s", address));
       }
       BonsaiAccount.assertCloseEnoughForDiffing(
           accountValue.getUpdated(), expectedValue, "Prior Value in Rolling Change");
@@ -508,14 +511,20 @@ public class BonsaiWorldStateUpdater
       if (expectedCode == null && replacementCode != null) {
         codeToUpdate.put(address, new BonsaiValue<>(null, replacementCode));
       } else {
-        throw new IllegalStateException("Expected to update code, but the code does not exist");
+        throw new IllegalStateException(
+            String.format(
+                "Expected to update code, but the code does not exist.  Address=%s", address));
       }
     } else {
       if (expectedCode == null) {
-        throw new IllegalStateException("Expected to create code, but the code exists");
+        throw new IllegalStateException(
+            String.format("Expected to create code, but the code exists.  Address=%s", address));
       }
       if (!codeValue.getUpdated().equals(expectedCode)) {
-        throw new IllegalStateException("Old value of code does not match expected value");
+        throw new IllegalStateException(
+            String.format(
+                "Old value of code does not match expected value.  Address=%s ExpectedHash=%s ActualHash=%s",
+                address, Hash.hash(expectedCode), Hash.hash(codeValue.getUpdated())));
       }
       if (replacementCode == null) {
         if (codeValue.getOriginal() == null) {
@@ -565,15 +574,26 @@ public class BonsaiWorldStateUpdater
             .put(slotHash, new BonsaiValue<>(null, replacementValue));
       } else {
         throw new IllegalStateException(
-            "Expected to update storage value, but the slot does not exist");
+            String.format(
+                "Expected to update storage value, but the slot does not exist. Account=%s SlotHash=%s",
+                address, slotHash));
       }
     } else {
       if (expectedValue == null) {
-        throw new IllegalStateException("Expected to create slot, but the slot exists");
+        throw new IllegalStateException(
+            String.format(
+                "Expected to create slot, but the slot exists. Account=%s SlotHash=%s",
+                address, slotHash));
       }
       final UInt256 existingSlotValue = slotValue.getUpdated();
       if (!existingSlotValue.equals(expectedValue)) {
-        throw new IllegalStateException("Old value of slot does not match expected value");
+        throw new IllegalStateException(
+            String.format(
+                "Old value of slot does not match expected value. Account=%s SlotHash=%s Expected=%s Actual=%s",
+                address,
+                slotHash,
+                expectedValue.toShortHexString(),
+                existingSlotValue.toShortHexString()));
       }
       if (replacementValue == null) {
         if (slotValue.getOriginal() == null) {
