@@ -129,7 +129,7 @@ public class TransactionSimulator {
 
     final WorldUpdater updater = worldState.updater();
 
-    if (transactionValidationParams.isAllowExceedBalance()) {
+    if (transactionValidationParams.isAllowExceedingBalance()) {
       updater.getOrCreate(senderAddress).getMutable().incrementBalance(Wei.of(Long.MAX_VALUE));
     }
 

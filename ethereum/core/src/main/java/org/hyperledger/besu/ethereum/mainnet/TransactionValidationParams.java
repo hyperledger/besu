@@ -41,7 +41,7 @@ public interface TransactionValidationParams {
   }
 
   @Value.Default
-  default boolean isAllowExceedBalance() {
+  default boolean isAllowExceedingBalance() {
     return false;
   }
 

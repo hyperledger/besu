@@ -262,7 +262,7 @@ public class EthEstimateGasTest {
             eq(
                 ImmutableTransactionValidationParams.builder()
                     .from(TransactionValidationParams.transactionSimulator())
-                    .isAllowExceedBalance(true)
+                    .isAllowExceedingBalance(true)
                     .build()),
             any(OperationTracer.class),
             eq(1L));
@@ -282,7 +282,7 @@ public class EthEstimateGasTest {
             eq(
                 ImmutableTransactionValidationParams.builder()
                     .from(TransactionValidationParams.transactionSimulator())
-                    .isAllowExceedBalance(false)
+                    .isAllowExceedingBalance(false)
                     .build()),
             any(OperationTracer.class),
             eq(1L));

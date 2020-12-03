@@ -82,7 +82,7 @@ public class EthEstimateGas implements JsonRpcMethod {
             modifiedCallParams,
             ImmutableTransactionValidationParams.builder()
                 .from(TransactionValidationParams.transactionSimulator())
-                .isAllowExceedBalance(!callParams.isStrict())
+                .isAllowExceedingBalance(!callParams.isStrict())
                 .build(),
             operationTracer,
             blockHeader.getNumber())

@@ -140,7 +140,7 @@ public class EthEstimateGasIntegrationTest {
   }
 
   @Test
-  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeDisabledAndReturnExpectedValue() {
+  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeDisabledAndThrowError() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),

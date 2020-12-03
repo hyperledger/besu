@@ -145,7 +145,7 @@ public class TransactionSimulatorTest {
 
     transactionSimulator.process(
         callParameter,
-        ImmutableTransactionValidationParams.builder().isAllowExceedBalance(true).build(),
+        ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
         OperationTracer.NO_TRACING,
         1L);
 
@@ -178,7 +178,7 @@ public class TransactionSimulatorTest {
 
     transactionSimulator.process(
         callParameter,
-        ImmutableTransactionValidationParams.builder().isAllowExceedBalance(false).build(),
+        ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
         OperationTracer.NO_TRACING,
         1L);
 
