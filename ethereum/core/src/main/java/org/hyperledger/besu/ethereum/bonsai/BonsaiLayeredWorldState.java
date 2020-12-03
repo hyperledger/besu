@@ -99,6 +99,6 @@ public class BonsaiLayeredWorldState implements BonsaiWorldState, WorldState {
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new UnsupportedOperationException("//FIXME Only needed for pruner and debug calls");
+    throw new UnsupportedOperationException("Bonsai does not support pruning and debug RPCs");
   }
 }

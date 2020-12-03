@@ -223,7 +223,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (blockHash != null) {
         final TrieLogLayer trieLog = updater.generateTrieLog(blockHash);
         trieLog.freeze();
-        // FIXME add to archive here, but only once we get persisted follow distance implemented
+        // TODO add to archive here, but only once we get persisted follow distance implemented
         // archive.addLayeredWorldState(new BonsaiLayeredWorldState(this, trieLog));
 
         final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();

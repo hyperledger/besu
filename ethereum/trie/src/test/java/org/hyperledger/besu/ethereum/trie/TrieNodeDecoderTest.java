@@ -59,7 +59,7 @@ public class TrieNodeDecoderTest {
 
     // Get and flatten root node
     final Bytes rootNodeRlp = Bytes.wrap(storage.get(trie.getRootHash().toArrayUnsafe()).get());
-    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(null /*FIXME*/, rootNodeRlp);
+    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(null, rootNodeRlp);
     // The full trie hold 10 nodes, the branch node starting with 0x3... holding 2 values will be a
     // hash
     // referenced node and so its 2 child nodes will be missing
