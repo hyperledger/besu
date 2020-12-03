@@ -90,12 +90,13 @@ public class TransactionPoolFactoryTest {
             new NoOpMetricsSystem(),
             state,
             Wei.of(1),
-            new TransactionPoolConfiguration(
+            ImmutableTransactionPoolConfiguration.of(
                 1,
                 1,
                 1,
                 1,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP,
+                TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD,
                 TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP),
             pendingTransactions,
             peerTransactionTracker,
@@ -175,12 +176,13 @@ public class TransactionPoolFactoryTest {
             new NoOpMetricsSystem(),
             state,
             Wei.of(1),
-            new TransactionPoolConfiguration(
+            ImmutableTransactionPoolConfiguration.of(
                 1,
                 1,
                 1,
                 1,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP,
+                TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD,
                 TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP),
             pendingTransactions,
             peerTransactionTracker,
