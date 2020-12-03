@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -295,75 +296,55 @@ public class MainnetTransactionProcessor {
           intrinsicGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
-      final MessageFrame initialFrame;
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-      final ReturnStack returnStack = new ReturnStack();
+      final MessageFrame.Builder commonMessageFrameBuilder =
+          MessageFrame.builder()
+              .messageFrameStack(messageFrameStack)
+              .maxStackSize(maxStackSize)
+              .returnStack(new ReturnStack())
+              .blockchain(blockchain)
+              .worldState(worldUpdater.updater())
+              .initialGas(gasAvailable)
+              .originator(senderAddress)
+              .gasPrice(transactionGasPrice)
+              .sender(senderAddress)
+              .value(transaction.getValue())
+              .apparentValue(transaction.getValue())
+              .blockHeader(blockHeader)
+              .depth(0)
+              .completer(__ -> {})
+              .miningBeneficiary(miningBeneficiary)
+              .blockHashLookup(blockHashLookup)
+              .isPersistingPrivateState(isPersistingPrivateState)
+              .transactionHash(transaction.getHash())
+              .privateMetadataUpdater(privateMetadataUpdater);
 
+      final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
         final Address contractAddress =
             Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
         initialFrame =
-            MessageFrame.builder()
+            commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)
-                .messageFrameStack(messageFrameStack)
-                .returnStack(returnStack)
-                .blockchain(blockchain)
-                .worldState(worldUpdater.updater())
-                .initialGas(gasAvailable)
                 .address(contractAddress)
-                .originator(senderAddress)
                 .contract(contractAddress)
                 .contractAccountVersion(createContractAccountVersion)
-                .gasPrice(transactionGasPrice)
                 .inputData(Bytes.EMPTY)
-                .sender(senderAddress)
-                .value(transaction.getValue())
-                .apparentValue(transaction.getValue())
                 .code(new Code(transaction.getPayload()))
-                .blockHeader(blockHeader)
-                .depth(0)
-                .completer(c -> {})
-                .miningBeneficiary(miningBeneficiary)
-                .blockHashLookup(blockHashLookup)
-                .isPersistingPrivateState(isPersistingPrivateState)
-                .maxStackSize(maxStackSize)
-                .transactionHash(transaction.getHash())
-                .privateMetadataUpdater(privateMetadataUpdater)
                 .build();
-
       } else {
         final Address to = transaction.getTo().get();
-        final Account contract = worldState.get(to);
-
+        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
         initialFrame =
-            MessageFrame.builder()
+            commonMessageFrameBuilder
                 .type(MessageFrame.Type.MESSAGE_CALL)
-                .messageFrameStack(messageFrameStack)
-                .returnStack(returnStack)
-                .blockchain(blockchain)
-                .worldState(worldUpdater.updater())
-                .initialGas(gasAvailable)
                 .address(to)
-                .originator(senderAddress)
                 .contract(to)
                 .contractAccountVersion(
-                    contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
-                .gasPrice(transactionGasPrice)
+                    maybeContract.map(AccountState::getVersion).orElse(Account.DEFAULT_VERSION))
                 .inputData(transaction.getPayload())
-                .sender(senderAddress)
-                .value(transaction.getValue())
-                .apparentValue(transaction.getValue())
-                .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
-                .blockHeader(blockHeader)
-                .depth(0)
-                .completer(c -> {})
-                .miningBeneficiary(miningBeneficiary)
-                .blockHashLookup(blockHashLookup)
-                .maxStackSize(maxStackSize)
-                .isPersistingPrivateState(isPersistingPrivateState)
-                .transactionHash(transaction.getHash())
-                .privateMetadataUpdater(privateMetadataUpdater)
+                .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
                 .build();
       }
 
