@@ -41,7 +41,6 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
   @Override
   public void encode(final Transaction transaction, final RLPOutput rlpOutput) {
     if (transaction.getType().equals(TransactionType.FRONTIER)) {
-
       super.encode(transaction, rlpOutput);
     } else {
       ExperimentalEIPs.eip1559MustBeEnabled();
@@ -80,6 +79,7 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
 
     final Transaction.Builder builder =
         Transaction.builder()
+            .type(TransactionType.EIP1559)
             .nonce(input.readLongScalar())
             .gasPrice(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())

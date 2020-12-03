@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -66,6 +67,7 @@ public class FrontierRLPFormat implements RLPFormat {
     rlpInput.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(rlpInput.readLongScalar())
             .gasPrice(Wei.of(rlpInput.readUInt256Scalar()))
             .gasLimit(rlpInput.readLongScalar())
@@ -100,6 +102,7 @@ public class FrontierRLPFormat implements RLPFormat {
 
     final Transaction.Builder builder =
         Transaction.builder()
+            .type(TransactionType.EIP1559)
             .nonce(input.readLongScalar())
             .gasPrice(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())
