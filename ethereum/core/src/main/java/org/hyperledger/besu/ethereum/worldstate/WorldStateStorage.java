@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -36,7 +37,8 @@ public interface WorldStateStorage {
   boolean isWorldStateAvailable(Bytes32 rootHash);
 
   default boolean contains(final Bytes32 hash) {
-    return getNodeData(null /*FIXME*/, hash).isPresent();
+    // we don't have location info
+    return getNodeData(null, hash).isPresent();
   }
 
   Updater updater();
