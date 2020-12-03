@@ -489,6 +489,21 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return getGasPremium().isPresent() && getFeeCap().isPresent();
   }
 
+  /**
+   * Returns whether or not the transaction is a GoQuorum private transaction. <br>
+   * <br>
+   * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38.
+   *
+   * @return true if GoQuorum private transaction, false otherwise
+   */
+  public boolean isGoQuorumPrivateTransaction() {
+    return v.map(
+            value ->
+                GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN.equals(value)
+                    || GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX.equals(value))
+        .orElse(false);
+  }
+
   private static Bytes32 computeSenderRecoveryHash(
       final long nonce,
       final Wei gasPrice,
