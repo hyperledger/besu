@@ -339,9 +339,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   static void assertCloseEnoughForDiffing(
       final BonsaiAccount source, final StateTrieAccountValue account, final String context) {
     if (source == null) {
-      if (account != null) {
-        throw new IllegalStateException(context + ": source is null but target isn't");
-      }
+      throw new IllegalStateException(context + ": source is null but target isn't");
     } else {
       if (source.nonce != account.getNonce()) {
         throw new IllegalStateException(context + ": nonces differ");

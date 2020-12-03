@@ -198,10 +198,7 @@ public class BonsaiWorldStateUpdater
       if (deletedStorageUpdates.isEmpty()) {
         storageToUpdate.remove(deletedAddress);
       }
-
-      if (accountValue != null) {
-        accountValue.setUpdated(null);
-      }
+      accountValue.setUpdated(null);
     }
 
     for (final UpdateTrackingAccount<BonsaiAccount> tracked : getUpdatedAccounts()) {
