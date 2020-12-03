@@ -79,7 +79,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public MutableWorldState copy() {
-    throw new UnsupportedOperationException("LOL no");
+    throw new UnsupportedOperationException(
+        "Bonsai Tries does not support direct duplication of the persisted tries.");
   }
 
   @Override

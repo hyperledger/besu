@@ -251,7 +251,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("LOL no");
+    throw new RuntimeException("Bonsai Tries does not currently support enumerating storage");
   }
 
   Bytes serializeAccount() {
