@@ -153,8 +153,7 @@ public class TrieNodeDecoder {
         }
         if (child.isReferencedByHash()) {
           // Retrieve hash-referenced child
-          final Optional<Node<Bytes>> maybeChildNode =
-              nodeFactory.retrieve(null, child.getHash());
+          final Optional<Node<Bytes>> maybeChildNode = nodeFactory.retrieve(null, child.getHash());
           if (maybeChildNode.isEmpty()) {
             continue;
           }
