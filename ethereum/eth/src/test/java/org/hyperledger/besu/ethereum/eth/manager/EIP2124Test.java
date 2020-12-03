@@ -47,8 +47,6 @@ public class EIP2124Test {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-                {},
-                {},
           // Mainnet test cases
           {
             "Mainnet // Unsynced",

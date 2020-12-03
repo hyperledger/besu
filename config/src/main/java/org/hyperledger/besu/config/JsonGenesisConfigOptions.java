@@ -449,6 +449,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return forkBlockNumbers
         .filter(OptionalLong::isPresent)
         .map(OptionalLong::getAsLong)
+        .distinct()
         .sorted()
         .collect(Collectors.toList());
   }
