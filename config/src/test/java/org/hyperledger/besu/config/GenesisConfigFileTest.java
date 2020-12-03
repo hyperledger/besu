@@ -361,7 +361,16 @@ public class GenesisConfigFileTest {
 
   @Test
   public void shouldLoadForksIgnoreUnexpectedValues() throws IOException {
-    final ObjectNode configNode =
+    final ObjectNode configNoUnexpectedForks =
+        new ObjectMapper()
+            .createObjectNode()
+            .set(
+                "config",
+                JsonUtil.objectNodeFromString(
+                    Resources.toString(
+                        Resources.getResource("valid_config.json"), StandardCharsets.UTF_8)));
+
+    final ObjectNode configClassicFork =
         new ObjectMapper()
             .createObjectNode()
             .set(
@@ -374,7 +383,7 @@ public class GenesisConfigFileTest {
                             "valid_config_with_etc_forks.json"),
                         StandardCharsets.UTF_8)));
 
-    final ObjectNode configNodeWithUnexpectedForks =
+    final ObjectNode configMultipleUnexpectedForks =
         new ObjectMapper()
             .createObjectNode()
             .set(
@@ -382,17 +391,24 @@ public class GenesisConfigFileTest {
                 JsonUtil.objectNodeFromString(
                     Resources.toString(
                         Resources.getResource(
-                            // If you inspect this config, you should see that classicForkBlock is
+                            // If you inspect this config, you should see that
+                            // 'unexpectedFork1Block',
+                            // 'unexpectedFork2Block' and 'unexpectedFork3Block' are
                             // declared (which we want to ignore)
                             "valid_config_with_unexpected_forks.json"),
                         StandardCharsets.UTF_8)));
 
-    final GenesisConfigFile config = fromConfig(configNode);
-    final GenesisConfigFile configWithUnexpectedForks = fromConfig(configNodeWithUnexpectedForks);
+    final GenesisConfigFile configFileNoUnexpectedForks = fromConfig(configNoUnexpectedForks);
+    final GenesisConfigFile configFileClassicFork = fromConfig(configClassicFork);
+    final GenesisConfigFile configFileMultipleUnexpectedForks =
+        fromConfig(configMultipleUnexpectedForks);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
-    assertThat(config.getForks()).isEqualTo(configWithUnexpectedForks.getForks());
-    assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(61));
+    assertThat(configFileNoUnexpectedForks.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
+    assertThat(configFileNoUnexpectedForks.getForks()).isEqualTo(configFileClassicFork.getForks());
+    assertThat(configFileNoUnexpectedForks.getForks())
+        .isEqualTo(configFileMultipleUnexpectedForks.getForks());
+    assertThat(configFileNoUnexpectedForks.getConfigOptions().getChainId())
+        .hasValue(BigInteger.valueOf(61));
   }
 
   private GenesisConfigFile configWithProperty(final String key, final String value) {
