@@ -214,8 +214,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         }
       }
 
-      accountTrie.commit(
-          (location, hash, value) -> writeTrieNode(trieBranchTx, location, value));
+      accountTrie.commit((location, hash, value) -> writeTrieNode(trieBranchTx, location, value));
       worldStateRootHash = accountTrie.getRootHash();
       trieBranchTx.put(WORLD_ROOT_KEY, worldStateRootHash.toArrayUnsafe());
 
@@ -292,9 +291,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   private void writeTrieNode(
-      final KeyValueStorageTransaction tx,
-      final Bytes location,
-      final Bytes value) {
+      final KeyValueStorageTransaction tx, final Bytes location, final Bytes value) {
     tx.put(location.toArrayUnsafe(), value.toArrayUnsafe());
   }
 
