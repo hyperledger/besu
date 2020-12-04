@@ -36,8 +36,6 @@ public interface WorldStateArchive {
 
   Optional<MutableWorldState> getMutable(final Hash rootHash);
 
-  WorldState get();
-
   MutableWorldState getMutable();
 
   Optional<Bytes> getNodeData(final Hash hash);

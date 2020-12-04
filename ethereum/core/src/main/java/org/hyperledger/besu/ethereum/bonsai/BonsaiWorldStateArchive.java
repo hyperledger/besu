@@ -83,11 +83,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public WorldState get() {
-    return null;
-  }
-
-  @Override
   public MutableWorldState getMutable() {
     return persistedState;
   }

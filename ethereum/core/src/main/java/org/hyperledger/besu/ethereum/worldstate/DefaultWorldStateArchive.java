@@ -62,11 +62,6 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public WorldState get() {
-    return get(EMPTY_ROOT_HASH).get();
-  }
-
-  @Override
   public MutableWorldState getMutable() {
     return getMutable(EMPTY_ROOT_HASH).get();
   }

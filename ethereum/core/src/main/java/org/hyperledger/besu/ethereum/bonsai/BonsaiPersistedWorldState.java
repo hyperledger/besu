@@ -171,7 +171,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         if (accountUpdated != null) {
           storageTrie.commit(
               (location, key, value) ->
-                  writeStorageTrieNode(trieBranchTx, updatedAddress, location, key, value));
+                  writeStorageTrieNode(trieBranchTx, updatedAddress, location, value));
           final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
           accountUpdated.setStorageRoot(newStorageRoot);
         }
@@ -215,7 +215,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       }
 
       accountTrie.commit(
-          (location, hash, value) -> writeTrieNode(trieBranchTx, location, hash, value));
+          (location, hash, value) -> writeTrieNode(trieBranchTx, location, value));
       worldStateRootHash = accountTrie.getRootHash();
       trieBranchTx.put(WORLD_ROOT_KEY, worldStateRootHash.toArrayUnsafe());
 
@@ -272,7 +272,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("NIY");
+    throw new RuntimeException("Bonsai Tries do not provide account streaming.");
   }
 
   @Override
@@ -294,7 +294,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private void writeTrieNode(
       final KeyValueStorageTransaction tx,
       final Bytes location,
-      @SuppressWarnings("unused") final Bytes32 nodeHash,
       final Bytes value) {
     tx.put(location.toArrayUnsafe(), value.toArrayUnsafe());
   }
@@ -314,7 +313,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final KeyValueStorageTransaction tx,
       final Address address,
       final Bytes location,
-      @SuppressWarnings("unused") final Bytes32 key,
       final Bytes value) {
     tx.put(Bytes.concatenate(address, location).toArrayUnsafe(), value.toArrayUnsafe());
   }
