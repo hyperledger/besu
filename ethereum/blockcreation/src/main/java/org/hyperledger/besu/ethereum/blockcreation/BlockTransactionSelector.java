@@ -257,7 +257,8 @@ public class BlockTransactionSelector {
 
     transactionSelectionResult.update(
         transaction,
-        transactionReceiptFactory.create(result, worldState, cumulativeGasUsed),
+        transactionReceiptFactory.create(
+            transaction.getType(), result, worldState, cumulativeGasUsed),
         gasUsedByTransaction);
   }
 

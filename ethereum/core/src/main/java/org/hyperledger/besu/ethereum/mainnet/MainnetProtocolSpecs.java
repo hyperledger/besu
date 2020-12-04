@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -403,6 +404,10 @@ public abstract class MainnetProtocolSpecs {
             gasCalculator ->
                 MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::berlin)
+        .transactionReceiptFactory(
+            enableRevertReason
+                ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
+                : MainnetProtocolSpecs::berlinTransactionReceiptFactory)
         .name("Berlin");
   }
 
@@ -459,7 +464,11 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
-      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
+      // ignored because it's always FRONTIER
+      final TransactionType __,
+      final TransactionProcessingResult result,
+      final WorldState worldState,
+      final long gasUsed) {
     return new TransactionReceipt(
         worldState.rootHash(),
         gasUsed,
@@ -468,15 +477,49 @@ public abstract class MainnetProtocolSpecs {
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
+      // ignored because it's always FRONTIER
+      final TransactionType __,
+      final TransactionProcessingResult result,
+      final WorldState worldState,
+      final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
+      // ignored because it's always FRONTIER
+      final TransactionType __,
+      final TransactionProcessingResult result,
+      final WorldState worldState,
+      final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
+  }
+
+  private static TransactionReceipt berlinTransactionReceiptFactory(
+      final TransactionType transactionType,
+      final TransactionProcessingResult transactionProcessingResult,
+      final WorldState worldState,
+      final long gasUsed) {
+    return new TransactionReceipt(
+        transactionType,
+        transactionProcessingResult.isSuccessful() ? 1 : 0,
+        gasUsed,
+        transactionProcessingResult.getLogs(),
+        Optional.empty());
+  }
+
+  private static TransactionReceipt berlinTransactionReceiptFactoryWithReasonEnabled(
+      final TransactionType transactionType,
+      final TransactionProcessingResult transactionProcessingResult,
+      final WorldState worldState,
+      final long gasUsed) {
+    return new TransactionReceipt(
+        transactionType,
+        transactionProcessingResult.isSuccessful() ? 1 : 0,
+        gasUsed,
+        transactionProcessingResult.getLogs(),
+        transactionProcessingResult.getRevertReason());
   }
 
   private static class DaoBlockProcessor implements BlockProcessor {

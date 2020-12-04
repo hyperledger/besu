@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -238,13 +239,21 @@ public class ClassicProtocolSpecs {
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactory(
-      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
+      // ignored because it's always FRONTIER for byzantium
+      final TransactionType __,
+      final TransactionProcessingResult result,
+      final WorldState worldState,
+      final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), Optional.empty());
   }
 
   private static TransactionReceipt byzantiumTransactionReceiptFactoryWithReasonEnabled(
-      final TransactionProcessingResult result, final WorldState worldState, final long gasUsed) {
+      // ignored because it's always FRONTIER for byzantium
+      final TransactionType __,
+      final TransactionProcessingResult result,
+      final WorldState worldState,
+      final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
