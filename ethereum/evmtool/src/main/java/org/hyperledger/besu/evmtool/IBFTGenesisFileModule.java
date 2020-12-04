@@ -16,7 +16,7 @@
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;

@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.payload.Authored;
-import org.hyperledger.besu.consensus.ibft.payload.Payload;
-import org.hyperledger.besu.consensus.ibft.payload.RoundSpecific;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messages.Authored;
+import org.hyperledger.besu.consensus.common.bft.messages.Payload;
+import org.hyperledger.besu.consensus.common.bft.messages.RoundSpecific;
+import org.hyperledger.besu.consensus.common.bft.messages.SignedData;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 

@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.messages.SignedData;
+import org.hyperledger.besu.consensus.ibft.payload.PayloadSerializers;
 import org.hyperledger.besu.consensus.ibft.payload.PreparePayload;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
@@ -32,6 +33,6 @@ public class Prepare extends IbftMessage<PreparePayload> {
   }
 
   public static Prepare decode(final Bytes data) {
-    return new Prepare(SignedData.readSignedPreparePayloadFrom(RLP.input(data)));
+    return new Prepare(PayloadSerializers.readSignedPreparePayloadFrom(RLP.input(data)));
   }
 }

@@ -2,6 +2,7 @@ dependencies {
   implementation project(':besu')
   implementation project(':config')
   implementation project(':consensus:clique')
+  implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':crypto')
   implementation project(':enclave')

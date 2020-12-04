@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.messages.SignedData;
+import org.hyperledger.besu.consensus.ibft.payload.PayloadSerializers;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -73,7 +74,8 @@ public class Proposal extends IbftMessage<ProposalPayload> {
   public static Proposal decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<ProposalPayload> payload = SignedData.readSignedProposalPayloadFrom(rlpIn);
+    final SignedData<ProposalPayload> payload =
+        PayloadSerializers.readSignedProposalPayloadFrom(rlpIn);
     final Block proposedBlock = Block.readFrom(rlpIn, IbftBlockHeaderFunctions.forCommittedSeal());
 
     final Optional<RoundChangeCertificate> roundChangeCertificate =

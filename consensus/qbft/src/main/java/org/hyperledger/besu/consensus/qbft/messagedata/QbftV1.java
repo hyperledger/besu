@@ -12,11 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.payload;
+package org.hyperledger.besu.consensus.qbft.messagedata;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+/** Message codes for iBFT v2 messages */
+public class QbftV1 {
+  public static final int PROPOSAL = 0;
+  public static final int PREPARE = 1;
+  public static final int COMMIT = 2;
+  public static final int ROUND_CHANGE = 3;
 
-public interface RoundSpecific {
-
-  ConsensusRoundIdentifier getRoundIdentifier();
+  public static final int MESSAGE_SPACE = 4;
 }

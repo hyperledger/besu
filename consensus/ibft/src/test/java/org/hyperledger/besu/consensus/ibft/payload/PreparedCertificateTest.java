@@ -17,7 +17,8 @@ package org.hyperledger.besu.consensus.ibft.payload;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messages.SignedData;
 import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -63,7 +64,8 @@ public class PreparedCertificateTest {
     final PreparePayload preparePayload =
         new PreparePayload(ROUND_IDENTIFIER, Hash.fromHexStringLenient("0x8523ba6e7c5f59ae87"));
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    final SignedData<PreparePayload> signedPrepare = SignedData.from(preparePayload, signature);
+    final SignedData<PreparePayload> signedPrepare =
+        PayloadSerializers.from(preparePayload, signature);
 
     final PreparedCertificate preparedCert =
         new PreparedCertificate(signedProposalPayload, Lists.newArrayList(signedPrepare));
@@ -83,6 +85,6 @@ public class PreparedCertificateTest {
         TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    return SignedData.from(proposalPayload, signature);
+    return PayloadSerializers.from(proposalPayload, signature);
   }
 }

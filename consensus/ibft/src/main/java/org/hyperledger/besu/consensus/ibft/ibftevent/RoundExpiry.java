@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.ibftevent;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 
 import java.util.Objects;
 

@@ -17,9 +17,9 @@ package org.hyperledger.besu.consensus.ibft.headervalidationrules;
 import static org.hyperledger.besu.consensus.ibft.IbftHelpers.calculateRequiredValidatorQuorum;
 
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.IbftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftContext;
-import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;

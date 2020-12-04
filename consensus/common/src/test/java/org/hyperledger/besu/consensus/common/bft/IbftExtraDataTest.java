@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -100,7 +100,8 @@ public class IbftExtraDataTest {
   }
 
   /**
-   * This test specifically verifies that {@link IbftExtraData#decode(BlockHeader)} uses {@link
+   * This test specifically verifies that {@link
+   * org.hyperledger.besu.consensus.common.bft.IbftExtraData#decode(BlockHeader)} uses {@link
    * RLPInput#readInt()} rather than {@link RLPInput#readIntScalar()} to decode the round number
    */
   @Test

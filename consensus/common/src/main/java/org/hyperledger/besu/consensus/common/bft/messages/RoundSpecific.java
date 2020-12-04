@@ -12,11 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.payload;
+package org.hyperledger.besu.consensus.common.bft.messages;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 
-public interface Authored {
+public interface RoundSpecific {
 
-  Address getAuthor();
+  ConsensusRoundIdentifier getRoundIdentifier();
 }

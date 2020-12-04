@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.ibftevent.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 

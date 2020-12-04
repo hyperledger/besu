@@ -16,6 +16,9 @@ package org.hyperledger.besu.consensus.ibft;
 
 import static java.util.Collections.emptyList;
 
+import org.hyperledger.besu.consensus.common.bft.IbftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;

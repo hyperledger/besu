@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,54 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.payload;
+package org.hyperledger.besu.consensus.qbft.payload;
 
+import org.hyperledger.besu.consensus.common.bft.messages.Payload;
+import org.hyperledger.besu.consensus.common.bft.messages.SignedData;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.util.Objects;
-import java.util.StringJoiner;
-
-import org.apache.tuweni.bytes.Bytes;
-
-public class SignedData<M extends Payload> implements Authored {
-
-  private final Address sender;
-  private final Signature signature;
-  private final M unsignedPayload;
-
-  public SignedData(final M unsignedPayload, final Address sender, final Signature signature) {
-    this.unsignedPayload = unsignedPayload;
-    this.sender = sender;
-    this.signature = signature;
-  }
-
-  @Override
-  public Address getAuthor() {
-    return sender;
-  }
-
-  public M getPayload() {
-    return unsignedPayload;
-  }
-
-  public void writeTo(final RLPOutput output) {
-
-    output.startList();
-    unsignedPayload.writeTo(output);
-    output.writeBytes(signature.encodedBytes());
-    output.endList();
-  }
-
-  public Bytes encode() {
-    final BytesValueRLPOutput rlpEncode = new BytesValueRLPOutput();
-    writeTo(rlpEncode);
-    return rlpEncode.encoded();
-  }
+public class PayloadSerializers {
 
   public static SignedData<ProposalPayload> readSignedProposalPayloadFrom(final RLPInput rlpInput) {
 
@@ -118,33 +80,5 @@ public class SignedData<M extends Payload> implements Authored {
       final Payload unsignedMessageData, final Signature signature) {
 
     return Util.signatureToAddress(signature, MessageFactory.hashForSignature(unsignedMessageData));
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    final SignedData<?> that = (SignedData<?>) o;
-    return Objects.equals(sender, that.sender)
-        && Objects.equals(signature, that.signature)
-        && Objects.equals(unsignedPayload, that.unsignedPayload);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(sender, signature, unsignedPayload);
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", SignedData.class.getSimpleName() + "[", "]")
-        .add("sender=" + sender)
-        .add("signature=" + signature)
-        .add("unsignedPayload=" + unsignedPayload)
-        .toString();
   }
 }

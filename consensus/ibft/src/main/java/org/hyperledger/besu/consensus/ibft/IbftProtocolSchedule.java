@@ -18,6 +18,7 @@ import static org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRules
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;

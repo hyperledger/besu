@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.messages.SignedData;
+import org.hyperledger.besu.consensus.ibft.payload.PayloadSerializers;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -70,7 +71,7 @@ public class RoundChange extends IbftMessage<RoundChangePayload> {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<RoundChangePayload> payload =
-        SignedData.readSignedRoundChangePayloadFrom(rlpIn);
+        PayloadSerializers.readSignedRoundChangePayloadFrom(rlpIn);
     Optional<Block> block = Optional.empty();
     if (!rlpIn.nextIsNull()) {
       block = Optional.of(Block.readFrom(rlpIn, IbftBlockHeaderFunctions.forCommittedSeal()));

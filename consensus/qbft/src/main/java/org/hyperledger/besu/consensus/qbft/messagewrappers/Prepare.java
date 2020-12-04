@@ -12,29 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.payload;
+package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.messages.SignedData;
+import org.hyperledger.besu.consensus.qbft.payload.PayloadSerializers;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public interface Payload extends RoundSpecific {
+public class Prepare extends IbftMessage<PreparePayload> {
 
-  void writeTo(final RLPOutput rlpOutput);
-
-  default Bytes encoded() {
-    BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    writeTo(rlpOutput);
-
-    return rlpOutput.encoded();
+  public Prepare(final SignedData<PreparePayload> payload) {
+    super(payload);
   }
 
-  int getMessageType();
+  public Hash getDigest() {
+    return getPayload().getDigest();
+  }
 
-  static Hash readDigest(final RLPInput ibftMessageData) {
-    return Hash.wrap(ibftMessageData.readBytes32());
+  public static Prepare decode(final Bytes data) {
+    return new Prepare(PayloadSerializers.readSignedPreparePayloadFrom(RLP.input(data)));
   }
 }
