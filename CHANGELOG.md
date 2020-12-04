@@ -1,11 +1,23 @@
 # Changelog
 
+## 20.10.3
+
+### Additions and Improvements
+* Added `memory` as an option to `--key-value-storage`.  This ephemeral storage is intended for sync testing and debugging.  [\#1617](https://github.com/hyperledger/besu/pull/1617)
+
+### Bug Fixes
+
+#### Previously identified known issues
+
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
 ## 20.10.2
 
 ### Additions and Improvements
 * Added support for batched requests in WebSockets. [#1583](https://github.com/hyperledger/besu/pull/1583)
-* Added a protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
-* Added CLI option `--goquorum-compatibility-enabled` to enable GoQuorum compatibility mode. [#1598](https://github.com/hyperledger/besu/pull/1598)
+* Added protocols section to `admin_peers` to provide info about peer health. [\#1582](https://github.com/hyperledger/besu/pull/1582)
+* Added CLI option `--goquorum-compatibility-enabled` to enable GoQuorum compatibility mode. [#1598](https://github.com/hyperledger/besu/pull/1598). Note that this mode is incompatible with Mainnet.
 
 ### Bug Fixes
 
@@ -18,6 +30,11 @@
 
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+### Download Link
+
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.2.zip
+sha256: `710aed228dcbe9b8103aef39e4431b0c63e73c3a708ce88bcd1ecfa1722ad307`
 
 ## 20.10.1
 

@@ -43,9 +43,7 @@ public final class BlockBodiesMessage extends AbstractMessageData {
 
   public static BlockBodiesMessage create(final Iterable<BlockBody> bodies) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    bodies.forEach(body -> body.writeTo(tmp));
-    tmp.endList();
+    tmp.writeList(bodies, BlockBody::writeTo);
     return new BlockBodiesMessage(tmp.encoded());
   }
 

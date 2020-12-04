@@ -125,7 +125,12 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
-  private static final JsonObject GENESIS_QUORUM_INTEROP_ENABLED =
+  private static final JsonObject VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject().put("isquorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
+  private static final JsonObject INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET =
       (new JsonObject()).put("config", new JsonObject().put("isquorum", true));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
@@ -3923,7 +3928,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void quorumInteropDisabledDoesNotEnforceZeroGasPrice() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand(
         "--goquorum-compatibility-enabled=false", "--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3931,7 +3937,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand("--goquorum-compatibility-enabled", "--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString())
         .contains(
@@ -3940,7 +3947,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand(
         "--goquorum-compatibility-enabled",
         "--genesis-file",
@@ -3954,7 +3962,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void quorumInteropEnabledSucceedsWithGasPriceSetToZero() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_QUORUM_INTEROP_ENABLED);
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand(
         "--goquorum-compatibility-enabled",
         "--genesis-file",
@@ -3962,5 +3971,32 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--min-gas-price",
         "0");
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsWithMainnetDefaultNetwork() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
+    assertThat(commandErrorOutput.toString())
+        .contains("GoQuorum compatibility mode (enabled) cannot be used on Mainnet");
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsWithMainnetChainId() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET.put("chainId", "1"));
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
+    assertThat(commandErrorOutput.toString())
+        .contains("GoQuorum compatibility mode (enabled) cannot be used on Mainnet");
   }
 }

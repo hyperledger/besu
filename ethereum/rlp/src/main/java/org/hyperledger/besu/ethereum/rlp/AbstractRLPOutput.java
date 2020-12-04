@@ -86,7 +86,7 @@ abstract class AbstractRLPOutput implements RLPOutput {
   }
 
   @Override
-  public void writeRLPUnsafe(final Bytes v) {
+  public void writeRaw(final Bytes v) {
     checkState(
         stackSize > 1 || values.isEmpty(), "Terminated RLP output, cannot add more elements");
     values.add(v);
