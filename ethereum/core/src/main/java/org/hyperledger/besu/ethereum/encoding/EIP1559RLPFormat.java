@@ -17,7 +17,12 @@
 
 package org.hyperledger.besu.ethereum.encoding;
 
-import org.apache.tuweni.bytes.Bytes;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
+import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
+
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -31,11 +36,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
-import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EIP1559RLPFormat extends FrontierRLPFormat {
   @Override

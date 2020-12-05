@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -71,6 +72,8 @@ public class ProtocolSpecBuilder {
   private TransactionGasBudgetCalculator gasBudgetCalculator =
       TransactionGasBudgetCalculator.frontier();
   private BadBlockManager badBlockManager;
+
+  private RLPFormat rlpFormat;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -237,6 +240,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder rlpFormat(final RLPFormat rlpFormat) {
+    this.rlpFormat = rlpFormat;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
@@ -358,7 +366,8 @@ public class ProtocolSpecBuilder {
         transactionPriceCalculator,
         eip1559,
         gasBudgetCalculator,
-        badBlockManager);
+        badBlockManager,
+        rlpFormat);
   }
 
   public interface TransactionProcessorBuilder {

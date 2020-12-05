@@ -22,10 +22,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
@@ -35,17 +37,31 @@ import com.google.common.base.Suppliers;
 
 public class EthSendRawTransaction implements JsonRpcMethod {
 
+  private final Supplier<ProtocolSchedule> protocolScheduleSupplier;
   private final boolean sendEmptyHashOnInvalidBlock;
 
-  private final Supplier<TransactionPool> transactionPool;
+  private final Supplier<BlockchainQueries> blockchainQueriesSupplier;
+  private final Supplier<TransactionPool> transactionPoolSupplier;
 
-  public EthSendRawTransaction(final TransactionPool transactionPool) {
-    this(Suppliers.ofInstance(transactionPool), false);
+  public EthSendRawTransaction(
+      final BlockchainQueries blockchainQueries,
+      final TransactionPool transactionPoolSupplier,
+      final ProtocolSchedule protocolSchedule) {
+    this(
+        Suppliers.ofInstance(blockchainQueries),
+        Suppliers.ofInstance(transactionPoolSupplier),
+        Suppliers.ofInstance(protocolSchedule),
+        false);
   }
 
   public EthSendRawTransaction(
-      final Supplier<TransactionPool> transactionPool, final boolean sendEmptyHashOnInvalidBlock) {
-    this.transactionPool = transactionPool;
+      final Supplier<BlockchainQueries> blockchainQueriesSupplier,
+      final Supplier<TransactionPool> transactionPoolSupplier,
+      final Supplier<ProtocolSchedule> protocolScheduleSupplier,
+      final boolean sendEmptyHashOnInvalidBlock) {
+    this.blockchainQueriesSupplier = blockchainQueriesSupplier;
+    this.transactionPoolSupplier = transactionPoolSupplier;
+    this.protocolScheduleSupplier = protocolScheduleSupplier;
     this.sendEmptyHashOnInvalidBlock = sendEmptyHashOnInvalidBlock;
   }
 
@@ -64,14 +80,20 @@ public class EthSendRawTransaction implements JsonRpcMethod {
 
     final Transaction transaction;
     try {
-      transaction = DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction);
+      transaction =
+          DomainObjectDecodeUtils.decodeRawTransaction(
+              rawTransaction,
+              protocolScheduleSupplier
+                  .get()
+                  .getByBlockNumber(blockchainQueriesSupplier.get().headBlockNumber())
+                  .getRLPFormat());
     } catch (final InvalidJsonRpcRequestException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        transactionPool.get().addLocalTransaction(transaction);
+        transactionPoolSupplier.get().addLocalTransaction(transaction);
     return validationResult.either(
         () ->
             new JsonRpcSuccessResponse(

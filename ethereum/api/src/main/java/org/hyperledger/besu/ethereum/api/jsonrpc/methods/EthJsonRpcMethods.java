@@ -142,7 +142,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthGetFilterLogs(filterManager),
         new EthSyncing(synchronizer),
         new EthGetStorageAt(blockchainQueries),
-        new EthSendRawTransaction(transactionPool),
+        new EthSendRawTransaction(blockchainQueries, transactionPool, protocolSchedule),
         new EthSendTransaction(),
         new EthEstimateGas(
             blockchainQueries,

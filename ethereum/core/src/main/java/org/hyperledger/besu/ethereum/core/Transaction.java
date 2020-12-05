@@ -20,10 +20,12 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.encoding.BerlinRLPFormat;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Objects;
@@ -32,7 +34,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class Transaction implements org.hyperledger.besu.plugin.data.Transaction {
@@ -92,8 +93,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return new Builder();
   }
 
-  public static Transaction readFrom(final RLPInput rlpInput) {
-    return BerlinRLPFormat.decode(rlpInput);
+  public static Transaction readFrom(final RLPInput rlpInput, final RLPFormat rlpFormat) {
+    return rlpFormat.decode(rlpInput);
   }
 
   /**

@@ -32,6 +32,11 @@ public interface RLPFormat {
     T decode(RLPInput input);
   }
 
+  static void encodeLatest(Transaction transaction, RLPOutput rlpOutput) {
+    // TODO is there a better way to do this?
+    new BerlinRLPFormat().encode(transaction, rlpOutput);
+  }
+
   void encode(Transaction transaction, RLPOutput rlpOutput);
 
   Transaction decode(RLPInput rlpInput);
