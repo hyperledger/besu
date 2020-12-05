@@ -351,6 +351,7 @@ public class AdminNodeInfoTest {
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void returnsClassicForkBlocks() {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
@@ -401,7 +402,6 @@ public class AdminNodeInfoTest {
     assertThat(ethMap).isInstanceOf(Map.class);
     final Object configMap = ((Map<?, ?>) ethMap).get("config");
     assertThat(configMap).isInstanceOf(Map.class);
-    //noinspection unchecked
     assertThat(((Map<String, Long>) configMap)).containsAllEntriesOf(expectedConfig);
   }
 
