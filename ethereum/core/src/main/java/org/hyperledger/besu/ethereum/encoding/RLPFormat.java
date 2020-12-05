@@ -39,5 +39,5 @@ public interface RLPFormat {
 
   void encode(Transaction transaction, RLPOutput rlpOutput);
 
-  Transaction decode(RLPInput rlpInput);
+  Transaction decodeTransaction(RLPInput rlpInput);
 }

@@ -54,7 +54,7 @@ public class BerlinRLPFormatTest {
   @Test
   public void encodeFrontierTxNominalCase() {
     final Transaction transaction =
-        BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        BerlinRLPFormat.decodeTransaction(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     BerlinRLPFormat.encode(transaction, output);
     assertThat(FRONTIER_TX_RLP).isEqualTo(output.encoded().toHexString());
@@ -64,7 +64,7 @@ public class BerlinRLPFormatTest {
   public void encodeEIP1559TxNominalCase() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction transaction =
-        BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        BerlinRLPFormat.decodeTransaction(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     BerlinRLPFormat.encode(transaction, output);
     assertThat(
@@ -79,7 +79,8 @@ public class BerlinRLPFormatTest {
     assertThatThrownBy(
             () ->
                 BerlinRLPFormat.encode(
-                    BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))),
+                    BerlinRLPFormat.decodeTransaction(
+                        RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))),
                     new BytesValueRLPOutput()))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("EIP-1559 feature flag");
@@ -91,7 +92,7 @@ public class BerlinRLPFormatTest {
     GoQuorumOptions.goquorumCompatibilityMode = true;
     RLPInput input = RLP.input(Bytes.fromHexString(GOQUORUM_PRIVATE_TX_RLP));
 
-    final Transaction transaction = BerlinRLPFormat.decode(input);
+    final Transaction transaction = BerlinRLPFormat.decodeTransaction(input);
     assertThat(transaction).isNotNull();
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.getSender())
@@ -103,7 +104,7 @@ public class BerlinRLPFormatTest {
   @Test
   public void decodeFrontierNominalCase() {
     final Transaction transaction =
-        BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        BerlinRLPFormat.decodeTransaction(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPrice()).isEqualByComparingTo(Wei.of(50L));
     assertThat(transaction.getGasPremium()).isEmpty();
@@ -114,7 +115,7 @@ public class BerlinRLPFormatTest {
   public void decodeEIP1559NominalCase() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction transaction =
-        BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        BerlinRLPFormat.decodeTransaction(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPremium()).hasValue(Wei.of(527L));
     assertThat(transaction.getFeeCap()).hasValue(Wei.of(369L));
@@ -124,7 +125,8 @@ public class BerlinRLPFormatTest {
   @Test
   public void decodeEIP1559FailureWhenNotEnabled() {
     ExperimentalEIPs.eip1559Enabled = false;
-    assertThatThrownBy(() -> BerlinRLPFormat.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))))
+    assertThatThrownBy(
+            () -> BerlinRLPFormat.decodeTransaction(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("EIP-1559 feature flag");
     ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;

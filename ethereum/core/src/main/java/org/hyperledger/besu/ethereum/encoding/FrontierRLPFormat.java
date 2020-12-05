@@ -61,7 +61,7 @@ public class FrontierRLPFormat implements RLPFormat {
   }
 
   @Override
-  public Transaction decode(final RLPInput rlpInput) {
+  public Transaction decodeTransaction(final RLPInput rlpInput) {
     if (GoQuorumOptions.goquorumCompatibilityMode) {
       return decodeGoQuorum(rlpInput);
     }

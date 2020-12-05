@@ -63,12 +63,12 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
   }
 
   @Override
-  public Transaction decode(final RLPInput rlpInput) {
+  public Transaction decodeTransaction(final RLPInput rlpInput) {
     final Bytes typedTransactionBytes = rlpInput.raw();
     final int firstByte = typedTransactionBytes.get(0) & 0xff;
     final TransactionType transactionType = TransactionType.of(firstByte);
     if (transactionType.equals(TransactionType.FRONTIER)) {
-      return super.decode(rlpInput);
+      return super.decodeTransaction(rlpInput);
     } else {
       return decodeEIP1559(rlpInput);
     }

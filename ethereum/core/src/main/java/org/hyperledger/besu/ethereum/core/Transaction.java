@@ -19,7 +19,6 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.encoding.BerlinRLPFormat;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -94,7 +93,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput, final RLPFormat rlpFormat) {
-    return rlpFormat.decode(rlpInput);
+    return rlpFormat.decodeTransaction(rlpInput);
   }
 
   /**
@@ -421,8 +420,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *
    * @param out the output to write the transaction to
    */
-  public void writeTo(final RLPOutput out) {
-    BerlinRLPFormat.encode(this, out);
+  public void writeTo(final RLPOutput out, final RLPFormat rlpFormat) {
+    rlpFormat.encode(this, out);
   }
 
   @Override
@@ -457,7 +456,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      final Bytes rlp = RLP.encode(this::writeTo);
+      final Bytes rlp =
+          RLP.encode(
+              // If the hash of a transaction is expected to change over time, this assumption is
+              // violated
+              rlpOutput -> RLPFormat.encodeLatest(this, rlpOutput));
       hash = Hash.hash(rlp);
     }
     return hash;

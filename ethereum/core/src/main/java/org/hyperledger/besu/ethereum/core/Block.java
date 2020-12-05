@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -53,20 +54,21 @@ public class Block {
     return toRlp().size();
   }
 
-  public void writeTo(final RLPOutput out) {
+  public void writeTo(final RLPOutput out, final RLPFormat rlpFormat) {
     out.startList();
 
     header.writeTo(out);
-    out.writeList(body.getTransactions(), Transaction::writeTo);
+    out.writeList(body.getTransactions(), rlpFormat::encode);
     out.writeList(body.getOmmers(), BlockHeader::writeTo);
 
     out.endList();
   }
 
-  public static Block readFrom(final RLPInput in, final BlockHeaderFunctions hashFunction) {
+  public static Block readFrom(
+      final RLPInput in, final RLPFormat rlpFormat, final BlockHeaderFunctions hashFunction) {
     in.enterList();
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
-    final List<Transaction> transactions = in.readList(Transaction::readFrom);
+    final List<Transaction> transactions = in.readList(rlpFormat::decodeTransaction);
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
     in.leaveList();
 
