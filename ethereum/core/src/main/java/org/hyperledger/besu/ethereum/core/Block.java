@@ -16,13 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.util.List;
 import java.util.Objects;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class Block {
 
@@ -46,33 +41,9 @@ public class Block {
     return header.getHash();
   }
 
-  public Bytes toRlp() {
-    return RLP.encode(this::writeTo);
-  }
-
   public int calculateSize() {
-    return toRlp().size();
-  }
-
-  public void writeTo(final RLPOutput out, final RLPFormat rlpFormat) {
-    out.startList();
-
-    header.writeTo(out);
-    out.writeList(body.getTransactions(), rlpFormat::encode);
-    out.writeList(body.getOmmers(), BlockHeader::writeTo);
-
-    out.endList();
-  }
-
-  public static Block readFrom(
-      final RLPInput in, final RLPFormat rlpFormat, final BlockHeaderFunctions hashFunction) {
-    in.enterList();
-    final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
-    final List<Transaction> transactions = in.readList(rlpFormat::decodeTransaction);
-    final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
-    in.leaveList();
-
-    return new Block(header, new BlockBody(transactions, ommers));
+    // TODO maybe this should go elsewhere?
+    return RLP.encode(rlpOutput -> RLPFormat.encode(this, rlpOutput)).size();
   }
 
   @Override

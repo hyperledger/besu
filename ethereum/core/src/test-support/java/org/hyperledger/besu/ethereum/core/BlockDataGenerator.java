@@ -322,6 +322,7 @@ public class BlockDataGenerator {
     return transaction(payload, address());
   }
 
+  // TODO add random transactions of different eip 2718 types
   public Transaction transaction(final Bytes payload, final Address to) {
     return Transaction.builder()
         .nonce(positiveLong())

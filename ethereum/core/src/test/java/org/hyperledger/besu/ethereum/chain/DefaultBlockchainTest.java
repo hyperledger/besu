@@ -93,7 +93,8 @@ public class DefaultBlockchainTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
             "Supplied genesis block does not match stored chain data.\n"
-                + "Please specify a different data directory with --data-path or specify the original genesis file with --genesis-file.");
+                + "Please specify a different data directory with --data-path or specify the"
+                + " original genesis file with --genesis-file.");
   }
 
   @Test
@@ -949,7 +950,7 @@ public class DefaultBlockchainTest {
       final KeyValueStorage kvStore, final Block genesisBlock) {
     return (DefaultBlockchain)
         DefaultBlockchain.createMutable(
-            genesisBlock, createStorage(kvStore), new NoOpMetricsSystem(), 0);
+            genesisBlock, protocolSchedule, createStorage(kvStore), new NoOpMetricsSystem(), 0);
   }
 
   private Blockchain createBlockchain(final KeyValueStorage kvStore) {

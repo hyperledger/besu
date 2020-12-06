@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BadBlockResult
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,10 +49,16 @@ public class DebugGetBadBlocks implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockNumber(blockchain.headBlockNumber());
     final List<BadBlockResult> response =
-        protocolSchedule.getByBlockNumber(blockchain.headBlockNumber()).getBadBlocksManager()
-            .getBadBlocks().stream()
-            .map(block -> BadBlockResult.from(blockResultFactory.transactionComplete(block), block))
+        protocolSpec.getBadBlocksManager().getBadBlocks().stream()
+            .map(
+                block ->
+                    BadBlockResult.from(
+                        blockResultFactory.transactionComplete(block),
+                        block,
+                        protocolSpec.getRLPFormat()))
             .collect(Collectors.toList());
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }

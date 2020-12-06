@@ -36,8 +36,10 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -73,7 +75,10 @@ public class DebugTraceBlockTest {
                     .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions())
                     .setParentHash(parentBlock.getHash()));
 
-    final Object[] params = new Object[] {block.toRlp().toString()};
+    final Object[] params =
+        new Object[] {
+          RLP.encode(rlpOutput -> RLPFormat.getLatest().encode(block, rlpOutput)).toString()
+        };
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 
@@ -127,7 +132,7 @@ public class DebugTraceBlockTest {
                     Collections.emptyList(),
                     Collections.emptyList(),
                     parentBlock.getHeader().getDifficulty(),
-                    parentBlock.calculateSize())));
+                    parentBlock.calculateSize(protocolSchedule))));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceBlock.response(request);
@@ -143,7 +148,10 @@ public class DebugTraceBlockTest {
                 BlockDataGenerator.BlockOptions.create()
                     .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
-    final Object[] params = new Object[] {block.toRlp().toString()};
+    final Object[] params =
+        new Object[] {
+          RLP.encode(rlpOutput -> RLPFormat.getLatest().encode(block, rlpOutput)).toString()
+        };
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 

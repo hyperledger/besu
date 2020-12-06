@@ -34,21 +34,23 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -57,8 +59,10 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -429,7 +433,7 @@ public final class RunnerTest {
       final int count,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext) {
-    final List<Block> blocks = BlockSyncTestUtils.firstBlocks(count + 1);
+    final List<Block> blocks = firstBlocks(protocolSchedule, count + 1);
 
     for (int i = 1; i < count + 1; ++i) {
       final Block block = blocks.get(i);
@@ -442,5 +446,29 @@ public final class RunnerTest {
         throw new IllegalStateException("Unable to import block " + block.getHeader().getNumber());
       }
     }
+  }
+
+  public static List<Block> firstBlocks(final ProtocolSchedule protocolSchedule, final int count) {
+    final List<Block> result = new ArrayList<>(count);
+    final TemporaryFolder temp = new TemporaryFolder();
+    try {
+      temp.create();
+      final Path blocks = temp.newFile().toPath();
+      BlockTestUtil.write1000Blocks(blocks);
+      try (final RawBlockIterator iterator =
+          new RawBlockIterator(
+              blocks,
+              protocolSchedule,
+              rlp -> RLPFormat.decodeBlockHeader(rlp, new MainnetBlockHeaderFunctions()))) {
+        for (int i = 0; i < count; ++i) {
+          result.add(iterator.next());
+        }
+      }
+    } catch (final IOException ex) {
+      throw new IllegalStateException(ex);
+    } finally {
+      temp.delete();
+    }
+    return result;
   }
 }

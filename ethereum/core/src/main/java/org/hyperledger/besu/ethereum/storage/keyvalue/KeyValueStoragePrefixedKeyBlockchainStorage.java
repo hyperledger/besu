@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -75,13 +76,14 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHash) {
     return get(BLOCK_HEADER_PREFIX, blockHash)
-        .map(b -> BlockHeader.readFrom(RLP.input(b), blockHeaderFunctions));
+        .map(b -> RLPFormat.decodeBlockHeader(RLP.input(b), blockHeaderFunctions));
   }
 
   @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHash) {
     return get(BLOCK_BODY_PREFIX, blockHash)
-        .map(bytes -> BlockBody.readFrom(RLP.input(bytes), blockHeaderFunctions));
+        .map(
+            bytes -> RLPFormat.getLatest().decodeBlockBody(RLP.input(bytes), blockHeaderFunctions));
   }
 
   @Override
@@ -137,7 +139,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     @Override
     public void putBlockBody(final Hash blockHash, final BlockBody blockBody) {
-      set(BLOCK_BODY_PREFIX, blockHash, RLP.encode(blockBody::writeTo));
+      set(
+          BLOCK_BODY_PREFIX,
+          blockHash,
+          RLP.encode(rlpOutput -> RLPFormat.getLatest().encode(blockBody, rlpOutput)));
     }
 
     @Override

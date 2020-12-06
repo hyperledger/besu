@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -239,7 +240,8 @@ public final class RlpBlockExporterTest {
     return new RawBlockIterator(
         blocks,
         rlp ->
-            BlockHeader.readFrom(rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+            RLPFormat.decodeBlockHeader(
+                rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
   }
 
   private Block getBlock(final Blockchain blockchain, final long blockNumber) {

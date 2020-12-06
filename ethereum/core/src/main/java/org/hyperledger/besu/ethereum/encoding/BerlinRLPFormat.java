@@ -27,6 +27,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BerlinRLPFormat extends FrontierRLPFormat {
 
+  // TODO have a getSupportedTransactions that recurses up the chain of rlp formats looking for a
+  // compatible encoder/decoder
   private static final ImmutableMap<TransactionType, RLPFormat.Encoder<Transaction>>
       TYPED_TRANSACTION_ENCODERS = ImmutableMap.of();
 
@@ -45,6 +47,7 @@ public class BerlinRLPFormat extends FrontierRLPFormat {
                               "Developer Error. A supported transaction type %s has no associated"
                                   + " encoding logic",
                               type)));
+      // TODO change this to normal rlp encoding instead of this bytes.concat stuff
       rlpOutput.writeRaw(
           Bytes.concatenate(
               Bytes.of((byte) type.getSerializedType()),

@@ -28,6 +28,9 @@ import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -139,5 +142,27 @@ public class FrontierRLPFormat implements RLPFormat {
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
     return v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
         || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
+  }
+
+  @Override
+  public void encode(final BlockBody blockBody, final RLPOutput rlpOutput) {
+    rlpOutput.startList();
+
+    rlpOutput.writeList(blockBody.getTransactions(), this::encode);
+    rlpOutput.writeList(blockBody.getOmmers(), BlockHeader::writeTo);
+
+    rlpOutput.endList();
+  }
+
+  @Override
+  public BlockBody decodeBlockBody(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    input.enterList();
+    final BlockBody body =
+        new BlockBody(
+            input.readList(this::decodeTransaction),
+            input.readList(rlp -> RLPFormat.decodeBlockHeader(rlp, blockHeaderFunctions)));
+    input.leaveList();
+    return body;
   }
 }

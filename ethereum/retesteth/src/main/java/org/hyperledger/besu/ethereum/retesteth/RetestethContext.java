@@ -223,6 +223,7 @@ public class RetestethContext {
     final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     return DefaultBlockchain.createMutable(
         genesisBlock,
+        protocolSchedule,
         new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
         new NoOpMetricsSystem(),
         100);

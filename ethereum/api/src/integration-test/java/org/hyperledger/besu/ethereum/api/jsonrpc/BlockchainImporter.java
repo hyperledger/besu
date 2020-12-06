@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -49,7 +49,7 @@ public class BlockchainImporter {
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
             rlp ->
-                BlockHeader.readFrom(
+                RLPFormat.decodeBlockHeader(
                     rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
       while (iterator.hasNext()) {
         blocks.add(iterator.next());

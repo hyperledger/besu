@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.HashSet;
 import java.util.List;
@@ -69,7 +71,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
-      LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
+      LOG.warn(
+          "Invalid block RLP : {}",
+          RLP.encode(rlpOutput -> RLPFormat.encode(block, rlpOutput)).toHexString());
       receipts.forEach(
           receipt ->
               LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
@@ -88,7 +92,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
+    final Bytes32 transactionsRoot =
+        BodyValidation.transactionsRoot(
+            body.getTransactions(),
+            protocolSchedule.getByBlockNumber(header.getNumber()).getRLPFormat());
     if (!validateTransactionsRoot(header.getTransactionsRoot(), transactionsRoot)) {
       return false;
     }

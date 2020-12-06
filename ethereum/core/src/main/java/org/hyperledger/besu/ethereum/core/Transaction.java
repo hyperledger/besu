@@ -458,9 +458,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     if (hash == null) {
       final Bytes rlp =
           RLP.encode(
-              // If the hash of a transaction is expected to change over time, this assumption is
-              // violated
-              rlpOutput -> RLPFormat.encodeLatest(this, rlpOutput));
+              // If the hash of a transaction is expected to change between network upgrades, this
+              // assumption is violated
+              rlpOutput -> RLPFormat.getLatest().encode(this, rlpOutput));
       hash = Hash.hash(rlp);
     }
     return hash;

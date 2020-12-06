@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -38,8 +40,11 @@ public interface BadBlockResult {
   @JsonProperty("rlp")
   String getRlp();
 
-  static BadBlockResult from(final BlockResult blockResult, final Block block) {
+  static BadBlockResult from(
+      final BlockResult blockResult, final Block block, final RLPFormat rlpFormat) {
     return ImmutableBadBlockResult.of(
-        blockResult, block.getHash().toHexString(), block.toRlp().toHexString());
+        blockResult,
+        block.getHash().toHexString(),
+        RLP.encode(rlpOutput -> rlpFormat.encode(block, rlpOutput)).toHexString());
   }
 }

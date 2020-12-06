@@ -63,7 +63,8 @@ public class NewBlockHeadersSubscriptionServiceTest {
           new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
   private final Block genesisBlock = gen.genesisBlock();
   private final MutableBlockchain blockchain =
-      DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
+      DefaultBlockchain.createMutable(
+          genesisBlock, protocolSchedule, blockchainStorage, new NoOpMetricsSystem(), 0);
 
   @Spy
   private final SubscriptionManager subscriptionManagerSpy =

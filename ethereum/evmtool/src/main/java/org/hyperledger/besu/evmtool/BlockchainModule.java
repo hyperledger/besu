@@ -50,7 +50,8 @@ public class BlockchainModule {
       @Named("GenesisBlock") final Block genesisBlock,
       final BlockchainStorage blockchainStorage,
       final MetricsSystem metricsSystem) {
-    return DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
+    return DefaultBlockchain.createMutable(
+        genesisBlock, protocolSchedule, blockchainStorage, metricsSystem, 0);
   }
 
   @Provides

@@ -127,7 +127,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
         Collections.emptyList(),
         Collections.emptyList(),
         Difficulty.ZERO,
-        block.calculateSize());
+        block.calculateSize(protocolSchedule));
   }
 
   private JsonRpcRequestContext getUncleByBlockNumberAndIndex(final Object[] params) {

@@ -151,7 +151,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
         Collections.emptyList(),
         Collections.emptyList(),
         Difficulty.ZERO,
-        block.calculateSize());
+        block.calculateSize(protocolSchedule));
   }
 
   private JsonRpcRequestContext getUncleByBlockHashAndIndex(final Object[] params) {

@@ -52,7 +52,10 @@ public class NewBlockMessageTest {
 
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    blockForInsertion.writeTo(tmp);
+    protocolSchedule
+        .getByBlockNumber(blockForInsertion.getHeader().getNumber())
+        .getRLPFormat()
+        .encode(blockForInsertion, tmp);
     tmp.writeUInt256Scalar(totalDifficulty);
     tmp.endList();
 

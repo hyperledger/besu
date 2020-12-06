@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
@@ -149,49 +148,6 @@ public class BlockHeader extends SealableBlockHeader
       out.writeLongScalar(baseFee);
     }
     out.endList();
-  }
-
-  public static BlockHeader readFrom(
-      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
-    input.enterList();
-    final Hash parentHash = Hash.wrap(input.readBytes32());
-    final Hash ommersHash = Hash.wrap(input.readBytes32());
-    final Address coinbase = Address.readFrom(input);
-    final Hash stateRoot = Hash.wrap(input.readBytes32());
-    final Hash transactionsRoot = Hash.wrap(input.readBytes32());
-    final Hash receiptsRoot = Hash.wrap(input.readBytes32());
-    final LogsBloomFilter logsBloom = LogsBloomFilter.readFrom(input);
-    final Difficulty difficulty = Difficulty.of(input.readUInt256Scalar());
-    final long number = input.readLongScalar();
-    final long gasLimit = input.readLongScalar();
-    final long gasUsed = input.readLongScalar();
-    final long timestamp = input.readLongScalar();
-    final Bytes extraData = input.readBytes();
-    final Hash mixHash = Hash.wrap(input.readBytes32());
-    final long nonce = input.readLong();
-    final Long baseFee =
-        ExperimentalEIPs.eip1559Enabled && !input.isEndOfCurrentList()
-            ? input.readLongScalar()
-            : null;
-    input.leaveList();
-    return new BlockHeader(
-        parentHash,
-        ommersHash,
-        coinbase,
-        stateRoot,
-        transactionsRoot,
-        receiptsRoot,
-        logsBloom,
-        difficulty,
-        number,
-        gasLimit,
-        gasUsed,
-        timestamp,
-        extraData,
-        baseFee,
-        mixHash,
-        nonce,
-        blockHeaderFunctions);
   }
 
   @Override
