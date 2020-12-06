@@ -56,13 +56,11 @@ public class BerlinRLPFormat extends FrontierRLPFormat {
       TYPED_TRANSACTION_DECODERS = ImmutableMap.of();
 
   public Transaction decodeTransaction(final RLPInput rlpInput) {
-    final Bytes typedTransactionBytes = rlpInput.raw();
-    final int firstByte = typedTransactionBytes.get(0) & 0xff;
-    final TransactionType transactionType = TransactionType.of(firstByte);
-    if (transactionType.equals(TransactionType.FRONTIER)) {
+    if (rlpInput.nextIsList()) {
       return super.decodeTransaction(rlpInput);
     } else {
-      rlpInput.skipNext(); // throw away the type byte
+      final int firstByte = rlpInput.readByte();
+      final TransactionType transactionType = TransactionType.of(firstByte);
       final RLPFormat.Decoder<Transaction> decoder =
           Optional.ofNullable(TYPED_TRANSACTION_DECODERS.get(transactionType))
               .orElseThrow(
