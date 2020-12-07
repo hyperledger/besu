@@ -47,7 +47,7 @@ public interface PrivacyController {
 
   String deletePrivacyGroup(String privacyGroupId, String enclavePublicKey);
 
-  PrivacyGroup[] findPrivacyGroupByMembers(List<String> addresses, String enclavePublicKey);
+  PrivacyGroup[] findOffChainPrivacyGroupByMembers(List<String> addresses, String enclavePublicKey);
 
   Transaction createPrivacyMarkerTransaction(
       String privateTransactionLookupId, PrivateTransaction privateTransaction);

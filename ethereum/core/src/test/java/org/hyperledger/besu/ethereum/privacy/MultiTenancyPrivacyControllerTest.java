@@ -270,14 +270,15 @@ public class MultiTenancyPrivacyControllerTest {
             "",
             "",
             List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
-    when(privacyController.findPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1))
+    when(privacyController.findOffChainPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1))
         .thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        multiTenancyPrivacyController.findPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1);
+        multiTenancyPrivacyController.findOffChainPrivacyGroupByMembers(
+            addresses, ENCLAVE_PUBLIC_KEY1);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
-    verify(privacyController).findPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1);
+    verify(privacyController).findOffChainPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1);
   }
 
   @Test
@@ -286,7 +287,7 @@ public class MultiTenancyPrivacyControllerTest {
 
     assertThatThrownBy(
             () ->
-                multiTenancyPrivacyController.findPrivacyGroupByMembers(
+                multiTenancyPrivacyController.findOffChainPrivacyGroupByMembers(
                     addresses, ENCLAVE_PUBLIC_KEY1))
         .isInstanceOf(MultiTenancyValidationException.class)
         .hasMessage("Privacy group addresses must contain the enclave public key");

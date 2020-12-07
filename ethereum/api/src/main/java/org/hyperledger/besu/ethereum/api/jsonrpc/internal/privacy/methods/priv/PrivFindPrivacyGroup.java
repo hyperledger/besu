@@ -63,7 +63,7 @@ public class PrivFindPrivacyGroup implements JsonRpcMethod {
     try {
       response =
           Arrays.asList(
-              privacyController.findPrivacyGroupByMembers(
+              privacyController.findOffChainPrivacyGroupByMembers(
                   Arrays.asList(addresses),
                   enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser())));
     } catch (final MultiTenancyValidationException e) {

@@ -361,7 +361,8 @@ public class DefaultPrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privacyController.findPrivacyGroupByMembers(PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
+        privacyController.findOffChainPrivacyGroupByMembers(
+            PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
     verify(enclave).findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);

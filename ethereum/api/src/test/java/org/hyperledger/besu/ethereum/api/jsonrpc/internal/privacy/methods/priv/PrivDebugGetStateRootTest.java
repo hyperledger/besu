@@ -18,7 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -119,7 +119,7 @@ public class PrivDebugGetStateRootTest {
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) method.response(request(ENCLAVE_PUBLIC_KEY, "latest"));
 
-    assertThat(response.getError().getMessage()).contains(INVALID_PARAMS.getMessage());
+    assertThat(response.getError().getMessage()).contains(INTERNAL_ERROR.getMessage());
   }
 
   @Test

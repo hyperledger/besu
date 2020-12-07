@@ -115,14 +115,14 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findPrivacyGroupByMembers(
+  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     if (!addresses.contains(enclavePublicKey)) {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
     final PrivacyGroup[] resultantGroups =
-        privacyController.findPrivacyGroupByMembers(addresses, enclavePublicKey);
+        privacyController.findOffChainPrivacyGroupByMembers(addresses, enclavePublicKey);
     return Arrays.stream(resultantGroups)
         .filter(g -> g.getMembers().contains(enclavePublicKey))
         .toArray(PrivacyGroup[]::new);

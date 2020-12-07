@@ -159,7 +159,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findPrivacyGroupByMembers(
+  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     return enclave.findPrivacyGroup(addresses);
   }
