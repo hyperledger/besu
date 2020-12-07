@@ -1459,7 +1459,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-
   private BesuCommand configure() throws Exception {
     checkPortClash();
 
