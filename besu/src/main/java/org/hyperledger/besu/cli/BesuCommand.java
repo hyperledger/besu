@@ -2366,21 +2366,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void checkPortClash() {
-    // List of port parameters
-    final List<Integer> ports =
-        asList(
-            p2pPort,
-            graphQLHttpPort,
-            rpcHttpPort,
-            rpcWsPort,
-            metricsPort,
-            metricsPushPort,
-            stratumPort);
-    ports.stream()
+    getEffectivePorts().stream()
         .filter(Objects::nonNull)
+        .filter(port -> port > 0)
         .forEach(
             port -> {
-              if (port != 0 && !allocatedPorts.add(port)) {
+              if (!allocatedPorts.add(port)) {
                 throw new ParameterException(
                     commandLine,
                     "Port number '"
@@ -2388,6 +2379,37 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         + "' has been specified multiple times. Please review the supplied configuration.");
               }
             });
+  }
+
+  /**
+   * * Gets the list of effective ports (ports that are enabled).
+   *
+   * @return The list of effective ports
+   */
+  private List<Integer> getEffectivePorts() {
+    final List<Integer> effectivePorts = new ArrayList<>();
+    addPortIfEnabled(effectivePorts, p2pPort, p2pEnabled);
+    addPortIfEnabled(effectivePorts, graphQLHttpPort, isGraphQLHttpEnabled);
+    addPortIfEnabled(effectivePorts, rpcHttpPort, isRpcHttpEnabled);
+    addPortIfEnabled(effectivePorts, rpcWsPort, isRpcWsEnabled);
+    addPortIfEnabled(effectivePorts, metricsPort, isMetricsEnabled);
+    addPortIfEnabled(effectivePorts, metricsPushPort, isMetricsPushEnabled);
+    addPortIfEnabled(effectivePorts, stratumPort, iStratumMiningEnabled);
+    return effectivePorts;
+  }
+
+  /**
+   * Adds port in the passed list only if enabled.
+   *
+   * @param ports The list of ports
+   * @param port The port value
+   * @param enabled true if enabled, false otherwise
+   */
+  private void addPortIfEnabled(
+      final List<Integer> ports, final Integer port, final boolean enabled) {
+    if (enabled) {
+      ports.add(port);
+    }
   }
 
   private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
