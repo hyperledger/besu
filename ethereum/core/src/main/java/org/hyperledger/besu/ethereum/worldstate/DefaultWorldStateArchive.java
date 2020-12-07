@@ -62,18 +62,14 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public WorldState get() {
-    return get(EMPTY_ROOT_HASH).get();
-  }
-
-  @Override
   public MutableWorldState getMutable() {
     return getMutable(EMPTY_ROOT_HASH).get();
   }
 
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
-    return worldStateStorage.getNodeData(hash);
+    // query by location is not supported, only query by content
+    return worldStateStorage.getNodeData(null, hash);
   }
 
   public WorldStateStorage getWorldStateStorage() {

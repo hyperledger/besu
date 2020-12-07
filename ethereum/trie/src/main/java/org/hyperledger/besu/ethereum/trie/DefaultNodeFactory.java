@@ -21,13 +21,13 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class DefaultNodeFactory<V> implements NodeFactory<V> {
+public class DefaultNodeFactory<V> implements NodeFactory<V> {
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
 
   private final Function<V, Bytes> valueSerializer;
 
-  DefaultNodeFactory(final Function<V, Bytes> valueSerializer) {
+  public DefaultNodeFactory(final Function<V, Bytes> valueSerializer) {
     this.valueSerializer = valueSerializer;
   }
 

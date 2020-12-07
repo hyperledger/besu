@@ -169,7 +169,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public void persist() {
+  public void persist(final Hash blockhash) {
     final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {
@@ -200,6 +200,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
     return Optional.ofNullable(newStorageKeyPreimages.get(trieKey))
         .or(() -> preimageStorage.getStorageTrieKeyPreimage(trieKey));
+  }
+
+  private static UInt256 convertToUInt256(final Bytes value) {
+    // TODO: we could probably have an optimized method to decode a single scalar since it's used
+    // pretty often.
+    final RLPInput in = RLP.input(value);
+    return in.readUInt256Scalar();
   }
 
   private Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
@@ -318,13 +325,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
                 storageEntries.put(key, entry);
               });
       return storageEntries;
-    }
-
-    private UInt256 convertToUInt256(final Bytes value) {
-      // TODO: we could probably have an optimized method to decode a single scalar since it's used
-      // pretty often.
-      final RLPInput in = RLP.input(value);
-      return in.readUInt256Scalar();
     }
 
     @Override

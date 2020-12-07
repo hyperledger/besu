@@ -170,6 +170,11 @@ public class RestoreVisitor<V> implements PathNodeVisitor<V> {
     }
 
     @Override
+    public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
+      // do nothing
+    }
+
+    @Override
     public Bytes getPath() {
       return path;
     }

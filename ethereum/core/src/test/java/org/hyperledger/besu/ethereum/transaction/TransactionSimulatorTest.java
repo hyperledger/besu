@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -27,15 +28,20 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -65,6 +71,7 @@ public class TransactionSimulatorTest {
   @Mock private Blockchain blockchain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private MutableWorldState worldState;
+  @Mock private WorldUpdater worldUpdater;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private MainnetTransactionProcessor transactionProcessor;
@@ -110,6 +117,72 @@ public class TransactionSimulatorTest {
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldIncreaseBalanceAccountWhenExceedingBalanceAllowed() {
+    final CallParameter callParameter = legacyTransactionCallParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(callParameter.getGasLimit())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+
+    final MutableAccount mutableAccount =
+        mockWorldUpdaterForAccount(Hash.ZERO, callParameter.getFrom());
+
+    transactionSimulator.process(
+        callParameter,
+        ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
+        OperationTracer.NO_TRACING,
+        1L);
+
+    verify(mutableAccount).incrementBalance(Wei.of(Long.MAX_VALUE));
+  }
+
+  @Test
+  public void shouldNotIncreaseBalanceAccountWhenExceedingBalanceIsNotAllowed() {
+    final CallParameter callParameter = legacyTransactionCallParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(callParameter.getGasLimit())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+
+    final MutableAccount mutableAccount =
+        mockWorldUpdaterForAccount(Hash.ZERO, callParameter.getFrom());
+
+    transactionSimulator.process(
+        callParameter,
+        ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
+        OperationTracer.NO_TRACING,
+        1L);
+
+    verifyNoInteractions(mutableAccount);
   }
 
   @Test
@@ -343,6 +416,16 @@ public class TransactionSimulatorTest {
   private void mockWorldStateForAbsentAccount(final Hash stateRoot) {
     when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
     when(worldState.get(any())).thenReturn(null);
+  }
+
+  private MutableAccount mockWorldUpdaterForAccount(final Hash stateRoot, final Address address) {
+    final EvmAccount account = mock(EvmAccount.class);
+    final MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
+    when(worldState.updater()).thenReturn(worldUpdater);
+    when(worldUpdater.getOrCreate(eq(address))).thenReturn(account);
+    when(account.getMutable()).thenReturn(mutableAccount);
+    return mutableAccount;
   }
 
   private void mockBlockchainForBlockHeader(final Hash stateRoot, final long blockNumber) {

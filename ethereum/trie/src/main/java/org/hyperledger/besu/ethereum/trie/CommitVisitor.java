@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class CommitVisitor<V> implements NodeVisitor<V> {
+public class CommitVisitor<V> implements LocationNodeVisitor<V> {
 
   private final NodeUpdater nodeUpdater;
 
@@ -25,21 +25,21 @@ class CommitVisitor<V> implements NodeVisitor<V> {
   }
 
   @Override
-  public void visit(final ExtensionNode<V> extensionNode) {
+  public void visit(final Bytes location, final ExtensionNode<V> extensionNode) {
     if (!extensionNode.isDirty()) {
       return;
     }
 
     final Node<V> child = extensionNode.getChild();
     if (child.isDirty()) {
-      child.accept(this);
+      child.accept(Bytes.concatenate(location, extensionNode.getPath()), this);
     }
 
-    maybeStoreNode(extensionNode);
+    maybeStoreNode(location, extensionNode);
   }
 
   @Override
-  public void visit(final BranchNode<V> branchNode) {
+  public void visit(final Bytes location, final BranchNode<V> branchNode) {
     if (!branchNode.isDirty()) {
       return;
     }
@@ -47,29 +47,29 @@ class CommitVisitor<V> implements NodeVisitor<V> {
     for (byte i = 0; i < BranchNode.RADIX; ++i) {
       final Node<V> child = branchNode.child(i);
       if (child.isDirty()) {
-        child.accept(this);
+        child.accept(Bytes.concatenate(location, Bytes.of(i)), this);
       }
     }
 
-    maybeStoreNode(branchNode);
+    maybeStoreNode(location, branchNode);
   }
 
   @Override
-  public void visit(final LeafNode<V> leafNode) {
+  public void visit(final Bytes location, final LeafNode<V> leafNode) {
     if (!leafNode.isDirty()) {
       return;
     }
 
-    maybeStoreNode(leafNode);
+    maybeStoreNode(location, leafNode);
   }
 
   @Override
-  public void visit(final NullNode<V> nullNode) {}
+  public void visit(final Bytes location, final NullNode<V> nullNode) {}
 
-  private void maybeStoreNode(final Node<V> node) {
+  private void maybeStoreNode(final Bytes location, final Node<V> node) {
     final Bytes nodeRLP = node.getRlp();
     if (nodeRLP.size() >= 32) {
-      this.nodeUpdater.store(node.getHash(), nodeRLP);
+      this.nodeUpdater.store(location, node.getHash(), nodeRLP);
     }
   }
 }

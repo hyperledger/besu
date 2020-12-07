@@ -34,16 +34,14 @@ public class KeyValueMerkleStorage implements MerkleStorage {
   }
 
   @Override
-  public Optional<Bytes> get(final Bytes32 hash) {
-    final Optional<Bytes> value =
-        pendingUpdates.containsKey(hash)
-            ? Optional.of(pendingUpdates.get(hash))
-            : keyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap);
-    return value;
+  public Optional<Bytes> get(final Bytes location, final Bytes32 hash) {
+    return pendingUpdates.containsKey(hash)
+        ? Optional.of(pendingUpdates.get(hash))
+        : keyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
-  public void put(final Bytes32 hash, final Bytes value) {
+  public void put(final Bytes location, final Bytes32 hash, final Bytes value) {
     pendingUpdates.put(hash, value);
   }
 
