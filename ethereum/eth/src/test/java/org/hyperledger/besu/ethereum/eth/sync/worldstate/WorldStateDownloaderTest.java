@@ -464,7 +464,7 @@ public class WorldStateDownloaderTest {
     allNodes.forEach(
         (nodeHash, node) -> {
           if (storeNode.get()) {
-            localStorageUpdater.putAccountStateTrieNode(nodeHash, node);
+            localStorageUpdater.putAccountStateTrieNode(null, nodeHash, node);
             knownNodes.add(nodeHash);
           } else {
             unknownNodes.add(nodeHash);
@@ -560,7 +560,7 @@ public class WorldStateDownloaderTest {
       final Bytes32 hash = entry.getKey();
       final Bytes data = entry.getValue();
       if (storeNode) {
-        localStorageUpdater.putAccountStorageTrieNode(hash, data);
+        localStorageUpdater.putAccountStorageTrieNode(null, hash, data);
         knownNodes.add(hash);
       } else {
         unknownNodes.add(hash);
@@ -774,8 +774,8 @@ public class WorldStateDownloaderTest {
       final WorldStateStorage storage, final Bytes32 rootHash) {
     final List<Bytes32> hashesToRequest = new ArrayList<>();
 
-    Bytes rootNodeRlp = storage.getNodeData(rootHash).get();
-    TrieNodeDecoder.decodeNodes(rootNodeRlp).stream()
+    final Bytes rootNodeRlp = storage.getNodeData(Bytes.EMPTY, rootHash).get();
+    TrieNodeDecoder.decodeNodes(Bytes.EMPTY, rootNodeRlp).stream()
         .filter(n -> !Objects.equals(n.getHash(), rootHash))
         .filter(Node::isReferencedByHash)
         .forEach((n) -> hashesToRequest.add(n.getHash()));

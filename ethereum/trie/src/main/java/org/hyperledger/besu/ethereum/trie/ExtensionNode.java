@@ -56,6 +56,11 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
+  public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
+    visitor.visit(location, this);
+  }
+
+  @Override
   public Bytes getPath() {
     return path;
   }
@@ -85,7 +90,7 @@ class ExtensionNode<V> implements Node<V> {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeBytes(CompactEncoding.encode(path));
-    out.writeRLPUnsafe(child.getRlpRef());
+    out.writeRaw(child.getRlpRef());
     out.endList();
     final Bytes encoded = out.encoded();
     rlp = new WeakReference<>(encoded);
@@ -131,11 +136,15 @@ class ExtensionNode<V> implements Node<V> {
   @Override
   public String print() {
     final StringBuilder builder = new StringBuilder();
-    builder.append("Extension:");
-    builder.append("\n\tRef: ").append(getRlpRef());
-    builder.append("\n\tPath: " + CompactEncoding.encode(path));
     final String childRep = getChild().print().replaceAll("\n\t", "\n\t\t");
-    builder.append("\n\t").append(childRep);
+    builder
+        .append("Extension:")
+        .append("\n\tRef: ")
+        .append(getRlpRef())
+        .append("\n\tPath: ")
+        .append(CompactEncoding.encode(path))
+        .append("\n\t")
+        .append(childRep);
     return builder.toString();
   }
 

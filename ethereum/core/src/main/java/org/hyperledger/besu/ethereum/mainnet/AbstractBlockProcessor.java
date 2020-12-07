@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   public interface TransactionReceiptFactory {
 
     TransactionReceipt create(
-        TransactionProcessingResult result, WorldState worldState, long gasUsed);
+        TransactionType transactionType,
+        TransactionProcessingResult result,
+        WorldState worldState,
+        long gasUsed);
   }
 
   private static final Logger LOG = LogManager.getLogger();
@@ -165,7 +169,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
 
       final TransactionReceipt transactionReceipt =
-          transactionReceiptFactory.create(result, worldState, currentGasUsed);
+          transactionReceiptFactory.create(
+              transaction.getType(), result, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
     }
 
@@ -174,7 +179,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
-    worldState.persist();
+    worldState.persist(blockHeader.getHash());
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 

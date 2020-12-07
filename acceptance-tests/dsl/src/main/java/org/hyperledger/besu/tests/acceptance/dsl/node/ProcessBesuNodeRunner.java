@@ -414,14 +414,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   private void killBesuProcess(final String name) {
     final Process process = besuProcesses.remove(name);
     if (process == null) {
-      LOG.error("Process {} wasn't in our list", name);
+      LOG.error("Process {} wasn't in our list, pid {}", name, process.pid());
+      return;
     }
     if (!process.isAlive()) {
-      LOG.info("Process {} already exited", name);
+      LOG.info("Process {} already exited, pid {}", name, process.pid());
       return;
     }
 
-    LOG.info("Killing {} process", name);
+    LOG.info("Killing {} process, pid {}", name, process.pid());
 
     process.destroy();
     try {
@@ -431,7 +432,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     if (process.isAlive()) {
-      LOG.warn("Process {} still alive, destroying forcibly now", name);
+      LOG.warn("Process {} still alive, destroying forcibly now, pid {}", name, process.pid());
       try {
         process.destroyForcibly().waitFor(30, TimeUnit.SECONDS);
       } catch (final Exception e) {

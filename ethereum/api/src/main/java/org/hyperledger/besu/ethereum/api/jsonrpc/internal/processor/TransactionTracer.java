@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -169,6 +169,6 @@ public class TransactionTracer {
         tracer,
         new BlockHashLookup(header, blockchain),
         false,
-        new TransactionValidationParams.Builder().allowFutureNonce(true).build());
+        ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build());
   }
 }
