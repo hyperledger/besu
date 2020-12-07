@@ -96,10 +96,11 @@ public class RoundChangePayloadValidator {
       return false;
     }
 
-    if (certificate.getPreparePayloads().size() < minimumPrepareMessages) {
+    if (certificate.getPreparePayloads().stream().map(SignedData::getAuthor).distinct().count()
+        < minimumPrepareMessages) {
       LOG.info(
-          "Invalid RoundChange message, insufficient Prepare messages exist to justify "
-              + "prepare certificate.");
+          "Invalid RoundChange message, insufficient uniquely authored Prepare messages exist to "
+              + " justify  prepare certificate.");
       return false;
     }
 
@@ -132,6 +133,7 @@ public class RoundChangePayloadValidator {
 
   @FunctionalInterface
   public interface MessageValidatorForHeightFactory {
+
     SignedDataValidator createAt(final ConsensusRoundIdentifier roundIdentifier);
   }
 }

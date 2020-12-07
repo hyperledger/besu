@@ -207,4 +207,24 @@ public class RoundChangeSignedDataValidatorTest {
     verify(basicValidator, times(1)).validateProposal(prepareCertificate.getProposalPayload());
     verify(basicValidator, times(1)).validatePrepare(prepareMsg.getSignedPayload());
   }
+
+  @Test
+  public void roundChangeWithDuplicatedPreparesFails() {
+    final RoundChangePayloadValidator validatorRequiringTwoPrepares =
+        new RoundChangePayloadValidator(validatorFactory, validators, 2, chainHeight);
+
+    final Prepare prepareMsg = validatorMessageFactory.createPrepare(currentRound, block.getHash());
+    final PreparedRoundArtifacts preparedRoundArtifacts =
+        new PreparedRoundArtifacts(
+            proposerMessageFactory.createProposal(currentRound, block, Optional.empty()),
+            Lists.newArrayList(prepareMsg, prepareMsg));
+    final PreparedCertificate prepareCertificate = preparedRoundArtifacts.getPreparedCertificate();
+    final RoundChange msg =
+        proposerMessageFactory.createRoundChange(targetRound, Optional.of(preparedRoundArtifacts));
+
+    when(basicValidator.validateProposal(prepareCertificate.getProposalPayload())).thenReturn(true);
+    when(basicValidator.validatePrepare(prepareMsg.getSignedPayload())).thenReturn(true);
+
+    assertThat(validatorRequiringTwoPrepares.validateRoundChange(msg.getSignedPayload())).isFalse();
+  }
 }
