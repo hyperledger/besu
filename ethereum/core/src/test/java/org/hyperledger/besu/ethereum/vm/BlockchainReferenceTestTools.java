@@ -108,7 +108,7 @@ public class BlockchainReferenceTestTools {
       }
 
       try {
-        final Block block = candidateBlock.getBlock();
+        final Block block = candidateBlock.getBlock(schedule);
 
         final ProtocolSpec protocolSpec = schedule.getByBlockNumber(block.getHeader().getNumber());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();

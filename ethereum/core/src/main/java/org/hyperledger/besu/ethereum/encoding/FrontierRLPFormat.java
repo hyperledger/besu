@@ -29,39 +29,16 @@ import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public class FrontierRLPFormat implements RLPFormat {
-
-  @Override
-  public void encode(final Transaction transaction, final RLPOutput rlpOutput) {
-    rlpOutput.startList();
-    rlpOutput.writeLongScalar(transaction.getNonce());
-    rlpOutput.writeUInt256Scalar(transaction.getGasPrice());
-    rlpOutput.writeLongScalar(transaction.getGasLimit());
-    rlpOutput.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-    rlpOutput.writeUInt256Scalar(transaction.getValue());
-    rlpOutput.writeBytes(transaction.getPayload());
-    writeSignature(transaction, rlpOutput);
-    rlpOutput.endList();
-  }
-
-  static void writeSignature(final Transaction transaction, final RLPOutput out) {
-    out.writeBigIntegerScalar(transaction.getV());
-    out.writeBigIntegerScalar(transaction.getSignature().getR());
-    out.writeBigIntegerScalar(transaction.getSignature().getS());
-  }
 
   @Override
   public Transaction decodeTransaction(final RLPInput rlpInput) {
@@ -142,16 +119,6 @@ public class FrontierRLPFormat implements RLPFormat {
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
     return v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
         || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
-  }
-
-  @Override
-  public void encode(final BlockBody blockBody, final RLPOutput rlpOutput) {
-    rlpOutput.startList();
-
-    rlpOutput.writeList(blockBody.getTransactions(), this::encode);
-    rlpOutput.writeList(blockBody.getOmmers(), BlockHeader::writeTo);
-
-    rlpOutput.endList();
   }
 
   @Override

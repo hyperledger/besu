@@ -29,8 +29,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -39,29 +37,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 public class EIP1559RLPFormat extends FrontierRLPFormat {
-  @Override
-  public void encode(final Transaction transaction, final RLPOutput rlpOutput) {
-    if (transaction.getType().equals(TransactionType.FRONTIER)) {
-      super.encode(transaction, rlpOutput);
-    } else {
-      ExperimentalEIPs.eip1559MustBeEnabled();
-
-      rlpOutput.startList();
-      rlpOutput.writeLongScalar(transaction.getNonce());
-      rlpOutput.writeNull();
-      rlpOutput.writeLongScalar(transaction.getGasLimit());
-      rlpOutput.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-      rlpOutput.writeUInt256Scalar(transaction.getValue());
-      rlpOutput.writeBytes(transaction.getPayload());
-      rlpOutput.writeUInt256Scalar(
-          transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
-      rlpOutput.writeUInt256Scalar(
-          transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
-      writeSignature(transaction, rlpOutput);
-      rlpOutput.endList();
-    }
-  }
-
   @Override
   public Transaction decodeTransaction(final RLPInput rlpInput) {
     final Bytes typedTransactionBytes = rlpInput.raw();

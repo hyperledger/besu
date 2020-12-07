@@ -53,8 +53,7 @@ public final class BodyValidation {
    * @param transactions the transactions
    * @return the transaction root
    */
-  public static Hash transactionsRoot(
-      final List<Transaction> transactions, final RLPFormat rlpFormat) {
+  public static Hash transactionsRoot(final List<Transaction> transactions) {
     final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, transactions.size())
@@ -62,7 +61,7 @@ public final class BodyValidation {
             i ->
                 trie.put(
                     indexKey(i),
-                    RLP.encode(rlpOutput -> rlpFormat.encode(transactions.get(i), rlpOutput))));
+                    RLP.encode(rlpOutput -> RLPFormat.encode(transactions.get(i), rlpOutput))));
 
     return Hash.wrap(trie.getRootHash());
   }
@@ -90,7 +89,7 @@ public final class BodyValidation {
    * @return the ommers hash
    */
   public static Hash ommersHash(final List<BlockHeader> ommers) {
-    return Hash.wrap(keccak256(RLP.encode(out -> out.writeList(ommers, BlockHeader::writeTo))));
+    return Hash.wrap(keccak256(RLP.encode(out -> out.writeList(ommers, RLPFormat::encode))));
   }
 
   /**

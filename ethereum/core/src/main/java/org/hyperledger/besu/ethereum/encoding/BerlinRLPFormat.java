@@ -15,45 +15,17 @@
 package org.hyperledger.besu.ethereum.encoding;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.tuweni.bytes.Bytes;
 
 public class BerlinRLPFormat extends FrontierRLPFormat {
 
   // TODO have a getSupportedTransactions that recurses up the chain of rlp formats looking for a
   // compatible encoder/decoder
-  private static final ImmutableMap<TransactionType, RLPFormat.Encoder<Transaction>>
-      TYPED_TRANSACTION_ENCODERS = ImmutableMap.of();
-
-  @Override
-  public void encode(final Transaction transaction, final RLPOutput rlpOutput) {
-    if (transaction.getType().equals(TransactionType.FRONTIER)) {
-      super.encode(transaction, rlpOutput);
-    } else {
-      final TransactionType type = transaction.getType();
-      final RLPFormat.Encoder<Transaction> encoder =
-          Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(type))
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          String.format(
-                              "Developer Error. A supported transaction type %s has no associated"
-                                  + " encoding logic",
-                              type)));
-      // TODO change this to normal rlp encoding instead of this bytes.concat stuff
-      rlpOutput.writeRaw(
-          Bytes.concatenate(
-              Bytes.of((byte) type.getSerializedType()),
-              RLP.encode(output -> encoder.encode(transaction, output))));
-    }
-  }
 
   private static final ImmutableMap<TransactionType, RLPFormat.Decoder<Transaction>>
       TYPED_TRANSACTION_DECODERS = ImmutableMap.of();

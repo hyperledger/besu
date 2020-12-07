@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -119,35 +116,6 @@ public class BlockHeader extends SealableBlockHeader
   @Override
   public org.hyperledger.besu.plugin.data.Hash getBlockHash() {
     return hash.get();
-  }
-
-  /**
-   * Write an RLP representation.
-   *
-   * @param out The RLP output to write to
-   */
-  public void writeTo(final RLPOutput out) {
-    out.startList();
-
-    out.writeBytes(parentHash);
-    out.writeBytes(ommersHash);
-    out.writeBytes(coinbase);
-    out.writeBytes(stateRoot);
-    out.writeBytes(transactionsRoot);
-    out.writeBytes(receiptsRoot);
-    out.writeBytes(logsBloom);
-    out.writeUInt256Scalar(difficulty);
-    out.writeLongScalar(number);
-    out.writeLongScalar(gasLimit);
-    out.writeLongScalar(gasUsed);
-    out.writeLongScalar(timestamp);
-    out.writeBytes(extraData);
-    out.writeBytes(mixHash);
-    out.writeLong(nonce);
-    if (ExperimentalEIPs.eip1559Enabled && baseFee != null) {
-      out.writeLongScalar(baseFee);
-    }
-    out.endList();
   }
 
   @Override

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -160,7 +161,7 @@ public final class GenesisStateTest {
                 GenesisStateTest.class.getResource("genesis-olympic.json"), Charsets.UTF_8),
             MainnetProtocolSchedule.create());
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    genesisState.getBlock().writeTo(tmp);
+    RLPFormat.encode(genesisState.getBlock(), tmp);
     assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().toArray()))
         .isEqualTo(OLYMPIC_HASH);
     assertThat(Hex.toHexString(tmp.encoded().toArray())).isEqualTo(OLYMPIC_RLP);

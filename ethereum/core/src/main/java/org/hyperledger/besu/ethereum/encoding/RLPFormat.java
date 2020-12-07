@@ -27,12 +27,18 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.Quantity;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
+import java.util.Optional;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public interface RLPFormat {
@@ -52,11 +58,103 @@ public interface RLPFormat {
     return new BerlinRLPFormat();
   }
 
-  void encode(Transaction transaction, RLPOutput rlpOutput);
+  ImmutableMap<TransactionType, Encoder<Transaction>> TYPED_TRANSACTION_ENCODERS =
+      ImmutableMap.of(TransactionType.EIP1559, RLPFormat::encodeEIP1559);
+
+  // TODO replace all the encoders with static methods since we trust our own data format
+  static void encode(Transaction transaction, RLPOutput rlpOutput) {
+    if (transaction.getType().equals(TransactionType.FRONTIER)) {
+      encodeFrontier(transaction, rlpOutput);
+    } else {
+      final TransactionType type = transaction.getType();
+      final RLPFormat.Encoder<Transaction> encoder =
+          Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(type))
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          String.format(
+                              "Developer Error. A supported transaction type %s has no associated"
+                                  + " encoding logic",
+                              type)));
+      // TODO change this to normal rlp encoding instead of this bytes.concat stuff
+      rlpOutput.writeRaw(
+          Bytes.concatenate(
+              Bytes.of((byte) type.getSerializedType()),
+              RLP.encode(output -> encoder.encode(transaction, output))));
+    }
+  }
+
+  private static void encodeFrontier(final Transaction transaction, final RLPOutput rlpOutput) {
+    rlpOutput.startList();
+    rlpOutput.writeLongScalar(transaction.getNonce());
+    rlpOutput.writeUInt256Scalar(transaction.getGasPrice());
+    rlpOutput.writeLongScalar(transaction.getGasLimit());
+    rlpOutput.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    rlpOutput.writeUInt256Scalar(transaction.getValue());
+    rlpOutput.writeBytes(transaction.getPayload());
+    writeSignature(transaction, rlpOutput);
+    rlpOutput.endList();
+  }
+
+  private static void encodeEIP1559(final Transaction transaction, final RLPOutput rlpOutput) {
+    ExperimentalEIPs.eip1559MustBeEnabled();
+
+    rlpOutput.startList();
+    rlpOutput.writeLongScalar(transaction.getNonce());
+    rlpOutput.writeNull();
+    rlpOutput.writeLongScalar(transaction.getGasLimit());
+    rlpOutput.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    rlpOutput.writeUInt256Scalar(transaction.getValue());
+    rlpOutput.writeBytes(transaction.getPayload());
+    rlpOutput.writeUInt256Scalar(
+        transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+    rlpOutput.writeUInt256Scalar(
+        transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+    writeSignature(transaction, rlpOutput);
+    rlpOutput.endList();
+  }
+
+  static void writeSignature(final Transaction transaction, final RLPOutput rlpOutput) {
+    rlpOutput.writeBigIntegerScalar(transaction.getV());
+    rlpOutput.writeBigIntegerScalar(transaction.getSignature().getR());
+    rlpOutput.writeBigIntegerScalar(transaction.getSignature().getS());
+  }
 
   Transaction decodeTransaction(RLPInput rlpInput);
 
-  void encode(BlockBody blockBody, RLPOutput rlpOutput);
+  static void encode(final BlockHeader blockHeader, final RLPOutput rlpOutput) {
+    rlpOutput.startList();
+
+    rlpOutput.writeBytes(blockHeader.getParentHash());
+    rlpOutput.writeBytes(blockHeader.getOmmersHash());
+    rlpOutput.writeBytes(blockHeader.getCoinbase());
+    rlpOutput.writeBytes(blockHeader.getStateRoot());
+    rlpOutput.writeBytes(blockHeader.getTransactionsRoot());
+    rlpOutput.writeBytes(blockHeader.getReceiptsRoot());
+    rlpOutput.writeBytes(blockHeader.getLogsBloom());
+    rlpOutput.writeUInt256Scalar(blockHeader.getDifficulty());
+    rlpOutput.writeLongScalar(blockHeader.getNumber());
+    rlpOutput.writeLongScalar(blockHeader.getGasLimit());
+    rlpOutput.writeLongScalar(blockHeader.getGasUsed());
+    rlpOutput.writeLongScalar(blockHeader.getTimestamp());
+    rlpOutput.writeBytes(blockHeader.getExtraData());
+    rlpOutput.writeBytes(blockHeader.getMixHash());
+    rlpOutput.writeLong(blockHeader.getNonce());
+    if (ExperimentalEIPs.eip1559Enabled) {
+      blockHeader.getBaseFee().ifPresent(rlpOutput::writeLongScalar);
+    }
+
+    rlpOutput.endList();
+  }
+
+  static void encode(BlockBody blockBody, RLPOutput rlpOutput) {
+    rlpOutput.startList();
+
+    rlpOutput.writeList(blockBody.getTransactions(), RLPFormat::encode);
+    rlpOutput.writeList(blockBody.getOmmers(), RLPFormat::encode);
+
+    rlpOutput.endList();
+  }
 
   BlockBody decodeBlockBody(RLPInput input, BlockHeaderFunctions blockHeaderFunctions);
 
@@ -106,10 +204,10 @@ public interface RLPFormat {
   static void encode(final Block block, final RLPOutput rlpOutput) {
     rlpOutput.startList();
 
-    block.getHeader().writeTo(rlpOutput);
+    RLPFormat.encode(block.getHeader(), rlpOutput);
     final BlockBody blockBody = block.getBody();
-    rlpOutput.writeList(blockBody.getTransactions(), getLatest()::encode);
-    rlpOutput.writeList(blockBody.getOmmers(), BlockHeader::writeTo);
+    rlpOutput.writeList(blockBody.getTransactions(), RLPFormat::encode);
+    rlpOutput.writeList(blockBody.getOmmers(), RLPFormat::encode);
 
     rlpOutput.endList();
   }
