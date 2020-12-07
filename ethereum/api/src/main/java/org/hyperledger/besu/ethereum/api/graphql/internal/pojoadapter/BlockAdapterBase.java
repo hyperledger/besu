@@ -28,9 +28,11 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -216,7 +218,12 @@ public class BlockAdapterBase extends AdapterBase {
     final CallParameter param =
         new CallParameter(from, to, gasParam, gasPriceParam, valueParam, data);
 
-    final Optional<TransactionSimulatorResult> opt = transactionSimulator.process(param, bn);
+    final Optional<TransactionSimulatorResult> opt =
+        transactionSimulator.process(
+            param,
+            TransactionValidationParams.transactionSimulator(),
+            OperationTracer.NO_TRACING,
+            bn);
     if (opt.isPresent()) {
       final TransactionSimulatorResult result = opt.get();
       long status = 0;

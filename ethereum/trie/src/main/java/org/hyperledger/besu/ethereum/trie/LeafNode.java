@@ -60,6 +60,11 @@ class LeafNode<V> implements Node<V> {
   }
 
   @Override
+  public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
+    visitor.visit(location, this);
+  }
+
+  @Override
   public Bytes getPath() {
     return path;
   }

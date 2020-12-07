@@ -20,5 +20,5 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public interface NodeLoader {
-  Optional<Bytes> getNode(Bytes32 hash);
+  Optional<Bytes> getNode(Bytes location, Bytes32 hash);
 }
