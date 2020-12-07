@@ -266,7 +266,7 @@ public class MainnetTransactionValidator {
   public ValidationResult<TransactionInvalidReason> validateForSender(
       final Transaction transaction, final Account sender, final boolean allowFutureNonce) {
     final TransactionValidationParams validationParams =
-        new TransactionValidationParams.Builder().allowFutureNonce(allowFutureNonce).build();
+        ImmutableTransactionValidationParams.builder().isAllowFutureNonce(allowFutureNonce).build();
     return validateForSender(transaction, sender, validationParams);
   }
 }
