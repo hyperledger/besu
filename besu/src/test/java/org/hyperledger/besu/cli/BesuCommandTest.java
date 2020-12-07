@@ -3892,4 +3892,43 @@ public class BesuCommandTest extends CommandTestAbstract {
         "0");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
+
+  @Test
+  public void staticNodesFileOptionValueAbsentMessage() {
+    parseCommand("--static-nodes-file");
+    assertThat(commandErrorOutput.toString()).startsWith("Missing required parameter for option");
+  }
+
+  @Test
+  public void staticNodesFilesOptionInvalidJSONFormatError() throws IOException {
+    final Path tempfile =
+        createTempFile(
+            "static-nodes-badformat.json",
+            "\"enode://c0b0e1151971f8a22dc2493c622317c8706c731f6fcf46d93104ef"
+                + "3a08f21f7750b5d5e17f311091f732c9f917b02e1ae6d39f076903779fd1e7"
+                + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
+    parseCommand("--static-nodes-file", tempfile.toString());
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Failed to decode:Cannot deserialize instance of");
+  }
+
+  @Test
+  public void staticNodesFileOptionFileDoesNotExistMessage() {
+    parseCommand("--static-nodes-file", "this-file-does-not-exist-at-all.json");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void staticNodesFileOptionValidParamenter() throws IOException {
+    final Path staticNodeTempFile =
+        createTempFile(
+            "static-nodes-goodformat.json",
+            "[\n"
+                + "\"enode://c0b0e1151971f8a22dc2493c622317c8706c731f6fcf46d93104ef"
+                + "3a08f21f7750b5d5e17f311091f732c9f917b02e1ae6d39f076903779fd1e7"
+                + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
+    parseCommand("--static-nodes-file", staticNodeTempFile.toString());
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
 }
