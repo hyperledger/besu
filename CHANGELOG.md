@@ -3,6 +3,7 @@
 ## 20.10.3
 
 ### Additions and Improvements
+* Added `memory` as an option to `--key-value-storage`.  This ephemeral storage is intended for sync testing and debugging.  [\#1617](https://github.com/hyperledger/besu/pull/1617)
 
 ### Bug Fixes
 
