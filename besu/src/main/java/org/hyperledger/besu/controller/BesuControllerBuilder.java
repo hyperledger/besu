@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -54,6 +55,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
@@ -99,6 +101,8 @@ public abstract class BesuControllerBuilder {
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
   private long reorgLoggingThreshold;
+  private DataStorageConfiguration dataStorageConfiguration =
+      DataStorageConfiguration.DEFAULT_CONFIG;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -196,6 +200,12 @@ public abstract class BesuControllerBuilder {
 
   public BesuControllerBuilder reorgLoggingThreshold(final long reorgLoggingThreshold) {
     this.reorgLoggingThreshold = reorgLoggingThreshold;
+    return this;
+  }
+
+  public BesuControllerBuilder dataStorageConfiguration(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    this.dataStorageConfiguration = dataStorageConfiguration;
     return this;
   }
 
@@ -414,9 +424,15 @@ public abstract class BesuControllerBuilder {
   }
 
   public WorldStateArchive createWorldStateArchive(final WorldStateStorage worldStateStorage) {
-    final WorldStatePreimageStorage preimageStorage =
-        storageProvider.createWorldStatePreimageStorage();
-    return new DefaultWorldStateArchive(worldStateStorage, preimageStorage);
+    switch (dataStorageConfiguration.getDataStorageFormat()) {
+      case BONSAI:
+        return new BonsaiWorldStateArchive(storageProvider);
+      case FOREST:
+      default:
+        final WorldStatePreimageStorage preimageStorage =
+            storageProvider.createWorldStatePreimageStorage();
+        return new DefaultWorldStateArchive(worldStateStorage, preimageStorage);
+    }
   }
 
   private List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
