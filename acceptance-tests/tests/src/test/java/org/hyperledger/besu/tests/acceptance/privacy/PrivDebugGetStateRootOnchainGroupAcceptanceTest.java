@@ -65,26 +65,6 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
   }
 
   @Test
-  public void nodesNotInGroupShouldReturnError() {
-    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode);
-
-    final PrivacyRequestFactory.DebugGetStateRoot aliceResult =
-        aliceNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "latest"));
-
-    assertThat(aliceResult.hasError()).isFalse();
-    assertThat(aliceResult.getResult()).isNotNull();
-    assertThat(aliceResult.getResult()).isInstanceOf(Hash.class);
-
-    final PrivacyRequestFactory.DebugGetStateRoot bobResult =
-        bobNode.execute(privacyTransactions.debugGetStateRoot(privacyGroupId, "latest"));
-
-    assertThat(bobResult.getResult()).isNull();
-    assertThat(bobResult.hasError()).isTrue();
-    assertThat(bobResult.getError()).isNotNull();
-    assertThat(bobResult.getError().getMessage()).contains("Error finding privacy group");
-  }
-
-  @Test
   public void unknownGroupShouldReturnError() {
     final PrivacyRequestFactory.DebugGetStateRoot aliceResult =
         aliceNode.execute(

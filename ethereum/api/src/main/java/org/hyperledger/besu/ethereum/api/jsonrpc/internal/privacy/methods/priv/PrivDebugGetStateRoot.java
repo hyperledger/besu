@@ -94,7 +94,7 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
                     requestContext.getRequest().getId(), stateRootHash.toString()))
         .orElse(
             new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
+                requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR));
   }
 
   @Override
