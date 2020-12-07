@@ -1459,8 +1459,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  @VisibleForTesting
-  BesuCommand configure() throws Exception {
+
+  private BesuCommand configure() throws Exception {
     checkPortClash();
 
     syncMode =
