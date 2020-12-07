@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -42,6 +43,10 @@ public class TransactionTest {
         .getByName(name)
         .getByBlockNumber(0)
         .getTransactionValidator();
+  }
+
+  private static RLPFormat rlpFormat(final String name) {
+    return REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(name).getByBlockNumber(0).getRLPFormat();
   }
 
   private final TransactionTestCaseSpec spec;
@@ -105,19 +110,19 @@ public class TransactionTest {
     final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);
 
     try {
-      final Bytes rlp = spec.getRlp();
+      final Bytes rlpBytes = spec.getRlp();
 
       // Test transaction deserialization (will throw an exception if it fails).
-      final Transaction transaction = Transaction.readFrom(RLP.input(rlp));
+      final Transaction transaction = rlpFormat(milestone).decodeTransaction(RLP.input(rlpBytes));
       if (!transactionValidator(milestone).validate(transaction, Optional.empty()).isValid()) {
         throw new RuntimeException(String.format("Transaction is invalid %s", transaction));
       }
 
       // Test rlp encoding
-      final Bytes actualRlp = RLP.encode(transaction::writeTo);
+      final Bytes actualRlp = RLP.encode(rlpOutput -> RLPFormat.encode(transaction, rlpOutput));
       assertThat(expected.isSucceeds()).isTrue();
 
-      assertThat(actualRlp).isEqualTo(rlp);
+      assertThat(actualRlp).isEqualTo(rlpBytes);
 
       assertThat(transaction.getSender()).isEqualTo(expected.getSender());
       assertThat(transaction.getHash()).isEqualTo(expected.getHash());

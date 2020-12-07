@@ -62,7 +62,7 @@ public interface RLPFormat {
       ImmutableMap.of(TransactionType.EIP1559, RLPFormat::encodeEIP1559);
 
   // TODO replace all the encoders with static methods since we trust our own data format
-  static void encode(Transaction transaction, RLPOutput rlpOutput) {
+  static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
     if (transaction.getType().equals(TransactionType.FRONTIER)) {
       encodeFrontier(transaction, rlpOutput);
     } else {
@@ -147,7 +147,7 @@ public interface RLPFormat {
     rlpOutput.endList();
   }
 
-  static void encode(BlockBody blockBody, RLPOutput rlpOutput) {
+  static void encode(final BlockBody blockBody, final RLPOutput rlpOutput) {
     rlpOutput.startList();
 
     rlpOutput.writeList(blockBody.getTransactions(), RLPFormat::encode);
@@ -176,6 +176,7 @@ public interface RLPFormat {
     final Bytes extraData = input.readBytes();
     final Hash mixHash = Hash.wrap(input.readBytes32());
     final long nonce = input.readLong();
+    // TODO split this apart?
     final Long baseFee =
         ExperimentalEIPs.eip1559Enabled && !input.isEndOfCurrentList()
             ? input.readLongScalar()
