@@ -55,7 +55,7 @@ public class VMReferenceTestCaseSpec {
       @JsonProperty("post") final ReferenceTestWorldState finalWorldState) {
     this.exec = exec;
     this.initialWorldState = initialWorldState;
-    this.initialWorldState.persist();
+    this.initialWorldState.persist(null);
     exec.setBlockHeader(env);
 
     if (finalGas != null && out != null && finalWorldState != null) {

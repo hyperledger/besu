@@ -48,6 +48,7 @@ import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
+import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EthstatsOptions;
@@ -230,6 +231,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
   private final EthstatsOptions unstableEthstatsOptions = EthstatsOptions.create();
+  private final DataStorageOptions unstableDataStorageOptions = DataStorageOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final MiningOptions unstableMiningOptions = MiningOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
@@ -1214,6 +1216,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Ethstats", unstableEthstatsOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
+            .put("Data Storage Options", unstableDataStorageOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1569,7 +1572,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .<GasLimitCalculator>map(TargetingGasLimitCalculator::new)
                 .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
-        .reorgLoggingThreshold(reorgLoggingThreshold);
+        .reorgLoggingThreshold(reorgLoggingThreshold)
+        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2440,6 +2444,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     @Override
     public Path getDataPath() {
       return dataDir();
+    }
+
+    @Override
+    public int getDatabaseVersion() {
+      return unstableDataStorageOptions
+          .toDomainObject()
+          .getDataStorageFormat()
+          .getDatabaseVersion();
     }
   }
 }

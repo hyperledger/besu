@@ -231,4 +231,9 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       getUpdatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
     }
   }
+
+  protected void reset() {
+    updatedAccounts.clear();
+    deletedAccounts.clear();
+  }
 }
