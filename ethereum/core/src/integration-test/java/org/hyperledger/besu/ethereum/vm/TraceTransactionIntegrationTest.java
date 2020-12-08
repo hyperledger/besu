@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -154,7 +155,7 @@ public class TraceTransactionIntegrationTest {
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true));
     final Transaction transaction =
-        null
+        RLPFormat.getLatest()
             .decodeTransaction(
                 new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
     transactionProcessor.processTransaction(

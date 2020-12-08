@@ -48,8 +48,9 @@ public class BlockchainImporter {
     try (final RawBlockIterator iterator =
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
+            protocolSchedule,
             rlp ->
-                RLPFormat.decodeBlockHeader(
+                RLPFormat.decodeBlockHeaderStandalone(
                     rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
       while (iterator.hasNext()) {
         blocks.add(iterator.next());
