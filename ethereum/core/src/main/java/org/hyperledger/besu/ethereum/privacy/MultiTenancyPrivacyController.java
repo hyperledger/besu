@@ -115,14 +115,14 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findPrivacyGroup(
+  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     if (!addresses.contains(enclavePublicKey)) {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
     final PrivacyGroup[] resultantGroups =
-        privacyController.findPrivacyGroup(addresses, enclavePublicKey);
+        privacyController.findOffChainPrivacyGroupByMembers(addresses, enclavePublicKey);
     return Arrays.stream(resultantGroups)
         .filter(g -> g.getMembers().contains(enclavePublicKey))
         .toArray(PrivacyGroup[]::new);
@@ -197,26 +197,41 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOffChainPrivacyGroup(
+  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
       final String privacyGroupId, final String enclavePublicKey) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.retrieveOffChainPrivacyGroup(privacyGroupId, enclavePublicKey);
-    if (!maybePrivacyGroup.get().getMembers().contains(enclavePublicKey)) {
-      throw new MultiTenancyValidationException(
-          "Privacy group must contain the enclave public key");
-    }
+        privacyController.findOffChainPrivacyGroupByGroupId(privacyGroupId, enclavePublicKey);
+    checkGroupParticipation(maybePrivacyGroup, enclavePublicKey);
     return maybePrivacyGroup;
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroup(
+  public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
+      final String privacyGroupId, final String enclaveKey) {
+    final Optional<PrivacyGroup> maybePrivacyGroup =
+        privacyController.findPrivacyGroupByGroupId(privacyGroupId, enclaveKey);
+    checkGroupParticipation(maybePrivacyGroup, enclaveKey);
+    return maybePrivacyGroup;
+  }
+
+  private void checkGroupParticipation(
+      final Optional<PrivacyGroup> maybePrivacyGroup, final String enclaveKey) {
+    if (maybePrivacyGroup.isPresent()
+        && !maybePrivacyGroup.get().getMembers().contains(enclaveKey)) {
+      throw new MultiTenancyValidationException(
+          "Privacy group must contain the enclave public key");
+    }
+  }
+
+  @Override
+  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     if (!addresses.contains(enclavePublicKey)) {
       throw new MultiTenancyValidationException(
           "Privacy group addresses must contain the enclave public key");
     }
     final List<PrivacyGroup> resultantGroups =
-        privacyController.findOnChainPrivacyGroup(addresses, enclavePublicKey);
+        privacyController.findOnChainPrivacyGroupByMembers(addresses, enclavePublicKey);
     return resultantGroups.stream()
         .filter(g -> g.getMembers().contains(enclavePublicKey))
         .collect(Collectors.toList());
@@ -244,12 +259,12 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String enclavePublicKey,
       final PrivateTransaction privateTransaction) {
     final Optional<PrivacyGroup> maybePrivacyGroup =
-        privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+        privacyController.findOnChainPrivacyGroupAndAddNewMembers(
             privacyGroupId, enclavePublicKey, privateTransaction);
     // The check that the enclavePublicKey is a member (if the group already exists) is done in the
     // DefaultPrivacyController.

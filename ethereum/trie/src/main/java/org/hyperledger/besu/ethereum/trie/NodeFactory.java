@@ -19,7 +19,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-interface NodeFactory<V> {
+public interface NodeFactory<V> {
 
   Node<V> createExtension(Bytes path, Node<V> child);
 

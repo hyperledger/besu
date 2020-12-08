@@ -265,13 +265,15 @@ public class RestoreState implements Runnable {
 
   private void updateAccountState(final Bytes32 key, final Bytes value) {
     maybeCommitUpdater();
-    updater.putAccountStateTrieNode(key, value);
+    // restore by path not supported
+    updater.putAccountStateTrieNode(null, key, value);
     trieNodeCount++;
   }
 
   private void updateAccountStorage(final Bytes32 key, final Bytes value) {
     maybeCommitUpdater();
-    updater.putAccountStorageTrieNode(key, value);
+    // restore by path not supported
+    updater.putAccountStorageTrieNode(null, key, value);
     trieNodeCount++;
   }
 
