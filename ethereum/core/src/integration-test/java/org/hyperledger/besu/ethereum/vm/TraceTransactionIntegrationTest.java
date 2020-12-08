@@ -154,8 +154,9 @@ public class TraceTransactionIntegrationTest {
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true));
     final Transaction transaction =
-        Transaction.readFrom(
-            new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
+        null
+            .decodeTransaction(
+                new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
     transactionProcessor.processTransaction(
         blockchain,
         worldStateArchive.getMutable(genesisBlock.getHeader().getStateRoot()).get().updater(),

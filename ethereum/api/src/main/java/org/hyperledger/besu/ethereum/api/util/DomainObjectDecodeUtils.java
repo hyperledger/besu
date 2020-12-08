@@ -30,7 +30,7 @@ public class DomainObjectDecodeUtils {
   public static Transaction decodeRawTransaction(final String rlp, final RLPFormat rlpFormat)
       throws InvalidJsonRpcRequestException {
     try {
-      return Transaction.readFrom(RLP.input(Bytes.fromHexString(rlp)), rlpFormat);
+      return rlpFormat.decodeTransaction(RLP.input(Bytes.fromHexString(rlp)));
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);

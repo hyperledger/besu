@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.Test;
 
 public class EthGetTransactionReceiptTest {
@@ -58,6 +59,7 @@ public class EthGetTransactionReceiptTest {
       Address.fromHexString("0x0000000000000000000000000000000000000003");
   private final Transaction transaction =
       Transaction.builder()
+          .type(TransactionType.FRONTIER)
           .nonce(1)
           .gasPrice(Wei.of(12))
           .gasLimit(43)

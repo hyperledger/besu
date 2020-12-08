@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
@@ -54,13 +54,12 @@ public class DebugTraceBlockTest {
 
   private final BlockTracer blockTracer = mock(BlockTracer.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
   private final DebugTraceBlock debugTraceBlock =
       new DebugTraceBlock(
           () -> blockTracer,
           new MainnetBlockHeaderFunctions(),
           blockchainQueries,
-          protocolSchedule);
+          MainnetProtocolSchedule.create());
 
   @Test
   public void nameShouldBeDebugTraceBlock() {

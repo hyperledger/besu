@@ -22,7 +22,6 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -90,11 +89,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  // TODO remove?
-  public static Transaction readFrom(final RLPInput rlpInput, final RLPFormat rlpFormat) {
-    return rlpFormat.decodeTransaction(rlpInput);
   }
 
   /**

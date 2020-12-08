@@ -46,11 +46,11 @@ public class EthSendRawTransaction implements JsonRpcMethod {
 
   public EthSendRawTransaction(
       final BlockchainQueries blockchainQueries,
-      final TransactionPool transactionPoolSupplier,
+      final TransactionPool transactionPool,
       final ProtocolSchedule protocolSchedule) {
     this(
         Suppliers.ofInstance(blockchainQueries),
-        Suppliers.ofInstance(transactionPoolSupplier),
+        Suppliers.ofInstance(transactionPool),
         Suppliers.ofInstance(protocolSchedule),
         false);
   }
