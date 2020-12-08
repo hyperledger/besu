@@ -56,7 +56,7 @@ public interface BesuNodeRunner {
 
   /**
    * Starts a capture of System.out and System.err. Once getConsole is called the capture will
-   * end.be
+   * end.
    */
   void startConsoleCapture();
 
