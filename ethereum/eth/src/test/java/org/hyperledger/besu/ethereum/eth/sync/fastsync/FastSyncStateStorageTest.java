@@ -19,11 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.io.File;
 
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
