@@ -118,7 +118,7 @@ public class RLPFormatTest {
   public void decodeEIP1559NominalCase() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction transaction =
-        berlinRLPFormat.decodeTransaction(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        eip1559RLPFormat.decodeTransaction(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPremium()).hasValue(Wei.of(527L));
     assertThat(transaction.getFeeCap()).hasValue(Wei.of(369L));

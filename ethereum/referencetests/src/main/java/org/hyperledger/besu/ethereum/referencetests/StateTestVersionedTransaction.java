@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 /**
  * Represents the "transaction" part of the JSON of a general state tests.
@@ -105,6 +106,7 @@ public class StateTestVersionedTransaction {
 
   public Transaction get(final GeneralStateTestCaseSpec.Indexes indexes) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .nonce(nonce)
         .gasPrice(gasPrice)
         .gasLimit(gasLimits.get(indexes.gas).asUInt256().toLong())
