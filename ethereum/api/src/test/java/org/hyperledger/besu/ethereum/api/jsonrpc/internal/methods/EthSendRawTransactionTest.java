@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -60,7 +59,7 @@ public class EthSendRawTransactionTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getChainHeadBlockNumber()).thenReturn(inconsequentialBlockNumber);
     when(protocolSchedule.getByBlockNumber(inconsequentialBlockNumber)).thenReturn(protocolSpec);
-    when(protocolSpec.getRLPFormat()).thenReturn(RLPFormat.getLatest());
+    when(protocolSpec.getRLPFormat()).thenReturn(protocolSchedule.getLatestRLPFormat());
   }
 
   @Test

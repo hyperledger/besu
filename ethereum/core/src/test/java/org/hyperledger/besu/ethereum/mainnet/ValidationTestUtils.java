@@ -51,7 +51,7 @@ public final class ValidationTestUtils {
     //    input.enterList();
     //    input.skipNext();
     //    final List<Transaction> transactions =
-    // input.readList(RLPFormat.getLatest()::decodeTransaction);
+    // input.readList(protocolSchedule.getLatestRLPFormat()::decodeTransaction);
     //    final List<BlockHeader> ommers =
     //        input.readList(
     //            rlp -> RLPFormat.decodeBlockHeaderStandalone(rlp, new
@@ -70,7 +70,8 @@ public final class ValidationTestUtils {
         MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions(), input);
     //    input.enterList();
     //    final BlockHeader header =
-    //        RLPFormat.getLatest().decodeBlockHeader(input, new MainnetBlockHeaderFunctions());
+    //        protocolSchedule.getLatestRLPFormat().decodeBlockHeader(input, new
+    // MainnetBlockHeaderFunctions());
     //    final List<Transaction> transactions = input.readList(Transaction::readFrom);
     //    final List<BlockHeader> ommers =
     //        input.readList(rlp -> RLPFormat.decodeBlockHeader(rlp, new

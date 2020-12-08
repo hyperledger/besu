@@ -17,6 +17,7 @@ package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -127,6 +128,7 @@ public class DataStoreModule {
   static BlockchainStorage provideBlockchainStorage(
       @Named("blockchain") final KeyValueStorage keyValueStorage,
       final BlockHeaderFunctions blockHashFunction) {
-    return new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHashFunction);
+    return new KeyValueStoragePrefixedKeyBlockchainStorage(
+        keyValueStorage, MainnetProtocolSchedule.create(), blockHashFunction);
   }
 }

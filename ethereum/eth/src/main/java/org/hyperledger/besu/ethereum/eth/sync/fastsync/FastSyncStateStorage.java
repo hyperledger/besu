@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -40,9 +41,11 @@ public class FastSyncStateStorage {
   private static final Logger LOG = LogManager.getLogger();
   private static final String PIVOT_BLOCK_HEADER_FILENAME = "pivotBlockHeader.rlp";
   private final File pivotBlockHeaderFile;
+  private final ProtocolSchedule protocolSchedule;
 
-  public FastSyncStateStorage(final Path fastSyncDataDir) {
+  public FastSyncStateStorage(final Path fastSyncDataDir, final ProtocolSchedule protocolSchedule) {
     pivotBlockHeaderFile = fastSyncDataDir.resolve(PIVOT_BLOCK_HEADER_FILENAME).toFile();
+    this.protocolSchedule = protocolSchedule;
   }
 
   public boolean isFastSyncInProgress() {
@@ -56,7 +59,8 @@ public class FastSyncStateStorage {
       }
       final Bytes rlp = Bytes.wrap(Files.toByteArray(pivotBlockHeaderFile));
       return new FastSyncState(
-          RLPFormat.getLatest()
+          protocolSchedule
+              .getLatestRLPFormat()
               .decodeBlockHeader(new BytesValueRLPInput(rlp, false), blockHeaderFunctions));
     } catch (final IOException e) {
       throw new IllegalStateException(

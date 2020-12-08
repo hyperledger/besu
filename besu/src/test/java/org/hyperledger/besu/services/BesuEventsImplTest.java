@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -105,7 +106,9 @@ public class BesuEventsImplTest {
         DefaultBlockchain.createMutable(
             gen.genesisBlock(),
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
+                new InMemoryKeyValueStorage(),
+                MainnetProtocolSchedule.create(),
+                new MainnetBlockHeaderFunctions()),
             new NoOpMetricsSystem(),
             0);
 

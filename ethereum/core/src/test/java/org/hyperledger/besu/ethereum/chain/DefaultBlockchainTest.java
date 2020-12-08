@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -943,7 +944,7 @@ public class DefaultBlockchainTest {
 
   private BlockchainStorage createStorage(final KeyValueStorage kvStore) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        kvStore, new MainnetBlockHeaderFunctions());
+        kvStore, MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions());
   }
 
   private DefaultBlockchain createMutableBlockchain(

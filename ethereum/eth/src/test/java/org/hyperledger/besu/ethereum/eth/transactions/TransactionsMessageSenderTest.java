@@ -24,10 +24,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.List;
@@ -105,6 +105,7 @@ public class TransactionsMessageSenderTest {
 
   private Set<Transaction> getTransactionsFromMessage(final MessageData message) {
     final TransactionsMessage transactionsMessage = TransactionsMessage.readFrom(message);
-    return newHashSet(transactionsMessage.transactions(RLPFormat.getLatest()));
+    return newHashSet(
+        transactionsMessage.transactions(MainnetProtocolSchedule.create().getLatestRLPFormat()));
   }
 }

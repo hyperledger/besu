@@ -89,7 +89,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
             protocolSchedule),
         new DebugTraceBlockByNumber(() -> new BlockTracer(blockReplay), blockchainQueries),
         new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay)),
-        new DebugBatchSendRawTransaction(transactionPool),
+        new DebugBatchSendRawTransaction(transactionPool, protocolSchedule),
         new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult),
         new DebugStandardTraceBlockToFile(
             () -> new TransactionTracer(blockReplay), blockchainQueries, dataDir),

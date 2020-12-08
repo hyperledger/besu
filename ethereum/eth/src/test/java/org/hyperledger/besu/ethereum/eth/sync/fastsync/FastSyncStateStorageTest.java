@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
 import java.io.File;
 
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,12 +35,13 @@ public class FastSyncStateStorageTest {
   private FastSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();
   private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader);
+  private final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
   private File tempDir;
 
   @Before
   public void setUp() throws Exception {
     tempDir = tempDirRule.newFolder();
-    storage = new FastSyncStateStorage(tempDir.toPath());
+    storage = new FastSyncStateStorage(tempDir.toPath(), protocolSchedule);
   }
 
   @Test
@@ -51,7 +54,8 @@ public class FastSyncStateStorageTest {
     storage.storeState(syncStateWithHeader);
     assertThat(storage.isFastSyncInProgress()).isTrue();
 
-    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir.toPath());
+    final FastSyncStateStorage newStorage =
+        new FastSyncStateStorage(tempDir.toPath(), protocolSchedule);
     assertThat(newStorage.isFastSyncInProgress()).isTrue();
   }
 
@@ -60,7 +64,8 @@ public class FastSyncStateStorageTest {
     storage.storeState(syncStateWithHeader);
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(syncStateWithHeader);
 
-    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir.toPath());
+    final FastSyncStateStorage newStorage =
+        new FastSyncStateStorage(tempDir.toPath(), protocolSchedule);
     assertThat(newStorage.loadState(new MainnetBlockHeaderFunctions()))
         .isEqualTo(syncStateWithHeader);
   }

@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -111,7 +112,8 @@ public class TestNode implements Closeable {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     final MutableBlockchain blockchain =
-        createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
+        createInMemoryBlockchain(
+            genesisState.getBlock(), MainnetProtocolSchedule.create(), blockHeaderFunctions);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext protocolContext =

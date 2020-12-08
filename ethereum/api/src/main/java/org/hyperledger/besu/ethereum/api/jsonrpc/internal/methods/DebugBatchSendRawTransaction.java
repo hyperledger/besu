@@ -19,32 +19,29 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.google.common.base.Suppliers;
 
 public class DebugBatchSendRawTransaction implements JsonRpcMethod {
-  private final Supplier<TransactionPool> transactionPool;
+  private final TransactionPool transactionPool;
+  private final ProtocolSchedule protocolSchedule;
 
-  public DebugBatchSendRawTransaction(final TransactionPool transactionPool) {
-    this(Suppliers.ofInstance(transactionPool));
-  }
-
-  public DebugBatchSendRawTransaction(final Supplier<TransactionPool> transactionPool) {
+  public DebugBatchSendRawTransaction(
+      final TransactionPool transactionPool, final ProtocolSchedule protocolSchedule) {
     this.transactionPool = transactionPool;
+    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
@@ -67,11 +64,9 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
   private ExecutionStatus process(final int index, final String rawTransaction) {
     try {
       final ValidationResult<TransactionInvalidReason> validationResult =
-          transactionPool
-              .get()
-              .addLocalTransaction(
-                  DomainObjectDecodeUtils.decodeRawTransaction(
-                      rawTransaction, RLPFormat.getLatest()));
+          transactionPool.addLocalTransaction(
+              DomainObjectDecodeUtils.decodeRawTransaction(
+                  rawTransaction, protocolSchedule.getLatestRLPFormat()));
       return validationResult.either(
           () -> new ExecutionStatus(index),
           errorReason -> new ExecutionStatus(index, false, errorReason.name()));

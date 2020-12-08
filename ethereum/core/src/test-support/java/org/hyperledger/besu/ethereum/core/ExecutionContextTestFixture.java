@@ -54,7 +54,7 @@ public class ExecutionContextTestFixture {
         DefaultBlockchain.createMutable(
             genesis,
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                keyValueStorage, new MainnetBlockHeaderFunctions()),
+                keyValueStorage, protocolSchedule, new MainnetBlockHeaderFunctions()),
             new NoOpMetricsSystem(),
             0);
     this.stateArchive = createInMemoryWorldStateArchive();

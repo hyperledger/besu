@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
@@ -38,15 +39,19 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 public class InMemoryStorageProvider implements StorageProvider {
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
-    return createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
+    return createInMemoryBlockchain(
+        genesisBlock, MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions());
   }
 
   public static MutableBlockchain createInMemoryBlockchain(
-      final Block genesisBlock, final BlockHeaderFunctions blockHeaderFunctions) {
+      final Block genesisBlock,
+      final ProtocolSchedule protocolSchedule,
+      final BlockHeaderFunctions blockHeaderFunctions) {
     final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     return DefaultBlockchain.createMutable(
         genesisBlock,
-        new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            keyValueStorage, protocolSchedule, blockHeaderFunctions),
         new NoOpMetricsSystem(),
         0);
   }
@@ -70,7 +75,9 @@ public class InMemoryStorageProvider implements StorageProvider {
   @Override
   public BlockchainStorage createBlockchainStorage(final ProtocolSchedule protocolSchedule) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        new InMemoryKeyValueStorage(), ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
+        new InMemoryKeyValueStorage(),
+        protocolSchedule,
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
   }
 
   @Override

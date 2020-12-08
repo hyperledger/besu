@@ -53,11 +53,6 @@ public interface RLPFormat {
     T decode(RLPInput input);
   }
 
-  // TODO move this to ProtocolSchedule probably?
-  static RLPFormat getLatest() {
-    return new BerlinRLPFormat();
-  }
-
   ImmutableMap<TransactionType, Encoder<Transaction>> TYPED_TRANSACTION_ENCODERS =
       ImmutableMap.of(TransactionType.EIP1559, RLPFormat::encodeEIP1559);
 

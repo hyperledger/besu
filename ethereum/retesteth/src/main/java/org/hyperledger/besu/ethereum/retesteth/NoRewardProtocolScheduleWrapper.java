@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
@@ -81,6 +82,11 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getGasBudgetCalculator(),
         original.getBadBlocksManager(),
         original.getRLPFormat());
+  }
+
+  @Override
+  public RLPFormat getLatestRLPFormat() {
+    return delegate.getLatestRLPFormat();
   }
 
   @Override

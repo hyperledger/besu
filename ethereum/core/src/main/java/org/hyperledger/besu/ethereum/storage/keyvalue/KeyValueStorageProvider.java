@@ -48,6 +48,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   public BlockchainStorage createBlockchainStorage(final ProtocolSchedule protocolSchedule) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
         getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN),
+        protocolSchedule,
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
   }
 

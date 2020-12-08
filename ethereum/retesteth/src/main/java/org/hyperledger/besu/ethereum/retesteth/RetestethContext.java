@@ -215,15 +215,11 @@ public class RetestethContext {
   }
 
   private static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
-    return createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
-  }
-
-  private static MutableBlockchain createInMemoryBlockchain(
-      final Block genesisBlock, final BlockHeaderFunctions blockHeaderFunctions) {
     final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     return DefaultBlockchain.createMutable(
         genesisBlock,
-        new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            keyValueStorage, MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions()),
         new NoOpMetricsSystem(),
         100);
   }

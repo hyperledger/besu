@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -61,6 +60,7 @@ public class TraceTransactionIntegrationTest {
   private Block genesisBlock;
   private MainnetTransactionProcessor transactionProcessor;
   private BlockHashLookup blockHashLookup;
+  private ProtocolSchedule protocolSchedule;
 
   @Before
   public void setUp() {
@@ -68,7 +68,6 @@ public class TraceTransactionIntegrationTest {
     genesisBlock = contextTestFixture.getGenesis();
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
-    final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
     transactionProcessor = protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
     blockHashLookup = new BlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
@@ -155,7 +154,8 @@ public class TraceTransactionIntegrationTest {
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true));
     final Transaction transaction =
-        RLPFormat.getLatest()
+        protocolSchedule
+            .getLatestRLPFormat()
             .decodeTransaction(
                 new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
     transactionProcessor.processTransaction(

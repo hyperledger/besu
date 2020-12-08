@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.encoding.FrontierRLPFormat;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -28,7 +29,7 @@ import org.junit.Test;
 
 public class TransactionIntegrationTest {
 
-  final RLPFormat frontierRLPFormat = RLPFormat.getLatest();
+  final RLPFormat frontierRLPFormat = new FrontierRLPFormat();
 
   @Test
   public void

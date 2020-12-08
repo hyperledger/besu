@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -54,10 +55,14 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   private final KeyValueStorage storage;
   private final BlockHeaderFunctions blockHeaderFunctions;
+  private final ProtocolSchedule protocolSchedule;
 
   public KeyValueStoragePrefixedKeyBlockchainStorage(
-      final KeyValueStorage storage, final BlockHeaderFunctions blockHeaderFunctions) {
+      final KeyValueStorage storage,
+      final ProtocolSchedule protocolSchedule,
+      final BlockHeaderFunctions blockHeaderFunctions) {
     this.storage = storage;
+    this.protocolSchedule = protocolSchedule;
     this.blockHeaderFunctions = blockHeaderFunctions;
   }
 
@@ -76,14 +81,21 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHash) {
     return get(BLOCK_HEADER_PREFIX, blockHash)
-        .map(b -> RLPFormat.getLatest().decodeBlockHeader(RLP.input(b), blockHeaderFunctions));
+        .map(
+            b ->
+                protocolSchedule
+                    .getLatestRLPFormat()
+                    .decodeBlockHeader(RLP.input(b), blockHeaderFunctions));
   }
 
   @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHash) {
     return get(BLOCK_BODY_PREFIX, blockHash)
         .map(
-            bytes -> RLPFormat.getLatest().decodeBlockBody(RLP.input(bytes), blockHeaderFunctions));
+            bytes ->
+                protocolSchedule
+                    .getLatestRLPFormat()
+                    .decodeBlockBody(RLP.input(bytes), blockHeaderFunctions));
   }
 
   @Override

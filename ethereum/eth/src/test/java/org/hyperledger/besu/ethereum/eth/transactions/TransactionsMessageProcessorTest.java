@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -62,7 +61,7 @@ public class TransactionsMessageProcessorTest {
     final long inconsequentialBlockNumber = 1L;
     when(blockchain.getChainHeadBlockNumber()).thenReturn(inconsequentialBlockNumber);
     when(protocolSchedule.getByBlockNumber(inconsequentialBlockNumber)).thenReturn(protocolSpec);
-    when(protocolSpec.getRLPFormat()).thenReturn(RLPFormat.getLatest());
+    when(protocolSpec.getRLPFormat()).thenReturn(protocolSchedule.getLatestRLPFormat());
   }
 
   @Test

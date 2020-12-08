@@ -67,6 +67,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -173,7 +174,10 @@ public class TestContextBuilder {
 
     final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
     final MutableBlockchain blockChain =
-        createInMemoryBlockchain(genesisBlock, IbftBlockHeaderFunctions.forOnChainBlock());
+        createInMemoryBlockchain(
+            genesisBlock,
+            MainnetProtocolSchedule.create(),
+            IbftBlockHeaderFunctions.forOnChainBlock());
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
