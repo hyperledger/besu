@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -45,14 +47,17 @@ public class DebugTraceBlock implements JsonRpcMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final BlockHeaderFunctions blockHeaderFunctions;
   private final BlockchainQueries blockchain;
+  private final ProtocolSchedule protocolSchedule;
 
   public DebugTraceBlock(
       final Supplier<BlockTracer> blockTracerSupplier,
       final BlockHeaderFunctions blockHeaderFunctions,
-      final BlockchainQueries blockchain) {
+      final BlockchainQueries blockchain,
+      final ProtocolSchedule protocolSchedule) {
     this.blockTracerSupplier = blockTracerSupplier;
     this.blockHeaderFunctions = blockHeaderFunctions;
     this.blockchain = blockchain;
+    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
@@ -65,7 +70,9 @@ public class DebugTraceBlock implements JsonRpcMethod {
     final String input = requestContext.getRequiredParameter(0, String.class);
     final Block block;
     try {
-      block = Block.readFrom(RLP.input(Bytes.fromHexString(input)), this.blockHeaderFunctions);
+      block =
+          RLPFormat.decodeBlockStandalone(
+              protocolSchedule, blockHeaderFunctions, RLP.input(Bytes.fromHexString(input)));
     } catch (final RLPException e) {
       LOG.debug("Failed to parse block RLP", e);
       return new JsonRpcErrorResponse(

@@ -62,8 +62,7 @@ public class PrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
     final MutableBlockchain blockchain =
-        DefaultBlockchain.createMutable(
-            genesisBlock, protocolSchedule, blockchainStorage, metricsSystem, 0);
+        DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
     final Pruner pruner =
         new Pruner(markSweepPruner, blockchain, new PrunerConfiguration(0, 1), mockExecutorService);
@@ -84,8 +83,7 @@ public class PrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
     final MutableBlockchain blockchain =
-        DefaultBlockchain.createMutable(
-            genesisBlock, protocolSchedule, blockchainStorage, metricsSystem, 0);
+        DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
     final Pruner pruner =
         new Pruner(markSweepPruner, blockchain, new PrunerConfiguration(1, 2), mockExecutorService);
@@ -111,8 +109,7 @@ public class PrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
     final MutableBlockchain blockchain =
-        DefaultBlockchain.createMutable(
-            genesisBlock, protocolSchedule, blockchainStorage, metricsSystem, 0);
+        DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
     // start pruner so it can start handling block added events
     final Pruner pruner =
@@ -182,8 +179,7 @@ public class PrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
     final MutableBlockchain blockchain =
-        DefaultBlockchain.createMutable(
-            genesisBlock, protocolSchedule, blockchainStorage, metricsSystem, 0);
+        DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
     final Pruner pruner =
         new Pruner(markSweepPruner, blockchain, new PrunerConfiguration(0, 1), mockExecutorService);

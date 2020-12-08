@@ -133,6 +133,8 @@ public class TransactionPoolFactory {
             new TransactionsMessageProcessor(
                 transactionTracker,
                 transactionPool,
+                protocolSchedule,
+                protocolContext.getBlockchain(),
                 metricsSystem.createCounter(
                     BesuMetricCategory.TRANSACTION_POOL,
                     "transactions_messages_skipped_total",
@@ -152,6 +154,8 @@ public class TransactionPoolFactory {
                       "pending_transactions_messages_skipped_total",
                       "Total number of pending transactions messages skipped by the processor."),
                   ethContext,
+                  protocolContext.getBlockchain(),
+                  protocolSchedule,
                   metricsSystem,
                   syncState),
               transactionPoolConfiguration.getTxMessageKeepAliveSeconds());

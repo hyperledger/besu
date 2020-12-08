@@ -17,13 +17,11 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.io.IOException;
-import java.util.List;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
@@ -31,29 +29,34 @@ import org.apache.tuweni.bytes.Bytes;
 public final class ValidationTestUtils {
 
   public static BlockHeader readHeader(final long num) throws IOException {
-    final RLPInput input =
-        new BytesValueRLPInput(
-            Bytes.wrap(
-                Resources.toByteArray(
-                    EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
-            false);
-    input.enterList();
-    return RLPFormat.decodeBlockHeader(input, new MainnetBlockHeaderFunctions());
+    return readBlock(num).getHeader();
+    //    final RLPInput input =
+    //        new BytesValueRLPInput(
+    //            Bytes.wrap(
+    //                Resources.toByteArray(
+    //                    EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
+    //            false);
+    //    input.enterList();
+    //    return RLPFormat.decodeBlockHeaderStandalone(input, new MainnetBlockHeaderFunctions());
   }
 
   public static BlockBody readBody(final long num) throws IOException {
-    final RLPInput input =
-        new BytesValueRLPInput(
-            Bytes.wrap(
-                Resources.toByteArray(
-                    EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
-            false);
-    input.enterList();
-    input.skipNext();
-    final List<Transaction> transactions = input.readList(Transaction::readFrom);
-    final List<BlockHeader> ommers =
-        input.readList(rlp -> RLPFormat.decodeBlockHeader(rlp, new MainnetBlockHeaderFunctions()));
-    return new BlockBody(transactions, ommers);
+    return readBlock(num).getBody();
+    //    final RLPInput input =
+    //        new BytesValueRLPInput(
+    //            Bytes.wrap(
+    //                Resources.toByteArray(
+    //                    EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
+    //            false);
+    //    input.enterList();
+    //    input.skipNext();
+    //    final List<Transaction> transactions =
+    // input.readList(RLPFormat.getLatest()::decodeTransaction);
+    //    final List<BlockHeader> ommers =
+    //        input.readList(
+    //            rlp -> RLPFormat.decodeBlockHeaderStandalone(rlp, new
+    // MainnetBlockHeaderFunctions()));
+    //    return new BlockBody(transactions, ommers);
   }
 
   public static Block readBlock(final long num) throws IOException {
@@ -63,13 +66,16 @@ public final class ValidationTestUtils {
                 Resources.toByteArray(
                     EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
             false);
-    input.enterList();
-    final BlockHeader header =
-        RLPFormat.decodeBlockHeader(input, new MainnetBlockHeaderFunctions());
-    final List<Transaction> transactions = input.readList(Transaction::readFrom);
-    final List<BlockHeader> ommers =
-        input.readList(rlp -> RLPFormat.decodeBlockHeader(rlp, new MainnetBlockHeaderFunctions()));
-    final BlockBody body = new BlockBody(transactions, ommers);
-    return new Block(header, body);
+    return RLPFormat.decodeBlockStandalone(
+        MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions(), input);
+    //    input.enterList();
+    //    final BlockHeader header =
+    //        RLPFormat.getLatest().decodeBlockHeader(input, new MainnetBlockHeaderFunctions());
+    //    final List<Transaction> transactions = input.readList(Transaction::readFrom);
+    //    final List<BlockHeader> ommers =
+    //        input.readList(rlp -> RLPFormat.decodeBlockHeader(rlp, new
+    // MainnetBlockHeaderFunctions()));
+    //    final BlockBody body = new BlockBody(transactions, ommers);
+    //    return new Block(header, body);
   }
 }

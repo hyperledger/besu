@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -28,6 +29,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+
+import static org.hyperledger.besu.ethereum.encoding.RLPFormat.decodeBlockStandalone;
 
 public class NewBlockMessage extends AbstractMessageData {
 
@@ -99,7 +102,7 @@ public class NewBlockMessage extends AbstractMessageData {
 
     public void writeTo(final RLPOutput out) {
       out.startList();
-      block.writeTo(out);
+      RLPFormat.encode(block, out);
       out.writeUInt256Scalar(totalDifficulty);
       out.endList();
     }
@@ -109,7 +112,7 @@ public class NewBlockMessage extends AbstractMessageData {
       final BlockHeaderFunctions blockHeaderFunctions =
           ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
       in.enterList();
-      final Block block = Block.readFrom(in, blockHeaderFunctions);
+      final Block block = decodeBlockStandalone(protocolSchedule, blockHeaderFunctions, in);
       final UInt256 totaldifficulty = in.readUInt256Scalar();
       return new NewBlockMessageData(block, Difficulty.of(totaldifficulty));
     }

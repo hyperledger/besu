@@ -244,13 +244,13 @@ public class BlockchainReferenceTestCaseSpec {
       final RLPInput input = new BytesValueRLPInput(rlp, false);
       input.enterList();
       final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
-      final BlockHeader header = RLPFormat.decodeBlockHeader(input, blockHeaderFunctions);
+      final BlockHeader header = RLPFormat.decodeBlockHeaderStandalone(input, blockHeaderFunctions);
+      final RLPFormat rlpFormat =
+          protocolSchedule.getByBlockNumber(header.getNumber()).getRLPFormat();
       final BlockBody body =
           new BlockBody(
-              input.readList(
-                  protocolSchedule.getByBlockNumber(header.getNumber()).getRLPFormat()
-                      ::decodeTransaction),
-              input.readList(rlp -> RLPFormat.decodeBlockHeader(rlp, blockHeaderFunctions)));
+              input.readList(rlpFormat::decodeTransaction),
+              input.readList(rlp -> rlpFormat.decodeBlockHeader(rlp, blockHeaderFunctions)));
       return new Block(header, body);
     }
   }

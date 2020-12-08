@@ -32,20 +32,19 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   private static final Logger LOG = LogManager.getLogger();
 
   private final Hash referenceHash;
-  private final long minimumRequiredBlockNumber;
 
   @VisibleForTesting
   GetHeadersFromPeerByHashTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long minimumRequiredBlockNumber,
+      final long startBlockHint,
       final int count,
       final int skip,
       final boolean reverse,
       final MetricsSystem metricsSystem) {
     super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
-    this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
+    this.startBlockHint = startBlockHint;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
   }
@@ -122,7 +121,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
           LOG.debug("Requesting {} headers from peer {}.", count, peer);
           return peer.getHeadersByHash(referenceHash, count, skip, reverse);
         },
-        minimumRequiredBlockNumber);
+        startBlockHint);
   }
 
   @Override

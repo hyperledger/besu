@@ -168,7 +168,7 @@ public class BlockchainSetupUtil {
           new RawBlockIterator(
               blocksPath,
               protocolSchedule,
-              rlp -> RLPFormat.decodeBlockHeader(rlp, blockHeaderFunctions))) {
+              rlp -> RLPFormat.decodeBlockHeaderStandalone(rlp, blockHeaderFunctions))) {
         while (iterator.hasNext()) {
           blocks.add(iterator.next());
         }

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -83,10 +84,8 @@ public class EthSendRawTransaction implements JsonRpcMethod {
       transaction =
           DomainObjectDecodeUtils.decodeRawTransaction(
               rawTransaction,
-              protocolScheduleSupplier
-                  .get()
-                  .getByBlockNumber(blockchainQueriesSupplier.get().headBlockNumber())
-                  .getRLPFormat());
+              ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(
+                  protocolScheduleSupplier.get(), blockchainQueriesSupplier.get().getBlockchain()));
     } catch (final InvalidJsonRpcRequestException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);

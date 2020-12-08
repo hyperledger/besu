@@ -81,6 +81,8 @@ public class PendingTransactionsMessageProcessorTest {
             transactionPoolConfiguration,
             totalSkippedTransactionsMessageCounter,
             ethContext,
+            blockchain,
+            protocolSchedule,
             metricsSystem,
             syncState);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);

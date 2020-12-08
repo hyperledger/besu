@@ -158,7 +158,22 @@ public interface RLPFormat {
 
   BlockBody decodeBlockBody(RLPInput input, BlockHeaderFunctions blockHeaderFunctions);
 
-  static BlockHeader decodeBlockHeader(
+  BlockHeader decodeBlockHeader(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions);
+
+  static void encode(final Block block, final RLPOutput rlpOutput) {
+    rlpOutput.startList();
+
+    RLPFormat.encode(block.getHeader(), rlpOutput);
+    final BlockBody blockBody = block.getBody();
+    rlpOutput.writeList(blockBody.getTransactions(), RLPFormat::encode);
+    rlpOutput.writeList(blockBody.getOmmers(), RLPFormat::encode);
+
+    rlpOutput.endList();
+  }
+
+  // TODO wtf do I do about this standalone and the specific ones
+  static BlockHeader decodeBlockHeaderStandalone(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     input.enterList();
     final Hash parentHash = Hash.wrap(input.readBytes32());
@@ -174,13 +189,12 @@ public interface RLPFormat {
     final long gasUsed = input.readLongScalar();
     final long timestamp = input.readLongScalar();
     final Bytes extraData = input.readBytes();
-    final Hash mixHash = Hash.wrap(input.readBytes32());
-    final long nonce = input.readLong();
-    // TODO split this apart?
     final Long baseFee =
         ExperimentalEIPs.eip1559Enabled && !input.isEndOfCurrentList()
             ? input.readLongScalar()
             : null;
+    final Hash mixHash = Hash.wrap(input.readBytes32());
+    final long nonce = input.readLong();
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -202,30 +216,19 @@ public interface RLPFormat {
         blockHeaderFunctions);
   }
 
-  static void encode(final Block block, final RLPOutput rlpOutput) {
-    rlpOutput.startList();
-
-    RLPFormat.encode(block.getHeader(), rlpOutput);
-    final BlockBody blockBody = block.getBody();
-    rlpOutput.writeList(blockBody.getTransactions(), RLPFormat::encode);
-    rlpOutput.writeList(blockBody.getOmmers(), RLPFormat::encode);
-
-    rlpOutput.endList();
-  }
-
+  // TODO move this to frontier instead of default
   // TODO refactor rlpinputs/outputs so they're always in the same place
-  static Block decodeBlock(
+  static Block decodeBlockStandalone(
       final ProtocolSchedule protocolSchedule,
       final BlockHeaderFunctions blockHeaderFunctions,
       final RLPInput rlpInput) {
     rlpInput.enterList();
-    final BlockHeader header = decodeBlockHeader(rlpInput, blockHeaderFunctions);
-    final List<Transaction> transactions =
-        rlpInput.readList(
-            protocolSchedule.getByBlockNumber(header.getNumber()).getRLPFormat()
-                ::decodeTransaction);
+    final BlockHeader header = decodeBlockHeaderStandalone(rlpInput, blockHeaderFunctions);
+    final RLPFormat rlpFormat =
+        protocolSchedule.getByBlockNumber(header.getNumber()).getRLPFormat();
+    final List<Transaction> transactions = rlpInput.readList(rlpFormat::decodeTransaction);
     final List<BlockHeader> ommers =
-        rlpInput.readList(rlp -> decodeBlockHeader(rlp, blockHeaderFunctions));
+        rlpInput.readList(rlp -> rlpFormat.decodeBlockHeader(rlp, blockHeaderFunctions));
     rlpInput.leaveList();
 
     return new Block(header, new BlockBody(transactions, ommers));

@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -114,6 +115,7 @@ public class TransactionSimulator {
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(nonce)
             .gasPrice(gasPrice)
             .gasLimit(gasLimit)

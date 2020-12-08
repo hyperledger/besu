@@ -17,12 +17,15 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.time.Instant.now;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.BufferedGetPooledTransactionsFromPeerFetcher;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.RunnableCounter;
@@ -52,6 +55,8 @@ public class PendingTransactionsMessageProcessor {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
+  private final ProtocolSchedule protocolSchedule;
+  private final Blockchain blockchain;
 
   public PendingTransactionsMessageProcessor(
       final PeerPendingTransactionTracker transactionTracker,
@@ -59,12 +64,16 @@ public class PendingTransactionsMessageProcessor {
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final Counter metricsCounter,
       final EthContext ethContext,
+      final Blockchain blockchain,
+      final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final SyncState syncState) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.ethContext = ethContext;
+    this.blockchain = blockchain;
+    this.protocolSchedule = protocolSchedule;
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
     this.totalSkippedTransactionsMessageCounter =
@@ -152,7 +161,10 @@ public class PendingTransactionsMessageProcessor {
       if (peer != null) {
         final BufferedGetPooledTransactionsFromPeerFetcher fetcher = scheduledTasks.remove(peer);
         if (!peer.isDisconnected()) {
-          fetcher.requestTransactions();
+          fetcher.requestTransactions(
+              () ->
+                  ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(
+                      protocolSchedule, blockchain));
         }
       }
     }

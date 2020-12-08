@@ -17,19 +17,16 @@
 
 package org.hyperledger.besu.ethereum.encoding;
 
-import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
-import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
-import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
-
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -59,11 +56,16 @@ public class FrontierRLPFormat implements RLPFormat {
     final BigInteger v = rlpInput.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+    if (v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE)
+        || v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(Transaction.REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(Transaction.REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId =
+          Optional.of(v.subtract(Transaction.REPLAY_PROTECTED_V_BASE).divide(Transaction.TWO));
+      recId =
+          v.subtract(
+                  Transaction.TWO.multiply(chainId.get()).add(Transaction.REPLAY_PROTECTED_V_BASE))
+              .byteValueExact();
     } else {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
@@ -97,12 +99,17 @@ public class FrontierRLPFormat implements RLPFormat {
     if (isGoQuorumPrivateTransaction(v)) {
       // GoQuorum private TX. No chain ID. Preserve the v value as provided.
       builder.v(v);
-      recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
-    } else if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+      recId = v.subtract(Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
+    } else if (v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE)
+        || v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(Transaction.REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(Transaction.REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId =
+          Optional.of(v.subtract(Transaction.REPLAY_PROTECTED_V_BASE).divide(Transaction.TWO));
+      recId =
+          v.subtract(
+                  Transaction.TWO.multiply(chainId.get()).add(Transaction.REPLAY_PROTECTED_V_BASE))
+              .byteValueExact();
     } else {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
@@ -117,8 +124,8 @@ public class FrontierRLPFormat implements RLPFormat {
   }
 
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
-    return v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
-        || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
+    return v.equals(Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
+        || v.equals(Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
   }
 
   @Override
@@ -128,8 +135,48 @@ public class FrontierRLPFormat implements RLPFormat {
     final BlockBody body =
         new BlockBody(
             input.readList(this::decodeTransaction),
-            input.readList(rlp -> RLPFormat.decodeBlockHeader(rlp, blockHeaderFunctions)));
+            input.readList(rlpInput -> decodeBlockHeader(rlpInput, blockHeaderFunctions)));
     input.leaveList();
     return body;
+  }
+
+  @Override
+  public BlockHeader decodeBlockHeader(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    input.enterList();
+    final Hash parentHash = Hash.wrap(input.readBytes32());
+    final Hash ommersHash = Hash.wrap(input.readBytes32());
+    final Address coinbase = Address.readFrom(input);
+    final Hash stateRoot = Hash.wrap(input.readBytes32());
+    final Hash transactionsRoot = Hash.wrap(input.readBytes32());
+    final Hash receiptsRoot = Hash.wrap(input.readBytes32());
+    final LogsBloomFilter logsBloom = LogsBloomFilter.readFrom(input);
+    final Difficulty difficulty = Difficulty.of(input.readUInt256Scalar());
+    final long number = input.readLongScalar();
+    final long gasLimit = input.readLongScalar();
+    final long gasUsed = input.readLongScalar();
+    final long timestamp = input.readLongScalar();
+    final Bytes extraData = input.readBytes();
+    final Hash mixHash = Hash.wrap(input.readBytes32());
+    final long nonce = input.readLong();
+    input.leaveList();
+    return new BlockHeader(
+        parentHash,
+        ommersHash,
+        coinbase,
+        stateRoot,
+        transactionsRoot,
+        receiptsRoot,
+        logsBloom,
+        difficulty,
+        number,
+        gasLimit,
+        gasUsed,
+        timestamp,
+        extraData,
+        null,
+        mixHash,
+        nonce,
+        blockHeaderFunctions);
   }
 }

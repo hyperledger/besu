@@ -18,6 +18,7 @@ import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,16 +40,25 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
   private static final Logger LOG = LogManager.getLogger();
 
   private final List<Hash> hashes;
+  private final Supplier<RLPFormat> rlpFormatSupplier;
 
   private GetPooledTransactionsFromPeerTask(
-      final EthContext ethContext, final List<Hash> hashes, final MetricsSystem metricsSystem) {
+      final EthContext ethContext,
+      final Supplier<RLPFormat> rlpFormatSupplier,
+      final List<Hash> hashes,
+      final MetricsSystem metricsSystem) {
     super(ethContext, EthPV65.GET_POOLED_TRANSACTIONS, metricsSystem);
+    this.rlpFormatSupplier = rlpFormatSupplier;
     this.hashes = new ArrayList<>(hashes);
   }
 
   public static GetPooledTransactionsFromPeerTask forHashes(
-      final EthContext ethContext, final List<Hash> hashes, final MetricsSystem metricsSystem) {
-    return new GetPooledTransactionsFromPeerTask(ethContext, hashes, metricsSystem);
+      final EthContext ethContext,
+      final Supplier<RLPFormat> rlpFormatSupplier,
+      final List<Hash> hashes,
+      final MetricsSystem metricsSystem) {
+    return new GetPooledTransactionsFromPeerTask(
+        ethContext, rlpFormatSupplier, hashes, metricsSystem);
   }
 
   @Override
@@ -70,7 +81,7 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
     }
     final PooledTransactionsMessage pooledTransactionsMessage =
         PooledTransactionsMessage.readFrom(message);
-    final List<Transaction> tx = pooledTransactionsMessage.transactions();
+    final List<Transaction> tx = pooledTransactionsMessage.transactions(rlpFormatSupplier.get());
     if (tx.size() > hashes.size()) {
       // Can't be the response to our request
       return Optional.empty();

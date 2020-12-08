@@ -76,7 +76,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHash) {
     return get(BLOCK_HEADER_PREFIX, blockHash)
-        .map(b -> RLPFormat.decodeBlockHeader(RLP.input(b), blockHeaderFunctions));
+        .map(b -> RLPFormat.getLatest().decodeBlockHeader(RLP.input(b), blockHeaderFunctions));
   }
 
   @Override

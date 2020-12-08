@@ -17,9 +17,12 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.time.Instant.now;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.RunnableCounter;
@@ -40,13 +43,19 @@ class TransactionsMessageProcessor {
   private final PeerTransactionTracker transactionTracker;
   private final TransactionPool transactionPool;
   private final Counter totalSkippedTransactionsMessageCounter;
+  private final ProtocolSchedule protocolSchedule;
+  private final Blockchain blockchain;
 
   public TransactionsMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
+      final ProtocolSchedule protocolSchedule,
+      final Blockchain blockchain,
       final Counter metricsCounter) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
+    this.protocolSchedule = protocolSchedule;
+    this.blockchain = blockchain;
     this.totalSkippedTransactionsMessageCounter =
         new RunnableCounter(
             metricsCounter,
@@ -75,7 +84,9 @@ class TransactionsMessageProcessor {
     try {
       LOG.trace("Received transactions message from {}", peer);
 
-      final List<Transaction> readTransactions = transactionsMessage.transactions();
+      final List<Transaction> readTransactions =
+          transactionsMessage.transactions(
+              ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(protocolSchedule, blockchain));
       final Set<Transaction> transactions = Sets.newHashSet(readTransactions);
       transactionTracker.markTransactionsAsSeen(peer, transactions);
       transactionPool.addRemoteTransactions(transactions);

@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -49,11 +50,7 @@ public final class BlockHeadersMessage extends AbstractMessageData {
 
   public static BlockHeadersMessage create(final Iterable<BlockHeader> headers) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    for (final BlockHeader header : headers) {
-      header.writeTo(tmp);
-    }
-    tmp.endList();
+    tmp.writeList(headers, RLPFormat::encode);
     return new BlockHeadersMessage(tmp.encoded());
   }
 
@@ -66,10 +63,11 @@ public final class BlockHeadersMessage extends AbstractMessageData {
     return EthPV62.BLOCK_HEADERS;
   }
 
-  public List<BlockHeader> getHeaders(final ProtocolSchedule protocolSchedule) {
+  public List<BlockHeader> getHeaders(
+      final Supplier<RLPFormat> rlpFormatSupplier, final ProtocolSchedule protocolSchedule) {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
-        .readList(rlp -> RLPFormat.decodeBlockHeader(rlp, blockHeaderFunctions));
+        .readList(rlp -> rlpFormatSupplier.get().decodeBlockHeader(rlp, blockHeaderFunctions));
   }
 }

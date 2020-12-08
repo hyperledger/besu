@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.FrontierRLPFormat;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
@@ -109,7 +110,8 @@ public class IntrinsicGasTest {
 
   @Test
   public void validateGasCost() {
-    Transaction t = Transaction.readFrom(RLP.input(Bytes.fromHexString(txRlp)));
+    Transaction t =
+        new FrontierRLPFormat().decodeTransaction(RLP.input(Bytes.fromHexString(txRlp)));
     Assertions.assertThat(gasCalculator.transactionIntrinsicGasCost(t)).isEqualTo(expectedGas);
   }
 }

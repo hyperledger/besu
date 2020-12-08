@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -76,19 +77,22 @@ public class TransactionSmartContractPermissioningControllerTest {
     when(metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count",
-            "Number of times the transaction smart contract permissioning provider has been checked"))
+            "Number of times the transaction smart contract permissioning provider has been"
+                + " checked"))
         .thenReturn(checkCounter);
 
     when(metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count_permitted",
-            "Number of times the transaction smart contract permissioning provider has been checked and returned permitted"))
+            "Number of times the transaction smart contract permissioning provider has been"
+                + " checked and returned permitted"))
         .thenReturn(checkPermittedCounter);
 
     when(metricsSystem.createCounter(
             BesuMetricCategory.PERMISSIONING,
             "transaction_smart_contract_check_count_unpermitted",
-            "Number of times the transaction smart contract permissioning provider has been checked and returned unpermitted"))
+            "Number of times the transaction smart contract permissioning provider has been"
+                + " checked and returned unpermitted"))
         .thenReturn(checkUnpermittedCounter);
 
     return new TransactionSmartContractPermissioningController(contractAddress, ts, metricsSystem);
@@ -96,6 +100,7 @@ public class TransactionSmartContractPermissioningControllerTest {
 
   private Transaction transactionForAccount(final Address address) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .sender(address)
         .value(Wei.ZERO)
         .gasPrice(Wei.ZERO)

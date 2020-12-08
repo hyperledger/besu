@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -81,7 +82,7 @@ public class GraphQLDataFetchers {
             ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext()).getTransactionPool();
         final Bytes rawTran = dataFetchingEnvironment.getArgument("data");
 
-        final Transaction transaction = Transaction.readFrom(RLP.input(rawTran));
+        final Transaction transaction = RLPFormat.getLatest().decodeTransaction(RLP.input(rawTran));
         final ValidationResult<TransactionInvalidReason> validationResult =
             transactionPool.addLocalTransaction(transaction);
         if (validationResult.isValid()) {

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -40,11 +41,7 @@ public class TransactionsMessage extends AbstractMessageData {
 
   public static TransactionsMessage create(final Iterable<Transaction> transactions) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    for (final Transaction transaction : transactions) {
-      transaction.writeTo(tmp);
-    }
-    tmp.endList();
+    tmp.writeList(transactions, RLPFormat::encode);
     return new TransactionsMessage(tmp.encoded());
   }
 
@@ -57,7 +54,7 @@ public class TransactionsMessage extends AbstractMessageData {
     return EthPV62.TRANSACTIONS;
   }
 
-  public List<Transaction> transactions() {
-    return new BytesValueRLPInput(data, false).readList(Transaction::readFrom);
+  public List<Transaction> transactions(final RLPFormat rlpFormat) {
+    return new BytesValueRLPInput(data, false).readList(rlpFormat::decodeTransaction);
   }
 }

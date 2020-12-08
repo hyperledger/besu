@@ -46,7 +46,7 @@ public final class EthHashTest {
             false);
     input.enterList();
     final BlockHeader header =
-        RLPFormat.decodeBlockHeader(input, new MainnetBlockHeaderFunctions());
+        RLPFormat.decodeBlockHeaderStandalone(input, new MainnetBlockHeaderFunctions());
     final long blockNumber = header.getNumber();
     final EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
     final long epoch = epochCalculator.cacheEpoch(blockNumber);

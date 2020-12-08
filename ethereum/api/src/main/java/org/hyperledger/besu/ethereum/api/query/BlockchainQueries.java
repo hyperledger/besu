@@ -334,8 +334,7 @@ public class BlockchainQueries {
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
-                                      final int size =
-                                          new Block(header, body).calculateSize(protocolSchedule);
+                                      final int size = new Block(header, body).calculateSize();
                                       return new BlockWithMetadata<>(
                                           header, formattedTxs, ommers, td, size);
                                     })));
@@ -390,8 +389,7 @@ public class BlockchainQueries {
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
-                                      final int size =
-                                          new Block(header, body).calculateSize(protocolSchedule);
+                                      final int size = new Block(header, body).calculateSize();
                                       return new BlockWithMetadata<>(header, txs, ommers, td, size);
                                     })));
   }

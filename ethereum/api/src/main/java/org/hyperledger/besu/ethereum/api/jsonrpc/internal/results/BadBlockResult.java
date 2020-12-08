@@ -40,11 +40,10 @@ public interface BadBlockResult {
   @JsonProperty("rlp")
   String getRlp();
 
-  static BadBlockResult from(
-      final BlockResult blockResult, final Block block, final RLPFormat rlpFormat) {
+  static BadBlockResult from(final BlockResult blockResult, final Block block) {
     return ImmutableBadBlockResult.of(
         blockResult,
         block.getHash().toHexString(),
-        RLP.encode(rlpOutput -> rlpFormat.encode(block, rlpOutput)).toHexString());
+        RLP.encode(rlpOutput -> RLPFormat.encode(block, rlpOutput)).toHexString());
   }
 }

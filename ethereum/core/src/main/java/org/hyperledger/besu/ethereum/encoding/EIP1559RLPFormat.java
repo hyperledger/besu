@@ -17,15 +17,14 @@
 
 package org.hyperledger.besu.ethereum.encoding;
 
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
-import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
-
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -70,11 +69,16 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
     final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+    if (v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE)
+        || v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(Transaction.REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(Transaction.REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId =
+          Optional.of(v.subtract(Transaction.REPLAY_PROTECTED_V_BASE).divide(Transaction.TWO));
+      recId =
+          v.subtract(
+                  Transaction.TWO.multiply(chainId.get()).add(Transaction.REPLAY_PROTECTED_V_BASE))
+              .byteValueExact();
     } else {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
@@ -83,5 +87,46 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
     input.leaveList();
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();
+  }
+
+  @Override
+  public BlockHeader decodeBlockHeader(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    input.enterList();
+    final Hash parentHash = Hash.wrap(input.readBytes32());
+    final Hash ommersHash = Hash.wrap(input.readBytes32());
+    final Address coinbase = Address.readFrom(input);
+    final Hash stateRoot = Hash.wrap(input.readBytes32());
+    final Hash transactionsRoot = Hash.wrap(input.readBytes32());
+    final Hash receiptsRoot = Hash.wrap(input.readBytes32());
+    final LogsBloomFilter logsBloom = LogsBloomFilter.readFrom(input);
+    final Difficulty difficulty = Difficulty.of(input.readUInt256Scalar());
+    final long number = input.readLongScalar();
+    final long gasLimit = input.readLongScalar();
+    final long gasUsed = input.readLongScalar();
+    final long timestamp = input.readLongScalar();
+    final Bytes extraData = input.readBytes();
+    final Hash mixHash = Hash.wrap(input.readBytes32());
+    final long nonce = input.readLong();
+    final long baseFee = input.readLongScalar();
+    input.leaveList();
+    return new BlockHeader(
+        parentHash,
+        ommersHash,
+        coinbase,
+        stateRoot,
+        transactionsRoot,
+        receiptsRoot,
+        logsBloom,
+        difficulty,
+        number,
+        gasLimit,
+        gasUsed,
+        timestamp,
+        extraData,
+        baseFee,
+        mixHash,
+        nonce,
+        blockHeaderFunctions);
   }
 }

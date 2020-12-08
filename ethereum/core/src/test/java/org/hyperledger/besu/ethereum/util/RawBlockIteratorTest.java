@@ -18,10 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.io.DataOutputStream;
@@ -84,7 +83,8 @@ public class RawBlockIteratorTest {
     final RawBlockIterator iterator =
         new RawBlockIterator(
             blocksFile.toPath(),
-            rlp -> RLPFormat.decodeBlockHeader(rlp, new MainnetBlockHeaderFunctions()),
+            MainnetProtocolSchedule.create(),
+            rlp -> RLPFormat.decodeBlockHeaderStandalone(rlp, new MainnetBlockHeaderFunctions()),
             initialCapacity);
 
     // Read blocks and check that they match
@@ -101,9 +101,9 @@ public class RawBlockIteratorTest {
   private byte[] serializeBlock(final Block block) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    block.getHeader().writeTo(out);
-    out.writeList(block.getBody().getTransactions(), Transaction::writeTo);
-    out.writeList(block.getBody().getOmmers(), BlockHeader::writeTo);
+    RLPFormat.encode(block.getHeader(), out);
+    out.writeList(block.getBody().getTransactions(), RLPFormat::encode);
+    out.writeList(block.getBody().getOmmers(), RLPFormat::encode);
     out.endList();
     return out.encoded().toArray();
   }

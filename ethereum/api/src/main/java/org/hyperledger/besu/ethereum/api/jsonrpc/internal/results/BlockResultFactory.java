@@ -79,11 +79,7 @@ public class BlockResultFactory {
             .map(TextNode::new)
             .collect(Collectors.toList());
     return new BlockResult(
-        block.getHeader(),
-        txs,
-        ommers,
-        block.getHeader().getDifficulty(),
-        block.calculateSize(protocolSchedule));
+        block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

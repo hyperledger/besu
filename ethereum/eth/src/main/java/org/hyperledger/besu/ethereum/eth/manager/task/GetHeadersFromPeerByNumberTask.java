@@ -28,19 +28,17 @@ import org.apache.logging.log4j.Logger;
 public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTask {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final long blockNumber;
-
   @VisibleForTesting
   GetHeadersFromPeerByNumberTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final long blockNumber,
+      final long exactBlockNumber,
       final int count,
       final int skip,
       final boolean reverse,
       final MetricsSystem metricsSystem) {
     super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
-    this.blockNumber = blockNumber;
+    this.startBlockHint = exactBlockNumber;
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtNumber(
@@ -78,13 +76,13 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
     return sendRequestToPeer(
         peer -> {
           LOG.debug("Requesting {} headers from peer {}.", count, peer);
-          return peer.getHeadersByNumber(blockNumber, count, skip, reverse);
+          return peer.getHeadersByNumber(startBlockHint, count, skip, reverse);
         },
-        blockNumber);
+        startBlockHint);
   }
 
   @Override
   protected boolean matchesFirstHeader(final BlockHeader firstHeader) {
-    return firstHeader.getNumber() == blockNumber;
+    return firstHeader.getNumber() == startBlockHint;
   }
 }

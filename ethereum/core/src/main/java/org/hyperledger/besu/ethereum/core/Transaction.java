@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
@@ -716,7 +717,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     public Transaction build() {
       return new Transaction(
-          transactionType,
+          checkNotNull(transactionType),
           nonce,
           gasPrice,
           gasPremium,

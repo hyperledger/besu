@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -41,7 +42,7 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
   public static PooledTransactionsMessage create(final List<Transaction> transactions) {
     List<Transaction> tx = transactions;
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeList(tx, Transaction::writeTo);
+    out.writeList(tx, RLPFormat::encode);
     return new PooledTransactionsMessage(out.encoded());
   }
 
@@ -58,10 +59,10 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
     return new PooledTransactionsMessage(message.getData());
   }
 
-  public List<Transaction> transactions() {
+  public List<Transaction> transactions(final RLPFormat rlpFormat) {
     if (pooledTransactions == null) {
       final BytesValueRLPInput in = new BytesValueRLPInput(getData(), false);
-      pooledTransactions = in.readList(Transaction::readFrom);
+      pooledTransactions = in.readList(rlpFormat::decodeTransaction);
     }
     return pooledTransactions;
   }

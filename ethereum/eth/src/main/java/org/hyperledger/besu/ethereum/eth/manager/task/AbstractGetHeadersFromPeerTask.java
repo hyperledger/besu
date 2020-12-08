@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -44,6 +45,7 @@ public abstract class AbstractGetHeadersFromPeerTask
   protected final int count;
   protected final int skip;
   protected final boolean reverse;
+  protected long startBlockHint; // this could be the exact start block or a minimum start block
 
   protected AbstractGetHeadersFromPeerTask(
       final ProtocolSchedule protocolSchedule,
@@ -71,7 +73,11 @@ public abstract class AbstractGetHeadersFromPeerTask
     }
 
     final BlockHeadersMessage headersMessage = BlockHeadersMessage.readFrom(message);
-    final List<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
+    final List<BlockHeader> headers =
+        headersMessage.getHeaders(
+            ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                protocolSchedule, startBlockHint),
+            protocolSchedule);
     if (headers.isEmpty()) {
       // Message contains no data - nothing to do
       return Optional.empty();

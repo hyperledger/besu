@@ -63,7 +63,8 @@ public class GetPooledTransactionsFromPeerTaskTest extends PeerMessageTaskTest<L
         Lists.newArrayList(requestedData).stream()
             .map(Transaction::getHash)
             .collect(Collectors.toList());
-    return GetPooledTransactionsFromPeerTask.forHashes(ethContext, hashes, metricsSystem);
+    return GetPooledTransactionsFromPeerTask.forHashes(
+        ethContext, blockchain, protocolContext, hashes, metricsSystem);
   }
 
   @Override

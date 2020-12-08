@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.net.URL;
@@ -105,7 +106,8 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     try (final RawBlockIterator iterator =
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
-            rlp -> RLPFormat.decodeBlockHeader(rlp, new MainnetBlockHeaderFunctions()))) {
+            PROTOCOL_SCHEDULE,
+            rlp -> RLPFormat.decodeBlockHeaderStandalone(rlp, new MainnetBlockHeaderFunctions()))) {
       while (iterator.hasNext()) {
         BLOCKS.add(iterator.next());
       }
@@ -142,7 +144,11 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
         .thenReturn(
             Collections.singleton(
                 new PendingTransactions.TransactionInfo(
-                    Transaction.builder().nonce(42).gasLimit(654321).build(),
+                    Transaction.builder()
+                        .type(TransactionType.FRONTIER)
+                        .nonce(42)
+                        .gasLimit(654321)
+                        .build(),
                     true,
                     Instant.ofEpochSecond(Integer.MAX_VALUE))));
 

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.HashSet;
@@ -43,7 +44,7 @@ public final class LimitedTransactionsMessages {
     message.startList();
     for (final Transaction transaction : transactions) {
       final BytesValueRLPOutput encodedTransaction = new BytesValueRLPOutput();
-      transaction.writeTo(encodedTransaction);
+      RLPFormat.encode(transaction, encodedTransaction);
       Bytes encodedBytes = encodedTransaction.encoded();
       // Break if individual transaction size exceeds limit
       if (encodedBytes.size() > LIMIT && (messageSize != 0)) {

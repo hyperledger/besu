@@ -56,7 +56,8 @@ public class FastSyncStateStorage {
       }
       final Bytes rlp = Bytes.wrap(Files.toByteArray(pivotBlockHeaderFile));
       return new FastSyncState(
-          RLPFormat.decodeBlockHeader(new BytesValueRLPInput(rlp, false), blockHeaderFunctions));
+          RLPFormat.getLatest()
+              .decodeBlockHeader(new BytesValueRLPInput(rlp, false), blockHeaderFunctions));
     } catch (final IOException e) {
       throw new IllegalStateException(
           "Unable to read fast sync status file: " + pivotBlockHeaderFile.getAbsolutePath());
@@ -73,7 +74,7 @@ public class FastSyncStateStorage {
     }
     try {
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
-      state.getPivotBlockHeader().get().writeTo(output);
+      RLPFormat.encode(state.getPivotBlockHeader().get(), output);
       Files.write(output.encoded().toArrayUnsafe(), pivotBlockHeaderFile);
     } catch (final IOException e) {
       throw new IllegalStateException(
