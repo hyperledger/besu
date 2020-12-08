@@ -343,7 +343,8 @@ public class RespondingEthPeer {
               Lists.newArrayList(
                   pooledTransactionsMessage.transactions(
                       ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(
-                          protocolSchedule, blockchain)));
+                              protocolSchedule, blockchain)
+                          .get()));
           final List<Transaction> partialPooledTx =
               originalPooledTx.subList(0, (int) (originalPooledTx.size() * portion));
           partialResponse = PooledTransactionsMessage.create(partialPooledTx);

@@ -64,7 +64,8 @@ public final class BlockBodiesMessageTest {
           new BlockBody(
               oneBlock.readList(
                   ProtocolScheduleBasedRLPFormatFetcher.getByBlockNumber(
-                          MainnetProtocolSchedule.create(), blockHeader.getNumber())
+                              MainnetProtocolSchedule.create(), blockHeader.getNumber())
+                          .get()
                       ::decodeTransaction),
               oneBlock.readList(
                   rlp ->

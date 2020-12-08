@@ -85,7 +85,9 @@ public class EthSendRawTransaction implements JsonRpcMethod {
           DomainObjectDecodeUtils.decodeRawTransaction(
               rawTransaction,
               ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(
-                  protocolScheduleSupplier.get(), blockchainQueriesSupplier.get().getBlockchain()));
+                      protocolScheduleSupplier.get(),
+                      blockchainQueriesSupplier.get().getBlockchain())
+                  .get());
     } catch (final InvalidJsonRpcRequestException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);

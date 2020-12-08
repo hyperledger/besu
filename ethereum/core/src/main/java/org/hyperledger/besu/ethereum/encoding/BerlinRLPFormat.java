@@ -26,9 +26,6 @@ import com.google.common.collect.ImmutableMap;
 
 public class BerlinRLPFormat extends FrontierRLPFormat {
 
-  // TODO have a getSupportedTransactions that recurses up the chain of rlp formats looking for a
-  // compatible encoder/decoder
-
   private static final ImmutableMap<TransactionType, RLPFormat.Decoder<Transaction>>
       TYPED_TRANSACTION_DECODERS = ImmutableMap.of();
 

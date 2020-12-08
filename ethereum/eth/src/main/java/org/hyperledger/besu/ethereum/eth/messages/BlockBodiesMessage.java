@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -24,7 +25,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -58,11 +58,12 @@ public final class BlockBodiesMessage extends AbstractMessageData {
   }
 
   public List<BlockBody> bodies(
-      final Supplier<RLPFormat> rlpFormatSupplier, final ProtocolSchedule protocolSchedule) {
+      final ProtocolScheduleBasedRLPFormatFetcher protocolScheduleBasedRLPFormatFetcher,
+      final ProtocolSchedule protocolSchedule) {
     return new BytesValueRLPInput(data, false)
         .readList(
             rlp ->
-                rlpFormatSupplier
+                protocolScheduleBasedRLPFormatFetcher
                     .get()
                     .decodeBlockBody(
                         rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));

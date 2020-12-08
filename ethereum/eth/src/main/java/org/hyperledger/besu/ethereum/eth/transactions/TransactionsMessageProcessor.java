@@ -86,7 +86,8 @@ class TransactionsMessageProcessor {
 
       final List<Transaction> readTransactions =
           transactionsMessage.transactions(
-              ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(protocolSchedule, blockchain));
+              ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(protocolSchedule, blockchain)
+                  .get());
       final Set<Transaction> transactions = Sets.newHashSet(readTransactions);
       transactionTracker.markTransactionsAsSeen(peer, transactions);
       transactionPool.addRemoteTransactions(transactions);

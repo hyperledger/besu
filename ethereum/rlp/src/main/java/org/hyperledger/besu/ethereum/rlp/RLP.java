@@ -23,7 +23,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 
 /** Static methods to work with RLP encoding/decoding. */
-// TODO maybe merge RLPFormat with this?
 public abstract class RLP {
   private RLP() {}
 

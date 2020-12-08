@@ -162,9 +162,7 @@ public class PendingTransactionsMessageProcessor {
         final BufferedGetPooledTransactionsFromPeerFetcher fetcher = scheduledTasks.remove(peer);
         if (!peer.isDisconnected()) {
           fetcher.requestTransactions(
-              () ->
-                  ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(
-                      protocolSchedule, blockchain));
+              ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(protocolSchedule, blockchain));
         }
       }
     }

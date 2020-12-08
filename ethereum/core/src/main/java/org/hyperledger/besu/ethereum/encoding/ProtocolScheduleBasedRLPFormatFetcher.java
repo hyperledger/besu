@@ -22,29 +22,27 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.function.Supplier;
 
-// TODO make this interface extending supplier?
-public final class ProtocolScheduleBasedRLPFormatFetcher {
+public interface ProtocolScheduleBasedRLPFormatFetcher extends Supplier<RLPFormat> {
 
-  private ProtocolScheduleBasedRLPFormatFetcher() {}
-
-  public static RLPFormat getByBlockNumber(
+  static ProtocolScheduleBasedRLPFormatFetcher getByBlockNumber(
       final ProtocolSchedule protocolSchedule, final long blockNumber) {
-    return protocolSchedule.getByBlockNumber(blockNumber).getRLPFormat();
+    return () -> protocolSchedule.getByBlockNumber(blockNumber).getRLPFormat();
   }
 
-  public static RLPFormat getForChainHead(
+  static ProtocolScheduleBasedRLPFormatFetcher getForChainHead(
       final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
-    return protocolSchedule.getByBlockNumber(blockchain.getChainHeadBlockNumber()).getRLPFormat();
+    return () ->
+        protocolSchedule.getByBlockNumber(blockchain.getChainHeadBlockNumber()).getRLPFormat();
   }
 
-  public static Supplier<RLPFormat> getAscendingByBlockNumber(
+  static ProtocolScheduleBasedRLPFormatFetcher getAscendingByBlockNumber(
       final ProtocolSchedule protocolSchedule, final long startingBlockNumber) {
-    return new Supplier<>() {
+    return new ProtocolScheduleBasedRLPFormatFetcher() {
       long currentBlockNumber = startingBlockNumber;
 
       @Override
       public RLPFormat get() {
-        return getByBlockNumber(protocolSchedule, currentBlockNumber++);
+        return getByBlockNumber(protocolSchedule, currentBlockNumber++).get();
       }
     };
   }
