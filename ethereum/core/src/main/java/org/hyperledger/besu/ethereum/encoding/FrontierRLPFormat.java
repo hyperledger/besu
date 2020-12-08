@@ -17,7 +17,6 @@
 
 package org.hyperledger.besu.ethereum.encoding;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -34,6 +33,8 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class FrontierRLPFormat implements RLPFormat {
 

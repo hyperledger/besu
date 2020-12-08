@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import static org.hyperledger.besu.ethereum.encoding.RLPFormat.decodeBlockStandalone;
+
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -29,8 +31,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-
-import static org.hyperledger.besu.ethereum.encoding.RLPFormat.decodeBlockStandalone;
 
 public class NewBlockMessage extends AbstractMessageData {
 

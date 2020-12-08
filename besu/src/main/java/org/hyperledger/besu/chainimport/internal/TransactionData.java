@@ -19,6 +19,7 @@ import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Optional;
 
@@ -28,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 @JsonIgnoreProperties("comment")
 public class TransactionData {

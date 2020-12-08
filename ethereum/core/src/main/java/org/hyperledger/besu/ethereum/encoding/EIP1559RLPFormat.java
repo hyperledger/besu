@@ -17,6 +17,8 @@
 
 package org.hyperledger.besu.ethereum.encoding;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -34,8 +36,6 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 public class EIP1559RLPFormat extends FrontierRLPFormat {
   @Override

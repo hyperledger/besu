@@ -19,12 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
