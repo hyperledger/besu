@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
@@ -75,7 +76,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   public void requestTransactionShouldStartTaskWhenUnknownTransaction() {
 
     final Hash hash = generator.transaction().getHash();
-    final List<Transaction> taskResult = Collections.singletonList(Transaction.builder().build());
+    final List<Transaction> taskResult =
+        Collections.singletonList(Transaction.builder().type(TransactionType.FRONTIER).build());
     final AbstractPeerTask.PeerTaskResult<List<Transaction>> peerTaskResult =
         new AbstractPeerTask.PeerTaskResult<>(ethPeer, taskResult);
     when(ethScheduler.scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class)))
@@ -112,7 +114,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
 
     final Hash hash = generator.transaction().getHash();
     when(transactionPool.getTransactionByHash(hash))
-        .thenReturn(Optional.of(Transaction.builder().build()));
+        .thenReturn(Optional.of(Transaction.builder().type(TransactionType.FRONTIER).build()));
 
     fetcher.addHash(hash);
     fetcher.requestTransactions(RLPFormat::getLatest);

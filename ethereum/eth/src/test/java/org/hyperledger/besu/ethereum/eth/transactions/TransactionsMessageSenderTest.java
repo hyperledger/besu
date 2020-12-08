@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
@@ -104,6 +105,6 @@ public class TransactionsMessageSenderTest {
 
   private Set<Transaction> getTransactionsFromMessage(final MessageData message) {
     final TransactionsMessage transactionsMessage = TransactionsMessage.readFrom(message);
-    return newHashSet(transactionsMessage.transactions());
+    return newHashSet(transactionsMessage.transactions(RLPFormat.getLatest()));
   }
 }

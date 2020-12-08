@@ -50,7 +50,7 @@ public final class NewBlockHashesMessageTest {
       final RLPInput oneBlock = new BytesValueRLPInput(Bytes.wrap(block), false);
       oneBlock.enterList();
       final BlockHeader header =
-          RLPFormat.decodeBlockHeader(oneBlock, new MainnetBlockHeaderFunctions());
+          RLPFormat.decodeBlockHeaderStandalone(oneBlock, new MainnetBlockHeaderFunctions());
       hashes.add(new NewBlockHashesMessage.NewBlockHash(header.getHash(), header.getNumber()));
       // We don't care about the bodies, just the header hashes
       oneBlock.skipNext();

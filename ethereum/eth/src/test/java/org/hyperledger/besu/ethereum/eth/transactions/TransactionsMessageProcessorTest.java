@@ -20,14 +20,20 @@ import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import com.google.common.collect.ImmutableSet;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -41,12 +47,23 @@ public class TransactionsMessageProcessorTest {
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private Counter totalSkippedTransactionsMessageCounter;
   @Mock private EthPeer peer1;
+  @Mock private static ProtocolSchedule protocolSchedule;
+  @Mock private static Blockchain blockchain;
+  @Mock private static ProtocolSpec protocolSpec;
   @InjectMocks private TransactionsMessageProcessor messageHandler;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Transaction transaction1 = generator.transaction();
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
+
+  @Before
+  public void setUp() {
+    final long inconsequentialBlockNumber = 1L;
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(inconsequentialBlockNumber);
+    when(protocolSchedule.getByBlockNumber(inconsequentialBlockNumber)).thenReturn(protocolSpec);
+    when(protocolSpec.getRLPFormat()).thenReturn(RLPFormat.getLatest());
+  }
 
   @Test
   public void shouldMarkAllReceivedTransactionsAsSeen() {

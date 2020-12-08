@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -36,6 +37,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor.FetcherCreatorTask;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -62,6 +65,8 @@ public class PendingTransactionsMessageProcessorTest {
   @Mock private SyncState syncState;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
+  @Mock private Blockchain blockchain;
+  @Mock private ProtocolSchedule protocolSchedule;
 
   private PendingTransactionsMessageProcessor messageHandler;
 
@@ -125,9 +130,9 @@ public class PendingTransactionsMessageProcessorTest {
     when(syncState.isInSync(anyLong())).thenReturn(true);
 
     when(transactionPool.getTransactionByHash(hash1))
-        .thenReturn(Optional.of(Transaction.builder().build()));
+        .thenReturn(Optional.of(Transaction.builder().type(TransactionType.FRONTIER).build()));
     when(transactionPool.getTransactionByHash(hash2))
-        .thenReturn(Optional.of(Transaction.builder().build()));
+        .thenReturn(Optional.of(Transaction.builder().type(TransactionType.FRONTIER).build()));
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,

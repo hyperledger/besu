@@ -50,7 +50,8 @@ public final class GetBlockBodiesMessageTest {
       final RLPInput oneBlock = new BytesValueRLPInput(Bytes.wrap(block), false);
       oneBlock.enterList();
       hashes.add(
-          RLPFormat.decodeBlockHeader(oneBlock, new MainnetBlockHeaderFunctions()).getHash());
+          RLPFormat.decodeBlockHeaderStandalone(oneBlock, new MainnetBlockHeaderFunctions())
+              .getHash());
       // We don't care about the bodies, just the headers
       oneBlock.skipNext();
       oneBlock.skipNext();

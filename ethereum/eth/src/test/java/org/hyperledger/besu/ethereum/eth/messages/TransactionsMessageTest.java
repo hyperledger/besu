@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
@@ -46,6 +47,6 @@ public class TransactionsMessageTest {
     final TransactionsMessage message = TransactionsMessage.readFrom(raw);
 
     // Check that transactions match original inputs after transformations
-    assertThat(message.transactions()).isEqualTo(transactions);
+    assertThat(message.transactions(RLPFormat.getLatest())).isEqualTo(transactions);
   }
 }

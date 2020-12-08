@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.Test;
 
 public class PooledTransactionsMessageTest {
@@ -36,6 +37,7 @@ public class PooledTransactionsMessageTest {
     List<Transaction> tx =
         Arrays.asList(
             Transaction.builder()
+                .type(TransactionType.FRONTIER)
                 .nonce(42)
                 .gasLimit(654321)
                 .gasPrice(Wei.of(2))
