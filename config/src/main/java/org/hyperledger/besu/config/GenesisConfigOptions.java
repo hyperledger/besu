@@ -15,6 +15,7 @@
 package org.hyperledger.besu.config;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -62,6 +63,8 @@ public interface GenesisConfigOptions {
 
   // TODO EIP-1559 change for the actual fork name when known
   OptionalLong getEIP1559BlockNumber();
+
+  List<Long> getForks();
 
   /**
    * Block number for the Dao Fork, this value is used to tell node to connect with peer that did
