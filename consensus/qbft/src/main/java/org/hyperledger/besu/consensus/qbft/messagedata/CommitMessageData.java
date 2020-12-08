@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.messagedata;
 
+import org.hyperledger.besu.consensus.common.bft.messages.AbstractBftMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class CommitMessageData extends AbstractIbftMessageData {
+public class CommitMessageData extends AbstractBftMessageData {
 
   private static final int MESSAGE_CODE = QbftV1.COMMIT;
 

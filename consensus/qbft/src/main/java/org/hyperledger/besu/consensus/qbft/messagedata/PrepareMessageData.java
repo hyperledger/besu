@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.messagedata;
 
+import org.hyperledger.besu.consensus.common.bft.messages.AbstractBftMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class PrepareMessageData extends AbstractIbftMessageData {
+public class PrepareMessageData extends AbstractBftMessageData {
 
   private static final int MESSAGE_CODE = QbftV1.PREPARE;
 
