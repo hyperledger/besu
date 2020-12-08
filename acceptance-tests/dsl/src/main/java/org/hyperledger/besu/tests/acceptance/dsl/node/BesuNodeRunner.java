@@ -53,4 +53,16 @@ public interface BesuNodeRunner {
               }
             });
   }
+
+  /**
+   * Starts a capture of System.out and System.err. Once getConsole is called the capture will
+   * end.be
+   */
+  void startConsoleCapture();
+
+  /**
+   * If no capture was started an empty string is returned. After the call the original System.err
+   * and out are restored.
+   */
+  String getConsoleContents();
 }
