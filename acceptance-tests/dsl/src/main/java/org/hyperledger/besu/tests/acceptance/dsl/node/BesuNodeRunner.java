@@ -63,6 +63,8 @@ public interface BesuNodeRunner {
   /**
    * If no capture was started an empty string is returned. After the call the original System.err
    * and out are restored.
+   *
+   * @return The console output since startConsoleCapture() was called.
    */
   String getConsoleContents();
 }
