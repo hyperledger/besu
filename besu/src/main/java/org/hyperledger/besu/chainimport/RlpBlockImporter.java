@@ -96,7 +96,7 @@ public class RlpBlockImporter implements Closeable {
             blocks,
             protocolSchedule,
             rlp ->
-                RLPFormat.decodeBlockHeader(
+                RLPFormat.decodeBlockHeaderStandalone(
                     rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
       BlockHeader previousHeader = null;
       CompletableFuture<Void> previousBlockFuture = null;

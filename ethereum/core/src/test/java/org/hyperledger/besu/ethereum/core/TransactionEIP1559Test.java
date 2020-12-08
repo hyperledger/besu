@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.lang.reflect.Field;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.After;
 import org.junit.Test;
 
@@ -55,6 +56,7 @@ public class TransactionEIP1559Test {
   public void givenEIP1559Transaction_assertThatRlpDecodingWorks() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction legacyTransaction = eip1559RLPFormat.decodeTransaction(legacyRLPInput);
+    set(legacyTransaction, "transactionType", TransactionType.EIP1559);
     set(legacyTransaction, "gasPrice", null);
     set(legacyTransaction, "gasPremium", expectedGasPremium);
     set(legacyTransaction, "feeCap", expectedFeeCap);

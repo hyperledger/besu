@@ -56,6 +56,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
@@ -432,6 +433,7 @@ public class PrivacyReorgTest {
 
   private Transaction buildMarkerTransaction(final Bytes payload) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .chainId(BigInteger.valueOf(2018))
         .gasLimit(60000)
         .gasPrice(Wei.of(1000))

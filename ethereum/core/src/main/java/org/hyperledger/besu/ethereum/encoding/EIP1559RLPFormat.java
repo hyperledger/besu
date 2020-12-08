@@ -35,13 +35,12 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class EIP1559RLPFormat extends FrontierRLPFormat {
   @Override
   public Transaction decodeTransaction(final RLPInput rlpInput) {
-    final Bytes typedTransactionBytes = rlpInput.raw();
-    final int firstByte = typedTransactionBytes.get(0) & 0xff;
-    final TransactionType transactionType = TransactionType.of(firstByte);
-    if (transactionType.equals(TransactionType.FRONTIER)) {
+    if (rlpInput.nextIsList()) {
       return super.decodeTransaction(rlpInput);
     } else {
       return decodeEIP1559(rlpInput);
@@ -49,6 +48,10 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
   }
 
   Transaction decodeEIP1559(final RLPInput input) {
+    checkArgument(
+        TransactionType.of(input.readByte()).equals(TransactionType.EIP1559),
+        "invalid eip 1559 transaction type");
+
     ExperimentalEIPs.eip1559MustBeEnabled();
     input.enterList();
 

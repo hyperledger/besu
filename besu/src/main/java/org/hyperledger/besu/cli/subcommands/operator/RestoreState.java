@@ -140,11 +140,15 @@ public class RestoreState implements Runnable {
         final BlockHeaderFunctions functions = new MainnetBlockHeaderFunctions();
 
         final BlockHeader header =
-            RLPFormat.decodeBlockHeader(
+            RLPFormat.decodeBlockHeaderStandalone(
                 new BytesValueRLPInput(Bytes.wrap(headerEntry), false, true), functions);
         final BlockBody body =
-            BlockBody.readFrom(
-                new BytesValueRLPInput(Bytes.wrap(bodyEntry), false, true), functions);
+            besuController
+                .getProtocolSchedule()
+                .getByBlockNumber(header.getNumber())
+                .getRLPFormat()
+                .decodeBlockBody(
+                    new BytesValueRLPInput(Bytes.wrap(bodyEntry), false, true), functions);
         final RLPInput receiptsRlp = new BytesValueRLPInput(Bytes.wrap(receiptEntry), false, true);
         final int receiptsCount = receiptsRlp.enterList();
         final List<TransactionReceipt> receipts = new ArrayList<>(receiptsCount);

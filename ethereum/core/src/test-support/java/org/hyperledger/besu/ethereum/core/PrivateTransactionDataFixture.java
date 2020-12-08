@@ -34,6 +34,7 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 public class PrivateTransactionDataFixture {
 
@@ -86,6 +87,7 @@ public class PrivateTransactionDataFixture {
   private static Transaction privacyMarkerTransaction(
       final Bytes transactionKey, final Address precompiledContractAddress) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .nonce(DEFAULT_NONCE)
         .gasPrice(DEFAULT_GAS_PRICE)
         .gasLimit(DEFAULT_GAS_LIMIT)

@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 public class TransactionTestFixture {
 
@@ -44,6 +45,7 @@ public class TransactionTestFixture {
   public Transaction createTransaction(final KeyPair keys) {
     final Transaction.Builder builder = Transaction.builder();
     builder
+        .type(TransactionType.FRONTIER)
         .gasLimit(gasLimit)
         .gasPrice(gasPrice)
         .nonce(nonce)

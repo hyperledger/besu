@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.Arrays;
@@ -153,7 +154,7 @@ public class IbftBlockHashingTest {
             .encodeWithoutCommitSeals());
 
     BytesValueRLPOutput rlpForHeaderFroCommittersSigning = new BytesValueRLPOutput();
-    builder.buildBlockHeader().writeTo(rlpForHeaderFroCommittersSigning);
+    RLPFormat.encode(builder.buildBlockHeader(), rlpForHeaderFroCommittersSigning);
 
     List<Signature> commitSeals =
         COMMITTERS_NODE_KEYS.stream()
@@ -175,7 +176,7 @@ public class IbftBlockHashingTest {
             .encodeWithoutCommitSealsAndRoundNumber());
 
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    builder.buildBlockHeader().writeTo(rlpOutput);
+    RLPFormat.encode(builder.buildBlockHeader(), rlpOutput);
 
     return Hash.hash(rlpOutput.encoded());
   }

@@ -104,7 +104,6 @@ public class BesuEventsImplTest {
     blockchain =
         DefaultBlockchain.createMutable(
             gen.genesisBlock(),
-            protocolSchedule,
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
             new NoOpMetricsSystem(),

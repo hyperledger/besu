@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -60,7 +63,7 @@ public class Proposal extends IbftMessage<ProposalPayload> {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
-    proposedBlock.writeTo(rlpOut);
+    RLPFormat.encode(proposedBlock, rlpOut);
     if (roundChangeCertificate.isPresent()) {
       roundChangeCertificate.get().writeTo(rlpOut);
     } else {
@@ -74,7 +77,11 @@ public class Proposal extends IbftMessage<ProposalPayload> {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload = SignedData.readSignedProposalPayloadFrom(rlpIn);
-    final Block proposedBlock = Block.readFrom(rlpIn, IbftBlockHeaderFunctions.forCommittedSeal());
+    final Block proposedBlock =
+        RLPFormat.decodeBlockStandalone(
+            IbftProtocolSchedule.create(new StubGenesisConfigOptions()),
+            IbftBlockHeaderFunctions.forCommittedSeal(),
+            rlpIn);
 
     final Optional<RoundChangeCertificate> roundChangeCertificate =
         readRoundChangeCertificate(rlpIn);

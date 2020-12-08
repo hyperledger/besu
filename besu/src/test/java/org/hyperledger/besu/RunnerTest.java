@@ -459,7 +459,8 @@ public final class RunnerTest {
           new RawBlockIterator(
               blocks,
               protocolSchedule,
-              rlp -> RLPFormat.decodeBlockHeader(rlp, new MainnetBlockHeaderFunctions()))) {
+              rlp ->
+                  RLPFormat.decodeBlockHeaderStandalone(rlp, new MainnetBlockHeaderFunctions()))) {
         for (int i = 0; i < count; ++i) {
           result.add(iterator.next());
         }

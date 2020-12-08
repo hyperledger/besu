@@ -239,8 +239,9 @@ public final class RlpBlockExporterTest {
   private RawBlockIterator getBlockIterator(final Path blocks) throws IOException {
     return new RawBlockIterator(
         blocks,
+        protocolSchedule,
         rlp ->
-            RLPFormat.decodeBlockHeader(
+            RLPFormat.decodeBlockHeaderStandalone(
                 rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
   }
 
