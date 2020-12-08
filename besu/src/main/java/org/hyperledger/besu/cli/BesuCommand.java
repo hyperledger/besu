@@ -2135,6 +2135,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
             .ethstatsUrl(unstableEthstatsOptions.getEthstatsUrl())
             .ethstatsContact(unstableEthstatsOptions.getEthstatsContact())
+            .storageProvider(keyStorageProvider(keyValueStorageName))
             .build();
 
     addShutdownHook(runner);
