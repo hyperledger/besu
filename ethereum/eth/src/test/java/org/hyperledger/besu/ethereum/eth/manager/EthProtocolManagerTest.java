@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
@@ -540,7 +541,11 @@ public final class EthProtocolManagerTest {
             assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_BODIES);
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
-                Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
+                Lists.newArrayList(
+                    blocksMessage.bodies(
+                        ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                            protocolSchedule, startBlock),
+                        protocolSchedule));
             assertThat(bodies.size()).isEqualTo(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedBlocks[i].getBody()).isEqualTo(bodies.get(i));
@@ -589,7 +594,11 @@ public final class EthProtocolManagerTest {
             assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_BODIES);
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
-                Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
+                Lists.newArrayList(
+                    blocksMessage.bodies(
+                        ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                            protocolSchedule, startBlock),
+                        protocolSchedule));
             assertThat(bodies.size()).isEqualTo(limit);
             for (int i = 0; i < limit; i++) {
               assertThat(expectedBlocks[i].getBody()).isEqualTo(bodies.get(i));
@@ -633,7 +642,11 @@ public final class EthProtocolManagerTest {
             assertThat(message.getCode()).isEqualTo(EthPV62.BLOCK_BODIES);
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
-                Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
+                Lists.newArrayList(
+                    blocksMessage.bodies(
+                        ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                            protocolSchedule, expectedBlockNumber),
+                        protocolSchedule));
             assertThat(bodies.size()).isEqualTo(1);
             assertThat(expectedBlock.getBody()).isEqualTo(bodies.get(0));
             done.complete(null);

@@ -16,10 +16,13 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
 import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -45,6 +48,7 @@ public final class BlockBodiesMessageTest {
     final List<BlockBody> bodies = new ArrayList<>();
     final ByteBuffer buffer =
         ByteBuffer.wrap(Resources.toByteArray(this.getClass().getResource("/50.blocks")));
+    long startBlock = -1;
     for (int i = 0; i < 50; ++i) {
       final int blockSize = RLP.calculateSize(Bytes.wrapByteBuffer(buffer));
       final byte[] block = new byte[blockSize];
@@ -52,23 +56,33 @@ public final class BlockBodiesMessageTest {
       buffer.compact().position(0);
       final RLPInput oneBlock = new BytesValueRLPInput(Bytes.wrap(block), false);
       oneBlock.enterList();
-      // We don't care about the header, just the body
-      oneBlock.skipNext();
+      final BlockHeader blockHeader =
+          RLPFormat.decodeBlockHeaderStandalone(oneBlock, new MainnetBlockHeaderFunctions());
+      startBlock = startBlock == -1 ? blockHeader.getNumber() : startBlock;
       bodies.add(
           // We know the test data to only contain Frontier blocks
           new BlockBody(
-              oneBlock.readList(Transaction::readFrom),
               oneBlock.readList(
-                  rlp -> RLPFormat.decodeBlockHeader(rlp, new MainnetBlockHeaderFunctions()))));
+                  ProtocolScheduleBasedRLPFormatFetcher.getByBlockNumber(
+                          MainnetProtocolSchedule.create(), blockHeader.getNumber())
+                      ::decodeTransaction),
+              oneBlock.readList(
+                  rlp ->
+                      RLPFormat.decodeBlockHeaderStandalone(
+                          rlp, new MainnetBlockHeaderFunctions()))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
     final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
+    final ProtocolSchedule protocolSchedule =
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfigFile.development().getConfigOptions(), false);
     final Iterator<BlockBody> readBodies =
         message
             .bodies(
-                FixedDifficultyProtocolSchedule.create(
-                    GenesisConfigFile.development().getConfigOptions(), false))
+                ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                    protocolSchedule, startBlock),
+                protocolSchedule)
             .iterator();
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));

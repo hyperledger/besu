@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -311,7 +312,11 @@ public class RespondingEthPeer {
         case EthPV62.GET_BLOCK_BODIES:
           final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(originalResponse);
           final List<BlockBody> originalBodies =
-              Lists.newArrayList(bodiesMessage.bodies(protocolSchedule));
+              Lists.newArrayList(
+                  bodiesMessage.bodies(
+                      ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                          protocolSchedule, blockchain.getChainHeadBlockNumber()),
+                      protocolSchedule));
           final List<BlockBody> partialBodies =
               originalBodies.subList(0, (int) (originalBodies.size() * portion));
           partialResponse = BlockBodiesMessage.create(partialBodies);
@@ -335,7 +340,10 @@ public class RespondingEthPeer {
           final PooledTransactionsMessage pooledTransactionsMessage =
               PooledTransactionsMessage.readFrom(originalResponse);
           final List<Transaction> originalPooledTx =
-              Lists.newArrayList(pooledTransactionsMessage.transactions());
+              Lists.newArrayList(
+                  pooledTransactionsMessage.transactions(
+                      ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(
+                          protocolSchedule, blockchain)));
           final List<Transaction> partialPooledTx =
               originalPooledTx.subList(0, (int) (originalPooledTx.size() * portion));
           partialResponse = PooledTransactionsMessage.create(partialPooledTx);

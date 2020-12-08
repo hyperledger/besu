@@ -73,7 +73,6 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
       final List<BlockHeader> requestedData) {
     final BlockHeader firstHeader = requestedData.get(0);
     return GetHeadersFromPeerByHashTask.startingAtHash(
-        blockchain,
         protocolSchedule,
         ethContext,
         firstHeader.getHash(),
@@ -120,7 +119,6 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     // Execute task and wait for response
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByHashTask(
-            blockchain,
             protocolSchedule,
             ethContext,
             blockchain.getBlockHashByNumber(startNumber).get(),
@@ -157,7 +155,6 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
 
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByHashTask(
-            blockchain,
             protocolSchedule,
             ethContext,
             block1.getHash(),
@@ -186,7 +183,6 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     final List<BlockHeader> headers = Arrays.asList(block1, block2);
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByHashTask(
-            blockchain,
             protocolSchedule,
             ethContext,
             block1.getHash(),

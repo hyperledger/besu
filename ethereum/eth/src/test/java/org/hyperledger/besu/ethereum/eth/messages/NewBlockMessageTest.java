@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
@@ -52,10 +53,7 @@ public class NewBlockMessageTest {
 
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    protocolSchedule
-        .getByBlockNumber(blockForInsertion.getHeader().getNumber())
-        .getRLPFormat()
-        .encode(blockForInsertion, tmp);
+    RLPFormat.encode(blockForInsertion, tmp);
     tmp.writeUInt256Scalar(totalDifficulty);
     tmp.endList();
 

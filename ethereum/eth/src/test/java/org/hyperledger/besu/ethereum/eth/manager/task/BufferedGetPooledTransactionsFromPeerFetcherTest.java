@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -81,7 +82,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
         .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
 
     fetcher.addHash(hash);
-    fetcher.requestTransactions();
+    fetcher.requestTransactions(RLPFormat::getLatest);
 
     verify(ethScheduler).scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class));
     verifyNoMoreInteractions(ethScheduler);
@@ -99,7 +100,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     when(ethScheduler.scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class)))
         .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
 
-    fetcher.requestTransactions();
+    fetcher.requestTransactions(RLPFormat::getLatest);
 
     verify(ethScheduler, times(2))
         .scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class));
@@ -114,7 +115,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
         .thenReturn(Optional.of(Transaction.builder().build()));
 
     fetcher.addHash(hash);
-    fetcher.requestTransactions();
+    fetcher.requestTransactions(RLPFormat::getLatest);
 
     verifyNoInteractions(ethScheduler);
     verify(transactionPool, never()).addRemoteTransactions(anyList());

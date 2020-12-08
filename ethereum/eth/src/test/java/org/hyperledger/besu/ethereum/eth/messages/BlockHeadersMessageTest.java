@@ -50,7 +50,8 @@ public final class BlockHeadersMessageTest {
       buffer.compact().position(0);
       final RLPInput oneBlock = new BytesValueRLPInput(Bytes.wrap(block), false);
       oneBlock.enterList();
-      headers.add(RLPFormat.decodeBlockHeader(oneBlock, new MainnetBlockHeaderFunctions()));
+      headers.add(
+          RLPFormat.decodeBlockHeaderStandalone(oneBlock, new MainnetBlockHeaderFunctions()));
       // We don't care about the bodies, just the headers
       oneBlock.skipNext();
       oneBlock.skipNext();
