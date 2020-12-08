@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ public class TraceTransactionIntegrationTest {
     genesisBlock = contextTestFixture.getGenesis();
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
+    protocolSchedule = contextTestFixture.getProtocolSchedule();
     transactionProcessor = protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
     blockHashLookup = new BlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
@@ -77,6 +79,7 @@ public class TraceTransactionIntegrationTest {
     final KeyPair keyPair = KeyPair.generate();
     final Transaction createTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .gasLimit(300_000)
             .gasPrice(Wei.ZERO)
             .nonce(0)
@@ -110,6 +113,7 @@ public class TraceTransactionIntegrationTest {
         new DebugOperationTracer(new TraceOptions(true, true, true));
     final Transaction executeTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .gasLimit(300_000)
             .gasPrice(Wei.ZERO)
             .nonce(1)

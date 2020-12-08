@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -302,6 +303,7 @@ public class EthGetFilterChangesIntegrationTest {
 
   private Transaction createTransaction(final int transactionNumber) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .gasLimit(100)
         .gasPrice(Wei.ZERO)
         .nonce(1)
