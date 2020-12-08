@@ -1825,8 +1825,7 @@ public class JsonRpcHttpServiceTest {
         .isEqualTo(header.getDifficulty());
     assertThat(Bytes.fromHexStringLenient(result.getString("extraData")))
         .isEqualTo(header.getExtraData());
-    assertThat(hexStringToInt(result.getString("size")))
-        .isEqualTo(block.calculateSize(protocolSchedule));
+    assertThat(hexStringToInt(result.getString("size"))).isEqualTo(block.calculateSize());
     assertThat(Long.decode(result.getString("gasLimit"))).isEqualTo(header.getGasLimit());
     assertThat(Long.decode(result.getString("gasUsed"))).isEqualTo(header.getGasUsed());
     assertThat(Long.decode(result.getString("timestamp"))).isEqualTo(header.getTimestamp());
@@ -1916,7 +1915,7 @@ public class JsonRpcHttpServiceTest {
 
   public BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata(final Block block) {
     final Difficulty td = block.getHeader().getDifficulty().add(10L);
-    final int size = block.calculateSize(protocolSchedule);
+    final int size = block.calculateSize();
 
     final List<Transaction> txs = block.getBody().getTransactions();
     final List<TransactionWithMetadata> formattedTxs = new ArrayList<>(txs.size());
@@ -1932,7 +1931,7 @@ public class JsonRpcHttpServiceTest {
 
   public BlockWithMetadata<Hash, Hash> blockWithMetadataAndTxHashes(final Block block) {
     final Difficulty td = block.getHeader().getDifficulty().add(10L);
-    final int size = block.calculateSize(protocolSchedule);
+    final int size = block.calculateSize();
 
     final List<Hash> txs =
         block.getBody().getTransactions().stream()
