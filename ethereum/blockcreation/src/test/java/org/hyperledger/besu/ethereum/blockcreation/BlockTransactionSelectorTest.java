@@ -554,6 +554,7 @@ public class BlockTransactionSelectorTest {
 
   private Transaction createTransaction(final int transactionNumber) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .gasLimit(100)
         .gasPrice(Wei.of(5))
         .nonce(transactionNumber)

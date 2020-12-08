@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 public abstract class PrivateMarkerTransactionFactory {
 
@@ -49,6 +50,7 @@ public abstract class PrivateMarkerTransactionFactory {
       final long nonce,
       final KeyPair signingKey) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .nonce(nonce)
         .gasPrice(privateTransaction.getGasPrice())
         .gasLimit(privateTransaction.getGasLimit())
@@ -65,6 +67,7 @@ public abstract class PrivateMarkerTransactionFactory {
       final KeyPair signingKey,
       final Address precompileAddress) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .nonce(nonce)
         .gasPrice(privateTransaction.getGasPrice())
         .gasLimit(privateTransaction.getGasLimit())
