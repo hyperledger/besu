@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.HashSet;
@@ -73,7 +73,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
       LOG.warn(
           "Invalid block RLP : {}",
-          RLP.encode(rlpOutput -> RLPFormat.encode(block, rlpOutput)).toHexString());
+          RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(block, rlpOutput)).toHexString());
       receipts.forEach(
           receipt ->
               LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));

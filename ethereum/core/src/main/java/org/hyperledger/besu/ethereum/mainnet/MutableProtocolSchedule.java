@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -70,7 +70,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public RLPFormat getLatestRLPFormat() {
+  public ProtocolRLPSpec getLatestRLPFormat() {
     return protocolSpecs.first().getSpec().getRLPFormat();
   }
 

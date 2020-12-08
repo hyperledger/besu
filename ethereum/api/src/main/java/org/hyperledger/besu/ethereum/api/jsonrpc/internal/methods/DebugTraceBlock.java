@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -71,7 +71,7 @@ public class DebugTraceBlock implements JsonRpcMethod {
     final Block block;
     try {
       block =
-          RLPFormat.decodeBlockStandalone(
+          ProtocolRLPSpec.decodeBlockStandalone(
               protocolSchedule, blockHeaderFunctions, RLP.input(Bytes.fromHexString(input)));
     } catch (final RLPException e) {
       LOG.debug("Failed to parse block RLP", e);

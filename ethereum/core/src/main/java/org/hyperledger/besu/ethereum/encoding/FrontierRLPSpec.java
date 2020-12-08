@@ -17,11 +17,10 @@
 
 package org.hyperledger.besu.ethereum.encoding;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -37,39 +36,25 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class EIP1559RLPFormat extends FrontierRLPFormat {
+public class FrontierRLPSpec implements ProtocolRLPSpec {
+
   @Override
   public Transaction decodeTransaction(final RLPInput rlpInput) {
-    if (rlpInput.nextIsList()) {
-      return super.decodeTransaction(rlpInput);
-    } else {
-      return decodeEIP1559(rlpInput);
+    if (GoQuorumOptions.goquorumCompatibilityMode) {
+      return decodeGoQuorum(rlpInput);
     }
-  }
-
-  Transaction decodeEIP1559(final RLPInput input) {
-    checkArgument(
-        TransactionType.of(input.readByte()).equals(TransactionType.EIP1559),
-        "invalid eip 1559 transaction type");
-
-    ExperimentalEIPs.eip1559MustBeEnabled();
-    input.enterList();
-
+    rlpInput.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
-            .type(TransactionType.EIP1559)
-            .nonce(input.readLongScalar())
-            .gasPrice(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readLongScalar())
-            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(Wei.of(input.readUInt256Scalar()))
-            .payload(input.readBytes())
-            .gasPremium(Wei.of(input.readBytes().toBigInteger()))
-            .feeCap(Wei.of(input.readBytes().toBigInteger()));
+            .type(TransactionType.FRONTIER)
+            .nonce(rlpInput.readLongScalar())
+            .gasPrice(Wei.of(rlpInput.readUInt256Scalar()))
+            .gasLimit(rlpInput.readLongScalar())
+            .to(rlpInput.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(rlpInput.readUInt256Scalar()))
+            .payload(rlpInput.readBytes());
 
-    final BigInteger v = input.readBytes().toBigInteger();
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger v = rlpInput.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
     if (v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE)
@@ -86,10 +71,74 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
+    final BigInteger r = rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger s = rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger();
     final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+
+    rlpInput.leaveList();
+
+    chainId.ifPresent(builder::chainId);
+    return builder.signature(signature).build();
+  }
+
+  static Transaction decodeGoQuorum(final RLPInput input) {
+    input.enterList();
+
+    final Transaction.Builder builder =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .nonce(input.readLongScalar())
+            .gasPrice(Wei.of(input.readUInt256Scalar()))
+            .gasLimit(input.readLongScalar())
+            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(input.readUInt256Scalar()))
+            .payload(input.readBytes());
+
+    final BigInteger v = input.readBigIntegerScalar();
+    final byte recId;
+    Optional<BigInteger> chainId = Optional.empty();
+    if (isGoQuorumPrivateTransaction(v)) {
+      // GoQuorum private TX. No chain ID. Preserve the v value as provided.
+      builder.v(v);
+      recId = v.subtract(Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
+    } else if (v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE)
+        || v.equals(Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(Transaction.REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(Transaction.REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId =
+          Optional.of(v.subtract(Transaction.REPLAY_PROTECTED_V_BASE).divide(Transaction.TWO));
+      recId =
+          v.subtract(
+                  Transaction.TWO.multiply(chainId.get()).add(Transaction.REPLAY_PROTECTED_V_BASE))
+              .byteValueExact();
+    } else {
+      throw new RuntimeException(
+          String.format("An unsupported encoded `v` value of %s was found", v));
+    }
+    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+
     input.leaveList();
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();
+  }
+
+  private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
+    return v.equals(Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
+        || v.equals(Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
+  }
+
+  @Override
+  public BlockBody decodeBlockBody(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    input.enterList();
+    final BlockBody body =
+        new BlockBody(
+            input.readList(this::decodeTransaction),
+            input.readList(rlpInput -> decodeBlockHeader(rlpInput, blockHeaderFunctions)));
+    input.leaveList();
+    return body;
   }
 
   @Override
@@ -111,7 +160,6 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
     final Bytes extraData = input.readBytes();
     final Hash mixHash = Hash.wrap(input.readBytes32());
     final long nonce = input.readLong();
-    final long baseFee = input.readLongScalar();
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -127,7 +175,7 @@ public class EIP1559RLPFormat extends FrontierRLPFormat {
         gasUsed,
         timestamp,
         extraData,
-        baseFee,
+        null,
         mixHash,
         nonce,
         blockHeaderFunctions);

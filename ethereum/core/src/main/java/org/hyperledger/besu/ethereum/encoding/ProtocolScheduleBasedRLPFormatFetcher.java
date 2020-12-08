@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.function.Supplier;
 
-public interface ProtocolScheduleBasedRLPFormatFetcher extends Supplier<RLPFormat> {
+public interface ProtocolScheduleBasedRLPFormatFetcher extends Supplier<ProtocolRLPSpec> {
 
   static ProtocolScheduleBasedRLPFormatFetcher getByBlockNumber(
       final ProtocolSchedule protocolSchedule, final long blockNumber) {
@@ -41,7 +41,7 @@ public interface ProtocolScheduleBasedRLPFormatFetcher extends Supplier<RLPForma
       long currentBlockNumber = startingBlockNumber;
 
       @Override
-      public RLPFormat get() {
+      public ProtocolRLPSpec get() {
         return getByBlockNumber(protocolSchedule, currentBlockNumber++).get();
       }
     };

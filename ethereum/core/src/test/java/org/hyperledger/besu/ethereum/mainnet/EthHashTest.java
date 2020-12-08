@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -46,7 +46,7 @@ public final class EthHashTest {
             false);
     input.enterList();
     final BlockHeader header =
-        RLPFormat.decodeBlockHeaderStandalone(input, new MainnetBlockHeaderFunctions());
+        ProtocolRLPSpec.decodeBlockHeaderStandalone(input, new MainnetBlockHeaderFunctions());
     final long blockNumber = header.getNumber();
     final EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
     final long epoch = epochCalculator.cacheEpoch(blockNumber);

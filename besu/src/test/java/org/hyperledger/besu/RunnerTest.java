@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -460,7 +460,8 @@ public final class RunnerTest {
               blocks,
               protocolSchedule,
               rlp ->
-                  RLPFormat.decodeBlockHeaderStandalone(rlp, new MainnetBlockHeaderFunctions()))) {
+                  ProtocolRLPSpec.decodeBlockHeaderStandalone(
+                      rlp, new MainnetBlockHeaderFunctions()))) {
         for (int i = 0; i < count; ++i) {
           result.add(iterator.next());
         }

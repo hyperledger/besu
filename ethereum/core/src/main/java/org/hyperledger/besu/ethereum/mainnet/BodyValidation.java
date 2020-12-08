@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
@@ -61,7 +61,8 @@ public final class BodyValidation {
             i ->
                 trie.put(
                     indexKey(i),
-                    RLP.encode(rlpOutput -> RLPFormat.encode(transactions.get(i), rlpOutput))));
+                    RLP.encode(
+                        rlpOutput -> ProtocolRLPSpec.encode(transactions.get(i), rlpOutput))));
 
     return Hash.wrap(trie.getRootHash());
   }
@@ -89,7 +90,7 @@ public final class BodyValidation {
    * @return the ommers hash
    */
   public static Hash ommersHash(final List<BlockHeader> ommers) {
-    return Hash.wrap(keccak256(RLP.encode(out -> out.writeList(ommers, RLPFormat::encode))));
+    return Hash.wrap(keccak256(RLP.encode(out -> out.writeList(ommers, ProtocolRLPSpec::encode))));
   }
 
   /**

@@ -41,7 +41,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-public interface RLPFormat {
+public interface ProtocolRLPSpec {
 
   @FunctionalInterface
   interface Encoder<T> {
@@ -54,7 +54,7 @@ public interface RLPFormat {
   }
 
   ImmutableMap<TransactionType, Encoder<Transaction>> TYPED_TRANSACTION_ENCODERS =
-      ImmutableMap.of(TransactionType.EIP1559, RLPFormat::encodeEIP1559);
+      ImmutableMap.of(TransactionType.EIP1559, ProtocolRLPSpec::encodeEIP1559);
 
   // This is all going to change in the next PR because we had to settle some spec ambiguities on a
   // breakout room call
@@ -63,7 +63,7 @@ public interface RLPFormat {
       encodeFrontier(transaction, rlpOutput);
     } else {
       final TransactionType type = transaction.getType();
-      final RLPFormat.Encoder<Transaction> encoder =
+      final ProtocolRLPSpec.Encoder<Transaction> encoder =
           Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(type))
               .orElseThrow(
                   () ->
@@ -145,8 +145,8 @@ public interface RLPFormat {
   static void encode(final BlockBody blockBody, final RLPOutput rlpOutput) {
     rlpOutput.startList();
 
-    rlpOutput.writeList(blockBody.getTransactions(), RLPFormat::encode);
-    rlpOutput.writeList(blockBody.getOmmers(), RLPFormat::encode);
+    rlpOutput.writeList(blockBody.getTransactions(), ProtocolRLPSpec::encode);
+    rlpOutput.writeList(blockBody.getOmmers(), ProtocolRLPSpec::encode);
 
     rlpOutput.endList();
   }
@@ -161,10 +161,10 @@ public interface RLPFormat {
   static void encode(final Block block, final RLPOutput rlpOutput) {
     rlpOutput.startList();
 
-    RLPFormat.encode(block.getHeader(), rlpOutput);
+    ProtocolRLPSpec.encode(block.getHeader(), rlpOutput);
     final BlockBody blockBody = block.getBody();
-    rlpOutput.writeList(blockBody.getTransactions(), RLPFormat::encode);
-    rlpOutput.writeList(blockBody.getOmmers(), RLPFormat::encode);
+    rlpOutput.writeList(blockBody.getTransactions(), ProtocolRLPSpec::encode);
+    rlpOutput.writeList(blockBody.getOmmers(), ProtocolRLPSpec::encode);
 
     rlpOutput.endList();
   }
@@ -218,11 +218,11 @@ public interface RLPFormat {
       final RLPInput rlpInput) {
     rlpInput.enterList();
     final BlockHeader header = decodeBlockHeaderStandalone(rlpInput, blockHeaderFunctions);
-    final RLPFormat rlpFormat =
+    final ProtocolRLPSpec protocolRlpSpec =
         protocolSchedule.getByBlockNumber(header.getNumber()).getRLPFormat();
-    final List<Transaction> transactions = rlpInput.readList(rlpFormat::decodeTransaction);
+    final List<Transaction> transactions = rlpInput.readList(protocolRlpSpec::decodeTransaction);
     final List<BlockHeader> ommers =
-        rlpInput.readList(rlp -> rlpFormat.decodeBlockHeader(rlp, blockHeaderFunctions));
+        rlpInput.readList(rlp -> protocolRlpSpec.decodeBlockHeader(rlp, blockHeaderFunctions));
     rlpInput.leaveList();
 
     return new Block(header, new BlockBody(transactions, ommers));

@@ -18,8 +18,8 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -57,7 +57,7 @@ public final class BlockBodiesMessageTest {
       final RLPInput oneBlock = new BytesValueRLPInput(Bytes.wrap(block), false);
       oneBlock.enterList();
       final BlockHeader blockHeader =
-          RLPFormat.decodeBlockHeaderStandalone(oneBlock, new MainnetBlockHeaderFunctions());
+          ProtocolRLPSpec.decodeBlockHeaderStandalone(oneBlock, new MainnetBlockHeaderFunctions());
       startBlock = startBlock == -1 ? blockHeader.getNumber() : startBlock;
       bodies.add(
           // We know the test data to only contain Frontier blocks
@@ -69,7 +69,7 @@ public final class BlockBodiesMessageTest {
                       ::decodeTransaction),
               oneBlock.readList(
                   rlp ->
-                      RLPFormat.decodeBlockHeaderStandalone(
+                      ProtocolRLPSpec.decodeBlockHeaderStandalone(
                           rlp, new MainnetBlockHeaderFunctions()))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);

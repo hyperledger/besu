@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.encoding.EIP1559RLPFormat;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.EIP1559RLPSpec;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -32,7 +32,7 @@ import org.junit.After;
 import org.junit.Test;
 
 public class TransactionEIP1559Test {
-  private final RLPFormat eip1559RLPFormat = new EIP1559RLPFormat();
+  private final ProtocolRLPSpec eip1559RLPSpec = new EIP1559RLPSpec();
   private final RLPInput legacyRLPInput =
       RLP.input(
           Bytes.fromHexString(
@@ -47,7 +47,7 @@ public class TransactionEIP1559Test {
 
   @Test
   public void givenLegacyTransaction_assertThatRlpEncodingWorks() {
-    final Transaction legacyTransaction = eip1559RLPFormat.decodeTransaction(legacyRLPInput);
+    final Transaction legacyTransaction = eip1559RLPSpec.decodeTransaction(legacyRLPInput);
     assertThat(legacyTransaction.isFrontierTransaction()).isTrue();
     assertThat(legacyTransaction.isEIP1559Transaction()).isFalse();
   }
@@ -55,15 +55,15 @@ public class TransactionEIP1559Test {
   @Test
   public void givenEIP1559Transaction_assertThatRlpDecodingWorks() {
     ExperimentalEIPs.eip1559Enabled = true;
-    final Transaction legacyTransaction = eip1559RLPFormat.decodeTransaction(legacyRLPInput);
+    final Transaction legacyTransaction = eip1559RLPSpec.decodeTransaction(legacyRLPInput);
     set(legacyTransaction, "transactionType", TransactionType.EIP1559);
     set(legacyTransaction, "gasPrice", null);
     set(legacyTransaction, "gasPremium", expectedGasPremium);
     set(legacyTransaction, "feeCap", expectedFeeCap);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    RLPFormat.encode(legacyTransaction, rlpOutput);
+    ProtocolRLPSpec.encode(legacyTransaction, rlpOutput);
     final Transaction eip1559Transaction =
-        eip1559RLPFormat.decodeTransaction(new BytesValueRLPInput(rlpOutput.encoded(), false));
+        eip1559RLPSpec.decodeTransaction(new BytesValueRLPInput(rlpOutput.encoded(), false));
     assertThat(eip1559Transaction.isFrontierTransaction()).isFalse();
     assertThat(eip1559Transaction.isEIP1559Transaction()).isTrue();
     assertThat(eip1559Transaction.getGasPremium()).hasValue(expectedGasPremium);

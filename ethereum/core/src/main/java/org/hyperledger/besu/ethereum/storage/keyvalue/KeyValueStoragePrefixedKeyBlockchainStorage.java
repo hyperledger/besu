@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -149,7 +149,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       set(
           BLOCK_HEADER_PREFIX,
           blockHash,
-          RLP.encode(rlpOutput -> RLPFormat.encode(blockHeader, rlpOutput)));
+          RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(blockHeader, rlpOutput)));
     }
 
     @Override
@@ -157,7 +157,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       set(
           BLOCK_BODY_PREFIX,
           blockHash,
-          RLP.encode(rlpOutput -> RLPFormat.encode(blockBody, rlpOutput)));
+          RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(blockBody, rlpOutput)));
     }
 
     @Override

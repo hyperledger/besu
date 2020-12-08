@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -107,7 +107,9 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
             PROTOCOL_SCHEDULE,
-            rlp -> RLPFormat.decodeBlockHeaderStandalone(rlp, new MainnetBlockHeaderFunctions()))) {
+            rlp ->
+                ProtocolRLPSpec.decodeBlockHeaderStandalone(
+                    rlp, new MainnetBlockHeaderFunctions()))) {
       while (iterator.hasNext()) {
         BLOCKS.add(iterator.next());
       }

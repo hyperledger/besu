@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -25,7 +25,7 @@ public interface ProtocolSchedule {
 
   ProtocolSpec getByBlockNumber(long number);
 
-  RLPFormat getLatestRLPFormat();
+  ProtocolRLPSpec getLatestRLPFormat();
 
   Optional<BigInteger> getChainId();
 

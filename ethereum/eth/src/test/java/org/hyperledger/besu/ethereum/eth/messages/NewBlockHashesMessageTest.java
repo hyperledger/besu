@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
@@ -50,7 +50,7 @@ public final class NewBlockHashesMessageTest {
       final RLPInput oneBlock = new BytesValueRLPInput(Bytes.wrap(block), false);
       oneBlock.enterList();
       final BlockHeader header =
-          RLPFormat.decodeBlockHeaderStandalone(oneBlock, new MainnetBlockHeaderFunctions());
+          ProtocolRLPSpec.decodeBlockHeaderStandalone(oneBlock, new MainnetBlockHeaderFunctions());
       hashes.add(new NewBlockHashesMessage.NewBlockHash(header.getHash(), header.getNumber()));
       // We don't care about the bodies, just the header hashes
       oneBlock.skipNext();

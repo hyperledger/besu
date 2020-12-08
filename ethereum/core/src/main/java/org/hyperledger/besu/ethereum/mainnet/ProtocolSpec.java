@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -78,7 +78,7 @@ public class ProtocolSpec {
 
   private final BadBlockManager badBlockManager;
 
-  private final RLPFormat rlpFormat;
+  private final ProtocolRLPSpec protocolRlpSpec;
 
   /**
    * Creates a new protocol specification instance.
@@ -106,7 +106,7 @@ public class ProtocolSpec {
    * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    * @param gasBudgetCalculator the gas budget calculator to use.
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param rlpFormat the format for rlp (de)serialization
+   * @param protocolRlpSpec the format for rlp (de)serialization
    */
   public ProtocolSpec(
       final String name,
@@ -132,7 +132,7 @@ public class ProtocolSpec {
       final Optional<EIP1559> eip1559,
       final TransactionGasBudgetCalculator gasBudgetCalculator,
       final BadBlockManager badBlockManager,
-      final RLPFormat rlpFormat) {
+      final ProtocolRLPSpec protocolRlpSpec) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -156,7 +156,7 @@ public class ProtocolSpec {
     this.eip1559 = eip1559;
     this.gasBudgetCalculator = gasBudgetCalculator;
     this.badBlockManager = badBlockManager;
-    this.rlpFormat = rlpFormat;
+    this.protocolRlpSpec = protocolRlpSpec;
   }
 
   /**
@@ -357,7 +357,7 @@ public class ProtocolSpec {
     return badBlockManager;
   }
 
-  public RLPFormat getRLPFormat() {
-    return this.rlpFormat;
+  public ProtocolRLPSpec getRLPFormat() {
+    return this.protocolRlpSpec;
   }
 }

@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -244,13 +244,14 @@ public class BlockchainReferenceTestCaseSpec {
       final RLPInput input = new BytesValueRLPInput(rlp, false);
       input.enterList();
       final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
-      final BlockHeader header = RLPFormat.decodeBlockHeaderStandalone(input, blockHeaderFunctions);
-      final RLPFormat rlpFormat =
+      final BlockHeader header =
+          ProtocolRLPSpec.decodeBlockHeaderStandalone(input, blockHeaderFunctions);
+      final ProtocolRLPSpec protocolRlpSpec =
           protocolSchedule.getByBlockNumber(header.getNumber()).getRLPFormat();
       final BlockBody body =
           new BlockBody(
-              input.readList(rlpFormat::decodeTransaction),
-              input.readList(rlp -> rlpFormat.decodeBlockHeader(rlp, blockHeaderFunctions)));
+              input.readList(protocolRlpSpec::decodeTransaction),
+              input.readList(rlp -> protocolRlpSpec.decodeBlockHeader(rlp, blockHeaderFunctions)));
       return new Block(header, body);
     }
   }

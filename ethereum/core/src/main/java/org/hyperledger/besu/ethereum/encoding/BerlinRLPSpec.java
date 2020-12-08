@@ -24,9 +24,9 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 
-public class BerlinRLPFormat extends FrontierRLPFormat {
+public class BerlinRLPSpec extends FrontierRLPSpec {
 
-  private static final ImmutableMap<TransactionType, RLPFormat.Decoder<Transaction>>
+  private static final ImmutableMap<TransactionType, ProtocolRLPSpec.Decoder<Transaction>>
       TYPED_TRANSACTION_DECODERS = ImmutableMap.of();
 
   @Override
@@ -36,7 +36,7 @@ public class BerlinRLPFormat extends FrontierRLPFormat {
     } else {
       final int firstByte = rlpInput.readByte();
       final TransactionType transactionType = TransactionType.of(firstByte);
-      final RLPFormat.Decoder<Transaction> decoder =
+      final ProtocolRLPSpec.Decoder<Transaction> decoder =
           Optional.ofNullable(TYPED_TRANSACTION_DECODERS.get(transactionType))
               .orElseThrow(
                   () ->

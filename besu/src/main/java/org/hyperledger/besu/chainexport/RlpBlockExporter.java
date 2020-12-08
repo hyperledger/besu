@@ -16,7 +16,7 @@ package org.hyperledger.besu.chainexport;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.io.FileOutputStream;
@@ -33,7 +33,7 @@ public class RlpBlockExporter extends BlockExporter {
   @Override
   protected void exportBlock(final FileOutputStream outputStream, final Block block)
       throws IOException {
-    final Bytes rlp = RLP.encode(rlpOutput -> RLPFormat.encode(block, rlpOutput));
+    final Bytes rlp = RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(block, rlpOutput));
     outputStream.write(rlp.toArrayUnsafe());
   }
 }

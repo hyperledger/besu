@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -73,7 +73,7 @@ public class ProtocolSpecBuilder {
       TransactionGasBudgetCalculator.frontier();
   private BadBlockManager badBlockManager;
 
-  private RLPFormat rlpFormat;
+  private ProtocolRLPSpec protocolRlpSpec;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -240,8 +240,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder rlpFormat(final RLPFormat rlpFormat) {
-    this.rlpFormat = rlpFormat;
+  public ProtocolSpecBuilder rlpFormat(final ProtocolRLPSpec protocolRlpSpec) {
+    this.protocolRlpSpec = protocolRlpSpec;
     return this;
   }
 
@@ -367,7 +367,7 @@ public class ProtocolSpecBuilder {
         eip1559,
         gasBudgetCalculator,
         badBlockManager,
-        rlpFormat);
+        protocolRlpSpec);
   }
 
   public interface TransactionProcessorBuilder {

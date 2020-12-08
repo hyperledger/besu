@@ -33,8 +33,8 @@ import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
-import org.hyperledger.besu.ethereum.encoding.BerlinRLPFormat;
-import org.hyperledger.besu.ethereum.encoding.FrontierRLPFormat;
+import org.hyperledger.besu.ethereum.encoding.BerlinRLPSpec;
+import org.hyperledger.besu.ethereum.encoding.FrontierRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -146,7 +146,7 @@ public abstract class MainnetProtocolSpecs {
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
-        .rlpFormat(new FrontierRLPFormat())
+        .rlpFormat(new FrontierRLPSpec())
         .name("Frontier");
   }
 
@@ -411,7 +411,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
                 : MainnetProtocolSpecs::berlinTransactionReceiptFactory)
-        .rlpFormat(new BerlinRLPFormat())
+        .rlpFormat(new BerlinRLPSpec())
         .name("Berlin");
   }
 

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -44,6 +44,6 @@ public interface BadBlockResult {
     return ImmutableBadBlockResult.of(
         blockResult,
         block.getHash().toHexString(),
-        RLP.encode(rlpOutput -> RLPFormat.encode(block, rlpOutput)).toHexString());
+        RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(block, rlpOutput)).toHexString());
   }
 }

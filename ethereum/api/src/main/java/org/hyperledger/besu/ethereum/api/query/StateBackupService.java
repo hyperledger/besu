@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -309,11 +309,11 @@ public class StateBackupService {
             receipts.isPresent(), "Receipts for %s was not found in the archive", blockNumber);
 
         final BytesValueRLPOutput headerOutput = new BytesValueRLPOutput();
-        RLPFormat.encode(block.get(), headerOutput);
+        ProtocolRLPSpec.encode(block.get(), headerOutput);
         headerWriter.writeBytes(headerOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
-        RLPFormat.encode(block.get(), bodyOutput);
+        ProtocolRLPSpec.encode(block.get(), bodyOutput);
         bodyWriter.writeBytes(bodyOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput receiptsOutput = new BytesValueRLPOutput();

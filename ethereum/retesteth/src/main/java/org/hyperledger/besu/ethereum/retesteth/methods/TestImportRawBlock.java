@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -57,7 +57,7 @@ public class TestImportRawBlock implements JsonRpcMethod {
     final Block block;
     try {
       block =
-          RLPFormat.decodeBlockStandalone(
+          ProtocolRLPSpec.decodeBlockStandalone(
               context.getProtocolSchedule(),
               context.getBlockHeaderFunctions(),
               RLP.input(Bytes.fromHexString(input)));

@@ -20,7 +20,7 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -446,7 +446,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           RLP.encode(
               // If the hash of a transaction is expected to change between network upgrades, this
               // assumption is violated
-              rlpOutput -> RLPFormat.encode(this, rlpOutput));
+              rlpOutput -> ProtocolRLPSpec.encode(this, rlpOutput));
       hash = Hash.hash(rlp);
     }
     return hash;

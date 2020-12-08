@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -45,7 +45,7 @@ public class TransactionTest {
         .getTransactionValidator();
   }
 
-  private static RLPFormat rlpFormat(final String name) {
+  private static ProtocolRLPSpec rlpFormat(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(name).getByBlockNumber(0).getRLPFormat();
   }
 
@@ -119,7 +119,8 @@ public class TransactionTest {
       }
 
       // Test rlp encoding
-      final Bytes actualRlp = RLP.encode(rlpOutput -> RLPFormat.encode(transaction, rlpOutput));
+      final Bytes actualRlp =
+          RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(transaction, rlpOutput));
       assertThat(expected.isSucceeds()).isTrue();
 
       assertThat(actualRlp).isEqualTo(rlpBytes);

@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes.FRONTI
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.encoding.EIP1559RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.EIP1559RLPSpec;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -130,7 +130,7 @@ public class EIP1559Test {
   }
 
   private static class TransactionFixture {
-    private static final EIP1559RLPFormat eip1559RLPFormat = new EIP1559RLPFormat();
+    private static final EIP1559RLPSpec eip1559RLPFormat = new EIP1559RLPSpec();
     private static final Transaction LEGACY =
         eip1559RLPFormat.decodeTransaction(
             RLP.input(

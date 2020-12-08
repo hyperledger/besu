@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.Objects;
@@ -42,7 +42,7 @@ public class Block {
   }
 
   public int calculateSize() {
-    return RLP.encode(rlpOutput -> RLPFormat.encode(this, rlpOutput)).size();
+    return RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(this, rlpOutput)).size();
   }
 
   @Override

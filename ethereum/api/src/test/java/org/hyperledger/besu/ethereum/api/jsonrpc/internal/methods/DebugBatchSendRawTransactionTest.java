@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugBatchSendRawTransaction.ExecutionStatus;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.encoding.FrontierRLPFormat;
+import org.hyperledger.besu.ethereum.encoding.FrontierRLPSpec;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -50,7 +50,7 @@ public class DebugBatchSendRawTransactionTest {
   @Before
   public void setUp() {
     method = new DebugBatchSendRawTransaction(transactionPool, protocolSchedule);
-    when(protocolSchedule.getLatestRLPFormat()).thenReturn(new FrontierRLPFormat());
+    when(protocolSchedule.getLatestRLPFormat()).thenReturn(new FrontierRLPSpec());
   }
 
   @Test

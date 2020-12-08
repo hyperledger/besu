@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.List;
@@ -96,7 +96,7 @@ public class IbftBlockHashing {
     }
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    RLPFormat.encode(builder.buildBlockHeader(), out);
+    ProtocolRLPSpec.encode(builder.buildBlockHeader(), out);
 
     return out.encoded();
   }

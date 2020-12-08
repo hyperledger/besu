@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -81,7 +81,7 @@ public class DebugTraceBlockTest {
                     .setParentHash(parentBlock.getHash()));
 
     final Object[] params =
-        new Object[] {RLP.encode(rlpOutput -> RLPFormat.encode(block, rlpOutput)).toString()};
+        new Object[] {RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(block, rlpOutput)).toString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 
@@ -152,7 +152,7 @@ public class DebugTraceBlockTest {
                     .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
     final Object[] params =
-        new Object[] {RLP.encode(rlpOutput -> RLPFormat.encode(block, rlpOutput)).toString()};
+        new Object[] {RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(block, rlpOutput)).toString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
 

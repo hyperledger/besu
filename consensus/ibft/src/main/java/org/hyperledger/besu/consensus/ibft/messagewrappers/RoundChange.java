@@ -22,7 +22,7 @@ import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -60,7 +60,7 @@ public class RoundChange extends IbftMessage<RoundChangePayload> {
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
     if (proposedBlock.isPresent()) {
-      RLPFormat.encode(proposedBlock.get(), rlpOut);
+      ProtocolRLPSpec.encode(proposedBlock.get(), rlpOut);
     } else {
       rlpOut.writeNull();
     }
@@ -78,7 +78,7 @@ public class RoundChange extends IbftMessage<RoundChangePayload> {
     if (!rlpIn.nextIsNull()) {
       block =
           Optional.of(
-              RLPFormat.decodeBlockStandalone(
+              ProtocolRLPSpec.decodeBlockStandalone(
                   IbftProtocolSchedule.create(new StubGenesisConfigOptions()),
                   IbftBlockHeaderFunctions.forCommittedSeal(),
                   rlpIn));

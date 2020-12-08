@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
-import static org.hyperledger.besu.ethereum.encoding.RLPFormat.decodeBlockStandalone;
+import static org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec.decodeBlockStandalone;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.encoding.RLPFormat;
+import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -102,7 +102,7 @@ public class NewBlockMessage extends AbstractMessageData {
 
     public void writeTo(final RLPOutput out) {
       out.startList();
-      RLPFormat.encode(block, out);
+      ProtocolRLPSpec.encode(block, out);
       out.writeUInt256Scalar(totalDifficulty);
       out.endList();
     }
