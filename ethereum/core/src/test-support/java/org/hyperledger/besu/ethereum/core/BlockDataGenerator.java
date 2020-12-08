@@ -139,7 +139,7 @@ public class BlockDataGenerator {
       seq.add(next);
       parentHash = next.getHash();
       nextBlockNumber = nextBlockNumber + 1L;
-      worldState.persist();
+      worldState.persist(null);
     }
 
     return seq;
@@ -181,7 +181,7 @@ public class BlockDataGenerator {
       accounts.add(account);
     }
     updater.commit();
-    worldState.persist();
+    worldState.persist(null);
     return accounts;
   }
 

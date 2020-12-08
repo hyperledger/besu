@@ -3853,7 +3853,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void assertThatDuplicatePortSpecifiedFails() {
-    parseCommand("--p2p-port=9", "--rpc-http-port=10", "--rpc-ws-port=10");
+    parseCommand(
+        "--p2p-port=9",
+        "--rpc-http-enabled",
+        "--rpc-http-port=10",
+        "--rpc-ws-port=10",
+        "--rpc-ws-enabled");
     assertThat(commandErrorOutput.toString())
         .contains("Port number '10' has been specified multiple times.");
   }
@@ -3998,5 +4003,28 @@ public class BesuCommandTest extends CommandTestAbstract {
         "0");
     assertThat(commandErrorOutput.toString())
         .contains("GoQuorum compatibility mode (enabled) cannot be used on Mainnet");
+  }
+
+  @Test
+  public void assertThatCheckPortClashAcceptsAsExpected() throws Exception {
+    // use WS port for HTTP
+    final int port = 8546;
+    parseCommand("--rpc-http-enabled", "--rpc-http-port", String.valueOf(port));
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getPort()).isEqualTo(port);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void assertThatCheckPortClashRejectsAsExpected() throws Exception {
+    // use WS port for HTTP
+    final int port = 8546;
+    parseCommand("--rpc-http-enabled", "--rpc-http-port", String.valueOf(port), "--rpc-ws-enabled");
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Port number '8546' has been specified multiple times. Please review the supplied configuration.");
   }
 }

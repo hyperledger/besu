@@ -18,5 +18,5 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public interface NodeUpdater {
-  void store(Bytes32 hash, Bytes value);
+  void store(Bytes location, Bytes32 hash, Bytes value);
 }

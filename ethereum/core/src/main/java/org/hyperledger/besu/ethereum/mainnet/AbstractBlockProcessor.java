@@ -179,7 +179,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
-    worldState.persist();
+    worldState.persist(blockHeader.getHash());
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 

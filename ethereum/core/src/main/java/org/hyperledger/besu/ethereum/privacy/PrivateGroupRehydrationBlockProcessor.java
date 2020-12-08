@@ -144,7 +144,7 @@ public class PrivateGroupRehydrationBlockProcessor {
                 privateTransaction.getPrivacyGroupId().get());
 
         privateStateUpdater.commit();
-        disposablePrivateState.persist();
+        disposablePrivateState.persist(null);
 
         storePrivateMetadata(
             transactionHash,
@@ -233,7 +233,7 @@ public class PrivateGroupRehydrationBlockProcessor {
           UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
 
       privateWorldStateUpdater.commit();
-      disposablePrivateState.persist();
+      disposablePrivateState.persist(null);
     }
   }
 
