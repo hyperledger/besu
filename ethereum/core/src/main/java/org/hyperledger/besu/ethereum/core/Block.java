@@ -42,7 +42,6 @@ public class Block {
   }
 
   public int calculateSize() {
-    // TODO maybe this should go elsewhere?
     return RLP.encode(rlpOutput -> RLPFormat.encode(this, rlpOutput)).size();
   }
 
