@@ -130,6 +130,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())
@@ -163,6 +164,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())
