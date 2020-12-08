@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -143,10 +144,9 @@ public class RestoreState implements Runnable {
             ProtocolRLPSpec.decodeBlockHeaderStandalone(
                 new BytesValueRLPInput(Bytes.wrap(headerEntry), false, true), functions);
         final BlockBody body =
-            besuController
-                .getProtocolSchedule()
-                .getByBlockNumber(header.getNumber())
-                .getRLPFormat()
+            ProtocolScheduleBasedRLPSpecSupplier.getByBlockNumber(
+                    besuController.getProtocolSchedule(), header.getNumber())
+                .get()
                 .decodeBlockBody(
                     new BytesValueRLPInput(Bytes.wrap(bodyEntry), false, true), functions);
         final RLPInput receiptsRlp = new BytesValueRLPInput(Bytes.wrap(receiptEntry), false, true);
