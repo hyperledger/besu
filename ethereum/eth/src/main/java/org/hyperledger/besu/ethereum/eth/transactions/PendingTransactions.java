@@ -46,8 +46,8 @@ import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -69,7 +69,7 @@ public class PendingTransactions {
   private final EvictingQueue<Hash> newPooledHashes;
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
   private final NavigableSet<TransactionInfo> prioritizedTransactions =
-      new TreeSet<>(
+      new ConcurrentSkipListSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
               .thenComparing(TransactionInfo::getSequence)
@@ -204,34 +204,31 @@ public class PendingTransactions {
   }
 
   public void selectTransactions(final TransactionSelector selector) {
-    synchronized (prioritizedTransactions) {
-      final List<Transaction> transactionsToRemove = new ArrayList<>();
-      final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
-      for (final TransactionInfo transactionInfo : prioritizedTransactions) {
-        final AccountTransactionOrder accountTransactionOrder =
-            accountTransactions.computeIfAbsent(
-                transactionInfo.getSender(), this::createSenderTransactionOrder);
-
-        for (final Transaction transactionToProcess :
-            accountTransactionOrder.transactionsToProcess(transactionInfo.getTransaction())) {
-          final TransactionSelectionResult result =
-              selector.evaluateTransaction(transactionToProcess);
-          switch (result) {
-            case DELETE_TRANSACTION_AND_CONTINUE:
-              transactionsToRemove.add(transactionToProcess);
-              break;
-            case CONTINUE:
-              break;
-            case COMPLETE_OPERATION:
-              transactionsToRemove.forEach(this::removeTransaction);
-              return;
-            default:
-              throw new RuntimeException("Illegal value for TransactionSelectionResult.");
-          }
+    final List<Transaction> transactionsToRemove = new ArrayList<>();
+    final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
+    for (final TransactionInfo transactionInfo : prioritizedTransactions) {
+      final AccountTransactionOrder accountTransactionOrder =
+          accountTransactions.computeIfAbsent(
+              transactionInfo.getSender(), this::createSenderTransactionOrder);
+      for (final Transaction transactionToProcess :
+          accountTransactionOrder.transactionsToProcess(transactionInfo.getTransaction())) {
+        final TransactionSelectionResult result =
+            selector.evaluateTransaction(transactionToProcess);
+        switch (result) {
+          case DELETE_TRANSACTION_AND_CONTINUE:
+            transactionsToRemove.add(transactionToProcess);
+            break;
+          case CONTINUE:
+            break;
+          case COMPLETE_OPERATION:
+            transactionsToRemove.forEach(this::removeTransaction);
+            return;
+          default:
+            throw new RuntimeException("Illegal value for TransactionSelectionResult.");
         }
       }
-      transactionsToRemove.forEach(this::removeTransaction);
     }
+    transactionsToRemove.forEach(this::removeTransaction);
   }
 
   private AccountTransactionOrder createSenderTransactionOrder(final Address address) {

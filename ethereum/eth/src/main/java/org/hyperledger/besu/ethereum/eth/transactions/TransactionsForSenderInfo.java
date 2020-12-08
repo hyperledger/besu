@@ -22,7 +22,7 @@ import java.util.NavigableMap;
 import java.util.OptionalLong;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.LongStream;
 
 class TransactionsForSenderInfo {
@@ -30,7 +30,7 @@ class TransactionsForSenderInfo {
   private final Queue<Long> gaps = new PriorityQueue<>();
 
   TransactionsForSenderInfo() {
-    transactionsInfos = new TreeMap<>();
+    transactionsInfos = new ConcurrentSkipListMap<>();
   }
 
   void addTransactionToTrack(
