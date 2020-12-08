@@ -40,7 +40,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   private final Address address;
   private final Hash addressHash;
 
-  @Nullable private final A account; // null if this is a new account.
+  @Nullable private A account; // null if this is a new account.
 
   private long nonce;
   private Wei balance;
@@ -69,7 +69,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     this.updatedStorage = new TreeMap<>();
   }
 
-  UpdateTrackingAccount(final A account) {
+  public UpdateTrackingAccount(final A account) {
     checkNotNull(account);
 
     this.address = account.getAddress();
@@ -94,6 +94,15 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
    */
   public A getWrappedAccount() {
     return account;
+  }
+
+  public void setWrappedAccount(final A account) {
+    if (this.account == null) {
+      this.account = account;
+      storageWasCleared = false;
+    } else {
+      throw new IllegalStateException("Already tracking a wrapped account");
+    }
   }
 
   /**
@@ -176,6 +185,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   @Override
   public void setCode(final Bytes code) {
     this.updatedCode = code;
+    this.updatedCodeHash = null;
   }
 
   @Override

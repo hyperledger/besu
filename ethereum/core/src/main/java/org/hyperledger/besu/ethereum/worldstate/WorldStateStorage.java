@@ -27,16 +27,17 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getCode(Bytes32 codeHash);
 
-  Optional<Bytes> getAccountStateTrieNode(Bytes32 nodeHash);
+  Optional<Bytes> getAccountStateTrieNode(Bytes location, Bytes32 nodeHash);
 
-  Optional<Bytes> getAccountStorageTrieNode(Bytes32 nodeHash);
+  Optional<Bytes> getAccountStorageTrieNode(Bytes location, Bytes32 nodeHash);
 
-  Optional<Bytes> getNodeData(Bytes32 hash);
+  Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
 
   boolean isWorldStateAvailable(Bytes32 rootHash);
 
   default boolean contains(final Bytes32 hash) {
-    return getNodeData(hash).isPresent();
+    // we don't have location info
+    return getNodeData(null, hash).isPresent();
   }
 
   Updater updater();
@@ -59,9 +60,9 @@ public interface WorldStateStorage {
       return putCode(codeHash, code);
     }
 
-    Updater putAccountStateTrieNode(Bytes32 nodeHash, Bytes node);
+    Updater putAccountStateTrieNode(Bytes location, Bytes32 nodeHash, Bytes node);
 
-    Updater putAccountStorageTrieNode(Bytes32 nodeHash, Bytes node);
+    Updater putAccountStorageTrieNode(Bytes location, Bytes32 nodeHash, Bytes node);
 
     void commit();
 

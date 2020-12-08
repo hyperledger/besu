@@ -23,14 +23,14 @@ public class TransactionValidationParamsTest {
   @Test
   public void isAllowFutureNonce() {
     assertThat(
-            new TransactionValidationParams.Builder()
-                .allowFutureNonce(true)
+            ImmutableTransactionValidationParams.builder()
+                .isAllowFutureNonce(true)
                 .build()
                 .isAllowFutureNonce())
         .isTrue();
     assertThat(
-            new TransactionValidationParams.Builder()
-                .allowFutureNonce(false)
+            ImmutableTransactionValidationParams.builder()
+                .isAllowFutureNonce(false)
                 .build()
                 .isAllowFutureNonce())
         .isFalse();
@@ -39,13 +39,13 @@ public class TransactionValidationParamsTest {
   @Test
   public void checkOnchainPermissions() {
     assertThat(
-            new TransactionValidationParams.Builder()
+            ImmutableTransactionValidationParams.builder()
                 .checkOnchainPermissions(true)
                 .build()
                 .checkOnchainPermissions())
         .isTrue();
     assertThat(
-            new TransactionValidationParams.Builder()
+            ImmutableTransactionValidationParams.builder()
                 .checkOnchainPermissions(false)
                 .build()
                 .checkOnchainPermissions())
@@ -55,13 +55,13 @@ public class TransactionValidationParamsTest {
   @Test
   public void checkLocalPermissions() {
     assertThat(
-            new TransactionValidationParams.Builder()
+            ImmutableTransactionValidationParams.builder()
                 .checkLocalPermissions(true)
                 .build()
                 .checkLocalPermissions())
         .isTrue();
     assertThat(
-            new TransactionValidationParams.Builder()
+            ImmutableTransactionValidationParams.builder()
                 .checkLocalPermissions(false)
                 .build()
                 .checkLocalPermissions())
