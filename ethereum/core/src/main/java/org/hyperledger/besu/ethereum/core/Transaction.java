@@ -92,6 +92,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return new Builder();
   }
 
+  // TODO remove?
   public static Transaction readFrom(final RLPInput rlpInput, final RLPFormat rlpFormat) {
     return rlpFormat.decodeTransaction(rlpInput);
   }
