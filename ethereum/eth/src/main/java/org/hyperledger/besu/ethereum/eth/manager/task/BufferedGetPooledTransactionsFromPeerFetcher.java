@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor;
 
@@ -45,14 +45,14 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   }
 
   public void requestTransactions(
-      final ProtocolScheduleBasedRLPFormatFetcher protocolScheduleBasedRLPFormatFetcher) {
+      final ProtocolScheduleBasedRLPSpecSupplier protocolScheduleBasedRLPSpecSupplier) {
     for (List<Hash> txAnnounces = getTxAnnounces();
         !txAnnounces.isEmpty();
         txAnnounces = getTxAnnounces()) {
       final GetPooledTransactionsFromPeerTask task =
           GetPooledTransactionsFromPeerTask.forHashes(
               processor.getEthContext(),
-              protocolScheduleBasedRLPFormatFetcher,
+              protocolScheduleBasedRLPSpecSupplier,
               txAnnounces,
               processor.getMetricsSystem());
       task.assignPeer(peer);

@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
@@ -543,7 +543,7 @@ public final class EthProtocolManagerTest {
             final List<BlockBody> bodies =
                 Lists.newArrayList(
                     blocksMessage.bodies(
-                        ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                        ProtocolScheduleBasedRLPSpecSupplier.getAscendingByBlockNumber(
                             protocolSchedule, startBlock),
                         protocolSchedule));
             assertThat(bodies.size()).isEqualTo(blockCount);
@@ -596,7 +596,7 @@ public final class EthProtocolManagerTest {
             final List<BlockBody> bodies =
                 Lists.newArrayList(
                     blocksMessage.bodies(
-                        ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                        ProtocolScheduleBasedRLPSpecSupplier.getAscendingByBlockNumber(
                             protocolSchedule, startBlock),
                         protocolSchedule));
             assertThat(bodies.size()).isEqualTo(limit);
@@ -644,7 +644,7 @@ public final class EthProtocolManagerTest {
             final List<BlockBody> bodies =
                 Lists.newArrayList(
                     blocksMessage.bodies(
-                        ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                        ProtocolScheduleBasedRLPSpecSupplier.getAscendingByBlockNumber(
                             protocolSchedule, expectedBlockNumber),
                         protocolSchedule));
             assertThat(bodies.size()).isEqualTo(1);

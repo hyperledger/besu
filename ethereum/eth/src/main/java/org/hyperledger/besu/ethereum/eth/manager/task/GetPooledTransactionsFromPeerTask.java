@@ -18,7 +18,7 @@ import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
@@ -39,21 +39,21 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
   private static final Logger LOG = LogManager.getLogger();
 
   private final List<Hash> hashes;
-  private final ProtocolScheduleBasedRLPFormatFetcher protocolScheduleBasedRLPFormatFetcher;
+  private final ProtocolScheduleBasedRLPSpecSupplier protocolScheduleBasedRLPSpecSupplier;
 
   private GetPooledTransactionsFromPeerTask(
       final EthContext ethContext,
-      final ProtocolScheduleBasedRLPFormatFetcher protocolScheduleBasedRLPFormatFetcher,
+      final ProtocolScheduleBasedRLPSpecSupplier protocolScheduleBasedRLPSpecSupplier,
       final List<Hash> hashes,
       final MetricsSystem metricsSystem) {
     super(ethContext, EthPV65.GET_POOLED_TRANSACTIONS, metricsSystem);
-    this.protocolScheduleBasedRLPFormatFetcher = protocolScheduleBasedRLPFormatFetcher;
+    this.protocolScheduleBasedRLPSpecSupplier = protocolScheduleBasedRLPSpecSupplier;
     this.hashes = new ArrayList<>(hashes);
   }
 
   public static GetPooledTransactionsFromPeerTask forHashes(
       final EthContext ethContext,
-      final ProtocolScheduleBasedRLPFormatFetcher rlpFormatSupplier,
+      final ProtocolScheduleBasedRLPSpecSupplier rlpFormatSupplier,
       final List<Hash> hashes,
       final MetricsSystem metricsSystem) {
     return new GetPooledTransactionsFromPeerTask(
@@ -81,7 +81,7 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
     final PooledTransactionsMessage pooledTransactionsMessage =
         PooledTransactionsMessage.readFrom(message);
     final List<Transaction> tx =
-        pooledTransactionsMessage.transactions(protocolScheduleBasedRLPFormatFetcher.get());
+        pooledTransactionsMessage.transactions(protocolScheduleBasedRLPSpecSupplier.get());
     if (tx.size() > hashes.size()) {
       // Can't be the response to our request
       return Optional.empty();

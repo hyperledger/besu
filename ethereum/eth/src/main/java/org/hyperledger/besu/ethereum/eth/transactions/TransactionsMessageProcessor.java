@@ -19,7 +19,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -86,7 +86,7 @@ class TransactionsMessageProcessor {
 
       final List<Transaction> readTransactions =
           transactionsMessage.transactions(
-              ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(protocolSchedule, blockchain)
+              ProtocolScheduleBasedRLPSpecSupplier.getForChainHead(protocolSchedule, blockchain)
                   .get());
       final Set<Transaction> transactions = Sets.newHashSet(readTransactions);
       transactionTracker.markTransactionsAsSeen(peer, transactions);

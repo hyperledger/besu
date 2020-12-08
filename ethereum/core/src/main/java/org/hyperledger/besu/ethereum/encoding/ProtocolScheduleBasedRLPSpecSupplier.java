@@ -22,22 +22,22 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.function.Supplier;
 
-public interface ProtocolScheduleBasedRLPFormatFetcher extends Supplier<ProtocolRLPSpec> {
+public interface ProtocolScheduleBasedRLPSpecSupplier extends Supplier<ProtocolRLPSpec> {
 
-  static ProtocolScheduleBasedRLPFormatFetcher getByBlockNumber(
+  static ProtocolScheduleBasedRLPSpecSupplier getByBlockNumber(
       final ProtocolSchedule protocolSchedule, final long blockNumber) {
     return () -> protocolSchedule.getByBlockNumber(blockNumber).getRLPFormat();
   }
 
-  static ProtocolScheduleBasedRLPFormatFetcher getForChainHead(
+  static ProtocolScheduleBasedRLPSpecSupplier getForChainHead(
       final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
     return () ->
         protocolSchedule.getByBlockNumber(blockchain.getChainHeadBlockNumber()).getRLPFormat();
   }
 
-  static ProtocolScheduleBasedRLPFormatFetcher getAscendingByBlockNumber(
+  static ProtocolScheduleBasedRLPSpecSupplier getAscendingByBlockNumber(
       final ProtocolSchedule protocolSchedule, final long startingBlockNumber) {
-    return new ProtocolScheduleBasedRLPFormatFetcher() {
+    return new ProtocolScheduleBasedRLPSpecSupplier() {
       long currentBlockNumber = startingBlockNumber;
 
       @Override

@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
-import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -63,7 +63,7 @@ public final class BlockBodiesMessageTest {
           // We know the test data to only contain Frontier blocks
           new BlockBody(
               oneBlock.readList(
-                  ProtocolScheduleBasedRLPFormatFetcher.getByBlockNumber(
+                  ProtocolScheduleBasedRLPSpecSupplier.getByBlockNumber(
                               MainnetProtocolSchedule.create(), blockHeader.getNumber())
                           .get()
                       ::decodeTransaction),
@@ -81,7 +81,7 @@ public final class BlockBodiesMessageTest {
     final Iterator<BlockBody> readBodies =
         message
             .bodies(
-                ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                ProtocolScheduleBasedRLPSpecSupplier.getAscendingByBlockNumber(
                     protocolSchedule, startBlock),
                 protocolSchedule)
             .iterator();

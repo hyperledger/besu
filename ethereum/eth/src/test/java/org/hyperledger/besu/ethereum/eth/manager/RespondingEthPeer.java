@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -314,7 +314,7 @@ public class RespondingEthPeer {
           final List<BlockBody> originalBodies =
               Lists.newArrayList(
                   bodiesMessage.bodies(
-                      ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+                      ProtocolScheduleBasedRLPSpecSupplier.getAscendingByBlockNumber(
                           protocolSchedule, blockchain.getChainHeadBlockNumber()),
                       protocolSchedule));
           final List<BlockBody> partialBodies =
@@ -342,7 +342,7 @@ public class RespondingEthPeer {
           final List<Transaction> originalPooledTx =
               Lists.newArrayList(
                   pooledTransactionsMessage.transactions(
-                      ProtocolScheduleBasedRLPFormatFetcher.getForChainHead(
+                      ProtocolScheduleBasedRLPSpecSupplier.getForChainHead(
                               protocolSchedule, blockchain)
                           .get()));
           final List<Transaction> partialPooledTx =

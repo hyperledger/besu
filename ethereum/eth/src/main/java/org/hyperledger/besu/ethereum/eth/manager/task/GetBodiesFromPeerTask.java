@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPFormatFetcher;
+import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
@@ -106,7 +106,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(message);
     final List<BlockBody> bodies =
         bodiesMessage.bodies(
-            ProtocolScheduleBasedRLPFormatFetcher.getAscendingByBlockNumber(
+            ProtocolScheduleBasedRLPSpecSupplier.getAscendingByBlockNumber(
                 protocolSchedule, headers.get(0).getNumber()),
             protocolSchedule);
     if (bodies.size() == 0) {
