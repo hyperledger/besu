@@ -69,7 +69,7 @@ public class DefaultMutableWorldStateTest {
     final MutableWorldState worldState = createEmpty();
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
-    worldState.persist();
+    worldState.persist(null);
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 
@@ -100,7 +100,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
-    worldState.persist();
+    worldState.persist(null);
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 
@@ -113,7 +113,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
-    worldState.persist();
+    worldState.persist(null);
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
   }
 
@@ -145,7 +145,7 @@ public class DefaultMutableWorldStateTest {
     WorldUpdater updater = worldState.updater();
     updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.commit();
-    worldState.persist();
+    worldState.persist(null);
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
@@ -158,7 +158,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     assertThat(updater.get(ADDRESS)).isNull();
     // And after persisting
-    worldState.persist();
+    worldState.persist(null);
     assertThat(updater.get(ADDRESS)).isNull();
 
     assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
@@ -185,7 +185,7 @@ public class DefaultMutableWorldStateTest {
     assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
 
     // Check again after persisting
-    worldState.persist();
+    worldState.persist(null);
     accounts = worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
     assertThat(accounts.size()).isEqualTo(1L);
     assertThat(accounts.get(0).getAddress()).hasValue(ADDRESS);
@@ -267,7 +267,7 @@ public class DefaultMutableWorldStateTest {
     assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
 
     // Persist and re-run assertions
-    worldState.persist();
+    worldState.persist(null);
 
     assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
     assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
@@ -474,7 +474,7 @@ public class DefaultMutableWorldStateTest {
     account.setBalance(Wei.of(100000));
     account.setStorageValue(storageKey, storageValue);
     updater.commit();
-    worldState.persist();
+    worldState.persist(null);
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
@@ -548,7 +548,7 @@ public class DefaultMutableWorldStateTest {
     account.setStorageValue(storageKey, originalStorageValue);
     assertThat(account.getStorageValue(storageKey)).isEqualTo(originalStorageValue);
     updater.commit();
-    worldState.persist();
+    worldState.persist(null);
 
     // Clear storage then edit
     account = updater.getAccount(ADDRESS).getMutable();
@@ -667,14 +667,14 @@ public class DefaultMutableWorldStateTest {
     assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
     assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(initialEntries);
 
-    worldState.persist();
+    worldState.persist(null);
     assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
     assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(initialEntries);
 
     updater.commit();
     assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
 
-    worldState.persist();
+    worldState.persist(null);
     assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
   }
 }
