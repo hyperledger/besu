@@ -33,10 +33,12 @@ public abstract class RLP {
   public static final Bytes EMPTY_LIST;
 
   static {
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.startList();
-    out.endList();
-    EMPTY_LIST = out.encoded();
+    EMPTY_LIST =
+        encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              rlpOutput.endList();
+            });
   }
 
   /**
@@ -103,7 +105,6 @@ public abstract class RLP {
    * @param writer A method that given an {@link RLPOutput}, writes some data to it.
    * @return The RLP encoding of the data written by {@code writer}.
    */
-  // TODO make the "encoding rlp as bytes" story consistent and easy
   public static Bytes encode(final Consumer<RLPOutput> writer) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     writer.accept(out);

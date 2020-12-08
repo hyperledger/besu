@@ -43,8 +43,7 @@ import org.junit.Test;
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-// TODO check other tests
-public class RLPFormatTest {
+public class RLPFormatTransactionsTest {
   private static final BerlinRLPFormat berlinRLPFormat = new BerlinRLPFormat();
   private static final EIP1559RLPFormat eip1559RLPFormat = new EIP1559RLPFormat();
   private static final String FRONTIER_TX_RLP =

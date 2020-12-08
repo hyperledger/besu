@@ -57,7 +57,6 @@ public class TestCodeExecutor {
 
     final Transaction transaction =
         Transaction.builder()
-            // TODO add more types
             .type(TransactionType.FRONTIER)
             .value(Wei.ZERO)
             .sender(SENDER_ADDRESS)

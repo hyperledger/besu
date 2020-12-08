@@ -56,7 +56,7 @@ public interface RLPFormat {
   ImmutableMap<TransactionType, Encoder<Transaction>> TYPED_TRANSACTION_ENCODERS =
       ImmutableMap.of(TransactionType.EIP1559, RLPFormat::encodeEIP1559);
 
-  // This is all going to change in the next PR because we had to settle some abiguities on a
+  // This is all going to change in the next PR because we had to settle some spec ambiguities on a
   // breakout room call
   static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
     if (transaction.getType().equals(TransactionType.FRONTIER)) {
@@ -152,6 +152,11 @@ public interface RLPFormat {
   }
 
   BlockBody decodeBlockBody(RLPInput input, BlockHeaderFunctions blockHeaderFunctions);
+
+  default BlockHeader decodeBlockHeader(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    return decodeBlockHeaderStandalone(input, blockHeaderFunctions);
+  }
 
   static void encode(final Block block, final RLPOutput rlpOutput) {
     rlpOutput.startList();
