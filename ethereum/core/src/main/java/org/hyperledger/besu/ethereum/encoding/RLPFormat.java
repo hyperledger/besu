@@ -56,7 +56,8 @@ public interface RLPFormat {
   ImmutableMap<TransactionType, Encoder<Transaction>> TYPED_TRANSACTION_ENCODERS =
       ImmutableMap.of(TransactionType.EIP1559, RLPFormat::encodeEIP1559);
 
-  // TODO replace all the encoders with static methods since we trust our own data format
+  // This is all going to change in the next PR because we had to settle some abiguities on a
+  // breakout room call
   static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
     if (transaction.getType().equals(TransactionType.FRONTIER)) {
       encodeFrontier(transaction, rlpOutput);
@@ -71,7 +72,6 @@ public interface RLPFormat {
                               "Developer Error. A supported transaction type %s has no associated"
                                   + " encoding logic",
                               type)));
-      // TODO change this to normal rlp encoding instead of this bytes.concat stuff
       rlpOutput.writeRaw(
           Bytes.concatenate(
               Bytes.of((byte) type.getSerializedType()),
@@ -153,9 +153,6 @@ public interface RLPFormat {
 
   BlockBody decodeBlockBody(RLPInput input, BlockHeaderFunctions blockHeaderFunctions);
 
-  BlockHeader decodeBlockHeader(
-      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions);
-
   static void encode(final Block block, final RLPOutput rlpOutput) {
     rlpOutput.startList();
 
@@ -167,7 +164,6 @@ public interface RLPFormat {
     rlpOutput.endList();
   }
 
-  // TODO wtf do I do about this standalone and the specific ones
   static BlockHeader decodeBlockHeaderStandalone(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     input.enterList();
@@ -211,8 +207,6 @@ public interface RLPFormat {
         blockHeaderFunctions);
   }
 
-  // TODO move this to frontier instead of default
-  // TODO refactor rlpinputs/outputs so they're always in the same place
   static Block decodeBlockStandalone(
       final ProtocolSchedule protocolSchedule,
       final BlockHeaderFunctions blockHeaderFunctions,
