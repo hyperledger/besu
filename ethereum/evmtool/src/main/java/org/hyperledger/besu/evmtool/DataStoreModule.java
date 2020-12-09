@@ -129,6 +129,6 @@ public class DataStoreModule {
       @Named("blockchain") final KeyValueStorage keyValueStorage,
       final BlockHeaderFunctions blockHashFunction) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        keyValueStorage, MainnetProtocolSchedule.create(), blockHashFunction);
+        keyValueStorage, MainnetProtocolSchedule.DEFAULT, blockHashFunction);
   }
 }

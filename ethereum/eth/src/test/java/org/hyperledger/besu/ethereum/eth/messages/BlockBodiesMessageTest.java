@@ -64,7 +64,7 @@ public final class BlockBodiesMessageTest {
           new BlockBody(
               oneBlock.readList(
                   ProtocolScheduleBasedRLPSpecSupplier.getByBlockNumber(
-                              MainnetProtocolSchedule.create(), blockHeader.getNumber())
+                              MainnetProtocolSchedule.DEFAULT, blockHeader.getNumber())
                           .get()
                       ::decodeTransaction),
               oneBlock.readList(

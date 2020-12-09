@@ -219,7 +219,7 @@ public class RetestethContext {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            keyValueStorage, MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions()),
+            keyValueStorage, MainnetProtocolSchedule.DEFAULT, new MainnetBlockHeaderFunctions()),
         new NoOpMetricsSystem(),
         100);
   }

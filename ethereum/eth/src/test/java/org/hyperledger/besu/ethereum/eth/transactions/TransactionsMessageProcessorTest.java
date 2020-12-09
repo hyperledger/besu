@@ -60,7 +60,7 @@ public class TransactionsMessageProcessorTest {
   public void setUp() {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.MAX_VALUE);
     when(protocolSchedule.getByBlockNumber(eq(Long.MAX_VALUE)))
-        .thenReturn(MainnetProtocolSchedule.create().getByBlockNumber(Long.MAX_VALUE));
+        .thenReturn(MainnetProtocolSchedule.DEFAULT.getByBlockNumber(Long.MAX_VALUE));
   }
 
   @Test

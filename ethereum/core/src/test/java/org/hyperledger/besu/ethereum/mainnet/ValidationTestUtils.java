@@ -46,6 +46,6 @@ public final class ValidationTestUtils {
                     EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
             false);
     return ProtocolRLPSpec.decodeBlockStandalone(
-        MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions(), input);
+        MainnetProtocolSchedule.DEFAULT, new MainnetBlockHeaderFunctions(), input);
   }
 }

@@ -35,7 +35,7 @@ public class FastSyncStateStorageTest {
   private FastSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();
   private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader);
-  private final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
+  private final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.DEFAULT;
   private File tempDir;
 
   @Before

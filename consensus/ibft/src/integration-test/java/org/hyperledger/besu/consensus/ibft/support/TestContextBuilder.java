@@ -176,7 +176,7 @@ public class TestContextBuilder {
     final MutableBlockchain blockChain =
         createInMemoryBlockchain(
             genesisBlock,
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.DEFAULT,
             IbftBlockHeaderFunctions.forOnChainBlock());
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.

@@ -83,7 +83,7 @@ public class RawBlockIteratorTest {
     final RawBlockIterator iterator =
         new RawBlockIterator(
             blocksFile.toPath(),
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.DEFAULT,
             rlp ->
                 ProtocolRLPSpec.decodeBlockHeaderStandalone(rlp, new MainnetBlockHeaderFunctions()),
             initialCapacity);

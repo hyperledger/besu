@@ -195,7 +195,7 @@ public class PrunerTest {
   private BlockchainStorage getBlockchainStorage() {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
         new InMemoryKeyValueStorage(),
-        MainnetProtocolSchedule.create(),
+        MainnetProtocolSchedule.DEFAULT,
         new MainnetBlockHeaderFunctions());
   }
 }

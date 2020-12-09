@@ -106,6 +106,6 @@ public class TransactionsMessageSenderTest {
   private Set<Transaction> getTransactionsFromMessage(final MessageData message) {
     final TransactionsMessage transactionsMessage = TransactionsMessage.readFrom(message);
     return newHashSet(
-        transactionsMessage.transactions(MainnetProtocolSchedule.create().getLatestRLPSpec()));
+        transactionsMessage.transactions(MainnetProtocolSchedule.DEFAULT.getLatestRLPSpec()));
   }
 }

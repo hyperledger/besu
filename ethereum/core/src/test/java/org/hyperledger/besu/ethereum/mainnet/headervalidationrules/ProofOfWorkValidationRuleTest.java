@@ -142,7 +142,7 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   private BlockHeaderFunctions mainnetBlockHashFunction() {
-    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.DEFAULT;
     return ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 }

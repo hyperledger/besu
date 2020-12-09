@@ -62,7 +62,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
   private final BlockchainStorage blockchainStorage =
       new KeyValueStoragePrefixedKeyBlockchainStorage(
           new InMemoryKeyValueStorage(),
-          MainnetProtocolSchedule.create(),
+          MainnetProtocolSchedule.DEFAULT,
           new MainnetBlockHeaderFunctions());
   private final Block genesisBlock = gen.genesisBlock();
   private final MutableBlockchain blockchain =

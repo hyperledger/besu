@@ -113,7 +113,7 @@ public class TestNode implements Closeable {
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     final MutableBlockchain blockchain =
         createInMemoryBlockchain(
-            genesisState.getBlock(), MainnetProtocolSchedule.create(), blockHeaderFunctions);
+            genesisState.getBlock(), MainnetProtocolSchedule.DEFAULT, blockHeaderFunctions);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext protocolContext =

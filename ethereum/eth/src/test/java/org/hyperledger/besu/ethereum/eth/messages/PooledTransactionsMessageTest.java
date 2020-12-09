@@ -46,7 +46,7 @@ public class PooledTransactionsMessageTest {
                 .signAndBuild(SECP256K1.KeyPair.generate()));
     final PooledTransactionsMessage msg = PooledTransactionsMessage.create(tx);
     assertThat(msg.getCode()).isEqualTo(EthPV65.POOLED_TRANSACTIONS);
-    assertThat(msg.transactions(MainnetProtocolSchedule.create().getLatestRLPSpec())).isEqualTo(tx);
+    assertThat(msg.transactions(MainnetProtocolSchedule.DEFAULT.getLatestRLPSpec())).isEqualTo(tx);
   }
 
   @Test

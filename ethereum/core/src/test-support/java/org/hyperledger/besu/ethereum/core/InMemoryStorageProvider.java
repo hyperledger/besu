@@ -40,7 +40,7 @@ public class InMemoryStorageProvider implements StorageProvider {
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
     return createInMemoryBlockchain(
-        genesisBlock, MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions());
+        genesisBlock, MainnetProtocolSchedule.DEFAULT, new MainnetBlockHeaderFunctions());
   }
 
   public static MutableBlockchain createInMemoryBlockchain(

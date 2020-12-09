@@ -944,7 +944,7 @@ public class DefaultBlockchainTest {
 
   private BlockchainStorage createStorage(final KeyValueStorage kvStore) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        kvStore, MainnetProtocolSchedule.create(), new MainnetBlockHeaderFunctions());
+        kvStore, MainnetProtocolSchedule.DEFAULT, new MainnetBlockHeaderFunctions());
   }
 
   private DefaultBlockchain createMutableBlockchain(

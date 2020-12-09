@@ -59,7 +59,7 @@ public class DebugTraceBlockTest {
           () -> blockTracer,
           new MainnetBlockHeaderFunctions(),
           blockchainQueries,
-          MainnetProtocolSchedule.create());
+          MainnetProtocolSchedule.DEFAULT);
 
   @Test
   public void nameShouldBeDebugTraceBlock() {

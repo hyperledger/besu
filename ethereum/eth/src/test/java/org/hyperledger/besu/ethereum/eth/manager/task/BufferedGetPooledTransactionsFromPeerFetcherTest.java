@@ -84,7 +84,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
         .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
 
     fetcher.addHash(hash);
-    fetcher.requestTransactions(MainnetProtocolSchedule.create()::getLatestRLPSpec);
+    fetcher.requestTransactions(MainnetProtocolSchedule.DEFAULT::getLatestRLPSpec);
 
     verify(ethScheduler).scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class));
     verifyNoMoreInteractions(ethScheduler);
@@ -102,7 +102,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     when(ethScheduler.scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class)))
         .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
 
-    fetcher.requestTransactions(MainnetProtocolSchedule.create()::getLatestRLPSpec);
+    fetcher.requestTransactions(MainnetProtocolSchedule.DEFAULT::getLatestRLPSpec);
 
     verify(ethScheduler, times(2))
         .scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class));
@@ -117,7 +117,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
         .thenReturn(Optional.of(Transaction.builder().type(TransactionType.FRONTIER).build()));
 
     fetcher.addHash(hash);
-    fetcher.requestTransactions(MainnetProtocolSchedule.create()::getLatestRLPSpec);
+    fetcher.requestTransactions(MainnetProtocolSchedule.DEFAULT::getLatestRLPSpec);
 
     verifyNoInteractions(ethScheduler);
     verify(transactionPool, never()).addRemoteTransactions(anyList());

@@ -107,7 +107,7 @@ public class BesuEventsImplTest {
             gen.genesisBlock(),
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
-                MainnetProtocolSchedule.create(),
+                MainnetProtocolSchedule.DEFAULT,
                 new MainnetBlockHeaderFunctions()),
             new NoOpMetricsSystem(),
             0);
