@@ -81,13 +81,14 @@ public class GenesisConfigFile {
 
   public static GenesisConfigOptions getMainnetConfigOptions() {
     // this method avoids reading all the alloc accounts when all we want is the "config" section
-    final JsonFactory jsonFactory = new JsonFactory();
     try (final JsonParser jsonParser =
-        jsonFactory.createParser(GenesisConfigFile.class.getResource("/mainnet.json"))) {
+        new JsonFactory().createParser(GenesisConfigFile.class.getResource("/mainnet.json"))) {
 
       while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
         if ("config".equals(jsonParser.getCurrentName())) {
-          return JsonGenesisConfigOptions.fromJsonObject(new ObjectMapper().readTree(jsonParser));
+          jsonParser.nextToken();
+          return JsonGenesisConfigOptions.fromJsonObject(
+              normalizeKeys(new ObjectMapper().readTree(jsonParser)));
         }
       }
 
