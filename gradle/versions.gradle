@@ -92,13 +92,13 @@ dependencyManagement {
       entry 'bytes'
       entry 'config'
       entry 'crypto'
-      entry 'toml'
-      entry 'units'
       entry 'devp2p'
       entry 'dns-discovery'
       entry 'io'
-      entry 'rlp'
       entry 'net'
+      entry 'rlp'
+      entry 'toml'
+      entry 'units'
     }
 
     dependency 'org.assertj:assertj-core:3.16.1'
