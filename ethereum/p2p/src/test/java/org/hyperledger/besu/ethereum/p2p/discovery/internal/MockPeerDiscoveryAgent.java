@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -49,7 +50,13 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
       final NatService natService) {
-    super(nodeKey, config, peerPermissions, natService, new NoOpMetricsSystem());
+    super(
+        nodeKey,
+        config,
+        peerPermissions,
+        natService,
+        new NoOpMetricsSystem(),
+        new InMemoryStorageProvider());
     this.agentNetwork = agentNetwork;
   }
 
