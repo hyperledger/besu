@@ -15,7 +15,6 @@
 package org.hyperledger.besu.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
 import java.io.IOException;
@@ -129,22 +128,6 @@ public class GenesisConfigFile {
     return parseLong("timestamp", JsonUtil.getValueAsString(configRoot, "timestamp", "0x0"));
   }
 
-  public List<Long> getForks() {
-    return JsonUtil.getObjectNode(configRoot, "config").stream()
-        .flatMap(
-            node ->
-                Streams.stream(node.fieldNames())
-                    .map(String::toLowerCase)
-                    .filter(name -> !name.equals("chainid"))
-                    .filter(name -> node.get(name).canConvertToLong())
-                    .filter(name -> name.contains("block"))
-                    .filter(name -> !name.equals("classicforkblock"))
-                    .filter(name -> !name.equals("qip714block"))
-                    .map(name -> node.get(name).asLong()))
-        .sorted()
-        .collect(toUnmodifiableList());
-  }
-
   private String getRequiredString(final String key) {
     if (!configRoot.has(key)) {
       throw new IllegalArgumentException(
@@ -164,5 +147,9 @@ public class GenesisConfigFile {
               + value
               + "'");
     }
+  }
+
+  public List<Long> getForks() {
+    return getConfigOptions().getForks();
   }
 }

@@ -26,6 +26,8 @@ public interface Node<V> {
 
   void accept(NodeVisitor<V> visitor);
 
+  void accept(Bytes location, LocationNodeVisitor<V> visitor);
+
   Bytes getPath();
 
   Optional<V> getValue();

@@ -191,7 +191,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     if (messageFrame.isPersistingPrivateState()) {
 
       privateWorldStateUpdater.commit();
-      disposablePrivateState.persist();
+      disposablePrivateState.persist(null);
 
       storePrivateMetadata(
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
@@ -439,7 +439,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
           UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
 
       privateWorldStateUpdater.commit();
-      disposablePrivateState.persist();
+      disposablePrivateState.persist(null);
     }
   }
 
