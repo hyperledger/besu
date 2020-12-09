@@ -47,7 +47,7 @@ public interface NodeStatsReport {
     long getHashrate();
 
     @JsonProperty("peers")
-    int getPeers();
+    long getPeers();
 
     @JsonProperty("gasPrice")
     long getGasPrice();
