@@ -24,9 +24,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
+import org.apache.logging.log4j.util.Strings;
 
 public class GenesisConfigFile {
 
@@ -73,6 +78,24 @@ public class GenesisConfigFile {
 
   public static GenesisConfigFile fromConfig(final ObjectNode config) {
     return new GenesisConfigFile(normalizeKeys(config));
+  }
+
+  public static GenesisConfigOptions getMainnetConfigOptions() {
+    // this method avoids reading all the alloc accounts when all we want is the "config" section
+    final JsonFactory jsonFactory = new JsonFactory();
+    try (final JsonParser jsonParser =
+        jsonFactory.createParser(GenesisConfigFile.class.getResource("/mainnet.json"))) {
+
+      while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+        if ("config".equals(jsonParser.getCurrentName())) {
+          return JsonGenesisConfigOptions.fromJsonObject(new ObjectMapper().readTree(jsonParser));
+        }
+      }
+
+    } catch (IOException e) {
+      throw new RuntimeException("Failed open or parse mainnet genesis json", e);
+    }
+    return null;
   }
 
   public GenesisConfigOptions getConfigOptions() {
