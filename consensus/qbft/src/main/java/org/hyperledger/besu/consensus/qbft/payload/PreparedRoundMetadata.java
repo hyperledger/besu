@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.payload;
 
+import com.google.common.base.MoreObjects;
+import java.util.Objects;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -59,5 +61,31 @@ public class PreparedRoundMetadata {
     out.writeBytes(preparedBlockHash);
     out.writeIntScalar(preparedRound);
     out.endList();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PreparedRoundMetadata that = (PreparedRoundMetadata) o;
+    return preparedRound == that.preparedRound &&
+        Objects.equals(preparedBlockHash, that.preparedBlockHash);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(preparedBlockHash, preparedRound);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("preparedBlockHash", preparedBlockHash)
+        .add("preparedRound", preparedRound)
+        .toString();
   }
 }
