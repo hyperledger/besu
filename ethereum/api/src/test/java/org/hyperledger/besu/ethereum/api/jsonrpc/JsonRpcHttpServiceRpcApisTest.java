@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -261,6 +262,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             .vertx(vertx)
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())
+            .storageProvider(new InMemoryStorageProvider())
             .build();
 
     p2pNetwork.start();

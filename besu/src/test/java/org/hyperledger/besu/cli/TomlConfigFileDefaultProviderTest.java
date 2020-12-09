@@ -228,7 +228,7 @@ public class TomlConfigFileDefaultProviderTest {
 
     exceptionRule.expect(ParameterException.class);
     exceptionRule.expectMessage(
-        "Invalid TOML configuration: Unexpected '=', expected ', \", ''', "
+        "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=', expected ', \", ''', "
             + "\"\"\", a number, a boolean, a date/time, an array, or a table (line 1, column 19)");
 
     final File tempConfigFile = temp.newFile("config.toml");

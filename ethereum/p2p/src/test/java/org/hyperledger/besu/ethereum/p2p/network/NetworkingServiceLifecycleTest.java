@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.p2p.NetworkingTestHelper.configWithR
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
@@ -158,6 +159,7 @@ public class NetworkingServiceLifecycleTest {
         .nodeKey(nodeKey)
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)));
+        .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
+        .storageProvider(new InMemoryStorageProvider());
   }
 }

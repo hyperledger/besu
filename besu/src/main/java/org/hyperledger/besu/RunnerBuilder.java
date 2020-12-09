@@ -89,6 +89,7 @@ import org.hyperledger.besu.ethereum.permissioning.node.InsufficientPeersPermiss
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -167,6 +168,7 @@ public class RunnerBuilder {
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
   private boolean randomPeerPriority;
+  private StorageProvider storageProvider;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -333,6 +335,11 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder storageProvider(final StorageProvider storageProvider) {
+    this.storageProvider = storageProvider;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
@@ -418,6 +425,7 @@ public class RunnerBuilder {
                 .supportedCapabilities(caps)
                 .natService(natService)
                 .randomPeerPriority(randomPeerPriority)
+                .storageProvider(storageProvider)
                 .build();
 
     final NetworkRunner networkRunner =
