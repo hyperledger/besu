@@ -70,7 +70,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public ProtocolRLPSpec getLatestRLPFormat() {
+  public ProtocolRLPSpec getLatestRLPSpec() {
     return protocolSpecs.first().getSpec().getRLPFormat();
   }
 

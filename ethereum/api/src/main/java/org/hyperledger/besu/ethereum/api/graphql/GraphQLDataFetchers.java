@@ -84,7 +84,7 @@ public class GraphQLDataFetchers {
         final Transaction transaction =
             ((GraphQLDataFetcherContext) dataFetchingEnvironment.getContext())
                 .getProtocolSchedule()
-                .getLatestRLPFormat()
+                .getLatestRLPSpec()
                 .decodeTransaction(RLP.input(rawTran));
         final ValidationResult<TransactionInvalidReason> validationResult =
             transactionPool.addLocalTransaction(transaction);

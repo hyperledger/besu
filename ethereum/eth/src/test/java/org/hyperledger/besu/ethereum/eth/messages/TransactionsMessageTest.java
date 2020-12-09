@@ -47,7 +47,7 @@ public class TransactionsMessageTest {
     final TransactionsMessage message = TransactionsMessage.readFrom(raw);
 
     // Check that transactions match original inputs after transformations
-    assertThat(message.transactions(MainnetProtocolSchedule.create().getLatestRLPFormat()))
+    assertThat(message.transactions(MainnetProtocolSchedule.create().getLatestRLPSpec()))
         .isEqualTo(transactions);
   }
 }

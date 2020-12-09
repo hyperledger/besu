@@ -159,7 +159,7 @@ public class TraceTransactionIntegrationTest {
         new DebugOperationTracer(new TraceOptions(true, true, true));
     final Transaction transaction =
         protocolSchedule
-            .getLatestRLPFormat()
+            .getLatestRLPSpec()
             .decodeTransaction(
                 new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
     transactionProcessor.processTransaction(

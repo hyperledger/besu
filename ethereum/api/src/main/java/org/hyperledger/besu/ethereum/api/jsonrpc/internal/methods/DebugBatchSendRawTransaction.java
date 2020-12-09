@@ -66,7 +66,7 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
       final ValidationResult<TransactionInvalidReason> validationResult =
           transactionPool.addLocalTransaction(
               DomainObjectDecodeUtils.decodeRawTransaction(
-                  rawTransaction, protocolSchedule.getLatestRLPFormat()));
+                  rawTransaction, protocolSchedule.getLatestRLPSpec()));
       return validationResult.either(
           () -> new ExecutionStatus(index),
           errorReason -> new ExecutionStatus(index, false, errorReason.name()));

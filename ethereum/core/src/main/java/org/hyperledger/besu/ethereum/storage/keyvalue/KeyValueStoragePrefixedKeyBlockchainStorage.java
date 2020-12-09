@@ -84,7 +84,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
         .map(
             b ->
                 protocolSchedule
-                    .getLatestRLPFormat()
+                    .getLatestRLPSpec()
                     .decodeBlockHeader(RLP.input(b), blockHeaderFunctions));
   }
 
@@ -94,7 +94,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
         .map(
             bytes ->
                 protocolSchedule
-                    .getLatestRLPFormat()
+                    .getLatestRLPSpec()
                     .decodeBlockBody(RLP.input(bytes), blockHeaderFunctions));
   }
 

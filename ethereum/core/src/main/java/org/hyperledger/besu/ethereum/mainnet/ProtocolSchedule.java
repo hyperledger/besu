@@ -25,7 +25,7 @@ public interface ProtocolSchedule {
 
   ProtocolSpec getByBlockNumber(long number);
 
-  ProtocolRLPSpec getLatestRLPFormat();
+  ProtocolRLPSpec getLatestRLPSpec();
 
   Optional<BigInteger> getChainId();
 

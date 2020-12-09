@@ -50,7 +50,7 @@ public class DebugBatchSendRawTransactionTest {
   @Before
   public void setUp() {
     method = new DebugBatchSendRawTransaction(transactionPool, protocolSchedule);
-    when(protocolSchedule.getLatestRLPFormat()).thenReturn(new FrontierRLPSpec());
+    when(protocolSchedule.getLatestRLPSpec()).thenReturn(new FrontierRLPSpec());
   }
 
   @Test

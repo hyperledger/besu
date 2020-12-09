@@ -60,7 +60,7 @@ public class FastSyncStateStorage {
       final Bytes rlp = Bytes.wrap(Files.toByteArray(pivotBlockHeaderFile));
       return new FastSyncState(
           protocolSchedule
-              .getLatestRLPFormat()
+              .getLatestRLPSpec()
               .decodeBlockHeader(new BytesValueRLPInput(rlp, false), blockHeaderFunctions));
     } catch (final IOException e) {
       throw new IllegalStateException(

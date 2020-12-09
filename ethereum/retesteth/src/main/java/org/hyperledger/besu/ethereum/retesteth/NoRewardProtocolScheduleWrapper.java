@@ -85,8 +85,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public ProtocolRLPSpec getLatestRLPFormat() {
-    return delegate.getLatestRLPFormat();
+  public ProtocolRLPSpec getLatestRLPSpec() {
+    return delegate.getLatestRLPSpec();
   }
 
   @Override
