@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
-import org.apache.logging.log4j.util.Strings;
 
 public class GenesisConfigFile {
 
