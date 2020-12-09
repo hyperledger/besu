@@ -38,7 +38,8 @@ public class GoQuorumEnclaveTest {
 
   private static final byte[] PAYLOAD = Base64.getDecoder().decode("EAAAAAAA");
   private static final String MOCK_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
-  private static final String KEY = "key";
+  private static final String KEY =
+      "tQEmN0d/xXJZs5OMgl8QVBIyYxu1XubAKehsSYbcOjbxai+QJQpEOs6ghrYAZizLtnM4EJdMyVeVrxO3cA9JJA==";
   private static GoQuorumEnclave enclave;
 
   private RequestTransmitter vertxTransmitter;
@@ -49,7 +50,7 @@ public class GoQuorumEnclaveTest {
   }
 
   @Test
-  public void testUpCheck() {
+  public void upCheck() {
     when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/upcheck"), any()))
         .thenReturn("I'm up!");
 
@@ -57,7 +58,7 @@ public class GoQuorumEnclaveTest {
   }
 
   @Test
-  public void testReceiveThrowsWhenPayloadDoesNotExist() {
+  public void receiveThrowsWhenPayloadDoesNotExist() {
     when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/receive"), any()))
         .thenThrow(
             new EnclaveClientException(404, "Message with hash " + MOCK_KEY + " was not found"));
@@ -68,7 +69,7 @@ public class GoQuorumEnclaveTest {
   }
 
   @Test
-  public void testSendAndReceive() {
+  public void sendAndReceive() {
     when(vertxTransmitter.post(any(), any(), any(), any())).thenReturn(new SendResponse(KEY));
     when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/receive"), any()))
         .thenReturn(new GoQuorumReceiveResponse(PAYLOAD, 0, null, null));
@@ -81,6 +82,17 @@ public class GoQuorumEnclaveTest {
     final GoQuorumReceiveResponse rr = enclave.receive(sr.getKey());
     assertThat(rr).isNotNull();
     assertThat(rr.getPayload()).isEqualTo(PAYLOAD);
+  }
+
+  @Test
+  public void sendSignedTransaction() {
+    when(vertxTransmitter.post(any(), any(), ArgumentMatchers.contains("/sendsignedtx"), any()))
+        .thenReturn(new SendResponse(KEY));
+
+    final List<String> publicKeys = Arrays.asList("/+UuD63zItL1EbjxkKUljMgG8Z1w0AJ8pNOR4iq2yQc=");
+
+    final SendResponse sr = enclave.sendSignedTransaction(PAYLOAD, publicKeys);
+    assertThat(sr.getKey()).isEqualTo(KEY);
   }
 
   @Test

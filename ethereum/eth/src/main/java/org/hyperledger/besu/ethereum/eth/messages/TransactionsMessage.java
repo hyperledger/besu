@@ -19,10 +19,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.Iterator;
-import java.util.function.Function;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -59,8 +57,7 @@ public class TransactionsMessage extends AbstractMessageData {
     return EthPV62.TRANSACTIONS;
   }
 
-  public Iterator<Transaction> transactions(
-      final Function<RLPInput, Transaction> transactionReader) {
-    return new BytesValueRLPInput(data, false).readList(transactionReader).iterator();
+  public List<Transaction> transactions() {
+    return new BytesValueRLPInput(data, false).readList(Transaction::readFrom);
   }
 }

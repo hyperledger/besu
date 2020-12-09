@@ -22,7 +22,6 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
@@ -44,6 +43,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   public static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
 
   public static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
+
+  public static final BigInteger GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN = BigInteger.valueOf(37);
+  public static final BigInteger GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX = BigInteger.valueOf(38);
 
   // The v signature parameter starts at 36 because 1 is the first valid chainId so:
   // chainId > 1 implies that 2 * chainId + V_BASE > 36.
@@ -71,6 +73,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final Optional<BigInteger> chainId;
 
+  private final Optional<BigInteger> v;
+
   // Caches a "hash" of a portion of the transaction used for sender recovery.
   // Note that this hash does not include the transaction signature so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
@@ -87,8 +91,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return new Builder();
   }
 
-  public static Transaction readFrom(final RLPInput input) throws RLPException {
-    return TransactionRLPDecoder.decodeTransaction(input);
+  public static Transaction readFrom(final RLPInput rlpInput) {
+    return TransactionRLPDecoder.decode(rlpInput);
   }
 
   /**
@@ -105,6 +109,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param payload the payload
    * @param sender the transaction sender
    * @param chainId the chain id to apply the transaction to
+   * @param v the v value. This is only passed in directly for GoQuorum private transactions
+   *     (v=37|38). For all other transactions, the v value is derived from the signature. If v is
+   *     provided here, the chain id must be empty.
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
@@ -121,7 +128,12 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final SECP256K1.Signature signature,
       final Bytes payload,
       final Address sender,
-      final Optional<BigInteger> chainId) {
+      final Optional<BigInteger> chainId,
+      final Optional<BigInteger> v) {
+    if (v.isPresent() && chainId.isPresent()) {
+      throw new IllegalStateException(
+          String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
+    }
     this.nonce = nonce;
     this.gasPrice = gasPrice;
     this.gasPremium = gasPremium;
@@ -133,6 +145,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.payload = payload;
     this.sender = sender;
     this.chainId = chainId;
+    this.v = v;
   }
 
   /**
@@ -150,6 +163,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
+   *     it will default to any chain.
    */
   public Transaction(
       final long nonce,
@@ -161,7 +175,50 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId) {
-    this(nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId);
+    this(
+        nonce,
+        gasPrice,
+        null,
+        null,
+        gasLimit,
+        to,
+        value,
+        signature,
+        payload,
+        sender,
+        chainId,
+        Optional.empty());
+  }
+  /**
+   * Instantiates a transaction instance.
+   *
+   * @param nonce the nonce
+   * @param gasPrice the gas price
+   * @param gasLimit the gas limit
+   * @param to the transaction recipient
+   * @param value the value being transferred to the recipient
+   * @param signature the signature
+   * @param payload the payload
+   * @param sender the transaction sender
+   * @param chainId the chain id to apply the transaction to
+   * @param v the v value (only passed in directly for GoQuorum private transactions)
+   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
+   *     otherwise it should contain an address.
+   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
+   *     it will default to any chain.
+   */
+  public Transaction(
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final SECP256K1.Signature signature,
+      final Bytes payload,
+      final Address sender,
+      final Optional<BigInteger> chainId,
+      final Optional<BigInteger> v) {
+    this(nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId, v);
   }
 
   /**
@@ -302,7 +359,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               .orElseThrow(
                   () ->
                       new IllegalStateException(
-                          "Cannot recover public key from " + "signature for " + this));
+                          "Cannot recover public key from signature for " + this));
       sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
     }
     return sender;
@@ -346,14 +403,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   @Override
   public BigInteger getV() {
-    final BigInteger v;
+    if (this.v.isPresent()) {
+      return this.v.get();
+    }
+
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
     if (chainId.isEmpty()) {
-      v = recId.add(REPLAY_UNPROTECTED_V_BASE);
+      return recId.add(REPLAY_UNPROTECTED_V_BASE);
     } else {
-      v = recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
+      return recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
     }
-    return v;
   }
 
   /**
@@ -431,6 +490,21 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return getGasPremium().isPresent() && getFeeCap().isPresent();
   }
 
+  /**
+   * Returns whether or not the transaction is a GoQuorum private transaction. <br>
+   * <br>
+   * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38.
+   *
+   * @return true if GoQuorum private transaction, false otherwise
+   */
+  public boolean isGoQuorumPrivateTransaction() {
+    return v.map(
+            value ->
+                GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN.equals(value)
+                    || GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX.equals(value))
+        .orElse(false);
+  }
+
   private static Bytes32 computeSenderRecoveryHash(
       final long nonce,
       final Wei gasPrice,
@@ -479,13 +553,14 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         && this.payload.equals(that.payload)
         && this.signature.equals(that.signature)
         && this.to.equals(that.to)
-        && this.value.equals(that.value);
+        && this.value.equals(that.value)
+        && this.v.equals(that.v);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId);
+        nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId, v);
   }
 
   @Override
@@ -503,6 +578,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append("value=").append(getValue()).append(", ");
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
+    if (v.isPresent()) sb.append("v=").append(v.get()).append(", ");
     sb.append("payload=").append(getPayload());
     return sb.append("}").toString();
   }
@@ -538,8 +614,15 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected Optional<BigInteger> chainId = Optional.empty();
 
+    protected Optional<BigInteger> v = Optional.empty();
+
     public Builder chainId(final BigInteger chainId) {
       this.chainId = Optional.of(chainId);
+      return this;
+    }
+
+    public Builder v(final BigInteger v) {
+      this.v = Optional.of(v);
       return this;
     }
 
@@ -605,7 +688,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           signature,
           payload,
           sender,
-          chainId);
+          chainId,
+          v);
     }
 
     public Transaction signAndBuild(final SECP256K1.KeyPair keys) {

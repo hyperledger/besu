@@ -19,12 +19,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 public class EthCall extends AbstractBlockParameterMethod {
 
@@ -49,10 +51,14 @@ public class EthCall extends AbstractBlockParameterMethod {
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
-    final CallParameter callParams = validateAndGetCallParams(request);
+    final JsonCallParameter callParams = validateAndGetCallParams(request);
 
     return transactionSimulator
-        .process(callParams, blockNumber)
+        .process(
+            callParams,
+            TransactionValidationParams.transactionSimulator(),
+            OperationTracer.NO_TRACING,
+            blockNumber)
         .map(
             result ->
                 result
@@ -77,10 +83,14 @@ public class EthCall extends AbstractBlockParameterMethod {
     return (JsonRpcResponse) findResultByParamType(requestContext);
   }
 
-  private CallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final CallParameter callParams = request.getRequiredParameter(0, CallParameter.class);
+  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
+    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getTo() == null) {
       throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
+    }
+    if (callParams.getGasPrice() != null
+        && (callParams.getFeeCap().isPresent() || callParams.getGasPremium().isPresent())) {
+      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or feeCap");
     }
     return callParams;
   }

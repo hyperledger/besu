@@ -17,6 +17,8 @@ package org.hyperledger.besu.config;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -274,6 +276,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getQip714BlockNumber() {
     return OptionalLong.empty();
+  }
+
+  @Override
+  public List<Long> getForks() {
+    return Collections.emptyList();
   }
 
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {

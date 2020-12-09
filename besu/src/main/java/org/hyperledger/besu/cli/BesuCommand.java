@@ -48,6 +48,7 @@ import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
+import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EthstatsOptions;
@@ -73,6 +74,7 @@ import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -143,6 +145,7 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
@@ -228,6 +231,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
   private final EthstatsOptions unstableEthstatsOptions = EthstatsOptions.create();
+  private final DataStorageOptions unstableDataStorageOptions = DataStorageOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final MiningOptions unstableMiningOptions = MiningOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
@@ -1212,6 +1216,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Ethstats", unstableEthstatsOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
+            .put("Data Storage Options", unstableDataStorageOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1225,6 +1230,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
+    new InMemoryStoragePlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
 
@@ -1326,7 +1332,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
-    validateGoQuorumCompatibilityModeParam();
 
     return this;
   }
@@ -1396,17 +1401,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void validateGoQuorumCompatibilityModeParam() {
-    if (isGoQuorumCompatibilityMode) {
-      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
-
-      if (!genesisConfigOptions.isQuorum()) {
-        throw new IllegalStateException(
-            "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
-      }
-    }
-  }
-
   private GenesisConfigOptions readGenesisConfigOptions() {
     final GenesisConfigOptions genesisConfigOptions;
     try {
@@ -1468,10 +1462,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuCommand configure() throws Exception {
     checkPortClash();
 
-    if (isGoQuorumCompatibilityMode) {
-      checkGoQuorumCompatibilityConfig();
-    }
-
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
@@ -1480,6 +1470,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     : SyncMode.FULL);
 
     ethNetworkConfig = updateNetworkConfig(getNetwork());
+    if (isGoQuorumCompatibilityMode) {
+      checkGoQuorumCompatibilityConfig(ethNetworkConfig);
+    }
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
@@ -1579,7 +1572,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .<GasLimitCalculator>map(TargetingGasLimitCalculator::new)
                 .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
-        .reorgLoggingThreshold(reorgLoggingThreshold);
+        .reorgLoggingThreshold(reorgLoggingThreshold)
+        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2257,6 +2251,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // than a useless one that may make user think that it can work when it can't.
         builder.setBootNodes(new ArrayList<>());
       }
+      builder.setDnsDiscoveryUrl(null);
     }
 
     if (networkId != null) {
@@ -2277,7 +2272,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(commandLine, e.getMessage());
       }
     }
-
     return builder.build();
   }
 
@@ -2372,21 +2366,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void checkPortClash() {
-    // List of port parameters
-    final List<Integer> ports =
-        asList(
-            p2pPort,
-            graphQLHttpPort,
-            rpcHttpPort,
-            rpcWsPort,
-            metricsPort,
-            metricsPushPort,
-            stratumPort);
-    ports.stream()
+    getEffectivePorts().stream()
         .filter(Objects::nonNull)
+        .filter(port -> port > 0)
         .forEach(
             port -> {
-              if (port != 0 && !allocatedPorts.add(port)) {
+              if (!allocatedPorts.add(port)) {
                 throw new ParameterException(
                     commandLine,
                     "Port number '"
@@ -2396,13 +2381,73 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             });
   }
 
-  private void checkGoQuorumCompatibilityConfig() {
-    if (genesisFile != null
-        && getGenesisConfigFile().getConfigOptions().isQuorum()
-        && !minTransactionGasPrice.isZero()) {
-      throw new ParameterException(
-          this.commandLine,
-          "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+  /**
+   * * Gets the list of effective ports (ports that are enabled).
+   *
+   * @return The list of effective ports
+   */
+  private List<Integer> getEffectivePorts() {
+    final List<Integer> effectivePorts = new ArrayList<>();
+    addPortIfEnabled(effectivePorts, p2pPort, p2pEnabled);
+    addPortIfEnabled(effectivePorts, graphQLHttpPort, isGraphQLHttpEnabled);
+    addPortIfEnabled(effectivePorts, rpcHttpPort, isRpcHttpEnabled);
+    addPortIfEnabled(effectivePorts, rpcWsPort, isRpcWsEnabled);
+    addPortIfEnabled(effectivePorts, metricsPort, isMetricsEnabled);
+    addPortIfEnabled(effectivePorts, metricsPushPort, isMetricsPushEnabled);
+    addPortIfEnabled(effectivePorts, stratumPort, iStratumMiningEnabled);
+    return effectivePorts;
+  }
+
+  /**
+   * Adds port in the passed list only if enabled.
+   *
+   * @param ports The list of ports
+   * @param port The port value
+   * @param enabled true if enabled, false otherwise
+   */
+  private void addPortIfEnabled(
+      final List<Integer> ports, final Integer port, final boolean enabled) {
+    if (enabled) {
+      ports.add(port);
+    }
+  }
+
+  private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
+    if (isGoQuorumCompatibilityMode) {
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      // this static flag is read by the RLP decoder
+      GoQuorumOptions.goquorumCompatibilityMode = true;
+
+      if (!genesisConfigOptions.isQuorum()) {
+        throw new IllegalStateException(
+            "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
+      }
+      genesisConfigOptions
+          .getChainId()
+          .ifPresent(
+              chainId ->
+                  ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
+                      chainId, isGoQuorumCompatibilityMode));
+
+      if (genesisFile != null
+          && getGenesisConfigFile().getConfigOptions().isQuorum()
+          && !minTransactionGasPrice.isZero()) {
+        throw new ParameterException(
+            this.commandLine,
+            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+      }
+      if (ethNetworkConfig.getNetworkId().equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
+        throw new ParameterException(
+            this.commandLine, "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
+      }
+    }
+  }
+
+  private void ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
+      final BigInteger chainId, final boolean isGoQuorumCompatibilityMode) {
+    if (isGoQuorumCompatibilityMode && chainId.equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
+      throw new IllegalStateException(
+          "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
     }
   }
 
@@ -2421,6 +2466,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     @Override
     public Path getDataPath() {
       return dataDir();
+    }
+
+    @Override
+    public int getDatabaseVersion() {
+      return unstableDataStorageOptions
+          .toDomainObject()
+          .getDataStorageFormat()
+          .getDatabaseVersion();
     }
   }
 }

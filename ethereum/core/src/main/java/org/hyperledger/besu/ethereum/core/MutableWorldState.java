@@ -23,6 +23,11 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    */
   MutableWorldState copy();
 
-  /** Persist accumulated changes to underlying storage. */
-  void persist();
+  /**
+   * Persist accumulated changes to underlying storage.
+   *
+   * @param blockhash the block hash of the world state this represents. If this does not represent
+   *     a forward transition from one block to the next `null` should be passed in.
+   */
+  void persist(Hash blockhash);
 }

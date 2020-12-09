@@ -81,7 +81,7 @@ public class WorldDownloadStateTest {
     final CompletableFuture<Void> postFutureChecks =
         future.thenAccept(
             result ->
-                assertThat(worldStateStorage.getAccountStateTrieNode(ROOT_NODE_HASH))
+                assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
                     .contains(ROOT_NODE_DATA));
 
     downloadState.checkCompletion(worldStateStorage, header);
@@ -97,7 +97,7 @@ public class WorldDownloadStateTest {
     downloadState.checkCompletion(worldStateStorage, header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 

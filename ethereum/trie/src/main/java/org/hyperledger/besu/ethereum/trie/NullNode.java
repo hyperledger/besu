@@ -21,14 +21,14 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class NullNode<V> implements Node<V> {
+public class NullNode<V> implements Node<V> {
   @SuppressWarnings("rawtypes")
   private static final NullNode instance = new NullNode();
 
   private NullNode() {}
 
   @SuppressWarnings("unchecked")
-  static <V> NullNode<V> instance() {
+  public static <V> NullNode<V> instance() {
     return instance;
   }
 
@@ -40,6 +40,11 @@ class NullNode<V> implements Node<V> {
   @Override
   public void accept(final NodeVisitor<V> visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
+    visitor.visit(location, this);
   }
 
   @Override
