@@ -29,7 +29,7 @@ public class MainnetProtocolSchedule {
   public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
   public static final ProtocolSchedule DEFAULT =
-      fromConfig(GenesisConfigFile.getMainnetConfigOptions(), PrivacyParameters.DEFAULT, false);
+      fromConfig(GenesisConfigFile.mainnet().getConfigOptions(), PrivacyParameters.DEFAULT, false);
 
   /**
    * Create a Mainnet protocol schedule from a config object
