@@ -309,11 +309,11 @@ public class StateBackupService {
             receipts.isPresent(), "Receipts for %s was not found in the archive", blockNumber);
 
         final BytesValueRLPOutput headerOutput = new BytesValueRLPOutput();
-        ProtocolRLPSpec.encode(block.get(), headerOutput);
+        ProtocolRLPSpec.encode(block.get().getHeader(), headerOutput);
         headerWriter.writeBytes(headerOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
-        ProtocolRLPSpec.encode(block.get(), bodyOutput);
+        ProtocolRLPSpec.encode(block.get().getBody(), bodyOutput);
         bodyWriter.writeBytes(bodyOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput receiptsOutput = new BytesValueRLPOutput();
