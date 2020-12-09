@@ -145,6 +145,6 @@ dependencyManagement {
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:signing-api:0.4.0'
 
-    dependency 'tech.pegasys.discovery:discovery:0.4.0-dev-b9433156'
+    dependency 'tech.pegasys.discovery:discovery:0.4.1'
   }
 }
