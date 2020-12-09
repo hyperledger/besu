@@ -44,7 +44,7 @@ public abstract class AbstractGetHeadersFromPeerTask
   protected final int count;
   protected final int skip;
   protected final boolean reverse;
-  protected long startBlockHint; // this could be the exact start block or a minimum start block
+  protected long startBlockNumber;
 
   protected AbstractGetHeadersFromPeerTask(
       final ProtocolSchedule protocolSchedule,

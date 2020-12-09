@@ -38,7 +38,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
       final boolean reverse,
       final MetricsSystem metricsSystem) {
     super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
-    this.startBlockHint = exactBlockNumber;
+    this.startBlockNumber = exactBlockNumber;
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtNumber(
@@ -76,13 +76,13 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
     return sendRequestToPeer(
         peer -> {
           LOG.debug("Requesting {} headers from peer {}.", count, peer);
-          return peer.getHeadersByNumber(startBlockHint, count, skip, reverse);
+          return peer.getHeadersByNumber(startBlockNumber, count, skip, reverse);
         },
-        startBlockHint);
+        startBlockNumber);
   }
 
   @Override
   protected boolean matchesFirstHeader(final BlockHeader firstHeader) {
-    return firstHeader.getNumber() == startBlockHint;
+    return firstHeader.getNumber() == startBlockNumber;
   }
 }

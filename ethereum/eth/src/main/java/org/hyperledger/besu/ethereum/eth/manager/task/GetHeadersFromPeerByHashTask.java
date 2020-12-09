@@ -38,13 +38,13 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long startBlockHint,
+      final long startBlock,
       final int count,
       final int skip,
       final boolean reverse,
       final MetricsSystem metricsSystem) {
     super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
-    this.startBlockHint = startBlockHint;
+    this.startBlockNumber = startBlock;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
   }
@@ -121,7 +121,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
           LOG.debug("Requesting {} headers from peer {}.", count, peer);
           return peer.getHeadersByHash(referenceHash, count, skip, reverse);
         },
-        startBlockHint);
+        startBlockNumber);
   }
 
   @Override
