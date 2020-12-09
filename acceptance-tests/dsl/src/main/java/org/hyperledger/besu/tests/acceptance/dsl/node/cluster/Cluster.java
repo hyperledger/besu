@@ -197,8 +197,7 @@ public class Cluster implements AutoCloseable {
   }
 
   /**
-   * Starts a capture of System.out and System.err. Once getConsole is called the capture will
-   * end.
+   * Starts a capture of System.out and System.err. Once getConsole is called the capture will end.
    */
   public void startConsoleCapture() {
     besuNodeRunner.startConsoleCapture();
