@@ -55,7 +55,7 @@ public class Proposal extends IbftMessage<ProposalPayload> {
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
     rlpOut.writeList(roundChanges, SignedData::writeTo);
-    rlpOut.writeList(roundChanges, SignedData::writeTo);
+    rlpOut.writeList(prepares, SignedData::writeTo);
     rlpOut.endList();
     return rlpOut.encoded();
   }
@@ -65,10 +65,10 @@ public class Proposal extends IbftMessage<ProposalPayload> {
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload =
         PayloadSerializers.readSignedProposalPayloadFrom(rlpIn);
-    final List<SignedData<PreparePayload>> prepares =
-        rlpIn.readList(PayloadSerializers::readSignedPreparePayloadFrom);
     final List<SignedData<RoundChangePayload>> roundChanges =
         rlpIn.readList(PayloadSerializers::readSignedRoundChangePayloadFrom);
+    final List<SignedData<PreparePayload>> prepares =
+        rlpIn.readList(PayloadSerializers::readSignedPreparePayloadFrom);
 
     rlpIn.leaveList();
     return new Proposal(payload, roundChanges, prepares);

@@ -14,17 +14,17 @@
  */
 package org.hyperledger.besu.consensus.qbft.payload;
 
-import java.util.List;
 import org.hyperledger.besu.consensus.common.bft.messages.SignedData;
 import org.hyperledger.besu.ethereum.core.Block;
+
+import java.util.List;
 
 public class PreparedRoundArtifacts {
   final Block preparedBlock;
   final List<SignedData<PreparePayload>> prepares;
 
   public PreparedRoundArtifacts(
-      final Block preparedBlock,
-      final List<SignedData<PreparePayload>> prepares) {
+      final Block preparedBlock, final List<SignedData<PreparePayload>> prepares) {
     this.preparedBlock = preparedBlock;
     this.prepares = prepares;
   }

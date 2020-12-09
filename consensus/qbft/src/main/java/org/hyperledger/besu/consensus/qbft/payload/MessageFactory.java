@@ -76,12 +76,20 @@ public class MessageFactory {
     final RoundChangePayload payload;
     if (preparedRoundData.isPresent()) {
       final int round =
-          preparedRoundData.get().getPrepares().get(0).getPayload().getRoundIdentifier()
+          preparedRoundData
+              .get()
+              .getPrepares()
+              .get(0)
+              .getPayload()
+              .getRoundIdentifier()
               .getRoundNumber();
 
-      payload = new RoundChangePayload(roundIdentifier,
-          Optional.of(new PreparedRoundMetadata(preparedRoundData.get().preparedBlock.getHash(),
-              round)));
+      payload =
+          new RoundChangePayload(
+              roundIdentifier,
+              Optional.of(
+                  new PreparedRoundMetadata(
+                      preparedRoundData.get().preparedBlock.getHash(), round)));
       return new RoundChange(
           createSignedMessage(payload),
           Optional.of(preparedRoundData.get().preparedBlock),
@@ -90,9 +98,7 @@ public class MessageFactory {
     } else {
       payload = new RoundChangePayload(roundIdentifier, Optional.empty());
       return new RoundChange(
-          createSignedMessage(payload),
-          Optional.empty(),
-          Collections.emptyList());
+          createSignedMessage(payload), Optional.empty(), Collections.emptyList());
     }
   }
 
