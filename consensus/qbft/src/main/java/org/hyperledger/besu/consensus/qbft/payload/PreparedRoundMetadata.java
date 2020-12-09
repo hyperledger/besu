@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.payload;
 
-import com.google.common.base.MoreObjects;
-import java.util.Objects;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
+import java.util.Objects;
+
+import com.google.common.base.MoreObjects;
 
 public class PreparedRoundMetadata {
   private final Hash preparedBlockHash;
@@ -72,8 +74,8 @@ public class PreparedRoundMetadata {
       return false;
     }
     PreparedRoundMetadata that = (PreparedRoundMetadata) o;
-    return preparedRound == that.preparedRound &&
-        Objects.equals(preparedBlockHash, that.preparedBlockHash);
+    return preparedRound == that.preparedRound
+        && Objects.equals(preparedBlockHash, that.preparedBlockHash);
   }
 
   @Override
