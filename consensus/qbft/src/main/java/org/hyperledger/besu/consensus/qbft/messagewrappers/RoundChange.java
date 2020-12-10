@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +47,7 @@ public class RoundChange extends IbftMessage<RoundChangePayload> {
     return proposedBlock;
   }
 
-  public Collection<SignedData<PreparePayload>> getPrepares() {
+  public List<SignedData<PreparePayload>> getPrepares() {
     return prepares;
   }
 
