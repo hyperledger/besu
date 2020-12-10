@@ -62,8 +62,7 @@ public class FastDownloaderFactory {
     if (syncConfig.getSyncMode() != SyncMode.FAST) {
       if (fastSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
-            "Unable to change the sync mode when fast sync is incomplete, please restart with fast"
-                + " sync mode");
+            "Unable to change the sync mode when fast sync is incomplete, please restart with fast sync mode");
       } else {
         return Optional.empty();
       }
@@ -77,8 +76,7 @@ public class FastDownloaderFactory {
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
-          "Fast sync was requested, but cannot be enabled because the local blockchain is not"
-              + " empty.");
+          "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
     }
 
