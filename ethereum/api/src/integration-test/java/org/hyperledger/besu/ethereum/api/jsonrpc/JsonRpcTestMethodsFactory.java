@@ -127,7 +127,7 @@ public class JsonRpcTestMethodsFactory {
             peerDiscovery,
             blockchainQueries,
             synchronizer,
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.DEFAULT,
             filterManager,
             transactionPool,
             miningCoordinator,

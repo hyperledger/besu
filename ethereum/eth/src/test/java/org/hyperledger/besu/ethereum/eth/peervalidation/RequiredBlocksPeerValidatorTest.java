@@ -38,7 +38,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new RequiredBlocksPeerValidator(
-        MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), blockNumber, Hash.ZERO, buffer);
+        MainnetProtocolSchedule.DEFAULT, new NoOpMetricsSystem(), blockNumber, Hash.ZERO, buffer);
   }
 
   @Test
@@ -51,7 +51,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.DEFAULT,
             new NoOpMetricsSystem(),
             requiredBlockNumber,
             requiredBlock.getHash(),
@@ -83,7 +83,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.DEFAULT,
             new NoOpMetricsSystem(),
             requiredBlockNumber,
             Hash.ZERO,

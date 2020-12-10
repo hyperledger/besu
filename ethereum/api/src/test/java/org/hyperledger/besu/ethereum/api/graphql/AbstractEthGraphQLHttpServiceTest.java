@@ -95,7 +95,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   @BeforeClass
   public static void setupConstants() throws Exception {
-    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create();
+    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.DEFAULT;
 
     final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
 

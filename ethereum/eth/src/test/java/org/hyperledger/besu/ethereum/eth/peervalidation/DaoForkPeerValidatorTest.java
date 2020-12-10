@@ -37,7 +37,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new DaoForkPeerValidator(
-        MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), blockNumber, buffer);
+        MainnetProtocolSchedule.DEFAULT, new NoOpMetricsSystem(), blockNumber, buffer);
   }
 
   @Test
@@ -53,7 +53,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
+            MainnetProtocolSchedule.DEFAULT, new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
@@ -81,7 +81,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
+            MainnetProtocolSchedule.DEFAULT, new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);

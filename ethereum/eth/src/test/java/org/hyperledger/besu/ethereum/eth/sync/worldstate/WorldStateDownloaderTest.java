@@ -907,7 +907,7 @@ public class WorldStateDownloaderTest {
             mock(Blockchain.class),
             remoteWorldStateArchive,
             mock(TransactionPool.class),
-            MainnetProtocolSchedule.create(),
+            MainnetProtocolSchedule.DEFAULT,
             .5f);
     final RespondingEthPeer.Responder emptyResponder = RespondingEthPeer.emptyResponder();
 

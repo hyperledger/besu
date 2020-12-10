@@ -61,7 +61,7 @@ public class FullSyncTargetManagerTest {
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting();
     localBlockchain = localBlockchainSetup.getBlockchain();
 
-    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.DEFAULT;
     final ProtocolContext protocolContext =
         new ProtocolContext(localBlockchain, localWorldState, null);
     ethProtocolManager =
