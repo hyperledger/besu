@@ -60,9 +60,9 @@ public class ProposalTest {
 
     final ProposalPayload payload = new ProposalPayload(new ConsensusRoundIdentifier(1, 1), BLOCK);
 
-    final Signature sig = nodeKey.sign(Hash.keccak256(payload.encoded()));
-
-    final SignedData<ProposalPayload> signedPayload = new SignedData<>(payload, addr, sig);
+    final SignedData<ProposalPayload> signedPayload = new SignedData<>(payload,
+        addr,
+        nodeKey.sign(MessageFactory.hashForSignature(payload)));
 
     final PreparePayload preparePayload =
         new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
