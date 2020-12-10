@@ -213,6 +213,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     .collect(Collectors.toList()))
             .besuPluginContext(new BesuPluginContextImpl())
             .autoLogBloomCaching(false)
+            .storageProvider(storageProvider)
             .build();
 
     System.setOut(null);

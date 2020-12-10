@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
@@ -119,6 +120,7 @@ public final class RunnerBuilderTest {
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(vertx)
             .dataDir(dataDir.getRoot().toPath())
+            .storageProvider(mock(KeyValueStorageProvider.class))
             .build();
     runner.start();
 
