@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 
 import java.util.List;
 
@@ -61,7 +62,7 @@ public class VoteTallyCacheTestBase {
 
     genesisBlock = createEmptyBlock(0, Hash.ZERO);
 
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, ProtocolScheduleFixture.MAINNET);
 
     block_1 = createEmptyBlock(1, genesisBlock.getHeader().getHash());
     block_2 = createEmptyBlock(2, block_1.getHeader().getHash());

@@ -64,7 +64,8 @@ public class NodeSmartContractPermissioningControllerTest {
     final GenesisState genesisState =
         GenesisState.fromConfig(GenesisConfigFile.fromConfig(jsonData), protocolSchedule);
 
-    final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
+    final MutableBlockchain blockchain =
+        createInMemoryBlockchain(genesisState.getBlock(), protocolSchedule);
     final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
 
     genesisState.writeStateTo(worldArchive.getMutable());

@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
@@ -66,7 +67,8 @@ public class LogsSubscriptionServiceTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator(1);
   private final MutableBlockchain blockchain =
-      InMemoryStorageProvider.createInMemoryBlockchain(gen.genesisBlock());
+      InMemoryStorageProvider.createInMemoryBlockchain(
+          gen.genesisBlock(), ProtocolScheduleFixture.MAINNET);
 
   private LogsSubscriptionService logsSubscriptionService;
   private final AtomicLong nextSubscriptionId = new AtomicLong();

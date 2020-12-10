@@ -37,9 +37,10 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryStorageProvider implements StorageProvider {
 
-  public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
+  public static MutableBlockchain createInMemoryBlockchain(
+      final Block genesisBlock, final ProtocolSchedule protocolSchedule) {
     return createInMemoryBlockchain(
-        genesisBlock, ProtocolScheduleFixture.MAINNET, new MainnetBlockHeaderFunctions());
+        genesisBlock, protocolSchedule, new MainnetBlockHeaderFunctions());
   }
 
   public static MutableBlockchain createInMemoryBlockchain(

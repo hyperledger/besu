@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -61,7 +62,8 @@ public class PrunerIntegrationTest {
           worldStateStorage, new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
   private final InMemoryKeyValueStorage markStorage = new InMemoryKeyValueStorage();
   private final Block genesisBlock = gen.genesisBlock();
-  private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
+  private final MutableBlockchain blockchain =
+      createInMemoryBlockchain(genesisBlock, ProtocolScheduleFixture.MAINNET);
 
   @Test
   public void pruner_smallState_manyOpsPerTx() {

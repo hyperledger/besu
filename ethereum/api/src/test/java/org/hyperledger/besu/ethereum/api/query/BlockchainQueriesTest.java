@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -550,7 +551,8 @@ public class BlockchainQueriesTest {
     }
 
     // Setup blockchain
-    final MutableBlockchain blockchain = createInMemoryBlockchain(blocks.get(0));
+    final MutableBlockchain blockchain =
+        createInMemoryBlockchain(blocks.get(0), ProtocolScheduleFixture.MAINNET);
     blockData
         .subList(1, blockData.size())
         .forEach(b -> blockchain.appendBlock(b.block, b.receipts));

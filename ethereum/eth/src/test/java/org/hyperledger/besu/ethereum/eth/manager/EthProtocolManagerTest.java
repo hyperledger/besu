@@ -907,7 +907,7 @@ public final class EthProtocolManagerTest {
   public void shouldSuccessfullyRespondToGetHeadersRequestLessThanZero()
       throws ExecutionException, InterruptedException {
     final Block genesisBlock = gen.genesisBlock();
-    final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock);
+    final MutableBlockchain blockchain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()

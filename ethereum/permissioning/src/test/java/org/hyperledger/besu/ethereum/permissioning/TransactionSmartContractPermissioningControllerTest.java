@@ -65,7 +65,8 @@ public class TransactionSmartContractPermissioningControllerTest {
     final GenesisState genesisState =
         GenesisState.fromConfig(GenesisConfigFile.fromConfig(emptyContractFile), protocolSchedule);
 
-    final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
+    final MutableBlockchain blockchain =
+        createInMemoryBlockchain(genesisState.getBlock(), protocolSchedule);
     final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
 
     genesisState.writeStateTo(worldArchive.getMutable());

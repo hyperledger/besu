@@ -75,7 +75,7 @@ public class DetermineCommonAncestorTaskTest {
   @Before
   public void setup() {
     localGenesisBlock = blockDataGenerator.genesisBlock();
-    localBlockchain = createInMemoryBlockchain(localGenesisBlock);
+    localBlockchain = createInMemoryBlockchain(localGenesisBlock, protocolSchedule);
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
@@ -283,7 +283,7 @@ public class DetermineCommonAncestorTaskTest {
 
     final Block remoteGenesis =
         (blocksInCommon > 0) ? localGenesisBlock : blockDataGenerator.genesisBlock();
-    MutableBlockchain remoteChain = createInMemoryBlockchain(remoteGenesis);
+    MutableBlockchain remoteChain = createInMemoryBlockchain(remoteGenesis, protocolSchedule);
 
     // Build common chain
     if (blocksInCommon > 1) {

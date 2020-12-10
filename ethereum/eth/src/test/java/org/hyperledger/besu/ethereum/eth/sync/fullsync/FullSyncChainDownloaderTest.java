@@ -450,7 +450,7 @@ public class FullSyncChainDownloaderTest {
         blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get();
     final BlockBody genesisBody = blockchain.getBlockBody(genesisHeader.getHash()).get();
     final Block genesisBlock = new Block(genesisHeader, genesisBody);
-    final MutableBlockchain shortChain = createInMemoryBlockchain(genesisBlock);
+    final MutableBlockchain shortChain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
     long nextBlock = genesisHeader.getNumber() + 1;
     while (nextBlock <= truncateAtBlockNumber) {
       final BlockHeader header = blockchain.getBlockHeader(nextBlock).get();

@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
@@ -33,32 +32,28 @@ public class BlockchainImporter {
 
   private final GenesisState genesisState;
 
-  private final ProtocolSchedule protocolSchedule;
+  private static final ProtocolSchedule PROTOCOL_SCHEDULE = ProtocolScheduleFixture.MAINNET;
 
   private final List<Block> blocks;
 
   private final Block genesisBlock;
 
   public BlockchainImporter(final URL blocksUrl, final String genesisJson) throws Exception {
-    protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(genesisJson).getConfigOptions());
-
     blocks = new ArrayList<>();
     try (final RawBlockIterator iterator =
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
-            protocolSchedule,
+            PROTOCOL_SCHEDULE,
             rlp ->
                 ProtocolRLPSpec.decodeBlockHeaderStandalone(
-                    rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
+                    rlp, ScheduleBasedBlockHeaderFunctions.create(PROTOCOL_SCHEDULE)))) {
       while (iterator.hasNext()) {
         blocks.add(iterator.next());
       }
     }
 
     genesisBlock = blocks.get(0);
-    genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
+    genesisState = GenesisState.fromJson(genesisJson, PROTOCOL_SCHEDULE);
   }
 
   public GenesisState getGenesisState() {
@@ -66,7 +61,7 @@ public class BlockchainImporter {
   }
 
   public ProtocolSchedule getProtocolSchedule() {
-    return protocolSchedule;
+    return PROTOCOL_SCHEDULE;
   }
 
   public List<Block> getBlocks() {

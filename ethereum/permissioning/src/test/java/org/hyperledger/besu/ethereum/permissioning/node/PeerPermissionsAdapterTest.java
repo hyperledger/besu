@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -44,7 +45,8 @@ public class PeerPermissionsAdapterTest {
       mock(NodePermissioningController.class);
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final MutableBlockchain blockchain =
-      InMemoryStorageProvider.createInMemoryBlockchain(gen.genesisBlock());
+      InMemoryStorageProvider.createInMemoryBlockchain(
+          gen.genesisBlock(), ProtocolScheduleFixture.MAINNET);
   private final List<EnodeURL> bootNodes = new ArrayList<>();
   private final PeerPermissionsAdapter adapter =
       new PeerPermissionsAdapter(nodePermissioningController, bootNodes, blockchain);

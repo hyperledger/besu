@@ -15,8 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -56,10 +54,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private final WorldStateArchive worldStateArchive;
 
-  private final MutableBlockchain blockchain;
   private final String sealEngine;
-
-  private final ProtocolContext protocolContext;
 
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
@@ -80,11 +75,6 @@ public class BlockchainReferenceTestCaseSpec {
     return worldStateArchive;
   }
 
-  private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
-    final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
-    return InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
-  }
-
   @JsonCreator
   public BlockchainReferenceTestCaseSpec(
       @JsonProperty("network") final String network,
@@ -99,9 +89,7 @@ public class BlockchainReferenceTestCaseSpec {
     this.genesisBlockHeader = genesisBlockHeader;
     this.lastBlockHash = Hash.fromHexString(lastBlockHash);
     this.worldStateArchive = buildWorldStateArchive(accounts);
-    this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
-    this.protocolContext = new ProtocolContext(this.blockchain, this.worldStateArchive, null);
   }
 
   public String getNetwork() {
@@ -118,14 +106,6 @@ public class BlockchainReferenceTestCaseSpec {
 
   public BlockHeader getGenesisBlockHeader() {
     return genesisBlockHeader;
-  }
-
-  public MutableBlockchain getBlockchain() {
-    return blockchain;
-  }
-
-  public ProtocolContext getProtocolContext() {
-    return protocolContext;
   }
 
   public Hash getLastBlockHash() {

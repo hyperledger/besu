@@ -20,8 +20,10 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -98,8 +100,11 @@ public class BlockchainReferenceTestTools {
     final ProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
 
-    final MutableBlockchain blockchain = spec.getBlockchain();
-    final ProtocolContext context = spec.getProtocolContext();
+    final MutableBlockchain blockchain =
+        InMemoryStorageProvider.createInMemoryBlockchain(
+            new Block(genesisBlockHeader, BlockBody.empty()), schedule);
+    final ProtocolContext context =
+        new ProtocolContext(blockchain, spec.getWorldStateArchive(), null);
 
     for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
         spec.getCandidateBlocks()) {

@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.Optional;
@@ -80,7 +81,7 @@ public class CliqueMiningCoordinatorTest {
 
     headerTestFixture.number(1);
     Block genesisBlock = createEmptyBlock(0, Hash.ZERO, proposerKeys); // not normally signed but ok
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, mock(ProtocolSchedule.class));
 
     final VoteTally voteTally = mock(VoteTally.class);
     when(voteTally.getValidators()).thenReturn(validators);

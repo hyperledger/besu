@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -78,7 +79,8 @@ public class SyncStateTest {
   private final Block genesisBlock =
       gen.genesisBlock(new BlockOptions().setDifficulty(Difficulty.ZERO));
   private final MutableBlockchain blockchain =
-      InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+      InMemoryStorageProvider.createInMemoryBlockchain(
+          genesisBlock, ProtocolScheduleFixture.MAINNET);
 
   @Captor ArgumentCaptor<Optional<SyncStatus>> syncStatusCaptor;
 

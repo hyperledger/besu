@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
@@ -55,7 +56,9 @@ public class PrivateStateRootResolverTest {
 
   @BeforeClass
   public static void setupClass() {
-    BLOCKCHAIN = InMemoryStorageProvider.createInMemoryBlockchain(BLOCK_GENERATOR.genesisBlock());
+    BLOCKCHAIN =
+        InMemoryStorageProvider.createInMemoryBlockchain(
+            BLOCK_GENERATOR.genesisBlock(), ProtocolScheduleFixture.MAINNET);
     for (int i = 1; i <= 69; i++) {
       final BlockDataGenerator.BlockOptions options =
           new BlockDataGenerator.BlockOptions()

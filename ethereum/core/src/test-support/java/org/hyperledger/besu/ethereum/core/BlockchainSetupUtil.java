@@ -153,7 +153,8 @@ public class BlockchainSetupUtil {
       final ProtocolSchedule protocolSchedule = protocolScheduleProvider.get(genesisConfigFile);
 
       final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
-      final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
+      final MutableBlockchain blockchain =
+          createInMemoryBlockchain(genesisState.getBlock(), protocolSchedule);
       final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
       final TransactionPool transactionPool = mock(TransactionPool.class);
 

@@ -96,7 +96,7 @@ public class CliqueBlockCreatorTest {
 
     final Block genesis =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
-    blockchain = createInMemoryBlockchain(genesis);
+    blockchain = createInMemoryBlockchain(genesis, protocolSchedule);
     protocolContext = new ProtocolContext(blockchain, stateArchive, cliqueContext);
     epochManager = new EpochManager(10);
 

@@ -73,11 +73,12 @@ public class JsonRpcTestMethodsFactory {
 
     importer.getGenesisState().writeStateTo(stateArchive.getMutable());
 
-    final MutableBlockchain blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
+    final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
+    final MutableBlockchain blockchain =
+        createInMemoryBlockchain(importer.getGenesisBlock(), protocolSchedule);
     final ProtocolContext context = new ProtocolContext(blockchain, stateArchive, null);
 
     for (final Block block : importer.getBlocks()) {
-      final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();

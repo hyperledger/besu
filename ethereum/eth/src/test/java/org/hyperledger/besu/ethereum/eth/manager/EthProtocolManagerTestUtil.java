@@ -103,7 +103,8 @@ public class EthProtocolManagerTestUtil {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final GenesisConfigFile config = GenesisConfigFile.mainnet();
     final GenesisState genesisState = GenesisState.fromConfig(config, protocolSchedule);
-    final Blockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
+    final Blockchain blockchain =
+        createInMemoryBlockchain(genesisState.getBlock(), protocolSchedule);
     return create(blockchain, ethScheduler);
   }
 

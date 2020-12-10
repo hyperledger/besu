@@ -35,7 +35,9 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 
@@ -52,6 +54,7 @@ public class NodeCanProduceNextBlockTest {
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
   private ProtocolContext cliqueProtocolContext;
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
+  private static final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
 
   MutableBlockchain blockChain;
   private Block genesisBlock;
@@ -74,7 +77,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -100,7 +103,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(otherNodeKeyPair);
 
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -135,7 +138,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -166,7 +169,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -212,7 +215,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -242,7 +245,7 @@ public class NodeCanProduceNextBlockTest {
 
     genesisBlock = createEmptyBlock(proposerKeyPair);
 
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
@@ -267,7 +270,7 @@ public class NodeCanProduceNextBlockTest {
   public void nonValidatorIsNotAllowedToCreateABlock() {
     genesisBlock = createEmptyBlock(otherNodeKeyPair);
 
-    blockChain = createInMemoryBlockchain(genesisBlock);
+    blockChain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
     when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));

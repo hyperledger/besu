@@ -79,7 +79,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
   @BeforeClass
   public static void setupClass() {
     genesisBlock = blockDataGenerator.genesisBlock();
-    localBlockchain = createInMemoryBlockchain(genesisBlock);
+    localBlockchain = createInMemoryBlockchain(genesisBlock, ProtocolScheduleFixture.MAINNET);
 
     // Setup local chain
     for (int i = 1; i <= chainHeight; i++) {
@@ -95,7 +95,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
   @Before
   public void setup() {
-    remoteBlockchain = createInMemoryBlockchain(genesisBlock);
+    remoteBlockchain = createInMemoryBlockchain(genesisBlock, protocolSchedule);
   }
 
   @Parameters(name = "requestSize={0}, commonAncestor={1}")

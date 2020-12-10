@@ -23,7 +23,9 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,6 +49,7 @@ public class BlockchainUtilParameterizedTest {
   private final int commonAncestorHeight;
   private static Block genesisBlock;
   private static MutableBlockchain localBlockchain;
+  private static final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
 
   private MutableBlockchain remoteBlockchain;
 
@@ -60,7 +63,8 @@ public class BlockchainUtilParameterizedTest {
   @BeforeClass
   public static void setupClass() {
     genesisBlock = blockDataGenerator.genesisBlock();
-    localBlockchain = InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+    localBlockchain =
+        InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock, protocolSchedule);
     // Setup local chain.
     for (int i = 1; i <= chainHeight; i++) {
       final BlockDataGenerator.BlockOptions options =
@@ -75,7 +79,8 @@ public class BlockchainUtilParameterizedTest {
 
   @Before
   public void setup() {
-    remoteBlockchain = InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+    remoteBlockchain =
+        InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock, protocolSchedule);
 
     commonHeader = genesisBlock.getHeader();
     for (long i = 1; i <= commonAncestorHeight; i++) {
