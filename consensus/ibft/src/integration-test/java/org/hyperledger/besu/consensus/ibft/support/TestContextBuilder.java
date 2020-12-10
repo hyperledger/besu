@@ -63,11 +63,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -176,7 +176,7 @@ public class TestContextBuilder {
     final MutableBlockchain blockChain =
         createInMemoryBlockchain(
             genesisBlock,
-            MainnetProtocolSchedule.DEFAULT,
+            ProtocolScheduleFixture.MAINNET,
             IbftBlockHeaderFunctions.forOnChainBlock());
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.

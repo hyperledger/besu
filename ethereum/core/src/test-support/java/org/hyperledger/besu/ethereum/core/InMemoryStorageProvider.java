@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
@@ -40,7 +39,7 @@ public class InMemoryStorageProvider implements StorageProvider {
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
     return createInMemoryBlockchain(
-        genesisBlock, MainnetProtocolSchedule.DEFAULT, new MainnetBlockHeaderFunctions());
+        genesisBlock, ProtocolScheduleFixture.MAINNET, new MainnetBlockHeaderFunctions());
   }
 
   public static MutableBlockchain createInMemoryBlockchain(

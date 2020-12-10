@@ -134,7 +134,9 @@ public class OrionTestHarness {
             + "clientnetworkinterface = \""
             + HOST
             + "\"\n"
-            + "storage = \"leveldb:database/orion_node\"\n"
+            + "storage = \""
+            + orionConfiguration.getStorage()
+            + "\"\n"
             + "publickeys = ["
             + joinPathsAsTomlListEntry(orionConfiguration.getPublicKeys())
             + "]\n"
