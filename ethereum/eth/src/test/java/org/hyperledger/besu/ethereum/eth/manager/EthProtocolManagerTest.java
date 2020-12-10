@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixtures;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -880,7 +880,7 @@ public final class EthProtocolManagerTest {
           .isEqualTo(Collections.singletonList(EthProtocol.ETH63));
 
       // assert that all messages transmitted contain the expected block & total difficulty.
-      final ProtocolSchedule protocolSchdeule = ProtocolScheduleFixtures.DEFAULT;
+      final ProtocolSchedule protocolSchdeule = ProtocolScheduleFixture.MAINNET;
       for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
         assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
         assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);

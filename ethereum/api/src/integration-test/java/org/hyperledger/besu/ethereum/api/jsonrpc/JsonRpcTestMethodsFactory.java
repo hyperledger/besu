@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixtures;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -127,7 +127,7 @@ public class JsonRpcTestMethodsFactory {
             peerDiscovery,
             blockchainQueries,
             synchronizer,
-            ProtocolScheduleFixtures.DEFAULT,
+            ProtocolScheduleFixture.MAINNET,
             filterManager,
             transactionPool,
             miningCoordinator,

@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixtures;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -62,7 +62,7 @@ import org.junit.Test;
 
 public class DetermineCommonAncestorTaskTest {
 
-  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixtures.DEFAULT;
+  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final int defaultHeaderRequestSize = 10;

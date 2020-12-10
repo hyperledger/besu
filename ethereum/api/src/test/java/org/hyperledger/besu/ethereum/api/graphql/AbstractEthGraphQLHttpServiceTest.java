@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixtures;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -95,7 +95,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   @BeforeClass
   public static void setupConstants() throws Exception {
-    PROTOCOL_SCHEDULE = ProtocolScheduleFixtures.DEFAULT;
+    PROTOCOL_SCHEDULE = ProtocolScheduleFixture.MAINNET;
 
     final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
 

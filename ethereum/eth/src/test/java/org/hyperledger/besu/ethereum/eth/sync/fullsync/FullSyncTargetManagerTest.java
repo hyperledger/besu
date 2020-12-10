@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixtures;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -61,7 +61,7 @@ public class FullSyncTargetManagerTest {
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting();
     localBlockchain = localBlockchainSetup.getBlockchain();
 
-    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixtures.DEFAULT;
+    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final ProtocolContext protocolContext =
         new ProtocolContext(localBlockchain, localWorldState, null);
     ethProtocolManager =

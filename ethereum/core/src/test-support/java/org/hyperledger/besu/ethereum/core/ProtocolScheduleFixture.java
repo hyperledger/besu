@@ -17,10 +17,8 @@
 
 package org.hyperledger.besu.ethereum.core;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
+
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
@@ -29,10 +27,13 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.io.IOException;
 
-import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class ProtocolScheduleFixtures {
-  public static final ProtocolSchedule DEFAULT =
+public class ProtocolScheduleFixture {
+  public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
           getMainnetConfigOptions(), PrivacyParameters.DEFAULT, false);
 

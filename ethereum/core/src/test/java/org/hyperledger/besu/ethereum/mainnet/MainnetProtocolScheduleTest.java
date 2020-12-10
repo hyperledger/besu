@@ -15,19 +15,19 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 
 import java.nio.charset.StandardCharsets;
 
 import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixtures;
 import org.junit.Test;
 
 public class MainnetProtocolScheduleTest {
 
   @Test
   public void shouldReturnDefaultProtocolSpecsWhenCustomNumbersAreNotUsed() {
-    final ProtocolSchedule sched = ProtocolScheduleFixtures.DEFAULT;
+    final ProtocolSchedule sched = ProtocolScheduleFixture.MAINNET;
     Assertions.assertThat(sched.getByBlockNumber(1L).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockNumber(1_150_000L).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockNumber(1_920_000L).getName())
