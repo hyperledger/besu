@@ -56,13 +56,12 @@ public final class BodyValidation {
   public static Hash transactionsRoot(final List<Transaction> transactions) {
     final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
-    IntStream.range(0, transactions.size())
-        .forEach(
-            i ->
-                trie.put(
-                    indexKey(i),
-                    RLP.encode(
-                        rlpOutput -> ProtocolRLPSpec.encode(transactions.get(i), rlpOutput))));
+    for (int i = 0; i < transactions.size(); ++i) {
+      final int iFinal = i;
+      trie.put(
+          indexKey(i),
+          RLP.encode(rlpOutput -> ProtocolRLPSpec.encode(transactions.get(iFinal), rlpOutput)));
+    }
 
     return Hash.wrap(trie.getRootHash());
   }
