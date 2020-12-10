@@ -25,10 +25,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -60,7 +60,7 @@ public class TransactionsMessageProcessorTest {
   public void setUp() {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(Long.MAX_VALUE);
     when(protocolSchedule.getByBlockNumber(eq(Long.MAX_VALUE)))
-        .thenReturn(MainnetProtocolSchedule.DEFAULT.getByBlockNumber(Long.MAX_VALUE));
+        .thenReturn(ProtocolScheduleFixture.MAINNET.getByBlockNumber(Long.MAX_VALUE));
   }
 
   @Test

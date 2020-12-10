@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.io.File;
@@ -35,7 +35,7 @@ public class FastSyncStateStorageTest {
   private FastSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();
   private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader);
-  private final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.DEFAULT;
+  private final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
   private File tempDir;
 
   @Before

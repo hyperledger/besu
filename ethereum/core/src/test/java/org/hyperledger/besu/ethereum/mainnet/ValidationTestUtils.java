@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -46,6 +47,6 @@ public final class ValidationTestUtils {
                     EthHashTest.class.getResource(String.format("block_%d.blocks", num)))),
             false);
     return ProtocolRLPSpec.decodeBlockStandalone(
-        MainnetProtocolSchedule.DEFAULT, new MainnetBlockHeaderFunctions(), input);
+        ProtocolScheduleFixture.MAINNET, new MainnetBlockHeaderFunctions(), input);
   }
 }

@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -195,7 +195,7 @@ public class PrunerTest {
   private BlockchainStorage getBlockchainStorage() {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
         new InMemoryKeyValueStorage(),
-        MainnetProtocolSchedule.DEFAULT,
+        ProtocolScheduleFixture.MAINNET,
         new MainnetBlockHeaderFunctions());
   }
 }

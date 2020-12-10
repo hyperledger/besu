@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.io.DataOutputStream;
@@ -83,7 +83,7 @@ public class RawBlockIteratorTest {
     final RawBlockIterator iterator =
         new RawBlockIterator(
             blocksFile.toPath(),
-            MainnetProtocolSchedule.DEFAULT,
+            ProtocolScheduleFixture.MAINNET,
             rlp ->
                 ProtocolRLPSpec.decodeBlockHeaderStandalone(rlp, new MainnetBlockHeaderFunctions()),
             initialCapacity);

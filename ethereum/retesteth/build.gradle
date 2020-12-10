@@ -38,6 +38,8 @@ dependencies {
   implementation project(':nat')
   implementation project(':services:kvstore')
   implementation project(':util')
+  implementation project(':util')
+  implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'

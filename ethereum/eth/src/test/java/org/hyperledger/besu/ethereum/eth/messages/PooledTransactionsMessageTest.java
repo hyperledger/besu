@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -46,7 +46,7 @@ public class PooledTransactionsMessageTest {
                 .signAndBuild(SECP256K1.KeyPair.generate()));
     final PooledTransactionsMessage msg = PooledTransactionsMessage.create(tx);
     assertThat(msg.getCode()).isEqualTo(EthPV65.POOLED_TRANSACTIONS);
-    assertThat(msg.transactions(MainnetProtocolSchedule.DEFAULT.getLatestRLPSpec())).isEqualTo(tx);
+    assertThat(msg.transactions(ProtocolScheduleFixture.MAINNET.getLatestRLPSpec())).isEqualTo(tx);
   }
 
   @Test

@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.encoding.ProtocolRLPSpec;
 import org.hyperledger.besu.ethereum.encoding.ProtocolScheduleBasedRLPSpecSupplier;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
@@ -64,7 +64,7 @@ public final class BlockBodiesMessageTest {
           new BlockBody(
               oneBlock.readList(
                   ProtocolScheduleBasedRLPSpecSupplier.getByBlockNumber(
-                              MainnetProtocolSchedule.DEFAULT, blockHeader.getNumber())
+                              ProtocolScheduleFixture.MAINNET, blockHeader.getNumber())
                           .get()
                       ::decodeTransaction),
               oneBlock.readList(
