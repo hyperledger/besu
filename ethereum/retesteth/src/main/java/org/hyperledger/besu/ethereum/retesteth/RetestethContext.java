@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -219,7 +220,7 @@ public class RetestethContext {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            keyValueStorage, MainnetProtocolSchedule.DEFAULT, new MainnetBlockHeaderFunctions()),
+            keyValueStorage, ProtocolScheduleFixture.MAINNET, new MainnetBlockHeaderFunctions()),
         new NoOpMetricsSystem(),
         100);
   }
