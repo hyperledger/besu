@@ -88,16 +88,18 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
     dependency 'org.fusesource.jansi:jansi:1.8'
 
-    dependency 'org.apache.tuweni:bytes:1.2.0'
-    dependency 'org.apache.tuweni:config:1.2.0'
-    dependency 'org.apache.tuweni:crypto:1.2.0'
-    dependency 'org.apache.tuweni:devp2p:1.2.0'
-    dependency 'org.apache.tuweni:dns-discovery:1.2.0'
-    dependency 'org.apache.tuweni:io:1.2.0'
-    dependency 'org.apache.tuweni:rlp:1.2.0'
-    dependency 'org.apache.tuweni:toml:1.2.0'
-    dependency 'org.apache.tuweni:units:1.2.0'
-    dependency 'org.apache.tuweni:net:1.2.0'
+    dependencySet(group: 'org.apache.tuweni', version: '1.3.0') {
+      entry 'bytes'
+      entry 'config'
+      entry 'crypto'
+      entry 'devp2p'
+      entry 'dns-discovery'
+      entry 'io'
+      entry 'net'
+      entry 'rlp'
+      entry 'toml'
+      entry 'units'
+    }
 
     dependency 'org.assertj:assertj-core:3.16.1'
 
@@ -142,5 +144,7 @@ dependencyManagement {
     dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:signing-api:0.4.0'
+
+    dependency 'tech.pegasys.discovery:discovery:0.4.1'
   }
 }
