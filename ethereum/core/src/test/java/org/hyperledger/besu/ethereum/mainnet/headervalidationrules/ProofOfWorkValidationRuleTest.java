@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixtures;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
@@ -142,7 +142,7 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   private BlockHeaderFunctions mainnetBlockHashFunction() {
-    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.DEFAULT;
+    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixtures.DEFAULT;
     return ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 }
