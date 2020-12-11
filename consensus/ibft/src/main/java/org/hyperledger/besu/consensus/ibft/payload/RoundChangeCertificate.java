@@ -38,7 +38,7 @@ public class RoundChangeCertificate {
     final List<SignedData<RoundChangePayload>> roundChangePayloads;
 
     rlpInput.enterList();
-    roundChangePayloads = rlpInput.readList(SignedData::readSignedRoundChangePayloadFrom);
+    roundChangePayloads = rlpInput.readList(PayloadDeserializers::readSignedRoundChangePayloadFrom);
     rlpInput.leaveList();
 
     return new RoundChangeCertificate(roundChangePayloads);

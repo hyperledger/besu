@@ -82,7 +82,8 @@ public class RoundChangePayloadTest {
 
     final PreparePayload preparePayload =
         new PreparePayload(ROUND_IDENTIFIER, Hash.fromHexStringLenient("0x8523ba6e7c5f59ae87"));
-    final SignedData<PreparePayload> signedPrepare = SignedData.from(preparePayload, SIGNATURE);
+    final SignedData<PreparePayload> signedPrepare =
+        PayloadDeserializers.from(preparePayload, SIGNATURE);
     final PreparedCertificate preparedCert =
         new PreparedCertificate(signedProposal, Lists.newArrayList(signedPrepare));
 
@@ -104,6 +105,6 @@ public class RoundChangePayloadTest {
         TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    return SignedData.from(proposalPayload, signature);
+    return PayloadDeserializers.from(proposalPayload, signature);
   }
 }
