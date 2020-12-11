@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-public class PayloadDeserialisers {
+public class PayloadDeserializers {
 
   public static SignedData<ProposalPayload> readSignedProposalPayloadFrom(final RLPInput rlpInput) {
 
