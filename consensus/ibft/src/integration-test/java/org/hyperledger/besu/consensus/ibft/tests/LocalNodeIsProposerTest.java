@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.ibftevent.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
 import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;

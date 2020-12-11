@@ -18,7 +18,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createValidPreparedRoundArtifacts;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;

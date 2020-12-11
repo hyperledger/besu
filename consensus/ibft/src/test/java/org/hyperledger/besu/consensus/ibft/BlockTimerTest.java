@@ -24,6 +24,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.ibftevent.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
