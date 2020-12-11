@@ -33,6 +33,7 @@ dependencies {
   implementation project(':crypto')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
+  implementation project(':ethereum:rlp')
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'

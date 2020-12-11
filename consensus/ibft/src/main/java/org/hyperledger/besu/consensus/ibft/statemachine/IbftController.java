@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.Gossiper;
 import org.hyperledger.besu.consensus.ibft.MessageTracker;
 import org.hyperledger.besu.consensus.ibft.SynchronizerUpdater;
