@@ -63,7 +63,8 @@ public class PreparedCertificateTest {
     final PreparePayload preparePayload =
         new PreparePayload(ROUND_IDENTIFIER, Hash.fromHexStringLenient("0x8523ba6e7c5f59ae87"));
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    final SignedData<PreparePayload> signedPrepare = SignedData.from(preparePayload, signature);
+    final SignedData<PreparePayload> signedPrepare =
+        PayloadDeserialisers.from(preparePayload, signature);
 
     final PreparedCertificate preparedCert =
         new PreparedCertificate(signedProposalPayload, Lists.newArrayList(signedPrepare));
@@ -83,6 +84,6 @@ public class PreparedCertificateTest {
         TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    return SignedData.from(proposalPayload, signature);
+    return PayloadDeserialisers.from(proposalPayload, signature);
   }
 }

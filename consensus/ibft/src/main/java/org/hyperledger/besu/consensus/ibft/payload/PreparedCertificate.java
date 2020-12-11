@@ -38,8 +38,8 @@ public class PreparedCertificate {
     final List<SignedData<PreparePayload>> prepareMessages;
 
     rlpInput.enterList();
-    proposalMessage = SignedData.readSignedProposalPayloadFrom(rlpInput);
-    prepareMessages = rlpInput.readList(SignedData::readSignedPreparePayloadFrom);
+    proposalMessage = PayloadDeserialisers.readSignedProposalPayloadFrom(rlpInput);
+    prepareMessages = rlpInput.readList(PayloadDeserialisers::readSignedPreparePayloadFrom);
     rlpInput.leaveList();
 
     return new PreparedCertificate(proposalMessage, prepareMessages);

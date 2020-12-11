@@ -16,9 +16,7 @@ package org.hyperledger.besu.consensus.ibft.payload;
 
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
@@ -59,65 +57,6 @@ public class SignedData<M extends Payload> implements Authored {
     final BytesValueRLPOutput rlpEncode = new BytesValueRLPOutput();
     writeTo(rlpEncode);
     return rlpEncode.encoded();
-  }
-
-  public static SignedData<ProposalPayload> readSignedProposalPayloadFrom(final RLPInput rlpInput) {
-
-    rlpInput.enterList();
-    final ProposalPayload unsignedMessageData = ProposalPayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
-    rlpInput.leaveList();
-
-    return from(unsignedMessageData, signature);
-  }
-
-  public static SignedData<PreparePayload> readSignedPreparePayloadFrom(final RLPInput rlpInput) {
-
-    rlpInput.enterList();
-    final PreparePayload unsignedMessageData = PreparePayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
-    rlpInput.leaveList();
-
-    return from(unsignedMessageData, signature);
-  }
-
-  public static SignedData<CommitPayload> readSignedCommitPayloadFrom(final RLPInput rlpInput) {
-
-    rlpInput.enterList();
-    final CommitPayload unsignedMessageData = CommitPayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
-    rlpInput.leaveList();
-
-    return from(unsignedMessageData, signature);
-  }
-
-  public static SignedData<RoundChangePayload> readSignedRoundChangePayloadFrom(
-      final RLPInput rlpInput) {
-
-    rlpInput.enterList();
-    final RoundChangePayload unsignedMessageData = RoundChangePayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
-    rlpInput.leaveList();
-
-    return from(unsignedMessageData, signature);
-  }
-
-  protected static <M extends Payload> SignedData<M> from(
-      final M unsignedMessageData, final Signature signature) {
-
-    final Address sender = recoverSender(unsignedMessageData, signature);
-
-    return new SignedData<>(unsignedMessageData, sender, signature);
-  }
-
-  protected static Signature readSignature(final RLPInput signedMessage) {
-    return signedMessage.readBytes(Signature::decode);
-  }
-
-  protected static Address recoverSender(
-      final Payload unsignedMessageData, final Signature signature) {
-
-    return Util.signatureToAddress(signature, MessageFactory.hashForSignature(unsignedMessageData));
   }
 
   @Override
