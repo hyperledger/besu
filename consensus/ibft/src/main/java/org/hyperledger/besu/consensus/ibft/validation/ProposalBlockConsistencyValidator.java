@@ -15,9 +15,9 @@
 package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
-import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import org.apache.logging.log4j.LogManager;

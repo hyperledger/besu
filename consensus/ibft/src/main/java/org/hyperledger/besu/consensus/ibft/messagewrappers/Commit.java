@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
-import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;

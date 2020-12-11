@@ -19,6 +19,7 @@ import static org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightMa
 import static org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManager.MessageAge.PRIOR_ROUND;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.ibft.BlockTimer;
 import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.ibft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
