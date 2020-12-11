@@ -18,7 +18,7 @@ import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;

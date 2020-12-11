@@ -27,7 +27,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.consensus.ibft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.ibft.support.TestContext;
