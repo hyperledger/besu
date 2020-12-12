@@ -38,7 +38,7 @@ public class TransactionRLPEncoder {
       ImmutableMap.of(TransactionType.EIP1559, TransactionRLPEncoder::encodeEIP1559);
 
   public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
-    if (transaction.getType().equals(TransactionType.FRONTIER)) {
+    if (TransactionType.FRONTIER.equals(transaction.getType())) {
       encodeFrontier(transaction, rlpOutput);
     } else {
       final TransactionType type = transaction.getType();
