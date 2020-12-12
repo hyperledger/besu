@@ -52,6 +52,7 @@ public class TransactionEIP1559Test {
   public void givenEIP1559Transaction_assertThatRlpDecodingWorks() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction legacyTransaction = Transaction.readFrom(legacyRLPInput);
+    set(legacyTransaction, "transactionType", TransactionType.EIP1559);
     set(legacyTransaction, "gasPrice", null);
     set(legacyTransaction, "gasPremium", expectedGasPremium);
     set(legacyTransaction, "feeCap", expectedFeeCap);

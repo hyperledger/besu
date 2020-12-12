@@ -51,6 +51,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 public class BlockDataGenerator {
 
@@ -324,6 +325,8 @@ public class BlockDataGenerator {
 
   public Transaction transaction(final Bytes payload, final Address to) {
     return Transaction.builder()
+        // TODO support more EIP-2718 types as they're added
+        .type(TransactionType.FRONTIER)
         .nonce(positiveLong())
         .gasPrice(Wei.wrap(bytes32()))
         .gasLimit(positiveLong())
