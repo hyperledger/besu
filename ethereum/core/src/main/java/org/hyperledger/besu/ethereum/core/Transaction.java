@@ -587,6 +587,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append("{");
+    sb.append("type=").append(getType()).append(", ");
     sb.append("nonce=").append(getNonce()).append(", ");
     sb.append("gasPrice=").append(getGasPrice()).append(", ");
     if (getGasPremium().isPresent() && getFeeCap().isPresent()) {
@@ -612,6 +613,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   public static class Builder {
 
+    protected TransactionType transactionType;
+
     protected long nonce = -1L;
 
     protected Wei gasPrice;
@@ -635,7 +638,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     protected Optional<BigInteger> chainId = Optional.empty();
 
     protected Optional<BigInteger> v = Optional.empty();
-    protected TransactionType transactionType;
 
     public Builder chainId(final BigInteger chainId) {
       this.chainId = Optional.of(chainId);
@@ -704,7 +706,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     public Transaction build() {
       return new Transaction(
-          checkNotNull(transactionType),
+          transactionType,
           nonce,
           gasPrice,
           gasPremium,
