@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface ProtocolSchedule {

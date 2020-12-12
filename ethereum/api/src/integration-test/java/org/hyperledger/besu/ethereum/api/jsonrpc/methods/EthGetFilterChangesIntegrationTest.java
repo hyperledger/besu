@@ -102,7 +102,6 @@ public class EthGetFilterChangesIntegrationTest {
             TestClock.fixed(),
             metricsSystem,
             blockchain::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     final ProtocolContext protocolContext = executionContext.getProtocolContext();
 

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.lang.reflect.Field;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.After;
 import org.junit.Test;
 
@@ -44,8 +45,7 @@ public class TransactionEIP1559Test {
   @Test
   public void givenLegacyTransaction_assertThatRlpEncodingWorks() {
     final Transaction legacyTransaction = Transaction.readFrom(legacyRLPInput);
-    assertThat(legacyTransaction.isFrontierTransaction()).isTrue();
-    assertThat(legacyTransaction.isEIP1559Transaction()).isFalse();
+    assertThat(legacyTransaction.getType()).isEqualTo(TransactionType.FRONTIER);
   }
 
   @Test
@@ -59,8 +59,7 @@ public class TransactionEIP1559Test {
     legacyTransaction.writeTo(rlpOutput);
     final Transaction eip1559Transaction =
         Transaction.readFrom(new BytesValueRLPInput(rlpOutput.encoded(), false));
-    assertThat(eip1559Transaction.isFrontierTransaction()).isFalse();
-    assertThat(eip1559Transaction.isEIP1559Transaction()).isTrue();
+    assertThat(legacyTransaction.getType()).isEqualTo(TransactionType.EIP1559);
     assertThat(eip1559Transaction.getGasPremium()).hasValue(expectedGasPremium);
     assertThat(eip1559Transaction.getFeeCap()).hasValue(expectedFeeCap);
     assertThat(eip1559Transaction.getGasPrice()).isEqualByComparingTo(Wei.ZERO);

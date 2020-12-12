@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -99,14 +100,13 @@ public class PendingTransactions {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final Optional<EIP1559> eip1559,
       final Percentage priceBump) {
     this.maxTransactionRetentionHours = maxTransactionRetentionHours;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
-    this.transactionReplacementHandler = new TransactionPoolReplacementHandler(eip1559, priceBump);
+    this.transactionReplacementHandler = new TransactionPoolReplacementHandler(priceBump);
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
@@ -272,7 +272,7 @@ public class PendingTransactions {
     final TransactionInfo existingTransaction =
         getTrackedTransactionBySenderAndNonce(transactionInfo);
     if (existingTransaction != null) {
-      if (existingTransaction.transaction.isFrontierTransaction()
+      if (existingTransaction.transaction.getType().equals(TransactionType.FRONTIER)
           && !transactionReplacementHandler.shouldReplace(
               existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
         return REJECTED_UNDERPRICED_REPLACEMENT;
