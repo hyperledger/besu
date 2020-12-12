@@ -26,7 +26,6 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 public class PrivateTransactionTestFixture {
 

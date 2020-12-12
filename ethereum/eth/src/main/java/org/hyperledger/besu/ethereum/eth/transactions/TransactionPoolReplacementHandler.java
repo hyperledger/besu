@@ -17,12 +17,10 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 

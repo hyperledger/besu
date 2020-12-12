@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 

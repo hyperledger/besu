@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -45,7 +46,6 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 public class MainnetTransactionProcessor {
 

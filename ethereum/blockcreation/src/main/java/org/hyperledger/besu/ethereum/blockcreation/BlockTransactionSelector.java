@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +42,6 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 /**
  * Responsible for extracting transactions from PendingTransactions and determining if the

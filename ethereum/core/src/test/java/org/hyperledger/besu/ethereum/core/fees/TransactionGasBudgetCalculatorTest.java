@@ -20,11 +20,11 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
