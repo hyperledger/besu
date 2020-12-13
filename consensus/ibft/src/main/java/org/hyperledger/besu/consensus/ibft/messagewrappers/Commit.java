@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
@@ -23,7 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class Commit extends IbftMessage<CommitPayload> {
+public class Commit extends BftMessage<CommitPayload> {
 
   public Commit(final SignedData<CommitPayload> payload) {
     super(payload);
