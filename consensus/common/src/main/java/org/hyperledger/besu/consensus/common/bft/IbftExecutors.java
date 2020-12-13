@@ -13,10 +13,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
-import static org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors.newScheduledThreadPool;
-
+import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
@@ -61,7 +60,8 @@ public class IbftExecutors {
     }
     state = State.RUNNING;
     ibftProcessorExecutor = Executors.newSingleThreadExecutor();
-    timerExecutor = newScheduledThreadPool("IbftTimerExecutor", 1, metricsSystem);
+    timerExecutor =
+        MonitoredExecutors.newScheduledThreadPool("IbftTimerExecutor", 1, metricsSystem);
   }
 
   public void stop() {

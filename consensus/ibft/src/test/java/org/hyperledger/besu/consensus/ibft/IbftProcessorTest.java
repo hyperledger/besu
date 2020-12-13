@@ -26,6 +26,8 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.IbftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.IbftProcessor;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
 import java.util.concurrent.ExecutorService;

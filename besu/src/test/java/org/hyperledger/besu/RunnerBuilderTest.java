@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.IbftEventQueue;
 import org.hyperledger.besu.consensus.ibft.network.PeerConnectionTracker;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;

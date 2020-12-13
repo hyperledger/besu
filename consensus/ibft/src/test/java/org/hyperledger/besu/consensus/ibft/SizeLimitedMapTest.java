@@ -16,6 +16,8 @@ package org.hyperledger.besu.consensus.ibft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.consensus.common.bft.SizeLimitedMap;
+
 import org.junit.Test;
 
 public class SizeLimitedMapTest {

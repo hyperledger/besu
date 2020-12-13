@@ -12,24 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
-/**
- * Map that is limited to a specified size and will evict oldest entries when the size limit is
- * reached.
- */
-public class SizeLimitedMap<K, V> extends LinkedHashMap<K, V> {
-  private final int maxEntries;
+public interface SynchronizerUpdater {
 
-  public SizeLimitedMap(final int maxEntries) {
-    this.maxEntries = maxEntries;
-  }
-
-  @Override
-  protected boolean removeEldestEntry(final Map.Entry<K, V> ignored) {
-    return size() > maxEntries;
-  }
+  void updatePeerChainState(long knownBlockNumber, PeerConnection peerConnection);
 }

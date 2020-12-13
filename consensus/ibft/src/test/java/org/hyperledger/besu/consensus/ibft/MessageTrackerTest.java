@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
