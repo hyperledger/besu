@@ -39,8 +39,7 @@ public class BftProcessor implements Runnable {
    * @param incomingQueue The event queue from which to drain new events
    * @param eventMultiplexer an object capable of handling any/all BFT events
    */
-  public BftProcessor(
-      final BftEventQueue incomingQueue, final EventMultiplexer eventMultiplexer) {
+  public BftProcessor(final BftEventQueue incomingQueue, final EventMultiplexer eventMultiplexer) {
     this.incomingQueue = incomingQueue;
     this.eventMultiplexer = eventMultiplexer;
   }

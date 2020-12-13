@@ -17,10 +17,10 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftConfigOptions;
 import org.hyperledger.besu.config.IbftFork;
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
-import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
@@ -152,8 +152,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             proposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(bftEventQueue, ibftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(
-                bftEventQueue, ibftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
+            new BlockTimer(bftEventQueue, ibftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
             blockCreatorFactory,
             new MessageFactory(nodeKey),
             clock);

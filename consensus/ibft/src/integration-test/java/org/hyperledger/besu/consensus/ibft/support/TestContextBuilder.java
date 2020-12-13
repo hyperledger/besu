@@ -330,8 +330,7 @@ public class TestContextBuilder {
             proposerSelector,
             multicaster,
             new RoundTimer(bftEventQueue, ROUND_TIMER_SEC * 1000, bftExecutors),
-            new BlockTimer(
-                bftEventQueue, BLOCK_TIMER_SEC * 1000, bftExecutors, TestClock.fixed()),
+            new BlockTimer(bftEventQueue, BLOCK_TIMER_SEC * 1000, bftExecutors, TestClock.fixed()),
             blockCreatorFactory,
             new MessageFactory(nodeKey),
             clock);

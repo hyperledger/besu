@@ -60,8 +60,7 @@ public class BftExecutors {
     }
     state = State.RUNNING;
     bftProcessorExecutor = Executors.newSingleThreadExecutor();
-    timerExecutor =
-        MonitoredExecutors.newScheduledThreadPool("BftTimerExecutor", 1, metricsSystem);
+    timerExecutor = MonitoredExecutors.newScheduledThreadPool("BftTimerExecutor", 1, metricsSystem);
   }
 
   public void stop() {

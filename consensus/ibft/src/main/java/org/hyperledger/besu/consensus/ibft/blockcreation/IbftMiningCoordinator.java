@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.ibft.blockcreation;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
-import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;

@@ -38,8 +38,7 @@ public class IbftProtocolManager implements ProtocolManager {
    * @param bftEventQueue Entry point into the ibft event processor
    * @param peers Used to track all connected IBFT peers.
    */
-  public IbftProtocolManager(
-      final BftEventQueue bftEventQueue, final PeerConnectionTracker peers) {
+  public IbftProtocolManager(final BftEventQueue bftEventQueue, final PeerConnectionTracker peers) {
     this.bftEventQueue = bftEventQueue;
     this.peers = peers;
   }

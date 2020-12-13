@@ -75,8 +75,7 @@ public class BftProcessorTest {
 
   @Test
   public void cleanupExecutorsAfterShutdownNow() throws InterruptedException {
-    final BftProcessor processor =
-        new BftProcessor(new BftEventQueue(1000), mockeEventMultiplexer);
+    final BftProcessor processor = new BftProcessor(new BftEventQueue(1000), mockeEventMultiplexer);
 
     // Start the BftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
