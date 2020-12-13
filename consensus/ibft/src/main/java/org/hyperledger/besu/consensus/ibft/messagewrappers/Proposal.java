@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
@@ -29,7 +30,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class Proposal extends IbftMessage<ProposalPayload> {
+public class Proposal extends BftMessage<ProposalPayload> {
 
   private final Block proposedBlock;
 

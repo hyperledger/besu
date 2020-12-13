@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.ibftevent.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.ibftevent.NewChainHead;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.IbftMessage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
@@ -130,7 +130,7 @@ public class IbftController implements BftEventHandler {
     }
   }
 
-  private <P extends IbftMessage<?>> void consumeMessage(
+  private <P extends BftMessage<?>> void consumeMessage(
       final Message message, final P ibftMessage, final Consumer<P> handleMessage) {
     LOG.trace("Received IBFT {} message", ibftMessage.getClass().getSimpleName());
 
@@ -219,7 +219,7 @@ public class IbftController implements BftEventHandler {
     futureMessageBuffer.retrieveMessagesForHeight(newChainHeight).forEach(this::handleMessage);
   }
 
-  private boolean processMessage(final IbftMessage<?> msg, final Message rawMsg) {
+  private boolean processMessage(final BftMessage<?> msg, final Message rawMsg) {
     final ConsensusRoundIdentifier msgRoundIdentifier = msg.getRoundIdentifier();
     if (isMsgForCurrentHeight(msgRoundIdentifier)) {
       return isMsgFromKnownValidator(msg) && ibftFinalState.isLocalNodeValidator();
