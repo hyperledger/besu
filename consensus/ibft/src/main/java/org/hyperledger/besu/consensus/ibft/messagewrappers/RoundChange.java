@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
@@ -29,7 +30,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class RoundChange extends IbftMessage<RoundChangePayload> {
+public class RoundChange extends BftMessage<RoundChangePayload> {
 
   private final Optional<Block> proposedBlock;
 

@@ -19,11 +19,11 @@ import static org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightMa
 import static org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManager.MessageAge.PRIOR_ROUND;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.ibft.BlockTimer;
 import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.IbftMessage;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
@@ -189,7 +189,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     actionOrBufferMessage(commit, currentRound::handleCommitMessage, RoundState::addCommitMessage);
   }
 
-  private <P extends Payload, M extends IbftMessage<P>> void actionOrBufferMessage(
+  private <P extends Payload, M extends BftMessage<P>> void actionOrBufferMessage(
       final M ibftMessage,
       final Consumer<M> inRoundHandler,
       final BiConsumer<RoundState, M> buffer) {
