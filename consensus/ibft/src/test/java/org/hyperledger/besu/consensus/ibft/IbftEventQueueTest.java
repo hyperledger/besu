@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.ibft;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvents;
+import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftEvent;
+import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftEvents;
 
 import java.util.ArrayList;
 import java.util.List;

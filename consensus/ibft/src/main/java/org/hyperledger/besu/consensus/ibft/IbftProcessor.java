@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
+import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftEvent;
 
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;

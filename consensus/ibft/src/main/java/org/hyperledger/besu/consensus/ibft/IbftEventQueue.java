@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
+import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftEvent;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

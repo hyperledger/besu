@@ -15,14 +15,15 @@
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ibftevent.BlockTimerExpiry;
+import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftReceivedMessageEvent;
+import org.hyperledger.besu.consensus.common.bft.ibftevent.NewChainHead;
+import org.hyperledger.besu.consensus.common.bft.ibftevent.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.ibft.Gossiper;
 import org.hyperledger.besu.consensus.ibft.MessageTracker;
 import org.hyperledger.besu.consensus.ibft.SynchronizerUpdater;
-import org.hyperledger.besu.consensus.ibft.ibftevent.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftReceivedMessageEvent;
-import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
-import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
@@ -40,7 +41,7 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftController {
+public class IbftController implements BftEventHandler {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Blockchain blockchain;
@@ -71,12 +72,14 @@ public class IbftController {
     this.sychronizerUpdater = sychronizerUpdater;
   }
 
+  @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
       startNewHeightManager(blockchain.getChainHeadHeader());
     }
   }
 
+  @Override
   public void handleMessageEvent(final IbftReceivedMessageEvent msg) {
     final MessageData data = msg.getMessage().getData();
     if (!duplicateMessageTracker.hasSeenMessage(data)) {
@@ -145,6 +148,7 @@ public class IbftController {
     }
   }
 
+  @Override
   public void handleNewBlockEvent(final NewChainHead newChainHead) {
     final BlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
     final BlockHeader currentMiningParent = currentHeightManager.getParentBlockHeader();
@@ -177,6 +181,7 @@ public class IbftController {
     startNewHeightManager(newBlockHeader);
   }
 
+  @Override
   public void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {
     final ConsensusRoundIdentifier roundIndentifier = blockTimerExpiry.getRoundIndentifier();
     if (isMsgForCurrentHeight(roundIndentifier)) {
@@ -189,6 +194,7 @@ public class IbftController {
     }
   }
 
+  @Override
   public void handleRoundExpiry(final RoundExpiry roundExpiry) {
     // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
     // the currentHeightManager, but CAN be the same directly following import).

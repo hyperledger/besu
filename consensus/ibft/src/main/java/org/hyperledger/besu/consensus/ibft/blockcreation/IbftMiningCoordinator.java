@@ -16,11 +16,11 @@ package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.consensus.common.bft.ibftevent.NewChainHead;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
 import org.hyperledger.besu.consensus.ibft.IbftExecutors;
 import org.hyperledger.besu.consensus.ibft.IbftProcessor;
-import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -48,7 +48,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
 
   private static final Logger LOG = getLogger();
 
-  private final IbftController controller;
+  private final BftEventHandler eventHandler;
   private final IbftProcessor ibftProcessor;
   private final IbftBlockCreatorFactory blockCreatorFactory;
   protected final Blockchain blockchain;
@@ -60,13 +60,13 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
 
   public IbftMiningCoordinator(
       final IbftExecutors ibftExecutors,
-      final IbftController controller,
+      final BftEventHandler eventHandler,
       final IbftProcessor ibftProcessor,
       final IbftBlockCreatorFactory blockCreatorFactory,
       final Blockchain blockchain,
       final IbftEventQueue eventQueue) {
     this.ibftExecutors = ibftExecutors;
-    this.controller = controller;
+    this.eventHandler = eventHandler;
     this.ibftProcessor = ibftProcessor;
     this.blockCreatorFactory = blockCreatorFactory;
     this.eventQueue = eventQueue;
@@ -79,7 +79,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
     if (state.compareAndSet(State.IDLE, State.RUNNING)) {
       ibftExecutors.start();
       blockAddedObserverId = blockchain.observeBlockAdded(this);
-      controller.start();
+      eventHandler.start();
       ibftExecutors.executeIbftProcessor(ibftProcessor);
     }
   }
