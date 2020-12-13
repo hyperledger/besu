@@ -112,6 +112,7 @@ public class TraceTransactionIntegrationTest {
         new DebugOperationTracer(new TraceOptions(true, true, true));
     final Transaction executeTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .gasLimit(300_000)
             .gasPrice(Wei.ZERO)
             .nonce(1)
