@@ -27,6 +27,8 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class TransactionRLPEncoder {
 
   @FunctionalInterface
@@ -38,10 +40,13 @@ public class TransactionRLPEncoder {
       ImmutableMap.of(TransactionType.EIP1559, TransactionRLPEncoder::encodeEIP1559);
 
   public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
-    if (TransactionType.FRONTIER.equals(transaction.getType())) {
+    final TransactionType transactionType =
+        checkNotNull(
+            transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    if (TransactionType.FRONTIER.equals(transactionType)) {
       encodeFrontier(transaction, rlpOutput);
     } else {
-      final TransactionType type = transaction.getType();
+      final TransactionType type = transactionType;
       final Encoder encoder =
           Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(type))
               .orElseThrow(

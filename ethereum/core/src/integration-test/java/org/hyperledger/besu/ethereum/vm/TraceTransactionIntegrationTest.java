@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -77,6 +78,7 @@ public class TraceTransactionIntegrationTest {
     final KeyPair keyPair = KeyPair.generate();
     final Transaction createTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .gasLimit(300_000)
             .gasPrice(Wei.ZERO)
             .nonce(0)
