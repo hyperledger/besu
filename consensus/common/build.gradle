@@ -48,6 +48,7 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.awaitility:awaitility'
 }
 configurations { testArtifacts }
 task testJar (type: Jar) {

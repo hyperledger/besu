@@ -12,11 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-import org.hyperledger.besu.consensus.common.bft.SizeLimitedMap;
 
 import org.junit.Test;
 
