@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.ibft;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
+import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;

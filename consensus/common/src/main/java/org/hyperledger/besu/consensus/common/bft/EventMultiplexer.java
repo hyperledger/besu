@@ -12,14 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.ibft.ibftevent.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftReceivedMessageEvent;
-import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
-import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
+import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
+import org.hyperledger.besu.consensus.common.bft.events.IbftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.IbftReceivedMessageEvent;
+import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
+import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,10 +28,10 @@ public class EventMultiplexer {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final IbftController ibftController;
+  private final BftEventHandler eventHandler;
 
-  public EventMultiplexer(final IbftController ibftController) {
-    this.ibftController = ibftController;
+  public EventMultiplexer(final BftEventHandler eventHandler) {
+    this.eventHandler = eventHandler;
   }
 
   public void handleIbftEvent(final IbftEvent ibftEvent) {
@@ -39,19 +39,19 @@ public class EventMultiplexer {
       switch (ibftEvent.getType()) {
         case MESSAGE:
           final IbftReceivedMessageEvent rxEvent = (IbftReceivedMessageEvent) ibftEvent;
-          ibftController.handleMessageEvent(rxEvent);
+          eventHandler.handleMessageEvent(rxEvent);
           break;
         case ROUND_EXPIRY:
           final RoundExpiry roundExpiryEvent = (RoundExpiry) ibftEvent;
-          ibftController.handleRoundExpiry(roundExpiryEvent);
+          eventHandler.handleRoundExpiry(roundExpiryEvent);
           break;
         case NEW_CHAIN_HEAD:
           final NewChainHead newChainHead = (NewChainHead) ibftEvent;
-          ibftController.handleNewBlockEvent(newChainHead);
+          eventHandler.handleNewBlockEvent(newChainHead);
           break;
         case BLOCK_TIMER_EXPIRY:
           final BlockTimerExpiry blockTimerExpiry = (BlockTimerExpiry) ibftEvent;
-          ibftController.handleBlockTimerExpiry(blockTimerExpiry);
+          eventHandler.handleBlockTimerExpiry(blockTimerExpiry);
           break;
         default:
           throw new RuntimeException("Illegal event in queue.");
