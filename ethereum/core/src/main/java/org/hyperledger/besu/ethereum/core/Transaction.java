@@ -734,5 +734,14 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
       return SECP256K1.sign(hash, keys);
     }
+
+    public Builder guessType() {
+      if (gasPremium != null || feeCap != null) {
+        transactionType = TransactionType.EIP1559;
+      } else {
+        transactionType = TransactionType.FRONTIER;
+      }
+      return this;
+    }
   }
 }

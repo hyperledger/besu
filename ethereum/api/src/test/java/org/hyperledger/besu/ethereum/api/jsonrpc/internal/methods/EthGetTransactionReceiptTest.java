@@ -65,6 +65,7 @@ public class EthGetTransactionReceiptTest {
           .value(Wei.ZERO)
           .signature(signature)
           .sender(sender)
+          .guessType()
           .build();
 
   private final Hash hash =

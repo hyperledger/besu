@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -78,6 +79,7 @@ public class TransactionPriceCalculatorTest {
     assertThat(
             transactionPriceCalculator.price(
                 Transaction.builder()
+                    .type(TransactionType.EIP1559)
                     .gasPrice(gasPrice)
                     .gasPremium(gasPremium)
                     .feeCap(feeCap)

@@ -20,9 +20,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
 @FunctionalInterface
 public interface TransactionPriceCalculator {
@@ -42,7 +40,11 @@ public interface TransactionPriceCalculator {
           Wei.of((BigInteger) transaction.getGasPremium().orElseThrow().getValue());
       final Wei feeCap = Wei.of((BigInteger) transaction.getFeeCap().orElseThrow().getValue());
       final Wei baseFee = Wei.of(maybeBaseFee.orElseThrow());
-      return Collections.max(Set.of(gasPremium.add(baseFee), feeCap));
+      Wei price = gasPremium.add(baseFee);
+      if (price.compareTo(feeCap) > 0) {
+        price = feeCap;
+      }
+      return price;
     };
   }
 }
