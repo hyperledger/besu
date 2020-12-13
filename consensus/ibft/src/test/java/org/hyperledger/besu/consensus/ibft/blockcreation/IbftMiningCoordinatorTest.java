@@ -19,9 +19,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.IbftEventQueue;
-import org.hyperledger.besu.consensus.common.bft.IbftExecutors;
-import org.hyperledger.besu.consensus.common.bft.IbftProcessor;
+import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -45,23 +45,23 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftMiningCoordinatorTest {
   @Mock private BftEventHandler controller;
-  @Mock private IbftExecutors ibftExecutors;
-  @Mock private IbftProcessor ibftProcessor;
+  @Mock private BftExecutors bftExecutors;
+  @Mock private BftProcessor bftProcessor;
   @Mock private IbftBlockCreatorFactory ibftBlockCreatorFactory;
   @Mock private Blockchain blockChain;
   @Mock private Block block;
   @Mock private BlockBody blockBody;
   @Mock private BlockHeader blockHeader;
-  private final IbftEventQueue eventQueue = new IbftEventQueue(1000);
+  private final BftEventQueue eventQueue = new BftEventQueue(1000);
   private IbftMiningCoordinator ibftMiningCoordinator;
 
   @Before
   public void setup() {
     ibftMiningCoordinator =
         new IbftMiningCoordinator(
-            ibftExecutors,
+            bftExecutors,
             controller,
-            ibftProcessor,
+            bftProcessor,
             ibftBlockCreatorFactory,
             blockChain,
             eventQueue);
@@ -79,11 +79,11 @@ public class IbftMiningCoordinatorTest {
   public void stopsMining() {
     // Shouldn't stop without first starting
     ibftMiningCoordinator.stop();
-    verify(ibftProcessor, never()).stop();
+    verify(bftProcessor, never()).stop();
 
     ibftMiningCoordinator.start();
     ibftMiningCoordinator.stop();
-    verify(ibftProcessor).stop();
+    verify(bftProcessor).stop();
   }
 
   @Test

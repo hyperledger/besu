@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
-import org.hyperledger.besu.consensus.common.bft.events.IbftEvents;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
@@ -145,7 +145,7 @@ public class ValidatorPeer {
 
   public void injectMessage(final MessageData msgData) {
     final DefaultMessage message = new DefaultMessage(peerConnection, msgData);
-    localEventMultiplexer.handleIbftEvent(IbftEvents.fromMessage(message));
+    localEventMultiplexer.handleBftEvent(BftEvents.fromMessage(message));
   }
 
   public MessageFactory getMessageFactory() {

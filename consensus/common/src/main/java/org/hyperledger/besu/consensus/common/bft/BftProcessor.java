@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.bft.events.IbftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -23,24 +23,24 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** Execution context for draining queued ibft events and applying them to a maintained state */
-public class IbftProcessor implements Runnable {
+/** Execution context for draining queued bft events and applying them to a maintained state */
+public class BftProcessor implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final IbftEventQueue incomingQueue;
+  private final BftEventQueue incomingQueue;
   private volatile boolean shutdown = false;
   private final EventMultiplexer eventMultiplexer;
   private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
   /**
-   * Construct a new IbftProcessor
+   * Construct a new BftProcessor
    *
    * @param incomingQueue The event queue from which to drain new events
-   * @param eventMultiplexer an object capable of handling any/all IBFT events
+   * @param eventMultiplexer an object capable of handling any/all BFT events
    */
-  public IbftProcessor(
-      final IbftEventQueue incomingQueue, final EventMultiplexer eventMultiplexer) {
+  public BftProcessor(
+      final BftEventQueue incomingQueue, final EventMultiplexer eventMultiplexer) {
     this.incomingQueue = incomingQueue;
     this.eventMultiplexer = eventMultiplexer;
   }
@@ -58,17 +58,17 @@ public class IbftProcessor implements Runnable {
   public void run() {
     try {
       while (!shutdown) {
-        nextIbftEvent().ifPresent(eventMultiplexer::handleIbftEvent);
+        nextEvent().ifPresent(eventMultiplexer::handleBftEvent);
       }
     } catch (final Throwable t) {
-      LOG.error("IBFT Mining thread has suffered a fatal error, mining has been halted", t);
+      LOG.error("BFT Mining thread has suffered a fatal error, mining has been halted", t);
     }
     // Clean up the executor service the round timer has been utilising
-    LOG.info("Shutting down IBFT event processor");
+    LOG.info("Shutting down BFT event processor");
     shutdownLatch.countDown();
   }
 
-  private Optional<IbftEvent> nextIbftEvent() {
+  private Optional<BftEvent> nextEvent() {
     try {
       return Optional.ofNullable(incomingQueue.poll(500, TimeUnit.MILLISECONDS));
     } catch (final InterruptedException interrupt) {

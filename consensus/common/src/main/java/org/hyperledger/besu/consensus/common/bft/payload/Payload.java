@@ -34,7 +34,7 @@ public interface Payload extends RoundSpecific {
 
   int getMessageType();
 
-  static Hash readDigest(final RLPInput ibftMessageData) {
-    return Hash.wrap(ibftMessageData.readBytes32());
+  static Hash readDigest(final RLPInput messageData) {
+    return Hash.wrap(messageData.readBytes32());
   }
 }

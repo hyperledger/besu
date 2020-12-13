@@ -12,24 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.bft.events;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+public class BftReceivedMessageEvent implements BftEvent {
 
-public class IbftValidatorOverrides {
+  private final Message message;
 
-  private final Map<Long, List<Address>> overriddenValidators;
-
-  public IbftValidatorOverrides(final Map<Long, List<Address>> overriddenValidators) {
-    this.overriddenValidators = overriddenValidators;
+  public BftReceivedMessageEvent(final Message message) {
+    this.message = message;
   }
 
-  public Optional<Collection<Address>> getForBlock(final long blockNumber) {
-    return Optional.ofNullable(overriddenValidators.get(blockNumber));
+  public Message getMessage() {
+    return message;
+  }
+
+  @Override
+  public BftEvents.Type getType() {
+    return BftEvents.Type.MESSAGE;
   }
 }

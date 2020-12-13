@@ -30,7 +30,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.IbftReceivedMessageEvent;
+import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
@@ -239,7 +239,7 @@ public class IbftControllerTest {
     setupProposal(roundIdentifier, validator);
     constructIbftController();
     ibftController.start();
-    ibftController.handleMessageEvent(new IbftReceivedMessageEvent(proposalMessage));
+    ibftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleProposalPayload(proposal);
@@ -253,7 +253,7 @@ public class IbftControllerTest {
     setupPrepare(roundIdentifier, validator);
     constructIbftController();
     ibftController.start();
-    ibftController.handleMessageEvent(new IbftReceivedMessageEvent(prepareMessage));
+    ibftController.handleMessageEvent(new BftReceivedMessageEvent(prepareMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handlePreparePayload(prepare);
@@ -267,7 +267,7 @@ public class IbftControllerTest {
     setupCommit(roundIdentifier, validator);
     constructIbftController();
     ibftController.start();
-    ibftController.handleMessageEvent(new IbftReceivedMessageEvent(commitMessage));
+    ibftController.handleMessageEvent(new BftReceivedMessageEvent(commitMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleCommitPayload(commit);
@@ -281,7 +281,7 @@ public class IbftControllerTest {
     setupRoundChange(roundIdentifier, validator);
     constructIbftController();
     ibftController.start();
-    ibftController.handleMessageEvent(new IbftReceivedMessageEvent(roundChangeMessage));
+    ibftController.handleMessageEvent(new BftReceivedMessageEvent(roundChangeMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleRoundChangePayload(roundChange);
@@ -293,25 +293,25 @@ public class IbftControllerTest {
   @Test
   public void proposalForPastHeightIsDiscarded() {
     setupProposal(pastRoundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(proposalMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(proposalMessage));
   }
 
   @Test
   public void prepareForPastHeightIsDiscarded() {
     setupPrepare(pastRoundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(prepareMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(prepareMessage));
   }
 
   @Test
   public void commitForPastHeightIsDiscarded() {
     setupCommit(pastRoundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(commitMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(commitMessage));
   }
 
   @Test
   public void roundChangeForPastHeightIsDiscarded() {
     setupRoundChange(pastRoundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(roundChangeMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(roundChangeMessage));
   }
 
   @Test
@@ -337,25 +337,25 @@ public class IbftControllerTest {
   @Test
   public void proposalForUnknownValidatorIsDiscarded() {
     setupProposal(roundIdentifier, unknownValidator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(proposalMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(proposalMessage));
   }
 
   @Test
   public void prepareForUnknownValidatorIsDiscarded() {
     setupPrepare(roundIdentifier, unknownValidator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(prepareMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(prepareMessage));
   }
 
   @Test
   public void commitForUnknownValidatorIsDiscarded() {
     setupCommit(roundIdentifier, unknownValidator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(commitMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(commitMessage));
   }
 
   @Test
   public void roundChangeForUnknownValidatorIsDiscarded() {
     setupRoundChange(roundIdentifier, unknownValidator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(roundChangeMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(roundChangeMessage));
   }
 
   @Test
@@ -386,7 +386,7 @@ public class IbftControllerTest {
   public void duplicatedMessagesAreNotProcessed() {
     when(messageTracker.hasSeenMessage(proposalMessageData)).thenReturn(true);
     setupProposal(roundIdentifier, validator);
-    verifyNotHandledAndNoFutureMsgs(new IbftReceivedMessageEvent(proposalMessage));
+    verifyNotHandledAndNoFutureMsgs(new BftReceivedMessageEvent(proposalMessage));
     verify(messageTracker, never()).addSeenMessage(proposalMessageData);
   }
 
@@ -396,7 +396,7 @@ public class IbftControllerTest {
     setupProposal(roundIdentifier, validator);
     constructIbftController();
     ibftController.start();
-    ibftController.handleMessageEvent(new IbftReceivedMessageEvent(proposalMessage));
+    ibftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
 
     verify(messageTracker).addSeenMessage(proposalMessageData);
   }
@@ -417,12 +417,12 @@ public class IbftControllerTest {
 
     constructIbftController();
     ibftController.start();
-    ibftController.handleMessageEvent(new IbftReceivedMessageEvent(proposalMessage));
+    ibftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, never()).handleProposalPayload(any());
   }
 
-  private void verifyNotHandledAndNoFutureMsgs(final IbftReceivedMessageEvent msg) {
+  private void verifyNotHandledAndNoFutureMsgs(final BftReceivedMessageEvent msg) {
     constructIbftController();
     ibftController.start();
     ibftController.handleMessageEvent(msg);
@@ -435,7 +435,7 @@ public class IbftControllerTest {
   private void verifyHasFutureMessages(final long msgHeight, final Message message) {
     constructIbftController();
     ibftController.start();
-    ibftController.handleMessageEvent(new IbftReceivedMessageEvent(message));
+    ibftController.handleMessageEvent(new BftReceivedMessageEvent(message));
 
     verify(futureMessageBuffer).addMessage(msgHeight, message);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();

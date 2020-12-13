@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.bft.events.IbftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -24,25 +24,25 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** Threadsafe queue that lets parts of the system inform the Ibft infrastructure about events */
-public class IbftEventQueue {
-  private final BlockingQueue<IbftEvent> queue = new LinkedBlockingQueue<>();
+/** Threadsafe queue that lets parts of the system inform the Bft infrastructure about events */
+public class BftEventQueue {
+  private final BlockingQueue<BftEvent> queue = new LinkedBlockingQueue<>();
 
   private static final Logger LOG = LogManager.getLogger();
   private final int messageQueueLimit;
 
-  public IbftEventQueue(final int messageQueueLimit) {
+  public BftEventQueue(final int messageQueueLimit) {
     this.messageQueueLimit = messageQueueLimit;
   }
 
   /**
-   * Put an Ibft event onto the queue
+   * Put an Bft event onto the queue
    *
-   * @param event Provided ibft event
+   * @param event Provided bft event
    */
-  public void add(final IbftEvent event) {
+  public void add(final BftEvent event) {
     if (queue.size() > messageQueueLimit) {
-      LOG.warn("Queue size exceeded trying to add new ibft event {}", event);
+      LOG.warn("Queue size exceeded trying to add new bft event {}", event);
     } else {
       queue.add(event);
     }
@@ -62,11 +62,11 @@ public class IbftEventQueue {
    *
    * @param timeout number of time units after which this operation should timeout
    * @param unit the time units in which to count
-   * @return The next IbftEvent to become available on the queue or null if the expiry passes
+   * @return The next BftEvent to become available on the queue or null if the expiry passes
    * @throws InterruptedException If the underlying queue implementation is interrupted
    */
   @Nullable
-  public IbftEvent poll(final long timeout, final TimeUnit unit) throws InterruptedException {
+  public BftEvent poll(final long timeout, final TimeUnit unit) throws InterruptedException {
     return queue.poll(timeout, unit);
   }
 }

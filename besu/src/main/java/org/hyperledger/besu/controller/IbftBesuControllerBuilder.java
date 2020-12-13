@@ -20,16 +20,16 @@ import org.hyperledger.besu.config.IbftFork;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
-import org.hyperledger.besu.consensus.common.IbftValidatorOverrides;
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
-import org.hyperledger.besu.consensus.common.bft.IbftEventQueue;
-import org.hyperledger.besu.consensus.common.bft.IbftExecutors;
-import org.hyperledger.besu.consensus.common.bft.IbftProcessor;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
@@ -82,7 +82,7 @@ import org.apache.logging.log4j.Logger;
 public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
-  private IbftEventQueue ibftEventQueue;
+  private BftEventQueue bftEventQueue;
   private IbftConfigOptions ibftConfig;
   private ValidatorPeers peers;
   private final BlockInterface blockInterface = new IbftBlockInterface();
@@ -90,7 +90,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected void prepForBuild() {
     ibftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getIbft2ConfigOptions();
-    ibftEventQueue = new IbftEventQueue(ibftConfig.getMessageQueueLimit());
+    bftEventQueue = new BftEventQueue(ibftConfig.getMessageQueueLimit());
   }
 
   @Override
@@ -104,7 +104,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
       final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration()
         .withSubProtocol(EthProtocol.get(), ethProtocolManager)
-        .withSubProtocol(IbftSubProtocol.get(), new IbftProtocolManager(ibftEventQueue, peers));
+        .withSubProtocol(IbftSubProtocol.get(), new IbftProtocolManager(bftEventQueue, peers));
   }
 
   @Override
@@ -116,7 +116,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
-    final IbftExecutors ibftExecutors = IbftExecutors.create(metricsSystem);
+    final BftExecutors bftExecutors = BftExecutors.create(metricsSystem);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final IbftBlockCreatorFactory blockCreatorFactory =
@@ -151,9 +151,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(ibftEventQueue, ibftConfig.getRequestTimeoutSeconds(), ibftExecutors),
+            new RoundTimer(bftEventQueue, ibftConfig.getRequestTimeoutSeconds(), bftExecutors),
             new BlockTimer(
-                ibftEventQueue, ibftConfig.getBlockPeriodSeconds(), ibftExecutors, clock),
+                bftEventQueue, ibftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
             blockCreatorFactory,
             new MessageFactory(nodeKey),
             clock);
@@ -192,16 +192,16 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers()));
 
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
-    final IbftProcessor ibftProcessor = new IbftProcessor(ibftEventQueue, eventMultiplexer);
+    final BftProcessor bftProcessor = new BftProcessor(bftEventQueue, eventMultiplexer);
 
     final MiningCoordinator ibftMiningCoordinator =
         new IbftMiningCoordinator(
-            ibftExecutors,
+            bftExecutors,
             ibftController,
-            ibftProcessor,
+            bftProcessor,
             blockCreatorFactory,
             blockchain,
-            ibftEventQueue);
+            bftEventQueue);
     ibftMiningCoordinator.enable();
 
     return ibftMiningCoordinator;
@@ -246,7 +246,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             new VoteTallyUpdater(epochManager, new IbftBlockInterface()),
             epochManager,
             new IbftBlockInterface(),
-            new IbftValidatorOverrides(ibftValidatorForkMap)),
+            new BftValidatorOverrides(ibftValidatorForkMap)),
         new VoteProposer(),
         epochManager,
         blockInterface);

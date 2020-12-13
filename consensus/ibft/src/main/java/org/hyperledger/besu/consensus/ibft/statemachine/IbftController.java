@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.IbftReceivedMessageEvent;
+import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
@@ -80,7 +80,7 @@ public class IbftController implements BftEventHandler {
   }
 
   @Override
-  public void handleMessageEvent(final IbftReceivedMessageEvent msg) {
+  public void handleMessageEvent(final BftReceivedMessageEvent msg) {
     final MessageData data = msg.getMessage().getData();
     if (!duplicateMessageTracker.hasSeenMessage(data)) {
       duplicateMessageTracker.addSeenMessage(data);
