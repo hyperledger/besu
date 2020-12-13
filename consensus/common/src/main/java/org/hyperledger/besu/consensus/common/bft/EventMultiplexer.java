@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.bft.ibftevent.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftEvent;
-import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftReceivedMessageEvent;
-import org.hyperledger.besu.consensus.common.bft.ibftevent.NewChainHead;
-import org.hyperledger.besu.consensus.common.bft.ibftevent.RoundExpiry;
+import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
+import org.hyperledger.besu.consensus.common.bft.events.IbftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.IbftReceivedMessageEvent;
+import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
+import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 
 import org.apache.logging.log4j.LogManager;

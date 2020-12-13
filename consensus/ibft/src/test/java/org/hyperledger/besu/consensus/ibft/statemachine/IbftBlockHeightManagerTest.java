@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.ibftevent.RoundExpiry;
+import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.BlockTimer;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.RoundTimer;

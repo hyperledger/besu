@@ -19,7 +19,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.ibftevent.NewChainHead;
+import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
 import org.hyperledger.besu.consensus.ibft.IbftExecutors;

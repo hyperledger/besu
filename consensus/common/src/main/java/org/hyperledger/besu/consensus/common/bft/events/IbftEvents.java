@@ -12,24 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.ibftevent;
+package org.hyperledger.besu.consensus.common.bft.events;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
-public class IbftReceivedMessageEvent implements IbftEvent {
-
-  private final Message message;
-
-  public IbftReceivedMessageEvent(final Message message) {
-    this.message = message;
+/** Static helper functions for producing and working with IbftEvent objects */
+public class IbftEvents {
+  public static IbftEvent fromMessage(final Message message) {
+    return new IbftReceivedMessageEvent(message);
   }
 
-  public Message getMessage() {
-    return message;
-  }
-
-  @Override
-  public IbftEvents.Type getType() {
-    return IbftEvents.Type.MESSAGE;
+  public enum Type {
+    ROUND_EXPIRY,
+    NEW_CHAIN_HEAD,
+    BLOCK_TIMER_EXPIRY,
+    MESSAGE
   }
 }

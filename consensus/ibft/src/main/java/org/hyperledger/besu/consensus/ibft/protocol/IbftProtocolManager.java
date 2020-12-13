@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.ibft.protocol;
 
-import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftEvent;
-import org.hyperledger.besu.consensus.common.bft.ibftevent.IbftEvents;
+import org.hyperledger.besu.consensus.common.bft.events.IbftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.IbftEvents;
 import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
 import org.hyperledger.besu.consensus.ibft.network.PeerConnectionTracker;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;

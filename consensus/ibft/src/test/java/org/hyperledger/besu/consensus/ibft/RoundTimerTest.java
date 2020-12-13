@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.ibftevent.RoundExpiry;
+import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;

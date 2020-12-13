@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.ibftevent;
+package org.hyperledger.besu.consensus.common.bft.events;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 
