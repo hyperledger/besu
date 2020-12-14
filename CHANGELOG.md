@@ -7,7 +7,7 @@
 * Fixed gasPrice parameter not always respected when passed to `eth_estimateGas` endpoint [#1636](https://github.com/hyperledger/besu/pull/1636)
 
 ### Bug Fixes
-
+- Accept to use default port values if not in use. [#1673](https://github.com/hyperledger/besu/pull/1673)
 
 #### Previously identified known issues
 
