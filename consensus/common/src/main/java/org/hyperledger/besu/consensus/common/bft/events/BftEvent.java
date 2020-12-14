@@ -14,22 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft.events;
 
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
-
-public class IbftReceivedMessageEvent implements IbftEvent {
-
-  private final Message message;
-
-  public IbftReceivedMessageEvent(final Message message) {
-    this.message = message;
-  }
-
-  public Message getMessage() {
-    return message;
-  }
-
-  @Override
-  public IbftEvents.Type getType() {
-    return IbftEvents.Type.MESSAGE;
-  }
+/** Category of events that will effect and are interpretable by the Bft processing mechanism */
+public interface BftEvent {
+  BftEvents.Type getType();
 }

@@ -21,7 +21,7 @@ import java.util.Objects;
 import com.google.common.base.MoreObjects;
 
 /** Event indicating a round timer has expired */
-public final class RoundExpiry implements IbftEvent {
+public final class RoundExpiry implements BftEvent {
   private final ConsensusRoundIdentifier round;
 
   /**
@@ -34,8 +34,8 @@ public final class RoundExpiry implements IbftEvent {
   }
 
   @Override
-  public IbftEvents.Type getType() {
-    return IbftEvents.Type.ROUND_EXPIRY;
+  public BftEvents.Type getType() {
+    return BftEvents.Type.ROUND_EXPIRY;
   }
 
   public ConsensusRoundIdentifier getView() {
