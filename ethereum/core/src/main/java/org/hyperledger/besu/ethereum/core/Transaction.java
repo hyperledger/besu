@@ -19,7 +19,11 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -764,6 +768,17 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               "Developer error. Didn't specify signing hash computation");
       }
       return SECP256K1.sign(hash, keys);
+    }
+
+    private Bytes accessListSigningMessage() {
+      return RLP.encode(
+          rlpOutput -> {
+            rlpOutput.startList();
+            rlpOutput.writeInt(transactionType.getSerializedType());
+            TransactionRLPEncoder.encodeAccessListInner(
+                chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
+            rlpOutput.endList();
+          });
     }
   }
 }
