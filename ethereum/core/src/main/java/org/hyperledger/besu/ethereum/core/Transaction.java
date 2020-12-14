@@ -19,11 +19,7 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -71,6 +67,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   private final SECP256K1.Signature signature;
 
   private final Bytes payload;
+
+  private final AccessList accessList;
 
   private final Optional<BigInteger> chainId;
 
@@ -131,6 +129,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Wei value,
       final SECP256K1.Signature signature,
       final Bytes payload,
+      final AccessList accessList,
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v) {
@@ -138,6 +137,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       throw new IllegalStateException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
     }
+    // todo do all transaction type validation here
     this.transactionType = transactionType;
     this.nonce = nonce;
     this.gasPrice = gasPrice;
@@ -148,6 +148,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.value = value;
     this.signature = signature;
     this.payload = payload;
+    this.accessList = accessList;
     this.sender = sender;
     this.chainId = chainId;
     this.v = v;
@@ -177,6 +178,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         value,
         signature,
         payload,
+        AccessList.EMPTY,
         sender,
         chainId,
         v);
@@ -367,6 +369,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
   }
 
+  public AccessList getAccessList() {
+    return accessList;
+  }
+
   /**
    * Return the transaction chain id (if it exists)
    *
@@ -403,15 +409,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     if (hashNoSignature == null) {
       hashNoSignature =
           computeSenderRecoveryHash(
-              nonce,
-              gasPrice,
-              gasPremium,
-              feeCap,
-              gasLimit,
-              to.orElse(null),
-              value,
-              payload,
-              chainId);
+              nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
     }
     return hashNoSignature;
   }
@@ -530,7 +528,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Wei gasPremium,
       final Wei feeCap,
       final long gasLimit,
-      final Address to,
+      final Optional<Address> to,
       final Wei value,
       final Bytes payload,
       final Optional<BigInteger> chainId) {
@@ -541,7 +539,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               out.writeLongScalar(nonce);
               out.writeUInt256Scalar(gasPrice);
               out.writeLongScalar(gasLimit);
-              out.writeBytes(to == null ? Bytes.EMPTY : to);
+              out.writeBytes(to.orElse(Address.wrap(Bytes.EMPTY)));
               out.writeUInt256Scalar(value);
               out.writeBytes(payload);
               if (ExperimentalEIPs.eip1559Enabled && gasPremium != null && feeCap != null) {
@@ -563,17 +561,17 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return false;
     }
     final Transaction that = (Transaction) other;
-    return this.chainId.equals(that.chainId)
-        && this.gasLimit == that.gasLimit
+    return Objects.equals(this.chainId, that.chainId)
+        && Objects.equals(this.gasLimit, that.gasLimit)
         && Objects.equals(this.gasPrice, that.gasPrice)
         && Objects.equals(this.gasPremium, that.gasPremium)
         && Objects.equals(this.feeCap, that.feeCap)
-        && this.nonce == that.nonce
-        && this.payload.equals(that.payload)
-        && this.signature.equals(that.signature)
-        && this.to.equals(that.to)
-        && this.value.equals(that.value)
-        && this.v.equals(that.v);
+        && Objects.equals(this.nonce, that.nonce)
+        && Objects.equals(this.payload, that.payload)
+        && Objects.equals(this.signature, that.signature)
+        && Objects.equals(this.to, that.to)
+        && Objects.equals(this.value, that.value)
+        && Objects.equals(this.v, that.v);
   }
 
   @Override
@@ -582,6 +580,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId, v);
   }
 
+  // todo access list here
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
@@ -599,7 +598,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     if (v.isPresent()) sb.append("v=").append(v.get()).append(", ");
-    sb.append("payload=").append(getPayload());
+    sb.append("payload=").append(getPayload()).append(", ");
+    if (transactionType.equals(TransactionType.ACCESS_LIST)) {
+      sb.append("accessList=").append(accessList);
+    }
     return sb.append("}").toString();
   }
 
@@ -624,7 +626,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected long gasLimit = -1L;
 
-    protected Address to;
+    protected Optional<Address> to;
 
     protected Wei value;
 
@@ -632,11 +634,18 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected Bytes payload;
 
+    protected AccessList accessList = AccessList.EMPTY;
+
     protected Address sender;
 
     protected Optional<BigInteger> chainId = Optional.empty();
 
     protected Optional<BigInteger> v = Optional.empty();
+
+    public Builder type(final TransactionType transactionType) {
+      this.transactionType = transactionType;
+      return this;
+    }
 
     public Builder chainId(final BigInteger chainId) {
       this.chainId = Optional.of(chainId);
@@ -679,12 +688,17 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     public Builder to(final Address to) {
-      this.to = to;
+      this.to = Optional.ofNullable(to);
       return this;
     }
 
     public Builder payload(final Bytes payload) {
       this.payload = payload;
+      return this;
+    }
+
+    public Builder accessList(final AccessList accessList) {
+      this.accessList = accessList;
       return this;
     }
 
@@ -698,8 +712,12 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return this;
     }
 
-    public Builder type(final TransactionType transactionType) {
-      this.transactionType = transactionType;
+    public Builder guessType() {
+      if (gasPremium != null || feeCap != null) {
+        transactionType = TransactionType.EIP1559;
+      } else {
+        transactionType = TransactionType.FRONTIER;
+      }
       return this;
     }
 
@@ -711,10 +729,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           gasPremium,
           feeCap,
           gasLimit,
-          Optional.ofNullable(to),
+          to,
           value,
           signature,
           payload,
+          accessList,
           sender,
           chainId,
           v);
@@ -729,19 +748,22 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
-      final Bytes32 hash =
-          computeSenderRecoveryHash(
-              nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
-      return SECP256K1.sign(hash, keys);
-    }
-
-    public Builder guessType() {
-      if (gasPremium != null || feeCap != null) {
-        transactionType = TransactionType.EIP1559;
-      } else {
-        transactionType = TransactionType.FRONTIER;
+      final Bytes32 hash;
+      switch (transactionType) {
+        case FRONTIER:
+        case EIP1559:
+          hash =
+              computeSenderRecoveryHash(
+                  nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
+          break;
+        case ACCESS_LIST:
+          hash = keccak256(accessListSigningMessage());
+          break;
+        default:
+          throw new IllegalStateException(
+              "Developer error. Didn't specify signing hash computation");
       }
-      return this;
+      return SECP256K1.sign(hash, keys);
     }
   }
 }
