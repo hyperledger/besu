@@ -24,6 +24,7 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Collection;
@@ -102,6 +103,7 @@ public class TransactionReplacementByPriceRuleTest {
   private static TransactionInfo frontierTx(final long price) {
     final TransactionInfo transactionInfo = mock(TransactionInfo.class);
     final Transaction transaction = mock(Transaction.class);
+    when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
     when(transaction.getGasPrice()).thenReturn(Wei.of(price));
     when(transactionInfo.getTransaction()).thenReturn(transaction);
     return transactionInfo;
@@ -110,9 +112,9 @@ public class TransactionReplacementByPriceRuleTest {
   private static TransactionInfo eip1559Tx(final long gasPremium, final long feeCap) {
     final TransactionInfo transactionInfo = mock(TransactionInfo.class);
     final Transaction transaction = mock(Transaction.class);
+    when(transaction.getType()).thenReturn(TransactionType.EIP1559);
     when(transaction.getGasPremium()).thenReturn(Optional.of(Wei.of(gasPremium)));
     when(transaction.getFeeCap()).thenReturn(Optional.of(Wei.of(feeCap)));
-    when(transaction.isEIP1559Transaction()).thenReturn(true);
     when(transactionInfo.getTransaction()).thenReturn(transaction);
     return transactionInfo;
   }

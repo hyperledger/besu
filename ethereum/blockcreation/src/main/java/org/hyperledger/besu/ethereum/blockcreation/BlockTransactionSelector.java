@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 import java.util.Optional;
@@ -78,7 +79,8 @@ public class BlockTransactionSelector {
         final Transaction transaction, final TransactionReceipt receipt, final long gasUsed) {
       transactions.add(transaction);
       receipts.add(receipt);
-      if (ExperimentalEIPs.eip1559Enabled && transaction.isEIP1559Transaction()) {
+      if (ExperimentalEIPs.eip1559Enabled
+          && transaction.getType().equals(TransactionType.EIP1559)) {
         eip1559CumulativeGasUsed += gasUsed;
       } else {
         frontierCumulativeGasUsed += gasUsed;
@@ -267,18 +269,24 @@ public class BlockTransactionSelector {
 
     final long blockGasRemaining;
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
-      if (transaction.isEIP1559Transaction()) {
-        return !transactionGasBudgetCalculator.hasBudget(
-            transaction,
-            blockNumber,
-            gasLimit,
-            transactionSelectionResult.eip1559CumulativeGasUsed);
-      } else {
-        return !transactionGasBudgetCalculator.hasBudget(
-            transaction,
-            blockNumber,
-            gasLimit,
-            transactionSelectionResult.frontierCumulativeGasUsed);
+      switch (transaction.getType()) {
+        case EIP1559:
+          return !transactionGasBudgetCalculator.hasBudget(
+              transaction,
+              blockNumber,
+              gasLimit,
+              transactionSelectionResult.eip1559CumulativeGasUsed);
+        case FRONTIER:
+          return !transactionGasBudgetCalculator.hasBudget(
+              transaction,
+              blockNumber,
+              gasLimit,
+              transactionSelectionResult.frontierCumulativeGasUsed);
+        default:
+          throw new IllegalStateException(
+              String.format(
+                  "Developer error. Supported transaction type %s deoesn't have a block gas budget calculator",
+                  transaction.getType()));
       }
     } else {
       blockGasRemaining =

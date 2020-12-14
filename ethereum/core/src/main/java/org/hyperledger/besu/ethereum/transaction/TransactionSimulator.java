@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Optional;
 
@@ -135,6 +136,7 @@ public class TransactionSimulator {
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(nonce)
             .gasPrice(gasPrice)
             .gasLimit(gasLimit)

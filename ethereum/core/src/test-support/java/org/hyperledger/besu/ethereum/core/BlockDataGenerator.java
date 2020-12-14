@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
@@ -324,6 +325,8 @@ public class BlockDataGenerator {
 
   public Transaction transaction(final Bytes payload, final Address to) {
     return Transaction.builder()
+        // TODO support more EIP-2718 types as they're added
+        .type(TransactionType.FRONTIER)
         .nonce(positiveLong())
         .gasPrice(Wei.wrap(bytes32()))
         .gasLimit(positiveLong())

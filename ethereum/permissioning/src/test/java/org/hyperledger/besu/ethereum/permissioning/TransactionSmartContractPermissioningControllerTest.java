@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -96,6 +97,7 @@ public class TransactionSmartContractPermissioningControllerTest {
 
   private Transaction transactionForAccount(final Address address) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .sender(address)
         .value(Wei.ZERO)
         .gasPrice(Wei.ZERO)
