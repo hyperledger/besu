@@ -17,12 +17,13 @@
 
 package org.hyperledger.besu.ethereum.core;
 
+import static java.util.Collections.emptyList;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.apache.tuweni.bytes.Bytes32;
 
-import static java.util.Collections.emptyList;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class AccessList extends ArrayList<Map.Entry<Address, List<Bytes32>>> {
 
