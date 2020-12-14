@@ -130,7 +130,6 @@ public class TransactionRLPEncoderTest {
                     .value(Wei.of(1))
                     .payload(Bytes.EMPTY)
                     .accessList(new AccessList(accessedStorage))
-                    // TODO figure out yparity bit bit
                     .signAndBuild(SECP256K1.KeyPair.generate())),
             emptyList());
 
