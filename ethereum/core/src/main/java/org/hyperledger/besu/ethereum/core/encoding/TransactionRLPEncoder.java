@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -38,22 +40,26 @@ public class TransactionRLPEncoder {
       ImmutableMap.of(TransactionType.EIP1559, TransactionRLPEncoder::encodeEIP1559);
 
   public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
-    if (transaction.getType().equals(TransactionType.FRONTIER)) {
+    final TransactionType transactionType =
+        checkNotNull(
+            transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    if (TransactionType.FRONTIER.equals(transactionType)) {
       encodeFrontier(transaction, rlpOutput);
+    } else if (TransactionType.EIP1559.equals(transactionType)) {
+      encodeEIP1559(transaction, rlpOutput);
     } else {
-      final TransactionType type = transaction.getType();
       final Encoder encoder =
-          Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(type))
+          Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(transactionType))
               .orElseThrow(
                   () ->
                       new IllegalStateException(
                           String.format(
                               "Developer Error. A supported transaction type %s has no associated"
                                   + " encoding logic",
-                              type)));
+                              transactionType)));
       rlpOutput.writeRaw(
           Bytes.concatenate(
-              Bytes.of((byte) type.getSerializedType()),
+              Bytes.of((byte) transactionType.getSerializedType()),
               RLP.encode(output -> encoder.encode(transaction, output))));
     }
   }
