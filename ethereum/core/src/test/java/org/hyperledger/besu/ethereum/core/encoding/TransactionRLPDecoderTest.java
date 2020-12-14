@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
