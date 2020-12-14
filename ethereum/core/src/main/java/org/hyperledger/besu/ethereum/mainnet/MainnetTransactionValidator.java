@@ -55,11 +55,25 @@ public class MainnetTransactionValidator {
       final boolean goQuorumCompatibilityMode) {
     this(
         gasCalculator,
-        Optional.empty(),
         checkSignatureMalleability,
         chainId,
         Set.of(TransactionType.FRONTIER),
         goQuorumCompatibilityMode);
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final Set<TransactionType> acceptedTransactionTypes,
+      final boolean quorumCompatibilityMode) {
+    this(
+        gasCalculator,
+        Optional.empty(),
+        checkSignatureMalleability,
+        chainId,
+        acceptedTransactionTypes,
+        quorumCompatibilityMode);
   }
 
   public MainnetTransactionValidator(
