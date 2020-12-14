@@ -14,21 +14,22 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
+import org.hyperledger.besu.consensus.common.bft.events.IbftReceivedMessageEvent;
+import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
+import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
+import org.hyperledger.besu.consensus.common.bft.payload.Authored;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.ibft.Gossiper;
 import org.hyperledger.besu.consensus.ibft.MessageTracker;
 import org.hyperledger.besu.consensus.ibft.SynchronizerUpdater;
-import org.hyperledger.besu.consensus.ibft.ibftevent.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftReceivedMessageEvent;
-import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
-import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.IbftMessage;
-import org.hyperledger.besu.consensus.ibft.payload.Authored;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
@@ -40,7 +41,7 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftController {
+public class IbftController implements BftEventHandler {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Blockchain blockchain;
@@ -71,12 +72,14 @@ public class IbftController {
     this.sychronizerUpdater = sychronizerUpdater;
   }
 
+  @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
       startNewHeightManager(blockchain.getChainHeadHeader());
     }
   }
 
+  @Override
   public void handleMessageEvent(final IbftReceivedMessageEvent msg) {
     final MessageData data = msg.getMessage().getData();
     if (!duplicateMessageTracker.hasSeenMessage(data)) {
@@ -127,7 +130,7 @@ public class IbftController {
     }
   }
 
-  private <P extends IbftMessage<?>> void consumeMessage(
+  private <P extends BftMessage<?>> void consumeMessage(
       final Message message, final P ibftMessage, final Consumer<P> handleMessage) {
     LOG.trace("Received IBFT {} message", ibftMessage.getClass().getSimpleName());
 
@@ -145,6 +148,7 @@ public class IbftController {
     }
   }
 
+  @Override
   public void handleNewBlockEvent(final NewChainHead newChainHead) {
     final BlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
     final BlockHeader currentMiningParent = currentHeightManager.getParentBlockHeader();
@@ -177,6 +181,7 @@ public class IbftController {
     startNewHeightManager(newBlockHeader);
   }
 
+  @Override
   public void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {
     final ConsensusRoundIdentifier roundIndentifier = blockTimerExpiry.getRoundIndentifier();
     if (isMsgForCurrentHeight(roundIndentifier)) {
@@ -189,6 +194,7 @@ public class IbftController {
     }
   }
 
+  @Override
   public void handleRoundExpiry(final RoundExpiry roundExpiry) {
     // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
     // the currentHeightManager, but CAN be the same directly following import).
@@ -213,7 +219,7 @@ public class IbftController {
     futureMessageBuffer.retrieveMessagesForHeight(newChainHeight).forEach(this::handleMessage);
   }
 
-  private boolean processMessage(final IbftMessage<?> msg, final Message rawMsg) {
+  private boolean processMessage(final BftMessage<?> msg, final Message rawMsg) {
     final ConsensusRoundIdentifier msgRoundIdentifier = msg.getRoundIdentifier();
     if (isMsgForCurrentHeight(msgRoundIdentifier)) {
       return isMsgFromKnownValidator(msg) && ibftFinalState.isLocalNodeValidator();

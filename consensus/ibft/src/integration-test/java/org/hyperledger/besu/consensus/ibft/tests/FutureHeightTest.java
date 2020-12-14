@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.emptyList;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
-import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;

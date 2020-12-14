@@ -19,11 +19,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
 import org.hyperledger.besu.consensus.ibft.IbftExecutors;
 import org.hyperledger.besu.consensus.ibft.IbftProcessor;
-import org.hyperledger.besu.consensus.ibft.ibftevent.NewChainHead;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -44,7 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IbftMiningCoordinatorTest {
-  @Mock private IbftController controller;
+  @Mock private BftEventHandler controller;
   @Mock private IbftExecutors ibftExecutors;
   @Mock private IbftProcessor ibftProcessor;
   @Mock private IbftBlockCreatorFactory ibftBlockCreatorFactory;

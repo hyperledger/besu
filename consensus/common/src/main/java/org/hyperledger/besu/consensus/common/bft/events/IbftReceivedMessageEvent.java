@@ -12,11 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.payload;
+package org.hyperledger.besu.consensus.common.bft.events;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
-public interface RoundSpecific {
+public class IbftReceivedMessageEvent implements IbftEvent {
 
-  ConsensusRoundIdentifier getRoundIdentifier();
+  private final Message message;
+
+  public IbftReceivedMessageEvent(final Message message) {
+    this.message = message;
+  }
+
+  public Message getMessage() {
+    return message;
+  }
+
+  @Override
+  public IbftEvents.Type getType() {
+    return IbftEvents.Type.MESSAGE;
+  }
 }

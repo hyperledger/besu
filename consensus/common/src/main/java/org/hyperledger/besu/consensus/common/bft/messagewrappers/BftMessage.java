@@ -12,13 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.messagewrappers;
+package org.hyperledger.besu.consensus.common.bft.messagewrappers;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.payload.Authored;
-import org.hyperledger.besu.consensus.ibft.payload.Payload;
-import org.hyperledger.besu.consensus.ibft.payload.RoundSpecific;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.payload.Authored;
+import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.consensus.common.bft.payload.RoundSpecific;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -26,11 +26,11 @@ import java.util.StringJoiner;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class IbftMessage<P extends Payload> implements Authored, RoundSpecific {
+public class BftMessage<P extends Payload> implements Authored, RoundSpecific {
 
   private final SignedData<P> payload;
 
-  public IbftMessage(final SignedData<P> payload) {
+  public BftMessage(final SignedData<P> payload) {
     this.payload = payload;
   }
 
@@ -64,7 +64,7 @@ public class IbftMessage<P extends Payload> implements Authored, RoundSpecific {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", IbftMessage.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", BftMessage.class.getSimpleName() + "[", "]")
         .add("payload=" + payload)
         .toString();
   }

@@ -12,9 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.ibftevent;
+package org.hyperledger.besu.consensus.common.bft.payload;
 
-/** Category of events that will effect and are interpretable by the Ibft processing mechanism */
-public interface IbftEvent {
-  IbftEvents.Type getType();
+import org.hyperledger.besu.ethereum.core.Address;
+
+public interface Authored {
+
+  Address getAuthor();
 }

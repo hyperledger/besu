@@ -24,9 +24,10 @@ import org.hyperledger.besu.consensus.common.IbftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.ibft.BlockTimer;
 import org.hyperledger.besu.consensus.ibft.EthSynchronizerUpdater;
-import org.hyperledger.besu.consensus.ibft.EventMultiplexer;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
@@ -172,7 +173,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     final MessageTracker duplicateMessageTracker =
         new MessageTracker(ibftConfig.getDuplicateMessageLimit());
 
-    final IbftController ibftController =
+    final BftEventHandler ibftController =
         new IbftController(
             blockchain,
             finalState,

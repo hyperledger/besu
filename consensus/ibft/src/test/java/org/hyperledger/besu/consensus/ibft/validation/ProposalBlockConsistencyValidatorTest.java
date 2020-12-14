@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibft.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.TestHelpers;

@@ -25,8 +25,9 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.ibft.BlockTimer;
-import org.hyperledger.besu.consensus.ibft.EventMultiplexer;
 import org.hyperledger.besu.consensus.ibft.Gossiper;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
@@ -94,17 +95,17 @@ public class TestContextBuilder {
   private static class ControllerAndState {
 
     private final IbftExecutors ibftExecutors;
-    private final IbftController controller;
+    private final BftEventHandler eventHandler;
     private final IbftFinalState finalState;
     private final EventMultiplexer eventMultiplexer;
 
     public ControllerAndState(
         final IbftExecutors ibftExecutors,
-        final IbftController controller,
+        final BftEventHandler eventHandler,
         final IbftFinalState finalState,
         final EventMultiplexer eventMultiplexer) {
       this.ibftExecutors = ibftExecutors;
-      this.controller = controller;
+      this.eventHandler = eventHandler;
       this.finalState = finalState;
       this.eventMultiplexer = eventMultiplexer;
     }
@@ -113,8 +114,8 @@ public class TestContextBuilder {
       return ibftExecutors;
     }
 
-    public IbftController getController() {
-      return controller;
+    public BftEventHandler getEventHandler() {
+      return eventHandler;
     }
 
     public IbftFinalState getFinalState() {
@@ -219,7 +220,7 @@ public class TestContextBuilder {
         remotePeers,
         blockChain,
         controllerAndState.getIbftExecutors(),
-        controllerAndState.getController(),
+        controllerAndState.getEventHandler(),
         controllerAndState.getFinalState(),
         controllerAndState.getEventMultiplexer());
   }
@@ -346,7 +347,7 @@ public class TestContextBuilder {
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber());
 
-    final IbftController ibftController =
+    final BftEventHandler ibftController =
         new IbftController(
             blockChain,
             finalState,
