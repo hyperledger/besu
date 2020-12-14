@@ -12,24 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft.events;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
-/**
- * Map that is limited to a specified size and will evict oldest entries when the size limit is
- * reached.
- */
-public class SizeLimitedMap<K, V> extends LinkedHashMap<K, V> {
-  private final int maxEntries;
+public class BftReceivedMessageEvent implements BftEvent {
 
-  public SizeLimitedMap(final int maxEntries) {
-    this.maxEntries = maxEntries;
+  private final Message message;
+
+  public BftReceivedMessageEvent(final Message message) {
+    this.message = message;
+  }
+
+  public Message getMessage() {
+    return message;
   }
 
   @Override
-  protected boolean removeEldestEntry(final Map.Entry<K, V> ignored) {
-    return size() > maxEntries;
+  public BftEvents.Type getType() {
+    return BftEvents.Type.MESSAGE;
   }
 }

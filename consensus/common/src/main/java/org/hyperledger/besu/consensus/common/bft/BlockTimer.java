@@ -12,9 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -25,9 +24,9 @@ import java.util.concurrent.TimeUnit;
 
 /** Class for starting and keeping organised block timers */
 public class BlockTimer {
-  private final IbftExecutors ibftExecutors;
+  private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
-  private final IbftEventQueue queue;
+  private final BftEventQueue queue;
   private final long minimumTimeBetweenBlocksMillis;
   private final Clock clock;
 
@@ -36,16 +35,16 @@ public class BlockTimer {
    *
    * @param queue The queue in which to put block expiry events
    * @param minimumTimeBetweenBlocksSeconds Minimum timestamp difference between blocks
-   * @param ibftExecutors Executor services that timers can be scheduled with
+   * @param bftExecutors Executor services that timers can be scheduled with
    * @param clock System clock
    */
   public BlockTimer(
-      final IbftEventQueue queue,
+      final BftEventQueue queue,
       final long minimumTimeBetweenBlocksSeconds,
-      final IbftExecutors ibftExecutors,
+      final BftExecutors bftExecutors,
       final Clock clock) {
     this.queue = queue;
-    this.ibftExecutors = ibftExecutors;
+    this.bftExecutors = bftExecutors;
     this.currentTimerTask = Optional.empty();
     this.minimumTimeBetweenBlocksMillis = minimumTimeBetweenBlocksSeconds * 1000;
     this.clock = clock;
@@ -87,7 +86,7 @@ public class BlockTimer {
       final Runnable newTimerRunnable = () -> queue.add(new BlockTimerExpiry(round));
 
       final ScheduledFuture<?> newTimerTask =
-          ibftExecutors.scheduleTask(newTimerRunnable, delay, TimeUnit.MILLISECONDS);
+          bftExecutors.scheduleTask(newTimerRunnable, delay, TimeUnit.MILLISECONDS);
       currentTimerTask = Optional.of(newTimerTask);
     } else {
       queue.add(new BlockTimerExpiry(round));

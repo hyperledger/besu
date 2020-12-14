@@ -16,12 +16,12 @@ package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.IbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
-import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
-import org.hyperledger.besu.consensus.ibft.IbftExecutors;
-import org.hyperledger.besu.consensus.ibft.IbftProcessor;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -50,25 +50,25 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   private static final Logger LOG = getLogger();
 
   private final BftEventHandler eventHandler;
-  private final IbftProcessor ibftProcessor;
+  private final BftProcessor bftProcessor;
   private final IbftBlockCreatorFactory blockCreatorFactory;
   protected final Blockchain blockchain;
-  private final IbftEventQueue eventQueue;
-  private final IbftExecutors ibftExecutors;
+  private final BftEventQueue eventQueue;
+  private final BftExecutors bftExecutors;
 
   private long blockAddedObserverId;
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
 
   public IbftMiningCoordinator(
-      final IbftExecutors ibftExecutors,
+      final BftExecutors bftExecutors,
       final BftEventHandler eventHandler,
-      final IbftProcessor ibftProcessor,
+      final BftProcessor bftProcessor,
       final IbftBlockCreatorFactory blockCreatorFactory,
       final Blockchain blockchain,
-      final IbftEventQueue eventQueue) {
-    this.ibftExecutors = ibftExecutors;
+      final BftEventQueue eventQueue) {
+    this.bftExecutors = bftExecutors;
     this.eventHandler = eventHandler;
-    this.ibftProcessor = ibftProcessor;
+    this.bftProcessor = bftProcessor;
     this.blockCreatorFactory = blockCreatorFactory;
     this.eventQueue = eventQueue;
 
@@ -78,10 +78,10 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   @Override
   public void start() {
     if (state.compareAndSet(State.IDLE, State.RUNNING)) {
-      ibftExecutors.start();
+      bftExecutors.start();
       blockAddedObserverId = blockchain.observeBlockAdded(this);
       eventHandler.start();
-      ibftExecutors.executeIbftProcessor(ibftProcessor);
+      bftExecutors.executeBftProcessor(bftProcessor);
     }
   }
 
@@ -89,21 +89,21 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   public void stop() {
     if (state.compareAndSet(State.RUNNING, State.STOPPED)) {
       blockchain.removeObserver(blockAddedObserverId);
-      ibftProcessor.stop();
+      bftProcessor.stop();
       // Make sure the processor has stopped before shutting down the executors
       try {
-        ibftProcessor.awaitStop();
+        bftProcessor.awaitStop();
       } catch (final InterruptedException e) {
         LOG.debug("Interrupted while waiting for IbftProcessor to stop.", e);
         Thread.currentThread().interrupt();
       }
-      ibftExecutors.stop();
+      bftExecutors.stop();
     }
   }
 
   @Override
   public void awaitStop() throws InterruptedException {
-    ibftExecutors.awaitStop();
+    bftExecutors.awaitStop();
   }
 
   @Override
