@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.lang.reflect.Field;
 
@@ -44,14 +45,14 @@ public class TransactionEIP1559Test {
   @Test
   public void givenLegacyTransaction_assertThatRlpEncodingWorks() {
     final Transaction legacyTransaction = Transaction.readFrom(legacyRLPInput);
-    assertThat(legacyTransaction.isFrontierTransaction()).isTrue();
-    assertThat(legacyTransaction.isEIP1559Transaction()).isFalse();
+    assertThat(legacyTransaction.getType()).isEqualTo(TransactionType.FRONTIER);
   }
 
   @Test
   public void givenEIP1559Transaction_assertThatRlpDecodingWorks() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction legacyTransaction = Transaction.readFrom(legacyRLPInput);
+    set(legacyTransaction, "transactionType", TransactionType.EIP1559);
     set(legacyTransaction, "gasPrice", null);
     set(legacyTransaction, "gasPremium", expectedGasPremium);
     set(legacyTransaction, "feeCap", expectedFeeCap);
@@ -59,8 +60,7 @@ public class TransactionEIP1559Test {
     legacyTransaction.writeTo(rlpOutput);
     final Transaction eip1559Transaction =
         Transaction.readFrom(new BytesValueRLPInput(rlpOutput.encoded(), false));
-    assertThat(eip1559Transaction.isFrontierTransaction()).isFalse();
-    assertThat(eip1559Transaction.isEIP1559Transaction()).isTrue();
+    assertThat(legacyTransaction.getType()).isEqualTo(TransactionType.EIP1559);
     assertThat(eip1559Transaction.getGasPremium()).hasValue(expectedGasPremium);
     assertThat(eip1559Transaction.getFeeCap()).hasValue(expectedFeeCap);
     assertThat(eip1559Transaction.getGasPrice()).isEqualByComparingTo(Wei.ZERO);

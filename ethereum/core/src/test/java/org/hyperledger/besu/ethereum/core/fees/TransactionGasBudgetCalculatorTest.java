@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -95,7 +96,11 @@ public class TransactionGasBudgetCalculatorTest {
 
   private Transaction transaction(final boolean isEIP1559, final long gasLimit) {
     final Transaction transaction = mock(Transaction.class);
-    when(transaction.isEIP1559Transaction()).thenReturn(isEIP1559);
+    if (isEIP1559) {
+      when(transaction.getType()).thenReturn(TransactionType.EIP1559);
+    } else {
+      when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
+    }
     when(transaction.getGasLimit()).thenReturn(gasLimit);
     return transaction;
   }
