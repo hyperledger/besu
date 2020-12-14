@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -46,7 +47,6 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -464,7 +464,7 @@ public class WorldStateDownloaderTest {
     allNodes.forEach(
         (nodeHash, node) -> {
           if (storeNode.get()) {
-            localStorageUpdater.putAccountStateTrieNode(nodeHash, node);
+            localStorageUpdater.putAccountStateTrieNode(null, nodeHash, node);
             knownNodes.add(nodeHash);
           } else {
             unknownNodes.add(nodeHash);
@@ -560,7 +560,7 @@ public class WorldStateDownloaderTest {
       final Bytes32 hash = entry.getKey();
       final Bytes data = entry.getValue();
       if (storeNode) {
-        localStorageUpdater.putAccountStorageTrieNode(hash, data);
+        localStorageUpdater.putAccountStorageTrieNode(null, hash, data);
         knownNodes.add(hash);
       } else {
         unknownNodes.add(hash);
@@ -774,8 +774,8 @@ public class WorldStateDownloaderTest {
       final WorldStateStorage storage, final Bytes32 rootHash) {
     final List<Bytes32> hashesToRequest = new ArrayList<>();
 
-    Bytes rootNodeRlp = storage.getNodeData(rootHash).get();
-    TrieNodeDecoder.decodeNodes(rootNodeRlp).stream()
+    final Bytes rootNodeRlp = storage.getNodeData(Bytes.EMPTY, rootHash).get();
+    TrieNodeDecoder.decodeNodes(Bytes.EMPTY, rootNodeRlp).stream()
         .filter(n -> !Objects.equals(n.getHash(), rootHash))
         .filter(Node::isReferencedByHash)
         .forEach((n) -> hashesToRequest.add(n.getHash()));
@@ -907,7 +907,7 @@ public class WorldStateDownloaderTest {
             mock(Blockchain.class),
             remoteWorldStateArchive,
             mock(TransactionPool.class),
-            MainnetProtocolSchedule.create(),
+            ProtocolScheduleFixture.MAINNET,
             .5f);
     final RespondingEthPeer.Responder emptyResponder = RespondingEthPeer.emptyResponder();
 

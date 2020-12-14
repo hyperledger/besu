@@ -11,25 +11,20 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.consensus.ibft.ibftevent;
 
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
+package org.hyperledger.besu.ethereum.worldstate;
 
-public class IbftReceivedMessageEvent implements IbftEvent {
+import org.immutables.value.Value;
 
-  private final Message message;
+@Value.Immutable
+public interface DataStorageConfiguration {
 
-  public IbftReceivedMessageEvent(final Message message) {
-    this.message = message;
-  }
+  DataStorageConfiguration DEFAULT_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.FOREST)
+          .build();
 
-  public Message getMessage() {
-    return message;
-  }
-
-  @Override
-  public IbftEvents.Type getType() {
-    return IbftEvents.Type.MESSAGE;
-  }
+  DataStorageFormat getDataStorageFormat();
 }

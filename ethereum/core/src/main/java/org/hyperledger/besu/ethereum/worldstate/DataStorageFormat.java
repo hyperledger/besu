@@ -11,12 +11,22 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.consensus.ibft.payload;
 
-import org.hyperledger.besu.ethereum.core.Address;
+package org.hyperledger.besu.ethereum.worldstate;
 
-public interface Authored {
+public enum DataStorageFormat {
+  FOREST(1), // Original format.  Store all tries
+  BONSAI(2); // New format.  Store one trie, and trie logs to roll forward and backward.
 
-  Address getAuthor();
+  private final int databaseVersion;
+
+  DataStorageFormat(final int databaseVersion) {
+    this.databaseVersion = databaseVersion;
+  }
+
+  public int getDatabaseVersion() {
+    return databaseVersion;
+  }
 }

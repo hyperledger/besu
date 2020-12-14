@@ -219,7 +219,7 @@ public class StateBackupService {
       return;
     }
     final Optional<Bytes> worldStateRoot =
-        worldStateStorage.getAccountStateTrieNode(header.get().getStateRoot());
+        worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, header.get().getStateRoot());
     if (worldStateRoot.isEmpty()) {
       backupStatus.currentAccount = null;
       return;

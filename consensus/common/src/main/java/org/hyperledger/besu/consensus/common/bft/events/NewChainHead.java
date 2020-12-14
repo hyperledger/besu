@@ -12,39 +12,37 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.ibftevent;
+package org.hyperledger.besu.consensus.common.bft.events;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
-/** Event indicating a round timer has expired */
-public final class RoundExpiry implements IbftEvent {
-  private final ConsensusRoundIdentifier round;
+/** Event indicating that new chain head has been received */
+public final class NewChainHead implements IbftEvent {
+  private final BlockHeader newChainHeadHeader;
 
   /**
-   * Constructor for a RoundExpiry event
+   * Constructor for a NewChainHead event
    *
-   * @param round The round that the expired timer belonged to
+   * @param newChainHeadHeader The header of the current blockchain head
    */
-  public RoundExpiry(final ConsensusRoundIdentifier round) {
-    this.round = round;
+  public NewChainHead(final BlockHeader newChainHeadHeader) {
+    this.newChainHeadHeader = newChainHeadHeader;
   }
 
   @Override
   public IbftEvents.Type getType() {
-    return IbftEvents.Type.ROUND_EXPIRY;
-  }
-
-  public ConsensusRoundIdentifier getView() {
-    return round;
+    return IbftEvents.Type.NEW_CHAIN_HEAD;
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("Round", round).toString();
+    return MoreObjects.toStringHelper(this)
+        .add("New Chain Head Header", newChainHeadHeader)
+        .toString();
   }
 
   @Override
@@ -55,12 +53,16 @@ public final class RoundExpiry implements IbftEvent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final RoundExpiry that = (RoundExpiry) o;
-    return Objects.equals(round, that.round);
+    final NewChainHead that = (NewChainHead) o;
+    return Objects.equals(newChainHeadHeader, that.newChainHeadHeader);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(round);
+    return Objects.hash(newChainHeadHeader);
+  }
+
+  public BlockHeader getNewChainHeadHeader() {
+    return newChainHeadHeader;
   }
 }

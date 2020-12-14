@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.messagedata;
+package org.hyperledger.besu.consensus.common.bft.messagedata;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -21,12 +21,12 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public abstract class AbstractIbftMessageData extends AbstractMessageData {
-  protected AbstractIbftMessageData(final Bytes data) {
+public abstract class AbstractBftMessageData extends AbstractMessageData {
+  protected AbstractBftMessageData(final Bytes data) {
     super(data);
   }
 
-  protected static <T extends AbstractIbftMessageData> T fromMessageData(
+  protected static <T extends AbstractBftMessageData> T fromMessageData(
       final MessageData messageData,
       final int messageCode,
       final Class<T> clazz,

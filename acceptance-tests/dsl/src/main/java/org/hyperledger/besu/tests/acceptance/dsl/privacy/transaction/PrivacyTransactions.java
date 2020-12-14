@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransa
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.EeaSendRawTransactionTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivCallTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivDebugGetStateRoot;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetCodeTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetLogsTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetTransaction;
@@ -135,5 +136,10 @@ public class PrivacyTransactions {
   public PrivGetFilterChangesTransaction getFilterChanges(
       final String privacyGroupId, final String filterId) {
     return new PrivGetFilterChangesTransaction(privacyGroupId, filterId);
+  }
+
+  public PrivDebugGetStateRoot debugGetStateRoot(
+      final String privacyGroupId, final String blockParam) {
+    return new PrivDebugGetStateRoot(privacyGroupId, blockParam);
   }
 }

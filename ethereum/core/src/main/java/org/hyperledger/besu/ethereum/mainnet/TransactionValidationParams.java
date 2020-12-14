@@ -14,87 +14,64 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-public class TransactionValidationParams {
+import org.immutables.value.Value;
 
-  private static final TransactionValidationParams processingBlockParams =
-      new TransactionValidationParams(false, true, false);
-  private static final TransactionValidationParams transactionPoolParams =
-      new TransactionValidationParams(true, false, true);
-  private static final TransactionValidationParams miningParams =
-      new TransactionValidationParams(false, true, true);
-  private static final TransactionValidationParams blockReplayParams =
-      new TransactionValidationParams(false, false, false);
-  private static final TransactionValidationParams transactionSimulatorParams =
-      new TransactionValidationParams(false, false, false);
-  private final boolean allowFutureNonce;
-  private final boolean checkOnchainPermissions;
-  private final boolean checkLocalPermissions;
+@Value.Immutable
+@Value.Style(allParameters = true)
+public interface TransactionValidationParams {
 
-  private TransactionValidationParams(
-      final boolean allowFutureNonce,
-      final boolean checkOnchainPermissions,
-      final boolean checkLocalPermissions) {
-    this.allowFutureNonce = allowFutureNonce;
-    this.checkOnchainPermissions = checkOnchainPermissions;
-    this.checkLocalPermissions = checkLocalPermissions;
+  TransactionValidationParams processingBlockParams =
+      ImmutableTransactionValidationParams.of(false, false, true, false);
+
+  TransactionValidationParams transactionPoolParams =
+      ImmutableTransactionValidationParams.of(true, false, false, true);
+
+  TransactionValidationParams miningParams =
+      ImmutableTransactionValidationParams.of(false, false, true, true);
+
+  TransactionValidationParams blockReplayParams =
+      ImmutableTransactionValidationParams.of(false, false, false, false);
+
+  TransactionValidationParams transactionSimulatorParams =
+      ImmutableTransactionValidationParams.of(false, false, false, false);
+
+  @Value.Default
+  default boolean isAllowFutureNonce() {
+    return false;
   }
 
-  public boolean isAllowFutureNonce() {
-    return allowFutureNonce;
+  @Value.Default
+  default boolean isAllowExceedingBalance() {
+    return false;
   }
 
-  public boolean checkOnchainPermissions() {
-    return checkOnchainPermissions;
+  @Value.Default
+  default boolean checkOnchainPermissions() {
+    return false;
   }
 
-  public boolean checkLocalPermissions() {
-    return checkLocalPermissions;
+  @Value.Default
+  default boolean checkLocalPermissions() {
+    return true;
   }
 
-  public static TransactionValidationParams transactionSimulator() {
+  static TransactionValidationParams transactionSimulator() {
     return transactionSimulatorParams;
   }
 
-  public static TransactionValidationParams processingBlock() {
+  static TransactionValidationParams processingBlock() {
     return processingBlockParams;
   }
 
-  public static TransactionValidationParams transactionPool() {
+  static TransactionValidationParams transactionPool() {
     return transactionPoolParams;
   }
 
-  public static TransactionValidationParams mining() {
+  static TransactionValidationParams mining() {
     return miningParams;
   }
 
-  public static TransactionValidationParams blockReplay() {
+  static TransactionValidationParams blockReplay() {
     return blockReplayParams;
-  }
-
-  public static class Builder {
-
-    private boolean allowFutureNonce = false;
-    private boolean checkOnchainPermissions = false;
-    private boolean checkLocalPermissions = true;
-
-    public Builder allowFutureNonce(final boolean allowFutureNonce) {
-      this.allowFutureNonce = allowFutureNonce;
-      return this;
-    }
-
-    public Builder checkOnchainPermissions(final boolean checkOnchainPermissions) {
-      this.checkOnchainPermissions = checkOnchainPermissions;
-      return this;
-    }
-
-    public Builder checkLocalPermissions(final boolean checkLocalPermissions) {
-      this.checkLocalPermissions = checkLocalPermissions;
-      return this;
-    }
-
-    public TransactionValidationParams build() {
-      return new TransactionValidationParams(
-          allowFutureNonce, checkOnchainPermissions, checkLocalPermissions);
-    }
   }
 }

@@ -12,29 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.payload;
-
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public interface Payload extends RoundSpecific {
+interface LocationNodeVisitor<V> {
 
-  void writeTo(final RLPOutput rlpOutput);
+  void visit(Bytes location, ExtensionNode<V> extensionNode);
 
-  default Bytes encoded() {
-    BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    writeTo(rlpOutput);
+  void visit(Bytes location, BranchNode<V> branchNode);
 
-    return rlpOutput.encoded();
-  }
+  void visit(Bytes location, LeafNode<V> leafNode);
 
-  int getMessageType();
-
-  static Hash readDigest(final RLPInput ibftMessageData) {
-    return Hash.wrap(ibftMessageData.readBytes32());
-  }
+  void visit(Bytes location, NullNode<V> nullNode);
 }
