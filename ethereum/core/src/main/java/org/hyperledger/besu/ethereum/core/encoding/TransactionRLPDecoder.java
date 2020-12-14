@@ -22,16 +22,22 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.AbstractMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
@@ -46,33 +52,35 @@ public class TransactionRLPDecoder {
 
   private static final ImmutableMap<TransactionType, TransactionRLPDecoder.Decoder>
       TYPED_TRANSACTION_DECODERS =
-          ImmutableMap.of(TransactionType.EIP1559, TransactionRLPDecoder::decodeEIP1559);
+          ImmutableMap.of(
+              TransactionType.ACCESS_LIST,
+              TransactionRLPDecoder::decodeAccessList,
+              TransactionType.EIP1559,
+              TransactionRLPDecoder::decodeEIP1559);
 
   public static Transaction decode(final RLPInput rlpInput) {
-    if (GoQuorumOptions.goquorumCompatibilityMode) {
-      return decodeGoQuorum(rlpInput);
-    }
-    final Bytes typedTransactionBytes = rlpInput.raw();
-    final int firstByte = typedTransactionBytes.get(0) & 0xff;
-    final TransactionType transactionType = TransactionType.of(firstByte);
-    if (transactionType.equals(TransactionType.FRONTIER)) {
+    if (rlpInput.nextIsList()) {
       return decodeFrontier(rlpInput);
     } else {
-      rlpInput.skipNext(); // throw away the type byte
+      final Bytes typedTransactionBytes = rlpInput.readBytes();
+      final TransactionType transactionType =
+          TransactionType.of(typedTransactionBytes.get(0) & 0xff);
       final Decoder decoder =
           Optional.ofNullable(TYPED_TRANSACTION_DECODERS.get(transactionType))
               .orElseThrow(
                   () ->
                       new IllegalStateException(
                           String.format(
-                              "Developer Error. A supported transaction type %s has no associated"
-                                  + " decoding logic",
+                              "Developer Error. A supported transaction type %s has no associated decoding logic",
                               transactionType)));
-      return decoder.decode(rlpInput);
+      return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
     }
   }
 
   static Transaction decodeFrontier(final RLPInput input) {
+    if (GoQuorumOptions.goquorumCompatibilityMode) {
+      return decodeGoQuorum(input);
+    }
     input.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
@@ -104,6 +112,36 @@ public class TransactionRLPDecoder {
 
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();
+  }
+
+  private static Transaction decodeAccessList(final RLPInput rlpInput) {
+    rlpInput.enterList();
+    final Transaction transaction =
+        Transaction.builder()
+            .type(TransactionType.ACCESS_LIST)
+            .chainId(BigInteger.valueOf(rlpInput.readLongScalar()))
+            .nonce(rlpInput.readLongScalar())
+            .gasPrice(Wei.of(rlpInput.readUInt256Scalar()))
+            .gasLimit(rlpInput.readLongScalar())
+            .to(rlpInput.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .value(Wei.of(rlpInput.readUInt256Scalar()))
+            .payload(rlpInput.readBytes())
+            .accessList(
+                new AccessList(
+                    rlpInput.readList(
+                        // todo rename these something more descriptive
+                        rlpInput1 -> {
+                          rlpInput1.enterList();
+                          final Map.Entry<Address, List<Bytes32>> accessListEntry =
+                              new AbstractMap.SimpleEntry<>(
+                                  Address.wrap(rlpInput1.readBytes()),
+                                  rlpInput1.readList(RLPInput::readBytes32));
+                          rlpInput1.leaveList();
+                          return accessListEntry;
+                        })))
+            .build();
+    rlpInput.leaveList();
+    return transaction;
   }
 
   static Transaction decodeEIP1559(final RLPInput input) {

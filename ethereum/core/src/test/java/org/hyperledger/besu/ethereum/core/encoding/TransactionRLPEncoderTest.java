@@ -14,16 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.core.AccessList;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.Test;
+
+import java.math.BigInteger;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /*
  * Copyright ConsenSys AG.
@@ -78,5 +96,47 @@ public class TransactionRLPEncoderTest {
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("EIP-1559 feature flag");
     ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+  }
+
+  @Test
+  public void blockBodyWithLegacyAndEIP2930TransactionsRoundTrips() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final List<Address> accessedAddresses = List.of(gen.address(), gen.address(), gen.address());
+    final List<Map.Entry<Address, List<Bytes32>>> accessedStorage = new ArrayList<>();
+    for (int i = 0; i < accessedAddresses.size(); ++i) {
+      accessedStorage.add(
+          new AbstractMap.SimpleEntry<>(
+              accessedAddresses.get(i),
+              Stream.generate(gen::bytes32).limit(2 * i).collect(toUnmodifiableList())));
+    }
+    final BlockBody blockBody =
+        new BlockBody(
+            List.of(
+                Transaction.builder()
+                    .type(TransactionType.FRONTIER)
+                    .nonce(42)
+                    .gasLimit(654321)
+                    .gasPrice(Wei.of(2))
+                    .value(Wei.of(1337))
+                    .payload(Bytes.EMPTY)
+                    .signAndBuild(SECP256K1.KeyPair.generate()),
+                Transaction.builder()
+                    .type(TransactionType.ACCESS_LIST)
+                    .chainId(BigInteger.ONE)
+                    .nonce(1)
+                    .gasPrice(Wei.of(500))
+                    .gasLimit(100000)
+                    .to(gen.address())
+                    .value(Wei.of(1))
+                    .payload(Bytes.EMPTY)
+                    .accessList(new AccessList(accessedStorage))
+                    // TODO figure out yparity bit bit
+                    .signAndBuild(SECP256K1.KeyPair.generate())),
+            emptyList());
+
+    assertThat(
+            BlockBody.readFrom(
+                RLP.input(RLP.encode(blockBody::writeTo)), new MainnetBlockHeaderFunctions()))
+        .isEqualTo(blockBody);
   }
 }

@@ -543,7 +543,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               out.writeLongScalar(nonce);
               out.writeUInt256Scalar(gasPrice);
               out.writeLongScalar(gasLimit);
-              out.writeBytes(to.orElse(Address.wrap(Bytes.EMPTY)));
+              out.writeBytes(to.isEmpty() ? Bytes.EMPTY : to.get());
               out.writeUInt256Scalar(value);
               out.writeBytes(payload);
               if (ExperimentalEIPs.eip1559Enabled && gasPremium != null && feeCap != null) {
@@ -630,7 +630,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected long gasLimit = -1L;
 
-    protected Optional<Address> to;
+    protected Optional<Address> to = Optional.empty();
 
     protected Wei value;
 
