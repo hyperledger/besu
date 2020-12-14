@@ -37,6 +37,7 @@ public class IbftConfigOptions {
   private static final int DEFAULT_DUPLICATE_MESSAGE_LIMIT = 100;
   private static final int DEFAULT_FUTURE_MESSAGES_LIMIT = 1000;
   private static final int DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE = 10;
+  private static final boolean DEFAULT_USE_QBFT = false;
 
   private final ObjectNode ibftConfigRoot;
 
@@ -93,6 +94,10 @@ public class IbftConfigOptions {
       return new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe());
     }
     return new BigInteger(weiStr);
+  }
+
+  public boolean useQbft() {
+    return JsonUtil.getBoolean(ibftConfigRoot, "useqbft", DEFAULT_USE_QBFT);
   }
 
   Map<String, Object> asMap() {

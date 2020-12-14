@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
@@ -77,7 +77,7 @@ public class Proposal extends BftMessage<ProposalPayload> {
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload =
         PayloadDeserializers.readSignedProposalPayloadFrom(rlpIn);
-    final Block proposedBlock = Block.readFrom(rlpIn, IbftBlockHeaderFunctions.forCommittedSeal());
+    final Block proposedBlock = Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal());
 
     final Optional<RoundChangeCertificate> roundChangeCertificate =
         readRoundChangeCertificate(rlpIn);

@@ -15,15 +15,13 @@
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
-import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.ibft.blockcreation.ProposerSelector;
-import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
-import org.hyperledger.besu.consensus.ibft.network.ValidatorMulticaster;
-import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 
@@ -38,10 +36,9 @@ public class IbftFinalState {
   private final ProposerSelector proposerSelector;
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
-  private final IbftBlockCreatorFactory blockCreatorFactory;
-  private final MessageFactory messageFactory;
-  private final IbftMessageTransmitter messageTransmitter;
+  private final BftBlockCreatorFactory blockCreatorFactory;
   private final Clock clock;
+  private final ValidatorMulticaster validatorMulticaster;
 
   public IbftFinalState(
       final VoteTallyCache voteTallyCache,
@@ -51,8 +48,7 @@ public class IbftFinalState {
       final ValidatorMulticaster validatorMulticaster,
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
-      final IbftBlockCreatorFactory blockCreatorFactory,
-      final MessageFactory messageFactory,
+      final BftBlockCreatorFactory blockCreatorFactory,
       final Clock clock) {
     this.voteTallyCache = voteTallyCache;
     this.nodeKey = nodeKey;
@@ -61,13 +57,12 @@ public class IbftFinalState {
     this.roundTimer = roundTimer;
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
-    this.messageFactory = messageFactory;
     this.clock = clock;
-    this.messageTransmitter = new IbftMessageTransmitter(messageFactory, validatorMulticaster);
+    this.validatorMulticaster = validatorMulticaster;
   }
 
   public int getQuorum() {
-    return IbftHelpers.calculateRequiredValidatorQuorum(getValidators().size());
+    return BftHelpers.calculateRequiredValidatorQuorum(getValidators().size());
   }
 
   public Collection<Address> getValidators() {
@@ -98,20 +93,16 @@ public class IbftFinalState {
     return blockTimer;
   }
 
-  public IbftBlockCreatorFactory getBlockCreatorFactory() {
+  public BftBlockCreatorFactory getBlockCreatorFactory() {
     return blockCreatorFactory;
-  }
-
-  public MessageFactory getMessageFactory() {
-    return messageFactory;
   }
 
   public Address getProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
     return proposerSelector.selectProposerForRound(roundIdentifier);
   }
 
-  public IbftMessageTransmitter getTransmitter() {
-    return messageTransmitter;
+  public ValidatorMulticaster getValidatorMulticaster() {
+    return validatorMulticaster;
   }
 
   public Clock getClock() {

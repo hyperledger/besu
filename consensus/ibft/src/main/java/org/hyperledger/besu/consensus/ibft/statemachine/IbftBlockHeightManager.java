@@ -79,12 +79,14 @@ public class IbftBlockHeightManager implements BlockHeightManager {
       final RoundChangeManager roundChangeManager,
       final IbftRoundFactory ibftRoundFactory,
       final Clock clock,
-      final MessageValidatorFactory messageValidatorFactory) {
+      final MessageValidatorFactory messageValidatorFactory,
+      final MessageFactory messageFactory) {
     this.parentHeader = parentHeader;
     this.roundFactory = ibftRoundFactory;
     this.blockTimer = finalState.getBlockTimer();
-    this.transmitter = finalState.getTransmitter();
-    this.messageFactory = finalState.getMessageFactory();
+    this.transmitter =
+        new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+    this.messageFactory = messageFactory;
     this.clock = clock;
     this.roundChangeManager = roundChangeManager;
     this.finalState = finalState;

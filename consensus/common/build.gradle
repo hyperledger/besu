@@ -30,8 +30,10 @@ jar {
 dependencies {
   api project(':plugin-api')
 
+  implementation project(':config')
   implementation project(':crypto')
   implementation project(':ethereum:api')
+  implementation project(':ethereum:blockcreation')
   implementation project(':ethereum:core')
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
@@ -42,14 +44,19 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'org.apache.tuweni:bytes'
 
+  testImplementation project(':config')
   testImplementation project(':crypto')
+  testImplementation project(':testutil')
   testImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project( path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation project(':metrics:core')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.awaitility:awaitility'
 }
+
 configurations { testArtifacts }
 task testJar (type: Jar) {
   archiveBaseName = "${project.name}-test"
@@ -58,4 +65,5 @@ task testJar (type: Jar) {
 
 artifacts {
   testArtifacts testJar
+  testSupportArtifacts testSupportJar
 }

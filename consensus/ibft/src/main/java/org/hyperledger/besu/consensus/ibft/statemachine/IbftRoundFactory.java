@@ -15,8 +15,10 @@
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
-import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
+import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -26,24 +28,27 @@ import org.hyperledger.besu.util.Subscribers;
 
 public class IbftRoundFactory {
   private final IbftFinalState finalState;
-  private final IbftBlockCreatorFactory blockCreatorFactory;
+  private final BftBlockCreatorFactory blockCreatorFactory;
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> minedBlockObservers;
   private final MessageValidatorFactory messageValidatorFactory;
+  private final MessageFactory messageFactory;
 
   public IbftRoundFactory(
       final IbftFinalState finalState,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final Subscribers<MinedBlockObserver> minedBlockObservers,
-      final MessageValidatorFactory messageValidatorFactory) {
+      final MessageValidatorFactory messageValidatorFactory,
+      final MessageFactory messageFactory) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.minedBlockObservers = minedBlockObservers;
     this.messageValidatorFactory = messageValidatorFactory;
+    this.messageFactory = messageFactory;
   }
 
   public IbftRound createNewRound(final BlockHeader parentHeader, final int round) {
@@ -63,7 +68,7 @@ public class IbftRoundFactory {
   public IbftRound createNewRoundWithState(
       final BlockHeader parentHeader, final RoundState roundState) {
     final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();
-    final IbftBlockCreator blockCreator =
+    final BftBlockCreator blockCreator =
         blockCreatorFactory.create(parentHeader, roundIdentifier.getRoundNumber());
 
     return new IbftRound(
@@ -73,8 +78,8 @@ public class IbftRoundFactory {
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockImporter(),
         minedBlockObservers,
         finalState.getNodeKey(),
-        finalState.getMessageFactory(),
-        finalState.getTransmitter(),
+        messageFactory,
+        new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster()),
         finalState.getRoundTimer());
   }
 }

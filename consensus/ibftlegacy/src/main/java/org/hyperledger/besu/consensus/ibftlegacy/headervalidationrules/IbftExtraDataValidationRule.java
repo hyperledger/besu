@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules;
 
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftHelpers;
@@ -55,7 +55,7 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
     try {
       final ValidatorProvider validatorProvider =
           context
-              .getConsensusState(IbftContext.class)
+              .getConsensusState(BftContext.class)
               .getVoteTallyCache()
               .getVoteTallyAfterBlock(parent);
       final IbftExtraData ibftExtraData = IbftExtraData.decode(header);

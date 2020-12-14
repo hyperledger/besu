@@ -194,7 +194,11 @@ public class BesuController implements java.io.Closeable {
       if (configOptions.isEthHash()) {
         builder = new MainnetBesuControllerBuilder();
       } else if (configOptions.isIbft2()) {
-        builder = new IbftBesuControllerBuilder();
+        if (configOptions.getIbft2ConfigOptions().useQbft()) {
+          builder = new QbftBesuControllerBuilder();
+        } else {
+          builder = new IbftBesuControllerBuilder();
+        }
       } else if (configOptions.isIbftLegacy()) {
         builder = new IbftLegacyBesuControllerBuilder();
       } else if (configOptions.isClique()) {

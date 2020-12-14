@@ -11,7 +11,8 @@
       "blockperiodseconds": 1,
       "epochlength": 30000,
       "requesttimeoutseconds": 5,
-      "blockreward": "5000000000000000000"
+      "blockreward": "5000000000000000000",
+      "useQbft": %useQbft%
     }
   },
   "nonce": "0x0",

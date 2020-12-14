@@ -31,6 +31,7 @@ dependencies {
   implementation 'org.apache.tuweni:bytes'
   implementation 'org.apache.tuweni:units'
 
+  testImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:ibft', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':metrics:core')
