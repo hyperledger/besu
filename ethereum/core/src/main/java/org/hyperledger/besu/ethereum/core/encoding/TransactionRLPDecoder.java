@@ -28,7 +28,6 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -56,9 +55,10 @@ public class TransactionRLPDecoder {
     if (rlpInput.nextIsList()) {
       return decodeFrontierOrEip1559(rlpInput);
     } else {
-      final Bytes typedTransactionBytes = rlpInput.readBytes();
-      final TransactionType transactionType =
-          TransactionType.of(typedTransactionBytes.get(0) & 0xff);
+      final Bytes typedTransactionBytes = rlpInput.raw();
+      final int firstByte = typedTransactionBytes.get(0) & 0xff;
+      final TransactionType transactionType = TransactionType.of(firstByte);
+      rlpInput.skipNext(); // throw away the type byte
       final Decoder decoder =
           Optional.ofNullable(TYPED_TRANSACTION_DECODERS.get(transactionType))
               .orElseThrow(
@@ -67,7 +67,7 @@ public class TransactionRLPDecoder {
                           String.format(
                               "Developer Error. A supported transaction type %s has no associated decoding logic",
                               transactionType)));
-      return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
+      return decoder.decode(rlpInput);
     }
   }
 
