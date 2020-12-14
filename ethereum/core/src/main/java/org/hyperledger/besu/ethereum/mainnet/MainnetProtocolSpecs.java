@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -48,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -436,8 +436,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionPriceCalculator,
                     true,
                     chainId,
-                    Optional.of(eip1559),
-                    AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS,
+                    Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
                     genesisConfigOptions.isQuorum()))
         .transactionProcessorBuilder(
             (gasCalculator,

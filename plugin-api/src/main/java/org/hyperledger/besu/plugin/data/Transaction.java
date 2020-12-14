@@ -172,36 +172,10 @@ public interface Transaction {
   Bytes getPayload();
 
   /**
-   * Returns whether or not the transaction is a legacy transaction.
-   *
-   * @return true if legacy transaction, false otherwise
-   */
-  @Unstable
-  default boolean isFrontierTransaction() {
-    return true;
-  }
-
-  /**
-   * Returns whether or not the transaction is an EIP-1559 transaction.
-   *
-   * @return true if EIP-1559 transaction, false otherwise
-   */
-  @Unstable
-  default boolean isEIP1559Transaction() {
-    return false;
-  }
-
-  /**
    * Returns the type of the transaction.
    *
    * @return the type of the transaction
    */
   @Unstable
-  default TransactionType getType() {
-    if (isEIP1559Transaction()) {
-      return TransactionType.EIP1559;
-    } else {
-      return TransactionType.FRONTIER;
-    }
-  }
+  TransactionType getType();
 }

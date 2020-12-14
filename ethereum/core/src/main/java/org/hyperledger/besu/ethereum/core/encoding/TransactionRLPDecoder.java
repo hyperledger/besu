@@ -76,6 +76,7 @@ public class TransactionRLPDecoder {
     input.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(input.readLongScalar())
             .gasPrice(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())
@@ -111,6 +112,7 @@ public class TransactionRLPDecoder {
 
     final Transaction.Builder builder =
         Transaction.builder()
+            .type(TransactionType.EIP1559)
             .nonce(input.readLongScalar())
             .gasPrice(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())
@@ -145,6 +147,7 @@ public class TransactionRLPDecoder {
 
     final Transaction.Builder builder =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(input.readLongScalar())
             .gasPrice(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())

@@ -48,7 +48,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
@@ -103,7 +102,6 @@ public class CliqueMinerExecutorTest {
                 TestClock.fixed(),
                 metricsSystem,
                 () -> null,
-                Optional.empty(),
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
@@ -144,7 +142,6 @@ public class CliqueMinerExecutorTest {
                 TestClock.fixed(),
                 metricsSystem,
                 () -> null,
-                Optional.empty(),
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
@@ -185,7 +182,6 @@ public class CliqueMinerExecutorTest {
                 TestClock.fixed(),
                 metricsSystem,
                 () -> null,
-                Optional.empty(),
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, initialVanityData, false),

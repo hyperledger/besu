@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Optional;
@@ -50,7 +51,9 @@ public class TransactionReplacementByPriceRule implements TransactionPoolReplace
 
   private Wei priceOf(final Transaction transaction, final Optional<Long> baseFee) {
     final TransactionPriceCalculator transactionPriceCalculator =
-        transaction.isEIP1559Transaction() ? EIP1559_CALCULATOR : FRONTIER_CALCULATOR;
+        transaction.getType().equals(TransactionType.EIP1559)
+            ? EIP1559_CALCULATOR
+            : FRONTIER_CALCULATOR;
     return transactionPriceCalculator.price(transaction, baseFee);
   }
 }
