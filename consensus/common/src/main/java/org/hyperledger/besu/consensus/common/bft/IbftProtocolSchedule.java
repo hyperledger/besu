@@ -12,9 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
-import static org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator;
+import static org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftConfigOptions;

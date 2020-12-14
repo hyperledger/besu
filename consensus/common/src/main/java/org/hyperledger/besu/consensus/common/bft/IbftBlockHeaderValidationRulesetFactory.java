@@ -12,11 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.ibft.headervalidationrules.IbftCoinbaseValidationRule;
-import org.hyperledger.besu.consensus.ibft.headervalidationrules.IbftCommitSealsValidationRule;
-import org.hyperledger.besu.consensus.ibft.headervalidationrules.IbftValidatorsValidationRule;
+import org.hyperledger.besu.consensus.common.bft.headervalidationrules.IbftCoinbaseValidationRule;
+import org.hyperledger.besu.consensus.common.bft.headervalidationrules.IbftCommitSealsValidationRule;
+import org.hyperledger.besu.consensus.common.bft.headervalidationrules.IbftValidatorsValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;

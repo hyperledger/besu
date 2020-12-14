@@ -12,11 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
-import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -25,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
-import java.util.Optional;
 
 public class IbftHelpers {
 
@@ -60,29 +56,5 @@ public class IbftHelpers {
             .buildBlockHeader();
 
     return new Block(sealedHeader, block.getBody());
-  }
-
-  public static Optional<PreparedCertificate> findLatestPreparedCertificate(
-      final Collection<SignedData<RoundChangePayload>> msgs) {
-
-    Optional<PreparedCertificate> result = Optional.empty();
-
-    for (SignedData<RoundChangePayload> roundChangeMsg : msgs) {
-      final RoundChangePayload payload = roundChangeMsg.getPayload();
-      if (payload.getPreparedCertificate().isPresent()) {
-        if (!result.isPresent()) {
-          result = payload.getPreparedCertificate();
-        } else {
-          final PreparedCertificate currentLatest = result.get();
-          final PreparedCertificate nextCert = payload.getPreparedCertificate().get();
-
-          if (currentLatest.getProposalPayload().getPayload().getRoundIdentifier().getRoundNumber()
-              < nextCert.getProposalPayload().getPayload().getRoundIdentifier().getRoundNumber()) {
-            result = Optional.of(nextCert);
-          }
-        }
-      }
-    }
-    return result;
   }
 }

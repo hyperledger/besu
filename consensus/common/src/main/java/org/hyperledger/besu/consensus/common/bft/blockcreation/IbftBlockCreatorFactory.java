@@ -12,14 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.blockcreation;
+package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.ValidatorVote;
 import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
-import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.consensus.ibft.Vote;
+import org.hyperledger.besu.consensus.common.bft.IbftContext;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -120,7 +120,7 @@ public class IbftBlockCreatorFactory {
     return extraData.encode();
   }
 
-  void changeTargetGasLimit(final Long targetGasLimit) {
+  public void changeTargetGasLimit(final Long targetGasLimit) {
     gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
   }
 

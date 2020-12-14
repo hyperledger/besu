@@ -28,7 +28,6 @@ jar {
 }
 
 dependencies {
-  implementation project(':config')
   implementation project(':consensus:common')
   implementation project(':crypto')
   implementation project(':ethereum:api')
@@ -69,6 +68,3 @@ dependencies {
 
   testSupportImplementation 'org.mockito:mockito-core'
 }
-
-
-artifacts { testSupportArtifacts testSupportJar }
