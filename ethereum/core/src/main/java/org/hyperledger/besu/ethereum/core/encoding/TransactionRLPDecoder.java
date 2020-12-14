@@ -171,7 +171,7 @@ public class TransactionRLPDecoder {
 
   private static Transaction decodeAccessList(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final Transaction transaction =
+    final Transaction.Builder preSignatureTransactionBuilder =
         Transaction.builder()
             .type(TransactionType.ACCESS_LIST)
             .chainId(BigInteger.valueOf(rlpInput.readLongScalar()))
@@ -193,7 +193,15 @@ public class TransactionRLPDecoder {
                                   rlpInput1.readList(RLPInput::readBytes32));
                           rlpInput1.leaveList();
                           return accessListEntry;
-                        })))
+                        })));
+    final byte recId = rlpInput.readByte();
+    final Transaction transaction =
+        preSignatureTransactionBuilder
+            .signature(
+                SECP256K1.Signature.create(
+                    rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                    rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                    recId))
             .build();
     rlpInput.leaveList();
     return transaction;

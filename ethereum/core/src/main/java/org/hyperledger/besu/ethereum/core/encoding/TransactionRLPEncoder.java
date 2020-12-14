@@ -78,7 +78,7 @@ public class TransactionRLPEncoder {
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
-    writeSignature(transaction, out);
+    writeSignatureAndRecoveryId(transaction, out);
     out.endList();
   }
 
@@ -94,6 +94,8 @@ public class TransactionRLPEncoder {
         transaction.getPayload(),
         transaction.getAccessList(),
         rlpOutput);
+    rlpOutput.writeByte(transaction.getSignature().getRecId());
+    writeSignature(transaction, rlpOutput);
     rlpOutput.endList();
   }
 
@@ -161,12 +163,17 @@ public class TransactionRLPEncoder {
         transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
     out.writeUInt256Scalar(
         transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
-    writeSignature(transaction, out);
+    writeSignatureAndRecoveryId(transaction, out);
     out.endList();
   }
 
-  private static void writeSignature(final Transaction transaction, final RLPOutput out) {
+  private static void writeSignatureAndRecoveryId(
+      final Transaction transaction, final RLPOutput out) {
     out.writeBigIntegerScalar(transaction.getV());
+    writeSignature(transaction, out);
+  }
+
+  private static void writeSignature(final Transaction transaction, final RLPOutput out) {
     out.writeBigIntegerScalar(transaction.getSignature().getR());
     out.writeBigIntegerScalar(transaction.getSignature().getS());
   }
