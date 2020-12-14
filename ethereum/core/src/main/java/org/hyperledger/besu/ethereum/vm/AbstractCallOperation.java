@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import com.google.common.collect.HashMultimap;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -24,6 +25,8 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+
+import static java.util.Collections.emptySet;
 
 /**
  * A skeleton class for implementing call operations.

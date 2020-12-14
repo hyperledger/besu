@@ -112,6 +112,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param value the value being transferred to the recipient
    * @param signature the signature
    * @param payload the payload
+   * @param accessList the list of addresses/storage slots this transaction intends to preload
    * @param sender the transaction sender
    * @param chainId the chain id to apply the transaction to
    * @param v the v value. This is only passed in directly for GoQuorum private transactions
