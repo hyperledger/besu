@@ -50,8 +50,10 @@ public class TransactionRLPEncoder {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
-    if (transactionType.equals(TransactionType.FRONTIER)) {
+    if (TransactionType.FRONTIER.equals(transactionType)) {
       encodeFrontier(transaction, rlpOutput);
+    } else if (TransactionType.EIP1559.equals(transactionType)) {
+      encodeEIP1559(transaction, rlpOutput);
     } else {
       final Encoder encoder =
           Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(transactionType))
