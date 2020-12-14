@@ -299,6 +299,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
+    if (peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())) {
+      return false;
+    }
     final boolean wasAdded = maintainedPeers.add(peer);
     peerDiscoveryAgent.bond(peer);
     rlpxAgent.connect(peer);
