@@ -36,7 +36,7 @@ public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     final long nonce = header.getNonce();
     if (!IbftLegacyBlockInterface.isValidVoteValue(nonce)) {
-      LOG.trace("Nonce value ({}) is neither auth or drop.", nonce);
+      LOG.info("Invalid block header: Nonce value ({}) is neither auth or drop.", nonce);
       return false;
     }
     return true;
