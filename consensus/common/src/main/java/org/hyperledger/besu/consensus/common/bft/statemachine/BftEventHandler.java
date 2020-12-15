@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.bft.statemachine;
 
+import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.IbftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
@@ -23,7 +23,7 @@ public interface BftEventHandler {
 
   void start();
 
-  void handleMessageEvent(IbftReceivedMessageEvent msg);
+  void handleMessageEvent(BftReceivedMessageEvent msg);
 
   void handleNewBlockEvent(NewChainHead newChainHead);
 
