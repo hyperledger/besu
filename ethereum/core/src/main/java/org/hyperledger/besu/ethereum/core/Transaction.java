@@ -716,7 +716,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     public Builder guessType() {
-      if (gasPremium != null || feeCap != null) {
+      if (!accessList.isEmpty()) {
+        transactionType = TransactionType.ACCESS_LIST;
+      } else if (gasPremium != null || feeCap != null) {
         transactionType = TransactionType.EIP1559;
       } else {
         transactionType = TransactionType.FRONTIER;
