@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
-import static org.hyperledger.besu.consensus.common.bft.IbftHelpers.calculateRequiredValidatorQuorum;
+import static org.hyperledger.besu.consensus.common.bft.BftHelpers.calculateRequiredValidatorQuorum;
 
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.IbftContext;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -39,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  *
  * <p>This also ensures sufficient commit seals exist in the block to make it valid.
  */
-public class IbftCommitSealsValidationRule implements AttachedBlockHeaderValidationRule {
+public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOGGER = LogManager.getLogger();
 
@@ -48,13 +48,13 @@ public class IbftCommitSealsValidationRule implements AttachedBlockHeaderValidat
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final ValidatorProvider validatorProvider =
         protocolContext
-            .getConsensusState(IbftContext.class)
+            .getConsensusState(BftContext.class)
             .getVoteTallyCache()
             .getVoteTallyAfterBlock(parent);
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
+    final BftExtraData bftExtraData = BftExtraData.decode(header);
 
     final List<Address> committers =
-        IbftBlockHashing.recoverCommitterAddresses(header, ibftExtraData);
+        BftBlockHashing.recoverCommitterAddresses(header, bftExtraData);
     final List<Address> committersWithoutDuplicates = new ArrayList<>(new HashSet<>(committers));
 
     if (committers.size() != committersWithoutDuplicates.size()) {

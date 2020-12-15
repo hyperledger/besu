@@ -33,7 +33,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-public class IbftProtocolScheduleTest {
+public class BftProtocolScheduleTest {
 
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
 
@@ -41,14 +41,14 @@ public class IbftProtocolScheduleTest {
   public void ensureBlockRewardAndMiningBeneficiaryInProtocolSpecMatchConfig() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
     final String miningBeneficiary = Address.fromHexString("0x1").toString();
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(ibftConfig.getEpochLength()).thenReturn(3000L);
+    final IbftConfigOptions configOptions = mock(IbftConfigOptions.class);
+    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
+    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(configOptions.getEpochLength()).thenReturn(3000L);
 
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
+    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(configOptions);
 
-    final ProtocolSchedule schedule = IbftProtocolSchedule.create(genesisConfig);
+    final ProtocolSchedule schedule = BftProtocolSchedule.create(genesisConfig);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     spec.getBlockReward();
@@ -61,13 +61,13 @@ public class IbftProtocolScheduleTest {
   @Test
   public void illegalMiningBeneficiaryStringThrowsException() {
     final String miningBeneficiary = "notHexStringOfTwentyBytes";
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
-    when(ibftConfig.getEpochLength()).thenReturn(3000L);
-    when(ibftConfig.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
+    final IbftConfigOptions configOptions = mock(IbftConfigOptions.class);
+    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
+    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(configOptions);
+    when(configOptions.getEpochLength()).thenReturn(3000L);
+    when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
 
-    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
+    assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Mining beneficiary in config is not a valid ethereum address");
   }
@@ -75,13 +75,13 @@ public class IbftProtocolScheduleTest {
   @Test
   public void missingMiningBeneficiaryInConfigWillPayCoinbaseInHeader() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(ibftConfig.getEpochLength()).thenReturn(3000L);
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
+    final IbftConfigOptions configOptions = mock(IbftConfigOptions.class);
+    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
+    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(configOptions.getEpochLength()).thenReturn(3000L);
+    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(configOptions);
 
-    final ProtocolSchedule schedule = IbftProtocolSchedule.create(genesisConfig);
+    final ProtocolSchedule schedule = BftProtocolSchedule.create(genesisConfig);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     final Address headerCoinbase = Address.fromHexString("0x123");
@@ -96,27 +96,27 @@ public class IbftProtocolScheduleTest {
   @Test
   public void negativeBlockRewardThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(-3);
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(ibftConfig.getEpochLength()).thenReturn(3000L);
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
+    final IbftConfigOptions configOptions = mock(IbftConfigOptions.class);
+    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
+    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(configOptions.getEpochLength()).thenReturn(3000L);
+    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(configOptions);
 
-    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
+    assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Ibft2 Block reward in config cannot be negative");
+        .hasMessage("Bft Block reward in config cannot be negative");
   }
 
   @Test
   public void zeroEpochLengthThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(ibftConfig.getEpochLength()).thenReturn(0L);
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
+    final IbftConfigOptions configOptions = mock(IbftConfigOptions.class);
+    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
+    when(configOptions.getEpochLength()).thenReturn(0L);
+    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(configOptions);
 
-    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
+    assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -124,13 +124,13 @@ public class IbftProtocolScheduleTest {
   @Test
   public void negativeEpochLengthThrowsException() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(ibftConfig.getEpochLength()).thenReturn(-3000L);
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
+    final IbftConfigOptions configOptions = mock(IbftConfigOptions.class);
+    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
+    when(configOptions.getEpochLength()).thenReturn(-3000L);
+    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(configOptions);
 
-    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
+    assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }

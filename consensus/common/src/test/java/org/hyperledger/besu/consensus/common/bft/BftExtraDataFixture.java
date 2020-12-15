@@ -29,9 +29,9 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class IbftExtraDataFixture {
+public class BftExtraDataFixture {
 
-  public static IbftExtraData createExtraData(
+  public static BftExtraData createExtraData(
       final BlockHeader header,
       final Bytes vanityData,
       final Optional<Vote> vote,
@@ -41,7 +41,7 @@ public class IbftExtraDataFixture {
     return createExtraData(header, vanityData, vote, validators, committerNodeKeys, 0);
   }
 
-  public static IbftExtraData createExtraData(
+  public static BftExtraData createExtraData(
       final BlockHeader header,
       final Bytes vanityData,
       final Optional<Vote> vote,
@@ -53,7 +53,7 @@ public class IbftExtraDataFixture {
         header, vanityData, vote, validators, committerNodeKeys, roundNumber, false);
   }
 
-  public static IbftExtraData createExtraData(
+  public static BftExtraData createExtraData(
       final BlockHeader header,
       final Bytes vanityData,
       final Optional<Vote> vote,
@@ -62,8 +62,8 @@ public class IbftExtraDataFixture {
       final int baseRoundNumber,
       final boolean useDifferentRoundNumbersForCommittedSeals) {
 
-    final IbftExtraData ibftExtraDataNoCommittedSeals =
-        new IbftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
+    final BftExtraData bftExtraDataNoCommittedSeals =
+        new BftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
 
     // if useDifferentRoundNumbersForCommittedSeals is true then each committed seal will be
     // calculated for an extraData field with a different round number
@@ -73,30 +73,30 @@ public class IbftExtraDataFixture {
                 i -> {
                   final int round =
                       useDifferentRoundNumbersForCommittedSeals
-                          ? ibftExtraDataNoCommittedSeals.getRound() + i
-                          : ibftExtraDataNoCommittedSeals.getRound();
+                          ? bftExtraDataNoCommittedSeals.getRound() + i
+                          : bftExtraDataNoCommittedSeals.getRound();
 
-                  IbftExtraData extraDataForCommittedSealCalculation =
-                      new IbftExtraData(
-                          ibftExtraDataNoCommittedSeals.getVanityData(),
+                  BftExtraData extraDataForCommittedSealCalculation =
+                      new BftExtraData(
+                          bftExtraDataNoCommittedSeals.getVanityData(),
                           emptyList(),
-                          ibftExtraDataNoCommittedSeals.getVote(),
+                          bftExtraDataNoCommittedSeals.getVote(),
                           round,
-                          ibftExtraDataNoCommittedSeals.getValidators());
+                          bftExtraDataNoCommittedSeals.getValidators());
 
                   final Hash headerHashForCommitters =
-                      IbftBlockHashing.calculateDataHashForCommittedSeal(
+                      BftBlockHashing.calculateDataHashForCommittedSeal(
                           header, extraDataForCommittedSealCalculation);
 
                   return committerNodeKeys.get(i).sign(headerHashForCommitters);
                 })
             .collect(Collectors.toList());
 
-    return new IbftExtraData(
-        ibftExtraDataNoCommittedSeals.getVanityData(),
+    return new BftExtraData(
+        bftExtraDataNoCommittedSeals.getVanityData(),
         commitSeals,
-        ibftExtraDataNoCommittedSeals.getVote(),
-        ibftExtraDataNoCommittedSeals.getRound(),
-        ibftExtraDataNoCommittedSeals.getValidators());
+        bftExtraDataNoCommittedSeals.getVote(),
+        bftExtraDataNoCommittedSeals.getRound(),
+        bftExtraDataNoCommittedSeals.getValidators());
   }
 }

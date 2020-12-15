@@ -17,50 +17,50 @@ package org.hyperledger.besu.consensus.common.bft;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-public class IbftHelpersTest {
+public class BftHelpersTest {
 
   @Test
   public void calculateRequiredValidatorQuorum1Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(1)).isEqualTo(1);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(1)).isEqualTo(1);
   }
 
   @Test
   public void calculateRequiredValidatorQuorum2Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(2)).isEqualTo(2);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(2)).isEqualTo(2);
   }
 
   @Test
   public void calculateRequiredValidatorQuorum3Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(3)).isEqualTo(2);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(3)).isEqualTo(2);
   }
 
   @Test
   public void calculateRequiredValidatorQuorum4Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(4)).isEqualTo(3);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(4)).isEqualTo(3);
   }
 
   @Test
   public void calculateRequiredValidatorQuorum5Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(5)).isEqualTo(4);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(5)).isEqualTo(4);
   }
 
   @Test
   public void calculateRequiredValidatorQuorum7Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(7)).isEqualTo(5);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(7)).isEqualTo(5);
   }
 
   @Test
   public void calculateRequiredValidatorQuorum10Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(10)).isEqualTo(7);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(10)).isEqualTo(7);
   }
 
   @Test
   public void calculateRequiredValidatorQuorum15Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(15)).isEqualTo(10);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(15)).isEqualTo(10);
   }
 
   @Test
   public void calculateRequiredValidatorQuorum20Validator() {
-    Assertions.assertThat(IbftHelpers.calculateRequiredValidatorQuorum(20)).isEqualTo(14);
+    Assertions.assertThat(BftHelpers.calculateRequiredValidatorQuorum(20)).isEqualTo(14);
   }
 }

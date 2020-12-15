@@ -12,27 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.blockcreation;
+package org.hyperledger.besu.consensus.ibftlegacy.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderValidationRulesetFactory;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftProtocolSchedule;
+import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidationRulesetFactory;
+import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
+import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -43,7 +43,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
-import java.util.Collections;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,11 +52,11 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class IbftBlockCreatorTest {
+public class BftBlockCreatorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
-  public void createdBlockPassesValidationRulesAndHasAppropriateHashAndMixHash() {
+  public void headerProducedPassesValidationRules() {
     // Construct a parent block.
     final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
     blockHeaderBuilder.gasLimit(5000); // required to pass validation rule checks.
@@ -67,68 +68,60 @@ public class IbftBlockCreatorTest {
     when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
     when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);
 
-    final List<Address> initialValidatorList = Lists.newArrayList();
-    for (int i = 0; i < 4; i++) {
-      initialValidatorList.add(AddressHelpers.ofValue(i));
-    }
+    final KeyPair nodeKeys = KeyPair.generate();
+    // Add the local node as a validator (can't propose a block if node is not a validator).
+    final Address localAddr = Address.extract(Hash.hash(nodeKeys.getPublicKey().getEncodedBytes()));
+    final List<Address> initialValidatorList =
+        Arrays.asList(
+            Address.fromHexString(String.format("%020d", 1)),
+            Address.fromHexString(String.format("%020d", 2)),
+            Address.fromHexString(String.format("%020d", 3)),
+            Address.fromHexString(String.format("%020d", 4)),
+            localAddr);
 
     final ProtocolSchedule protocolSchedule =
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
-                .getConfigOptions());
+                .getConfigOptions(),
+            false);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
             createInMemoryWorldStateArchive(),
             setupContextWithValidators(initialValidatorList));
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
-            5,
-            TestClock.fixed(),
-            metricsSystem,
-            blockchain::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
-
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
-            initialValidatorList.get(0),
+            Address.fromHexString(String.format("%020d", 0)),
             parent ->
                 new IbftExtraData(
-                        Bytes.wrap(new byte[32]),
-                        Collections.emptyList(),
-                        Optional.empty(),
-                        0,
-                        initialValidatorList)
+                        Bytes.wrap(new byte[32]), Lists.newArrayList(), null, initialValidatorList)
                     .encode(),
-            pendingTransactions,
+            new PendingTransactions(
+                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+                1,
+                5,
+                TestClock.fixed(),
+                metricsSystem,
+                blockchain::getChainHeadHeader,
+                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protContext,
             protocolSchedule,
             parentGasLimit -> parentGasLimit,
+            nodeKeys,
             Wei.ZERO,
             0.8,
-            parentHeader,
-            initialValidatorList.get(0));
+            parentHeader);
 
-    final int secondsBetweenBlocks = 1;
-    final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
+    final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());
 
     final BlockHeaderValidator rules =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(secondsBetweenBlocks)
-            .build();
+        IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0).build();
 
-    // NOTE: The header will not contain commit seals, so can only do light validation on header.
     final boolean validationResult =
         rules.validateHeader(
-            block.getHeader(), parentHeader, protContext, HeaderValidationMode.LIGHT);
+            block.getHeader(), parentHeader, protContext, HeaderValidationMode.FULL);
 
     assertThat(validationResult).isTrue();
-
-    final BlockHeader header = block.getHeader();
-    final IbftExtraData extraData = IbftExtraData.decode(header);
-    assertThat(block.getHash())
-        .isEqualTo(IbftBlockHashing.calculateDataHashForCommittedSeal(header, extraData));
   }
 }

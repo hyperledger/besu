@@ -36,9 +36,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Represents the data structure stored in the extraData field of the BlockHeader used when
- * operating under an IBFT 2.0 consensus mechanism.
+ * operating under an BFT consensus mechanism.
  */
-public class IbftExtraData implements ParsedExtraData {
+public class BftExtraData implements ParsedExtraData {
   private static final Logger LOG = LogManager.getLogger();
 
   public static final int EXTRA_VANITY_LENGTH = 32;
@@ -49,7 +49,7 @@ public class IbftExtraData implements ParsedExtraData {
   private final int round;
   private final Collection<Address> validators;
 
-  public IbftExtraData(
+  public BftExtraData(
       final Bytes vanityData,
       final Collection<Signature> seals,
       final Optional<Vote> vote,
@@ -67,30 +67,30 @@ public class IbftExtraData implements ParsedExtraData {
     this.vote = vote;
   }
 
-  public static IbftExtraData fromAddresses(final Collection<Address> addresses) {
-    return new IbftExtraData(
+  public static BftExtraData fromAddresses(final Collection<Address> addresses) {
+    return new BftExtraData(
         Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses);
   }
 
-  public static IbftExtraData decode(final BlockHeader blockHeader) {
+  public static BftExtraData decode(final BlockHeader blockHeader) {
     final Object inputExtraData = blockHeader.getParsedExtraData();
-    if (inputExtraData instanceof IbftExtraData) {
-      return (IbftExtraData) inputExtraData;
+    if (inputExtraData instanceof BftExtraData) {
+      return (BftExtraData) inputExtraData;
     }
     LOG.warn(
-        "Expected a IbftExtraData instance but got {}. Reparsing required.",
+        "Expected a BftExtraData instance but got {}. Reparsing required.",
         inputExtraData != null ? inputExtraData.getClass().getName() : "null");
     return decodeRaw(blockHeader.getExtraData());
   }
 
-  static IbftExtraData decodeRaw(final Bytes input) {
+  static BftExtraData decodeRaw(final Bytes input) {
     if (input.isEmpty()) {
-      throw new IllegalArgumentException("Invalid Bytes supplied - Ibft Extra Data required.");
+      throw new IllegalArgumentException("Invalid Bytes supplied - Bft Extra Data required.");
     }
 
     final RLPInput rlpInput = new BytesValueRLPInput(input, false);
 
-    rlpInput.enterList(); // This accounts for the "root node" which contains IBFT data items.
+    rlpInput.enterList(); // This accounts for the "root node" which contains BFT data items.
     final Bytes vanityData = rlpInput.readBytes();
     final List<Address> validators = rlpInput.readList(Address::readFrom);
     final Optional<Vote> vote;
@@ -104,7 +104,7 @@ public class IbftExtraData implements ParsedExtraData {
     final List<Signature> seals = rlpInput.readList(rlp -> Signature.decode(rlp.readBytes()));
     rlpInput.leaveList();
 
-    return new IbftExtraData(vanityData, seals, vote, round, validators);
+    return new BftExtraData(vanityData, seals, vote, round, validators);
   }
 
   public Bytes encode() {
@@ -149,8 +149,8 @@ public class IbftExtraData implements ParsedExtraData {
   }
 
   public static String createGenesisExtraDataString(final List<Address> validators) {
-    final IbftExtraData extraData =
-        new IbftExtraData(
+    final BftExtraData extraData =
+        new BftExtraData(
             Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
     return extraData.encode().toString();
   }
@@ -178,7 +178,7 @@ public class IbftExtraData implements ParsedExtraData {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", IbftExtraData.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", BftExtraData.class.getSimpleName() + "[", "]")
         .add("vanityData=" + vanityData)
         .add("seals=" + seals)
         .add("vote=" + vote)

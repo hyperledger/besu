@@ -20,7 +20,7 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
-import org.hyperledger.besu.consensus.common.bft.IbftContext;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul64Protocol;
@@ -81,7 +81,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected IbftContext createConsensusContext(
+  protected BftContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     final IbftConfigOptions ibftConfig =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getIbftLegacyConfigOptions();
@@ -94,7 +94,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
             blockInterface);
 
     final VoteProposer voteProposer = new VoteProposer();
-    return new IbftContext(voteTallyCache, voteProposer, epochManager, blockInterface);
+    return new BftContext(voteTallyCache, voteProposer, epochManager, blockInterface);
   }
 
   @Override

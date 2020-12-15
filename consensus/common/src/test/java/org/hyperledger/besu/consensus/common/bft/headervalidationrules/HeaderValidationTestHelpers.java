@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataFixture;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -39,17 +39,17 @@ public class HeaderValidationTestHelpers {
 
     final BlockHeader header = builder.buildHeader();
 
-    final IbftExtraData ibftExtraData =
-        IbftExtraDataFixture.createExtraData(
+    final BftExtraData bftExtraData =
+        BftExtraDataFixture.createExtraData(
             header,
-            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[BftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             committerNodeKeys,
             BASE_ROUND_NUMBER,
             useDifferentRoundNumbersForCommittedSeals);
 
-    builder.extraData(ibftExtraData.encode());
+    builder.extraData(bftExtraData.encode());
     return builder.buildHeader();
   }
 }

@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.bft.headervalidationrules.IbftCoinbaseValidationRule;
-import org.hyperledger.besu.consensus.common.bft.headervalidationrules.IbftCommitSealsValidationRule;
-import org.hyperledger.besu.consensus.common.bft.headervalidationrules.IbftValidatorsValidationRule;
+import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
+import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
+import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValidatorsValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -29,16 +29,16 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class IbftBlockHeaderValidationRulesetFactory {
+public class BftBlockHeaderValidationRulesetFactory {
 
   /**
-   * Produces a BlockHeaderValidator configured for assessing ibft block headers which are to form
+   * Produces a BlockHeaderValidator configured for assessing bft block headers which are to form
    * part of the BlockChain (i.e. not proposed blocks, which do not contain commit seals)
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
-   * @return BlockHeaderValidator configured for assessing ibft block headers
+   * @return BlockHeaderValidator configured for assessing bft block headers
    */
-  public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
+  public static BlockHeaderValidator.Builder bftBlockHeaderValidator(
       final long secondsBetweenBlocks) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
@@ -48,7 +48,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(
             new ConstantFieldValidationRule<>(
-                "MixHash", BlockHeader::getMixHash, IbftHelpers.EXPECTED_MIX_HASH))
+                "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
         .addRule(
             new ConstantFieldValidationRule<>(
                 "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
@@ -56,8 +56,8 @@ public class IbftBlockHeaderValidationRulesetFactory {
             new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
         .addRule(new ConstantFieldValidationRule<>("Nonce", BlockHeader::getNonce, 0L))
-        .addRule(new IbftValidatorsValidationRule())
-        .addRule(new IbftCoinbaseValidationRule())
-        .addRule(new IbftCommitSealsValidationRule());
+        .addRule(new BftValidatorsValidationRule())
+        .addRule(new BftCoinbaseValidationRule())
+        .addRule(new BftCommitSealsValidationRule());
   }
 }

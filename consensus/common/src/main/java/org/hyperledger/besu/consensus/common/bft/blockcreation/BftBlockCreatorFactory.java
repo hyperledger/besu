@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.common.bft.blockcreation;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.ValidatorVote;
 import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.bft.IbftContext;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
@@ -36,7 +36,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class IbftBlockCreatorFactory {
+public class BftBlockCreatorFactory {
 
   private final GasLimitCalculator gasLimitCalculator;
   private final PendingTransactions pendingTransactions;
@@ -49,7 +49,7 @@ public class IbftBlockCreatorFactory {
   private volatile Wei minTransactionGasPrice;
   private volatile Double minBlockOccupancyRatio;
 
-  public IbftBlockCreatorFactory(
+  public BftBlockCreatorFactory(
       final GasLimitCalculator gasLimitCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
@@ -68,8 +68,8 @@ public class IbftBlockCreatorFactory {
     this.miningBeneficiary = miningBeneficiary;
   }
 
-  public IbftBlockCreator create(final BlockHeader parentHeader, final int round) {
-    return new IbftBlockCreator(
+  public BftBlockCreator create(final BlockHeader parentHeader, final int round) {
+    return new BftBlockCreator(
         localAddress,
         ph -> createExtraData(round, ph),
         pendingTransactions,
@@ -97,21 +97,21 @@ public class IbftBlockCreatorFactory {
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     final VoteTally voteTally =
         protocolContext
-            .getConsensusState(IbftContext.class)
+            .getConsensusState(BftContext.class)
             .getVoteTallyCache()
             .getVoteTallyAfterBlock(parentHeader);
 
     final Optional<ValidatorVote> proposal =
         protocolContext
-            .getConsensusState(IbftContext.class)
+            .getConsensusState(BftContext.class)
             .getVoteProposer()
             .getVote(localAddress, voteTally);
 
     final List<Address> validators = new ArrayList<>(voteTally.getValidators());
 
-    final IbftExtraData extraData =
-        new IbftExtraData(
-            ConsensusHelpers.zeroLeftPad(vanityData, IbftExtraData.EXTRA_VANITY_LENGTH),
+    final BftExtraData extraData =
+        new BftExtraData(
+            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraData.EXTRA_VANITY_LENGTH),
             Collections.emptyList(),
             toVote(proposal),
             round,

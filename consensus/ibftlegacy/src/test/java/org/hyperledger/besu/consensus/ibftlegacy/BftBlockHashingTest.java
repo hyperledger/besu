@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-public class IbftBlockHashingTest {
+public class BftBlockHashingTest {
 
   private static final Address PROPOSER_IN_HEADER =
       Address.fromHexString("0x24defc2d149861d3d245749b81fe0e6b28e04f31");

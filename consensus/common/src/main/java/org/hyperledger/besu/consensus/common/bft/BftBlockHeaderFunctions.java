@@ -20,16 +20,16 @@ import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.function.Function;
 
-public class IbftBlockHeaderFunctions implements BlockHeaderFunctions {
+public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
 
-  private static final IbftBlockHeaderFunctions COMMITTED_SEAL =
-      new IbftBlockHeaderFunctions(IbftBlockHashing::calculateDataHashForCommittedSeal);
-  private static final IbftBlockHeaderFunctions ON_CHAIN =
-      new IbftBlockHeaderFunctions(IbftBlockHashing::calculateHashOfIbftBlockOnChain);
+  private static final BftBlockHeaderFunctions COMMITTED_SEAL =
+      new BftBlockHeaderFunctions(BftBlockHashing::calculateDataHashForCommittedSeal);
+  private static final BftBlockHeaderFunctions ON_CHAIN =
+      new BftBlockHeaderFunctions(BftBlockHashing::calculateHashOfBftBlockOnChain);
 
   private final Function<BlockHeader, Hash> hashFunction;
 
-  private IbftBlockHeaderFunctions(final Function<BlockHeader, Hash> hashFunction) {
+  private BftBlockHeaderFunctions(final Function<BlockHeader, Hash> hashFunction) {
     this.hashFunction = hashFunction;
   }
 
@@ -47,7 +47,7 @@ public class IbftBlockHeaderFunctions implements BlockHeaderFunctions {
   }
 
   @Override
-  public IbftExtraData parseExtraData(final BlockHeader header) {
-    return IbftExtraData.decodeRaw(header.getExtraData());
+  public BftExtraData parseExtraData(final BlockHeader header) {
+    return BftExtraData.decodeRaw(header.getExtraData());
   }
 }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import static org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator;
+import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.IbftConfigOptions;
@@ -30,8 +30,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
 
-/** Defines the protocol behaviours for a blockchain using IBFT. */
-public class IbftProtocolSchedule {
+/** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
+public class BftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
@@ -43,7 +43,7 @@ public class IbftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyIbftChanges(config.getIbft2ConfigOptions(), builder),
+            builder -> applyBftChanges(config.getIbft2ConfigOptions(), builder),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -59,33 +59,33 @@ public class IbftProtocolSchedule {
     return create(config, PrivacyParameters.DEFAULT, false);
   }
 
-  private static ProtocolSpecBuilder applyIbftChanges(
-      final IbftConfigOptions ibftConfig, final ProtocolSpecBuilder builder) {
+  private static ProtocolSpecBuilder applyBftChanges(
+      final IbftConfigOptions configOptions, final ProtocolSpecBuilder builder) {
 
-    if (ibftConfig.getEpochLength() <= 0) {
+    if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
     }
 
-    if (ibftConfig.getBlockRewardWei().signum() < 0) {
-      throw new IllegalArgumentException("Ibft2 Block reward in config cannot be negative");
+    if (configOptions.getBlockRewardWei().signum() < 0) {
+      throw new IllegalArgumentException("Bft Block reward in config cannot be negative");
     }
 
     builder
-        .blockHeaderValidatorBuilder(ibftBlockHeaderValidator(ibftConfig.getBlockPeriodSeconds()))
-        .ommerHeaderValidatorBuilder(ibftBlockHeaderValidator(ibftConfig.getBlockPeriodSeconds()))
+        .blockHeaderValidatorBuilder(bftBlockHeaderValidator(configOptions.getBlockPeriodSeconds()))
+        .ommerHeaderValidatorBuilder(bftBlockHeaderValidator(configOptions.getBlockPeriodSeconds()))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetBlockValidator::new)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
-        .blockReward(Wei.of(ibftConfig.getBlockRewardWei()))
+        .blockReward(Wei.of(configOptions.getBlockRewardWei()))
         .skipZeroBlockRewards(true)
-        .blockHeaderFunctions(IbftBlockHeaderFunctions.forOnChainBlock());
+        .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock());
 
-    if (ibftConfig.getMiningBeneficiary().isPresent()) {
+    if (configOptions.getMiningBeneficiary().isPresent()) {
       final Address miningBeneficiary;
       try {
         // Precalculate beneficiary to ensure string is valid now, rather than on lambda execution.
-        miningBeneficiary = Address.fromHexString(ibftConfig.getMiningBeneficiary().get());
+        miningBeneficiary = Address.fromHexString(configOptions.getMiningBeneficiary().get());
       } catch (final IllegalArgumentException e) {
         throw new IllegalArgumentException(
             "Mining beneficiary in config is not a valid ethereum address", e);

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.bft.IbftContext;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -30,9 +30,9 @@ import org.apache.logging.log4j.Logger;
  * Ensures that the coinbase (which corresponds to the block proposer) is included in the list of
  * validators
  */
-public class IbftCoinbaseValidationRule implements AttachedBlockHeaderValidationRule {
+public class BftCoinbaseValidationRule implements AttachedBlockHeaderValidationRule {
 
-  private static final Logger LOGGER = LogManager.getLogger(IbftCoinbaseValidationRule.class);
+  private static final Logger LOGGER = LogManager.getLogger(BftCoinbaseValidationRule.class);
 
   @Override
   public boolean validate(
@@ -40,7 +40,7 @@ public class IbftCoinbaseValidationRule implements AttachedBlockHeaderValidation
 
     final ValidatorProvider validatorProvider =
         context
-            .getConsensusState(IbftContext.class)
+            .getConsensusState(BftContext.class)
             .getVoteTallyCache()
             .getVoteTallyAfterBlock(parent);
     final Address proposer = header.getCoinbase();

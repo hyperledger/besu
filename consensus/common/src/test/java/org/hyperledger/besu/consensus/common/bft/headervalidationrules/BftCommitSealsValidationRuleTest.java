@@ -17,10 +17,10 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 import static org.hyperledger.besu.consensus.common.bft.headervalidationrules.HeaderValidationTestHelpers.createProposedBlockHeader;
 
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -37,10 +37,10 @@ import java.util.stream.IntStream;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-public class IbftCommitSealsValidationRuleTest {
+public class BftCommitSealsValidationRuleTest {
 
-  private final IbftCommitSealsValidationRule commitSealsValidationRule =
-      new IbftCommitSealsValidationRule();
+  private final BftCommitSealsValidationRule commitSealsValidationRule =
+      new BftCommitSealsValidationRule();
 
   @Test
   public void correctlyConstructedHeaderPassesValidation() {
@@ -73,8 +73,8 @@ public class IbftCommitSealsValidationRuleTest {
 
     final BlockHeader header = createProposedBlockHeader(validators, emptyList(), false);
 
-    // Note that no committer seals are in the header's IBFT extra data.
-    final IbftExtraData headerExtraData = IbftExtraData.decode(header);
+    // Note that no committer seals are in the header's BFT extra data.
+    final BftExtraData headerExtraData = BftExtraData.decode(header);
     assertThat(headerExtraData.getSeals().size()).isEqualTo(0);
 
     assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();

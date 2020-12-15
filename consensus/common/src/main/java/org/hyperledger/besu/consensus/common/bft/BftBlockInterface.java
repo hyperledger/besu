@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import java.util.Collection;
 import java.util.Optional;
 
-public class IbftBlockInterface implements BlockInterface {
+public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
@@ -40,10 +40,10 @@ public class IbftBlockInterface implements BlockInterface {
 
   @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
+    final BftExtraData bftExtraData = BftExtraData.decode(header);
 
-    if (ibftExtraData.getVote().isPresent()) {
-      final Vote headerVote = ibftExtraData.getVote().get();
+    if (bftExtraData.getVote().isPresent()) {
+      final Vote headerVote = bftExtraData.getVote().get();
       final ValidatorVote vote =
           new ValidatorVote(
               headerVote.isAuth() ? VoteType.ADD : VoteType.DROP,
@@ -56,15 +56,15 @@ public class IbftBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
-    return ibftExtraData.getValidators();
+    final BftExtraData bftExtraData = BftExtraData.decode(header);
+    return bftExtraData.getValidators();
   }
 
   public static Block replaceRoundInBlock(
       final Block block, final int round, final BlockHeaderFunctions blockHeaderFunctions) {
-    final IbftExtraData prevExtraData = IbftExtraData.decode(block.getHeader());
-    final IbftExtraData substituteExtraData =
-        new IbftExtraData(
+    final BftExtraData prevExtraData = BftExtraData.decode(block.getHeader());
+    final BftExtraData substituteExtraData =
+        new BftExtraData(
             prevExtraData.getVanityData(),
             prevExtraData.getSeals(),
             prevExtraData.getVote(),

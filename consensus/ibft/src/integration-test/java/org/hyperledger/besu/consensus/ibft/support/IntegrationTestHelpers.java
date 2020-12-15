@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.ibft.support;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.payload.CommitPayload;
@@ -34,11 +34,11 @@ public class IntegrationTestHelpers {
   public static SignedData<CommitPayload> createSignedCommitPayload(
       final ConsensusRoundIdentifier roundId, final Block block, final NodeKey nodeKey) {
 
-    final IbftExtraData extraData = IbftExtraData.decode(block.getHeader());
+    final BftExtraData extraData = BftExtraData.decode(block.getHeader());
 
     final Signature commitSeal =
         nodeKey.sign(
-            IbftBlockHashing.calculateDataHashForCommittedSeal(block.getHeader(), extraData));
+            BftBlockHashing.calculateDataHashForCommittedSeal(block.getHeader(), extraData));
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 

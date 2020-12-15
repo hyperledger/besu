@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.IbftHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
@@ -47,7 +47,7 @@ public class RoundChangeCertificateValidator {
       final long chainHeight) {
     this.validators = validators;
     this.messageValidatorFactory = messageValidatorFactory;
-    this.quorum = IbftHelpers.calculateRequiredValidatorQuorum(validators.size());
+    this.quorum = BftHelpers.calculateRequiredValidatorQuorum(validators.size());
     this.chainHeight = chainHeight;
   }
 
@@ -78,7 +78,7 @@ public class RoundChangeCertificateValidator {
         new RoundChangePayloadValidator(
             messageValidatorFactory,
             validators,
-            IbftHelpers.prepareMessageCountForQuorum(quorum),
+            BftHelpers.prepareMessageCountForQuorum(quorum),
             chainHeight);
 
     if (!roundChangeCert.getRoundChangePayloads().stream()
@@ -120,7 +120,7 @@ public class RoundChangeCertificateValidator {
     // Need to check that if we substitute the LatestPrepareCert round number into the supplied
     // block that we get the SAME hash as PreparedCert.
     final Block currentBlockWithOldRound =
-        IbftBlockInterface.replaceRoundInBlock(
+        BftBlockInterface.replaceRoundInBlock(
             proposedBlock,
             latestPreparedCertificate
                 .get()
@@ -128,7 +128,7 @@ public class RoundChangeCertificateValidator {
                 .getPayload()
                 .getRoundIdentifier()
                 .getRoundNumber(),
-            IbftBlockHeaderFunctions.forCommittedSeal());
+            BftBlockHeaderFunctions.forCommittedSeal());
 
     if (!currentBlockWithOldRound
         .getHash()

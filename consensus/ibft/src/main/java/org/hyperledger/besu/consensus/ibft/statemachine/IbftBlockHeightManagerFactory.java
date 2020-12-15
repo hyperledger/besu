@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.common.bft.IbftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -50,7 +50,7 @@ public class IbftBlockHeightManagerFactory {
         parentHeader,
         finalState,
         new RoundChangeManager(
-            IbftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
+            BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
             messageValidatorFactory.createRoundChangeMessageValidator(
                 parentHeader.getNumber() + 1L, parentHeader)),
         roundFactory,

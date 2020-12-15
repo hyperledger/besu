@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.IbftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
@@ -29,9 +29,9 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 // This class is responsible for creating a block without committer seals (basically it was just
 // too hard to coordinate with the state machine).
-public class IbftBlockCreator extends AbstractBlockCreator {
+public class BftBlockCreator extends AbstractBlockCreator {
 
-  public IbftBlockCreator(
+  public BftBlockCreator(
       final Address localAddress,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
@@ -60,9 +60,9 @@ public class IbftBlockCreator extends AbstractBlockCreator {
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)
-            .mixHash(IbftHelpers.EXPECTED_MIX_HASH)
+            .mixHash(BftHelpers.EXPECTED_MIX_HASH)
             .nonce(0L)
-            .blockHeaderFunctions(IbftBlockHeaderFunctions.forCommittedSeal());
+            .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal());
 
     return builder.buildBlockHeader();
   }

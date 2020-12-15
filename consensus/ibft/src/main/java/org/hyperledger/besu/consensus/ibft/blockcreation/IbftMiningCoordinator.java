@@ -19,7 +19,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.IbftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -51,7 +51,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
 
   private final BftEventHandler eventHandler;
   private final BftProcessor bftProcessor;
-  private final IbftBlockCreatorFactory blockCreatorFactory;
+  private final BftBlockCreatorFactory blockCreatorFactory;
   protected final Blockchain blockchain;
   private final BftEventQueue eventQueue;
   private final BftExecutors bftExecutors;
@@ -63,7 +63,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
       final BftExecutors bftExecutors,
       final BftEventHandler eventHandler,
       final BftProcessor bftProcessor,
-      final IbftBlockCreatorFactory blockCreatorFactory,
+      final BftBlockCreatorFactory blockCreatorFactory,
       final Blockchain blockchain,
       final BftEventQueue eventQueue) {
     this.bftExecutors = bftExecutors;

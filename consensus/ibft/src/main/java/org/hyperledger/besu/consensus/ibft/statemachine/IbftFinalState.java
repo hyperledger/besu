@@ -15,11 +15,11 @@
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftHelpers;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.IbftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.network.ValidatorMulticaster;
@@ -38,7 +38,7 @@ public class IbftFinalState {
   private final ProposerSelector proposerSelector;
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
-  private final IbftBlockCreatorFactory blockCreatorFactory;
+  private final BftBlockCreatorFactory blockCreatorFactory;
   private final MessageFactory messageFactory;
   private final IbftMessageTransmitter messageTransmitter;
   private final Clock clock;
@@ -51,7 +51,7 @@ public class IbftFinalState {
       final ValidatorMulticaster validatorMulticaster,
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
-      final IbftBlockCreatorFactory blockCreatorFactory,
+      final BftBlockCreatorFactory blockCreatorFactory,
       final MessageFactory messageFactory,
       final Clock clock) {
     this.voteTallyCache = voteTallyCache;
@@ -67,7 +67,7 @@ public class IbftFinalState {
   }
 
   public int getQuorum() {
-    return IbftHelpers.calculateRequiredValidatorQuorum(getValidators().size());
+    return BftHelpers.calculateRequiredValidatorQuorum(getValidators().size());
   }
 
   public Collection<Address> getValidators() {
@@ -98,7 +98,7 @@ public class IbftFinalState {
     return blockTimer;
   }
 
-  public IbftBlockCreatorFactory getBlockCreatorFactory() {
+  public BftBlockCreatorFactory getBlockCreatorFactory() {
     return blockCreatorFactory;
   }
 

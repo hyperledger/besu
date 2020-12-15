@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.bft.IbftContext;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -35,7 +35,7 @@ import org.apache.logging.log4j.Logger;
  * Ensures the Validators listed in the block header match that tracked in memory (which was in-turn
  * created by tracking votes included on the block chain).
  */
-public class IbftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
+public class BftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOGGER = LogManager.getLogger();
 
@@ -45,33 +45,33 @@ public class IbftValidatorsValidationRule implements AttachedBlockHeaderValidati
     try {
       final ValidatorProvider validatorProvider =
           context
-              .getConsensusState(IbftContext.class)
+              .getConsensusState(BftContext.class)
               .getVoteTallyCache()
               .getVoteTallyAfterBlock(parent);
-      final IbftExtraData ibftExtraData = IbftExtraData.decode(header);
+      final BftExtraData bftExtraData = BftExtraData.decode(header);
 
       final NavigableSet<Address> sortedReportedValidators =
-          new TreeSet<>(ibftExtraData.getValidators());
+          new TreeSet<>(bftExtraData.getValidators());
 
-      if (!Iterables.elementsEqual(ibftExtraData.getValidators(), sortedReportedValidators)) {
+      if (!Iterables.elementsEqual(bftExtraData.getValidators(), sortedReportedValidators)) {
         LOGGER.trace(
             "Validators are not sorted in ascending order. Expected {} but got {}.",
             sortedReportedValidators,
-            ibftExtraData.getValidators());
+            bftExtraData.getValidators());
         return false;
       }
 
       final Collection<Address> storedValidators = validatorProvider.getValidators();
-      if (!Iterables.elementsEqual(ibftExtraData.getValidators(), storedValidators)) {
+      if (!Iterables.elementsEqual(bftExtraData.getValidators(), storedValidators)) {
         LOGGER.trace(
             "Incorrect validators. Expected {} but got {}.",
             storedValidators,
-            ibftExtraData.getValidators());
+            bftExtraData.getValidators());
         return false;
       }
 
     } catch (final RLPException ex) {
-      LOGGER.trace("ExtraData field was unable to be deserialised into an IBFT Struct.", ex);
+      LOGGER.trace("ExtraData field was unable to be deserialized into an BFT Struct.", ex);
       return false;
     } catch (final IllegalArgumentException ex) {
       LOGGER.trace("Failed to verify extra data", ex);

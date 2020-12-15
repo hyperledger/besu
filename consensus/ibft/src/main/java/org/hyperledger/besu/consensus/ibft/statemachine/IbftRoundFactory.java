@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.IbftBlockCreator;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.IbftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -26,7 +26,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 public class IbftRoundFactory {
   private final IbftFinalState finalState;
-  private final IbftBlockCreatorFactory blockCreatorFactory;
+  private final BftBlockCreatorFactory blockCreatorFactory;
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> minedBlockObservers;
@@ -63,7 +63,7 @@ public class IbftRoundFactory {
   public IbftRound createNewRoundWithState(
       final BlockHeader parentHeader, final RoundState roundState) {
     final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();
-    final IbftBlockCreator blockCreator =
+    final BftBlockCreator blockCreator =
         blockCreatorFactory.create(parentHeader, roundIdentifier.getRoundNumber());
 
     return new IbftRound(

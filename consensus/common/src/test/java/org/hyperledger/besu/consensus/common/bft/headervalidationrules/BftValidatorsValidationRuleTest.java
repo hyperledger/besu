@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -28,10 +28,10 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
-public class IbftValidatorsValidationRuleTest {
+public class BftValidatorsValidationRuleTest {
 
-  private final IbftValidatorsValidationRule validatorsValidationRule =
-      new IbftValidatorsValidationRule();
+  private final BftValidatorsValidationRule validatorsValidationRule =
+      new BftValidatorsValidationRule();
 
   @Test
   public void correctlyConstructedHeaderPassesValidation() {

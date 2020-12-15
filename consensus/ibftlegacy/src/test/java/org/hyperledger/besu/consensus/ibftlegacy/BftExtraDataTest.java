@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
-public class IbftExtraDataTest {
+public class BftExtraDataTest {
 
   @Test
   public void emptyListsConstituteValidContent() {

@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
@@ -41,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-public class IbftExtraDataValidationRuleTest {
+public class BftExtraDataValidationRuleTest {
 
   private BlockHeader createProposedBlockHeader(
       final KeyPair proposerKeyPair, final List<Address> validators) {

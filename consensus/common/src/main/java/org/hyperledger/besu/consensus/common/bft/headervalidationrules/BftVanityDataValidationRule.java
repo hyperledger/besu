@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
@@ -22,17 +22,17 @@ import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftVanityDataValidationRule implements AttachedBlockHeaderValidationRule {
+public class BftVanityDataValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LogManager.getLogger();
 
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-    final IbftExtraData extraData = IbftExtraData.decode(header);
+    final BftExtraData extraData = BftExtraData.decode(header);
 
-    if (extraData.getVanityData().size() != IbftExtraData.EXTRA_VANITY_LENGTH) {
-      LOG.trace("Ibft Extra Data does not contain 32 bytes of vanity data.");
+    if (extraData.getVanityData().size() != BftExtraData.EXTRA_VANITY_LENGTH) {
+      LOG.trace("Bft Extra Data does not contain 32 bytes of vanity data.");
       return false;
     }
     return true;

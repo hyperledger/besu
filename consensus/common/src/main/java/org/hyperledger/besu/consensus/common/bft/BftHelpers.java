@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
 
-public class IbftHelpers {
+public class BftHelpers {
 
   public static final Hash EXPECTED_MIX_HASH =
       Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365");
@@ -39,10 +39,10 @@ public class IbftHelpers {
   public static Block createSealedBlock(
       final Block block, final Collection<Signature> commitSeals) {
     final BlockHeader initialHeader = block.getHeader();
-    final IbftExtraData initialExtraData = IbftExtraData.decode(initialHeader);
+    final BftExtraData initialExtraData = BftExtraData.decode(initialHeader);
 
-    final IbftExtraData sealedExtraData =
-        new IbftExtraData(
+    final BftExtraData sealedExtraData =
+        new BftExtraData(
             initialExtraData.getVanityData(),
             commitSeals,
             initialExtraData.getVote(),
@@ -52,7 +52,7 @@ public class IbftHelpers {
     final BlockHeader sealedHeader =
         BlockHeaderBuilder.fromHeader(initialHeader)
             .extraData(sealedExtraData.encode())
-            .blockHeaderFunctions(IbftBlockHeaderFunctions.forOnChainBlock())
+            .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock())
             .buildBlockHeader();
 
     return new Block(sealedHeader, block.getBody());

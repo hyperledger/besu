@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.common.bft;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -38,14 +38,14 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class IbftBlockHeaderValidationRulesetFactoryTest {
+public class BftBlockHeaderValidationRulesetFactoryTest {
 
   private final ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(null, null, setupContextWithValidators(validators));
   }
 
   @Test
-  public void ibftValidateHeaderPasses() {
+  public void bftValidateHeaderPasses() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -57,7 +57,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -66,7 +66,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnExtraData() {
+  public void bftValidateHeaderFailsOnExtraData() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -78,7 +78,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, emptyList(), parentHeader).buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -87,7 +87,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnCoinbaseData() {
+  public void bftValidateHeaderFailsOnCoinbaseData() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -104,7 +104,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -113,7 +113,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnNonce() {
+  public void bftValidateHeaderFailsOnNonce() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -125,7 +125,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).nonce(3).buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -134,7 +134,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnTimestamp() {
+  public void bftValidateHeaderFailsOnTimestamp() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -148,7 +148,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -157,7 +157,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnMixHash() {
+  public void bftValidateHeaderFailsOnMixHash() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -171,7 +171,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -180,7 +180,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnOmmers() {
+  public void bftValidateHeaderFailsOnOmmers() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -194,7 +194,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -203,7 +203,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnDifficulty() {
+  public void bftValidateHeaderFailsOnDifficulty() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -217,7 +217,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -226,7 +226,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnAncestor() {
+  public void bftValidateHeaderFailsOnAncestor() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -238,7 +238,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, null).buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -247,7 +247,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnGasUsage() {
+  public void bftValidateHeaderFailsOnGasUsage() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -262,7 +262,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -271,7 +271,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void ibftValidateHeaderFailsOnGasLimitRange() {
+  public void bftValidateHeaderFailsOnGasLimitRange() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -285,7 +285,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator(5).build();
+        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -313,16 +313,16 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
 
-    final IbftExtraData ibftExtraData =
-        IbftExtraDataFixture.createExtraData(
+    final BftExtraData bftExtraData =
+        BftExtraDataFixture.createExtraData(
             builder.buildHeader(),
-            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[BftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),
             0xDEADBEEF);
 
-    builder.extraData(ibftExtraData.encode());
+    builder.extraData(bftExtraData.encode());
     return builder;
   }
 }

@@ -15,10 +15,10 @@
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataFixture;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -36,7 +36,7 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class IbftCoinbaseValidationRuleTest {
+public class BftCoinbaseValidationRuleTest {
 
   public static BlockHeader createProposedBlockHeader(
       final NodeKey proposerNodeKey,
@@ -48,15 +48,15 @@ public class IbftCoinbaseValidationRuleTest {
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
     final BlockHeader header = builder.buildHeader();
 
-    final IbftExtraData ibftExtraData =
-        IbftExtraDataFixture.createExtraData(
+    final BftExtraData bftExtraData =
+        BftExtraDataFixture.createExtraData(
             header,
-            Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[BftExtraData.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             committerNodeKeys);
 
-    builder.extraData(ibftExtraData.encode());
+    builder.extraData(bftExtraData.encode());
     return builder.buildHeader();
   }
 
@@ -73,7 +73,7 @@ public class IbftCoinbaseValidationRuleTest {
     final ProtocolContext context =
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
-    final IbftCoinbaseValidationRule coinbaseValidationRule = new IbftCoinbaseValidationRule();
+    final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
     BlockHeader header = createProposedBlockHeader(proposerNodeKey, validators, committers);
 
@@ -95,7 +95,7 @@ public class IbftCoinbaseValidationRuleTest {
     final ProtocolContext context =
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
-    final IbftCoinbaseValidationRule coinbaseValidationRule = new IbftCoinbaseValidationRule();
+    final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
     BlockHeader header = createProposedBlockHeader(proposerNodeKey, validators, committers);
 

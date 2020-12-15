@@ -23,10 +23,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.IbftBlockCreator;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRound;
@@ -71,7 +71,7 @@ public class IbftRoundIntegrationTest {
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private BlockImporter blockImporter;
 
-  @Mock private IbftBlockCreator blockCreator;
+  @Mock private BftBlockCreator blockCreator;
   @Mock private MessageValidator messageValidator;
   @Mock private RoundTimer roundTimer;
   @Mock private NodeKey nodeKey;
@@ -98,8 +98,8 @@ public class IbftRoundIntegrationTest {
     throwingMessageFactory = new MessageFactory(nodeKey);
     transmitter = new IbftMessageTransmitter(throwingMessageFactory, multicaster);
 
-    IbftExtraData proposedExtraData =
-        new IbftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
+    BftExtraData proposedExtraData =
+        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     headerTestFixture.extraData(proposedExtraData.encode());
     headerTestFixture.number(1);

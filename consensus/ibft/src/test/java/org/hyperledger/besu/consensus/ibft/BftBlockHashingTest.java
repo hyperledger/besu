@@ -17,9 +17,9 @@ package org.hyperledger.besu.consensus.ibft;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -45,7 +45,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
-public class IbftBlockHashingTest {
+public class BftBlockHashingTest {
 
   private static final List<NodeKey> COMMITTERS_NODE_KEYS = committersNodeKeys();
   private static final List<Address> VALIDATORS =
@@ -59,15 +59,15 @@ public class IbftBlockHashingTest {
 
   @Test
   public void testCalculateHashOfIbft2BlockOnChain() {
-    Hash actualHeaderHash = IbftBlockHashing.calculateHashOfIbftBlockOnChain(HEADER_TO_BE_HASHED);
+    Hash actualHeaderHash = BftBlockHashing.calculateHashOfBftBlockOnChain(HEADER_TO_BE_HASHED);
     assertThat(actualHeaderHash).isEqualTo(EXPECTED_HEADER_HASH);
   }
 
   @Test
   public void testRecoverCommitterAddresses() {
     List<Address> actualCommitterAddresses =
-        IbftBlockHashing.recoverCommitterAddresses(
-            HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED));
+        BftBlockHashing.recoverCommitterAddresses(
+            HEADER_TO_BE_HASHED, BftExtraData.decode(HEADER_TO_BE_HASHED));
 
     List<Address> expectedCommitterAddresses =
         COMMITTERS_NODE_KEYS.stream()
@@ -80,8 +80,8 @@ public class IbftBlockHashingTest {
   @Test
   public void testCalculateDataHashForCommittedSeal() {
     Hash dataHahsForCommittedSeal =
-        IbftBlockHashing.calculateDataHashForCommittedSeal(
-            HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED));
+        BftBlockHashing.calculateDataHashForCommittedSeal(
+            HEADER_TO_BE_HASHED, BftExtraData.decode(HEADER_TO_BE_HASHED));
 
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
@@ -90,8 +90,8 @@ public class IbftBlockHashingTest {
             .map(nodeKey -> nodeKey.sign(dataHahsForCommittedSeal))
             .collect(Collectors.toList());
 
-    IbftExtraData extraDataWithCommitSeals =
-        new IbftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
+    BftExtraData extraDataWithCommitSeals =
+        new BftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
 
     builder.extraData(extraDataWithCommitSeals.encode());
     BlockHeader actualHeader = builder.buildBlockHeader();
@@ -137,7 +137,7 @@ public class IbftBlockHashingTest {
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.nonce(0);
-    builder.blockHeaderFunctions(IbftBlockHeaderFunctions.forOnChainBlock());
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock());
     return builder;
   }
 
@@ -153,7 +153,7 @@ public class IbftBlockHashingTest {
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
     builder.extraData(
-        new IbftExtraData(VANITY_DATA, emptyList(), VOTE, ROUND, VALIDATORS)
+        new BftExtraData(VANITY_DATA, emptyList(), VOTE, ROUND, VALIDATORS)
             .encodeWithoutCommitSeals());
 
     BytesValueRLPOutput rlpForHeaderFroCommittersSigning = new BytesValueRLPOutput();
@@ -164,8 +164,8 @@ public class IbftBlockHashingTest {
             .map(nodeKey -> nodeKey.sign(Hash.hash(rlpForHeaderFroCommittersSigning.encoded())))
             .collect(Collectors.toList());
 
-    IbftExtraData extraDataWithCommitSeals =
-        new IbftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
+    BftExtraData extraDataWithCommitSeals =
+        new BftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
 
     builder.extraData(extraDataWithCommitSeals.encode());
     return builder.buildBlockHeader();
@@ -175,7 +175,7 @@ public class IbftBlockHashingTest {
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
     builder.extraData(
-        new IbftExtraData(VANITY_DATA, emptyList(), VOTE, 0, VALIDATORS)
+        new BftExtraData(VANITY_DATA, emptyList(), VOTE, 0, VALIDATORS)
             .encodeWithoutCommitSealsAndRoundNumber());
 
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();

@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.ibft.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -57,10 +57,10 @@ public class ProposalBlockConsistencyValidatorTest {
         proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
     final Block misMatchedBlock =
-        IbftBlockInterface.replaceRoundInBlock(
+        BftBlockInterface.replaceRoundInBlock(
             block,
             roundIdentifier.getRoundNumber() + 1,
-            IbftBlockHeaderFunctions.forCommittedSeal());
+            BftBlockHeaderFunctions.forCommittedSeal());
 
     assertThat(
             consistencyChecker.validateProposalMatchesBlock(

@@ -20,15 +20,15 @@ import org.hyperledger.besu.consensus.common.PoaContext;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 
-/** Holds the IBFT specific mutable state. */
-public class IbftContext implements PoaContext {
+/** Holds the BFT specific mutable state. */
+public class BftContext implements PoaContext {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
   private final EpochManager epochManager;
   private final BlockInterface blockInterface;
 
-  public IbftContext(
+  public BftContext(
       final VoteTallyCache voteTallyCache,
       final VoteProposer voteProposer,
       final EpochManager epochManager,
