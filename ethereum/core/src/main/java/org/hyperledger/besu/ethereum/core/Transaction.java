@@ -142,7 +142,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       throw new IllegalStateException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
     }
-    // todo do all transaction type validation here
     this.transactionType = transactionType;
     this.nonce = nonce;
     this.gasPrice = gasPrice;
@@ -585,7 +584,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId, v);
   }
 
-  // todo access list here
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
