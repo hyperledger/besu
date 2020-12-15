@@ -762,7 +762,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                   nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
           break;
         case ACCESS_LIST:
-          hash = keccak256(accessListSigningMessage());
+          hash = keccak256(accessListData());
           break;
         default:
           throw new IllegalStateException(
@@ -771,7 +771,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return SECP256K1.sign(hash, keys);
     }
 
-    private Bytes accessListSigningMessage() {
+    private Bytes accessListData() {
       return RLP.encode(
           rlpOutput -> {
             rlpOutput.startList();
