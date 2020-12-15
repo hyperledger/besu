@@ -23,13 +23,16 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Optional;
 
@@ -66,30 +69,44 @@ public class TransactionSimulator {
   }
 
   public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final long blockNumber) {
+    final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
+    return process(callParams, transactionValidationParams, operationTracer, header);
+  }
+
+  public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams, final Hash blockHeaderHash) {
     final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
-    return process(callParams, OperationTracer.NO_TRACING, header);
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        header);
   }
 
   public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams, final long blockNumber) {
-    return process(callParams, OperationTracer.NO_TRACING, blockNumber);
-  }
-
-  public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams,
-      final OperationTracer operationTracer,
-      final long blockNumber) {
-    final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
-    return process(callParams, operationTracer, header);
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        blockNumber);
   }
 
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
-    return process(callParams, OperationTracer.NO_TRACING, blockchain.getChainHeadHeader());
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        blockchain.getChainHeadHeader());
   }
 
   private Optional<TransactionSimulatorResult> process(
       final CallParameter callParams,
+      final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final BlockHeader header) {
     if (header == null) {
@@ -111,8 +128,15 @@ public class TransactionSimulator {
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
-    final Transaction transaction =
+    final WorldUpdater updater = worldState.updater();
+
+    if (transactionValidationParams.isAllowExceedingBalance()) {
+      updater.getOrCreate(senderAddress).getMutable().incrementBalance(Wei.of(Long.MAX_VALUE));
+    }
+
+    final Transaction.Builder transactionBuilder =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(nonce)
             .gasPrice(gasPrice)
             .gasLimit(gasLimit)
@@ -120,23 +144,26 @@ public class TransactionSimulator {
             .sender(senderAddress)
             .value(value)
             .payload(payload)
-            .signature(FAKE_SIGNATURE)
-            .build();
+            .signature(FAKE_SIGNATURE);
+    callParams.getGasPremium().ifPresent(transactionBuilder::gasPremium);
+    callParams.getFeeCap().ifPresent(transactionBuilder::feeCap);
+
+    final Transaction transaction = transactionBuilder.build();
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
 
-    final TransactionProcessor transactionProcessor =
+    final MainnetTransactionProcessor transactionProcessor =
         protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
-    final TransactionProcessor.Result result =
+    final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
-            worldState.updater(),
+            updater,
             header,
             transaction,
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             new BlockHashLookup(header, blockchain),
             false,
-            TransactionValidationParams.transactionSimulator(),
+            transactionValidationParams,
             operationTracer);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));

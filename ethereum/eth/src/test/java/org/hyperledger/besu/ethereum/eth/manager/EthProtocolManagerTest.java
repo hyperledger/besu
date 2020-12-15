@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -56,7 +57,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -273,7 +273,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true, false))) {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
@@ -565,7 +565,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true, false))) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -703,7 +703,7 @@ public final class EthProtocolManagerTest {
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true))) {
+            new EthProtocolConfiguration(limit, limit, limit, limit, limit, true, false))) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -880,7 +880,7 @@ public final class EthProtocolManagerTest {
           .isEqualTo(Collections.singletonList(EthProtocol.ETH63));
 
       // assert that all messages transmitted contain the expected block & total difficulty.
-      final ProtocolSchedule protocolSchdeule = MainnetProtocolSchedule.create();
+      final ProtocolSchedule protocolSchdeule = ProtocolScheduleFixture.MAINNET;
       for (final NewBlockMessage msg : messageSentCaptor.getAllValues()) {
         assertThat(msg.block(protocolSchdeule)).isEqualTo(minedBlock);
         assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);
@@ -987,7 +987,7 @@ public final class EthProtocolManagerTest {
           metricsSystem,
           mock(SyncState.class),
           Wei.ZERO,
-          TransactionPoolConfiguration.builder().build(),
+          TransactionPoolConfiguration.DEFAULT,
           true,
           Optional.empty());
 

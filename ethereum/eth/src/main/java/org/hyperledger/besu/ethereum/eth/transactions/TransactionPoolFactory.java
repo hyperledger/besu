@@ -52,7 +52,6 @@ public class TransactionPoolFactory {
             clock,
             metricsSystem,
             protocolContext.getBlockchain()::getChainHeadHeader,
-            eip1559,
             transactionPoolConfiguration.getPriceBump());
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
@@ -146,6 +145,7 @@ public class TransactionPoolFactory {
               new PendingTransactionsMessageProcessor(
                   pendingTransactionTracker.get(),
                   transactionPool,
+                  transactionPoolConfiguration,
                   metricsSystem.createCounter(
                       BesuMetricCategory.TRANSACTION_POOL,
                       "pending_transactions_messages_skipped_total",

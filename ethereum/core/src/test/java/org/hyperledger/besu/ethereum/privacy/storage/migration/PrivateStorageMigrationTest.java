@@ -38,10 +38,10 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -84,7 +85,7 @@ public class PrivateStorageMigrationTest {
   @Mock private WorldStateArchive publicWorldStateArchive;
   @Mock private MutableWorldState publicMutableWorldState;
   @Mock private LegacyPrivateStateStorage legacyPrivateStateStorage;
-  @Mock private TransactionProcessor transactionProcessor;
+  @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private TransactionReceiptFactory transactionReceiptFactory;
   @Mock private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   @Mock private PrivateMigrationBlockProcessor privateMigrationBlockProcessor;
@@ -311,6 +312,7 @@ public class PrivateStorageMigrationTest {
 
   private Transaction publicTransaction() {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .nonce(0)
         .gasPrice(Wei.of(1000))
         .gasLimit(3000000)

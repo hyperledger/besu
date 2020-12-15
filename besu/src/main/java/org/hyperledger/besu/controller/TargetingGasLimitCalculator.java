@@ -17,18 +17,30 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 
 import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class TargetingGasLimitCalculator implements GasLimitCalculator {
+public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
+    implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
-  public static final long ADJUSTMENT_FACTOR = 1024L;
+  private final long maxConstantAdjustmentIncrement;
   private Long targetGasLimit;
 
-  public TargetingGasLimitCalculator(final Long targetGasLimit) {
+  public TargetingGasLimitCalculator(final long targetGasLimit) {
+    this(targetGasLimit, 1024L, 5000L, Long.MAX_VALUE);
+  }
+
+  public TargetingGasLimitCalculator(
+      final long targetGasLimit,
+      final long maxConstantAdjustmentIncrement,
+      final long minGasLimit,
+      final long maxGasLimit) {
+    super(minGasLimit, maxGasLimit);
+    this.maxConstantAdjustmentIncrement = maxConstantAdjustmentIncrement;
     changeTargetGasLimit(targetGasLimit);
   }
 
@@ -36,9 +48,9 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
   public long nextGasLimit(final long currentGasLimit) {
     final long nextGasLimit;
     if (targetGasLimit > currentGasLimit) {
-      nextGasLimit = Math.min(targetGasLimit, safeAdd(currentGasLimit));
+      nextGasLimit = Math.min(targetGasLimit, safeAddAtMost(currentGasLimit));
     } else if (targetGasLimit < currentGasLimit) {
-      nextGasLimit = Math.max(targetGasLimit, safeSub(currentGasLimit));
+      nextGasLimit = Math.max(targetGasLimit, safeSubAtMost(currentGasLimit));
     } else {
       nextGasLimit = currentGasLimit;
     }
@@ -52,21 +64,32 @@ public class TargetingGasLimitCalculator implements GasLimitCalculator {
 
   @Override
   public void changeTargetGasLimit(final Long targetGasLimit) {
-    checkArgument(targetGasLimit >= 0, "Target gas limit must be non-negative");
+    checkArgument(
+        targetGasLimit >= minGasLimit,
+        "targetGasLimit of " + targetGasLimit + " is below the minGasLimit of " + minGasLimit);
+
+    checkArgument(
+        targetGasLimit <= maxGasLimit,
+        "targetGasLimit of " + targetGasLimit + " is above the maxGasLimit of " + maxGasLimit);
     this.targetGasLimit = targetGasLimit;
   }
 
-  private long safeAdd(final long gasLimit) {
+  private long adjustAmount(final long currentGasLimit) {
+    final long maxProportionalAdjustmentLimit = Math.max(deltaBound(currentGasLimit) - 1, 0);
+    return Math.min(maxConstantAdjustmentIncrement, maxProportionalAdjustmentLimit);
+  }
+
+  private long safeAddAtMost(final long gasLimit) {
     try {
-      return Math.addExact(gasLimit, ADJUSTMENT_FACTOR);
+      return Math.addExact(gasLimit, adjustAmount(gasLimit));
     } catch (final ArithmeticException ex) {
       return Long.MAX_VALUE;
     }
   }
 
-  private long safeSub(final long gasLimit) {
+  private long safeSubAtMost(final long gasLimit) {
     try {
-      return Math.max(Math.subtractExact(gasLimit, ADJUSTMENT_FACTOR), 0);
+      return Math.max(Math.subtractExact(gasLimit, adjustAmount(gasLimit)), 0);
     } catch (final ArithmeticException ex) {
       return 0;
     }

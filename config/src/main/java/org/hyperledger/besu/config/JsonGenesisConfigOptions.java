@@ -21,11 +21,14 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -301,6 +304,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isQuorum() {
+    return getOptionalBoolean("isquorum").orElse(false);
+  }
+
+  @Override
+  public OptionalLong getQip714BlockNumber() {
+    return getOptionalLong("qip714block");
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -348,6 +361,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     if (isIbft2()) {
       builder.put("ibft2", getIbft2ConfigOptions().asMap());
     }
+
+    if (isQuorum()) {
+      builder.put("isQuorum", true);
+      getQip714BlockNumber().ifPresent(blockNumber -> builder.put("qip714block", blockNumber));
+    }
+
     return builder.build();
   }
 
@@ -391,5 +410,47 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     } else {
       return JsonUtil.getValueAsString(configRoot, key).map(s -> new BigInteger(s, 10));
     }
+  }
+
+  private Optional<Boolean> getOptionalBoolean(final String key) {
+    if (configOverrides.containsKey(key)) {
+      final String value = configOverrides.get(key);
+      return value == null || value.isEmpty()
+          ? Optional.empty()
+          : Optional.of(Boolean.valueOf(configOverrides.get(key)));
+    } else {
+      return JsonUtil.getBoolean(configRoot, key);
+    }
+  }
+
+  @Override
+  public List<Long> getForks() {
+    Stream<OptionalLong> forkBlockNumbers =
+        Stream.of(
+            getHomesteadBlockNumber(),
+            getDaoForkBlock(),
+            getTangerineWhistleBlockNumber(),
+            getSpuriousDragonBlockNumber(),
+            getByzantiumBlockNumber(),
+            getConstantinopleBlockNumber(),
+            getConstantinopleFixBlockNumber(),
+            getIstanbulBlockNumber(),
+            getMuirGlacierBlockNumber(),
+            getEIP1559BlockNumber(),
+            getEcip1015BlockNumber(),
+            getDieHardBlockNumber(),
+            getGothamBlockNumber(),
+            getDefuseDifficultyBombBlockNumber(),
+            getAtlantisBlockNumber(),
+            getAghartaBlockNumber(),
+            getPhoenixBlockNumber(),
+            getThanosBlockNumber());
+
+    return forkBlockNumbers
+        .filter(OptionalLong::isPresent)
+        .map(OptionalLong::getAsLong)
+        .distinct()
+        .sorted()
+        .collect(Collectors.toList());
   }
 }

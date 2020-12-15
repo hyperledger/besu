@@ -15,7 +15,6 @@
 package org.hyperledger.besu.chainimport;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -41,18 +40,27 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Stopwatch;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /** Tool for importing rlp-encoded block data from files. */
 public class RlpBlockImporter implements Closeable {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LogManager.getFormatterLogger();
 
   private final Semaphore blockBacklog = new Semaphore(2);
 
   private final ExecutorService validationExecutor = Executors.newCachedThreadPool();
   private final ExecutorService importExecutor = Executors.newSingleThreadExecutor();
+
+  private long cumulativeGas;
+  private long segmentGas;
+  private final Stopwatch cumulativeTimer = Stopwatch.createUnstarted();
+  private final Stopwatch segmentTimer = Stopwatch.createUnstarted();
+  private static final long SEGMENT_SIZE = 1000;
 
   /**
    * Imports blocks that are stored as concatenated RLP sections in the given file into Besu's block
@@ -99,9 +107,6 @@ public class RlpBlockImporter implements Closeable {
             || blockNumber >= endBlock) {
           continue;
         }
-        if (blockNumber % 100 == 0) {
-          LOG.info("Import at block {}", blockNumber);
-        }
         if (blockchain.contains(header.getHash())) {
           continue;
         }
@@ -144,6 +149,7 @@ public class RlpBlockImporter implements Closeable {
       if (previousBlockFuture != null) {
         previousBlockFuture.join();
       }
+      logProgress(blockchain.getChainHeadBlockNumber());
       return new RlpBlockImporter.ImportResult(
           blockchain.getChainHead().getTotalDifficulty(), count);
     }
@@ -187,6 +193,8 @@ public class RlpBlockImporter implements Closeable {
       final ProtocolSpec protocolSpec,
       final boolean skipPowValidation) {
     try {
+      cumulativeTimer.start();
+      segmentTimer.start();
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final boolean blockImported =
           blockImporter.importBlock(
@@ -202,7 +210,29 @@ public class RlpBlockImporter implements Closeable {
       }
     } finally {
       blockBacklog.release();
+      cumulativeTimer.stop();
+      segmentTimer.stop();
+      final long thisGas = block.getHeader().getGasUsed();
+      cumulativeGas += thisGas;
+      segmentGas += thisGas;
+      if (header.getNumber() % SEGMENT_SIZE == 0) {
+        logProgress(header.getNumber());
+      }
     }
+  }
+
+  private void logProgress(final long blockNum) {
+    final long elapseMicros = segmentTimer.elapsed(TimeUnit.MICROSECONDS);
+    //noinspection PlaceholderCountMatchesArgumentCount
+    LOG.info(
+        "Import at block %8d / %,14d gas %,11d micros / Mgps %7.3f segment %6.3f cumulative",
+        blockNum,
+        segmentGas,
+        elapseMicros,
+        segmentGas / (double) elapseMicros,
+        cumulativeGas / (double) cumulativeTimer.elapsed(TimeUnit.MICROSECONDS));
+    segmentGas = 0;
+    segmentTimer.reset();
   }
 
   private BlockHeader lookupPreviousHeader(

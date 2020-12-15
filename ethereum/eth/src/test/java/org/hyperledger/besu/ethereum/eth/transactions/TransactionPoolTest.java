@@ -20,10 +20,10 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.GAS_PRICE_TOO_LOW;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.hyperledger.besu.ethereum.mainnet.ValidationResult.valid;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_TOO_LOW;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -58,12 +58,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -97,7 +97,8 @@ public class TransactionPoolTest {
   @SuppressWarnings("unchecked")
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
 
-  private final TransactionValidator transactionValidator = mock(TransactionValidator.class);
+  private final MainnetTransactionValidator transactionValidator =
+      mock(MainnetTransactionValidator.class);
   private MutableBlockchain blockchain;
 
   private PendingTransactions transactions;
@@ -124,7 +125,6 @@ public class TransactionPoolTest {
             TestClock.fixed(),
             metricsSystem,
             blockchain::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
@@ -682,7 +682,7 @@ public class TransactionPoolTest {
             Wei.ZERO,
             metricsSystem,
             Optional.empty(),
-            TransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
+            ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class)))
         .thenReturn(valid());
     when(transactionValidator.validateForSender(
@@ -721,7 +721,7 @@ public class TransactionPoolTest {
             Wei.ZERO,
             metricsSystem,
             Optional.empty(),
-            TransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
+            ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final Transaction transactionLocal =

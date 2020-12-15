@@ -29,12 +29,13 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class TraceTransactionIntegrationTest {
   private MutableBlockchain blockchain;
   private WorldStateArchive worldStateArchive;
   private Block genesisBlock;
-  private TransactionProcessor transactionProcessor;
+  private MainnetTransactionProcessor transactionProcessor;
   private BlockHashLookup blockHashLookup;
 
   @Before
@@ -77,6 +78,7 @@ public class TraceTransactionIntegrationTest {
     final KeyPair keyPair = KeyPair.generate();
     final Transaction createTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .gasLimit(300_000)
             .gasPrice(Wei.ZERO)
             .nonce(0)
@@ -87,7 +89,7 @@ public class TraceTransactionIntegrationTest {
     final MutableWorldState worldState =
         worldStateArchive.getMutable(genesisBlock.getHeader().getStateRoot()).get();
     final WorldUpdater createTransactionUpdater = worldState.updater();
-    Result result =
+    TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
             createTransactionUpdater,
@@ -110,6 +112,7 @@ public class TraceTransactionIntegrationTest {
         new DebugOperationTracer(new TraceOptions(true, true, true));
     final Transaction executeTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .gasLimit(300_000)
             .gasPrice(Wei.ZERO)
             .nonce(1)

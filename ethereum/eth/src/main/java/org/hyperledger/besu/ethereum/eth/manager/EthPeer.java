@@ -65,6 +65,7 @@ public class EthPeer {
   private final ChainState chainHeadState;
   private final AtomicBoolean statusHasBeenSentToPeer = new AtomicBoolean(false);
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
+  private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
 
   private volatile long lastRequestTimestamp = 0;
   private final RequestManager headersRequestManager = new RequestManager(this);
@@ -77,7 +78,8 @@ public class EthPeer {
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new HashMap<>();
 
-  EthPeer(
+  @VisibleForTesting
+  public EthPeer(
       final PeerConnection connection,
       final String protocolName,
       final Consumer<EthPeer> onStatusesExchanged,
@@ -97,7 +99,7 @@ public class EthPeer {
                 }));
     this.chainHeadState = new ChainState();
     this.onStatusesExchanged.set(onStatusesExchanged);
-    for (PeerValidator peerValidator : peerValidators) {
+    for (final PeerValidator peerValidator : peerValidators) {
       validationStatus.put(peerValidator, false);
     }
   }
@@ -115,7 +117,7 @@ public class EthPeer {
    * @return {@code true} if all peer validation logic has run and successfully validated this peer
    */
   public boolean isFullyValidated() {
-    for (Boolean isValid : validationStatus.values()) {
+    for (final Boolean isValid : validationStatus.values()) {
       if (!isValid) {
         return false;
       }
@@ -307,8 +309,10 @@ public class EthPeer {
     maybeExecuteStatusesExchangedCallback();
   }
 
-  public void registerStatusReceived(final Hash hash, final Difficulty td) {
+  public void registerStatusReceived(
+      final Hash hash, final Difficulty td, final int protocolVersion) {
     chainHeadState.statusReceived(hash, td);
+    lastProtocolVersion.set(protocolVersion);
     statusHasBeenReceivedFromPeer.set(true);
     maybeExecuteStatusesExchangedCallback();
   }
@@ -363,6 +367,14 @@ public class EthPeer {
     return chainHeadState;
   }
 
+  public int getLastProtocolVersion() {
+    return lastProtocolVersion.get();
+  }
+
+  public String getProtocolName() {
+    return protocolName;
+  }
+
   /**
    * Return A read-only snapshot of this peer's current {@code chainState} }
    *
@@ -396,8 +408,7 @@ public class EthPeer {
     return connection.getAgreedCapabilities();
   }
 
-  @VisibleForTesting
-  PeerConnection getConnection() {
+  public PeerConnection getConnection() {
     return connection;
   }
 

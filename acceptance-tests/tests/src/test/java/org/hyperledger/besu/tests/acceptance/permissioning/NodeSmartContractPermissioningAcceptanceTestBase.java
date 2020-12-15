@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
-import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.NodeSmartContractPermissioningConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
@@ -30,7 +27,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.NodeSmartContractPermissioningTransactions;
 
 import java.io.IOException;
-import java.math.BigInteger;
 
 class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBase {
 
@@ -131,13 +127,5 @@ class NodeSmartContractPermissioningAcceptanceTestBase extends AcceptanceTestBas
   protected Condition connectionIsForbidden(final Node source, final Node target) {
     return nodeSmartContractPermissioningConditions.connectionIsForbidden(
         CONTRACT_ADDRESS, source, target);
-  }
-
-  protected void waitForBlockHeight(final Node node, final long blockchainHeight) {
-    WaitUtils.waitFor(
-        120,
-        () ->
-            assertThat(node.execute(ethTransactions.blockNumber()))
-                .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
   }
 }

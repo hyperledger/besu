@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -40,16 +40,15 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,8 +65,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EeaSendRawTransactionTest {
 
-  private static final String VALID_LEGACY_PRIVATE_TRANSACTION_RLP = validPrivateTransactionRlp();
-  private static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP =
+  static final String VALID_LEGACY_PRIVATE_TRANSACTION_RLP = validPrivateTransactionRlp();
+  static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP =
       validPrivateTransactionRlpPrivacyGroup();
 
   // RLP encode fails creating a transaction without privateFrom so must be manually encoded
@@ -79,7 +78,7 @@ public class EeaSendRawTransactionTest {
           + "885ff29e973e2576b6600181d1b0a2b5294e30d9be4a1981ff"
           + "b33a0b8c8a72657374726963746564";
 
-  private static final Transaction PUBLIC_TRANSACTION =
+  static final Transaction PUBLIC_TRANSACTION =
       new Transaction(
           0L,
           Wei.of(1),
@@ -96,22 +95,20 @@ public class EeaSendRawTransactionTest {
           Bytes.fromHexString("0x"),
           Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty());
-  private static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
+  static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
 
-  private final String MOCK_ORION_KEY = "";
-  private final User user =
-      new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  final String MOCK_ORION_KEY = "";
+  final User user = new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
+  final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  @Mock private TransactionPool transactionPool;
-  @Mock private EeaSendRawTransaction method;
-  @Mock private PrivacyController privacyController;
+  @Mock TransactionPool transactionPool;
+  @Mock EeaSendRawTransaction method;
+  @Mock PrivacyController privacyController;
 
   @Before
   public void before() {
     method =
-        new EeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider, false);
+        new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
   }
 
   @Test
@@ -200,7 +197,7 @@ public class EeaSendRawTransactionTest {
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.retrieveOffChainPrivacyGroup(any(String.class), any(String.class)))
+    when(privacyController.findOffChainPrivacyGroupByGroupId(any(String.class), any(String.class)))
         .thenReturn(
             Optional.of(
                 new PrivacyGroup(
@@ -235,70 +232,6 @@ public class EeaSendRawTransactionTest {
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }
 
-  @Test
-  public void validOnChainTransactionPrivacyGroupIsSentToTransactionPool() {
-    method =
-        new EeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider, true);
-
-    when(privacyController.sendTransaction(any(PrivateTransaction.class), any(), any()))
-        .thenReturn(MOCK_ORION_KEY);
-    when(privacyController.validatePrivateTransaction(
-            any(PrivateTransaction.class), any(String.class)))
-        .thenReturn(ValidationResult.valid());
-    final Optional<PrivacyGroup> optionalPrivacyGroup =
-        Optional.of(
-            new PrivacyGroup(
-                "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
-    when(privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(any(), any(), any()))
-        .thenReturn(optionalPrivacyGroup);
-    when(privacyController.createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Address.class)))
-        .thenReturn(PUBLIC_TRANSACTION);
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
-        .thenReturn(ValidationResult.valid());
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "eea_sendRawTransaction",
-                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
-
-    final JsonRpcResponse actualResponse = method.response(request);
-
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-    verify(privacyController).sendTransaction(any(PrivateTransaction.class), any(), any());
-    verify(privacyController)
-        .validatePrivateTransaction(any(PrivateTransaction.class), any(String.class));
-    verify(privacyController)
-        .createPrivacyMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), eq(Address.ONCHAIN_PRIVACY));
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
-  }
-
-  @Test
-  public void eeaTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
-    method =
-        new EeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider, true);
-
-    final JsonRpcRequestContext request = getJsonRpcRequestContext();
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
-
-    final JsonRpcResponse actualResponse = method.response(request);
-
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-  }
-
   private JsonRpcRequestContext getJsonRpcRequestContext() {
     return new JsonRpcRequestContext(
         new JsonRpcRequest(
@@ -307,37 +240,11 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void offChainPrivacyGroupTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
+  public void transactionFailsIfPrivacyGroupDoesNotExist() {
     method =
-        new EeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider, true);
+        new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(any(), any(), any()))
-        .thenReturn(Optional.empty());
-
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "eea_sendRawTransaction",
-                new String[] {VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP}));
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
-
-    final JsonRpcResponse actualResponse = method.response(request);
-
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
-  }
-
-  @Test
-  public void onChainPrivacyGroupTransactionFailsWhenFeatureIsNotEnabled() {
-    method =
-        new EeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider, false);
-
-    when(privacyController.retrieveOffChainPrivacyGroup(any(String.class), any(String.class)))
+    when(privacyController.findOffChainPrivacyGroupByGroupId(any(String.class), any(String.class)))
         .thenThrow(
             new RuntimeException(JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST.getMessage()));
 

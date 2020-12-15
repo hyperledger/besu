@@ -40,13 +40,14 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -88,7 +89,7 @@ public class BesuEventsImplTest {
   @Mock private EthContext mockEthContext;
   @Mock private EthMessages mockEthMessages;
   @Mock private EthScheduler mockEthScheduler;
-  @Mock private TransactionValidator mockTransactionValidator;
+  @Mock private MainnetTransactionValidator mockTransactionValidator;
   @Mock private ProtocolSpec mockProtocolSpec;
   @Mock private WorldStateArchive mockWorldStateArchive;
   @Mock private WorldState mockWorldState;
@@ -129,7 +130,7 @@ public class BesuEventsImplTest {
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
     syncState = new SyncState(blockchain, mockEthPeers);
     TransactionPoolConfiguration txPoolConfig =
-        TransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(

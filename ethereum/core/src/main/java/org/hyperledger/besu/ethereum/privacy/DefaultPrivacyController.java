@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -29,17 +30,18 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -157,7 +159,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findPrivacyGroup(
+  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     return enclave.findPrivacyGroup(addresses);
   }
@@ -178,7 +180,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public ValidationResult<TransactionValidator.TransactionInvalidReason> validatePrivateTransaction(
+  public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
     final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
     return privateTransactionValidator.validate(
@@ -225,12 +227,12 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivateTransactionProcessor.Result> simulatePrivateTransaction(
+  public Optional<TransactionProcessingResult> simulatePrivateTransaction(
       final String privacyGroupId,
       final String enclavePublicKey,
       final CallParameter callParams,
       final long blockNumber) {
-    final Optional<PrivateTransactionProcessor.Result> result =
+    final Optional<TransactionProcessingResult> result =
         privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
     return result;
   }
@@ -258,13 +260,25 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOffChainPrivacyGroup(
+  public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
+      final String privacyGroupId, final String enclaveKey) {
+    try {
+      return findOffChainPrivacyGroupByGroupId(privacyGroupId, enclaveKey);
+    } catch (final EnclaveClientException ex) {
+      // An exception is thrown if the offchain group cannot be found
+      LOG.debug("Offchain privacy group not found: {}", privacyGroupId);
+    }
+    return findOnChainPrivacyGroupByGroupId(Bytes.fromBase64String(privacyGroupId), enclaveKey);
+  }
+
+  @Override
+  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
       final String privacyGroupId, final String enclaveKey) {
     return Optional.ofNullable(enclave.retrievePrivacyGroup(privacyGroupId));
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroup(
+  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     final ArrayList<PrivacyGroup> privacyGroups = new ArrayList<>();
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
@@ -275,7 +289,8 @@ public class DefaultPrivacyController implements PrivacyController {
         .keySet()
         .forEach(
             c -> {
-              final Optional<PrivacyGroup> maybePrivacyGroup = retrieveOnChainPrivacyGroup(c);
+              final Optional<PrivacyGroup> maybePrivacyGroup =
+                  findOnChainPrivacyGroupByGroupId(c, enclavePublicKey);
               if (maybePrivacyGroup.isPresent()
                   && maybePrivacyGroup.get().getMembers().containsAll(addresses)) {
                 privacyGroups.add(maybePrivacyGroup.get());
@@ -284,9 +299,10 @@ public class DefaultPrivacyController implements PrivacyController {
     return privacyGroups;
   }
 
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(final Bytes privacyGroupId) {
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupByGroupId(
+      final Bytes privacyGroupId, final String enclaveKey) {
     // get the privateFor list from the management contract
-    final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
+    final Optional<TransactionProcessingResult> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
             privacyGroupId.toBase64String(), buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
 
@@ -311,12 +327,12 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String enclavePublicKey,
       final PrivateTransaction privateTransaction) {
     // get the privateFor list from the management contract
-    final Optional<PrivateTransactionProcessor.Result> privateTransactionSimulatorResultOptional =
+    final Optional<TransactionProcessingResult> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
             privacyGroupId.toBase64String(), buildCallParams(GET_PARTICIPANTS_METHOD_SIGNATURE));
 
@@ -482,7 +498,7 @@ public class DefaultPrivacyController implements PrivacyController {
       final PrivacyGroup privacyGroup = maybePrivacyGroup.get();
       if (privacyGroup.getType() == PrivacyGroup.Type.ONCHAIN) {
         // onchain privacy group
-        final Optional<PrivateTransactionProcessor.Result> result =
+        final Optional<TransactionProcessingResult> result =
             privateTransactionSimulator.process(
                 privateTransaction.getPrivacyGroupId().get().toBase64String(),
                 buildCallParams(GET_VERSION_METHOD_SIGNATURE));

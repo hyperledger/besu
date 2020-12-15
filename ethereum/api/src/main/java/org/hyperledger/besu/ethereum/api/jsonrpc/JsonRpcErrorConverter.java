@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class JsonRpcErrorConverter {
 
@@ -55,6 +55,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.ETH_SEND_TX_ALREADY_KNOWN;
       case TRANSACTION_REPLACEMENT_UNDERPRICED:
         return JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED;
+      case GAS_PRICE_MUST_BE_ZERO:
+        return JsonRpcError.GAS_PRICE_MUST_BE_ZERO;
       default:
         return JsonRpcError.INVALID_PARAMS;
     }

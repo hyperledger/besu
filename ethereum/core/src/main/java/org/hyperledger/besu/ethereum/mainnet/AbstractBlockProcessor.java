@@ -25,8 +25,10 @@ import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +42,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   public interface TransactionReceiptFactory {
 
     TransactionReceipt create(
-        TransactionProcessor.Result result, WorldState worldState, long gasUsed);
+        TransactionType transactionType,
+        TransactionProcessingResult result,
+        WorldState worldState,
+        long gasUsed);
   }
 
   private static final Logger LOG = LogManager.getLogger();
@@ -81,7 +86,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
   }
 
-  private final TransactionProcessor transactionProcessor;
+  private final MainnetTransactionProcessor transactionProcessor;
 
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
@@ -94,7 +99,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private final TransactionGasBudgetCalculator gasBudgetCalculator;
 
   protected AbstractBlockProcessor(
-      final TransactionProcessor transactionProcessor,
+      final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
@@ -124,7 +129,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       if (!gasBudgetCalculator.hasBudget(
           transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
         LOG.info(
-            "Block processing error: transaction gas limit {} exceeds available block budget remaining {}. Block {} Transaction {}",
+            "Block processing error: transaction gas limit {} exceeds available block budget"
+                + " remaining {}. Block {} Transaction {}",
             transaction.getGasLimit(),
             remainingGasBudget,
             blockHeader.getHash().toHexString(),
@@ -137,7 +143,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
-      final TransactionProcessor.Result result =
+      final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               blockchain,
               worldStateUpdater,
@@ -163,7 +169,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
 
       final TransactionReceipt transactionReceipt =
-          transactionReceiptFactory.create(result, worldState, currentGasUsed);
+          transactionReceiptFactory.create(
+              transaction.getType(), result, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
     }
 
@@ -172,7 +179,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
-    worldState.persist();
+    worldState.persist(blockHeader.getHash());
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 

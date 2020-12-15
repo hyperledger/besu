@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.math.BigInteger;
@@ -269,14 +270,15 @@ public class MultiTenancyPrivacyControllerTest {
             "",
             "",
             List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
-    when(privacyController.findPrivacyGroup(addresses, ENCLAVE_PUBLIC_KEY1))
+    when(privacyController.findOffChainPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1))
         .thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        multiTenancyPrivacyController.findPrivacyGroup(addresses, ENCLAVE_PUBLIC_KEY1);
+        multiTenancyPrivacyController.findOffChainPrivacyGroupByMembers(
+            addresses, ENCLAVE_PUBLIC_KEY1);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
-    verify(privacyController).findPrivacyGroup(addresses, ENCLAVE_PUBLIC_KEY1);
+    verify(privacyController).findOffChainPrivacyGroupByMembers(addresses, ENCLAVE_PUBLIC_KEY1);
   }
 
   @Test
@@ -284,7 +286,9 @@ public class MultiTenancyPrivacyControllerTest {
     final List<String> addresses = List.of(ENCLAVE_PUBLIC_KEY2);
 
     assertThatThrownBy(
-            () -> multiTenancyPrivacyController.findPrivacyGroup(addresses, ENCLAVE_PUBLIC_KEY1))
+            () ->
+                multiTenancyPrivacyController.findOffChainPrivacyGroupByMembers(
+                    addresses, ENCLAVE_PUBLIC_KEY1))
         .isInstanceOf(MultiTenancyValidationException.class)
         .hasMessage("Privacy group addresses must contain the enclave public key");
   }
@@ -362,9 +366,9 @@ public class MultiTenancyPrivacyControllerTest {
     when(privacyController.simulatePrivateTransaction(any(), any(), any(), any(long.class)))
         .thenReturn(
             Optional.of(
-                PrivateTransactionProcessor.Result.successful(
+                TransactionProcessingResult.successful(
                     LOGS, 0, 0, Bytes.EMPTY, ValidationResult.valid())));
-    final Optional<PrivateTransactionProcessor.Result> result =
+    final Optional<TransactionProcessingResult> result =
         multiTenancyPrivacyController.simulatePrivateTransaction(
             PRIVACY_GROUP_ID,
             ENCLAVE_PUBLIC_KEY1,

@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -27,15 +28,20 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor.Result.Status;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
@@ -65,9 +71,10 @@ public class TransactionSimulatorTest {
   @Mock private Blockchain blockchain;
   @Mock private WorldStateArchive worldStateArchive;
   @Mock private MutableWorldState worldState;
+  @Mock private WorldUpdater worldUpdater;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private TransactionProcessor transactionProcessor;
+  @Mock private MainnetTransactionProcessor transactionProcessor;
 
   @Before
   public void setUp() {
@@ -80,14 +87,14 @@ public class TransactionSimulatorTest {
     when(blockchain.getBlockHeader(eq(1L))).thenReturn(Optional.empty());
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter(), 1L);
+        transactionSimulator.process(legacyTransactionCallParameter(), 1L);
 
     assertThat(result.isPresent()).isFalse();
   }
 
   @Test
   public void shouldReturnSuccessfulResultWhenProcessingIsSuccessful() {
-    final CallParameter callParameter = callParameter();
+    final CallParameter callParameter = legacyTransactionCallParameter();
 
     mockBlockchainForBlockHeader(Hash.ZERO, 1L);
     mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
@@ -113,8 +120,74 @@ public class TransactionSimulatorTest {
   }
 
   @Test
+  public void shouldIncreaseBalanceAccountWhenExceedingBalanceAllowed() {
+    final CallParameter callParameter = legacyTransactionCallParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(callParameter.getGasLimit())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+
+    final MutableAccount mutableAccount =
+        mockWorldUpdaterForAccount(Hash.ZERO, callParameter.getFrom());
+
+    transactionSimulator.process(
+        callParameter,
+        ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(true).build(),
+        OperationTracer.NO_TRACING,
+        1L);
+
+    verify(mutableAccount).incrementBalance(Wei.of(Long.MAX_VALUE));
+  }
+
+  @Test
+  public void shouldNotIncreaseBalanceAccountWhenExceedingBalanceIsNotAllowed() {
+    final CallParameter callParameter = legacyTransactionCallParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(callParameter.getGasLimit())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+
+    final MutableAccount mutableAccount =
+        mockWorldUpdaterForAccount(Hash.ZERO, callParameter.getFrom());
+
+    transactionSimulator.process(
+        callParameter,
+        ImmutableTransactionValidationParams.builder().isAllowExceedingBalance(false).build(),
+        OperationTracer.NO_TRACING,
+        1L);
+
+    verifyNoInteractions(mutableAccount);
+  }
+
+  @Test
   public void shouldUseDefaultValuesWhenMissingOptionalFields() {
-    final CallParameter callParameter = callParameter();
+    final CallParameter callParameter = legacyTransactionCallParameter();
 
     mockBlockchainForBlockHeader(Hash.ZERO, 1L);
     mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
@@ -139,7 +212,7 @@ public class TransactionSimulatorTest {
 
   @Test
   public void shouldUseZeroNonceWhenAccountDoesNotExist() {
-    final CallParameter callParameter = callParameter();
+    final CallParameter callParameter = legacyTransactionCallParameter();
 
     mockBlockchainForBlockHeader(Hash.ZERO, 1L);
     mockWorldStateForAbsentAccount(Hash.ZERO);
@@ -164,7 +237,7 @@ public class TransactionSimulatorTest {
 
   @Test
   public void shouldReturnFailureResultWhenProcessingFails() {
-    final CallParameter callParameter = callParameter();
+    final CallParameter callParameter = legacyTransactionCallParameter();
 
     mockBlockchainForBlockHeader(Hash.ZERO, 1L);
     mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
@@ -194,14 +267,14 @@ public class TransactionSimulatorTest {
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.empty());
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter(), Hash.ZERO);
+        transactionSimulator.process(legacyTransactionCallParameter(), Hash.ZERO);
 
     assertThat(result.isPresent()).isFalse();
   }
 
   @Test
   public void shouldReturnSuccessfulResultWhenProcessingIsSuccessfulByHash() {
-    final CallParameter callParameter = callParameter();
+    final CallParameter callParameter = legacyTransactionCallParameter();
 
     mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
     mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
@@ -228,7 +301,7 @@ public class TransactionSimulatorTest {
 
   @Test
   public void shouldUseDefaultValuesWhenMissingOptionalFieldsByHash() {
-    final CallParameter callParameter = callParameter();
+    final CallParameter callParameter = legacyTransactionCallParameter();
 
     mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
     mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
@@ -253,7 +326,7 @@ public class TransactionSimulatorTest {
 
   @Test
   public void shouldUseZeroNonceWhenAccountDoesNotExistByHash() {
-    final CallParameter callParameter = callParameter();
+    final CallParameter callParameter = legacyTransactionCallParameter();
 
     mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
     mockWorldStateForAbsentAccount(Hash.ZERO);
@@ -278,7 +351,7 @@ public class TransactionSimulatorTest {
 
   @Test
   public void shouldReturnFailureResultWhenProcessingFailsByHash() {
-    final CallParameter callParameter = callParameter();
+    final CallParameter callParameter = legacyTransactionCallParameter();
 
     mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
     mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
@@ -303,6 +376,35 @@ public class TransactionSimulatorTest {
     verifyTransactionWasProcessed(expectedTransaction);
   }
 
+  @Test
+  public void shouldReturnSuccessfulResultWhenEip1559TransactionProcessingIsSuccessful() {
+    final CallParameter callParameter = eip1559TransactionCallParameter();
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(callParameter.getGasLimit())
+            .feeCap(callParameter.getFeeCap().orElseThrow())
+            .gasPremium(callParameter.getGasPremium().orElseThrow())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(callParameter.getPayload())
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+  }
+
   private void mockWorldStateForAccount(
       final Hash stateRoot, final Address address, final long nonce) {
     final Account account = mock(Account.class);
@@ -314,6 +416,16 @@ public class TransactionSimulatorTest {
   private void mockWorldStateForAbsentAccount(final Hash stateRoot) {
     when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
     when(worldState.get(any())).thenReturn(null);
+  }
+
+  private MutableAccount mockWorldUpdaterForAccount(final Hash stateRoot, final Address address) {
+    final EvmAccount account = mock(EvmAccount.class);
+    final MutableAccount mutableAccount = mock(MutableAccount.class);
+    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
+    when(worldState.updater()).thenReturn(worldUpdater);
+    when(worldUpdater.getOrCreate(eq(address))).thenReturn(account);
+    when(account.getMutable()).thenReturn(mutableAccount);
+    return mutableAccount;
   }
 
   private void mockBlockchainForBlockHeader(final Hash stateRoot, final long blockNumber) {
@@ -335,7 +447,7 @@ public class TransactionSimulatorTest {
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
 
-    final Result result = mock(Result.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
     switch (status) {
       case SUCCESSFUL:
         when(result.isSuccessful()).thenReturn(true);
@@ -357,12 +469,24 @@ public class TransactionSimulatorTest {
             any(), any(), any(), eq(expectedTransaction), any(), any(), anyBoolean(), any(), any());
   }
 
-  private CallParameter callParameter() {
+  private CallParameter legacyTransactionCallParameter() {
     return new CallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
         0,
         Wei.of(0),
+        Wei.of(0),
+        Bytes.EMPTY);
+  }
+
+  private CallParameter eip1559TransactionCallParameter() {
+    return new CallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        0,
+        Wei.of(0),
+        Optional.of(Wei.of(0)),
+        Optional.of(Wei.of(0)),
         Wei.of(0),
         Bytes.EMPTY);
   }

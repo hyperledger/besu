@@ -19,14 +19,24 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Wei;
+
+import java.util.function.Supplier;
 
 public class EthGasPrice implements JsonRpcMethod {
 
+  private final Supplier<BlockchainQueries> blockchain;
   private final MiningCoordinator miningCoordinator;
 
-  public EthGasPrice(final MiningCoordinator miningCoordinator) {
+  public EthGasPrice(
+      final BlockchainQueries blockchain, final MiningCoordinator miningCoordinator) {
+    this(() -> blockchain, miningCoordinator);
+  }
+
+  public EthGasPrice(
+      final Supplier<BlockchainQueries> blockchain, final MiningCoordinator miningCoordinator) {
+    this.blockchain = blockchain;
     this.miningCoordinator = miningCoordinator;
   }
 
@@ -37,12 +47,12 @@ public class EthGasPrice implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Wei gasPrice;
-    Object result = null;
-    gasPrice = miningCoordinator.getMinTransactionGasPrice();
-    if (gasPrice != null) {
-      result = Quantity.create(gasPrice);
-    }
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(),
+        blockchain
+            .get()
+            .gasPrice()
+            .map(Quantity::create)
+            .orElseGet(() -> Quantity.create(miningCoordinator.getMinTransactionGasPrice())));
   }
 }

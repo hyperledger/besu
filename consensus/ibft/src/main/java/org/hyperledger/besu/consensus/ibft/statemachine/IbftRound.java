@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
-import org.hyperledger.besu.consensus.ibft.RoundTimer;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -42,6 +42,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -238,7 +239,8 @@ public class IbftRound {
 
     final long blockNumber = blockToImport.getHeader().getNumber();
     final IbftExtraData extraData = IbftExtraData.decode(blockToImport.getHeader());
-    LOG.info(
+    LOG.log(
+        getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
         "Importing block to chain. round={}, hash={}",
         getRoundIdentifier(),
         blockToImport.getHash());

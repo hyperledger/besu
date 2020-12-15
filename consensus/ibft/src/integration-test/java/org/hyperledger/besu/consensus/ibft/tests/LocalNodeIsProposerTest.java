@@ -17,8 +17,10 @@ package org.hyperledger.besu.consensus.ibft.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.ibftevent.BlockTimerExpiry;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
+import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
+import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -108,6 +110,45 @@ public class LocalNodeIsProposerTest {
 
     peers.getNonProposing(2).injectCommit(roundId, expectedProposedBlock.getHash());
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
+    peers.verifyNoMessagesReceived();
+  }
+
+  @Test
+  public void nodeDoesNotSendRoundChangeIfRoundTimesOutAfterBlockImportButBeforeNewBlock() {
+    peers.verifyMessagesReceived(expectedTxProposal);
+    peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock.getHash());
+    assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
+    peers.verifyNoMessagesReceived();
+
+    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
+    assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
+    peers.verifyNoMessagesReceived();
+
+    context.getController().handleRoundExpiry(new RoundExpiry(roundId));
+    peers.verifyNoMessagesReceived();
+
+    context
+        .getController()
+        .handleNewBlockEvent(new NewChainHead(expectedProposedBlock.getHeader()));
+    peers.verifyNoMessagesReceived();
+  }
+
+  @Test
+  public void nodeDoesNotSendCommitMessageAfterBlockIsImportedAndBeforeNewBlockEvent() {
+    peers.verifyMessagesReceived(expectedTxProposal);
+    peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock.getHash());
+    assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
+    peers.verifyNoMessagesReceived();
+
+    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
+    assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
+    peers.verifyNoMessagesReceived();
+
+    peers.getNonProposing(0).injectPrepare(roundId, expectedProposedBlock.getHash());
+    peers.verifyNoMessagesReceived();
+    peers.getNonProposing(1).injectPrepare(roundId, expectedProposedBlock.getHash());
+    peers.verifyNoMessagesReceived();
+    peers.getNonProposing(2).injectPrepare(roundId, expectedProposedBlock.getHash());
     peers.verifyNoMessagesReceived();
   }
 }

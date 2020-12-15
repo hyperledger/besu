@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
+import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -31,38 +33,32 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class EeaSendRawTransaction implements JsonRpcMethod {
 
-  private final TransactionPool transactionPool;
-  private final PrivacyController privacyController;
+  private static final Logger LOG = getLogger();
+  final TransactionPool transactionPool;
+  final PrivacyController privacyController;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
-  /*
-   Temporarily adding this flag to this method to avoid being able to use offchain and onchain
-   privacy groups at the same time. Later on this check will be done in a better place.
-  */
-  private final boolean onchainPrivacyGroupsEnabled;
 
   public EeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider,
-      final boolean onchainPrivacyGroupsEnabled) {
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.transactionPool = transactionPool;
     this.privacyController = privacyController;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
-    this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
   }
 
   @Override
@@ -86,81 +82,56 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
         return new JsonRpcErrorResponse(id, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
 
-      Optional<PrivacyGroup> maybePrivacyGroup = null;
       final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
-      if (onchainPrivacyGroupsEnabled) {
-        if (!maybePrivacyGroupId.isPresent()) {
-          return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
-        }
-        maybePrivacyGroup =
-            privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(
-                maybePrivacyGroupId.get(), enclavePublicKey, privateTransaction);
-        if (maybePrivacyGroup.isEmpty()) {
-          return new JsonRpcErrorResponse(id, JsonRpcError.ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST);
-        }
-      } else { // !onchainPrivacyGroupEnabled
-        if (maybePrivacyGroupId.isPresent()) {
-          maybePrivacyGroup =
-              privacyController.retrieveOffChainPrivacyGroup(
-                  maybePrivacyGroupId.get().toBase64String(), enclavePublicKey);
-        } else {
-          maybePrivacyGroup = Optional.empty();
-        }
-      }
+
+      final Optional<PrivacyGroup> maybePrivacyGroup =
+          findPrivacyGroup(maybePrivacyGroupId, enclavePublicKey, privateTransaction);
 
       final ValidationResult<TransactionInvalidReason> validationResult =
           privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
+
       if (!validationResult.isValid()) {
         return new JsonRpcErrorResponse(
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
       }
 
-      final String privateTransactionLookupId =
-          privacyController.sendTransaction(
-              privateTransaction, enclavePublicKey, maybePrivacyGroup);
+      final Transaction privacyMarkerTransaction =
+          createPMT(privateTransaction, maybePrivacyGroup, maybePrivacyGroupId, enclavePublicKey);
 
-      if (onchainPrivacyGroupsEnabled) {
-        final Bytes privacyGroupId =
-            maybePrivacyGroupId.orElseThrow(
-                () ->
-                    new RuntimeException(
-                        JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST.getMessage()));
-        final Optional<String> addPayloadPrivateTransactionLookupId =
-            privacyController.buildAndSendAddPayload(
-                privateTransaction,
-                Bytes32.wrap(privacyGroupId),
-                enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
-        return createPMTAndAddToTxPool(
-            id,
-            privateTransaction,
-            buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId),
-            Address.ONCHAIN_PRIVACY);
-      } else { // legacy or pantheon transaction
-        return createPMTAndAddToTxPool(
-            id, privateTransaction, privateTransactionLookupId, Address.DEFAULT_PRIVACY);
-      }
+      return transactionPool
+          .addLocalTransaction(privacyMarkerTransaction)
+          .either(
+              () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
+              errorReason -> getJsonRpcErrorResponse(id, errorReason));
+
+    } catch (final JsonRpcErrorResponseException e) {
+      return new JsonRpcErrorResponse(id, e.getJsonRpcError());
     } catch (final IllegalArgumentException | RLPException e) {
+      LOG.error(e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
-      final String message = e.getMessage();
-      return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(message));
+      return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
   }
 
-  JsonRpcResponse createPMTAndAddToTxPool(
-      final Object id,
+  Optional<PrivacyGroup> findPrivacyGroup(
+      final Optional<Bytes> maybePrivacyGroupId,
+      final String enclavePublicKey,
+      final PrivateTransaction privateTransaction) {
+    final Optional<PrivacyGroup> maybePrivacyGroup =
+        findOffchainPrivacyGroup(privacyController, maybePrivacyGroupId, enclavePublicKey);
+    return maybePrivacyGroup;
+  }
+
+  Transaction createPMT(
       final PrivateTransaction privateTransaction,
-      final String payload,
-      final Address privacyPrecompileAddress) {
-    final Transaction privacyMarkerTransaction;
-    privacyMarkerTransaction =
-        privacyController.createPrivacyMarkerTransaction(
-            payload, privateTransaction, privacyPrecompileAddress);
-    return transactionPool
-        .addLocalTransaction(privacyMarkerTransaction)
-        .either(
-            () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
-            errorReason -> getJsonRpcErrorResponse(id, errorReason));
+      final Optional<PrivacyGroup> maybePrivacyGroup,
+      final Optional<Bytes> maybePrivacyGroupId,
+      final String enclavePublicKey) {
+    final String privateTransactionLookupId =
+        privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
+    return privacyController.createPrivacyMarkerTransaction(
+        privateTransactionLookupId, privateTransaction, Address.DEFAULT_PRIVACY);
   }
 
   JsonRpcErrorResponse getJsonRpcErrorResponse(
@@ -169,16 +140,5 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       return new JsonRpcErrorResponse(id, JsonRpcError.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);
     }
     return new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason));
-  }
-
-  private String buildCompoundLookupId(
-      final String privateTransactionLookupId,
-      final Optional<String> maybePrivateTransactionLookupId) {
-    return maybePrivateTransactionLookupId.isPresent()
-        ? Bytes.concatenate(
-                Bytes.fromBase64String(privateTransactionLookupId),
-                Bytes.fromBase64String(maybePrivateTransactionLookupId.get()))
-            .toBase64String()
-        : privateTransactionLookupId;
   }
 }

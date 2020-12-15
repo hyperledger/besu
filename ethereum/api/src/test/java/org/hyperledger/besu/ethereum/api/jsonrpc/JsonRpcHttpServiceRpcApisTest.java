@@ -29,11 +29,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -198,7 +200,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(P2PNetwork.class),
                     blockchainQueries,
                     mock(Synchronizer.class),
-                    MainnetProtocolSchedule.create(),
+                    ProtocolScheduleFixture.MAINNET,
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),
@@ -213,7 +215,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath()));
+                    folder.getRoot().toPath(),
+                    mock(EthPeers.class)));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -259,6 +262,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             .vertx(vertx)
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())
+            .storageProvider(new InMemoryStorageProvider())
             .build();
 
     p2pNetwork.start();
@@ -292,7 +296,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     p2pNetwork,
                     blockchainQueries,
                     mock(Synchronizer.class),
-                    MainnetProtocolSchedule.create(),
+                    ProtocolScheduleFixture.MAINNET,
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
                     mock(EthHashMiningCoordinator.class),
@@ -307,7 +311,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     metricsConfiguration,
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath()));
+                    folder.getRoot().toPath(),
+                    mock(EthPeers.class)));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,

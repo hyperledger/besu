@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -29,7 +30,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.EthHash;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -42,7 +43,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -64,15 +64,17 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void createMainnetBlock1() throws IOException {
+    final GenesisConfigOptions genesisConfigOptions = GenesisConfigFile.DEFAULT.getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        GenesisConfigFile.DEFAULT.getConfigOptions(),
+                        genesisConfigOptions,
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
-                        false)
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -82,7 +84,7 @@ public class EthHashBlockCreatorTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -92,7 +94,6 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
@@ -120,17 +121,19 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void createMainnetBlock1_fixedDifficulty1() {
+    final GenesisConfigOptions genesisConfigOptions =
+        GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+            .getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        GenesisConfigFile.fromConfig(
-                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
-                            .getConfigOptions(),
+                        genesisConfigOptions,
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
-                        false)
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -140,7 +143,7 @@ public class EthHashBlockCreatorTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -150,7 +153,6 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
@@ -173,17 +175,19 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void rewardBeneficiary_zeroReward_skipZeroRewardsFalse() {
+    final GenesisConfigOptions genesisConfigOptions =
+        GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+            .getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        GenesisConfigFile.fromConfig(
-                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
-                            .getConfigOptions(),
+                        genesisConfigOptions,
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
-                        false)
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -193,7 +197,7 @@ public class EthHashBlockCreatorTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -203,7 +207,6 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
@@ -242,17 +245,19 @@ public class EthHashBlockCreatorTest {
 
   @Test
   public void rewardBeneficiary_zeroReward_skipZeroRewardsTrue() {
+    final GenesisConfigOptions genesisConfigOptions =
+        GenesisConfigFile.fromConfig("{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
+            .getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        GenesisConfigFile.fromConfig(
-                                "{\"config\": {\"ethash\": {\"fixeddifficulty\":1}}}")
-                            .getConfigOptions(),
+                        genesisConfigOptions,
                         BigInteger.valueOf(42),
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
-                        false)
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -262,7 +267,7 @@ public class EthHashBlockCreatorTest {
             new EthHasher.Light(),
             false,
             Subscribers.none(),
-            EthHash::epoch);
+            new EpochCalculator.DefaultEpochCalculator());
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -272,7 +277,6 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =

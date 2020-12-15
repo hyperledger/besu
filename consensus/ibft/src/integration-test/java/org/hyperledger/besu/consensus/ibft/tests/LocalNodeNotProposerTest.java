@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -138,7 +138,7 @@ public class LocalNodeNotProposerTest {
 
   @Test
   public void
-      fullQuorumOfCommitMessagesReceivedThenProposalImportsBlockCommitSentAfterFinalPrepare() {
+      canImportABlockIfSufficientCommitsReceivedWithoutPreparesAndThatNoPacketsSentAfterImport() {
     peers.commit(roundId, blockToPropose.getHash());
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
@@ -148,7 +148,6 @@ public class LocalNodeNotProposerTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
 
     peers.getNonProposing(0).injectPrepare(roundId, blockToPropose.getHash());
-    peers.verifyMessagesReceived(expectedTxCommit);
-    assertThat(context.getCurrentChainHeight()).isEqualTo(1);
+    peers.verifyNoMessagesReceived();
   }
 }

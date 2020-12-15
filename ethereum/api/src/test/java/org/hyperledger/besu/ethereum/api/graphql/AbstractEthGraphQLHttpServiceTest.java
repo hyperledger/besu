@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -33,12 +35,11 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.SyncStatus;
@@ -94,7 +95,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
   @BeforeClass
   public static void setupConstants() throws Exception {
-    PROTOCOL_SCHEDULE = MainnetProtocolSchedule.create();
+    PROTOCOL_SCHEDULE = ProtocolScheduleFixture.MAINNET;
 
     final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
 
@@ -153,7 +154,12 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
         InMemoryStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
     context = new ProtocolContext(blockchain, stateArchive, null);
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
+        new BlockchainQueries(
+            context.getBlockchain(),
+            context.getWorldStateArchive(),
+            Optional.empty(),
+            Optional.empty(),
+            ImmutableApiConfiguration.builder().gasPriceMin(0).build());
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);

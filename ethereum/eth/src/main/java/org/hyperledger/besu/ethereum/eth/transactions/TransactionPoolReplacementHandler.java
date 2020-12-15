@@ -17,29 +17,23 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 
 public class TransactionPoolReplacementHandler {
   private final List<TransactionPoolReplacementRule> rules;
-  private final Optional<EIP1559> eip1559;
 
-  public TransactionPoolReplacementHandler(
-      final Optional<EIP1559> eip1559, final Percentage priceBump) {
-    this(asList(new TransactionReplacementByPriceRule(priceBump)), eip1559);
+  public TransactionPoolReplacementHandler(final Percentage priceBump) {
+    this(asList(new TransactionReplacementByPriceRule(priceBump)));
   }
 
   @VisibleForTesting
-  TransactionPoolReplacementHandler(
-      final List<TransactionPoolReplacementRule> rules, final Optional<EIP1559> eip1559) {
+  TransactionPoolReplacementHandler(final List<TransactionPoolReplacementRule> rules) {
     this.rules = rules;
-    this.eip1559 = eip1559;
   }
 
   public boolean shouldReplace(
@@ -47,15 +41,7 @@ public class TransactionPoolReplacementHandler {
       final TransactionInfo newTransactionInfo,
       final BlockHeader chainHeadHeader) {
     assert existingTransactionInfo != null;
-    if (newTransactionInfo == null) {
-      return false;
-    }
-    return eip1559
-            .map(
-                eip ->
-                    eip.isValidTransaction(
-                        chainHeadHeader.getNumber(), newTransactionInfo.getTransaction()))
-            .orElse(newTransactionInfo.getTransaction().isFrontierTransaction())
+    return newTransactionInfo != null
         && rules.stream()
             .anyMatch(
                 rule ->

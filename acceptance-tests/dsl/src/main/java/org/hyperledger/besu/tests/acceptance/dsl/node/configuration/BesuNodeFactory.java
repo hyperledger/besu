@@ -26,11 +26,14 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -283,6 +286,32 @@ public class BesuNodeFactory {
                 validators ->
                     genesis.createIbft2GenesisConfigFilterBootnode(validators, genesisFile))
             .bootnodeEligible(true)
+            .build());
+  }
+
+  public BesuNode createIbft2NodeWithLocalAccountPermissioning(
+      final String name,
+      final String genesisFile,
+      final List<String> accountAllowList,
+      final File configFile)
+      throws IOException {
+    final LocalPermissioningConfiguration config = LocalPermissioningConfiguration.createDefault();
+    config.setAccountAllowlist(accountAllowList);
+    config.setAccountPermissioningConfigFilePath(configFile.getAbsolutePath());
+    final PermissioningConfiguration permissioningConfiguration =
+        new PermissioningConfiguration(Optional.of(config), Optional.empty(), Optional.empty());
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2AdminEnabledConfig())
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .permissioningConfiguration(permissioningConfiguration)
+            .devMode(false)
+            .genesisConfigProvider(
+                validators ->
+                    genesis.createIbft2GenesisConfigFilterBootnode(validators, genesisFile))
+            .bootnodeEligible(false)
             .build());
   }
 

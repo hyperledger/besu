@@ -3,12 +3,12 @@ dependencies {
   api project(':crypto')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'org.apache.tuweni:net'
   implementation 'org.apache.logging.log4j:log4j-api'
 
   runtimeOnly('org.bouncycastle:bcpkix-jdk15on')
-
 
   // test dependencies.
   testImplementation project(':testutil')
@@ -20,8 +20,7 @@ dependencies {
   integrationTestImplementation project(':testutil')
   integrationTestImplementation 'org.bouncycastle:bcpkix-jdk15on'
   integrationTestImplementation 'org.awaitility:awaitility'
-
-
+  integrationTestImplementation 'org.mockito:mockito-core'
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'net.consensys:orion'

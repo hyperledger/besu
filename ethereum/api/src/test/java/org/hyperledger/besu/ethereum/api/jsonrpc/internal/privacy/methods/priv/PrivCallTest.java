@@ -34,11 +34,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.util.Optional;
@@ -74,7 +77,17 @@ public class PrivCallTest {
 
   @Test
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenMissingToField() {
-    final CallParameter callParameter = new JsonCallParameter("0x0", null, "0x0", "0x0", "0x0", "");
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            Address.fromHexString("0x0"),
+            null,
+            Gas.ZERO,
+            Wei.ZERO,
+            null,
+            null,
+            Wei.ZERO,
+            Bytes.EMPTY,
+            null);
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
@@ -98,7 +111,9 @@ public class PrivCallTest {
 
   @Test
   public void shouldAcceptRequestWhenMissingOptionalFields() {
-    final CallParameter callParameter = new JsonCallParameter(null, "0x0", null, null, null, null);
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            null, Address.fromHexString("0x0"), null, null, null, null, null, null, null);
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, Bytes.of().toString());
@@ -180,8 +195,17 @@ public class PrivCallTest {
         .isInstanceOf(MultiTenancyValidationException.class);
   }
 
-  private CallParameter callParameter() {
-    return new JsonCallParameter("0x0", "0x0", "0x0", "0x0", "0x0", "");
+  private JsonCallParameter callParameter() {
+    return new JsonCallParameter(
+        Address.fromHexString("0x0"),
+        Address.fromHexString("0x0"),
+        Gas.ZERO,
+        Wei.ZERO,
+        null,
+        null,
+        Wei.ZERO,
+        Bytes.EMPTY,
+        null);
   }
 
   private JsonRpcRequestContext ethCallRequest(
@@ -194,8 +218,7 @@ public class PrivCallTest {
   }
 
   private void mockTransactionProcessorSuccessResult(final Bytes output) {
-    final PrivateTransactionProcessor.Result result =
-        mock(PrivateTransactionProcessor.Result.class);
+    final TransactionProcessingResult result = mock(TransactionProcessingResult.class);
 
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);

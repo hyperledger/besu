@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -49,7 +50,7 @@ public class FilterParameter {
           final List<Address> address,
       @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
           final List<List<LogTopic>> topics,
-      @JsonProperty("blockhash") final Hash blockHash) {
+      @JsonProperty("blockHash") @JsonAlias({"blockhash"}) final Hash blockHash) {
     this.isValid = blockHash == null || (fromBlock == null && toBlock == null);
     this.fromBlock = fromBlock != null ? fromBlock : BlockParameter.LATEST;
     this.toBlock = toBlock != null ? toBlock : BlockParameter.LATEST;

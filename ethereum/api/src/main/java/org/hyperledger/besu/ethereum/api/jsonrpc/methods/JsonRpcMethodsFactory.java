@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
@@ -69,7 +70,8 @@ public class JsonRpcMethodsFactory {
       final MetricsConfiguration metricsConfiguration,
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
-      final Path dataDir) {
+      final Path dataDir,
+      final EthPeers ethPeers) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -85,7 +87,8 @@ public class JsonRpcMethodsFactory {
                   p2pNetwork,
                   blockchainQueries,
                   namedPlugins,
-                  natService),
+                  natService,
+                  ethPeers),
               new DebugJsonRpcMethods(
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(

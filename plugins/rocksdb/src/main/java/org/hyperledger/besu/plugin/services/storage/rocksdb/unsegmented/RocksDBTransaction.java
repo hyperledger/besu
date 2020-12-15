@@ -19,11 +19,15 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Transaction;
 import org.rocksdb.WriteOptions;
 
 public class RocksDBTransaction implements KeyValueStorageTransaction {
+  private static final Logger logger = LogManager.getLogger();
+  private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 
   private final RocksDBMetrics metrics;
   private final Transaction innerTx;
@@ -41,6 +45,10 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
       innerTx.put(key, value);
     } catch (final RocksDBException e) {
+      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+        logger.error(e.getMessage());
+        System.exit(0);
+      }
       throw new StorageException(e);
     }
   }
@@ -50,6 +58,10 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
       innerTx.delete(key);
     } catch (final RocksDBException e) {
+      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+        logger.error(e.getMessage());
+        System.exit(0);
+      }
       throw new StorageException(e);
     }
   }
@@ -59,6 +71,10 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
     try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
       innerTx.commit();
     } catch (final RocksDBException e) {
+      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+        logger.error(e.getMessage());
+        System.exit(0);
+      }
       throw new StorageException(e);
     } finally {
       close();
@@ -71,6 +87,10 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
       innerTx.rollback();
       metrics.getRollbackCount().inc();
     } catch (final RocksDBException e) {
+      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+        logger.error(e.getMessage());
+        System.exit(0);
+      }
       throw new StorageException(e);
     } finally {
       close();

@@ -53,12 +53,12 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getAccountStateTrieNode(final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
   @Override
-  public Optional<Bytes> getAccountStorageTrieNode(final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStorageTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
@@ -71,7 +71,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getNodeData(final Bytes32 hash) {
+  public Optional<Bytes> getNodeData(final Bytes location, final Bytes32 hash) {
     if (hash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else if (hash.equals(Hash.EMPTY)) {
@@ -83,7 +83,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash) {
-    return getAccountStateTrieNode(rootHash).isPresent();
+    return getAccountStateTrieNode(Bytes.EMPTY, rootHash).isPresent();
   }
 
   @Override
@@ -156,7 +156,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public Updater putAccountStateTrieNode(final Bytes32 nodeHash, final Bytes node) {
+    public Updater putAccountStateTrieNode(
+        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;
@@ -167,7 +168,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public Updater putAccountStorageTrieNode(final Bytes32 nodeHash, final Bytes node) {
+    public Updater putAccountStorageTrieNode(
+        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;

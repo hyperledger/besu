@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
-
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
@@ -33,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
@@ -61,35 +59,24 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
 
-  PrometheusMetricsSystem(
+  public PrometheusMetricsSystem(
       final Set<MetricCategory> enabledCategories, final boolean timersEnabled) {
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
   }
 
-  public static ObservableMetricsSystem init(final MetricsConfiguration metricsConfiguration) {
-    if (!metricsConfiguration.isEnabled() && !metricsConfiguration.isPushEnabled()) {
-      return new NoOpMetricsSystem();
-    }
-    final PrometheusMetricsSystem metricsSystem =
-        new PrometheusMetricsSystem(
-            metricsConfiguration.getMetricCategories(), metricsConfiguration.isTimersEnabled());
-    if (metricsSystem.isCategoryEnabled(StandardMetricCategory.PROCESS)) {
-      metricsSystem.collectors.put(
-          StandardMetricCategory.PROCESS,
-          singleton(new StandardExports().register(metricsSystem.registry)));
-    }
-    if (metricsSystem.isCategoryEnabled(StandardMetricCategory.JVM)) {
-      metricsSystem.collectors.put(
-          StandardMetricCategory.JVM,
-          asList(
-              new MemoryPoolsExports().register(metricsSystem.registry),
-              new BufferPoolsExports().register(metricsSystem.registry),
-              new GarbageCollectorExports().register(metricsSystem.registry),
-              new ThreadExports().register(metricsSystem.registry),
-              new ClassLoadingExports().register(metricsSystem.registry)));
-    }
-    return metricsSystem;
+  public void init() {
+    addCollector(StandardMetricCategory.PROCESS, StandardExports::new);
+    addCollector(StandardMetricCategory.JVM, MemoryPoolsExports::new);
+    addCollector(StandardMetricCategory.JVM, BufferPoolsExports::new);
+    addCollector(StandardMetricCategory.JVM, GarbageCollectorExports::new);
+    addCollector(StandardMetricCategory.JVM, ThreadExports::new);
+    addCollector(StandardMetricCategory.JVM, ClassLoadingExports::new);
+  }
+
+  @Override
+  public Set<MetricCategory> getEnabledCategories() {
+    return enabledCategories;
   }
 
   @Override
@@ -154,14 +141,10 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     }
   }
 
-  private boolean isCategoryEnabled(final MetricCategory category) {
-    return enabledCategories.stream()
-        .anyMatch(metricCategory -> metricCategory.getName().equals(category.getName()));
-  }
-
-  public void addCollector(final MetricCategory category, final Collector metric) {
+  public void addCollector(
+      final MetricCategory category, final Supplier<Collector> metricSupplier) {
     if (isCategoryEnabled(category)) {
-      addCollectorUnchecked(category, metric);
+      addCollectorUnchecked(category, metricSupplier.get());
     }
   }
 

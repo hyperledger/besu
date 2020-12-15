@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
@@ -136,7 +137,7 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            TransactionPoolConfiguration.builder().build(),
+            TransactionPoolConfiguration.DEFAULT,
             true,
             Optional.empty());
 
@@ -166,6 +167,7 @@ public class TestNode implements Closeable {
                         .config(networkingConfiguration)
                         .metricsSystem(new NoOpMetricsSystem())
                         .supportedCapabilities(capabilities)
+                        .storageProvider(new InMemoryStorageProvider())
                         .build())
             .metricsSystem(new NoOpMetricsSystem())
             .build();

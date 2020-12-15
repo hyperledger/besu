@@ -164,7 +164,7 @@ public final class RunnerTest {
             .metricsSystem(noOpMetricsSystem)
             .privacyParameters(PrivacyParameters.DEFAULT)
             .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build()) {
@@ -184,7 +184,7 @@ public final class RunnerTest {
             .metricsSystem(noOpMetricsSystem)
             .privacyParameters(PrivacyParameters.DEFAULT)
             .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
@@ -202,7 +202,8 @@ public final class RunnerTest {
             .p2pListenPort(0)
             .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
-            .staticNodes(emptySet());
+            .staticNodes(emptySet())
+            .storageProvider(new InMemoryStorageProvider());
 
     Runner runnerBehind = null;
     final Runner runnerAhead =
@@ -248,13 +249,16 @@ public final class RunnerTest {
               .metricsSystem(noOpMetricsSystem)
               .privacyParameters(PrivacyParameters.DEFAULT)
               .clock(TestClock.fixed())
-              .transactionPoolConfiguration(TransactionPoolConfiguration.builder().build())
+              .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
               .gasLimitCalculator(GasLimitCalculator.constant())
               .build();
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              EthNetworkConfig.jsonConfig(DEV), DEV_NETWORK_ID, Collections.singletonList(enode));
+              EthNetworkConfig.jsonConfig(DEV),
+              DEV_NETWORK_ID,
+              Collections.singletonList(enode),
+              null);
       runnerBehind =
           runnerBuilder
               .besuController(controllerBehind)

@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.bouncycastle.util.encoders.Base64;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -86,10 +87,23 @@ public class PrivDebugGetStateRootTest {
   }
 
   @Test
+  public void shouldReturnErrorIfInvalidGroupId() {
+    when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
+        .thenCallRealMethod();
+    when(privacyController.findOffChainPrivacyGroupByGroupId(anyString(), anyString()))
+        .thenReturn(Optional.empty());
+    final JsonRpcResponse response = method.response(request("not_base64", "latest"));
+    assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
+    assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
+        .contains(FIND_PRIVACY_GROUP_ERROR.getMessage());
+  }
+
+  @Test
   public void shouldReturnErrorIfPrivacyGroupDoesNotExist() {
-    when(privacyController.findPrivacyGroup(anyList(), anyString()))
-        .thenReturn(new PrivacyGroup[] {});
-    final JsonRpcResponse response = method.response(request("invalid_group", "latest"));
+    when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
+        .thenReturn(Optional.empty());
+    final String invalidGroupId = Base64.toBase64String("invalid_group_id".getBytes(UTF_8));
+    final JsonRpcResponse response = method.response(request(invalidGroupId, "latest"));
     assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
         .contains(FIND_PRIVACY_GROUP_ERROR.getMessage());
@@ -97,31 +111,30 @@ public class PrivDebugGetStateRootTest {
 
   @Test
   public void shouldReturnErrorIfUnableToFindStateRoot() {
-    when(privacyController.findPrivacyGroup(anyList(), anyString()))
-        .thenReturn(new PrivacyGroup[] {PRIVACY_GROUP});
+    when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
+        .thenReturn(Optional.of(PRIVACY_GROUP));
     when(privacyController.getStateRootByBlockNumber(anyString(), anyString(), anyLong()))
         .thenReturn(Optional.empty());
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) method.response(request(ENCLAVE_PUBLIC_KEY, "latest"));
 
-    assertThat(response.getError().getMessage()).contains(INVALID_PARAMS.getMessage());
+    assertThat(response.getError().getMessage()).contains(INTERNAL_ERROR.getMessage());
   }
 
   @Test
-  public void shouldReturnSuccessWhenValidPrivacyGroupAndStateRoot() {
+  public void shouldReturnSuccessWhenOffChainGroupExists() {
     final Hash hash = Hash.EMPTY_LIST_HASH;
-
-    when(privacyController.findPrivacyGroup(anyList(), anyString()))
-        .thenReturn(new PrivacyGroup[] {PRIVACY_GROUP});
+    when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
+        .thenReturn(Optional.of(PRIVACY_GROUP));
     when(privacyController.getStateRootByBlockNumber(anyString(), anyString(), anyLong()))
         .thenReturn(Optional.of(hash));
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) method.response(request(ENCLAVE_PUBLIC_KEY, "latest"));
-    final Hash result = (Hash) response.getResult();
+    final String result = (String) response.getResult();
 
-    assertThat(result).isEqualTo(hash);
+    assertThat(result).isEqualTo(hash.toString());
   }
 
   private JsonRpcRequestContext request(final String privacyGroupId, final String params) {

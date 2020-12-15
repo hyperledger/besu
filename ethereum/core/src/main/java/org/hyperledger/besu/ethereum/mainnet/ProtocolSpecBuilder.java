@@ -47,7 +47,7 @@ public class ProtocolSpecBuilder {
   private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator difficultyCalculator;
   private Function<GasCalculator, EVM> evmBuilder;
-  private Function<GasCalculator, TransactionValidator> transactionValidatorBuilder;
+  private Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder;
   private BlockHeaderValidator.Builder blockHeaderValidatorBuilder;
   private BlockHeaderValidator.Builder ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
@@ -109,7 +109,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder transactionValidatorBuilder(
-      final Function<GasCalculator, TransactionValidator> transactionValidatorBuilder) {
+      final Function<GasCalculator, MainnetTransactionValidator> transactionValidatorBuilder) {
     this.transactionValidatorBuilder = transactionValidatorBuilder;
     return this;
   }
@@ -268,7 +268,7 @@ public class ProtocolSpecBuilder {
     final EVM evm = evmBuilder.apply(gasCalculator);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
-    final TransactionValidator transactionValidator =
+    final MainnetTransactionValidator transactionValidator =
         transactionValidatorBuilder.apply(gasCalculator);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
@@ -276,7 +276,7 @@ public class ProtocolSpecBuilder {
         precompileContractRegistryBuilder.apply(precompiledContractConfiguration);
     final AbstractMessageProcessor messageCallProcessor =
         messageCallProcessorBuilder.apply(evm, precompileContractRegistry);
-    final TransactionProcessor transactionProcessor =
+    final MainnetTransactionProcessor transactionProcessor =
         transactionProcessorBuilder.apply(
             gasCalculator, transactionValidator, contractCreationProcessor, messageCallProcessor);
 
@@ -362,9 +362,9 @@ public class ProtocolSpecBuilder {
   }
 
   public interface TransactionProcessorBuilder {
-    TransactionProcessor apply(
+    MainnetTransactionProcessor apply(
         GasCalculator gasCalculator,
-        TransactionValidator transactionValidator,
+        MainnetTransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor);
   }
@@ -372,7 +372,7 @@ public class ProtocolSpecBuilder {
   public interface PrivateTransactionProcessorBuilder {
     PrivateTransactionProcessor apply(
         GasCalculator gasCalculator,
-        TransactionValidator transactionValidator,
+        MainnetTransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor,
         PrivateTransactionValidator privateTransactionValidator);
@@ -384,7 +384,7 @@ public class ProtocolSpecBuilder {
 
   public interface BlockProcessorBuilder {
     BlockProcessor apply(
-        TransactionProcessor transactionProcessor,
+        MainnetTransactionProcessor transactionProcessor,
         AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,

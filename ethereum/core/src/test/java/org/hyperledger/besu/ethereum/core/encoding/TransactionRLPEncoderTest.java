@@ -48,8 +48,7 @@ public class TransactionRLPEncoderTest {
   @Test
   public void encodeFrontierTxNominalCase() {
     final Transaction transaction =
-        TransactionRLPDecoder.frontierDecoder()
-            .decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        TransactionRLPDecoder.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     TransactionRLPEncoder.encode(transaction, output);
     assertThat(FRONTIER_TX_RLP).isEqualTo(output.encoded().toHexString());
@@ -59,8 +58,7 @@ public class TransactionRLPEncoderTest {
   public void encodeEIP1559TxNominalCase() {
     ExperimentalEIPs.eip1559Enabled = true;
     final Transaction transaction =
-        TransactionRLPDecoder.eip1559Decoder()
-            .decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        TransactionRLPDecoder.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     TransactionRLPEncoder.encode(transaction, output);
     assertThat(
@@ -75,11 +73,10 @@ public class TransactionRLPEncoderTest {
     assertThatThrownBy(
             () ->
                 TransactionRLPEncoder.encode(
-                    TransactionRLPDecoder.eip1559Decoder()
-                        .decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))),
+                    TransactionRLPDecoder.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP))),
                     new BytesValueRLPOutput()))
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Invalid transaction format");
+        .hasMessageContaining("EIP-1559 feature flag");
     ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 }

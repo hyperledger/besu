@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -68,25 +69,25 @@ public class PrivateTransactionSimulator {
     this.privateStateRootResolver = privacyParameters.getPrivateStateRootResolver();
   }
 
-  public Optional<PrivateTransactionProcessor.Result> process(
+  public Optional<TransactionProcessingResult> process(
       final String privacyGroupId, final CallParameter callParams) {
     final BlockHeader header = blockchain.getChainHeadHeader();
     return process(privacyGroupId, callParams, header);
   }
 
-  public Optional<PrivateTransactionProcessor.Result> process(
+  public Optional<TransactionProcessingResult> process(
       final String privacyGroupId, final CallParameter callParams, final Hash blockHeaderHash) {
     final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
     return process(privacyGroupId, callParams, header);
   }
 
-  public Optional<PrivateTransactionProcessor.Result> process(
+  public Optional<TransactionProcessingResult> process(
       final String privacyGroupId, final CallParameter callParams, final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
     return process(privacyGroupId, callParams, header);
   }
 
-  private Optional<PrivateTransactionProcessor.Result> process(
+  private Optional<TransactionProcessingResult> process(
       final String privacyGroupIdString, final CallParameter callParams, final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
@@ -114,7 +115,7 @@ public class PrivateTransactionSimulator {
     final PrivateTransactionProcessor privateTransactionProcessor =
         protocolSpec.getPrivateTransactionProcessor();
 
-    final PrivateTransactionProcessor.Result result =
+    final TransactionProcessingResult result =
         privateTransactionProcessor.processTransaction(
             blockchain,
             publicWorldState.updater(),

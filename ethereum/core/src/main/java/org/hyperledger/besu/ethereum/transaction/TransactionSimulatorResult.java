@@ -15,9 +15,8 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.TransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
 import java.util.Objects;
 
@@ -27,11 +26,11 @@ import org.apache.tuweni.bytes.Bytes;
 public class TransactionSimulatorResult {
 
   private final Transaction transaction;
-  private final TransactionProcessor.Result result;
+  private final TransactionProcessingResult result;
 
   @VisibleForTesting
   public TransactionSimulatorResult(
-      final Transaction transaction, final TransactionProcessor.Result result) {
+      final Transaction transaction, final TransactionProcessingResult result) {
     this.transaction = transaction;
     this.result = result;
   }
@@ -48,11 +47,11 @@ public class TransactionSimulatorResult {
     return result.getOutput();
   }
 
-  public ValidationResult<TransactionValidator.TransactionInvalidReason> getValidationResult() {
+  public ValidationResult<TransactionInvalidReason> getValidationResult() {
     return result.getValidationResult();
   }
 
-  public TransactionProcessor.Result getResult() {
+  public TransactionProcessingResult getResult() {
     return result;
   }
 

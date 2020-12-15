@@ -87,12 +87,19 @@ public class Cluster implements AutoCloseable {
 
     nodes
         .parallelStream()
-        .filter(node -> bootnode.map(boot -> boot != node).orElse(true))
+        .filter(
+            node -> {
+              LOG.info("starting non-bootnode {}", node.getName());
+              return bootnode.map(boot -> boot != node).orElse(true);
+            })
         .forEach(this::startNode);
 
     if (clusterConfiguration.isAwaitPeerDiscovery()) {
       for (final RunnableNode node : nodes) {
-        LOG.info("Awaiting peer discovery for node {}", node.getName());
+        LOG.info(
+            "Awaiting peer discovery for node {}, expecting {} peers",
+            node.getName(),
+            nodes.size() - 1);
         node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));
       }
     }
@@ -187,5 +194,22 @@ public class Cluster implements AutoCloseable {
     nodes.values().stream()
         .filter(node -> besuNodeRunner.isActive(node.getName()))
         .forEach(condition::verify);
+  }
+
+  /**
+   * Starts a capture of System.out and System.err. Once getConsole is called the capture will end.
+   */
+  public void startConsoleCapture() {
+    besuNodeRunner.startConsoleCapture();
+  }
+
+  /**
+   * If no capture was started an empty string is returned. After the call the original System.err
+   * and out are restored.
+   *
+   * @return The console output since startConsoleCapture() was called.
+   */
+  public String getConsoleContents() {
+    return besuNodeRunner.getConsoleContents();
   }
 }

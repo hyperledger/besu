@@ -37,11 +37,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
-import org.hyperledger.besu.ethereum.mainnet.EthHash;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -62,7 +63,6 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
@@ -76,7 +76,7 @@ public class RetestethContext {
       (final byte[] buffer,
           final long nonce,
           final long number,
-          Function<Long, Long> epochCalc,
+          EpochCalculator epochCalc,
           final byte[] headerHash) -> {};
 
   private final ReentrantLock contextLock = new ReentrantLock();
@@ -164,9 +164,17 @@ public class RetestethContext {
     ethHashSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
             ? new EthHashSolver(
-                nonceGenerator, NO_WORK_HASHER, false, Subscribers.none(), EthHash::epoch)
+                nonceGenerator,
+                NO_WORK_HASHER,
+                false,
+                Subscribers.none(),
+                new EpochCalculator.DefaultEpochCalculator())
             : new EthHashSolver(
-                nonceGenerator, new EthHasher.Light(), false, Subscribers.none(), EthHash::epoch);
+                nonceGenerator,
+                new EthHasher.Light(),
+                false,
+                Subscribers.none(),
+                new EpochCalculator.DefaultEpochCalculator());
 
     blockReplay =
         new BlockReplay(
@@ -183,7 +191,7 @@ public class RetestethContext {
     final EthContext ethContext = new EthContext(ethPeers, new EthMessages(), ethScheduler);
 
     final TransactionPoolConfiguration transactionPoolConfiguration =
-        TransactionPoolConfiguration.builder().build();
+        ImmutableTransactionPoolConfiguration.builder().build();
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(

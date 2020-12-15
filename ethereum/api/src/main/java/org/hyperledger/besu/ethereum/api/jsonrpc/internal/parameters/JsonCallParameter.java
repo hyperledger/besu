@@ -14,29 +14,51 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import static java.lang.Boolean.FALSE;
+
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.deserializer.GasDeserializer;
+import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 
 public class JsonCallParameter extends CallParameter {
+
+  private final boolean strict;
+
   @JsonCreator
   public JsonCallParameter(
-      @JsonProperty("from") final String from,
-      @JsonProperty("to") final String to,
-      @JsonProperty("gas") final String gasLimit,
-      @JsonProperty("gasPrice") final String gasPrice,
-      @JsonProperty("value") final String value,
-      @JsonProperty("data") final String payload) {
+      @JsonProperty("from") final Address from,
+      @JsonProperty("to") final Address to,
+      @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
+      @JsonProperty("gasPrice") final Wei gasPrice,
+      @JsonProperty("gasPremium") final Wei gasPremium,
+      @JsonProperty("feeCap") final Wei feeCap,
+      @JsonProperty("value") final Wei value,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
+          final Bytes payload,
+      @JsonProperty("strict") final Boolean strict) {
     super(
-        from != null ? Address.fromHexString(from) : null,
-        to != null ? Address.fromHexString(to) : null,
-        gasLimit != null ? Long.decode(gasLimit) : -1,
-        gasPrice != null ? Wei.fromHexString(gasPrice) : null,
-        value != null ? Wei.fromHexString(value) : null,
-        payload != null ? Bytes.fromHexString(payload) : null);
+        from,
+        to,
+        gasLimit != null ? gasLimit.toLong() : -1,
+        gasPrice,
+        Optional.ofNullable(gasPremium),
+        Optional.ofNullable(feeCap),
+        value,
+        payload);
+    this.strict = Optional.ofNullable(strict).orElse(FALSE);
+  }
+
+  public boolean isStrict() {
+    return strict;
   }
 }

@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.priv.PrivConditions;
@@ -26,6 +29,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PrivacyTran
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
+
+import java.math.BigInteger;
 
 import io.vertx.core.Vertx;
 import org.junit.After;
@@ -67,6 +72,14 @@ public class PrivacyAcceptanceTestBase {
                 .PrivacyTransactions());
     contractTransactions = new ContractTransactions();
     eth = new EthConditions(ethTransactions);
+  }
+
+  protected void waitForBlockHeight(final PrivacyNode node, final long blockchainHeight) {
+    WaitUtils.waitFor(
+        120,
+        () ->
+            assertThat(node.execute(ethTransactions.blockNumber()))
+                .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
   }
 
   @After
