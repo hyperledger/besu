@@ -12,9 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
-
-import org.hyperledger.besu.consensus.common.bft.IbftHelpers;
+package org.hyperledger.besu.consensus.common.bft;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;

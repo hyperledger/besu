@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.IbftContextBuilder.setupContextWithValidators;
 
 import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.IbftExtraDataFixture;

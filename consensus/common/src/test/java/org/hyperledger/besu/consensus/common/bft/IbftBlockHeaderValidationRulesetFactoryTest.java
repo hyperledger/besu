@@ -12,17 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.IbftContextBuilder.setupContextWithValidators;
 
-import org.hyperledger.besu.consensus.common.bft.IbftBlockHeaderValidationRulesetFactory;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataFixture;
-import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
