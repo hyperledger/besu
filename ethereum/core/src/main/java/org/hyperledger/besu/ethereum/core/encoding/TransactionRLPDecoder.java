@@ -184,14 +184,13 @@ public class TransactionRLPDecoder {
             .accessList(
                 new AccessList(
                     rlpInput.readList(
-                        // todo rename these something more descriptive
-                        rlpInput1 -> {
-                          rlpInput1.enterList();
+                        accessListEntryRLPInput -> {
+                          accessListEntryRLPInput.enterList();
                           final Map.Entry<Address, List<Bytes32>> accessListEntry =
                               new AbstractMap.SimpleEntry<>(
-                                  Address.wrap(rlpInput1.readBytes()),
-                                  rlpInput1.readList(RLPInput::readBytes32));
-                          rlpInput1.leaveList();
+                                  Address.wrap(accessListEntryRLPInput.readBytes()),
+                                  accessListEntryRLPInput.readList(RLPInput::readBytes32));
+                          accessListEntryRLPInput.leaveList();
                           return accessListEntry;
                         })));
     final byte recId = rlpInput.readByte();

@@ -86,8 +86,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final Address address = accessListEntry.getKey();
 
       accessedAddresses.add(address);
-      for (final Bytes32 storageSlot : accessListEntry.getValue()) {
-        accessedStorage.put(address, storageSlot);
+      for (final Bytes32 storageKeyBytes : accessListEntry.getValue()) {
+        accessedStorage.put(address, storageKeyBytes);
         ++accessedStorageCount;
       }
     }

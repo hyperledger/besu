@@ -331,12 +331,11 @@ public class MessageFrame {
     // first warm up all the addresses because there could be addresses without storage in the
     // access list
     accessListWarmAddresses.parallelStream().forEach(worldState::get);
-    // then warm up all the storage slots
+    // then warm up all the storage
     // this takes advantage of the already warmed up accounts
     accessListWarmStorage.forEach(
-        // todo rename storage slot everywhere
-        (address, storageSlot) ->
-            worldState.get(address).getStorageValue(UInt256.fromBytes(storageSlot)));
+        (address, storageKeyBytes) ->
+            worldState.get(address).getStorageValue(UInt256.fromBytes(storageKeyBytes)));
   }
 
   /**

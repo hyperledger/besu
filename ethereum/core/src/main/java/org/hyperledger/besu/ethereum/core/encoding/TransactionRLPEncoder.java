@@ -139,13 +139,14 @@ public class TransactionRLPEncoder {
     // ]
     rlpOutput.writeList(
         accessList,
-        (accessListEntry, rlpOutput1) -> {
-          rlpOutput1.startList();
+        (accessListEntry, accessListEntryRLPOutput) -> {
+          accessListEntryRLPOutput.startList();
           rlpOutput.writeBytes(accessListEntry.getKey());
           rlpOutput.writeList(
               accessListEntry.getValue(),
-              (storageSlotBytes, rlpOutput2) -> rlpOutput2.writeBytes(storageSlotBytes));
-          rlpOutput1.endList();
+              (storageKeyBytes, storageKeyBytesRLPOutput) ->
+                  storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
+          accessListEntryRLPOutput.endList();
         });
   }
 
