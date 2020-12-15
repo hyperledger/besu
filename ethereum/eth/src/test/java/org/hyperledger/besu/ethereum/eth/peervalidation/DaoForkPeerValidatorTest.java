@@ -19,11 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
@@ -37,7 +37,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new DaoForkPeerValidator(
-        MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), blockNumber, buffer);
+        ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), blockNumber, buffer);
   }
 
   @Test
@@ -53,7 +53,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
+            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
@@ -81,7 +81,7 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
 
     final PeerValidator validator =
         new DaoForkPeerValidator(
-            MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), daoBlockNumber, 0);
+            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), daoBlockNumber, 0);
 
     final RespondingEthPeer peer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);

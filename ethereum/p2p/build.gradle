@@ -51,6 +51,7 @@ dependencies {
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
+  implementation 'tech.pegasys.discovery:discovery'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 

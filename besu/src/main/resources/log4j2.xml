@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO">
+<Configuration status="WARN">
     <Properties>
         <Property name="root.log.level">${env:LOG_LEVEL:-INFO}</Property>
         <Property name="root.log.logger">${env:LOGGER:-Console}</Property>
@@ -38,6 +38,7 @@
         </Routing>
     </Appenders>
     <Loggers>
+        <Logger name="org.apache.logging.log4j.status.StatusLogger" level="OFF"/>
         <Root level="${sys:root.log.level}">
             <AppenderRef ref="Router" />
         </Root>

@@ -79,7 +79,6 @@ public class BlockTransactionSelectorTest {
           TestClock.fixed(),
           metricsSystem,
           blockchain::getChainHeadHeader,
-          Optional.empty(),
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
   private final MainnetTransactionProcessor transactionProcessor =
@@ -562,6 +561,7 @@ public class BlockTransactionSelectorTest {
         .value(Wei.of(transactionNumber))
         .sender(Address.ID)
         .chainId(BigInteger.ONE)
+        .guessType()
         .signAndBuild(keyPair);
   }
 

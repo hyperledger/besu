@@ -32,7 +32,7 @@ public class IbftVanityDataValidationRule implements AttachedBlockHeaderValidati
     final IbftExtraData extraData = IbftExtraData.decode(header);
 
     if (extraData.getVanityData().size() != IbftExtraData.EXTRA_VANITY_LENGTH) {
-      LOG.trace("Ibft Extra Data does not contain 32 bytes of vanity data.");
+      LOG.info("Invalid block header: Ibft Extra Data does not contain 32 bytes of vanity data.");
       return false;
     }
     return true;
