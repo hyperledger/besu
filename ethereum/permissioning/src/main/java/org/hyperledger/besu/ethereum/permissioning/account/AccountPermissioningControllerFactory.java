@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
@@ -144,6 +145,7 @@ public class AccountPermissioningControllerFactory {
 
       final Transaction transaction =
           Transaction.builder()
+              .type(TransactionType.FRONTIER)
               .sender(Address.ZERO)
               .gasLimit(0)
               .gasPrice(Wei.ZERO)

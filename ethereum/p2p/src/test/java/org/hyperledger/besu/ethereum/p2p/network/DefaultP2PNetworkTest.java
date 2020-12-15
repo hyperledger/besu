@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -321,6 +322,15 @@ public final class DefaultP2PNetworkTest {
     assertThat(capturedPeers.get(2)).isEqualTo(discoPeers.get(2));
   }
 
+  @Test
+  public void cannotAddNodeWithSameEnodeID() {
+    final DefaultP2PNetwork network = network();
+    network.start();
+    assertThat(network.getLocalEnode()).isPresent();
+    final Peer peer = PeerTestHelper.createPeer(network.getLocalEnode().get().getNodeId());
+    assertThat(network.addMaintainConnectionPeer(peer)).isFalse();
+  }
+
   private DefaultP2PNetwork network() {
     return (DefaultP2PNetwork) builder().build();
   }
@@ -336,6 +346,7 @@ public final class DefaultP2PNetworkTest {
         .nodeKey(nodeKey)
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Capability.create("eth", 63));
+        .supportedCapabilities(Capability.create("eth", 63))
+        .storageProvider(new InMemoryStorageProvider());
   }
 }

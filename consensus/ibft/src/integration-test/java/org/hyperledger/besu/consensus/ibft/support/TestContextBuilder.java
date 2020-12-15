@@ -25,21 +25,22 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
-import org.hyperledger.besu.consensus.ibft.BlockTimer;
-import org.hyperledger.besu.consensus.ibft.EventMultiplexer;
-import org.hyperledger.besu.consensus.ibft.Gossiper;
+import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BlockTimer;
+import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.Gossiper;
+import org.hyperledger.besu.consensus.common.bft.MessageTracker;
+import org.hyperledger.besu.consensus.common.bft.RoundTimer;
+import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.IbftContext;
-import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
-import org.hyperledger.besu.consensus.ibft.IbftExecutors;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
-import org.hyperledger.besu.consensus.ibft.MessageTracker;
-import org.hyperledger.besu.consensus.ibft.RoundTimer;
-import org.hyperledger.besu.consensus.ibft.SynchronizerUpdater;
 import org.hyperledger.besu.consensus.ibft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.ibft.blockcreation.ProposerSelector;
@@ -93,28 +94,28 @@ public class TestContextBuilder {
 
   private static class ControllerAndState {
 
-    private final IbftExecutors ibftExecutors;
-    private final IbftController controller;
+    private final BftExecutors bftExecutors;
+    private final BftEventHandler eventHandler;
     private final IbftFinalState finalState;
     private final EventMultiplexer eventMultiplexer;
 
     public ControllerAndState(
-        final IbftExecutors ibftExecutors,
-        final IbftController controller,
+        final BftExecutors bftExecutors,
+        final BftEventHandler eventHandler,
         final IbftFinalState finalState,
         final EventMultiplexer eventMultiplexer) {
-      this.ibftExecutors = ibftExecutors;
-      this.controller = controller;
+      this.bftExecutors = bftExecutors;
+      this.eventHandler = eventHandler;
       this.finalState = finalState;
       this.eventMultiplexer = eventMultiplexer;
     }
 
-    public IbftExecutors getIbftExecutors() {
-      return ibftExecutors;
+    public BftExecutors getIbftExecutors() {
+      return bftExecutors;
     }
 
-    public IbftController getController() {
-      return controller;
+    public BftEventHandler getEventHandler() {
+      return eventHandler;
     }
 
     public IbftFinalState getFinalState() {
@@ -136,7 +137,7 @@ public class TestContextBuilder {
   public static final int FUTURE_MESSAGES_LIMIT = 1000;
 
   private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
-  private IbftEventQueue ibftEventQueue = new IbftEventQueue(MESSAGE_QUEUE_LIMIT);
+  private BftEventQueue bftEventQueue = new BftEventQueue(MESSAGE_QUEUE_LIMIT);
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
   private boolean useGossip = false;
@@ -146,8 +147,8 @@ public class TestContextBuilder {
     return this;
   }
 
-  public TestContextBuilder ibftEventQueue(final IbftEventQueue ibftEventQueue) {
-    this.ibftEventQueue = ibftEventQueue;
+  public TestContextBuilder ibftEventQueue(final BftEventQueue bftEventQueue) {
+    this.bftEventQueue = bftEventQueue;
     return this;
   }
 
@@ -190,7 +191,7 @@ public class TestContextBuilder {
             multicaster,
             networkNodes.getLocalNode().getNodeKey(),
             clock,
-            ibftEventQueue,
+            bftEventQueue,
             gossiper,
             synchronizerUpdater);
 
@@ -219,7 +220,7 @@ public class TestContextBuilder {
         remotePeers,
         blockChain,
         controllerAndState.getIbftExecutors(),
-        controllerAndState.getController(),
+        controllerAndState.getEventHandler(),
         controllerAndState.getFinalState(),
         controllerAndState.getEventMultiplexer());
   }
@@ -256,7 +257,7 @@ public class TestContextBuilder {
       final StubValidatorMulticaster multicaster,
       final NodeKey nodeKey,
       final Clock clock,
-      final IbftEventQueue ibftEventQueue,
+      final BftEventQueue bftEventQueue,
       final Gossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater) {
 
@@ -303,7 +304,6 @@ public class TestContextBuilder {
             clock,
             metricsSystem,
             blockChain::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
@@ -320,7 +320,7 @@ public class TestContextBuilder {
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);
 
-    final IbftExecutors ibftExecutors = IbftExecutors.create(new NoOpMetricsSystem());
+    final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
     final IbftFinalState finalState =
         new IbftFinalState(
             protocolContext.getConsensusState(IbftContext.class).getVoteTallyCache(),
@@ -328,9 +328,8 @@ public class TestContextBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             multicaster,
-            new RoundTimer(ibftEventQueue, ROUND_TIMER_SEC * 1000, ibftExecutors),
-            new BlockTimer(
-                ibftEventQueue, BLOCK_TIMER_SEC * 1000, ibftExecutors, TestClock.fixed()),
+            new RoundTimer(bftEventQueue, ROUND_TIMER_SEC * 1000, bftExecutors),
+            new BlockTimer(bftEventQueue, BLOCK_TIMER_SEC * 1000, bftExecutors, TestClock.fixed()),
             blockCreatorFactory,
             new MessageFactory(nodeKey),
             clock);
@@ -347,7 +346,7 @@ public class TestContextBuilder {
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber());
 
-    final IbftController ibftController =
+    final BftEventHandler ibftController =
         new IbftController(
             blockChain,
             finalState,
@@ -368,6 +367,6 @@ public class TestContextBuilder {
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
     //////////////////////////// END IBFT BesuController ////////////////////////////
 
-    return new ControllerAndState(ibftExecutors, ibftController, finalState, eventMultiplexer);
+    return new ControllerAndState(bftExecutors, ibftController, finalState, eventMultiplexer);
   }
 }
