@@ -327,6 +327,16 @@ public class MessageFrame {
     this.warmedUpAddresses.add(sender);
     this.warmedUpAddresses.add(contract);
     this.warmedUpStorage = HashMultimap.create(accessListWarmStorage);
+
+    // first warm up all the addresses because there could be addresses without storage in the
+    // access list
+    accessListWarmAddresses.parallelStream().forEach(worldState::get);
+    // then warm up all the storage slots
+    // this takes advantage of the already warmed up accounts
+    accessListWarmStorage.forEach(
+        // todo rename storage slot everywhere
+        (address, storageSlot) ->
+            worldState.get(address).getStorageValue(UInt256.fromBytes(storageSlot)));
   }
 
   /**
