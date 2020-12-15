@@ -275,6 +275,7 @@ public class NodePermissioningControllerFactoryTest {
 
     assertThat(thrown)
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Error validating onchain node permissioning smart contract configuration");
+        .hasMessage(
+            "Error: node permissioning contract at address 0x0000000000000000000000000000000000001234 does not match the expected interface version 1.");
   }
 }
