@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft;
 
+import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;

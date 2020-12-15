@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,9 +24,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.IbftEvent;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
@@ -44,20 +43,20 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class BlockTimerTest {
 
-  private IbftExecutors ibftExecutors;
-  private IbftEventQueue mockQueue;
+  private BftExecutors bftExecutors;
+  private BftEventQueue mockQueue;
   private Clock mockClock;
 
   @Before
   public void initialise() {
-    ibftExecutors = mock(IbftExecutors.class);
-    mockQueue = mock(IbftEventQueue.class);
+    bftExecutors = mock(BftExecutors.class);
+    mockQueue = mock(BftEventQueue.class);
     mockClock = mock(Clock.class);
   }
 
   @Test
   public void cancelTimerCancelsWhenNoTimer() {
-    final BlockTimer timer = new BlockTimer(mockQueue, 15, ibftExecutors, mockClock);
+    final BlockTimer timer = new BlockTimer(mockQueue, 15, bftExecutors, mockClock);
     // Starts with nothing running
     assertThat(timer.isRunning()).isFalse();
     // cancel shouldn't die if there's nothing running
@@ -74,7 +73,7 @@ public class BlockTimerTest {
     final long EXPECTED_DELAY = 10_000L;
 
     final BlockTimer timer =
-        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, ibftExecutors, mockClock);
+        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, bftExecutors, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -85,11 +84,11 @@ public class BlockTimerTest {
 
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
     Mockito.<ScheduledFuture<?>>when(
-            ibftExecutors.scheduleTask(any(Runnable.class), anyLong(), any()))
+            bftExecutors.scheduleTask(any(Runnable.class), anyLong(), any()))
         .thenReturn(mockedFuture);
 
     timer.startTimer(round, header);
-    verify(ibftExecutors)
+    verify(bftExecutors)
         .scheduleTask(any(Runnable.class), eq(EXPECTED_DELAY), eq(TimeUnit.MILLISECONDS));
   }
 
@@ -109,12 +108,12 @@ public class BlockTimerTest {
 
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
     Mockito.<ScheduledFuture<?>>when(
-            ibftExecutors.scheduleTask(any(Runnable.class), anyLong(), any()))
+            bftExecutors.scheduleTask(any(Runnable.class), anyLong(), any()))
         .thenReturn(mockedFuture);
 
-    final IbftEventQueue eventQueue = new IbftEventQueue(1000);
+    final BftEventQueue eventQueue = new BftEventQueue(1000);
     final BlockTimer timer =
-        new BlockTimer(eventQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, ibftExecutors, mockClock);
+        new BlockTimer(eventQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, bftExecutors, mockClock);
     timer.startTimer(round, header);
 
     // Verify that the event will not be added to the queue immediately
@@ -122,7 +121,7 @@ public class BlockTimerTest {
 
     // Verify that a task is sceheduled for EXPECTED_DELAY milliseconds in the future
     ArgumentCaptor<Runnable> expiryTask = ArgumentCaptor.forClass(Runnable.class);
-    verify(ibftExecutors, times(1))
+    verify(bftExecutors, times(1))
         .scheduleTask(expiryTask.capture(), eq(EXPECTED_DELAY), eq(TimeUnit.MILLISECONDS));
 
     // assert that the task puts a BlockExpired event into the queue
@@ -130,7 +129,7 @@ public class BlockTimerTest {
     assertThat(eventQueue.isEmpty()).isTrue();
     scheduledTask.run();
     assertThat(eventQueue.size()).isEqualTo(1);
-    final IbftEvent queuedEvent = eventQueue.poll(0, TimeUnit.SECONDS);
+    final BftEvent queuedEvent = eventQueue.poll(0, TimeUnit.SECONDS);
     assertThat(queuedEvent).isInstanceOf(BlockTimerExpiry.class);
     assertThat(((BlockTimerExpiry) queuedEvent).getRoundIndentifier())
         .isEqualToComparingFieldByField(round);
@@ -143,7 +142,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500;
 
     final BlockTimer timer =
-        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, ibftExecutors, mockClock);
+        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, bftExecutors, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -153,13 +152,13 @@ public class BlockTimerTest {
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
 
     timer.startTimer(round, header);
-    verify(ibftExecutors, never()).scheduleTask(any(Runnable.class), anyLong(), any());
+    verify(bftExecutors, never()).scheduleTask(any(Runnable.class), anyLong(), any());
 
-    final ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
-    verify(mockQueue).add(ibftEventCaptor.capture());
+    final ArgumentCaptor<BftEvent> bftEventCaptor = ArgumentCaptor.forClass(BftEvent.class);
+    verify(mockQueue).add(bftEventCaptor.capture());
 
-    assertThat(ibftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
-    assertThat(((BlockTimerExpiry) ibftEventCaptor.getValue()).getRoundIndentifier())
+    assertThat(bftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
+    assertThat(((BlockTimerExpiry) bftEventCaptor.getValue()).getRoundIndentifier())
         .isEqualToComparingFieldByField(round);
   }
 
@@ -170,7 +169,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     final BlockTimer timer =
-        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, ibftExecutors, mockClock);
+        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, bftExecutors, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -180,13 +179,13 @@ public class BlockTimerTest {
         new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
 
     timer.startTimer(round, header);
-    verify(ibftExecutors, never()).scheduleTask(any(Runnable.class), anyLong(), any());
+    verify(bftExecutors, never()).scheduleTask(any(Runnable.class), anyLong(), any());
 
-    final ArgumentCaptor<IbftEvent> ibftEventCaptor = ArgumentCaptor.forClass(IbftEvent.class);
-    verify(mockQueue).add(ibftEventCaptor.capture());
+    final ArgumentCaptor<BftEvent> bftEventCaptor = ArgumentCaptor.forClass(BftEvent.class);
+    verify(mockQueue).add(bftEventCaptor.capture());
 
-    assertThat(ibftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
-    assertThat(((BlockTimerExpiry) ibftEventCaptor.getValue()).getRoundIndentifier())
+    assertThat(bftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
+    assertThat(((BlockTimerExpiry) bftEventCaptor.getValue()).getRoundIndentifier())
         .isEqualToComparingFieldByField(round);
   }
 
@@ -197,7 +196,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     final BlockTimer timer =
-        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, ibftExecutors, mockClock);
+        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, bftExecutors, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -208,7 +207,7 @@ public class BlockTimerTest {
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
 
     Mockito.<ScheduledFuture<?>>when(
-            ibftExecutors.scheduleTask(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
+            bftExecutors.scheduleTask(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
         .thenReturn(mockedFuture);
     timer.startTimer(round, header);
     verify(mockedFuture, times(0)).cancel(false);
@@ -223,7 +222,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     final BlockTimer timer =
-        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, ibftExecutors, mockClock);
+        new BlockTimer(mockQueue, MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, bftExecutors, mockClock);
 
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
@@ -234,7 +233,7 @@ public class BlockTimerTest {
 
     final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
     Mockito.<ScheduledFuture<?>>when(
-            ibftExecutors.scheduleTask(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
+            bftExecutors.scheduleTask(any(Runnable.class), anyLong(), eq(TimeUnit.MILLISECONDS)))
         .thenReturn(mockedFuture);
     timer.startTimer(round, header);
     when(mockedFuture.isDone()).thenReturn(false);

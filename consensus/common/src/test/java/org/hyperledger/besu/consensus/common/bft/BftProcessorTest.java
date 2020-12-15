@@ -12,10 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -24,8 +23,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 
 import java.util.concurrent.ExecutorService;
@@ -33,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +38,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class IbftProcessorTest {
+public class BftProcessorTest {
   private EventMultiplexer mockeEventMultiplexer;
 
   @Before
@@ -50,11 +48,11 @@ public class IbftProcessorTest {
 
   @Test
   public void handlesStopGracefully() throws InterruptedException {
-    final IbftEventQueue mockQueue = mock(IbftEventQueue.class);
+    final BftEventQueue mockQueue = mock(BftEventQueue.class);
     Mockito.when(mockQueue.poll(anyLong(), any())).thenReturn(null);
-    final IbftProcessor processor = new IbftProcessor(mockQueue, mockeEventMultiplexer);
+    final BftProcessor processor = new BftProcessor(mockQueue, mockeEventMultiplexer);
 
-    // Start the IbftProcessor
+    // Start the BftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
     final Future<?> processorFuture = processorExecutor.submit(processor);
 
@@ -77,10 +75,9 @@ public class IbftProcessorTest {
 
   @Test
   public void cleanupExecutorsAfterShutdownNow() throws InterruptedException {
-    final IbftProcessor processor =
-        new IbftProcessor(new IbftEventQueue(1000), mockeEventMultiplexer);
+    final BftProcessor processor = new BftProcessor(new BftEventQueue(1000), mockeEventMultiplexer);
 
-    // Start the IbftProcessor
+    // Start the BftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
     final Future<?> processorFuture = processorExecutor.submit(processor);
 
@@ -101,12 +98,12 @@ public class IbftProcessorTest {
   @Test
   public void handlesQueueInterruptGracefully() throws InterruptedException {
     // Setup a queue that will always interrupt
-    final IbftEventQueue mockQueue = mock(IbftEventQueue.class);
+    final BftEventQueue mockQueue = mock(BftEventQueue.class);
     Mockito.when(mockQueue.poll(anyLong(), any())).thenThrow(new InterruptedException());
 
-    final IbftProcessor processor = new IbftProcessor(mockQueue, mockeEventMultiplexer);
+    final BftProcessor processor = new BftProcessor(mockQueue, mockeEventMultiplexer);
 
-    // Start the IbftProcessor
+    // Start the BftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
     final Future<?> processorFuture = processorExecutor.submit(processor);
 
@@ -132,10 +129,10 @@ public class IbftProcessorTest {
 
   @Test
   public void drainEventsIntoStateMachine() throws InterruptedException {
-    final IbftEventQueue queue = new IbftEventQueue(1000);
-    final IbftProcessor processor = new IbftProcessor(queue, mockeEventMultiplexer);
+    final BftEventQueue queue = new BftEventQueue(1000);
+    final BftProcessor processor = new BftProcessor(queue, mockeEventMultiplexer);
 
-    // Start the IbftProcessor
+    // Start the BftProcessor
     final ExecutorService processorExecutor = Executors.newSingleThreadExecutor();
     processorExecutor.execute(processor);
 
@@ -144,11 +141,11 @@ public class IbftProcessorTest {
     queue.add(roundExpiryEvent);
     queue.add(roundExpiryEvent);
 
-    await().atMost(3000, TimeUnit.MILLISECONDS).until(queue::isEmpty);
+    Awaitility.await().atMost(3000, TimeUnit.MILLISECONDS).until(queue::isEmpty);
 
     processor.stop();
     processorExecutor.shutdown();
 
-    verify(mockeEventMultiplexer, times(2)).handleIbftEvent(eq(roundExpiryEvent));
+    verify(mockeEventMultiplexer, times(2)).handleBftEvent(eq(roundExpiryEvent));
   }
 }
