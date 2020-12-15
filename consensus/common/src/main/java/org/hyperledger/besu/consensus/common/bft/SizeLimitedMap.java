@@ -12,24 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.ethereum.core.Address;
-
-import java.util.Collection;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
-public class IbftValidatorOverrides {
+/**
+ * Map that is limited to a specified size and will evict oldest entries when the size limit is
+ * reached.
+ */
+public class SizeLimitedMap<K, V> extends LinkedHashMap<K, V> {
+  private final int maxEntries;
 
-  private final Map<Long, List<Address>> overriddenValidators;
-
-  public IbftValidatorOverrides(final Map<Long, List<Address>> overriddenValidators) {
-    this.overriddenValidators = overriddenValidators;
+  public SizeLimitedMap(final int maxEntries) {
+    this.maxEntries = maxEntries;
   }
 
-  public Optional<Collection<Address>> getForBlock(final long blockNumber) {
-    return Optional.ofNullable(overriddenValidators.get(blockNumber));
+  @Override
+  protected boolean removeEldestEntry(final Map.Entry<K, V> ignored) {
+    return size() > maxEntries;
   }
 }

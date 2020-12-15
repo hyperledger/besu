@@ -13,10 +13,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
-import static org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors.newScheduledThreadPool;
-
+import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
@@ -29,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftExecutors {
+public class BftExecutors {
 
   private enum State {
     IDLE,
@@ -43,15 +42,15 @@ public class IbftExecutors {
   private final MetricsSystem metricsSystem;
 
   private volatile ScheduledExecutorService timerExecutor;
-  private volatile ExecutorService ibftProcessorExecutor;
+  private volatile ExecutorService bftProcessorExecutor;
   private volatile State state = State.IDLE;
 
-  private IbftExecutors(final MetricsSystem metricsSystem) {
+  private BftExecutors(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
   }
 
-  public static IbftExecutors create(final MetricsSystem metricsSystem) {
-    return new IbftExecutors(metricsSystem);
+  public static BftExecutors create(final MetricsSystem metricsSystem) {
+    return new BftExecutors(metricsSystem);
   }
 
   public synchronized void start() {
@@ -60,8 +59,8 @@ public class IbftExecutors {
       return;
     }
     state = State.RUNNING;
-    ibftProcessorExecutor = Executors.newSingleThreadExecutor();
-    timerExecutor = newScheduledThreadPool("IbftTimerExecutor", 1, metricsSystem);
+    bftProcessorExecutor = Executors.newSingleThreadExecutor();
+    timerExecutor = MonitoredExecutors.newScheduledThreadPool("BftTimerExecutor", 1, metricsSystem);
   }
 
   public void stop() {
@@ -73,21 +72,21 @@ public class IbftExecutors {
     }
 
     timerExecutor.shutdownNow();
-    ibftProcessorExecutor.shutdownNow();
+    bftProcessorExecutor.shutdownNow();
   }
 
   public void awaitStop() throws InterruptedException {
     if (!timerExecutor.awaitTermination(shutdownTimeout.getSeconds(), TimeUnit.SECONDS)) {
       LOG.error("{} timer executor did not shutdown cleanly.", getClass().getSimpleName());
     }
-    if (!ibftProcessorExecutor.awaitTermination(shutdownTimeout.getSeconds(), TimeUnit.SECONDS)) {
-      LOG.error("{} ibftProcessor executor did not shutdown cleanly.", getClass().getSimpleName());
+    if (!bftProcessorExecutor.awaitTermination(shutdownTimeout.getSeconds(), TimeUnit.SECONDS)) {
+      LOG.error("{} bftProcessor executor did not shutdown cleanly.", getClass().getSimpleName());
     }
   }
 
-  public synchronized void executeIbftProcessor(final IbftProcessor ibftProcessor) {
+  public synchronized void executeBftProcessor(final BftProcessor bftProcessor) {
     assertRunning();
-    ibftProcessorExecutor.execute(ibftProcessor);
+    bftProcessorExecutor.execute(bftProcessor);
   }
 
   public synchronized ScheduledFuture<?> scheduleTask(

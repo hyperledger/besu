@@ -21,7 +21,7 @@ import java.util.Objects;
 import com.google.common.base.MoreObjects;
 
 /** Event indicating a block timer has expired */
-public final class BlockTimerExpiry implements IbftEvent {
+public final class BlockTimerExpiry implements BftEvent {
   private final ConsensusRoundIdentifier roundIdentifier;
 
   /**
@@ -34,8 +34,8 @@ public final class BlockTimerExpiry implements IbftEvent {
   }
 
   @Override
-  public IbftEvents.Type getType() {
-    return IbftEvents.Type.BLOCK_TIMER_EXPIRY;
+  public BftEvents.Type getType() {
+    return BftEvents.Type.BLOCK_TIMER_EXPIRY;
   }
 
   public ConsensusRoundIdentifier getRoundIndentifier() {

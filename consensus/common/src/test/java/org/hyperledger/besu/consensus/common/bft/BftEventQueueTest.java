@@ -12,13 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.common.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import org.hyperledger.besu.consensus.common.bft.events.IbftEvent;
-import org.hyperledger.besu.consensus.common.bft.events.IbftEvents;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,33 +26,33 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-public class IbftEventQueueTest {
+public class BftEventQueueTest {
   private static final int MAX_QUEUE_SIZE = 1000;
 
-  private static class DummyIbftEvent implements IbftEvent {
+  private static class DummyBftEvent implements BftEvent {
     @Override
-    public IbftEvents.Type getType() {
+    public BftEvents.Type getType() {
       return null;
     }
   }
 
   @Test
   public void addPoll() throws InterruptedException {
-    final IbftEventQueue queue = new IbftEventQueue(MAX_QUEUE_SIZE);
+    final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
 
     assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
-    final DummyIbftEvent dummyEvent = new DummyIbftEvent();
+    final DummyBftEvent dummyEvent = new DummyBftEvent();
     queue.add(dummyEvent);
     assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isEqualTo(dummyEvent);
   }
 
   @Test
   public void queueOrdering() throws InterruptedException {
-    final IbftEventQueue queue = new IbftEventQueue(MAX_QUEUE_SIZE);
+    final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
 
-    final DummyIbftEvent dummyEvent1 = new DummyIbftEvent();
-    final DummyIbftEvent dummyEvent2 = new DummyIbftEvent();
-    final DummyIbftEvent dummyEvent3 = new DummyIbftEvent();
+    final DummyBftEvent dummyEvent1 = new DummyBftEvent();
+    final DummyBftEvent dummyEvent2 = new DummyBftEvent();
+    final DummyBftEvent dummyEvent3 = new DummyBftEvent();
     assertThatCode(
             () -> {
               queue.add(dummyEvent1);
@@ -68,17 +68,17 @@ public class IbftEventQueueTest {
 
   @Test
   public void addSizeLimit() throws InterruptedException {
-    final IbftEventQueue queue = new IbftEventQueue(MAX_QUEUE_SIZE);
+    final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
 
     for (int i = 0; i <= 1000; i++) {
-      final DummyIbftEvent dummyEvent = new DummyIbftEvent();
+      final DummyBftEvent dummyEvent = new DummyBftEvent();
       queue.add(dummyEvent);
     }
 
-    final DummyIbftEvent dummyEventDiscard = new DummyIbftEvent();
+    final DummyBftEvent dummyEventDiscard = new DummyBftEvent();
     queue.add(dummyEventDiscard);
 
-    final List<IbftEvent> drain = new ArrayList<>();
+    final List<BftEvent> drain = new ArrayList<>();
     for (int i = 0; i <= 1000; i++) {
       drain.add(queue.poll(0, TimeUnit.MICROSECONDS));
     }

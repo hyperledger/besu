@@ -24,8 +24,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.consensus.ibft.RoundTimer;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;

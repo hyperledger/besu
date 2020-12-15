@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
+import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.IbftEvent;
-import org.hyperledger.besu.consensus.common.bft.events.IbftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
@@ -34,30 +34,30 @@ public class EventMultiplexer {
     this.eventHandler = eventHandler;
   }
 
-  public void handleIbftEvent(final IbftEvent ibftEvent) {
+  public void handleBftEvent(final BftEvent bftEvent) {
     try {
-      switch (ibftEvent.getType()) {
+      switch (bftEvent.getType()) {
         case MESSAGE:
-          final IbftReceivedMessageEvent rxEvent = (IbftReceivedMessageEvent) ibftEvent;
+          final BftReceivedMessageEvent rxEvent = (BftReceivedMessageEvent) bftEvent;
           eventHandler.handleMessageEvent(rxEvent);
           break;
         case ROUND_EXPIRY:
-          final RoundExpiry roundExpiryEvent = (RoundExpiry) ibftEvent;
+          final RoundExpiry roundExpiryEvent = (RoundExpiry) bftEvent;
           eventHandler.handleRoundExpiry(roundExpiryEvent);
           break;
         case NEW_CHAIN_HEAD:
-          final NewChainHead newChainHead = (NewChainHead) ibftEvent;
+          final NewChainHead newChainHead = (NewChainHead) bftEvent;
           eventHandler.handleNewBlockEvent(newChainHead);
           break;
         case BLOCK_TIMER_EXPIRY:
-          final BlockTimerExpiry blockTimerExpiry = (BlockTimerExpiry) ibftEvent;
+          final BlockTimerExpiry blockTimerExpiry = (BlockTimerExpiry) bftEvent;
           eventHandler.handleBlockTimerExpiry(blockTimerExpiry);
           break;
         default:
           throw new RuntimeException("Illegal event in queue.");
       }
     } catch (final Exception e) {
-      LOG.error("State machine threw exception while processing event \\{" + ibftEvent + "\\}", e);
+      LOG.error("State machine threw exception while processing event \\{" + bftEvent + "\\}", e);
     }
   }
 }
