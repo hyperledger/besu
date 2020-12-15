@@ -20,14 +20,24 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class SignerRateLimitValidationRule implements AttachedBlockHeaderValidationRule {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final Address blockSigner = CliqueHelpers.getProposerOfBlock(header);
 
-    return CliqueHelpers.addressIsAllowedToProduceNextBlock(blockSigner, protocolContext, parent);
+    if (!CliqueHelpers.addressIsAllowedToProduceNextBlock(blockSigner, protocolContext, parent)) {
+      LOG.info("Invalid block header: {} is not allowed to produce next block", blockSigner);
+      return false;
+    }
+
+    return true;
   }
 
   @Override
