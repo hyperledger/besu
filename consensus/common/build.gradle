@@ -65,5 +65,7 @@ task testJar (type: Jar) {
   from sourceSets.test.output
 }
 
-artifacts { testArtifacts testJar}
-artifacts { testSupportArtifacts testSupportJar }
+artifacts {
+  testArtifacts testJar
+  testSupportArtifacts testSupportJar
+}
