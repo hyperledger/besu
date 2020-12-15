@@ -138,6 +138,8 @@ public enum JsonRpcError {
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
       -50100,
       "Private Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used from the Private Transaction."),
+  QUORUM_NO_PRIVATE_FOR(-50100, "No privateFor specified in rawTxArgs for quorum raw private transaction."),
+  QUORUM_ONLY_STANDARD_MODE_SUPPORTED(-50100, "Mode other than 'standard' mode defined in rawTxArgs for quorum raw private transaction."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 

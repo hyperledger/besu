@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import io.vertx.core.Vertx;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -31,6 +34,9 @@ import org.hyperledger.besu.ethereum.privacy.QuorumSendRawTxArgs;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
@@ -67,14 +73,14 @@ public class QuorumSendRawPrivateTransaction implements JsonRpcMethod {
     final QuorumSendRawTxArgs rawTxArgs = requestContext.getRequiredParameter(1, QuorumSendRawTxArgs.class);
 
 
-
-    if (!checkRawTxArgs(rawTxArgs, requestContext)) {
-        return new JsonRpcErrorResponse(id, INVALID_PARAMS);
-      }
-
     try {
       final Transaction transaction =
           Transaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
+
+    if (!checkAndHandlePrivateTransaction(transaction, rawTxArgs, requestContext)) {
+        return new JsonRpcErrorResponse(id, INVALID_PARAMS);
+      }
+
 
 //      final ValidationResult<TransactionInvalidReason> validationResult =
 //          privacyController.validatePrivateTransaction(transaction, enclavePublicKey);
@@ -106,30 +112,33 @@ public class QuorumSendRawPrivateTransaction implements JsonRpcMethod {
     }
   }
 
-  private boolean checkRawTxArgs(final QuorumSendRawTxArgs rawTxArgs, final JsonRpcRequestContext requestContext) {
+  private boolean checkAndHandlePrivateTransaction(final Transaction transaction, final QuorumSendRawTxArgs rawTxArgs, final JsonRpcRequestContext requestContext) throws URISyntaxException {
     // rawTxArgs cannot be null as the call to getRequiredParameter would have failed if it was not available
 
     if (rawTxArgs.getPrivateFor() == null) {
-      LOG.error("No privateFor specified in rawTxArgs for quorum raw private transaction.");
-      return false;
+      LOG.error(JsonRpcError.QUORUM_NO_PRIVATE_FOR.getMessage());
+      throw new JsonRpcErrorResponseException(JsonRpcError.QUORUM_NO_PRIVATE_FOR);
     }
 
     if (rawTxArgs.getPrivacyFlag() != 0) {
-      LOG.error("Mode other than 'standard' mode defined in rawTxArgs for quorum raw private transaction.");
-      return false;
+      LOG.error(JsonRpcError.QUORUM_ONLY_STANDARD_MODE_SUPPORTED.getMessage());
+      throw new JsonRpcErrorResponseException(JsonRpcError.QUORUM_ONLY_STANDARD_MODE_SUPPORTED);
     }
 
     if (rawTxArgs.getPrivateFrom() != null) {
       final String privateFrom = rawTxArgs.getPrivateFrom();
       final String enclavePublicKey =
             enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
-      if (privateFrom != enclavePublicKey) {
-        LOG.error("privateFrom specified in rawTxArgs not equal to users enclave public key.");
-        return false;
+      if (!privateFrom.equals(enclavePublicKey)) {
+        LOG.error(JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY.getMessage());
+        throw new JsonRpcErrorResponseException(JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
     }
 
+    final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
+    final GoQuorumEnclave goQuorumEnclave = enclaveFactory.createGoQuorumEnclave(new URI(""));
 
+    goQuorumEnclave.sendSignedTransaction(transaction.getData().get().toArray(), rawTxArgs.getPrivateFor());
 
     return true;
   }

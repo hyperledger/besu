@@ -32,6 +32,7 @@ public class RpcApis {
   public static final RpcApi TX_POOL = new RpcApi("TXPOOL");
   public static final RpcApi TRACE = new RpcApi("TRACE");
   public static final RpcApi PLUGINS = new RpcApi("PLUGINS");
+  public static final RpcApi QUORUM = new RpcApi("QUORUM");
 
   public static final List<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
@@ -60,6 +61,8 @@ public class RpcApis {
       return Optional.of(TRACE);
     } else if (name.equals(PLUGINS.getCliValue())) {
       return Optional.of(PLUGINS);
+    } else if (name.equals(QUORUM.getCliValue())) {
+      return Optional.of(QUORUM);
     } else {
       return Optional.empty();
     }
