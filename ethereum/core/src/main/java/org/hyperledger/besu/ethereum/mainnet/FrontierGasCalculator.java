@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -29,8 +28,6 @@ import org.hyperledger.besu.ethereum.vm.operations.ExpOperation;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-
-import java.util.Collections;
 
 public class FrontierGasCalculator implements GasCalculator {
 
@@ -117,7 +114,8 @@ public class FrontierGasCalculator implements GasCalculator {
   private static final Gas SELF_DESTRUCT_REFUND_AMOUNT = Gas.of(24_000L);
 
   @Override
-  public GasAndAccessedState transactionIntrinsicGasCost(final Transaction transaction) {
+  public GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(
+      final Transaction transaction) {
     final Bytes payload = transaction.getPayload();
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {

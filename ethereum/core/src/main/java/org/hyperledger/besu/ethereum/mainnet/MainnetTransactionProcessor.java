@@ -290,7 +290,7 @@ public class MainnetTransactionProcessor {
           sender.getBalance());
 
       final GasAndAccessedState gasAndAccessedState =
-          gasCalculator.transactionIntrinsicGasCost(transaction);
+          gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction);
       final Gas intrinsicGas = gasAndAccessedState.getGas();
       final Gas gasAvailable = Gas.of(transaction.getGasLimit()).minus(intrinsicGas);
       LOG.trace(

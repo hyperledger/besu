@@ -16,9 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.core.Address.BLS12_MAP_FP2_TO_G2;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -35,7 +32,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BerlinGasCalculator extends IstanbulGasCalculator {
@@ -73,29 +73,32 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public GasAndAccessedState transactionIntrinsicGasCost(final Transaction transaction) {
-    Gas transactionIntrinsicGasCost = super.transactionIntrinsicGasCost(transaction).getGas();
+  public GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(
+      final Transaction transaction) {
+    // As per https://eips.ethereum.org/EIPS/eip-2930
+    final AccessList accessList = transaction.getAccessList();
+
+    long accessedStorageCount = 0;
     final Set<Address> accessedAddresses = new HashSet<>();
     final Multimap<Address, Bytes32> accessedStorage = HashMultimap.create();
-    final AccessList accessList = transaction.getAccessList();
 
     for (final Map.Entry<Address, List<Bytes32>> accessListEntry : accessList) {
       final Address address = accessListEntry.getKey();
-      final List<Bytes32> storageSlots = accessListEntry.getValue();
 
       accessedAddresses.add(address);
-      for (final Bytes32 storageSlot : storageSlots) {
+      for (final Bytes32 storageSlot : accessListEntry.getValue()) {
         accessedStorage.put(address, storageSlot);
+        ++accessedStorageCount;
       }
-
-      transactionIntrinsicGasCost =
-          transactionIntrinsicGasCost.plus(ACCESS_LIST_STORAGE_COST.times(storageSlots.size()));
     }
 
-    transactionIntrinsicGasCost =
-        transactionIntrinsicGasCost.plus(ACCESS_LIST_ADDRESS_COST.times(accessList.size()));
-
-    return new GasAndAccessedState(transactionIntrinsicGasCost, accessedAddresses, accessedStorage);
+    return new GasAndAccessedState(
+        super.transactionIntrinsicGasCostAndAccessedState(transaction)
+            .getGas()
+            .plus(ACCESS_LIST_ADDRESS_COST.times(accessList.size()))
+            .plus(ACCESS_LIST_STORAGE_COST.times(accessedStorageCount)),
+        accessedAddresses,
+        accessedStorage);
   }
 
   @Override

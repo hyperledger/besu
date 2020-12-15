@@ -15,13 +15,13 @@
 
 package org.hyperledger.besu.ethereum.core;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import org.apache.tuweni.bytes.Bytes32;
+import static java.util.Collections.emptySet;
 
 import java.util.Set;
 
-import static java.util.Collections.emptySet;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class GasAndAccessedState {
   final Gas gas;

@@ -65,7 +65,7 @@ public interface GasCalculator {
    * @param transaction The transaction
    * @return the transaction's intrinsic gas cost
    */
-  GasAndAccessedState transactionIntrinsicGasCost(Transaction transaction);
+  GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(Transaction transaction);
 
   // Contract Creation Gas Calculations
 
