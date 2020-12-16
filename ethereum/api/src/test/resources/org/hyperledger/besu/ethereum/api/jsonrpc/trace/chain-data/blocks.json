@@ -525,6 +525,31 @@
           "value": "0x0a"
         }
       ]
+    },
+    {
+      "number": "0x1F",
+      "transactions" : [
+        {
+          "comment": "Call Precompiled contract directly",
+          "secretKey": "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3",
+          "gasLimit": "0xFFFFF2",
+          "gasPrice": "0xEF",
+          "to": "0x0000000000000000000000000000000000000001"
+        }
+      ]
+    },
+    {
+      "number": "0x20",
+      "transactions" : [
+        {
+          "comment": "Call to a contract creation that fails with a depth of 1",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0x11FA1",
+          "gasPrice": "0x10",
+          "to": "0x0180000000000000000000000000000000000000",
+          "data": "0x000000000000000000000000000000000000000000000000000000000000ea60"
+        }
+      ]
     }
   ]
 }
