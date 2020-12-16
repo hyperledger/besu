@@ -4,11 +4,12 @@
 
 ### Additions and Improvements
 * Added `memory` as an option to `--key-value-storage`.  This ephemeral storage is intended for sync testing and debugging.  [\#1617](https://github.com/hyperledger/besu/pull/1617)
-* Fixed gasPrice parameter not always respected when passed to `eth_estimateGas` endpoint [#1636](https://github.com/hyperledger/besu/pull/1636)
-* Enabled eth65 by default [#1682](https://github.com/hyperledger/besu/pull/1682)
+* Fixed gasPrice parameter not always respected when passed to `eth_estimateGas` endpoint [\#1636](https://github.com/hyperledger/besu/pull/1636)
+* Enabled eth65 by default [\#1682](https://github.com/hyperledger/besu/pull/1682)
 
 ### Bug Fixes
-
+* Accept to use default port values if not in use. [#1673](https://github.com/hyperledger/besu/pull/1673)
+* Block Validation Errors should be at least INFO level not DEBUG or TRACE.  Bug [\#1568](https://github.com/hyperledger/besu/pull/1568) PR [\#1706](https://github.com/hyperledger/besu/pull/1706)
 
 #### Previously identified known issues
 

@@ -40,8 +40,11 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
     final long gasLimit = header.getGasLimit();
 
     if ((gasLimit < minGasLimit) || (gasLimit > maxGasLimit)) {
-      LOG.trace(
-          "Header gasLimit = {}, outside range {} --> {}", gasLimit, minGasLimit, maxGasLimit);
+      LOG.info(
+          "Invalid block header: gasLimit = {} is outside range {} --> {}",
+          gasLimit,
+          minGasLimit,
+          maxGasLimit);
       return false;
     }
 
@@ -49,7 +52,7 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
     final long difference = Math.abs(parentGasLimit - gasLimit);
     final long bounds = deltaBound(parentGasLimit);
     if (Long.compareUnsigned(difference, bounds) >= 0) {
-      LOG.trace(
+      LOG.info(
           "Invalid block header: gas limit delta {} is out of bounds of {}", difference, bounds);
       return false;
     }

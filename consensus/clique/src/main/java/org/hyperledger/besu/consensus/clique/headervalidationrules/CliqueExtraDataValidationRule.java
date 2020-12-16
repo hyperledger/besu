@@ -66,10 +66,12 @@ public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidat
       return extraDataIsValid(storedValidators, header);
 
     } catch (final RLPException ex) {
-      LOG.trace("ExtraData field was unable to be deserialised into an Clique Struct.", ex);
+      LOG.info(
+          "Invalid block header: ExtraData field was unable to be deserialised into an Clique Struct.",
+          ex);
       return false;
     } catch (final IllegalArgumentException ex) {
-      LOG.trace("Failed to verify extra data", ex);
+      LOG.info("Invalid block header: Failed to verify extra data", ex);
       return false;
     }
   }
@@ -81,21 +83,21 @@ public class CliqueExtraDataValidationRule implements AttachedBlockHeaderValidat
     final Address proposer = cliqueExtraData.getProposerAddress();
 
     if (!expectedValidators.contains(proposer)) {
-      LOG.trace("Proposer sealing block is not a member of the signers.");
+      LOG.info("Invalid block header: Proposer sealing block is not a member of the signers.");
       return false;
     }
 
     if (epochManager.isEpochBlock(header.getNumber())) {
       if (!Iterables.elementsEqual(cliqueExtraData.getValidators(), expectedValidators)) {
-        LOG.trace(
-            "Incorrect signers. Expected {} but got {}.",
+        LOG.info(
+            "Invalid block header: Incorrect signers. Expected {} but got {}.",
             expectedValidators,
             cliqueExtraData.getValidators());
         return false;
       }
     } else {
       if (!cliqueExtraData.getValidators().isEmpty()) {
-        LOG.trace("Signer list on non-epoch blocks must be empty.");
+        LOG.info("Invalid block header: Signer list on non-epoch blocks must be empty.");
         return false;
       }
     }
