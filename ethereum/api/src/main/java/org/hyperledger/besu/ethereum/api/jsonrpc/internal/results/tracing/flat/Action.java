@@ -18,6 +18,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -180,7 +182,12 @@ public class Action {
               .from(trace.getTransaction().getSender().toHexString())
               .value(Quantity.create(trace.getTransaction().getValue()));
       if (!trace.getTraceFrames().isEmpty()) {
-        builder.gas(trace.getTraceFrames().get(0).getGasRemaining().toHexString());
+        final TraceFrame traceFrame = trace.getTraceFrames().get(0);
+        builder.gas(
+            traceFrame
+                .getGasRemaining()
+                .plus(traceFrame.getPrecompiledGasCost().orElse(Gas.ZERO))
+                .toHexString());
       }
       return builder;
     }
