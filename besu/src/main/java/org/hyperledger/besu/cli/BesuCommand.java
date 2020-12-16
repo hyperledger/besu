@@ -52,6 +52,7 @@ import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
@@ -119,8 +120,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueSto
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
-import org.hyperledger.besu.launcher.LauncherManager;
-import org.hyperledger.besu.launcher.exception.LauncherException;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
@@ -188,6 +187,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
+import net.consensys.quorum.mainnet.launcher.LauncherManager;
+import net.consensys.quorum.mainnet.launcher.config.ImmutableLauncherConfig;
+import net.consensys.quorum.mainnet.launcher.exception.LauncherException;
+import net.consensys.quorum.mainnet.launcher.util.ParseArgsHelper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -239,6 +242,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
+  final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
 
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
@@ -1221,6 +1225,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Data Storage Options", unstableDataStorageOptions)
+            .put("Launcher", unstableLauncherOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1268,10 +1273,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new ConfigOptionSearchAndRunHandler(
             resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
 
-    if (asList(args).contains(LAUNCHER_OPTION_NAME)) {
+    ParseArgsHelper.getLauncherOptions(unstableLauncherOptions, args);
+    if (unstableLauncherOptions.isLauncherMode()
+        || unstableLauncherOptions.isLauncherModeForced()) {
       try {
-        final File file = new LauncherManager(this, unstableNatOptions).run();
-        logger.info("New config file generated : {}", file.getAbsolutePath());
+        final ImmutableLauncherConfig launcherConfig =
+            ImmutableLauncherConfig.builder()
+                .launcherScript(BesuCommand.class.getResourceAsStream("launcher.json"))
+                .addCommandClasses(
+                    this, unstableNatOptions, unstableEthstatsOptions, unstableMiningOptions)
+                .isLauncherForced(unstableLauncherOptions.isLauncherModeForced())
+                .build();
+        final File file = new LauncherManager(launcherConfig).run();
+        logger.info("Config file location : {}", file.getAbsolutePath());
         commandLine.parseWithHandlers(
             configParsingHandler,
             exceptionHandler,
