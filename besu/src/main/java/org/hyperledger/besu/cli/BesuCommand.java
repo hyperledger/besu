@@ -1531,8 +1531,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final String key;
     try {
       key = Files.asCharSource(privacyPublicKeyFile, UTF_8).read();
-    } catch (final IOException e) {
-      throw new ParameterException(this.commandLine, e.getMessage());
+    } catch (final Exception e) {
+      throw new ParameterException(
+          this.commandLine,
+          "--privacy-public-key-file must be set when goquorum-compatibility-enabled is set to true.",
+          e);
     }
     if (key.length() != 44) {
       throw new IllegalArgumentException(
