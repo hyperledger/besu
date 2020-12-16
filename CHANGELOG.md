@@ -6,6 +6,7 @@
 * Added `memory` as an option to `--key-value-storage`.  This ephemeral storage is intended for sync testing and debugging.  [\#1617](https://github.com/hyperledger/besu/pull/1617)
 * Fixed gasPrice parameter not always respected when passed to `eth_estimateGas` endpoint [\#1636](https://github.com/hyperledger/besu/pull/1636)
 * Enabled eth65 by default [\#1682](https://github.com/hyperledger/besu/pull/1682)
+* Warn that bootnodes will be ignored if specified with discovery disabled [\#1717](https://github.com/hyperledger/besu/pull/1717)
 
 ### Bug Fixes
 * Accept to use default port values if not in use. [#1673](https://github.com/hyperledger/besu/pull/1673)
