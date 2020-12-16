@@ -19,7 +19,12 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class CoinbaseHeaderValidationRule implements DetachedBlockHeaderValidationRule {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final EpochManager epochManager;
 
@@ -31,8 +36,12 @@ public class CoinbaseHeaderValidationRule implements DetachedBlockHeaderValidati
   // The coinbase field is used for voting nodes in/out of the validator group. However, no votes
   // are allowed to be cast on epoch blocks
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    if (epochManager.isEpochBlock(header.getNumber())) {
-      return header.getCoinbase().equals(CliqueBlockInterface.NO_VOTE_SUBJECT);
+    if (epochManager.isEpochBlock(header.getNumber())
+        && !header.getCoinbase().equals(CliqueBlockInterface.NO_VOTE_SUBJECT)) {
+      LOG.info(
+          "Invalid block header: No clique in/out voting may occur on epoch blocks ({})",
+          header.getNumber());
+      return false;
     }
     return true;
   }

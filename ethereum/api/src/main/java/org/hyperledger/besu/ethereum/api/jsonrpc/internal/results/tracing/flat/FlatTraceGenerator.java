@@ -94,6 +94,7 @@ public class FlatTraceGenerator {
           .to(tx.getTo().map(Bytes::toHexString).orElse(null))
           .callType("call")
           .input(payload == null ? "0x" : payload.toHexString());
+
       if (!transactionTrace.getTraceFrames().isEmpty()
           && hasRevertInSubCall(transactionTrace, transactionTrace.getTraceFrames().get(0))) {
         firstFlatTraceBuilder.error(Optional.of("Reverted"));
@@ -104,6 +105,13 @@ public class FlatTraceGenerator {
           .type("create")
           .getResultBuilder()
           .address(smartContractAddress.orElse(null));
+    }
+
+    if (!transactionTrace.getTraceFrames().isEmpty()) {
+      final Optional<Gas> precompiledGasCost =
+          transactionTrace.getTraceFrames().get(0).getPrecompiledGasCost();
+      precompiledGasCost.ifPresent(
+          gas -> firstFlatTraceBuilder.getResultBuilder().gasUsed(gas.toHexString()));
     }
 
     final List<FlatTrace.Builder> flatTraces = new ArrayList<>();
@@ -170,7 +178,8 @@ public class FlatTraceGenerator {
           currentContext =
               handleSelfDestruct(traceFrame, tracesContexts, currentContext, flatTraces);
         }
-      } else if ("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString)) {
+      } else if (("CREATE".equals(opcodeString) || "CREATE2".equals(opcodeString))
+          && (traceFrame.getExceptionalHaltReason().isEmpty() || traceFrame.getDepth() == 0)) {
         currentContext =
             handleCreateOperation(
                 traceFrame,
@@ -179,7 +188,6 @@ public class FlatTraceGenerator {
                 cumulativeGasCost,
                 tracesContexts,
                 smartContractAddress);
-
       } else if ("REVERT".equals(opcodeString)) {
         currentContext = handleRevert(tracesContexts, currentContext);
       }
@@ -610,7 +618,6 @@ public class FlatTraceGenerator {
 
   private static void addContractCreationMethodToTrace(
       final TransactionTrace transactionTrace, final FlatTrace.Builder builder) {
-
     // add creationMethod for create action
     Optional.ofNullable(builder.getType())
         .filter(type -> type.equals("create"))
