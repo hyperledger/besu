@@ -97,6 +97,7 @@ import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -163,6 +164,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -181,6 +183,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -1406,7 +1409,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
       genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new IllegalStateException("Unable to read genesis file for GoQuorum options", e);
     }
     return genesisConfigOptions;
@@ -1502,8 +1505,44 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
 
+    if (isGoQuorumCompatibilityMode) {
+      configureGoQuorumPrivacy();
+    }
+
     logger.info("Security Module: {}", securityModuleName);
     return this;
+  }
+
+  private void configureGoQuorumPrivacy() {
+
+    GoQuorumPrivacyParameters.isEnabled = true;
+    final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
+    if (privacyKeyStoreFile != null) {
+      GoQuorumPrivacyParameters.goQuorumEnclave =
+          enclaveFactory.createGoQuorumEnclave(
+              privacyUrl,
+              privacyKeyStoreFile,
+              privacyKeyStorePasswordFile,
+              privacyTlsKnownEnclaveFile);
+    } else {
+      GoQuorumPrivacyParameters.goQuorumEnclave =
+          enclaveFactory.createGoQuorumEnclave(
+              privacyUrl); // STEFAN: allow for TLS connection (use other createGoQuorumEnclave
+      // method)
+    }
+    final String key;
+    try {
+      key = Files.asCharSource(privacyPublicKeyFile, UTF_8).read();
+    } catch (final IOException e) {
+      throw new ParameterException(this.commandLine, e.getMessage());
+    }
+    if (key.length() != 44) {
+      throw new IllegalArgumentException(
+          "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
+    }
+    // throws exception if invalid base 64
+    Base64.getDecoder().decode(key);
+    GoQuorumPrivacyParameters.enclaveKey = key;
   }
 
   private NetworkName getNetwork() {
@@ -1913,7 +1952,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
       return Optional.of(
           QuorumPermissioningConfiguration.enabled(qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK)));
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new IllegalStateException("Error reading GoQuorum permissioning options", e);
     }
   }
