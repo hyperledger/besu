@@ -1144,6 +1144,19 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void callingWithValidBootnodeButDiscoveryDisabledMustDisplayWarning() {
+    parseCommand(
+        "--bootnodes",
+        "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304",
+        "--discovery-enabled",
+        "false");
+    assertThat(commandOutput.toString()).isEmpty();
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger, atLeast(1)).warn("Discovery disabled: bootnodes will be ignored.");
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void callingWithInvalidBootnodeMustDisplayError() {
     parseCommand("--bootnodes", "invalid_enode_url");
     assertThat(commandOutput.toString()).isEmpty();
