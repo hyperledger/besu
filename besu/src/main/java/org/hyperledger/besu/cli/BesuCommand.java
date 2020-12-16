@@ -1526,7 +1526,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               privacyTlsKnownEnclaveFile);
     } else {
       GoQuorumPrivacyParameters.goQuorumEnclave = enclaveFactory.createGoQuorumEnclave(privacyUrl);
-      // method)
     }
     final String key;
     try {
