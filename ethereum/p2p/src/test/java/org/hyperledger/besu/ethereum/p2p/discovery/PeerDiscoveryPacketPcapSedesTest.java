@@ -129,7 +129,7 @@ public class PeerDiscoveryPacketPcapSedesTest {
   public void testUDPFindNeighborsSerializeDeserialize() {
     final byte[] data = Hex.decode(findNeighborsHexData);
     final Packet packet = Packet.decode(Buffer.buffer(data));
-    final Instant timestamp = Instant.now();
+    final Instant timestamp = Instant.ofEpochSecond(1608127678L);
     assertThat(packet.getType()).isNotNull();
     assertThat(packet.getNodeId()).isNotNull();
     assertThat(packet.getNodeId().toArray()).hasSize(64);
