@@ -748,7 +748,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--color-enabled"},
       description =
-          "Force color output to be enabled/disabled (default: colorized only if printing to console")
+          "Force color output to be enabled/disabled (default: colorized only if printing to console)")
   private static Boolean colorEnabled = null;
 
   @Option(
