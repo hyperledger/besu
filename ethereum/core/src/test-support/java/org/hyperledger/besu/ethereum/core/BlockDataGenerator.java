@@ -303,8 +303,8 @@ public class BlockDataGenerator {
     }
     final List<Transaction> defaultTxs = new ArrayList<>();
     if (options.hasTransactions()) {
-      defaultTxs.add(transaction());
-      defaultTxs.add(transaction());
+      defaultTxs.add(transaction(options.getTransactionTypes()));
+      defaultTxs.add(transaction(options.getTransactionTypes()));
     }
 
     return new BlockBody(options.getTransactions(defaultTxs), ommers);
@@ -314,12 +314,28 @@ public class BlockDataGenerator {
     return header(positiveLong(), body(BlockOptions.create().hasOmmers(false)));
   }
 
-  public Transaction transaction(final Bytes payload) {
-    return transaction(transactionType(), payload, address());
+  public TransactionType transactionType() {
+    return transactionType(TransactionType.values());
+  }
+
+  public TransactionType transactionType(final TransactionType... transactionTypes) {
+    return transactionTypes[random.nextInt(transactionTypes.length)];
   }
 
   public Transaction transaction() {
     return transaction(transactionType());
+  }
+
+  public Transaction transaction(final TransactionType... transactionTypes) {
+    return transaction(transactionType(transactionTypes));
+  }
+
+  public Transaction transaction(final TransactionType transactionType) {
+    return transaction(transactionType, bytes32(), address());
+  }
+
+  public Transaction transaction(final Bytes payload) {
+    return transaction(transactionType(), payload, address());
   }
 
   public Transaction transaction(
@@ -335,15 +351,6 @@ public class BlockDataGenerator {
                 "Developer Error. No random transaction generator defined for %s",
                 transactionType));
     }
-  }
-
-  public TransactionType transactionType() {
-    final TransactionType[] allTransactionTypes = TransactionType.values();
-    return allTransactionTypes[random.nextInt(allTransactionTypes.length)];
-  }
-
-  public Transaction transaction(final TransactionType transactionType) {
-    return transaction(transactionType, bytes32(), address());
   }
 
   private Transaction eip1559Transaction(final Bytes payload, final Address to) {
@@ -534,6 +541,7 @@ public class BlockDataGenerator {
     private Optional<Long> timestamp = Optional.empty();
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
+    private TransactionType[] transactionTypes = TransactionType.values();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -541,6 +549,10 @@ public class BlockDataGenerator {
 
     public List<Transaction> getTransactions(final List<Transaction> defaultValue) {
       return transactions.isEmpty() ? defaultValue : transactions;
+    }
+
+    public TransactionType[] getTransactionTypes() {
+      return transactionTypes;
     }
 
     public List<BlockHeader> getOmmers(final List<BlockHeader> defaultValue) {
@@ -656,6 +668,11 @@ public class BlockDataGenerator {
 
     public BlockOptions hasTransactions(final boolean hasTransactions) {
       this.hasTransactions = hasTransactions;
+      return this;
+    }
+
+    public BlockOptions transactionTypes(final TransactionType... transactionTypes) {
+      this.transactionTypes = transactionTypes;
       return this;
     }
 
