@@ -330,7 +330,7 @@ public class MessageFrame {
     this.warmedUpStorage = HashMultimap.create(accessListWarmStorage);
 
     // the warmed up addresses will always be a superset of the address keys in the warmed up
-    // storage so we can do the both warm ups in one pass
+    // storage so we can do both warm ups in one pass
     accessListWarmAddresses.parallelStream()
         .forEach(
             address -> {
