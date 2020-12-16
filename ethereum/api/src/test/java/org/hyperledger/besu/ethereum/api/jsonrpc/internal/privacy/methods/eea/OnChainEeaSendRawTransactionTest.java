@@ -57,7 +57,7 @@ public class OnChainEeaSendRawTransactionTest extends EeaSendRawTransactionTest 
         Optional.of(
             new PrivacyGroup(
                 "", PrivacyGroup.Type.ONCHAIN, "", "", Arrays.asList(ENCLAVE_PUBLIC_KEY)));
-    when(privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(any(), any(), any()))
+    when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
         .thenReturn(optionalPrivacyGroup);
     when(privacyController.createPrivacyMarkerTransaction(
             any(String.class), any(PrivateTransaction.class), any(Address.class)))
@@ -119,7 +119,7 @@ public class OnChainEeaSendRawTransactionTest extends EeaSendRawTransactionTest 
         new OnChainEeaSendRawTransaction(
             transactionPool, privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.retrieveOnChainPrivacyGroupWithToBeAddedMembers(any(), any(), any()))
+    when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
         .thenReturn(Optional.empty());
 
     final JsonRpcRequestContext request =

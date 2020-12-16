@@ -47,7 +47,7 @@ public interface PrivacyController {
 
   String deletePrivacyGroup(String privacyGroupId, String enclavePublicKey);
 
-  PrivacyGroup[] findPrivacyGroup(List<String> addresses, String enclavePublicKey);
+  PrivacyGroup[] findOffChainPrivacyGroupByMembers(List<String> addresses, String enclavePublicKey);
 
   Transaction createPrivacyMarkerTransaction(
       String privateTransactionLookupId, PrivateTransaction privateTransaction);
@@ -74,9 +74,13 @@ public interface PrivacyController {
   Optional<String> buildAndSendAddPayload(
       PrivateTransaction privateTransaction, Bytes32 privacyGroupId, String enclaveKey);
 
-  Optional<PrivacyGroup> retrieveOffChainPrivacyGroup(String toBase64String, String enclaveKey);
+  Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
+      String toBase64String, String enclaveKey);
 
-  List<PrivacyGroup> findOnChainPrivacyGroup(List<String> asList, String enclaveKey);
+  Optional<PrivacyGroup> findPrivacyGroupByGroupId(
+      final String privacyGroupId, final String enclaveKey);
+
+  List<PrivacyGroup> findOnChainPrivacyGroupByMembers(List<String> asList, String enclaveKey);
 
   Optional<Bytes> getContractCode(
       final String privacyGroupId,
@@ -84,7 +88,7 @@ public interface PrivacyController {
       final Hash blockHash,
       final String enclavePublicKey);
 
-  Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+  Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
       Bytes privacyGroupId, String enclavePublicKey, final PrivateTransaction privateTransaction);
 
   List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);

@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -298,6 +299,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
+    if (localNode.isReady()
+        && localNode.getPeer() != null
+        && localNode.getPeer().getEnodeURL() != null
+        && peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())) {
+      return false;
+    }
     final boolean wasAdded = maintainedPeers.add(peer);
     peerDiscoveryAgent.bond(peer);
     rlpxAgent.connect(peer);
@@ -439,6 +446,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private boolean randomPeerPriority;
 
     private MetricsSystem metricsSystem;
+    private StorageProvider storageProvider;
 
     public P2PNetwork build() {
       validate();
@@ -477,13 +485,20 @@ public class DefaultP2PNetwork implements P2PNetwork {
           supportedCapabilities != null && supportedCapabilities.size() > 0,
           "Supported capabilities must be set and non-empty.");
       checkState(metricsSystem != null, "MetricsSystem must be set.");
+      checkState(storageProvider != null, "StorageProvider must be set.");
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
 
       return new VertxPeerDiscoveryAgent(
-          vertx, nodeKey, config.getDiscovery(), peerPermissions, natService, metricsSystem);
+          vertx,
+          nodeKey,
+          config.getDiscovery(),
+          peerPermissions,
+          natService,
+          metricsSystem,
+          storageProvider);
     }
 
     private RlpxAgent createRlpxAgent(
@@ -566,6 +581,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder maintainedPeers(final MaintainedPeers maintainedPeers) {
       checkNotNull(maintainedPeers);
       this.maintainedPeers = maintainedPeers;
+      return this;
+    }
+
+    public Builder storageProvider(final StorageProvider storageProvider) {
+      checkNotNull(storageProvider);
+      this.storageProvider = storageProvider;
       return this;
     }
   }

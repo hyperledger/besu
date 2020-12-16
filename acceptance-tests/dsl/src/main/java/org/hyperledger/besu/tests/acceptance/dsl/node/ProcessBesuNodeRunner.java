@@ -26,9 +26,11 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.tests.acceptance.dsl.StaticNodesUtils;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
 import java.nio.file.Files;
@@ -57,6 +59,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
   private final Map<String, Process> besuProcesses = new HashMap<>();
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
+  private boolean capturingConsole;
+  private final ByteArrayOutputStream consoleContents = new ByteArrayOutputStream();
+  private final PrintStream consoleOut = new PrintStream(consoleContents);
 
   ProcessBesuNodeRunner() {
     Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
@@ -350,6 +355,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       while (line != null) {
         // would be nice to pass up the log level of the incoming log line
         PROCESS_LOG.info(line);
+        if (capturingConsole) {
+          consoleOut.println(line);
+        }
         line = in.readLine();
       }
     } catch (final IOException e) {
@@ -440,5 +448,17 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       }
       LOG.info("Process exited with code {}", process.exitValue());
     }
+  }
+
+  @Override
+  public void startConsoleCapture() {
+    consoleContents.reset();
+    capturingConsole = true;
+  }
+
+  @Override
+  public String getConsoleContents() {
+    capturingConsole = false;
+    return consoleContents.toString(UTF_8);
   }
 }

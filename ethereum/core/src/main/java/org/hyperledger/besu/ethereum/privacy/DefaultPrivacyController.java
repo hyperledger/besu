@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.enclave.Enclave;
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -158,7 +159,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findPrivacyGroup(
+  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     return enclave.findPrivacyGroup(addresses);
   }
@@ -259,13 +260,25 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOffChainPrivacyGroup(
+  public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
+      final String privacyGroupId, final String enclaveKey) {
+    try {
+      return findOffChainPrivacyGroupByGroupId(privacyGroupId, enclaveKey);
+    } catch (final EnclaveClientException ex) {
+      // An exception is thrown if the offchain group cannot be found
+      LOG.debug("Offchain privacy group not found: {}", privacyGroupId);
+    }
+    return findOnChainPrivacyGroupByGroupId(Bytes.fromBase64String(privacyGroupId), enclaveKey);
+  }
+
+  @Override
+  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
       final String privacyGroupId, final String enclaveKey) {
     return Optional.ofNullable(enclave.retrievePrivacyGroup(privacyGroupId));
   }
 
   @Override
-  public List<PrivacyGroup> findOnChainPrivacyGroup(
+  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
       final List<String> addresses, final String enclavePublicKey) {
     final ArrayList<PrivacyGroup> privacyGroups = new ArrayList<>();
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
@@ -276,7 +289,8 @@ public class DefaultPrivacyController implements PrivacyController {
         .keySet()
         .forEach(
             c -> {
-              final Optional<PrivacyGroup> maybePrivacyGroup = retrieveOnChainPrivacyGroup(c);
+              final Optional<PrivacyGroup> maybePrivacyGroup =
+                  findOnChainPrivacyGroupByGroupId(c, enclavePublicKey);
               if (maybePrivacyGroup.isPresent()
                   && maybePrivacyGroup.get().getMembers().containsAll(addresses)) {
                 privacyGroups.add(maybePrivacyGroup.get());
@@ -285,7 +299,8 @@ public class DefaultPrivacyController implements PrivacyController {
     return privacyGroups;
   }
 
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroup(final Bytes privacyGroupId) {
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupByGroupId(
+      final Bytes privacyGroupId, final String enclaveKey) {
     // get the privateFor list from the management contract
     final Optional<TransactionProcessingResult> privateTransactionSimulatorResultOptional =
         privateTransactionSimulator.process(
@@ -312,7 +327,7 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Optional<PrivacyGroup> retrieveOnChainPrivacyGroupWithToBeAddedMembers(
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
       final String enclavePublicKey,
       final PrivateTransaction privateTransaction) {

@@ -14,21 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
@@ -46,8 +45,7 @@ public class MainnetTransactionValidator {
   private final Optional<BigInteger> chainId;
 
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
-  private final Optional<EIP1559> maybeEip1559;
-  private final AcceptedTransactionTypes acceptedTransactionTypes;
+  private final Set<TransactionType> acceptedTransactionTypes;
   private final boolean goQuorumCompatibilityMode;
 
   public MainnetTransactionValidator(
@@ -60,8 +58,7 @@ public class MainnetTransactionValidator {
         Optional.empty(),
         checkSignatureMalleability,
         chainId,
-        Optional.empty(),
-        AcceptedTransactionTypes.FRONTIER_TRANSACTIONS,
+        Set.of(TransactionType.FRONTIER),
         goQuorumCompatibilityMode);
   }
 
@@ -70,14 +67,12 @@ public class MainnetTransactionValidator {
       final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
-      final Optional<EIP1559> maybeEip1559,
-      final AcceptedTransactionTypes acceptedTransactionTypes,
+      final Set<TransactionType> acceptedTransactionTypes,
       final boolean goQuorumCompatibilityMode) {
     this.gasCalculator = gasCalculator;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
-    this.maybeEip1559 = maybeEip1559;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
     this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
   }
@@ -105,29 +100,22 @@ public class MainnetTransactionValidator {
           "gasPrice must be set to zero on a GoQuorum compatible network");
     }
 
-    if (ExperimentalEIPs.eip1559Enabled && maybeEip1559.isPresent()) {
-      final EIP1559 eip1559 = maybeEip1559.get();
-      if (!eip1559.isValidFormat(transaction, acceptedTransactionTypes)) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            String.format(
-                "transaction format is invalid, accepted transaction types are %s",
-                acceptedTransactionTypes.toString()));
-      }
-      if (transaction.isEIP1559Transaction()) {
-        final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
-        if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
-          return ValidationResult.invalid(
-              TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-              String.format("gasPrice is less than the current BaseFee"));
-        }
-      }
-    } else if (transaction.isEIP1559Transaction()) {
+    final TransactionType transactionType = transaction.getType();
+    if (!acceptedTransactionTypes.contains(transactionType)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           String.format(
-              "transaction format is invalid, accepted transaction types are %s",
-              acceptedTransactionTypes.toString()));
+              "Transaction type %s is invalid, accepted transaction types are %s",
+              transactionType, acceptedTransactionTypes.toString()));
+    }
+
+    if (transactionType.equals(TransactionType.EIP1559)) {
+      final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
+      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+            String.format("gasPrice is less than the current BaseFee"));
+      }
     }
 
     final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);

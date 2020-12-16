@@ -96,6 +96,8 @@ public class PrivacyRequestFactory {
 
   public static class GetCodeResponse extends Response<String> {}
 
+  public static class DebugGetStateRoot extends Response<Hash> {}
+
   public Request<?, PrivDistributeTransactionResponse> privDistributeTransaction(
       final String signedPrivateTransaction) {
     return new Request<>(
@@ -417,6 +419,15 @@ public class PrivacyRequestFactory {
         Arrays.asList(privacyGroupId, filterId),
         web3jService,
         EthLog.class);
+  }
+
+  public Request<?, DebugGetStateRoot> privDebugGetStateRoot(
+      final String privacyGroupId, final String blockParam) {
+    return new Request<>(
+        "priv_debugGetStateRoot",
+        Arrays.asList(privacyGroupId, blockParam),
+        web3jService,
+        DebugGetStateRoot.class);
   }
 
   public static class PrivxFindPrivacyGroupResponse extends Response<List<OnChainPrivacyGroup>> {
