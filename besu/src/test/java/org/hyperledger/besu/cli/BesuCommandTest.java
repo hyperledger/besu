@@ -1152,7 +1152,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "false");
     assertThat(commandOutput.toString()).isEmpty();
     verify(mockRunnerBuilder).build();
-    verify(mockLogger).warn("Discovery disabled: bootnodes will be ignored.");
+    verify(mockLogger, atLeast(1)).warn("Discovery disabled: bootnodes will be ignored.");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 

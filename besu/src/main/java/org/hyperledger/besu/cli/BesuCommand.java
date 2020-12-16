@@ -1538,7 +1538,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuControllerBuilder getControllerBuilder() {
     return controllerBuilderFactory
-        .fromEthNetworkConfig(ethNetworkConfig, genesisConfigOverrides)
+        .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
