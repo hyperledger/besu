@@ -77,8 +77,6 @@ public class TransactionRLPEncoder {
   }
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
-
     out.startList();
     out.writeLongScalar(transaction.getNonce());
     out.writeNull();

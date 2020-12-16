@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
@@ -315,54 +316,68 @@ public class BlockDataGenerator {
     return header(positiveLong(), body(BlockOptions.create().hasOmmers(false)));
   }
 
-  public Transaction transaction() {
-    return transaction(bytes32());
-  }
-
   public Transaction transaction(final Bytes payload) {
-    return transaction(payload, address());
+    return transaction(transactionType(), payload, address());
   }
 
-  public Transaction transaction(final Bytes payload, final Address to) {
+  public Transaction transaction() {
+    return transaction(transactionType());
+  }
+
+  public Transaction transaction(
+      final TransactionType transactionType, final Bytes payload, final Address to) {
+    switch (transactionType) {
+      case FRONTIER:
+        return frontierTransaction(payload, to);
+      case EIP1559:
+        return eip1559Transaction(payload, to);
+      default:
+        throw new RuntimeException(
+            String.format(
+                "Developer Error. No random transaction generator defined for %s",
+                transactionType));
+    }
+  }
+
+  public TransactionType transactionType() {
+    final TransactionType[] allTransactionTypes = TransactionType.values();
+    return allTransactionTypes[random.nextInt(allTransactionTypes.length)];
+  }
+
+  public Transaction transaction(final TransactionType transactionType) {
+    return transaction(transactionType, bytes32(), address());
+  }
+
+  private Transaction eip1559Transaction(final Bytes payload, final Address to) {
     return Transaction.builder()
-        // TODO support more EIP-2718 types as they're added
-        .type(TransactionType.FRONTIER)
+        .type(TransactionType.EIP1559)
         .nonce(positiveLong())
-        .gasPrice(Wei.wrap(bytes32()))
+        .gasPrice(Wei.of(positiveLong()))
+        .gasPremium(Wei.of(positiveLong()))
+        .feeCap(Wei.wrap(bytes32()))
         .gasLimit(positiveLong())
         .to(to)
-        .value(Wei.wrap(bytes32()))
+        .value(Wei.of(positiveLong()))
+        .payload(payload)
+        .chainId(BigInteger.ONE)
+        .signAndBuild(generateKeyPair());
+  }
+
+  private Transaction frontierTransaction(final Bytes payload, final Address to) {
+    return Transaction.builder()
+        .type(TransactionType.FRONTIER)
+        .nonce(positiveLong())
+        .gasPrice(Wei.of(positiveLong()))
+        .gasLimit(positiveLong())
+        .to(to)
+        .value(Wei.of(positiveLong()))
         .payload(payload)
         .chainId(BigInteger.ONE)
         .signAndBuild(generateKeyPair());
   }
 
   public Set<Transaction> transactions(final int n) {
-    Wei gasPrice = Wei.wrap(bytes32());
-    long gasLimit = positiveLong();
-    Address to = address();
-    Wei value = Wei.wrap(bytes32());
-    int chainId = 1;
-    Bytes32 payload = bytes32();
-    final SECP256K1.Signature signature = SECP256K1.sign(payload, generateKeyPair());
-
-    final Set<Transaction> txs =
-        IntStream.range(0, n)
-            .parallel()
-            .mapToObj(
-                v ->
-                    new Transaction(
-                        v,
-                        gasPrice,
-                        gasLimit,
-                        Optional.of(to),
-                        value,
-                        signature,
-                        payload,
-                        to,
-                        Optional.of(BigInteger.valueOf(chainId))))
-            .collect(toSet());
-    return txs;
+    return Stream.generate(this::transaction).parallel().limit(n).collect(toUnmodifiableSet());
   }
 
   public TransactionReceipt receipt(final long cumulativeGasUsed) {
