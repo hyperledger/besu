@@ -10,6 +10,7 @@
 ### Bug Fixes
 * Accept to use default port values if not in use. [#1673](https://github.com/hyperledger/besu/pull/1673)
 * Block Validation Errors should be at least INFO level not DEBUG or TRACE.  Bug [\#1568](https://github.com/hyperledger/besu/pull/1568) PR [\#1706](https://github.com/hyperledger/besu/pull/1706)
+* Fixed invalid and wrong trace data, especially when calling a precompiled contract [#1710](https://github.com/hyperledger/besu/pull/1710)
 
 #### Previously identified known issues
 
