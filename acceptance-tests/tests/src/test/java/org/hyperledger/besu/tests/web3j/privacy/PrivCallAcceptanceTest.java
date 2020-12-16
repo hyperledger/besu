@@ -29,6 +29,7 @@ import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
@@ -58,6 +59,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
     privacyCluster.start(minerNode);
   }
 
+  @Ignore
   @Test
   public void mustReturnCorrectValue() throws Exception {
 
@@ -96,6 +98,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
         .isEqualByComparingTo(BigInteger.valueOf(VALUE));
   }
 
+  @Ignore
   @Test
   public void shouldReturnEmptyResultWithNonExistingPrivacyGroup() throws IOException {
 
@@ -127,6 +130,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
     assertThat(result.getResult()).isEqualTo("0x");
   }
 
+  @Ignore
   @Test
   public void mustNotSucceedWithWronglyEncodedFunction() {
 
@@ -156,6 +160,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
         .withMessageContaining("Invalid params");
   }
 
+  @Ignore
   @Test
   public void mustReturn0xUsingInvalidContractAddress() throws IOException {
 
