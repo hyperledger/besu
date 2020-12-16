@@ -1538,7 +1538,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public BesuControllerBuilder getControllerBuilder() {
     return controllerBuilderFactory
-        .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
+        .fromEthNetworkConfig(ethNetworkConfig, genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
@@ -2261,7 +2261,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (bootNodes != null) {
       try {
-
+        if (!peerDiscoveryEnabled) {
+          logger.warn("Discovery disabled: bootnodes will be ignored.");
+        }
         final List<EnodeURL> listBootNodes =
             bootNodes.stream()
                 .filter(value -> !value.isEmpty())
