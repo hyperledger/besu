@@ -87,7 +87,6 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-jul:2.13.3'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
     dependency 'org.fusesource.jansi:jansi:1.11'
-    dependency 'de.codeshelf.consoleui:consoleui:0.0.13'
 
     dependency 'net.consensys.services:quorum-mainnet-launcher:1.0.0'
 

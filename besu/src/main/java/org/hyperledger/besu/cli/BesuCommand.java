@@ -1292,7 +1292,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             String.format("%s=%s", CONFIG_FILE_OPTION_NAME, file.getAbsolutePath()));
       } catch (LauncherException e) {
         logger.warn("Unable to run the launcher {}", e.getMessage());
-        commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
       }
     } else {
       commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
