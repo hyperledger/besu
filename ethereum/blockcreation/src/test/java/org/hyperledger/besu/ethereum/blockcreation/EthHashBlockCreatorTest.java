@@ -43,7 +43,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -95,7 +94,6 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
@@ -155,7 +153,6 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
@@ -210,7 +207,6 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =
@@ -281,7 +277,6 @@ public class EthHashBlockCreatorTest {
             TestClock.fixed(),
             metricsSystem,
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final EthHashBlockCreator blockCreator =

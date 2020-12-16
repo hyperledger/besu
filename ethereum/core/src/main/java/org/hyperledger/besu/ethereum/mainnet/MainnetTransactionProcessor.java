@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -379,7 +380,8 @@ public class MainnetTransactionProcessor {
 
       final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
       final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-      if (blockHeader.getBaseFee().isPresent() && transaction.isEIP1559Transaction()) {
+      if (blockHeader.getBaseFee().isPresent()
+          && transaction.getType().equals(TransactionType.EIP1559)) {
         final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
         if (transactionGasPrice.compareTo(baseFee) < 0) {
           return TransactionProcessingResult.failed(
@@ -392,7 +394,7 @@ public class MainnetTransactionProcessor {
         }
       }
       final CoinbaseFeePriceCalculator coinbaseCreditService =
-          transaction.isFrontierTransaction()
+          transaction.getType().equals(TransactionType.FRONTIER)
               ? CoinbaseFeePriceCalculator.frontier()
               : coinbaseFeePriceCalculator;
       final Wei coinbaseWeiDelta =

@@ -16,10 +16,10 @@ package org.hyperledger.besu.consensus.common.bft.events;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
-/** Static helper functions for producing and working with IbftEvent objects */
-public class IbftEvents {
-  public static IbftEvent fromMessage(final Message message) {
-    return new IbftReceivedMessageEvent(message);
+/** Static helper functions for producing and working with BftEvent objects */
+public class BftEvents {
+  public static BftEvent fromMessage(final Message message) {
+    return new BftReceivedMessageEvent(message);
   }
 
   public enum Type {

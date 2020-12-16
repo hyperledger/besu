@@ -54,8 +54,8 @@ public class IbftValidatorsValidationRule implements AttachedBlockHeaderValidati
           new TreeSet<>(ibftExtraData.getValidators());
 
       if (!Iterables.elementsEqual(ibftExtraData.getValidators(), sortedReportedValidators)) {
-        LOGGER.trace(
-            "Validators are not sorted in ascending order. Expected {} but got {}.",
+        LOGGER.info(
+            "Invalid block header: Validators are not sorted in ascending order. Expected {} but got {}.",
             sortedReportedValidators,
             ibftExtraData.getValidators());
         return false;
@@ -63,18 +63,20 @@ public class IbftValidatorsValidationRule implements AttachedBlockHeaderValidati
 
       final Collection<Address> storedValidators = validatorProvider.getValidators();
       if (!Iterables.elementsEqual(ibftExtraData.getValidators(), storedValidators)) {
-        LOGGER.trace(
-            "Incorrect validators. Expected {} but got {}.",
+        LOGGER.info(
+            "Invalid block header: Incorrect validators. Expected {} but got {}.",
             storedValidators,
             ibftExtraData.getValidators());
         return false;
       }
 
     } catch (final RLPException ex) {
-      LOGGER.trace("ExtraData field was unable to be deserialised into an IBFT Struct.", ex);
+      LOGGER.info(
+          "Invalid block header: ExtraData field was unable to be deserialised into an IBFT Struct.",
+          ex);
       return false;
     } catch (final IllegalArgumentException ex) {
-      LOGGER.trace("Failed to verify extra data", ex);
+      LOGGER.info("Invalid block header: Failed to verify extra data", ex);
       return false;
     }
 

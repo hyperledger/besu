@@ -104,7 +104,6 @@ public class IbftBlockCreatorTest {
                 TestClock.fixed(),
                 metricsSystem,
                 blockchain::getChainHeadHeader,
-                Optional.empty(),
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protContext,
             protocolSchedule,

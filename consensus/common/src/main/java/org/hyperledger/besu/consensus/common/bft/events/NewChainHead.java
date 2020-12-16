@@ -21,7 +21,7 @@ import java.util.Objects;
 import com.google.common.base.MoreObjects;
 
 /** Event indicating that new chain head has been received */
-public final class NewChainHead implements IbftEvent {
+public final class NewChainHead implements BftEvent {
   private final BlockHeader newChainHeadHeader;
 
   /**
@@ -34,8 +34,8 @@ public final class NewChainHead implements IbftEvent {
   }
 
   @Override
-  public IbftEvents.Type getType() {
-    return IbftEvents.Type.NEW_CHAIN_HEAD;
+  public BftEvents.Type getType() {
+    return BftEvents.Type.NEW_CHAIN_HEAD;
   }
 
   @Override
