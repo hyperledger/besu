@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -142,7 +143,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
-    if (transaction.isFrontierTransaction()
+    if (transaction.getType().equals(TransactionType.FRONTIER)
         && (!ExperimentalEIPs.eip1559Enabled || this.eip1559.isEmpty())) {
       final Wei transactionGasPrice = minTransactionGasPrice(transaction);
       if (transactionGasPrice.compareTo(minTransactionGasPrice) < 0) {

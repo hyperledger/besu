@@ -58,7 +58,7 @@ public class IbftCommitSealsValidationRule implements AttachedBlockHeaderValidat
     final List<Address> committersWithoutDuplicates = new ArrayList<>(new HashSet<>(committers));
 
     if (committers.size() != committersWithoutDuplicates.size()) {
-      LOGGER.trace("Duplicated seals found in header.");
+      LOGGER.info("Invalid block header: Duplicated seals found in header.");
       return false;
     }
 
@@ -70,16 +70,16 @@ public class IbftCommitSealsValidationRule implements AttachedBlockHeaderValidat
 
     final int minimumSealsRequired = calculateRequiredValidatorQuorum(storedValidators.size());
     if (committers.size() < minimumSealsRequired) {
-      LOGGER.trace(
-          "Insufficient committers to seal block. (Required {}, received {})",
+      LOGGER.info(
+          "Invalid block header: Insufficient committers to seal block. (Required {}, received {})",
           minimumSealsRequired,
           committers.size());
       return false;
     }
 
     if (!storedValidators.containsAll(committers)) {
-      LOGGER.trace(
-          "Not all committers are in the locally maintained validator list. validators={} committers={}",
+      LOGGER.info(
+          "Invalid block header: Not all committers are in the locally maintained validator list. validators={} committers={}",
           storedValidators,
           committers);
       return false;
