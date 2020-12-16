@@ -1525,9 +1525,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               privacyKeyStorePasswordFile,
               privacyTlsKnownEnclaveFile);
     } else {
-      GoQuorumPrivacyParameters.goQuorumEnclave =
-          enclaveFactory.createGoQuorumEnclave(
-              privacyUrl); // STEFAN: allow for TLS connection (use other createGoQuorumEnclave
+      GoQuorumPrivacyParameters.goQuorumEnclave = enclaveFactory.createGoQuorumEnclave(privacyUrl);
       // method)
     }
     final String key;
