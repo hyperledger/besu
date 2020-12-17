@@ -52,9 +52,12 @@ public class GenesisConfigurationFactory {
   }
 
   public Optional<String> createIbft2GenesisConfig(
-      final Collection<? extends RunnableNode> validators, final String genesisFile, final boolean useQbft) {
+      final Collection<? extends RunnableNode> validators,
+      final String genesisFile,
+      final boolean useQbft) {
     final String template = readGenesisFile(genesisFile);
-    return updateGenesisExtraData(validators, template, BftExtraData::createGenesisExtraDataString, useQbft);
+    return updateGenesisExtraData(
+        validators, template, BftExtraData::createGenesisExtraDataString, useQbft);
   }
 
   public Optional<String> createIbft2GenesisConfigFilterBootnode(
@@ -71,7 +74,8 @@ public class GenesisConfigurationFactory {
   public Optional<String> createPrivacyIbft2GenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/ibft/privacy-ibft.json");
-    return updateGenesisExtraData(validators, template, BftExtraData::createGenesisExtraDataString, false);
+    return updateGenesisExtraData(
+        validators, template, BftExtraData::createGenesisExtraDataString, false);
   }
 
   private Optional<String> updateGenesisExtraData(
@@ -82,9 +86,10 @@ public class GenesisConfigurationFactory {
     final List<Address> addresses =
         validators.stream().map(RunnableNode::getAddress).collect(toList());
     final String extraDataString = extraDataCreator.apply(addresses);
-    final String genesis = genesisTemplate
-        .replaceAll("%extraData%", extraDataString)
-        .replaceAll("%useQbft%", useQbft ? "true" : "false");
+    final String genesis =
+        genesisTemplate
+            .replaceAll("%extraData%", extraDataString)
+            .replaceAll("%useQbft%", useQbft ? "true" : "false");
     return Optional.of(genesis);
   }
 

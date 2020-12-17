@@ -75,7 +75,9 @@ public class RoundChangeMessageValidator {
                 msg.getSignedPayload().getPayload().getRoundIdentifier().getSequenceNumber(),
                 msg.getPreparedRoundMetadata().get().getPreparedRound()));
 
-    signedDataValidator.setBlock(block);
+    // TODO(tmm): need to insert the block to the validator prior to being able to verify subsequent
+    // msgs
+
     if (validatePrepares(
         signedDataValidator, msg.getPrepares(), msg.getPreparedRoundMetadata().get())) {
       return false;

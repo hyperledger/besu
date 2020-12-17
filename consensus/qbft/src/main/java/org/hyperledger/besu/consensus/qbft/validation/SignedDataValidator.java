@@ -21,7 +21,6 @@ import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
@@ -40,7 +39,6 @@ public class SignedDataValidator {
   private final ConsensusRoundIdentifier roundIdentifier;
 
   private Optional<SignedData<ProposalPayload>> proposal = Optional.empty();
-  private Block block;
 
   public SignedDataValidator(
       final Collection<Address> validators,
@@ -49,10 +47,6 @@ public class SignedDataValidator {
     this.validators = validators;
     this.expectedProposer = expectedProposer;
     this.roundIdentifier = roundIdentifier;
-  }
-
-  public void setBlock(final Block block) {
-    this.block = block;
   }
 
   public boolean validateProposal(final SignedData<ProposalPayload> msg) {

@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.qbft;
 
-import java.io.IOException;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+
+import java.io.IOException;
+
 import org.junit.Test;
 
 public class QbftMiningAcceptanceTest extends AcceptanceTestBase {
@@ -41,7 +43,6 @@ public class QbftMiningAcceptanceTest extends AcceptanceTestBase {
     minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
     cluster.verify(receiver.balanceEquals(3));
   }
-
 
   @Test
   public void shouldMineOnMultipleNodes() throws IOException {
@@ -68,5 +69,4 @@ public class QbftMiningAcceptanceTest extends AcceptanceTestBase {
     minerNode4.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 3));
     cluster.verify(receiver.balanceEquals(6));
   }
-
 }
