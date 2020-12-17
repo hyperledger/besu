@@ -84,6 +84,16 @@ public class InMemoryStorageProvider implements StorageProvider {
   }
 
   @Override
+  public WorldStateStorage createPrivateWorldStateStorage() {
+    return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public WorldStatePreimageStorage createPrivateWorldStatePreimageStorage() {
+    return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
   public KeyValueStorage getStorageBySegmentIdentifier(final SegmentIdentifier segment) {
     return new InMemoryKeyValueStorage();
   }

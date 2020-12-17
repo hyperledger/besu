@@ -38,6 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractBlockProcessor implements BlockProcessor {
+
   @FunctionalInterface
   public interface TransactionReceiptFactory {
 
@@ -86,17 +87,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
   }
 
-  private final MainnetTransactionProcessor transactionProcessor;
+  protected final MainnetTransactionProcessor transactionProcessor;
 
-  private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
+  protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
   final Wei blockReward;
 
-  private final boolean skipZeroBlockRewards;
+  protected final boolean skipZeroBlockRewards;
 
-  private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
+  protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
-  private final TransactionGasBudgetCalculator gasBudgetCalculator;
+  protected final TransactionGasBudgetCalculator gasBudgetCalculator;
 
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -125,16 +126,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
-      final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
-      if (!gasBudgetCalculator.hasBudget(
-          transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
-        LOG.info(
-            "Block processing error: transaction gas limit {} exceeds available block budget"
-                + " remaining {}. Block {} Transaction {}",
-            transaction.getGasLimit(),
-            remainingGasBudget,
-            blockHeader.getHash().toHexString(),
-            transaction.getHash().toHexString());
+      if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return AbstractBlockProcessor.Result.failed();
       }
 
@@ -155,6 +147,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               true,
               TransactionValidationParams.processingBlock(),
               privateMetadataUpdater);
+
       if (result.isInvalid()) {
         LOG.info(
             "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
@@ -181,6 +174,24 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     worldState.persist(blockHeader.getHash());
     return AbstractBlockProcessor.Result.successful(receipts);
+  }
+
+  protected boolean hasAvailableBlockBudget(
+      final BlockHeader blockHeader, final Transaction transaction, final long currentGasUsed) {
+    if (!gasBudgetCalculator.hasBudget(
+        transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
+      final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
+      LOG.info(
+          "Block processing error: transaction gas limit {} exceeds available block budget"
+              + " remaining {}. Block {} Transaction {}",
+          transaction.getGasLimit(),
+          remainingGasBudget,
+          blockHeader.getHash().toHexString(),
+          transaction.getHash().toHexString());
+      return false;
+    }
+
+    return true;
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {

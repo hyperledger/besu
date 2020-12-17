@@ -230,6 +230,11 @@ public abstract class BesuControllerBuilder {
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
     final WorldStateArchive worldStateArchive = createWorldStateArchive(worldStateStorage);
+    final WorldStateStorage privateWorldStateStorage =
+        storageProvider.createPrivateWorldStateStorage();
+    final WorldStateArchive privateWorldStateArchive =
+        createPrivateWorldStateArchive(privateWorldStateStorage);
+
     final ProtocolContext protocolContext =
         ProtocolContext.init(
             storageProvider,
@@ -239,6 +244,8 @@ public abstract class BesuControllerBuilder {
             metricsSystem,
             this::createConsensusContext,
             reorgLoggingThreshold);
+    protocolContext.setPrivateWorldStateArchive(privateWorldStateArchive);
+
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -433,6 +440,13 @@ public abstract class BesuControllerBuilder {
             storageProvider.createWorldStatePreimageStorage();
         return new DefaultWorldStateArchive(worldStateStorage, preimageStorage);
     }
+  }
+
+  public WorldStateArchive createPrivateWorldStateArchive(
+      final WorldStateStorage privateWorldStateStorage) {
+    final WorldStatePreimageStorage preimageStorage =
+        storageProvider.createPrivateWorldStatePreimageStorage();
+    return new DefaultWorldStateArchive(privateWorldStateStorage, preimageStorage);
   }
 
   private List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {

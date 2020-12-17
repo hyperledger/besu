@@ -48,7 +48,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
   }
 
   @Override
-  boolean rewardCoinbase(
+  protected boolean rewardCoinbase(
       final MutableWorldState worldState,
       final BlockHeader header,
       final List<BlockHeader> ommers,

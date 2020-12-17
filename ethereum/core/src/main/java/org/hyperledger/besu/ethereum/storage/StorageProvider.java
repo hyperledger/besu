@@ -33,5 +33,9 @@ public interface StorageProvider extends Closeable {
 
   KeyValueStorage getStorageBySegmentIdentifier(SegmentIdentifier segment);
 
+  WorldStateStorage createPrivateWorldStateStorage();
+
+  WorldStatePreimageStorage createPrivateWorldStatePreimageStorage();
+
   boolean isWorldStateIterable();
 }

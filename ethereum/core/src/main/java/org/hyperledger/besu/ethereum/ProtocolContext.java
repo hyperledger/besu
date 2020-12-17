@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 /**
@@ -34,6 +35,7 @@ import java.util.function.BiFunction;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
+  private Optional<WorldStateArchive> privateWorldStateArchive;
   private final Object consensusState;
 
   public ProtocolContext(
@@ -42,6 +44,18 @@ public class ProtocolContext {
       final Object consensusState) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
+    this.privateWorldStateArchive = Optional.empty();
+    this.consensusState = consensusState;
+  }
+
+  public ProtocolContext(
+      final MutableBlockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final WorldStateArchive privateWorldStateArchive,
+      final Object consensusState) {
+    this.blockchain = blockchain;
+    this.worldStateArchive = worldStateArchive;
+    this.privateWorldStateArchive = Optional.of(privateWorldStateArchive);
     this.consensusState = consensusState;
   }
 
@@ -76,6 +90,14 @@ public class ProtocolContext {
 
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
+  }
+
+  public Optional<WorldStateArchive> getPrivateWorldStateArchive() {
+    return privateWorldStateArchive;
+  }
+
+  public void setPrivateWorldStateArchive(final WorldStateArchive privateWorldStateArchive) {
+    this.privateWorldStateArchive = Optional.of(privateWorldStateArchive);
   }
 
   public <C> C getConsensusState(final Class<C> klass) {

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -32,6 +33,11 @@ import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -107,7 +113,7 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
+                new GoQuorumTransactionProcessor(
                     gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
@@ -139,12 +145,28 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .blockProcessorBuilder(MainnetBlockProcessor::new)
-        .blockValidatorBuilder(MainnetBlockValidator::new)
+        .blockProcessorBuilder(MainnetProtocolSpecs.blockProcessorBuilder())
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .name("Frontier");
+  }
+
+  public static BlockProcessorBuilder blockProcessorBuilder() {
+    if (GoQuorumOptions.goquorumCompatibilityMode) {
+      return GoQuorumBlockProcessor::new;
+    } else {
+      return MainnetBlockProcessor::new;
+    }
+  }
+
+  public static BlockValidatorBuilder blockValidatorBuilder() {
+    if (GoQuorumOptions.goquorumCompatibilityMode) {
+      return GoQuorumBlockValidator::new;
+    } else {
+      return MainnetBlockValidator::new;
+    }
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
@@ -252,7 +274,7 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
+                new GoQuorumTransactionProcessor(
                     gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
@@ -443,7 +465,7 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new MainnetTransactionProcessor(
+                new GoQuorumTransactionProcessor(
                     gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
