@@ -73,7 +73,8 @@ public class PeerDiscoveryAgentTest {
     assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
     assertThat(agent.getAdvertisedPeer().get().getNodeRecord().isPresent()).isTrue();
     assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getNodeId()).isNotNull();
-    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getIdentityScheme()).isNotNull();
+    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getIdentityScheme())
+        .isNotNull();
     assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getSignature()).isNotNull();
     assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getSeq()).isNotNull();
   }

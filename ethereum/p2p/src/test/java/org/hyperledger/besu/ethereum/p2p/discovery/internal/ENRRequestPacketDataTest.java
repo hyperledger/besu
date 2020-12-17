@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Instant;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+
+import java.time.Instant;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class ENRRequestPacketDataTest {

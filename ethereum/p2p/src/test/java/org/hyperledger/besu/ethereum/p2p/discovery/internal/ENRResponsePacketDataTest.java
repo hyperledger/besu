@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.ethereum.beacon.discovery.schema.EnrField;
@@ -23,21 +26,20 @@ import org.ethereum.beacon.discovery.schema.IdentitySchema;
 import org.ethereum.beacon.discovery.schema.IdentitySchemaInterpreter;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.junit.Test;
 
 public class ENRResponsePacketDataTest {
   @Test
   public void serializeDeserialize() {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
-    final NodeRecord nodeRecord = new NodeRecordFactory(IdentitySchemaInterpreter.V4).createFromValues(UInt64.ONE,
-        new EnrField(EnrField.ID, IdentitySchema.V4)
-    );
+    final NodeRecord nodeRecord =
+        new NodeRecordFactory(IdentitySchemaInterpreter.V4)
+            .createFromValues(UInt64.ONE, new EnrField(EnrField.ID, IdentitySchema.V4));
 
     final ENRResponsePacketData packet = ENRResponsePacketData.create(requestHash, nodeRecord);
     final Bytes serialized = RLP.encode(packet::writeTo);
-    final ENRResponsePacketData deserialized = ENRResponsePacketData.readFrom(RLP.input(serialized));
+    final ENRResponsePacketData deserialized =
+        ENRResponsePacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getRequestHash()).isEqualTo(requestHash);
     assertThat(deserialized.getEnr()).isEqualTo(nodeRecord);
@@ -46,9 +48,9 @@ public class ENRResponsePacketDataTest {
   @Test
   public void readFrom() {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
-    final NodeRecord nodeRecord = new NodeRecordFactory(IdentitySchemaInterpreter.V4).createFromValues(UInt64.ONE,
-        new EnrField(EnrField.ID, IdentitySchema.V4)
-    );
+    final NodeRecord nodeRecord =
+        new NodeRecordFactory(IdentitySchemaInterpreter.V4)
+            .createFromValues(UInt64.ONE, new EnrField(EnrField.ID, IdentitySchema.V4));
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -65,9 +67,9 @@ public class ENRResponsePacketDataTest {
   @Test
   public void readFrom_withExtraFields() {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
-    final NodeRecord nodeRecord = new NodeRecordFactory(IdentitySchemaInterpreter.V4).createFromValues(UInt64.ONE,
-        new EnrField(EnrField.ID, IdentitySchema.V4)
-    );
+    final NodeRecord nodeRecord =
+        new NodeRecordFactory(IdentitySchemaInterpreter.V4)
+            .createFromValues(UInt64.ONE, new EnrField(EnrField.ID, IdentitySchema.V4));
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
