@@ -335,8 +335,7 @@ public class IbftRoundTest {
             blockCaptor.capture(),
             eq(Optional.of(roundChangeArtifacts.getRoundChangeCertificate())));
 
-    final IbftExtraData proposedExtraData =
-        IbftExtraData.decode(blockCaptor.getValue().getHeader());
+    final BftExtraData proposedExtraData = BftExtraData.decode(blockCaptor.getValue().getHeader());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
