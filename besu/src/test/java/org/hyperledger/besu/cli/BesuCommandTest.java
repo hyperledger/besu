@@ -4007,7 +4007,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "ThisFileDoesNotExist");
     assertThat(commandErrorOutput.toString())
         .contains(
-            "--privacy-public-key-file must be set when goquorum-compatibility-enabled is set to true.");
+            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
   }
 
   @Test
@@ -4022,7 +4022,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "0");
     assertThat(commandErrorOutput.toString())
         .contains(
-            "--privacy-public-key-file must be set when goquorum-compatibility-enabled is set to true.");
+            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
   }
 
   @Test
