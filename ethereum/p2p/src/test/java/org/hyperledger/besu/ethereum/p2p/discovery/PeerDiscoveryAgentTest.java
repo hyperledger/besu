@@ -68,6 +68,17 @@ public class PeerDiscoveryAgentTest {
   }
 
   @Test
+  public void testNodeRecordCreated() {
+    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
+    assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
+    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().isPresent()).isTrue();
+    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getNodeId()).isNotNull();
+    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getIdentityScheme()).isNotNull();
+    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getSignature()).isNotNull();
+    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getSeq()).isNotNull();
+  }
+
+  @Test
   public void neighborsPacketFromUnbondedPeerIsDropped() {
     // Start an agent with no bootstrap peers.
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());

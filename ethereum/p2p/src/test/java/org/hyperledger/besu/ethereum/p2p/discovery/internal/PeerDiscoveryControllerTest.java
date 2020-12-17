@@ -1283,6 +1283,67 @@ public class PeerDiscoveryControllerTest {
     verify(controller, never()).dropPeer(any());
   }
 
+  @Test
+  public void shouldRespondToENRRequest() {
+    final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
+
+    // Mock the creation of the PING packet to control hash for PONG.
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final PingPacketData pingPacketData =
+        PingPacketData.create(localPeer.getEndpoint(), peers.get(0).getEndpoint(), UInt64.ONE);
+    final Packet pingPacket = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
+
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller =
+        getControllerBuilder()
+            .peers(peers.get(0))
+            .outboundMessageHandler(outboundMessageHandler)
+            .build();
+    mockPingPacketCreation(pingPacket);
+    controller.start();
+    verify(outboundMessageHandler, times(1)).send(any(), matchPacketOfType(PacketType.PING));
+
+    final Packet pongPacket =
+        MockPacketDataFactory.mockPongPacket(peers.get(0), pingPacket.getHash());
+    controller.onMessage(pongPacket, peers.get(0));
+    assertThat(controller.streamDiscoveredPeers())
+        .filteredOn(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
+        .contains(peers.get(0));
+
+    final ENRRequestPacketData enrRequestPacketData = ENRRequestPacketData.create();
+    final Packet enrRequestPacket =
+        Packet.create(PacketType.ENR_REQUEST, enrRequestPacketData, nodeKeys.get(0));
+    controller.onMessage(enrRequestPacket, peers.get(0));
+    verify(outboundMessageHandler, times(1))
+        .send(any(), matchPacketOfType(PacketType.FIND_NEIGHBORS));
+    verify(outboundMessageHandler, times(1))
+        .send(any(), matchPacketOfType(PacketType.ENR_RESPONSE));
+  }
+
+  @Test
+  public void shouldNotRespondToENRRequestForNonBondedPeer() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller =
+        getControllerBuilder()
+            .peers(peers.get(0))
+            .outboundMessageHandler(outboundMessageHandler)
+            .build();
+
+    final ENRRequestPacketData enrRequestPacketData = ENRRequestPacketData.create();
+    final Packet packet =
+        Packet.create(PacketType.ENR_REQUEST, enrRequestPacketData, nodeKeys.get(0));
+
+    controller.onMessage(packet, peers.get(0));
+
+    assertThat(controller.streamDiscoveredPeers())
+        .filteredOn(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)
+        .hasSize(0);
+    verify(outboundMessageHandler, times(0))
+        .send(eq(peers.get(0)), matchPacketOfType(PacketType.ENR_REQUEST));
+  }
+
   private static Packet mockPingPacket(final DiscoveryPeer from, final DiscoveryPeer to) {
     final Packet packet = mock(Packet.class);
 
