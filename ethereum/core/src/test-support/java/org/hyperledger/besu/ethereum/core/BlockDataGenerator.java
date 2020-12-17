@@ -314,11 +314,11 @@ public class BlockDataGenerator {
     return header(positiveLong(), body(BlockOptions.create().hasOmmers(false)));
   }
 
-  public TransactionType transactionType() {
+  private TransactionType transactionType() {
     return transactionType(TransactionType.values());
   }
 
-  public TransactionType transactionType(final TransactionType... transactionTypes) {
+  private TransactionType transactionType(final TransactionType... transactionTypes) {
     return transactionTypes[random.nextInt(transactionTypes.length)];
   }
 
