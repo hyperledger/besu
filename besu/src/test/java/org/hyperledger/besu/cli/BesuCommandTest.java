@@ -868,7 +868,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void dataDirOptionMustBeUsed() throws Exception {
+  public void dataDirOptionMustBeUsed() {
     final Path path = Paths.get(".");
 
     parseCommand("--data-path", path.toString());
@@ -913,7 +913,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEmpty();
     assertThat(config.getDnsDiscoveryUrl()).isNull();
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(3141592));
@@ -929,14 +929,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1));
   }
 
   @Test
-  public void testGenesisPathGoerliEthConfig() throws Exception {
+  public void testGenesisPathGoerliEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
@@ -945,14 +945,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(GOERLI_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(GOERLI_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(5));
   }
 
   @Test
-  public void testGenesisPathRinkebyEthConfig() throws Exception {
+  public void testGenesisPathRinkebyEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
@@ -961,7 +961,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
@@ -1517,7 +1517,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void dnsEnabledOptionIsParsedCorrectly() {
-    TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
+    final TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
 
     assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
     assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
@@ -1525,7 +1525,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void dnsUpdateEnabledOptionIsParsedCorrectly() {
-    TestBesuCommand besuCommand =
+    final TestBesuCommand besuCommand =
         parseCommand("--Xdns-enabled", "true", "--Xdns-update-enabled", "true");
 
     assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
@@ -3987,8 +3987,42 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--genesis-file",
         genesisFile.toString(),
         "--min-gas-price",
-        "0");
+        "0",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH);
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsIfEnclaveKeyFileDoesNotExist() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0",
+        "--privacy-public-key-file",
+        "ThisFileDoesNotExist");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsIfEnclaveKeyFileIsNotSet() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
   }
 
   @Test
