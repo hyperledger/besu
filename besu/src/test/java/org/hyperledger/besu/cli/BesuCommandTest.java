@@ -4004,7 +4004,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--min-gas-price",
         "0",
         "--privacy-public-key-file",
-        "ThisDileDoesNotExist");
+        "ThisFileDoesNotExist");
     assertThat(commandErrorOutput.toString())
         .contains(
             "--privacy-public-key-file must be set when goquorum-compatibility-enabled is set to true.");

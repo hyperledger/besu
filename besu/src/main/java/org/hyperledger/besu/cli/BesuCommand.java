@@ -84,6 +84,7 @@ import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -1516,24 +1517,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void configureGoQuorumPrivacy() {
 
     GoQuorumPrivacyParameters.isEnabled = true;
+
+    GoQuorumPrivacyParameters.goQuorumEnclave = createGoQuorumEnclave();
+
+    GoQuorumPrivacyParameters.enclaveKey = readEnclaveKey();
+  }
+
+  private GoQuorumEnclave createGoQuorumEnclave() {
     final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
     if (privacyKeyStoreFile != null) {
-      GoQuorumPrivacyParameters.goQuorumEnclave =
-          enclaveFactory.createGoQuorumEnclave(
-              privacyUrl,
-              privacyKeyStoreFile,
-              privacyKeyStorePasswordFile,
-              privacyTlsKnownEnclaveFile);
+      return enclaveFactory.createGoQuorumEnclave(
+          privacyUrl, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyTlsKnownEnclaveFile);
     } else {
-      GoQuorumPrivacyParameters.goQuorumEnclave = enclaveFactory.createGoQuorumEnclave(privacyUrl);
+      return enclaveFactory.createGoQuorumEnclave(privacyUrl);
     }
+  }
+
+  private String readEnclaveKey() {
     final String key;
     try {
       key = Files.asCharSource(privacyPublicKeyFile, UTF_8).read();
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine,
-          "--privacy-public-key-file must be set when goquorum-compatibility-enabled is set to true.",
+          "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.",
           e);
     }
     if (key.length() != 44) {
@@ -1542,7 +1549,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     // throws exception if invalid base 64
     Base64.getDecoder().decode(key);
-    GoQuorumPrivacyParameters.enclaveKey = key;
+
+    return key;
   }
 
   private NetworkName getNetwork() {
