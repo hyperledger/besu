@@ -261,7 +261,7 @@ public class PrivacyReorgTest {
         gen.block(getBlockOptionsNoTransaction(blockchain.getGenesisBlock(), firstBlockStateRoot));
 
     final String secondBlockStateRoot =
-        "0xfb23c0865f7e107a9c384cd7458a70ec633721ef51a7d94df0b5a3ecc6c01aac";
+        "0x7e887f91d2a6205f4a643701aba022c2db0bac5ab235102ab7477edd7a8a4317";
     final Block secondBlock =
         gen.block(
             getBlockOptionsWithTransaction(
@@ -288,7 +288,7 @@ public class PrivacyReorgTest {
             .plus(blockchain.getBlockByNumber(2).get().getHeader().getDifficulty());
 
     final String forkBlockStateRoot =
-        "0xc7da6cf8512ffdcda7e08fc0997f667c0c9bdb79f0aa4d47661ead860390162c";
+        "0x486b886bde6472e8d706f8eb4fb6378ebbdceb4848a5a8d69a726575b22e41b6";
     final Block forkBlock =
         gen.block(
             getBlockOptionsNoTransactionWithDifficulty(
