@@ -14,6 +14,68 @@
  */
 package org.hyperledger.besu.cli;
 
+import com.google.common.collect.Lists;
+import com.google.common.io.Resources;
+import io.vertx.core.json.JsonObject;
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.toml.Toml;
+import org.apache.tuweni.toml.TomlParseResult;
+import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
+import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
+import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.metrics.StandardMetricCategory;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.util.number.Fraction;
+import org.hyperledger.besu.util.number.Percentage;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import picocli.CommandLine;
+
+import java.io.File;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,69 +106,6 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
-import org.hyperledger.besu.BesuInfo;
-import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
-import org.hyperledger.besu.metrics.StandardMetricCategory;
-import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.util.number.Fraction;
-import org.hyperledger.besu.util.number.Percentage;
-
-import java.io.File;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import com.google.common.collect.Lists;
-import com.google.common.io.Resources;
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.text.StringEscapeUtils;
-import org.apache.logging.log4j.Level;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.toml.Toml;
-import org.apache.tuweni.toml.TomlParseResult;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import picocli.CommandLine;
 
 public class BesuCommandTest extends CommandTestAbstract {
 
@@ -868,7 +867,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void dataDirOptionMustBeUsed() throws Exception {
+  public void dataDirOptionMustBeUsed() {
     final Path path = Paths.get(".");
 
     parseCommand("--data-path", path.toString());
@@ -913,7 +912,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEmpty();
     assertThat(config.getDnsDiscoveryUrl()).isNull();
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(3141592));
@@ -929,14 +928,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1));
   }
 
   @Test
-  public void testGenesisPathGoerliEthConfig() throws Exception {
+  public void testGenesisPathGoerliEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
@@ -945,14 +944,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(GOERLI_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(GOERLI_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(5));
   }
 
   @Test
-  public void testGenesisPathRinkebyEthConfig() throws Exception {
+  public void testGenesisPathRinkebyEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
@@ -961,7 +960,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
@@ -1140,6 +1139,19 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--bootnodes",
         "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304");
     assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void callingWithValidBootnodeButDiscoveryDisabledMustDisplayWarning() {
+    parseCommand(
+        "--bootnodes",
+        "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304",
+        "--discovery-enabled",
+        "false");
+    assertThat(commandOutput.toString()).isEmpty();
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger, atLeast(1)).warn("Discovery disabled: bootnodes will be ignored.");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -1504,7 +1516,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void dnsEnabledOptionIsParsedCorrectly() {
-    TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
+    final TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
 
     assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
     assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
@@ -1512,7 +1524,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void dnsUpdateEnabledOptionIsParsedCorrectly() {
-    TestBesuCommand besuCommand =
+    final TestBesuCommand besuCommand =
         parseCommand("--Xdns-enabled", "true", "--Xdns-update-enabled", "true");
 
     assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
@@ -3974,8 +3986,42 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--genesis-file",
         genesisFile.toString(),
         "--min-gas-price",
-        "0");
+        "0",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH);
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsIfEnclaveKeyFileDoesNotExist() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0",
+        "--privacy-public-key-file",
+        "ThisFileDoesNotExist");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsIfEnclaveKeyFileIsNotSet() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
   }
 
   @Test

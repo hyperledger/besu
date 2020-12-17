@@ -18,6 +18,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -80,6 +81,7 @@ import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -93,6 +95,7 @@ import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -165,6 +168,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -747,7 +751,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--color-enabled"},
       description =
-          "Force color output to be enabled/disabled (default: colorized only if printing to console")
+          "Force color output to be enabled/disabled (default: colorized only if printing to console)")
   private static Boolean colorEnabled = null;
 
   @Option(
@@ -1501,8 +1505,51 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
 
+    if (isGoQuorumCompatibilityMode) {
+      configureGoQuorumPrivacy();
+    }
+
     logger.info("Security Module: {}", securityModuleName);
     return this;
+  }
+
+  private void configureGoQuorumPrivacy() {
+
+    GoQuorumPrivacyParameters.isEnabled = true;
+
+    GoQuorumPrivacyParameters.goQuorumEnclave = createGoQuorumEnclave();
+
+    GoQuorumPrivacyParameters.enclaveKey = readEnclaveKey();
+  }
+
+  private GoQuorumEnclave createGoQuorumEnclave() {
+    final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
+    if (privacyKeyStoreFile != null) {
+      return enclaveFactory.createGoQuorumEnclave(
+          privacyUrl, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyTlsKnownEnclaveFile);
+    } else {
+      return enclaveFactory.createGoQuorumEnclave(privacyUrl);
+    }
+  }
+
+  private String readEnclaveKey() {
+    final String key;
+    try {
+      key = Files.asCharSource(privacyPublicKeyFile, UTF_8).read();
+    } catch (final Exception e) {
+      throw new ParameterException(
+          this.commandLine,
+          "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.",
+          e);
+    }
+    if (key.length() != 44) {
+      throw new IllegalArgumentException(
+          "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
+    }
+    // throws exception if invalid base 64
+    Base64.getDecoder().decode(key);
+
+    return key;
   }
 
   private NetworkName getNetwork() {
@@ -2259,8 +2306,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (bootNodes != null) {
+      if (!peerDiscoveryEnabled) {
+        logger.warn("Discovery disabled: bootnodes will be ignored.");
+      }
       try {
-
         final List<EnodeURL> listBootNodes =
             bootNodes.stream()
                 .filter(value -> !value.isEmpty())
