@@ -153,19 +153,19 @@ public abstract class MainnetProtocolSpecs {
         .name("Frontier");
   }
 
-  public static BlockProcessorBuilder blockProcessorBuilder() {
-    if (GoQuorumOptions.goquorumCompatibilityMode) {
-      return GoQuorumBlockProcessor::new;
-    } else {
-      return MainnetBlockProcessor::new;
-    }
-  }
-
   public static BlockValidatorBuilder blockValidatorBuilder() {
     if (GoQuorumOptions.goquorumCompatibilityMode) {
       return GoQuorumBlockValidator::new;
     } else {
       return MainnetBlockValidator::new;
+    }
+  }
+
+  public static BlockProcessorBuilder blockProcessorBuilder() {
+    if (GoQuorumOptions.goquorumCompatibilityMode) {
+      return GoQuorumBlockProcessor::new;
+    } else {
+      return MainnetBlockProcessor::new;
     }
   }
 

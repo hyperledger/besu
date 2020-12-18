@@ -17,18 +17,32 @@ package org.hyperledger.besu.ethereum.goquorum;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
-public class GoQuorumPrivateDatabase {
+import org.apache.tuweni.bytes.Bytes32;
 
-  // TODO-goquorum we don't want to do this in-memory (@see PrivateStateStorage)
-  private final Map<Hash, TransactionReceipt> privateReceipts = new HashMap<>();
+public interface GoQuorumPrivateStorage {
 
-  public void saveReceipts(final Map<Hash, TransactionReceipt> receipts) {
-    privateReceipts.putAll(receipts);
+  Optional<Hash> getPrivateStateRootHash(final Hash publicStateRootHash);
+
+  Optional<TransactionReceipt> getTransactionReceipt(Bytes32 blockHash, Bytes32 txHash);
+
+  // TODO-goquorum private  bloom filters
+
+  Updater updater();
+
+  interface Updater {
+
+    Updater putPrivateStateRootHashMapping(
+        final Hash publicStateRootHash, final Hash privateStateRootHash);
+
+    Updater putTransactionReceipt(
+        final Hash blockHash,
+        final Hash transactionHash,
+        final TransactionReceipt transactionReceipt);
+
+    void commit();
+
+    void rollback();
   }
-
-  // TODO-goquorum store private logs blooms
-
 }

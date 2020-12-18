@@ -35,9 +35,8 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
 
   private static final Logger LOG = getLogger();
 
-  // TODO-goquorum proper wiring of GoQuorumPrivateStateRootResolver
-  public static final GoQuorumPrivateStateRootResolver privateStateRootResolver =
-      new GoQuorumPrivateStateRootResolver();
+  // TODO-goquorum proper wiring of GoQuorumPrivateStorage
+  private final GoQuorumPrivateStorage goQuorumPrivateStorage;
 
   public GoQuorumBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
@@ -50,6 +49,8 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
       throw new IllegalStateException(
           "GoQuorumBlockValidator requires an instance of GoQuorumBlockProcessor");
     }
+
+    goQuorumPrivateStorage = GoQuorumKeyValueStorage.INSTANCE;
   }
 
   @Override
@@ -66,7 +67,9 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
   private MutableWorldState getPrivateWorldState(
       final ProtocolContext context, final Hash publicWorldStateRootHash) {
     final Hash privateStateRootHash =
-        privateStateRootResolver.getFromPublicStateRootHash(publicWorldStateRootHash);
+        goQuorumPrivateStorage
+            .getPrivateStateRootHash(publicWorldStateRootHash)
+            .orElse(Hash.EMPTY_TRIE_HASH);
 
     final Optional<MutableWorldState> maybePrivateWorldState =
         context.getPrivateWorldStateArchive().flatMap(p -> p.getMutable(privateStateRootHash));

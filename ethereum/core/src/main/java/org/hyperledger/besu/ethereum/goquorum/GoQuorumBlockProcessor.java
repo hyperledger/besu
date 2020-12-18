@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -36,9 +35,7 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,9 +45,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
   private static final Logger LOG = LogManager.getLogger();
 
   // TODO-goquorum proper wiring
-  private final GoQuorumPrivateDatabase privateDatabase = new GoQuorumPrivateDatabase();
-
-  // TODO-goquorum proper wiring of GoQuorumPrivateStateRootResolver
+  private final GoQuorumPrivateStorage goQuorumPrivateStorage;
 
   public GoQuorumBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -71,6 +66,8 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       throw new IllegalStateException(
           "GoQuorumBlockProcessor requires an instance of GoQuorumTransactionProcessor");
     }
+
+    goQuorumPrivateStorage = GoQuorumKeyValueStorage.INSTANCE;
   }
 
   @Override
@@ -84,8 +81,9 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
     final List<BlockHeader> ommers = block.getBody().getOmmers();
 
     final List<TransactionReceipt> publicTxReceipts = new ArrayList<>();
-    final Map<Hash, TransactionReceipt> privateTxReceipts = new HashMap<>();
     long currentGasUsed = 0;
+
+    final GoQuorumPrivateStorage.Updater privateStorageUpdater = goQuorumPrivateStorage.updater();
 
     // Begin processing individual tx
     for (final Transaction transaction : transactions) {
@@ -159,7 +157,8 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final TransactionReceipt privateTransactionReceipt =
           transactionReceiptFactory.create(
               transaction.getType(), result, privateWorldState, currentGasUsed);
-      privateTxReceipts.put(transaction.getHash(), privateTransactionReceipt);
+      privateStorageUpdater.putTransactionReceipt(
+          blockHeader.getHash(), transaction.getHash(), privateTransactionReceipt);
     }
     // End processing individual tx
 
@@ -171,10 +170,9 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
     worldState.persist(blockHeader.getHash());
     privateWorldState.persist(null);
 
-    privateDatabase.saveReceipts(privateTxReceipts);
-
-    GoQuorumBlockValidator.privateStateRootResolver.updatePrivateStateRootHash(
+    privateStorageUpdater.putPrivateStateRootHashMapping(
         worldState.rootHash(), privateWorldState.rootHash());
+    privateStorageUpdater.commit();
 
     return Result.successful(publicTxReceipts);
   }

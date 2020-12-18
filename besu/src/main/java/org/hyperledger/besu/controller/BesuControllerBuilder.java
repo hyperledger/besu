@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumKeyValueStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -225,6 +226,10 @@ public abstract class BesuControllerBuilder {
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
 
     prepForBuild();
+
+    // TODO-goquorum how can we take this to GoQuorumBlockValidator and GoQuorumBlockProcessor in a
+    // better way?
+    GoQuorumKeyValueStorage.INSTANCE = storageProvider.createGoQuorumPrivateStorage();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
