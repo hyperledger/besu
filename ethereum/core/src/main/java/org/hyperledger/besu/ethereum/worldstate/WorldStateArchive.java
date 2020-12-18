@@ -32,7 +32,7 @@ public interface WorldStateArchive {
 
   Optional<WorldState> get(final Hash rootHash, Hash blockHash);
 
-  boolean isWorldStateAvailable(final Hash rootHash);
+  boolean isWorldStateAvailable(final Hash rootHash, Hash blockHash);
 
   Optional<MutableWorldState> getMutable(final Hash rootHash, Hash blockHash);
 

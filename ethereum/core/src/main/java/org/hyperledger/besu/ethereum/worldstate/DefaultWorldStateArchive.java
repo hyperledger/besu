@@ -49,7 +49,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public boolean isWorldStateAvailable(final Hash rootHash) {
+  public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return worldStateStorage.isWorldStateAvailable(rootHash);
   }
 

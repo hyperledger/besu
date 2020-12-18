@@ -68,7 +68,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public boolean isWorldStateAvailable(final Hash rootHash) {
+  public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return layeredWorldStates.containsKey(rootHash)
         || persistedState.rootHash().equals(rootHash) /* || check disk storage */;
   }
