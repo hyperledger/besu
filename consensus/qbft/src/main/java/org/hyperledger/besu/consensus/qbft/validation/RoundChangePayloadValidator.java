@@ -36,19 +36,19 @@ public class RoundChangePayloadValidator {
     this.chainHeight = chainHeight;
   }
 
-  public boolean validateRoundChange(final SignedData<RoundChangePayload> msg) {
+  public boolean validateRoundChange(final SignedData<RoundChangePayload> payload) {
 
-    if (!validators.contains(msg.getAuthor())) {
+    if (!validators.contains(payload.getAuthor())) {
       LOG.info(
-          "Invalid RoundChange message, was not transmitted by a validator for the associated"
+          "Invalid RoundChange message: was not transmitted by a validator for the associated"
               + " round.");
       return false;
     }
 
-    final ConsensusRoundIdentifier targetRound = msg.getPayload().getRoundIdentifier();
+    final ConsensusRoundIdentifier targetRound = payload.getPayload().getRoundIdentifier();
 
     if (targetRound.getSequenceNumber() != chainHeight) {
-      LOG.info("Invalid RoundChange message, not valid for local chain height.");
+      LOG.info("Invalid RoundChange payload: not valid for local chain height.");
       return false;
     }
 

@@ -14,17 +14,22 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.allAuthorsBelongToValidatorList;
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.allMessagesTargetRound;
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasDuplicateAuthors;
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasSufficientEntries;
+
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,28 +39,34 @@ public class RoundChangeMessageValidator {
   private static final Logger LOG = LogManager.getLogger();
 
   private final RoundChangePayloadValidator roundChangePayloadValidator;
-  private final MessageValidatorForHeightFactory messageValidatorFactory;
-
-  private final long minimumPrepareMessages;
+  private final long quorumMessageCount;
+  private final long chainHeight;
+  private final Collection<Address> validators;
 
   public RoundChangeMessageValidator(
-      final MessageValidatorForHeightFactory messageValidatorFactory,
       final RoundChangePayloadValidator roundChangePayloadValidator,
-      final long minimumPrepareMessages) {
-    this.messageValidatorFactory = messageValidatorFactory;
+      final long quorumMessageCount,
+      final long chainHeight,
+      final Collection<Address> validators) {
     this.roundChangePayloadValidator = roundChangePayloadValidator;
-    this.minimumPrepareMessages = minimumPrepareMessages;
+    this.quorumMessageCount = quorumMessageCount;
+    this.chainHeight = chainHeight;
+    this.validators = validators;
   }
 
   public boolean validateRoundChange(final RoundChange msg) {
 
+    // Ensure msg is from a validator, is for current height, and is for a future round
     if (!roundChangePayloadValidator.validateRoundChange(msg.getSignedPayload())) {
-      LOG.info("Invalid RoundChange message, signed data did not validate correctly.");
+      LOG.info("Invalid RoundChange message: signed data did not validate correctly.");
       return false;
     }
 
     if (msg.getProposedBlock().isPresent()) {
       validateWithBlock(msg);
+    } else {
+      // if No block is specified, the roundmetadata must also be absent
+      return msg.getPreparedRoundMetadata().isEmpty();
     }
 
     return true;
@@ -64,52 +75,19 @@ public class RoundChangeMessageValidator {
   private boolean validateWithBlock(final RoundChange msg) {
     final Block block = msg.getProposedBlock().get();
 
-    if (!isPreparedRoundMetadataValid(
-        msg.getPreparedRoundMetadata(), block, msg.getRoundIdentifier().getRoundNumber())) {
-      return false;
-    }
-
-    final SignedDataValidator signedDataValidator =
-        messageValidatorFactory.createAt(
-            new ConsensusRoundIdentifier(
-                msg.getSignedPayload().getPayload().getRoundIdentifier().getSequenceNumber(),
-                msg.getPreparedRoundMetadata().get().getPreparedRound()));
-
-    // TODO(tmm): need to insert the block to the validator prior to being able to verify subsequent
-    // msgs
-
-    if (validatePrepares(
-        signedDataValidator, msg.getPrepares(), msg.getPreparedRoundMetadata().get())) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private boolean isPreparedRoundMetadataValid(
-      final Optional<PreparedRoundMetadata> preparedRoundMetadata,
-      final Block block,
-      final int msgRound) {
-    if (preparedRoundMetadata.isEmpty()) {
+    if (msg.getPreparedRoundMetadata().isEmpty()) {
       LOG.info(
-          "Invalid RoundChange message, block specified, but no corresponding prepared metadata");
-      return false;
+          "Invalid RoundChange message: Prepared block specified, but prepared metaadata absent");
     }
 
-    final PreparedRoundMetadata metadata = preparedRoundMetadata.get();
+    final PreparedRoundMetadata metadata = msg.getPreparedRoundMetadata().get();
 
     if (!metadata.getPreparedBlockHash().equals(block.getHash())) {
-      LOG.info("Invalid RoundChange message, Prepared metadata does not align with supplied block");
+      LOG.info("Invalid RoundChange message: Prepared metadata does not align with supplied block");
       return false;
     }
 
-    if (metadata.getPreparedRound() >= msgRound) {
-      LOG.info(
-          "Invalid RoundChange message, preparedRound ({}) is not less than msgRound ({})",
-          metadata.getPreparedRound(),
-          msgRound);
-      return false;
-    }
+    // NO NEED TO VERIFY PreparedRound is related to currentRound - its irrelevant.
 
     final BftExtraData extraData = BftExtraData.decode(block.getHeader());
     if (metadata.getPreparedRound() != extraData.getRound()) {
@@ -118,45 +96,51 @@ public class RoundChangeMessageValidator {
       return false;
     }
 
+    if (validatePrepares(metadata, chainHeight, msg.getPrepares())) {
+      return false;
+    }
+
     return true;
   }
 
+  // THIS IS DUPLICATED IN ProposalValidator - love to make it common?!!!!
   private boolean validatePrepares(
-      final SignedDataValidator signedDataValidator,
-      final List<SignedData<PreparePayload>> prepares,
-      final PreparedRoundMetadata preparedRoundMetadata) {
+      final PreparedRoundMetadata metaData,
+      final long currentHeight,
+      final List<SignedData<PreparePayload>> prepares) {
 
     if (hasDuplicateAuthors(prepares)) {
-      LOG.info("Invalid Roundchange message, Prepares list had multiple messages from same author");
+      LOG.info("Invalid Proposal message: multiple prepares from the same author.");
       return false;
     }
 
-    if (prepares.size() < minimumPrepareMessages) {
-      LOG.info("Invalid RoundChange message, insufficient Prepare payloads to justify block.");
+    if (!allAuthorsBelongToValidatorList(prepares, validators)) {
+      LOG.info("Invalid Proposal message: Not all prepares are from current validators");
       return false;
     }
 
-    for (final SignedData<PreparePayload> prepareMsg : prepares) {
-      if (!signedDataValidator.validatePrepare(prepareMsg)) {
-        LOG.info("Invalid RoundChange message, embedded Prepare message failed validation.");
-        return false;
-      }
+    if (!hasSufficientEntries(prepares, quorumMessageCount)) {
+      LOG.info(
+          "Invalid Proposal message: Insufficient prepare payloads for a none-round-0 proposal");
+      return false;
+    }
 
-      if (prepareMsg.getPayload().getRoundIdentifier().getRoundNumber()
-          != preparedRoundMetadata.getPreparedRound()) {
-        LOG.info(
-            "Invalid RoundChange message, embedded prepares did not have same round as prepared round");
-        return false;
-      }
+    final ConsensusRoundIdentifier preparedRoundIdentifier =
+        new ConsensusRoundIdentifier(currentHeight, metaData.getPreparedRound());
+
+    if (!allMessagesTargetRound(prepares, preparedRoundIdentifier)) {
+      LOG.info("Invalid Proposal message: Not all prepares target a the specified prepared-round.");
+      return false;
+    }
+
+    if (!prepares.stream()
+        .allMatch(p -> p.getPayload().getDigest().equals(metaData.getPreparedBlockHash()))) {
+      LOG.info(
+          "Invalid Proposal message: Not all prepares are for latest round change's prepared block hash");
+      return false;
     }
 
     return true;
-  }
-
-  private boolean hasDuplicateAuthors(final Collection<SignedData<PreparePayload>> payloads) {
-    final long distinctAuthorCount =
-        payloads.stream().map(SignedData::getAuthor).distinct().count();
-    return distinctAuthorCount != payloads.size();
   }
 
   @FunctionalInterface

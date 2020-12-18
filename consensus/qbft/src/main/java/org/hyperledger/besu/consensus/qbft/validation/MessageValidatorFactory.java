@@ -81,14 +81,11 @@ public class MessageValidatorFactory {
       final long chainHeight, final BlockHeader parentHeader) {
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
-    final long minimumPrepareMessages =
-        BftHelpers.prepareMessageCountForQuorum(
-            BftHelpers.calculateRequiredValidatorQuorum(validators.size()));
-
     return new RoundChangeMessageValidator(
-        (roundIdentifier) -> createSignedDataValidator(roundIdentifier, parentHeader),
         new RoundChangePayloadValidator(validators, chainHeight),
-        minimumPrepareMessages);
+        BftHelpers.calculateRequiredValidatorQuorum(validators.size()),
+        chainHeight,
+        validators);
   }
 
   public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
