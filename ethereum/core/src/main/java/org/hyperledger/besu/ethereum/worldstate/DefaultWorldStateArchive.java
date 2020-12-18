@@ -44,8 +44,8 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<WorldState> get(final Hash rootHash) {
-    return getMutable(rootHash).map(state -> state);
+  public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
+    return getMutable(rootHash, blockHash).map(state -> state);
   }
 
   @Override
@@ -54,7 +54,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(final Hash rootHash) {
+  public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
     if (!worldStateStorage.isWorldStateAvailable(rootHash)) {
       return Optional.empty();
     }
@@ -63,7 +63,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public MutableWorldState getMutable() {
-    return getMutable(EMPTY_ROOT_HASH).get();
+    return getMutable(EMPTY_ROOT_HASH, null).get();
   }
 
   @Override

@@ -125,7 +125,7 @@ public class BesuEventsImplTest {
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(mockWorldStateArchive.get(any())).thenReturn(Optional.of(mockWorldState));
+    when(mockWorldStateArchive.get(any(), any())).thenReturn(Optional.of(mockWorldState));
 
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
     syncState = new SyncState(blockchain, mockEthPeers);

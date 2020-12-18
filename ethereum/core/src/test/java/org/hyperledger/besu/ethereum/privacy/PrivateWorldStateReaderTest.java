@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.generatePrivateBlockMetadata;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -81,7 +82,7 @@ public class PrivateWorldStateReaderTest {
 
     when(privateStateRootResolver.resolveLastStateRoot(eq(privacyGroupBytes), eq(blockHash)))
         .thenReturn(stateRootHash);
-    when(privateWorldStateArchive.get(eq(stateRootHash))).thenReturn(Optional.empty());
+    when(privateWorldStateArchive.get(eq(stateRootHash), any())).thenReturn(Optional.empty());
 
     final Optional<Bytes> maybecontractCode =
         privateWorldStateReader.getContractCode(PRIVACY_GROUP_ID, blockHash, contractAddress);
@@ -96,7 +97,7 @@ public class PrivateWorldStateReaderTest {
 
     when(privateStateRootResolver.resolveLastStateRoot(eq(privacyGroupBytes), eq(blockHash)))
         .thenReturn(stateRootHash);
-    when(privateWorldStateArchive.get(eq(stateRootHash)))
+    when(privateWorldStateArchive.get(eq(stateRootHash), any()))
         .thenReturn(Optional.of(privateWorldState));
     when(privateWorldState.get(eq(contractAddress))).thenReturn(null);
 
@@ -113,7 +114,7 @@ public class PrivateWorldStateReaderTest {
 
     when(privateStateRootResolver.resolveLastStateRoot(eq(privacyGroupBytes), eq(blockHash)))
         .thenReturn(stateRootHash);
-    when(privateWorldStateArchive.get(eq(stateRootHash)))
+    when(privateWorldStateArchive.get(eq(stateRootHash), any()))
         .thenReturn(Optional.of(privateWorldState));
     when(privateWorldState.get(eq(contractAddress))).thenReturn(contractAccount);
     when(contractAccount.getCode()).thenReturn(null);
@@ -128,7 +129,7 @@ public class PrivateWorldStateReaderTest {
   public void existingAccountWithCodeReturnsExpectedBytes() {
     when(privateStateRootResolver.resolveLastStateRoot(eq(PRIVACY_GROUP_ID_BYTES), eq(blockHash)))
         .thenReturn(stateRootHash);
-    when(privateWorldStateArchive.get(eq(stateRootHash)))
+    when(privateWorldStateArchive.get(eq(stateRootHash), any()))
         .thenReturn(Optional.of(privateWorldState));
     when(privateWorldState.get(eq(contractAddress))).thenReturn(contractAccount);
     when(contractAccount.getCode()).thenReturn(contractCode);
