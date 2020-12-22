@@ -76,7 +76,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     this.root =
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
             ? NullNode.instance()
-            : new StoredNode<>(nodeFactory, rootHash);
+            : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
   }
 
   @Override
@@ -111,17 +111,25 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
     final CommitVisitor<V> commitVisitor = new CommitVisitor<>(nodeUpdater);
-    root.accept(commitVisitor);
+    root.accept(Bytes.EMPTY, commitVisitor);
     // Make sure root node was stored
     if (root.isDirty() && root.getRlpRef().size() < 32) {
-      nodeUpdater.store(root.getHash(), root.getRlpRef());
+      nodeUpdater.store(Bytes.EMPTY, root.getHash(), root.getRlpRef());
     }
     // Reset root so dirty nodes can be garbage collected
     final Bytes32 rootHash = root.getHash();
     this.root =
         rootHash.equals(EMPTY_TRIE_NODE_HASH)
             ? NullNode.instance()
-            : new StoredNode<>(nodeFactory, rootHash);
+            : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
+  }
+
+  public void acceptAtRoot(final NodeVisitor<V> visitor) {
+    root.accept(visitor);
+  }
+
+  public void acceptAtRoot(final PathNodeVisitor<V> visitor, final Bytes path) {
+    root.accept(visitor, path);
   }
 
   @Override
