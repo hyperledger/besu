@@ -27,7 +27,7 @@ public interface GoQuorumPrivateStorage {
 
   Optional<TransactionReceipt> getTransactionReceipt(Bytes32 blockHash, Bytes32 txHash);
 
-  // TODO-goquorum private  bloom filters
+  // TODO-goquorum private bloom filters
 
   Updater updater();
 

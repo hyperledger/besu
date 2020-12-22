@@ -30,6 +30,9 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class GoQuorumKeyValueStorage implements GoQuorumPrivateStorage {
 
+  // TODO-goquorum do we need to implement something like PrivateMetadataUpdater? (Stefan knows
+  // everything about it)
+
   public static GoQuorumPrivateStorage INSTANCE;
 
   private static final Bytes PRIVATE_STATEROOT_SUFFIX = Bytes.of("PRIVSTATEROOT".getBytes(UTF_8));

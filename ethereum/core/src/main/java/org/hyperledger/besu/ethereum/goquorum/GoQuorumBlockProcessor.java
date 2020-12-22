@@ -14,10 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.goquorum;
 
+import org.hyperledger.besu.enclave.GoQuorumEnclave;
+import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -32,19 +35,23 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  // TODO-goquorum proper wiring
+  // TODO-goquorum proper wiring instead of static references?
+  private final GoQuorumEnclave goQuorumEnclave;
   private final GoQuorumPrivateStorage goQuorumPrivateStorage;
 
   public GoQuorumBlockProcessor(
@@ -62,12 +69,8 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         skipZeroBlockRewards,
         gasBudgetCalculator);
 
-    if (!(transactionProcessor instanceof GoQuorumTransactionProcessor)) {
-      throw new IllegalStateException(
-          "GoQuorumBlockProcessor requires an instance of GoQuorumTransactionProcessor");
-    }
-
-    goQuorumPrivateStorage = GoQuorumKeyValueStorage.INSTANCE;
+    this.goQuorumEnclave = GoQuorumPrivacyParameters.goQuorumEnclave;
+    this.goQuorumPrivateStorage = GoQuorumKeyValueStorage.INSTANCE;
   }
 
   @Override
@@ -91,41 +94,54 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         return AbstractBlockProcessor.Result.failed();
       }
 
-      // TODO-goquorum can we reduce duplication??
+      final WorldUpdater effectiveWorldUpdater;
+      final Transaction effectiveTransaction;
 
-      final WorldUpdater worldStateUpdater = worldState.updater();
-      final WorldUpdater privateWorldStateUpdater = privateWorldState.updater();
+      final WorldUpdater publicWorldStateUpdater = worldState.updater();
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
-      final TransactionProcessingResult result;
       if (transaction.isGoQuorumPrivateTransaction()) {
-        result =
-            ((GoQuorumTransactionProcessor) transactionProcessor)
-                .processTransaction(
-                    blockchain,
-                    worldStateUpdater,
-                    privateWorldStateUpdater,
-                    blockHeader,
-                    transaction,
-                    miningBeneficiary,
-                    OperationTracer.NO_TRACING,
-                    blockHashLookup,
-                    TransactionValidationParams.processingBlock());
+        // GET DUAL STATE
+        effectiveWorldUpdater =
+            new DefaultMutablePrivateWorldStateUpdater(
+                publicWorldStateUpdater, privateWorldState.updater());
+
+        // TODO-goquorum we don't need the enclave key (after Tessera is updated)
+        final GoQuorumReceiveResponse receive =
+            goQuorumEnclave.receive(
+                transaction.getPayload().toBase64String(), GoQuorumPrivacyParameters.enclaveKey);
+        final Bytes privatePayload = Bytes.wrap(receive.getPayload());
+
+        effectiveTransaction =
+            new Transaction(
+                transaction.getNonce(),
+                transaction.getGasPrice(),
+                transaction.getGasLimit(),
+                transaction.getTo(),
+                transaction.getValue(),
+                transaction.getSignature(),
+                privatePayload,
+                transaction.getSender(),
+                transaction.getChainId(),
+                Optional.of(transaction.getV()));
       } else {
-        result =
-            transactionProcessor.processTransaction(
-                blockchain,
-                worldStateUpdater,
-                blockHeader,
-                transaction,
-                miningBeneficiary,
-                OperationTracer.NO_TRACING,
-                blockHashLookup,
-                true,
-                TransactionValidationParams.processingBlock());
+        effectiveWorldUpdater = worldState.updater();
+        effectiveTransaction = transaction;
       }
+
+      final TransactionProcessingResult result =
+          transactionProcessor.processTransaction(
+              blockchain,
+              effectiveWorldUpdater,
+              blockHeader,
+              effectiveTransaction,
+              miningBeneficiary,
+              OperationTracer.NO_TRACING,
+              blockHashLookup,
+              true,
+              TransactionValidationParams.processingBlock());
 
       if (result.isInvalid()) {
         LOG.info(
@@ -134,12 +150,17 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
             blockHeader.getHash().toHexString(),
             transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
+      } else {
+        // TODO-goquorum is there a better way of doing this??
+        publicWorldStateUpdater.getAccount(transaction.getSender()).getMutable().incrementNonce();
       }
 
-      worldStateUpdater.commit();
-      privateWorldStateUpdater.commit();
+      effectiveWorldUpdater.commit();
+      publicWorldStateUpdater.commit();
 
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
+
+      // TODO-goquorum we only replace the public receipt if the tx is private...
 
       // Only the logs are used for the
       final TransactionProcessingResult publicResult =
@@ -147,7 +168,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
               Collections.emptyList(),
               result.getEstimateGasUsedByTransaction(),
               result.getGasRemaining(),
-              result.getOutput(),
+              result.getOutput(), // TODO-goquorum do we need to remove the result?
               result.getValidationResult());
 
       final TransactionReceipt publicTransactionReceipt =

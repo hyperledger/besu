@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import java.util.Collection;
 import java.util.Optional;
 
+// TODO-goquorum add docs explaining this class
 public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
   private final WorldUpdater publicWorldUpdater;

@@ -150,20 +150,22 @@ public class MainnetTransactionValidator {
               transaction.getUpfrontCost(), senderBalance));
     }
 
-    if (transaction.getNonce() < senderNonce) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.NONCE_TOO_LOW,
-          String.format(
-              "transaction nonce %s below sender account nonce %s",
-              transaction.getNonce(), senderNonce));
-    }
+    if (!goQuorumCompatibilityMode) {
+      if (transaction.getNonce() < senderNonce) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.NONCE_TOO_LOW,
+            String.format(
+                "transaction nonce %s below sender account nonce %s",
+                transaction.getNonce(), senderNonce));
+      }
 
-    if (!validationParams.isAllowFutureNonce() && senderNonce != transaction.getNonce()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INCORRECT_NONCE,
-          String.format(
-              "transaction nonce %s does not match sender account nonce %s.",
-              transaction.getNonce(), senderNonce));
+      if (!validationParams.isAllowFutureNonce() && senderNonce != transaction.getNonce()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INCORRECT_NONCE,
+            String.format(
+                "transaction nonce %s does not match sender account nonce %s.",
+                transaction.getNonce(), senderNonce));
+      }
     }
 
     if (!isSenderAllowed(transaction, validationParams)) {

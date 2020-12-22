@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
@@ -113,7 +112,7 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new GoQuorumTransactionProcessor(
+                new MainnetTransactionProcessor(
                     gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
@@ -274,7 +273,7 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new GoQuorumTransactionProcessor(
+                new MainnetTransactionProcessor(
                     gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
@@ -465,7 +464,7 @@ public abstract class MainnetProtocolSpecs {
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
-                new GoQuorumTransactionProcessor(
+                new MainnetTransactionProcessor(
                     gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,

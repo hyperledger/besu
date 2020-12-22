@@ -35,7 +35,7 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
 
   private static final Logger LOG = getLogger();
 
-  // TODO-goquorum proper wiring of GoQuorumPrivateStorage
+  // TODO-goquorum proper wiring of GoQuorumPrivateStorage instead of static references?
   private final GoQuorumPrivateStorage goQuorumPrivateStorage;
 
   public GoQuorumBlockValidator(
@@ -57,11 +57,11 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
 
-    final MutableWorldState maybePrivateWorldState =
+    final MutableWorldState privateWorldState =
         getPrivateWorldState(context, worldState.rootHash());
 
     return ((GoQuorumBlockProcessor) blockProcessor)
-        .processBlock(context.getBlockchain(), worldState, maybePrivateWorldState, block);
+        .processBlock(context.getBlockchain(), worldState, privateWorldState, block);
   }
 
   private MutableWorldState getPrivateWorldState(
