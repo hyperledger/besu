@@ -36,7 +36,6 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -122,77 +121,77 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   @Override
   public AbstractBlockProcessor.Result processBlock(
-          final Blockchain blockchain,
-          final MutableWorldState worldState,
-          final BlockHeader blockHeader,
-          final List<Transaction> transactions,
-          final List<BlockHeader> ommers,
-          final PrivateMetadataUpdater privateMetadataUpdater) {
-        Span globalProcessBlock =
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+    Span globalProcessBlock =
         tracer.spanBuilder("processBlock").setSpanKind(Span.Kind.INTERNAL).startSpan();
-        try {
-    final List<TransactionReceipt> receipts = new ArrayList<>();
-    long currentGasUsed = 0;
-    for (final Transaction transaction : transactions) {
-      final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
-      if (!gasBudgetCalculator.hasBudget(
-              transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
-        LOG.info(
-                "Block processing error: transaction gas limit {} exceeds available block budget"
-                        + " remaining {}. Block {} Transaction {}",
-                transaction.getGasLimit(),
-                remainingGasBudget,
-                blockHeader.getHash().toHexString(),
-                transaction.getHash().toHexString());
-        return AbstractBlockProcessor.Result.failed();
-      }
-
-      final WorldUpdater worldStateUpdater = worldState.updater();
-      final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
-      final Address miningBeneficiary =
-              miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
-
-      final TransactionProcessingResult result =
-              transactionProcessor.processTransaction(
-                      blockchain,
-                      worldStateUpdater,
-                      blockHeader,
-                      transaction,
-                      miningBeneficiary,
-                      OperationTracer.NO_TRACING,
-                      blockHashLookup,
-                      true,
-                      TransactionValidationParams.processingBlock(),
-                      privateMetadataUpdater);
-      if (result.isInvalid()) {
-        LOG.info(
-                "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
-                result.getValidationResult().getInvalidReason(),
-                blockHeader.getHash().toHexString(),
-                transaction.getHash().toHexString());
-        return AbstractBlockProcessor.Result.failed();
-      }
-
-      worldStateUpdater.commit();
-
-      currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
-
-      final TransactionReceipt transactionReceipt =
-              transactionReceiptFactory.create(
-                      transaction.getType(), result, worldState, currentGasUsed);
-      receipts.add(transactionReceipt);
-    }
-
-    if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
-      // no need to log, rewardCoinbase logs the error.
-      return AbstractBlockProcessor.Result.failed();
-    }
-
-    worldState.persist(blockHeader.getHash());
-    return AbstractBlockProcessor.Result.successful(receipts);
-        } finally {
-        globalProcessBlock.end();
+    try {
+      final List<TransactionReceipt> receipts = new ArrayList<>();
+      long currentGasUsed = 0;
+      for (final Transaction transaction : transactions) {
+        final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
+        if (!gasBudgetCalculator.hasBudget(
+            transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
+          LOG.info(
+              "Block processing error: transaction gas limit {} exceeds available block budget"
+                  + " remaining {}. Block {} Transaction {}",
+              transaction.getGasLimit(),
+              remainingGasBudget,
+              blockHeader.getHash().toHexString(),
+              transaction.getHash().toHexString());
+          return AbstractBlockProcessor.Result.failed();
         }
+
+        final WorldUpdater worldStateUpdater = worldState.updater();
+        final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
+        final Address miningBeneficiary =
+            miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
+
+        final TransactionProcessingResult result =
+            transactionProcessor.processTransaction(
+                blockchain,
+                worldStateUpdater,
+                blockHeader,
+                transaction,
+                miningBeneficiary,
+                OperationTracer.NO_TRACING,
+                blockHashLookup,
+                true,
+                TransactionValidationParams.processingBlock(),
+                privateMetadataUpdater);
+        if (result.isInvalid()) {
+          LOG.info(
+              "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
+              result.getValidationResult().getInvalidReason(),
+              blockHeader.getHash().toHexString(),
+              transaction.getHash().toHexString());
+          return AbstractBlockProcessor.Result.failed();
+        }
+
+        worldStateUpdater.commit();
+
+        currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
+
+        final TransactionReceipt transactionReceipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), result, worldState, currentGasUsed);
+        receipts.add(transactionReceipt);
+      }
+
+      if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
+        // no need to log, rewardCoinbase logs the error.
+        return AbstractBlockProcessor.Result.failed();
+      }
+
+      worldState.persist(blockHeader.getHash());
+      return AbstractBlockProcessor.Result.successful(receipts);
+    } finally {
+      globalProcessBlock.end();
+    }
   }
 
   protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {

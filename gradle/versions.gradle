@@ -47,7 +47,13 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.5.0'
 
-    dependency 'io.grpc:grpc-netty-shaded:1.33.1'
+    dependency 'io.grpc:grpc-core:1.33.1'
+    dependency 'io.grpc:grpc-netty:1.33.1'
+    dependency 'io.grpc:grpc-stub:1.33.1'
+    dependency 'io.netty:netty-tcnative-boringssl-static:2.0.31.Final'
+    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.54.Final', classifier: 'linux-x86_64'
+    dependency 'io.netty:netty-all:4.1.54.Final'
+
 
     dependency 'io.kubernetes:client-java:5.0.0'
 
@@ -57,6 +63,7 @@ dependencyManagement {
     dependency group: 'io.opentelemetry.instrumentation.auto', name: 'opentelemetry-javaagent', version: '0.8.0', classifier: 'all'
 
     dependency 'io.opentelemetry:opentelemetry-api:0.10.0'
+    dependency 'io.opentelemetry:opentelemetry-proto:0.10.0'
     dependency 'io.opentelemetry:opentelemetry-sdk:0.10.0'
     dependency 'io.opentelemetry:opentelemetry-sdk-tracing:0.10.0'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp:0.10.0'
