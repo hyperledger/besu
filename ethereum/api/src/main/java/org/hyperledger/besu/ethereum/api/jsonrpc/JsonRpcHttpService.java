@@ -198,7 +198,7 @@ public class JsonRpcHttpService {
     this.authenticationService = authenticationService;
     this.livenessService = livenessService;
     this.readinessService = readinessService;
-    this.tracer = OpenTelemetry.getGlobalTracer("io.hyperledger.besu.jsonrpc", "1.0.0");
+    this.tracer = OpenTelemetry.getGlobalTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
