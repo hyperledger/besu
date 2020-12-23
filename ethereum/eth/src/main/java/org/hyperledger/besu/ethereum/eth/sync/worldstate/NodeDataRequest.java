@@ -32,18 +32,29 @@ public abstract class NodeDataRequest {
   private final Hash hash;
   private Bytes data;
   private boolean requiresPersisting = true;
+  private final Optional<Bytes> location;
+
+  protected NodeDataRequest(
+      final RequestType requestType, final Hash hash, final Optional<Bytes> location) {
+    this.requestType = requestType;
+    this.hash = hash;
+    this.location = location;
+  }
 
   protected NodeDataRequest(final RequestType requestType, final Hash hash) {
     this.requestType = requestType;
     this.hash = hash;
+    this.location = Optional.empty();
   }
 
-  public static AccountTrieNodeDataRequest createAccountDataRequest(final Hash hash) {
-    return new AccountTrieNodeDataRequest(hash);
+  public static AccountTrieNodeDataRequest createAccountDataRequest(
+      final Optional<Bytes> location, final Hash hash, final boolean isMainAccount) {
+    return new AccountTrieNodeDataRequest(hash, location, isMainAccount);
   }
 
-  public static StorageTrieNodeDataRequest createStorageDataRequest(final Hash hash) {
-    return new StorageTrieNodeDataRequest(hash);
+  public static StorageTrieNodeDataRequest createStorageDataRequest(
+      final Optional<Bytes> location, final Hash hash) {
+    return new StorageTrieNodeDataRequest(hash, location);
   }
 
   public static CodeNodeDataRequest createCodeRequest(final Hash hash) {
@@ -59,15 +70,19 @@ public abstract class NodeDataRequest {
     in.enterList();
     final RequestType requestType = RequestType.fromValue(in.readByte());
     final Hash hash = Hash.wrap(in.readBytes32());
+    final Optional<Boolean> isMainAccount =
+        Optional.ofNullable(!in.isEndOfCurrentList() ? in.readInt() == 1 : null);
+    final Optional<Bytes> location =
+        Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
     in.leaveList();
 
     final NodeDataRequest deserialized;
     switch (requestType) {
       case ACCOUNT_TRIE_NODE:
-        deserialized = createAccountDataRequest(hash);
+        deserialized = createAccountDataRequest(location, hash, isMainAccount.orElseThrow());
         break;
       case STORAGE_TRIE_NODE:
-        deserialized = createStorageDataRequest(hash);
+        deserialized = createStorageDataRequest(location, hash);
         break;
       case CODE:
         deserialized = createCodeRequest(hash);
@@ -81,10 +96,11 @@ public abstract class NodeDataRequest {
     return deserialized;
   }
 
-  private void writeTo(final RLPOutput out) {
+  protected void writeTo(final RLPOutput out) {
     out.startList();
     out.writeByte(requestType.getValue());
     out.writeBytes(hash);
+    location.ifPresent(out::writeBytes);
     out.endList();
   }
 
@@ -103,6 +119,10 @@ public abstract class NodeDataRequest {
   public NodeDataRequest setData(final Bytes data) {
     this.data = data;
     return this;
+  }
+
+  public Optional<Bytes> getLocation() {
+    return location;
   }
 
   public NodeDataRequest setRequiresPersisting(final boolean requiresPersisting) {

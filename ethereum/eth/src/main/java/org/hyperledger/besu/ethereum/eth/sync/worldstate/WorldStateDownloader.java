@@ -123,7 +123,8 @@ public class WorldStateDownloader implements WorldStateDownloadStatus {
 
       if (!newDownloadState.downloadWasResumed()) {
         // Only queue the root node if we're starting a new download from scratch
-        newDownloadState.enqueueRequest(NodeDataRequest.createAccountDataRequest(stateRoot));
+        newDownloadState.enqueueRequest(
+            NodeDataRequest.createAccountDataRequest(Optional.empty(), stateRoot, true));
       }
 
       maybeCompleteTask =

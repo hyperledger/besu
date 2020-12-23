@@ -20,14 +20,16 @@ import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 
 abstract class TrieNodeDataRequest extends NodeDataRequest {
 
-  TrieNodeDataRequest(final RequestType kind, final Hash hash) {
-    super(kind, hash);
+  protected TrieNodeDataRequest(
+      final RequestType requestType, final Hash hash, final Optional<Bytes> location) {
+    super(requestType, hash, location);
   }
 
   @Override
@@ -37,12 +39,14 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
       return Stream.empty();
     }
 
-    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(null, getData());
+    final List<Node<Bytes>> nodes =
+        TrieNodeDecoder.decodeNodes(getLocation().orElse(null), getData());
     return nodes.stream()
         .flatMap(
             node -> {
               if (nodeIsHashReferencedDescendant(node)) {
-                return Stream.of(createChildNodeDataRequest(Hash.wrap(node.getHash())));
+                return Stream.of(
+                    createChildNodeDataRequest(node.getLocation(), Hash.wrap(node.getHash())));
               } else {
                 return node.getValue()
                     .map(this::getRequestsFromTrieNodeValue)
@@ -55,7 +59,8 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
     return !Objects.equals(node.getHash(), getHash()) && node.isReferencedByHash();
   }
 
-  protected abstract NodeDataRequest createChildNodeDataRequest(final Hash childHash);
+  protected abstract NodeDataRequest createChildNodeDataRequest(
+      final Optional<Bytes> location, final Hash childHash);
 
   protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value);
 }
