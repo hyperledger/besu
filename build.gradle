@@ -489,8 +489,6 @@ applicationDefaultJvmArgs = [
 run {
   args project.hasProperty("besu.run.args") ? project.property("besu.run.args").toString().split("\\s+") : []
   doFirst {
-    applicationDefaultJvmArgs.add(0, "-Dotel.resource.attributes=service.name=besu-dev")
-    applicationDefaultJvmArgs.add(0, "-javaagent:"+ configurations.javaAgent.singleFile.toPath() + "")
     applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect {
       it.replace('BESU_HOME', "$buildDir/besu")
     }
@@ -504,19 +502,6 @@ def tweakStartScript(createScriptTask) {
 
   createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
   createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
-  // OpenTelemetry Wiring for unix scripts
-  def agentFileName = configurations.javaAgent.singleFile.toPath().getFileName()
-  def unixRegex = $/exec "$$JAVACMD" /$
-  def forwardSlash = "/"
-  def unixReplacement = $/if [ -n "$$TRACING" ];then
- TRACING_AGENT="-javaagent:$$APP_HOME/agent${forwardSlash}${agentFileName}"
-fi
-exec "$$JAVACMD" $$TRACING_AGENT /$
-  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace(unixRegex, unixReplacement)
-  // OpenTelemetry Wiring for windows scripts
-  def windowsRegex = $/"%JAVA_EXE%" %DEFAULT_JVM_OPTS%/$
-  def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:" "%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
-  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace(windowsRegex, windowsReplacement)
 
   // Prevent the error originating from the 8191 chars limit on Windows
   createScriptTask.windowsScript.text =
@@ -790,14 +775,9 @@ tasks.register("verifyDistributions") {
   }
 }
 
-configurations {
-  javaAgent
-}
-
 dependencies {
   implementation project(':besu')
   implementation project(':ethereum:evmtool')
-  javaAgent group: 'io.opentelemetry.instrumentation.auto', name: 'opentelemetry-javaagent', classifier: 'all'
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
@@ -808,7 +788,6 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
-      from(configurations.javaAgent.singleFile.toPath()) { into "agent"}
     }
   }
 }

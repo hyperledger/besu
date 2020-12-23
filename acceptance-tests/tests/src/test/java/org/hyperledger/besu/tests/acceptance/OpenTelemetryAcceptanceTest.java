@@ -117,7 +117,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
   @Before
   public void setUp() throws Exception {
     Server server =
-        NettyServerBuilder.forPort(55680)
+        NettyServerBuilder.forPort(4317)
             .addService(fakeTracesCollector)
             .addService(fakeMetricsCollector)
             .build()

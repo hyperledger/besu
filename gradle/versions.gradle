@@ -59,16 +59,13 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.7'
 
-
-    dependency group: 'io.opentelemetry.instrumentation.auto', name: 'opentelemetry-javaagent', version: '0.8.0', classifier: 'all'
-
-    dependency 'io.opentelemetry:opentelemetry-api:0.10.0'
-    dependency 'io.opentelemetry:opentelemetry-proto:0.10.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk:0.10.0'
-    dependency 'io.opentelemetry:opentelemetry-sdk-tracing:0.10.0'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:0.10.0'
-    dependency 'io.opentelemetry:opentelemetry-extension-runtime-metrics:0.10.0'
-    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:0.10.0'
+    dependency 'io.opentelemetry:opentelemetry-api:0.13.1'
+    dependency 'io.opentelemetry:opentelemetry-proto:0.13.1'
+    dependency 'io.opentelemetry:opentelemetry-sdk:0.13.1'
+    dependency 'io.opentelemetry:opentelemetry-sdk-trace:0.13.1'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:0.13.1'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:0.13.1-alpha'
+    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:0.13.1'
 
     dependency 'io.prometheus:simpleclient:0.9.0'
     dependency 'io.prometheus:simpleclient_common:0.9.0'

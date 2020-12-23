@@ -22,8 +22,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import io.opentelemetry.exporter.otlp.OtlpGrpcMetricExporter;
-import io.opentelemetry.exporter.otlp.OtlpGrpcSpanExporter;
+import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter;
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.export.IntervalMetricReader;

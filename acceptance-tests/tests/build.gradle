@@ -39,7 +39,7 @@ dependencies {
   testImplementation 'io.opentelemetry:opentelemetry-api'
   testImplementation 'io.opentelemetry:opentelemetry-proto'
   testImplementation 'io.opentelemetry:opentelemetry-sdk'
-  testImplementation 'io.opentelemetry:opentelemetry-sdk-tracing'
+  testImplementation 'io.opentelemetry:opentelemetry-sdk-trace'
   testImplementation 'io.opentelemetry:opentelemetry-exporter-otlp'
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'

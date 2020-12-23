@@ -42,13 +42,10 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.Labels;
-import io.opentelemetry.api.metrics.DoubleValueObserver;
 import io.opentelemetry.api.metrics.DoubleValueRecorder;
 import io.opentelemetry.api.metrics.LongCounter;
-import io.opentelemetry.api.metrics.LongSumObserver;
-import io.opentelemetry.api.metrics.LongUpDownSumObserver;
 import io.opentelemetry.api.metrics.Meter;
-import io.opentelemetry.sdk.metrics.MeterSdkProvider;
+import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.resources.ResourceAttributes;
@@ -74,7 +71,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   private final Map<String, LabelledMetric<Counter>> cachedCounters = new ConcurrentHashMap<>();
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
-  private final MeterSdkProvider meterSdkProvider;
+  private final SdkMeterProvider meterSdkProvider;
 
   public OpenTelemetrySystem(
       final Set<MetricCategory> enabledCategories,
@@ -88,10 +85,10 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
             .merge(
                 Resource.create(
                     Attributes.builder().put(ResourceAttributes.SERVICE_NAME, jobName).build()));
-    this.meterSdkProvider = MeterSdkProvider.builder().setResource(resource).build();
+    this.meterSdkProvider = SdkMeterProvider.builder().setResource(resource).build();
   }
 
-  MeterSdkProvider getMeterSdkProvider() {
+  SdkMeterProvider getMeterSdkProvider() {
     return meterSdkProvider;
   }
 
@@ -136,16 +133,13 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   private Object extractValue(final MetricData.Type type, final MetricData.Point point) {
     switch (type) {
-      case NON_MONOTONIC_LONG:
-      case MONOTONIC_LONG:
-      case GAUGE_LONG:
+      case LONG_GAUGE:
+      case LONG_SUM:
         return ((MetricData.LongPoint) point).getValue();
-      case NON_MONOTONIC_DOUBLE:
-      case MONOTONIC_DOUBLE:
-      case GAUGE_DOUBLE:
+      case DOUBLE_GAUGE:
         return ((MetricData.DoublePoint) point).getValue();
       case SUMMARY:
-        return ((MetricData.SummaryPoint) point).getPercentileValues();
+        return ((MetricData.DoubleSummaryPoint) point).getPercentileValues();
       default:
         throw new UnsupportedOperationException("Unsupported type " + type);
     }
@@ -203,9 +197,14 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     LOG.trace("Creating a gauge");
     if (isCategoryEnabled(category)) {
       final Meter meter = meterSdkProvider.get(category.getName());
-      DoubleValueObserver observer =
-          meter.doubleValueObserverBuilder(name).setDescription(help).build();
-      observer.setCallback(result -> result.observe(valueSupplier.getAsDouble(), Labels.empty()));
+      meter
+          .doubleValueObserverBuilder(name)
+          .setDescription(help)
+          .setUpdater(
+              res -> {
+                res.observe(valueSupplier.getAsDouble(), Labels.empty());
+              })
+          .build();
     }
   }
 
@@ -226,31 +225,22 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
     final List<MemoryPoolMXBean> poolBeans = ManagementFactory.getMemoryPoolMXBeans();
     final Meter meter = meterSdkProvider.get(StandardMetricCategory.JVM.getName());
-    final LongSumObserver gcMetric =
-        meter
-            .longSumObserverBuilder("jvm.gc.collection")
-            .setDescription("Time spent in a given JVM garbage collector in milliseconds.")
-            .setUnit("ms")
-            .build();
     final List<Labels> labelSets = new ArrayList<>(garbageCollectors.size());
     for (final GarbageCollectorMXBean gc : garbageCollectors) {
       labelSets.add(Labels.of("gc", gc.getName()));
     }
-
-    gcMetric.setCallback(
-        resultLongObserver -> {
-          for (int i = 0; i < garbageCollectors.size(); i++) {
-            resultLongObserver.observe(
-                garbageCollectors.get(i).getCollectionTime(), labelSets.get(i));
-          }
-        });
-
-    final LongUpDownSumObserver areaMetric =
-        meter
-            .longUpDownSumObserverBuilder("jvm.memory.area")
-            .setDescription("Bytes of a given JVM memory area.")
-            .setUnit("By")
-            .build();
+    meter
+        .longSumObserverBuilder("jvm.gc.collection")
+        .setDescription("Time spent in a given JVM garbage collector in milliseconds.")
+        .setUnit("ms")
+        .setUpdater(
+            resultLongObserver -> {
+              for (int i = 0; i < garbageCollectors.size(); i++) {
+                resultLongObserver.observe(
+                    garbageCollectors.get(i).getCollectionTime(), labelSets.get(i));
+              }
+            })
+        .build();
     final Labels usedHeap = Labels.of(TYPE_LABEL_KEY, USED, AREA_LABEL_KEY, HEAP);
     final Labels usedNonHeap = Labels.of(TYPE_LABEL_KEY, USED, AREA_LABEL_KEY, NON_HEAP);
     final Labels committedHeap = Labels.of(TYPE_LABEL_KEY, COMMITTED, AREA_LABEL_KEY, HEAP);
@@ -258,24 +248,22 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     // TODO: Decide if max is needed or not. May be derived with some approximation from max(used).
     final Labels maxHeap = Labels.of(TYPE_LABEL_KEY, MAX, AREA_LABEL_KEY, HEAP);
     final Labels maxNonHeap = Labels.of(TYPE_LABEL_KEY, MAX, AREA_LABEL_KEY, NON_HEAP);
-    areaMetric.setCallback(
-        resultLongObserver -> {
-          MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
-          MemoryUsage nonHeapUsage = memoryBean.getNonHeapMemoryUsage();
-          resultLongObserver.observe(heapUsage.getUsed(), usedHeap);
-          resultLongObserver.observe(nonHeapUsage.getUsed(), usedNonHeap);
-          resultLongObserver.observe(heapUsage.getUsed(), committedHeap);
-          resultLongObserver.observe(nonHeapUsage.getUsed(), committedNonHeap);
-          resultLongObserver.observe(heapUsage.getUsed(), maxHeap);
-          resultLongObserver.observe(nonHeapUsage.getUsed(), maxNonHeap);
-        });
-
-    final LongUpDownSumObserver poolMetric =
-        meter
-            .longUpDownSumObserverBuilder("jvm.memory.pool")
-            .setDescription("Bytes of a given JVM memory pool.")
-            .setUnit("By")
-            .build();
+    meter
+        .longUpDownSumObserverBuilder("jvm.memory.area")
+        .setDescription("Bytes of a given JVM memory area.")
+        .setUnit("By")
+        .setUpdater(
+            resultLongObserver -> {
+              MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
+              MemoryUsage nonHeapUsage = memoryBean.getNonHeapMemoryUsage();
+              resultLongObserver.observe(heapUsage.getUsed(), usedHeap);
+              resultLongObserver.observe(nonHeapUsage.getUsed(), usedNonHeap);
+              resultLongObserver.observe(heapUsage.getUsed(), committedHeap);
+              resultLongObserver.observe(nonHeapUsage.getUsed(), committedNonHeap);
+              resultLongObserver.observe(heapUsage.getUsed(), maxHeap);
+              resultLongObserver.observe(nonHeapUsage.getUsed(), maxNonHeap);
+            })
+        .build();
     final List<Labels> usedLabelSets = new ArrayList<>(poolBeans.size());
     final List<Labels> committedLabelSets = new ArrayList<>(poolBeans.size());
     final List<Labels> maxLabelSets = new ArrayList<>(poolBeans.size());
@@ -284,16 +272,22 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       committedLabelSets.add(Labels.of(TYPE_LABEL_KEY, COMMITTED, POOL_LABEL_KEY, pool.getName()));
       maxLabelSets.add(Labels.of(TYPE_LABEL_KEY, MAX, POOL_LABEL_KEY, pool.getName()));
     }
-    poolMetric.setCallback(
-        resultLongObserver -> {
-          for (int i = 0; i < poolBeans.size(); i++) {
-            MemoryUsage poolUsage = poolBeans.get(i).getUsage();
-            resultLongObserver.observe(poolUsage.getUsed(), usedLabelSets.get(i));
-            resultLongObserver.observe(poolUsage.getCommitted(), committedLabelSets.get(i));
-            // TODO: Decide if max is needed or not. May be derived with some approximation from
-            //  max(used).
-            resultLongObserver.observe(poolUsage.getMax(), maxLabelSets.get(i));
-          }
-        });
+
+    meter
+        .longUpDownSumObserverBuilder("jvm.memory.pool")
+        .setDescription("Bytes of a given JVM memory pool.")
+        .setUnit("By")
+        .setUpdater(
+            resultLongObserver -> {
+              for (int i = 0; i < poolBeans.size(); i++) {
+                MemoryUsage poolUsage = poolBeans.get(i).getUsage();
+                resultLongObserver.observe(poolUsage.getUsed(), usedLabelSets.get(i));
+                resultLongObserver.observe(poolUsage.getCommitted(), committedLabelSets.get(i));
+                // TODO: Decide if max is needed or not. May be derived with some approximation from
+                //  max(used).
+                resultLongObserver.observe(poolUsage.getMax(), maxLabelSets.get(i));
+              }
+            })
+        .build();
   }
 }
