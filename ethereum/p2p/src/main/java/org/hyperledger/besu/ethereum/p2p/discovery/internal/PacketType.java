@@ -26,7 +26,9 @@ public enum PacketType {
   PING(0x01, PingPacketData::readFrom),
   PONG(0x02, PongPacketData::readFrom),
   FIND_NEIGHBORS(0x03, FindNeighborsPacketData::readFrom),
-  NEIGHBORS(0x04, NeighborsPacketData::readFrom);
+  NEIGHBORS(0x04, NeighborsPacketData::readFrom),
+  ENR_REQUEST(0x05, ENRRequestPacketData::readFrom),
+  ENR_RESPONSE(0x06, ENRResponsePacketData::readFrom);
 
   private static final int MAX_VALUE = 0x7F;
   private static final int BYTE_MASK = 0xFF;
