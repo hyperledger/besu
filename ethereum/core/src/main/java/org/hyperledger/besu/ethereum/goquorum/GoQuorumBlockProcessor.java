@@ -88,44 +88,24 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
     final GoQuorumPrivateStorage.Updater privateStorageUpdater = goQuorumPrivateStorage.updater();
 
-    // Begin processing individual tx
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return AbstractBlockProcessor.Result.failed();
       }
-
-      final WorldUpdater effectiveWorldUpdater;
-      final Transaction effectiveTransaction;
 
       final WorldUpdater publicWorldStateUpdater = worldState.updater();
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
+      final WorldUpdater effectiveWorldUpdater;
+      final Transaction effectiveTransaction;
       if (transaction.isGoQuorumPrivateTransaction()) {
-        // GET DUAL STATE
         effectiveWorldUpdater =
             new DefaultMutablePrivateWorldStateUpdater(
                 publicWorldStateUpdater, privateWorldState.updater());
 
-        // TODO-goquorum we don't need the enclave key (after Tessera is updated)
-        final GoQuorumReceiveResponse receive =
-            goQuorumEnclave.receive(
-                transaction.getPayload().toBase64String(), GoQuorumPrivacyParameters.enclaveKey);
-        final Bytes privatePayload = Bytes.wrap(receive.getPayload());
-
-        effectiveTransaction =
-            new Transaction(
-                transaction.getNonce(),
-                transaction.getGasPrice(),
-                transaction.getGasLimit(),
-                transaction.getTo(),
-                transaction.getValue(),
-                transaction.getSignature(),
-                privatePayload,
-                transaction.getSender(),
-                transaction.getChainId(),
-                Optional.of(transaction.getV()));
+        effectiveTransaction = retrievePrivateTransactionFromEnclave(transaction);
       } else {
         effectiveWorldUpdater = worldState.updater();
         effectiveTransaction = transaction;
@@ -151,7 +131,8 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
             transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
       } else {
-        // TODO-goquorum is there a better way of doing this??
+        // TODO-goquorum We need to increment the sender's public nonce. Ss there a better way of
+        // doing this??
         publicWorldStateUpdater.getAccount(transaction.getSender()).getMutable().incrementNonce();
       }
 
@@ -160,28 +141,30 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
 
-      // TODO-goquorum we only replace the public receipt if the tx is private...
+      if (transaction.isGoQuorumPrivateTransaction()) {
+        // Only the logs are used for the Public transaction receipt
+        final TransactionProcessingResult publicResult =
+            TransactionProcessingResult.successful(
+                Collections.emptyList(),
+                0,
+                result.getGasRemaining(),
+                Bytes.EMPTY,
+                result.getValidationResult());
 
-      // Only the logs are used for the
-      final TransactionProcessingResult publicResult =
-          TransactionProcessingResult.successful(
-              Collections.emptyList(),
-              result.getEstimateGasUsedByTransaction(),
-              result.getGasRemaining(),
-              result.getOutput(), // TODO-goquorum do we need to remove the result?
-              result.getValidationResult());
+        publicTxReceipts.add(
+            transactionReceiptFactory.create(transaction.getType(), publicResult, worldState, 0));
 
-      final TransactionReceipt publicTransactionReceipt =
-          transactionReceiptFactory.create(transaction.getType(), publicResult, worldState, 0);
-      publicTxReceipts.add(publicTransactionReceipt);
-
-      final TransactionReceipt privateTransactionReceipt =
-          transactionReceiptFactory.create(
-              transaction.getType(), result, privateWorldState, currentGasUsed);
-      privateStorageUpdater.putTransactionReceipt(
-          blockHeader.getHash(), transaction.getHash(), privateTransactionReceipt);
+        final TransactionReceipt privateTransactionReceipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), result, privateWorldState, currentGasUsed);
+        privateStorageUpdater.putTransactionReceipt(
+            blockHeader.getHash(), transaction.getHash(), privateTransactionReceipt);
+      } else {
+        publicTxReceipts.add(
+            transactionReceiptFactory.create(
+                transaction.getType(), result, worldState, currentGasUsed));
+      }
     }
-    // End processing individual tx
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
@@ -196,5 +179,26 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
     privateStorageUpdater.commit();
 
     return Result.successful(publicTxReceipts);
+  }
+
+  private Transaction retrievePrivateTransactionFromEnclave(final Transaction transaction) {
+    // TODO-goquorum we don't need the enclave key (after Tessera is updated)
+    final GoQuorumReceiveResponse receive =
+        goQuorumEnclave.receive(
+            transaction.getPayload().toBase64String(), GoQuorumPrivacyParameters.enclaveKey);
+
+    final Bytes privatePayload = Bytes.wrap(receive.getPayload());
+
+    return new Transaction(
+        transaction.getNonce(),
+        transaction.getGasPrice(),
+        transaction.getGasLimit(),
+        transaction.getTo(),
+        transaction.getValue(),
+        transaction.getSignature(),
+        privatePayload,
+        transaction.getSender(),
+        transaction.getChainId(),
+        Optional.of(transaction.getV()));
   }
 }
