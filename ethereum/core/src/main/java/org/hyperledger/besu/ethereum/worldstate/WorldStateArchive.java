@@ -30,11 +30,11 @@ import org.apache.tuweni.units.bigints.UInt256;
 public interface WorldStateArchive {
   Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
-  Optional<WorldState> get(final Hash rootHash);
+  Optional<WorldState> get(final Hash rootHash, Hash blockHash);
 
-  boolean isWorldStateAvailable(final Hash rootHash);
+  boolean isWorldStateAvailable(final Hash rootHash, Hash blockHash);
 
-  Optional<MutableWorldState> getMutable(final Hash rootHash);
+  Optional<MutableWorldState> getMutable(final Hash rootHash, Hash blockHash);
 
   MutableWorldState getMutable();
 

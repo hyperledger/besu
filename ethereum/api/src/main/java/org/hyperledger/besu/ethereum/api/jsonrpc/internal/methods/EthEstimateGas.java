@@ -68,7 +68,7 @@ public class EthEstimateGas implements JsonRpcMethod {
     }
     if (!blockchainQueries
         .getWorldStateArchive()
-        .isWorldStateAvailable(blockHeader.getStateRoot())) {
+        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
       return errorResponse(requestContext, JsonRpcError.WORLD_STATE_UNAVAILABLE);
     }
 

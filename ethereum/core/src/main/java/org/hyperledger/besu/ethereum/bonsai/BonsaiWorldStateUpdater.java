@@ -43,9 +43,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BonsaiWorldStateUpdater
-    extends AbstractWorldUpdater<BonsaiPersistedWorldState, BonsaiAccount>
-    implements BonsaiWorldState {
+public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
+    implements BonsaiWorldView {
 
   private final Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new HashMap<>();
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
@@ -56,7 +55,7 @@ public class BonsaiWorldStateUpdater
   // alternative was to keep a giant pre-image cache of the entire trie.
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate = new HashMap<>();
 
-  BonsaiWorldStateUpdater(final BonsaiPersistedWorldState world) {
+  BonsaiWorldStateUpdater(final BonsaiWorldView world) {
     super(world);
   }
 
@@ -273,6 +272,12 @@ public class BonsaiWorldStateUpdater
   }
 
   @Override
+  public Optional<Bytes> getStateTrieNode(final Bytes location) {
+    // updater doesn't track trie nodes.  Always a miss.
+    return Optional.empty();
+  }
+
+  @Override
   public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     final Hash slotHashBytes = Hash.hash(storageKey.toBytes());
@@ -325,6 +330,11 @@ public class BonsaiWorldStateUpdater
 
   public TrieLogLayer generateTrieLog(final Hash blockHash) {
     final TrieLogLayer layer = new TrieLogLayer();
+    importIntoTrieLog(layer, blockHash);
+    return layer;
+  }
+
+  private void importIntoTrieLog(final TrieLogLayer layer, final Hash blockHash) {
     layer.setBlockHash(blockHash);
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
         accountsToUpdate.entrySet()) {
@@ -371,8 +381,6 @@ public class BonsaiWorldStateUpdater
             slotUpdate.getValue().getUpdated());
       }
     }
-
-    return layer;
   }
 
   public void rollForward(final TrieLogLayer layer) {
@@ -452,12 +460,17 @@ public class BonsaiWorldStateUpdater
       }
     } else {
       if (expectedValue == null) {
-        throw new IllegalStateException(
-            String.format(
-                "Expected to create account, but the account exists.  Address=%s", address));
+        if (accountValue.getUpdated() != null) {
+          throw new IllegalStateException(
+              String.format(
+                  "Expected to create account, but the account exists.  Address=%s", address));
+        }
+      } else {
+        BonsaiAccount.assertCloseEnoughForDiffing(
+            accountValue.getUpdated(),
+            expectedValue,
+            "Address=" + address + " Prior Value in Rolling Change");
       }
-      BonsaiAccount.assertCloseEnoughForDiffing(
-          accountValue.getUpdated(), expectedValue, "Prior Value in Rolling Change");
       if (replacementValue == null) {
         if (accountValue.getOriginal() == null) {
           accountsToUpdate.remove(address);
@@ -465,12 +478,8 @@ public class BonsaiWorldStateUpdater
           accountValue.setUpdated(null);
         }
       } else {
-        final BonsaiAccount existingAccount = accountValue.getUpdated();
-        existingAccount.setNonce(replacementValue.getNonce());
-        existingAccount.setBalance(replacementValue.getBalance());
-        existingAccount.setStorageRoot(replacementValue.getStorageRoot());
-        // depend on correctly structured layers to set code hash
-        existingAccount.setVersion(replacementValue.getVersion());
+        accountValue.setUpdated(
+            new BonsaiAccount(wrappedWorldView(), address, replacementValue, true));
       }
     }
   }
@@ -505,7 +514,7 @@ public class BonsaiWorldStateUpdater
     }
 
     if (codeValue == null) {
-      if (expectedCode == null && replacementCode != null) {
+      if ((expectedCode == null || expectedCode.size() == 0) && replacementCode != null) {
         codeToUpdate.put(address, new BonsaiValue<>(null, replacementCode));
       } else {
         throw new IllegalStateException(
@@ -513,22 +522,21 @@ public class BonsaiWorldStateUpdater
                 "Expected to update code, but the code does not exist.  Address=%s", address));
       }
     } else {
-      if (expectedCode == null) {
+      final Bytes existingCode = codeValue.getUpdated();
+      if ((expectedCode == null || expectedCode.isEmpty())
+          && existingCode != null
+          && !existingCode.isEmpty()) {
         throw new IllegalStateException(
             String.format("Expected to create code, but the code exists.  Address=%s", address));
       }
-      if (!codeValue.getUpdated().equals(expectedCode)) {
+      if (!expectedCode.equals(existingCode)) {
         throw new IllegalStateException(
             String.format(
                 "Old value of code does not match expected value.  Address=%s ExpectedHash=%s ActualHash=%s",
                 address, Hash.hash(expectedCode), Hash.hash(codeValue.getUpdated())));
       }
-      if (replacementCode == null) {
-        if (codeValue.getOriginal() == null) {
-          codeToUpdate.remove(address);
-        } else {
-          codeValue.setUpdated(null);
-        }
+      if (replacementCode == null && codeValue.getOriginal() == null) {
+        codeToUpdate.remove(address);
       } else {
         codeValue.setUpdated(replacementCode);
       }
@@ -555,6 +563,10 @@ public class BonsaiWorldStateUpdater
       // non-change, a cached read.
       return;
     }
+    if (replacementValue == null && expectedValue.isZero()) {
+      // corner case on deletes, non-change
+      return;
+    }
     final Map<Hash, BonsaiValue<UInt256>> storageMap = storageToUpdate.get(address);
     BonsaiValue<UInt256> slotValue = storageMap == null ? null : storageMap.get(slotHash);
     if (slotValue == null) {
@@ -566,7 +578,7 @@ public class BonsaiWorldStateUpdater
       }
     }
     if (slotValue == null) {
-      if (expectedValue == null && replacementValue != null) {
+      if ((expectedValue == null || expectedValue.isZero()) && replacementValue != null) {
         maybeCreateStorageMap(storageMap, address)
             .put(slotHash, new BonsaiValue<>(null, replacementValue));
       } else {
@@ -576,14 +588,16 @@ public class BonsaiWorldStateUpdater
                 address, slotHash));
       }
     } else {
-      if (expectedValue == null) {
+      final UInt256 existingSlotValue = slotValue.getUpdated();
+      if ((expectedValue == null || expectedValue.isZero())
+          && existingSlotValue != null
+          && !existingSlotValue.isZero()) {
         throw new IllegalStateException(
             String.format(
-                "Expected to create slot, but the slot exists. Account=%s SlotHash=%s",
-                address, slotHash));
+                "Expected to create slot, but the slot exists. Account=%s SlotHash=%s expectedValue=%s existingValue=%s",
+                address, slotHash, expectedValue, existingSlotValue));
       }
-      final UInt256 existingSlotValue = slotValue.getUpdated();
-      if (!existingSlotValue.equals(expectedValue)) {
+      if (!Objects.equals(expectedValue, existingSlotValue)) {
         throw new IllegalStateException(
             String.format(
                 "Old value of slot does not match expected value. Account=%s SlotHash=%s Expected=%s Actual=%s",
@@ -592,16 +606,12 @@ public class BonsaiWorldStateUpdater
                 expectedValue.toShortHexString(),
                 existingSlotValue.toShortHexString()));
       }
-      if (replacementValue == null) {
-        if (slotValue.getOriginal() == null) {
-          final Map<Hash, BonsaiValue<UInt256>> thisStorageUpdate =
-              maybeCreateStorageMap(storageMap, address);
-          thisStorageUpdate.remove(slotHash);
-          if (thisStorageUpdate.isEmpty()) {
-            storageToUpdate.remove(address);
-          }
-        } else {
-          slotValue.setUpdated(null);
+      if (replacementValue == null && slotValue.getOriginal() == null) {
+        final Map<Hash, BonsaiValue<UInt256>> thisStorageUpdate =
+            maybeCreateStorageMap(storageMap, address);
+        thisStorageUpdate.remove(slotHash);
+        if (thisStorageUpdate.isEmpty()) {
+          storageToUpdate.remove(address);
         }
       } else {
         slotValue.setUpdated(replacementValue);

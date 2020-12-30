@@ -150,8 +150,9 @@ public class PrivateStateRehydration {
       final MutableWorldState publicWorldState =
           blockchain
               .getBlockHeader(blockHeader.getParentHash())
-              .map(BlockHeader::getStateRoot)
-              .flatMap(publicWorldStateArchive::getMutable)
+              .flatMap(
+                  header ->
+                      publicWorldStateArchive.getMutable(header.getStateRoot(), header.getHash()))
               .orElseThrow(RuntimeException::new);
 
       privateGroupRehydrationBlockProcessor.processBlock(

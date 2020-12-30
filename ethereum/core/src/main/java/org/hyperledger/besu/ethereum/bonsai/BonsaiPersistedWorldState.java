@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -36,13 +37,22 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorldState {
+public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorldView {
 
-  private static final byte[] WORLD_ROOT_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
+  private static final Logger LOG = LogManager.getLogger();
+
+  private static final byte[] WORLD_ROOT_HASH_KEY =
+      "worldRootHash".getBytes(StandardCharsets.UTF_8);
+
+  @VisibleForTesting
+  static final byte[] WORLD_BLOCK_HASH_KEY = "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
   private final KeyValueStorage accountStorage;
   private final KeyValueStorage codeStorage;
@@ -50,10 +60,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private final KeyValueStorage trieBranchStorage;
   private final KeyValueStorage trieLogStorage;
 
-  private Bytes32 worldStateRootHash;
-
   private final BonsaiWorldStateArchive archive;
-  private BonsaiWorldStateUpdater updater;
+  private final BonsaiWorldStateUpdater updater;
+
+  private Hash worldStateRootHash;
+  private Hash worldStateBlockHash;
 
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
@@ -69,8 +80,17 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
     worldStateRootHash =
-        Bytes32.wrap(
-            trieBranchStorage.get(WORLD_ROOT_KEY).map(Bytes::wrap).orElse(Hash.EMPTY_TRIE_HASH));
+        Hash.wrap(
+            Bytes32.wrap(
+                trieBranchStorage
+                    .get(WORLD_ROOT_HASH_KEY)
+                    .map(Bytes::wrap)
+                    .orElse(Hash.EMPTY_TRIE_HASH)));
+    worldStateBlockHash =
+        Hash.wrap(
+            Bytes32.wrap(
+                trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes::wrap).orElse(Hash.ZERO)));
+    updater = new BonsaiWorldStateUpdater(this);
   }
 
   public BonsaiWorldStateArchive getArchive() {
@@ -89,8 +109,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public void persist(final Hash blockHash) {
+  public void persist(final BlockHeader blockHeader) {
     boolean success = false;
+    final Hash originalBlockHash = worldStateBlockHash;
+    final Hash originalRootHash = worldStateRootHash;
     final KeyValueStorageTransaction accountTx = accountStorage.startTransaction();
     final KeyValueStorageTransaction codeTx = codeStorage.startTransaction();
     final KeyValueStorageTransaction storageTx = storageStorage.startTransaction();
@@ -163,7 +185,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
           } else {
             final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
             storageTx.put(writeAddress, updatedStorageBytes.toArrayUnsafe());
-            storageTrie.put(keyHash, rlpEncode(updatedStorageBytes));
+            storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
           }
         }
 
@@ -214,21 +236,37 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         }
       }
 
+      // TODO write to a cache and then generate a layer update from that and the
+      // DB tx updates.  Right now it is just DB updates.
       accountTrie.commit((location, hash, value) -> writeTrieNode(trieBranchTx, location, value));
-      worldStateRootHash = accountTrie.getRootHash();
-      trieBranchTx.put(WORLD_ROOT_KEY, worldStateRootHash.toArrayUnsafe());
+      worldStateRootHash = Hash.wrap(accountTrie.getRootHash());
+      trieBranchTx.put(WORLD_ROOT_HASH_KEY, worldStateRootHash.toArrayUnsafe());
 
       // for manicured tries and composting, trim and compost branches here
 
-      if (blockHash != null) {
-        final TrieLogLayer trieLog = updater.generateTrieLog(blockHash);
-        trieLog.freeze();
-        // TODO add to archive here, but only once we get persisted follow distance implemented
-        // archive.addLayeredWorldState(new BonsaiLayeredWorldState(this, trieLog));
-
-        final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-        trieLog.writeTo(rlpLog);
-        trieLogTx.put(blockHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
+      // if we are persisted with a block header, and the prior state is the parent
+      // then persist the TrieLog for that transition.  If specified but not a direct
+      // descendant simply store the new block hash.
+      if (blockHeader != null) {
+        if (!worldStateRootHash.equals(blockHeader.getStateRoot())) {
+          throw new RuntimeException("World State Root does not match expected value");
+        }
+        worldStateBlockHash = blockHeader.getHash();
+        trieBranchTx.put(WORLD_BLOCK_HASH_KEY, worldStateBlockHash.toArrayUnsafe());
+        if (originalBlockHash.equals(blockHeader.getParentHash())) {
+          LOG.debug("Writing Trie Log for {}", worldStateBlockHash);
+          final TrieLogLayer trieLog = updater.generateTrieLog(worldStateBlockHash);
+          trieLog.freeze();
+          archive.addLayeredWorldState(
+              new BonsaiLayeredWorldState(
+                  this, blockHeader.getNumber(), worldStateRootHash, trieLog));
+          final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
+          trieLog.writeTo(rlpLog);
+          trieLogTx.put(worldStateBlockHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
+        }
+      } else {
+        trieBranchTx.remove(WORLD_BLOCK_HASH_KEY);
+        worldStateBlockHash = null;
       }
 
       success = true;
@@ -246,27 +284,27 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         storageTx.rollback();
         trieBranchTx.rollback();
         trieLogTx.rollback();
+        worldStateBlockHash = originalBlockHash;
+        worldStateRootHash = originalRootHash;
       }
     }
-  }
-
-  private static Bytes rlpEncode(final Bytes bytes) {
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeBytes(bytes.trimLeadingZeros());
-    return out.encoded();
+    if (blockHeader != null) {
+      archive.scrubLayeredCache(blockHeader.getNumber());
+    }
   }
 
   @Override
   public WorldUpdater updater() {
-    if (updater == null) {
-      updater = new BonsaiWorldStateUpdater(this);
-    }
     return updater;
   }
 
   @Override
   public Hash rootHash() {
     return Hash.wrap(worldStateRootHash);
+  }
+
+  public Hash blockHash() {
+    return worldStateBlockHash;
   }
 
   @Override
@@ -286,8 +324,13 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+      return getStateTrieNode(location);
     }
+  }
+
+  @Override
+  public Optional<Bytes> getStateTrieNode(final Bytes location) {
+    return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   private void writeTrieNode(
@@ -300,9 +343,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage
-          .get(Bytes.concatenate(address, location).toArrayUnsafe())
-          .map(Bytes::wrap);
+      return getStateTrieNode(Bytes.concatenate(address, location));
     }
   }
 
