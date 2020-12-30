@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
 
 /**
  * Represents an Ethereum node that we interacting with through the discovery and wire protocols.
@@ -38,6 +39,8 @@ public class DiscoveryPeer extends DefaultPeer {
   private long lastContacted = 0;
   private long lastSeen = 0;
   private long lastAttemptedConnection = 0;
+
+  private NodeRecord nodeRecord;
 
   private DiscoveryPeer(final EnodeURL enode, final Endpoint endpoint) {
     super(enode);
@@ -124,6 +127,14 @@ public class DiscoveryPeer extends DefaultPeer {
 
   public Endpoint getEndpoint() {
     return endpoint;
+  }
+
+  public Optional<NodeRecord> getNodeRecord() {
+    return Optional.ofNullable(nodeRecord);
+  }
+
+  public void setNodeRecord(final NodeRecord nodeRecord) {
+    this.nodeRecord = nodeRecord;
   }
 
   public boolean discoveryEndpointMatches(final DiscoveryPeer peer) {

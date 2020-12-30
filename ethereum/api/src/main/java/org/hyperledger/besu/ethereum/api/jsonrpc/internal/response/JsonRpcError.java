@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(value = JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum JsonRpcError {
   // Standard errors
@@ -186,10 +188,16 @@ public enum JsonRpcError {
 
   private final int code;
   private final String message;
+  private String data;
 
-  JsonRpcError(final int code, final String message) {
+  JsonRpcError(final int code, final String message, final String data) {
     this.code = code;
     this.message = message;
+    this.data = data;
+  }
+
+  JsonRpcError(final int code, final String message) {
+    this(code, message, null);
   }
 
   @JsonGetter("code")
@@ -202,11 +210,22 @@ public enum JsonRpcError {
     return message;
   }
 
+  @JsonGetter("data")
+  public String getData() {
+    return data;
+  }
+
+  public void setData(final String data) {
+    this.data = data;
+  }
+
   @JsonCreator
   public static JsonRpcError fromJson(
-      @JsonProperty("code") final int code, @JsonProperty("message") final String message) {
+      @JsonProperty("code") final int code,
+      @JsonProperty("message") final String message,
+      @JsonProperty("data") final String data) {
     for (final JsonRpcError error : JsonRpcError.values()) {
-      if (error.code == code && error.message.equals(message)) {
+      if (error.code == code && error.message.equals(message) && error.data.equals(data)) {
         return error;
       }
     }
