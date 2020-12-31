@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import io.vertx.core.Vertx;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.GoQuorumEnclave;
+import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -27,42 +27,33 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.QuorumSendRawTxArgs;
+import org.hyperledger.besu.ethereum.privacy.GoQuorumSendRawTxArgs;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
-
-public class QuorumSendRawPrivateTransaction implements JsonRpcMethod {
+public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   final TransactionPool transactionPool;
-  final PrivacyController privacyController;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
 
-  public QuorumSendRawPrivateTransaction(
+  public GoQuorumSendRawPrivateTransaction(
       final TransactionPool transactionPool,
-      final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     this.transactionPool = transactionPool;
-    this.privacyController = privacyController;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_SEND_RAW_TRANSACTION.getMethodName();
+    return RpcMethod.ETH_SEND_RAW_PRIVATE_TRANSACTION.getMethodName();
   }
 
   @Override
@@ -70,30 +61,14 @@ public class QuorumSendRawPrivateTransaction implements JsonRpcMethod {
     final Object id = requestContext.getRequest().getId();
     final String rawPrivateTransaction = requestContext.getRequiredParameter(0, String.class);
 
-    final QuorumSendRawTxArgs rawTxArgs = requestContext.getRequiredParameter(1, QuorumSendRawTxArgs.class);
-
+    final GoQuorumSendRawTxArgs rawTxArgs =
+        requestContext.getRequiredParameter(1, GoQuorumSendRawTxArgs.class);
 
     try {
       final Transaction transaction =
           Transaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
 
-    if (!checkAndHandlePrivateTransaction(transaction, rawTxArgs, requestContext)) {
-        return new JsonRpcErrorResponse(id, INVALID_PARAMS);
-      }
-
-
-//      final ValidationResult<TransactionInvalidReason> validationResult =
-//          privacyController.validatePrivateTransaction(transaction, enclavePublicKey);
-//
-//      if (!validationResult.isValid()) {
-//        return new JsonRpcErrorResponse(
-//            id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
-//      }
-
-      // In quorum they validate if the account can transact from the current node before adding the Tx to the pool (Permissioning)
-
-      // In quorum they are getting the Sender from the Tx AFTER adding the Tx to the pool. If that fails they are
-      // returning an error
+      checkAndHandlePrivateTransaction(transaction, rawTxArgs, requestContext);
 
       return transactionPool
           .addLocalTransaction(transaction)
@@ -112,8 +87,12 @@ public class QuorumSendRawPrivateTransaction implements JsonRpcMethod {
     }
   }
 
-  private boolean checkAndHandlePrivateTransaction(final Transaction transaction, final QuorumSendRawTxArgs rawTxArgs, final JsonRpcRequestContext requestContext) throws URISyntaxException {
-    // rawTxArgs cannot be null as the call to getRequiredParameter would have failed if it was not available
+  private void checkAndHandlePrivateTransaction(
+      final Transaction transaction,
+      final GoQuorumSendRawTxArgs rawTxArgs,
+      final JsonRpcRequestContext requestContext) {
+    // rawTxArgs cannot be null as the call to getRequiredParameter would have failed if it was not
+    // available
 
     if (rawTxArgs.getPrivateFor() == null) {
       LOG.error(JsonRpcError.QUORUM_NO_PRIVATE_FOR.getMessage());
@@ -128,23 +107,23 @@ public class QuorumSendRawPrivateTransaction implements JsonRpcMethod {
     if (rawTxArgs.getPrivateFrom() != null) {
       final String privateFrom = rawTxArgs.getPrivateFrom();
       final String enclavePublicKey =
-            enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
+          enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
       if (!privateFrom.equals(enclavePublicKey)) {
         LOG.error(JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY.getMessage());
-        throw new JsonRpcErrorResponseException(JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
+        throw new JsonRpcErrorResponseException(
+            JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
     }
 
-    final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
-    final GoQuorumEnclave goQuorumEnclave = enclaveFactory.createGoQuorumEnclave(new URI(""));
-
-    goQuorumEnclave.sendSignedTransaction(transaction.getData().get().toArray(), rawTxArgs.getPrivateFor());
-
-    return true;
+    final Bytes txId = transaction.getPayload();
+    if (txId == null || txId.isEmpty()) {
+      throw new JsonRpcErrorResponseException(JsonRpcError.QUORUM_LOOKUP_ID_NOT_AVAILABLE);
+    }
+    GoQuorumPrivacyParameters.goQuorumEnclave.sendSignedTransaction(
+        txId.toArray(), rawTxArgs.getPrivateFor());
   }
 
-
- JsonRpcErrorResponse getJsonRpcErrorResponse(
+  JsonRpcErrorResponse getJsonRpcErrorResponse(
       final Object id, final TransactionInvalidReason errorReason) {
     if (errorReason.equals(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT)) {
       return new JsonRpcErrorResponse(id, JsonRpcError.PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT);

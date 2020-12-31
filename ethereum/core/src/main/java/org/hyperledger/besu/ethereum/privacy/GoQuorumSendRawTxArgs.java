@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-
 // Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
-public class QuorumSendRawTxArgs {
+public class GoQuorumSendRawTxArgs {
 
   private final String privateFrom;
 
@@ -29,7 +29,7 @@ public class QuorumSendRawTxArgs {
   private final int privacyFlag;
 
   @JsonCreator
-  public QuorumSendRawTxArgs(
+  public GoQuorumSendRawTxArgs(
       @JsonProperty("privateFrom") final String privateFrom,
       @JsonProperty("privateFor") final List<String> privateFor,
       @JsonProperty("privacyFlag") final int privacyFlag) {
