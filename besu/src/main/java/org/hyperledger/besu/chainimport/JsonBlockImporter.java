@@ -84,7 +84,7 @@ public class JsonBlockImporter {
         controller
             .getProtocolContext()
             .getWorldStateArchive()
-            .get(parentHeader.getStateRoot())
+            .get(parentHeader.getStateRoot(), parentHeader.getHash())
             .get();
     final List<Transaction> transactions =
         blockData.streamTransactions(worldState).collect(Collectors.toList());

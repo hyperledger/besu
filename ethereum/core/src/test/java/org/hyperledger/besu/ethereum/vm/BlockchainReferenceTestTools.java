@@ -90,9 +90,11 @@ public class BlockchainReferenceTestTools {
   }
 
   public static void executeTest(final BlockchainReferenceTestCaseSpec spec) {
-    final MutableWorldState worldState =
-        spec.getWorldStateArchive().getMutable(spec.getGenesisBlockHeader().getStateRoot()).get();
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
+    final MutableWorldState worldState =
+        spec.getWorldStateArchive()
+            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .get();
     assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
     final ProtocolSchedule schedule =
