@@ -151,7 +151,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    LOG.trace("Creating a counter");
+    LOG.trace("Creating a counter {}", name);
     return cachedCounters.computeIfAbsent(
         name,
         (k) -> {
@@ -172,7 +172,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
-    LOG.trace("Creating a timer");
+    LOG.trace("Creating a timer {}", name);
     return cachedTimers.computeIfAbsent(
         name,
         (k) -> {
@@ -194,7 +194,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final DoubleSupplier valueSupplier) {
-    LOG.trace("Creating a gauge");
+    LOG.trace("Creating a gauge {}", name);
     if (isCategoryEnabled(category)) {
       final Meter meter = meterSdkProvider.get(category.getName());
       meter

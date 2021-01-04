@@ -171,10 +171,10 @@ public class OpenTelemetryMetricsSystemTest {
             .build();
     final ObservableMetricsSystem localMetricSystem =
         MetricsSystemFactory.create(metricsConfiguration);
-    localMetricSystem.createGauge(RPC, "myValue", "Help", () -> 7d);
+    localMetricSystem.createGauge(RPC, "myValue", "Help", () -> 7.0);
 
     assertThat(localMetricSystem.streamObservations())
-        .containsExactlyInAnyOrder(new Observation(RPC, "myValue", 7d, emptyList()));
+        .containsExactlyInAnyOrder(new Observation(RPC, "myValue", 7.0, emptyList()));
   }
 
   @Test

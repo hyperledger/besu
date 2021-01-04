@@ -67,7 +67,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
@@ -198,7 +198,7 @@ public class JsonRpcHttpService {
     this.authenticationService = authenticationService;
     this.livenessService = livenessService;
     this.readinessService = readinessService;
-    this.tracer = OpenTelemetry.getGlobalTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
+    this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
