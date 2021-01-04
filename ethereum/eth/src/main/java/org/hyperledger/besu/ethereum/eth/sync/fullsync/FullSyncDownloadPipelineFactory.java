@@ -101,7 +101,9 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
                 "chain_download_pipeline_processed_total",
                 "Number of entries process by each chain download pipeline stage",
                 "step",
-                "action"))
+                "action"),
+            true,
+            "fullSync")
         .thenProcessAsyncOrdered("downloadHeaders", downloadHeadersStep, downloaderParallelism)
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)

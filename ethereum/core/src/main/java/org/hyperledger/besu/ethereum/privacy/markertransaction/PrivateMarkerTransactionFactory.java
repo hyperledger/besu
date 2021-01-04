@@ -18,6 +18,7 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -27,10 +28,6 @@ public abstract class PrivateMarkerTransactionFactory {
 
   protected PrivateMarkerTransactionFactory(final Address privacyPrecompileAddress) {
     this.privacyPrecompileAddress = privacyPrecompileAddress;
-  }
-
-  private Address getPrivacyPrecompileAddress() {
-    return privacyPrecompileAddress;
   }
 
   public Transaction create(
@@ -47,24 +44,10 @@ public abstract class PrivateMarkerTransactionFactory {
       final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
       final long nonce,
-      final KeyPair signingKey) {
-    return Transaction.builder()
-        .nonce(nonce)
-        .gasPrice(privateTransaction.getGasPrice())
-        .gasLimit(privateTransaction.getGasLimit())
-        .to(getPrivacyPrecompileAddress())
-        .value(privateTransaction.getValue())
-        .payload(Bytes.fromBase64String(privateTransactionLookupId))
-        .signAndBuild(signingKey);
-  }
-
-  protected Transaction create(
-      final String privateTransactionLookupId,
-      final PrivateTransaction privateTransaction,
-      final long nonce,
       final KeyPair signingKey,
       final Address precompileAddress) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .nonce(nonce)
         .gasPrice(privateTransaction.getGasPrice())
         .gasLimit(privateTransaction.getGasLimit())

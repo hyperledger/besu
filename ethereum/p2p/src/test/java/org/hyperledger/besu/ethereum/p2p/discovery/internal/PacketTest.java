@@ -22,13 +22,14 @@ import java.util.Optional;
 
 import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 public class PacketTest {
 
   private static final String VALID_PONG_PACKET =
-      "a1581c1705e744976d0341011c4490b3ab0b48283407ae5cf7526b948717489613ad897c4cf167117196d21352c15bcbaec23227b22eb92a15f5cd4b0a4ef98124a679935c16bd334fbd26be55ba4344843ac4710a3f3e3684d719d48c4980660002f2cb84b4b57a1a82040182765fa046896547d3b4259aa1a67bd26e7ec58ab4be650c5552ef0360caf9dae489d53b845b872dc8";
+      "53cec0d27af44bdc0471d34c4eb631f74b502df7b5513a80a054f0d619f0417d6ba4fd4d6fb83994b95c6d0ae8b175b068a6bffc397e2b408e797069b9370ce47b153dd884b60108e686546a775ed5f85e71059a9c5791e266bd949d0dcfba380102f83bcb84b4b57a1a82040182765fa046896547d3b4259aa1a67bd26e7ec58ab4be650c5552ef0360caf9dae489d53b845b872dc8880000000000000003";
 
   @Test
   public void shouldDecodeValidPongPacket() {
@@ -43,14 +44,16 @@ public class PacketTest {
             Bytes.fromHexString(
                 "0x46896547d3b4259aa1a67bd26e7ec58ab4be650c5552ef0360caf9dae489d53b"));
     assertThat(packetData.getExpiration()).isEqualTo(1535585736);
+    assertThat(packetData.getEnrSeq().isPresent()).isTrue();
+    assertThat(packetData.getEnrSeq().get()).isEqualTo(UInt64.valueOf(3L));
     assertThat(packet.getNodeId())
         .isEqualTo(
             Bytes.fromHexString(
-                "0x669f45b66acf3b804c26ce13cfdd1f7e3d0ff4ed85060841b9af3af6dbfbacd05181e1c9363161446a307f3ca24e707856a01e4bf1eed5e1aefc14011a5c1c1c"));
+                "0xfbe12329d5d99e3d46cba2d1f9d8d397a4f2955253396f6e0459f3f14bb29c0e4f37d8bac890ff9bfb412879257ba2378a0b48bed6b81647c6972d323212d051"));
     assertThat(packet.getHash())
         .isEqualTo(
             Bytes.fromHexString(
-                "0xa1581c1705e744976d0341011c4490b3ab0b48283407ae5cf7526b9487174896"));
+                "0x53cec0d27af44bdc0471d34c4eb631f74b502df7b5513a80a054f0d619f0417d"));
   }
 
   @Test
