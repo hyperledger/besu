@@ -49,12 +49,7 @@ import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.HashMap;
@@ -63,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
@@ -78,9 +72,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   private final Map<String, Runner> besuRunners = new HashMap<>();
 
   private final Map<Node, BesuPluginContextImpl> besuPluginContextMap = new ConcurrentHashMap<>();
-  private final PrintStream originalOut = System.out;
-  private final PrintStream originalErr = System.err;
-  private final ByteArrayOutputStream consoleContents = new ByteArrayOutputStream();
 
   private BesuPluginContextImpl buildPluginContext(
       final BesuNode node,
@@ -216,7 +207,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .storageProvider(storageProvider)
             .build();
 
-    System.setOut(null);
     runner.start();
 
     besuRunners.put(node.getName(), runner);
@@ -263,44 +253,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
   }
 
-  static class SplittingStream extends OutputStream {
-    final OutputStream one;
-    final OutputStream two;
-
-    SplittingStream(final OutputStream one, final OutputStream two) {
-      this.one = one;
-      this.two = two;
-    }
-
-    @Override
-    public void write(final int b) throws IOException {
-      one.write(b);
-      two.write(b);
-    }
-
-    @Override
-    public void write(@Nonnull final byte[] b) throws IOException {
-      one.write(b);
-      two.write(b);
-    }
-
-    @Override
-    public void write(@Nonnull final byte[] b, final int off, final int len) throws IOException {
-      one.write(b, off, len);
-      two.write(b, off, len);
-    }
-  }
-
   @Override
   public void startConsoleCapture() {
-    System.setOut(new PrintStream(new SplittingStream(consoleContents, originalOut)));
-    System.setErr(new PrintStream(new SplittingStream(consoleContents, originalErr)));
+    throw new RuntimeException("Console contents can only be captured in process execution");
   }
 
   @Override
   public String getConsoleContents() {
-    System.setOut(originalOut);
-    System.setErr(originalErr);
-    return consoleContents.toString(StandardCharsets.UTF_8);
+    throw new RuntimeException("Console contents can only be captured in process execution");
   }
 }
