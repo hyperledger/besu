@@ -385,8 +385,15 @@ public class BlockDataGenerator {
         .signAndBuild(generateKeyPair());
   }
 
+  public Set<Transaction> transactions(final int n, final TransactionType... transactionTypes) {
+    return Stream.generate(() -> transaction(transactionTypes))
+        .parallel()
+        .limit(n)
+        .collect(toUnmodifiableSet());
+  }
+
   public Set<Transaction> transactions(final int n) {
-    return Stream.generate(this::transaction).parallel().limit(n).collect(toUnmodifiableSet());
+    return transactions(n, TransactionType.values());
   }
 
   public TransactionReceipt receipt(final long cumulativeGasUsed) {
