@@ -335,7 +335,11 @@ public class BlockDataGenerator {
   }
 
   public Transaction transaction(final Bytes payload) {
-    return transaction(transactionType(), payload, address());
+    return transaction(transactionType(), payload);
+  }
+
+  public Transaction transaction(final TransactionType transactionType, final Bytes payload) {
+    return transaction(transactionType, payload, address());
   }
 
   public Transaction transaction(

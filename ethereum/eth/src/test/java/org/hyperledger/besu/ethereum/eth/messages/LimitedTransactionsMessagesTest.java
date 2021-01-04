@@ -18,9 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -38,61 +40,53 @@ public class LimitedTransactionsMessagesTest {
 
   @Test
   public void createLimited() {
-    final Set<Transaction> txs = generator.transactions(6000);
+    final Set<Transaction> txs = new HashSet<>(generator.transactions(6000));
     final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertThat(firstMessage.getIncludedTransactions().size()).isBetween(4990, 5250);
 
     txs.removeAll(firstMessage.getIncludedTransactions());
-    assertThat(txs.size()).isBetween(700, 800);
     final LimitedTransactionsMessages secondMessage =
         LimitedTransactionsMessages.createLimited(txs);
-    assertThat(secondMessage.getIncludedTransactions().size()).isBetween(700, 800);
     txs.removeAll(secondMessage.getIncludedTransactions());
     assertThat(txs.size()).isEqualTo(0);
-    assertThat(
-            firstMessage.getTransactionsMessage().getSize()
-                + secondMessage.getTransactionsMessage().getSize())
-        .isLessThan(2 * LimitedTransactionsMessages.LIMIT);
+    List.of(firstMessage, secondMessage).stream()
+        .map(message -> message.getTransactionsMessage().getSize())
+        .forEach(
+            messageSize -> assertThat(messageSize).isLessThan(LimitedTransactionsMessages.LIMIT));
   }
 
   @Test
   public void createLimitedWithTransactionsJustUnderTheLimit() {
     final Set<Transaction> txs = new HashSet<>();
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertThat(firstMessage.getIncludedTransactions().size()).isEqualTo(2);
-    txs.removeAll(firstMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(1);
-    final LimitedTransactionsMessages secondMessage =
-        LimitedTransactionsMessages.createLimited(txs);
-    assertThat(secondMessage.getIncludedTransactions().size()).isEqualTo(1);
-    txs.removeAll(secondMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(0);
+    txs.add(
+        generator.transaction(TransactionType.FRONTIER, Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    txs.add(
+        generator.transaction(TransactionType.FRONTIER, Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    txs.add(
+        generator.transaction(TransactionType.FRONTIER, Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    while (!txs.isEmpty()) {
+      final LimitedTransactionsMessages message = LimitedTransactionsMessages.createLimited(txs);
+      assertThat(message.getIncludedTransactions().size()).isEqualTo(1);
+      txs.removeAll(message.getIncludedTransactions());
+    }
   }
 
   @Test
   public void createLimitedWithTransactionsJustUnderAndJustOverTheLimit() {
     final Set<Transaction> txs = new LinkedHashSet<>();
 
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    txs.add(
+        generator.transaction(TransactionType.FRONTIER, Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
     // ensure the next transaction exceed the limit TX_PAYLOAD_LIMIT + 100
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT + 100])));
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertThat(firstMessage.getIncludedTransactions().size()).isEqualTo(1);
-    txs.removeAll(firstMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(2);
-    final LimitedTransactionsMessages secondMessage =
-        LimitedTransactionsMessages.createLimited(txs);
-    assertThat(secondMessage.getIncludedTransactions().size()).isEqualTo(1);
-    txs.removeAll(secondMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(1);
-    final LimitedTransactionsMessages thirdMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertThat(thirdMessage.getIncludedTransactions().size()).isEqualTo(1);
-    txs.removeAll(thirdMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(0);
+    txs.add(
+        generator.transaction(
+            TransactionType.FRONTIER, Bytes.wrap(new byte[TX_PAYLOAD_LIMIT + 100])));
+    txs.add(
+        generator.transaction(TransactionType.FRONTIER, Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    while (!txs.isEmpty()) {
+      final LimitedTransactionsMessages message = LimitedTransactionsMessages.createLimited(txs);
+      assertThat(message.getIncludedTransactions().size()).isEqualTo(1);
+      txs.removeAll(message.getIncludedTransactions());
+    }
   }
 
   @Test
