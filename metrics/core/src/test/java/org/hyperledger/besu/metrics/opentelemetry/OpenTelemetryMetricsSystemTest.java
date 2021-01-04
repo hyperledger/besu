@@ -34,13 +34,10 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
-import io.opentelemetry.sdk.metrics.data.MetricData;
 import org.junit.Test;
 
 public class OpenTelemetryMetricsSystemTest {
@@ -174,13 +171,10 @@ public class OpenTelemetryMetricsSystemTest {
             .build();
     final ObservableMetricsSystem localMetricSystem =
         MetricsSystemFactory.create(metricsConfiguration);
-    localMetricSystem.createGauge(RPC, "myValue", "Help", () -> 7d);
-    List<MetricData.ValueAtPercentile> values = new ArrayList<>();
-    values.add(MetricData.ValueAtPercentile.create(0, 7d));
-    values.add(MetricData.ValueAtPercentile.create(100, 7d));
+    localMetricSystem.createGauge(RPC, "myValue", "Help", () -> 7.0);
 
     assertThat(localMetricSystem.streamObservations())
-        .containsExactlyInAnyOrder(new Observation(RPC, "myValue", values, emptyList()));
+        .containsExactlyInAnyOrder(new Observation(RPC, "myValue", 7.0, emptyList()));
   }
 
   @Test
