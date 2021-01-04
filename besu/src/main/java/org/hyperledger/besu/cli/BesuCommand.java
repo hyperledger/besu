@@ -2408,6 +2408,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final Path staticNodesPath;
     if (staticNodesFile != null) {
       staticNodesPath = staticNodesFile.toAbsolutePath();
+      if (!staticNodesPath.toFile().exists()) {
+        throw new ParameterException(
+            commandLine, String.format("Static nodes file %s does not exist", staticNodesPath));
+      }
     } else {
       final String staticNodesFilename = "static-nodes.json";
       staticNodesPath = dataDir().resolve(staticNodesFilename);

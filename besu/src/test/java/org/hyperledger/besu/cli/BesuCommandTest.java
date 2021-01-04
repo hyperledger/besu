@@ -4097,7 +4097,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void staticNodesFileOptionFileDoesNotExistMessage() {
     parseCommand("--static-nodes-file", "this-file-does-not-exist-at-all.json");
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).contains("Static nodes file", "does not exist");
   }
 
   @Test
