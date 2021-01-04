@@ -17,35 +17,20 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
-import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-@SuppressWarnings("UnusedVariable")
 public class MessageValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
-
   private final SignedDataValidator signedDataValidator;
-  private final ProposalBlockConsistencyValidator proposalConsistencyValidator;
-  private final BlockValidator blockValidator;
-  private final ProtocolContext protocolContext;
+  private final ProposalValidator proposalValidator;
 
   public MessageValidator(
-      final SignedDataValidator signedDataValidator,
-      final ProposalBlockConsistencyValidator proposalConsistencyValidator,
-      final BlockValidator blockValidator,
-      final ProtocolContext protocolContext) {
+      final SignedDataValidator signedDataValidator, final ProposalValidator proposalValidator) {
     this.signedDataValidator = signedDataValidator;
-    this.proposalConsistencyValidator = proposalConsistencyValidator;
-    this.blockValidator = blockValidator;
-    this.protocolContext = protocolContext;
+    this.proposalValidator = proposalValidator;
   }
 
   public boolean validateProposal(final Proposal msg) {
-    return signedDataValidator.validateProposal(msg.getSignedPayload());
+    return proposalValidator.validateProposal(msg);
   }
 
   public boolean validatePrepare(final Prepare msg) {

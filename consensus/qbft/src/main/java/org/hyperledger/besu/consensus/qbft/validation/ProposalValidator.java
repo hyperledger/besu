@@ -64,7 +64,7 @@ public class ProposalValidator {
   }
 
   public boolean validateProposal(final Proposal msg) {
-    // Ensure proposal is from proposer, and targets THIS round
+    // Ensure proposal is from the proposer, and targets THIS round
     if (!signedDataValidator.validateProposal(msg.getSignedPayload())) {
       LOG.info("Illegal Proposal message, embedded signed data failed validation");
       return false;
@@ -88,7 +88,7 @@ public class ProposalValidator {
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
-    if (!validationResult.isPresent()) {
+    if (validationResult.isEmpty()) {
       LOG.info("Invalid Proposal message: block did not pass validation.");
       return false;
     }

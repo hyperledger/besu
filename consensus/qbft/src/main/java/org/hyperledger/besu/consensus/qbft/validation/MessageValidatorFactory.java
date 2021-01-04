@@ -60,21 +60,23 @@ public class MessageValidatorFactory {
 
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
+
+    final SignedDataValidator signedDataValidator =
+        createSignedDataValidator(roundIdentifier, parentHeader);
+
     final BlockValidator blockValidator =
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
-    // final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
+    final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
-    return new MessageValidator(
-        createSignedDataValidator(roundIdentifier, parentHeader),
-        new ProposalBlockConsistencyValidator(),
-        blockValidator,
-        protocolContext);
-    /*
-       new ProposalPiggyBackValidator(
-           validators,
-           (ri) -> createSignedDataValidator(ri, parentHeader),
-           roundIdentifier.getSequenceNumber()));
-    */
+    final ProposalValidator proposalValidator =
+        new ProposalValidator(
+            signedDataValidator,
+            blockValidator,
+            protocolContext,
+            BftHelpers.calculateRequiredValidatorQuorum(validators.size()),
+            validators);
+
+    return new MessageValidator(signedDataValidator, proposalValidator);
   }
 
   public RoundChangeMessageValidator createRoundChangeMessageValidator(

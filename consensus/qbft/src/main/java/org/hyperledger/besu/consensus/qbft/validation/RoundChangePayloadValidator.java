@@ -14,16 +14,24 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.allAuthorsBelongToValidatorList;
+
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Note: This does not validate that the received payload is for a future round, only that it was
+ * signed by a known validator, and is for the current chain height. Future-round check must be
+ * performed elsewhere (eg. the BlockHeightManager)
+ */
 public class RoundChangePayloadValidator {
 
   private static final Logger LOG = LogManager.getLogger();
@@ -38,7 +46,7 @@ public class RoundChangePayloadValidator {
 
   public boolean validateRoundChange(final SignedData<RoundChangePayload> payload) {
 
-    if (!validators.contains(payload.getAuthor())) {
+    if (!allAuthorsBelongToValidatorList(List.of(payload), validators)) {
       LOG.info(
           "Invalid RoundChange message: was not transmitted by a validator for the associated"
               + " round.");

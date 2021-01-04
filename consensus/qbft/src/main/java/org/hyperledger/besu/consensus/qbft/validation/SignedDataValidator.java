@@ -142,7 +142,7 @@ public class SignedDataValidator {
       return false;
     }
 
-    if (!proposal.isPresent()) {
+    if (proposal.isEmpty()) {
       LOG.info(
           "Unable to validate {} message. No Proposal exists against which to validate "
               + "block digest.",

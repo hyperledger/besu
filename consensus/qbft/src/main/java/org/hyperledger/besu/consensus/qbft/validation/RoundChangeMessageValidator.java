@@ -56,20 +56,17 @@ public class RoundChangeMessageValidator {
 
   public boolean validateRoundChange(final RoundChange msg) {
 
-    // Ensure msg is from a validator, is for current height, and is for a future round
+    // Ensure msg is from a validator and is for the current height
     if (!roundChangePayloadValidator.validateRoundChange(msg.getSignedPayload())) {
       LOG.info("Invalid RoundChange message: signed data did not validate correctly.");
       return false;
     }
 
     if (msg.getProposedBlock().isPresent()) {
-      validateWithBlock(msg);
-    } else {
-      // if No block is specified, the roundmetadata must also be absent
-      return msg.getPreparedRoundMetadata().isEmpty();
+      return validateWithBlock(msg);
     }
 
-    return true;
+    return msg.getPreparedRoundMetadata().isEmpty();
   }
 
   private boolean validateWithBlock(final RoundChange msg) {
@@ -96,11 +93,7 @@ public class RoundChangeMessageValidator {
       return false;
     }
 
-    if (validatePrepares(metadata, chainHeight, msg.getPrepares())) {
-      return false;
-    }
-
-    return true;
+    return validatePrepares(metadata, chainHeight, msg.getPrepares());
   }
 
   // THIS IS DUPLICATED IN ProposalValidator - love to make it common?!!!!
@@ -141,11 +134,5 @@ public class RoundChangeMessageValidator {
     }
 
     return true;
-  }
-
-  @FunctionalInterface
-  public interface MessageValidatorForHeightFactory {
-
-    SignedDataValidator createAt(final ConsensusRoundIdentifier roundIdentifier);
   }
 }
