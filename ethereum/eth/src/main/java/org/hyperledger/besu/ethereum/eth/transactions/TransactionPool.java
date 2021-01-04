@@ -83,7 +83,6 @@ public class TransactionPool implements BlockAddedObserver {
       TransactionPriceCalculator.frontier();
   private final TransactionPriceCalculator eip1559PriceCalculator =
       TransactionPriceCalculator.eip1559();
-  private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
@@ -97,8 +96,7 @@ public class TransactionPool implements BlockAddedObserver {
       final Optional<PeerPendingTransactionTracker> maybePeerPendingTransactionTracker,
       final Wei minTransactionGasPrice,
       final MetricsSystem metricsSystem,
-      final Optional<EIP1559> eip1559,
-      final TransactionPoolConfiguration configuration) {
+      final Optional<EIP1559> eip1559) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -109,7 +107,6 @@ public class TransactionPool implements BlockAddedObserver {
     this.maybePeerPendingTransactionTracker = maybePeerPendingTransactionTracker;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.eip1559 = eip1559;
-    this.configuration = configuration;
 
     duplicateTransactionCounter =
         metricsSystem.createLabelledCounter(

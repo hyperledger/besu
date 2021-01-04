@@ -124,8 +124,7 @@ public class TransactionPoolFactory {
             pendingTransactionTracker,
             minTransactionGasPrice,
             metricsSystem,
-            eip1559,
-            transactionPoolConfiguration);
+            eip1559);
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
