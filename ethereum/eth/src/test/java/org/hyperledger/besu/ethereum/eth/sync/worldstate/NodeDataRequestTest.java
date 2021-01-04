@@ -18,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class NodeDataRequestTest {
@@ -25,8 +28,21 @@ public class NodeDataRequestTest {
   @Test
   public void serializesAccountTrieNodeRequests() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
-    AccountTrieNodeDataRequest request = NodeDataRequest.createAccountDataRequest(gen.hash());
+    AccountTrieNodeDataRequest request =
+        NodeDataRequest.createAccountDataRequest(gen.hash(), Optional.empty(), true);
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
+    assertThat(request.isMainAccountTrie()).isTrue();
+    assertRequestsEquals(sedeRequest, request);
+    assertThat(sedeRequest).isInstanceOf(AccountTrieNodeDataRequest.class);
+  }
+
+  @Test
+  public void serializesAccountTrieNodeRequestsWithLocation() {
+    BlockDataGenerator gen = new BlockDataGenerator(0);
+    AccountTrieNodeDataRequest request =
+        NodeDataRequest.createAccountDataRequest(gen.hash(), Optional.of(Bytes.of(3)), true);
+    NodeDataRequest sedeRequest = serializeThenDeserialize(request);
+    assertThat(request.isMainAccountTrie()).isTrue();
     assertRequestsEquals(sedeRequest, request);
     assertThat(sedeRequest).isInstanceOf(AccountTrieNodeDataRequest.class);
   }
@@ -34,7 +50,18 @@ public class NodeDataRequestTest {
   @Test
   public void serializesStorageTrieNodeRequests() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
-    StorageTrieNodeDataRequest request = NodeDataRequest.createStorageDataRequest(gen.hash());
+    StorageTrieNodeDataRequest request =
+        NodeDataRequest.createStorageDataRequest(gen.hash(), Optional.empty());
+    NodeDataRequest sedeRequest = serializeThenDeserialize(request);
+    assertRequestsEquals(sedeRequest, request);
+    assertThat(sedeRequest).isInstanceOf(StorageTrieNodeDataRequest.class);
+  }
+
+  @Test
+  public void serializesStorageTrieNodeRequestsWithLocation() {
+    BlockDataGenerator gen = new BlockDataGenerator(0);
+    StorageTrieNodeDataRequest request =
+        NodeDataRequest.createStorageDataRequest(gen.hash(), Optional.of(Bytes.of(3)));
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
     assertRequestsEquals(sedeRequest, request);
     assertThat(sedeRequest).isInstanceOf(StorageTrieNodeDataRequest.class);
@@ -57,5 +84,6 @@ public class NodeDataRequestTest {
     assertThat(actual.getRequestType()).isEqualTo(expected.getRequestType());
     assertThat(actual.getHash()).isEqualTo(expected.getHash());
     assertThat(actual.getData()).isEqualTo(expected.getData());
+    assertThat(actual.getLocation()).isEqualTo(expected.getLocation());
   }
 }

@@ -75,6 +75,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -682,7 +683,8 @@ public class WorldStateDownloaderTest {
     List<Bytes32> queuedHashes = getFirstSetOfChildNodeRequests(remoteStorage, stateRoot);
     assertThat(queuedHashes.size()).isGreaterThan(0); // Sanity check
     for (Bytes32 bytes32 : queuedHashes) {
-      taskCollection.add(new AccountTrieNodeDataRequest(Hash.wrap(bytes32)));
+      taskCollection.add(
+          new AccountTrieNodeDataRequest(Hash.wrap(bytes32), Optional.empty(), false));
     }
     // Sanity check
     for (final Bytes32 bytes32 : queuedHashes) {

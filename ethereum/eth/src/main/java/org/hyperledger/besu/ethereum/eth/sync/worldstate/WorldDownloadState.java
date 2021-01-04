@@ -188,7 +188,7 @@ class WorldDownloadState {
       if (rootNodeData == null) {
         enqueueRequest(
             NodeDataRequest.createAccountDataRequest(
-                Optional.empty(), header.getStateRoot(), true));
+                header.getStateRoot(), Optional.empty(), true));
         return false;
       }
       final Updater updater = worldStateStorage.updater();

@@ -50,7 +50,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
       final Optional<Bytes> location, final Hash childHash) {
-    return createAccountDataRequest(location, childHash, false);
+    return createAccountDataRequest(childHash, location, false);
   }
 
   @Override
@@ -65,7 +65,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
       final NodeDataRequest storageNode =
-          createStorageDataRequest(Optional.empty(), accountValue.getStorageRoot());
+          createStorageDataRequest(accountValue.getStorageRoot(), Optional.empty());
       builder.add(storageNode);
     }
     return builder.build();
@@ -79,5 +79,9 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     out.writeInt(isMainAccountTrie ? 1 : 0);
     getLocation().ifPresent(out::writeBytes);
     out.endList();
+  }
+
+  public boolean isMainAccountTrie() {
+    return isMainAccountTrie;
   }
 }

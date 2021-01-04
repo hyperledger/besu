@@ -42,7 +42,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
       final Optional<Bytes> location, final Hash childHash) {
-    return NodeDataRequest.createStorageDataRequest(location, childHash);
+    return NodeDataRequest.createStorageDataRequest(childHash, location);
   }
 
   @Override

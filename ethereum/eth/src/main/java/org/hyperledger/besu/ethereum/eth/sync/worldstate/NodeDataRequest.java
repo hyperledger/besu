@@ -48,12 +48,12 @@ public abstract class NodeDataRequest {
   }
 
   public static AccountTrieNodeDataRequest createAccountDataRequest(
-      final Optional<Bytes> location, final Hash hash, final boolean isMainAccount) {
+      final Hash hash, final Optional<Bytes> location, final boolean isMainAccount) {
     return new AccountTrieNodeDataRequest(hash, location, isMainAccount);
   }
 
   public static StorageTrieNodeDataRequest createStorageDataRequest(
-      final Optional<Bytes> location, final Hash hash) {
+      final Hash hash, final Optional<Bytes> location) {
     return new StorageTrieNodeDataRequest(hash, location);
   }
 
@@ -70,30 +70,33 @@ public abstract class NodeDataRequest {
     in.enterList();
     final RequestType requestType = RequestType.fromValue(in.readByte());
     final Hash hash = Hash.wrap(in.readBytes32());
-    final Optional<Boolean> isMainAccount =
-        Optional.ofNullable(!in.isEndOfCurrentList() ? in.readInt() == 1 : null);
-    final Optional<Bytes> location =
-        Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
-    in.leaveList();
+    final Optional<Bytes> location;
 
-    final NodeDataRequest deserialized;
-    switch (requestType) {
-      case ACCOUNT_TRIE_NODE:
-        deserialized = createAccountDataRequest(location, hash, isMainAccount.orElseThrow());
-        break;
-      case STORAGE_TRIE_NODE:
-        deserialized = createStorageDataRequest(location, hash);
-        break;
-      case CODE:
-        deserialized = createCodeRequest(hash);
-        break;
-      default:
-        throw new IllegalArgumentException(
-            "Unable to deserialize provided data into a valid "
-                + NodeDataRequest.class.getSimpleName());
+    try {
+      final NodeDataRequest deserialized;
+      switch (requestType) {
+        case ACCOUNT_TRIE_NODE:
+          final boolean isMainAccount = in.readInt() == 1;
+          location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
+          deserialized = createAccountDataRequest(hash, location, isMainAccount);
+          break;
+        case STORAGE_TRIE_NODE:
+          location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
+          deserialized = createStorageDataRequest(hash, location);
+          break;
+        case CODE:
+          deserialized = createCodeRequest(hash);
+          break;
+        default:
+          throw new IllegalArgumentException(
+              "Unable to deserialize provided data into a valid "
+                  + NodeDataRequest.class.getSimpleName());
+      }
+
+      return deserialized;
+    } finally {
+      in.leaveList();
     }
-
-    return deserialized;
   }
 
   protected void writeTo(final RLPOutput out) {
