@@ -9,6 +9,7 @@
 * Added command line option --static-nodes-file. [#1644](https://github.com/hyperledger/besu/pull/1644)
 
 ### Bug Fixes
+* Accept locally-sourced transactions below the minimum gas price. [#1743](https://github.com/hyperledger/besu/pull/1743)
 
 #### Previously identified known issues
 
