@@ -160,8 +160,10 @@ public abstract class PeerDiscoveryAgent {
                 this.localNode = Optional.of(ourNode);
                 isActive = true;
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
+                addLocalNodeRecord(id, advertisedAddress, tcpPort, discoveryPort)
+                    .ifPresent(
+                        nodeRecord -> localNode.ifPresent(peer -> peer.setNodeRecord(nodeRecord)));
                 startController(ourNode);
-                addLocalNodeRecord(id, advertisedAddress, tcpPort, discoveryPort);
                 return discoveryPort;
               });
     } else {
@@ -170,7 +172,7 @@ public abstract class PeerDiscoveryAgent {
     }
   }
 
-  private void addLocalNodeRecord(
+  private Optional<NodeRecord> addLocalNodeRecord(
       final Bytes nodeId,
       final String advertisedAddress,
       final Integer tcpPort,
@@ -206,7 +208,10 @@ public abstract class PeerDiscoveryAgent {
       keyValueStorageTransaction.put(
           Bytes.wrap(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray(), nodeRecord.serialize().toArray());
       keyValueStorageTransaction.commit();
+      return Optional.of(nodeRecord);
     }
+
+    return existingNodeRecord;
   }
 
   public void addPeerRequirement(final PeerRequirement peerRequirement) {

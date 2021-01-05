@@ -48,8 +48,8 @@ public class BftCoinbaseValidationRule implements AttachedBlockHeaderValidationR
     final Collection<Address> storedValidators = validatorProvider.getValidators();
 
     if (!storedValidators.contains(proposer)) {
-      LOGGER.trace(
-          "Block proposer is not a member of the validators. proposer={}, validators={}",
+      LOGGER.info(
+          "Invalid block header: Block proposer is not a member of the validators. proposer={}, validators={}",
           proposer,
           storedValidators);
       return false;

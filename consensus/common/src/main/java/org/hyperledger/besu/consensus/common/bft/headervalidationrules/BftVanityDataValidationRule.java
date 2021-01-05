@@ -31,8 +31,8 @@ public class BftVanityDataValidationRule implements AttachedBlockHeaderValidatio
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final BftExtraData extraData = BftExtraData.decode(header);
 
-    if (extraData.getVanityData().size() != BftExtraData.EXTRA_VANITY_LENGTH) {
-      LOG.trace("Bft Extra Data does not contain 32 bytes of vanity data.");
+    if (extraData.getVanityData().size() != IbftExtraData.EXTRA_VANITY_LENGTH) {
+      LOG.info("Invalid block header: Bft Extra Data does not contain 32 bytes of vanity data.");
       return false;
     }
     return true;

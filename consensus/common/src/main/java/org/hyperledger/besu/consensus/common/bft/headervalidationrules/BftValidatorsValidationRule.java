@@ -71,10 +71,12 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
       }
 
     } catch (final RLPException ex) {
-      LOGGER.trace("ExtraData field was unable to be deserialized into an BFT Struct.", ex);
+      LOGGER.info(
+          "Invalid block header: ExtraData field was unable to be deserialized into an BFT Struct.",
+          ex);
       return false;
     } catch (final IllegalArgumentException ex) {
-      LOGGER.trace("Failed to verify extra data", ex);
+      LOGGER.info("Invalid block header: Failed to verify extra data", ex);
       return false;
     }
 
