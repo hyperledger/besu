@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -151,8 +150,6 @@ public class TransactionRLPEncoder {
   }
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
-
     out.startList();
     out.writeLongScalar(transaction.getNonce());
     out.writeNull();

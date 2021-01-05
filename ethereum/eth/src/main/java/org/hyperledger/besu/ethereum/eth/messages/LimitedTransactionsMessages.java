@@ -46,7 +46,7 @@ public final class LimitedTransactionsMessages {
       transaction.writeTo(encodedTransaction);
       Bytes encodedBytes = encodedTransaction.encoded();
       if (messageSize != 0 // always at least one message
-          && (encodedBytes.size() > LIMIT || messageSize + encodedBytes.size() > LIMIT)) {
+          && messageSize + encodedBytes.size() > LIMIT) {
         break;
       }
       message.writeRaw(encodedBytes);
