@@ -124,6 +124,7 @@ public final class RunnerBuilderTest {
             .vertx(vertx)
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .build();
     runner.start();
 
