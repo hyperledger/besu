@@ -17,17 +17,14 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
-import java.util.Iterator;
 import java.util.NavigableMap;
 import java.util.OptionalLong;
-import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.TreeMap;
-import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 class TransactionsForSenderInfo {
   private final NavigableMap<Long, PendingTransactions.TransactionInfo> transactionsInfos;
-  private final Queue<Long> gaps = new PriorityQueue<>();
+  private OptionalLong nextGap = OptionalLong.empty();
 
   TransactionsForSenderInfo() {
     transactionsInfos = new TreeMap<>();
@@ -37,34 +34,55 @@ class TransactionsForSenderInfo {
       final long nonce, final PendingTransactions.TransactionInfo transactionInfo) {
     synchronized (transactionsInfos) {
       if (!transactionsInfos.isEmpty()) {
-        final long highestNonce = transactionsInfos.lastKey();
-        if (nonce > (highestNonce + 1)) {
-          LongStream.range(highestNonce + 1, nonce).forEach(gaps::add);
+        final long expectedNext = transactionsInfos.lastKey() + 1;
+        if (nonce > (expectedNext) && nextGap.isEmpty()) {
+          nextGap = OptionalLong.of(expectedNext);
         }
       }
       transactionsInfos.put(nonce, transactionInfo);
-    }
-  }
-
-  void updateGaps() {
-    synchronized (transactionsInfos) {
-      final Iterator<Long> nonceIterator = transactionsInfos.keySet().iterator();
-      long previousNonce = -1;
-      while (nonceIterator.hasNext()) {
-        final long currentNonce = nonceIterator.next();
-        LongStream.range(previousNonce + 1, currentNonce).forEach(gaps::add);
-        previousNonce = currentNonce;
+      if (nonce == nextGap.orElse(-1)) {
+        findGap();
       }
     }
   }
 
-  NavigableMap<Long, TransactionInfo> getTransactionsInfos() {
-    return transactionsInfos;
+  void removeTrackedTransaction(final long nonce) {
+    transactionsInfos.remove(nonce);
+    synchronized (transactionsInfos) {
+      if (!transactionsInfos.isEmpty() && nonce != transactionsInfos.firstKey()) {
+        findGap();
+      }
+    }
   }
 
-  OptionalLong maybeNextGap() {
-    synchronized (transactionsInfos) {
-      return gaps.isEmpty() ? OptionalLong.empty() : OptionalLong.of(gaps.poll());
+  private void findGap() {
+    // find first gap
+    long expectedValue = transactionsInfos.firstKey();
+    for (final Long nonce : transactionsInfos.keySet()) {
+      if (expectedValue == nonce) {
+        // no gap, keep moving
+        expectedValue++;
+      } else {
+        nextGap = OptionalLong.of(expectedValue);
+        return;
+      }
     }
+    nextGap = OptionalLong.empty();
+  }
+
+  OptionalLong maybeNextNonce() {
+    if (transactionsInfos.isEmpty()) {
+      return OptionalLong.empty();
+    } else {
+      return nextGap.isEmpty() ? OptionalLong.of(transactionsInfos.lastKey() + 1) : nextGap;
+    }
+  }
+
+  Stream<TransactionInfo> streamTransactionInfos() {
+    return transactionsInfos.values().stream();
+  }
+
+  TransactionInfo getTransactionInfoForNonce(final long nonce) {
+    return transactionsInfos.get(nonce);
   }
 }
