@@ -33,11 +33,11 @@ public interface GenesisConfigOptions {
 
   String getConsensusEngine();
 
-  IbftConfigOptions getIbftLegacyConfigOptions();
+  BftConfigOptions getIbftLegacyConfigOptions();
 
   CliqueConfigOptions getCliqueConfigOptions();
 
-  IbftConfigOptions getIbft2ConfigOptions();
+  BftConfigOptions getBftConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
 

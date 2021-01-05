@@ -204,6 +204,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--metrics-category");
         params.add(((Enum<?>) category).name());
       }
+      if (node.isMetricsEnabled() || metricsConfiguration.isPushEnabled()) {
+        params.add("--metrics-protocol");
+        params.add(metricsConfiguration.getProtocol().name());
+      }
       if (metricsConfiguration.isPushEnabled()) {
         params.add("--metrics-push-enabled");
         params.add("--metrics-push-host");

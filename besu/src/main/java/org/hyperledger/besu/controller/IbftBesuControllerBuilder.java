@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.IbftConfigOptions;
 import org.hyperledger.besu.config.IbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
@@ -24,23 +24,23 @@ import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
-import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
-import org.hyperledger.besu.consensus.ibft.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibft.UniqueMessageMulticaster;
-import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftMiningCoordinator;
-import org.hyperledger.besu.consensus.ibft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.ibft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -83,13 +83,13 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
-  private IbftConfigOptions ibftConfig;
+  private BftConfigOptions ibftConfig;
   private ValidatorPeers peers;
-  private final BlockInterface blockInterface = new IbftBlockInterface();
+  private final BlockInterface blockInterface = new BftBlockInterface();
 
   @Override
   protected void prepForBuild() {
-    ibftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getIbft2ConfigOptions();
+    ibftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
     bftEventQueue = new BftEventQueue(ibftConfig.getMessageQueueLimit());
   }
 
@@ -119,8 +119,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(metricsSystem);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final IbftBlockCreatorFactory blockCreatorFactory =
-        new IbftBlockCreatorFactory(
+    final BftBlockCreatorFactory blockCreatorFactory =
+        new BftBlockCreatorFactory(
             gasLimitCalculator,
             transactionPool.getPendingTransactions(),
             protocolContext,
@@ -132,7 +132,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
     final VoteTallyCache voteTallyCache =
-        protocolContext.getConsensusState(IbftContext.class).getVoteTallyCache();
+        protocolContext.getConsensusState(BftContext.class).getVoteTallyCache();
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
@@ -213,7 +213,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
-    return IbftProtocolSchedule.create(
+    return BftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled);
@@ -229,22 +229,22 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected IbftContext createConsensusContext(
+  protected BftContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     final GenesisConfigOptions configOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides);
-    final IbftConfigOptions ibftConfig = configOptions.getIbft2ConfigOptions();
+    final BftConfigOptions ibftConfig = configOptions.getBftConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
     final Map<Long, List<Address>> ibftValidatorForkMap =
         convertIbftForks(configOptions.getTransitions().getIbftForks());
 
-    return new IbftContext(
+    return new BftContext(
         new ForkingVoteTallyCache(
             blockchain,
-            new VoteTallyUpdater(epochManager, new IbftBlockInterface()),
+            new VoteTallyUpdater(epochManager, new BftBlockInterface()),
             epochManager,
-            new IbftBlockInterface(),
+            new BftBlockInterface(),
             new BftValidatorOverrides(ibftValidatorForkMap)),
         new VoteProposer(),
         epochManager,
