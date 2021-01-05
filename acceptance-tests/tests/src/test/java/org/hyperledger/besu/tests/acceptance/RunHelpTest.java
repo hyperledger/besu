@@ -47,7 +47,7 @@ public class RunHelpTest extends AcceptanceTestBase {
               "\n      --rpc-http-cors-origins=<rpcHttpCorsAllowedOrigins>\n"
                   + "                             Comma separated origin domain URLs for CORS\n"
                   + "                               validation (default: none)\n"
-                  + "\nBesu is licensed under the Apache License 2.0\n");
+                  + "Besu is licensed under the Apache License 2.0\n");
     } catch (final AssertionError ae) {
       assertThat(consoleContents)
           .endsWith(
