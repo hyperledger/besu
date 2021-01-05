@@ -33,6 +33,7 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':plugin-api')
 
+  implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
 
