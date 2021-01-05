@@ -38,6 +38,22 @@ public class RunHelpTest extends AcceptanceTestBase {
     final String consoleContents = cluster.getConsoleContents();
     assertThat(consoleContents)
         .startsWith("Usage:\n\nbesu [OPTIONS] [COMMAND]\n\nDescription:\n\n");
-    assertThat(consoleContents).endsWith("\nBesu is licensed under the Apache License 2.0\n");
+
+    // Depending on how the process capture worked we will have one of two end strings
+    // This is a test harness issue, not a Besu issue.
+    try {
+      assertThat(consoleContents)
+          .endsWith(
+              "\n      --rpc-http-cors-origins=<rpcHttpCorsAllowedOrigins>\n"
+                  + "                             Comma separated origin domain URLs for CORS\n"
+                  + "                               validation (default: none)\n"
+                  + "\nBesu is licensed under the Apache License 2.0\n");
+    } catch (final AssertionError ae) {
+      assertThat(consoleContents)
+          .endsWith(
+              "\n      --rpc-http-cors-origins=<rpcHttpCorsAllowedOrigins>\n"
+                  + "                             Comma separated origin domain URLs for CORS\n"
+                  + "                               validation (default: none)\n");
+    }
   }
 }
