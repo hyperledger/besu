@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.IbftConfigOptions;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -43,7 +43,7 @@ public class BftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyBftChanges(config.getIbft2ConfigOptions(), builder),
+            builder -> applyBftChanges(config.getBftConfigOptions(), builder),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -60,7 +60,7 @@ public class BftProtocolSchedule {
   }
 
   private static ProtocolSpecBuilder applyBftChanges(
-      final IbftConfigOptions configOptions, final ProtocolSpecBuilder builder) {
+      final BftConfigOptions configOptions, final ProtocolSpecBuilder builder) {
 
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");

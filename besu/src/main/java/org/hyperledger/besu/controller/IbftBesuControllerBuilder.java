@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.IbftConfigOptions;
 import org.hyperledger.besu.config.IbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
@@ -83,13 +83,13 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
-  private IbftConfigOptions ibftConfig;
+  private BftConfigOptions ibftConfig;
   private ValidatorPeers peers;
   private final BlockInterface blockInterface = new BftBlockInterface();
 
   @Override
   protected void prepForBuild() {
-    ibftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getIbft2ConfigOptions();
+    ibftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
     bftEventQueue = new BftEventQueue(ibftConfig.getMessageQueueLimit());
   }
 
@@ -233,7 +233,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     final GenesisConfigOptions configOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides);
-    final IbftConfigOptions ibftConfig = configOptions.getIbft2ConfigOptions();
+    final BftConfigOptions ibftConfig = configOptions.getBftConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
     final Map<Long, List<Address>> ibftValidatorForkMap =

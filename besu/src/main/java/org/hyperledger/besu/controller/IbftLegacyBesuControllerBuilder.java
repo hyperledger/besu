@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.config.IbftConfigOptions;
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
@@ -83,7 +83,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected BftContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    final IbftConfigOptions ibftConfig =
+    final BftConfigOptions ibftConfig =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getIbftLegacyConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
     final VoteTallyCache voteTallyCache =

@@ -22,10 +22,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-public class IbftConfigOptions {
+public class BftConfigOptions {
 
-  public static final IbftConfigOptions DEFAULT =
-      new IbftConfigOptions(JsonUtil.createEmptyObjectNode());
+  public static final BftConfigOptions DEFAULT =
+      new BftConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
@@ -40,7 +40,7 @@ public class IbftConfigOptions {
 
   private final ObjectNode ibftConfigRoot;
 
-  IbftConfigOptions(final ObjectNode ibftConfigRoot) {
+  BftConfigOptions(final ObjectNode ibftConfigRoot) {
     this.ibftConfigRoot = ibftConfigRoot;
   }
 
