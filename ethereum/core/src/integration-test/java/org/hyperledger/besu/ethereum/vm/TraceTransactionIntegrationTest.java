@@ -163,7 +163,7 @@ public class TraceTransactionIntegrationTest {
     final Transaction transaction =
         Transaction.readFrom(
             new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
-    final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
+    BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     transactionProcessor.processTransaction(
         blockchain,
         worldStateArchive
