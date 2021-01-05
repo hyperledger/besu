@@ -21,9 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
-import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
-import org.hyperledger.besu.consensus.ibft.network.ValidatorMulticaster;
-import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 
@@ -39,9 +37,8 @@ public class IbftFinalState {
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
   private final BftBlockCreatorFactory blockCreatorFactory;
-  private final MessageFactory messageFactory;
-  private final IbftMessageTransmitter messageTransmitter;
   private final Clock clock;
+  private final ValidatorMulticaster validatorMulticaster;
 
   public IbftFinalState(
       final VoteTallyCache voteTallyCache,
@@ -52,7 +49,6 @@ public class IbftFinalState {
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
       final BftBlockCreatorFactory blockCreatorFactory,
-      final MessageFactory messageFactory,
       final Clock clock) {
     this.voteTallyCache = voteTallyCache;
     this.nodeKey = nodeKey;
@@ -61,9 +57,8 @@ public class IbftFinalState {
     this.roundTimer = roundTimer;
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
-    this.messageFactory = messageFactory;
     this.clock = clock;
-    this.messageTransmitter = new IbftMessageTransmitter(messageFactory, validatorMulticaster);
+    this.validatorMulticaster = validatorMulticaster;
   }
 
   public int getQuorum() {
@@ -102,16 +97,12 @@ public class IbftFinalState {
     return blockCreatorFactory;
   }
 
-  public MessageFactory getMessageFactory() {
-    return messageFactory;
-  }
-
   public Address getProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
     return proposerSelector.selectProposerForRound(roundIdentifier);
   }
 
-  public IbftMessageTransmitter getTransmitter() {
-    return messageTransmitter;
+  public ValidatorMulticaster getValidatorMulticaster() {
+    return validatorMulticaster;
   }
 
   public Clock getClock() {

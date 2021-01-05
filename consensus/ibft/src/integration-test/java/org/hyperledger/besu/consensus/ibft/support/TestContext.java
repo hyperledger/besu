@@ -45,6 +45,7 @@ public class TestContext {
   private final BftEventHandler controller;
   private final IbftFinalState finalState;
   private final EventMultiplexer eventMultiplexer;
+  private final MessageFactory messageFactory;
 
   public TestContext(
       final Map<Address, ValidatorPeer> remotePeers,
@@ -52,13 +53,15 @@ public class TestContext {
       final BftExecutors bftExecutors,
       final BftEventHandler controller,
       final IbftFinalState finalState,
-      final EventMultiplexer eventMultiplexer) {
+      final EventMultiplexer eventMultiplexer,
+      final MessageFactory messageFactory) {
     this.remotePeers = remotePeers;
     this.blockchain = blockchain;
     this.bftExecutors = bftExecutors;
     this.controller = controller;
     this.finalState = finalState;
     this.eventMultiplexer = eventMultiplexer;
+    this.messageFactory = messageFactory;
   }
 
   public void start() {
@@ -79,7 +82,7 @@ public class TestContext {
   }
 
   public MessageFactory getLocalNodeMessageFactory() {
-    return finalState.getMessageFactory();
+    return messageFactory;
   }
 
   public Block createBlockForProposal(
