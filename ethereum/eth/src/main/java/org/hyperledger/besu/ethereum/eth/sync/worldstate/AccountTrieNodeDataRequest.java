@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -29,12 +28,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  private final boolean isMainAccountTrie;
-
   AccountTrieNodeDataRequest(
-      final Hash hash, final Optional<Bytes> location, final boolean isMainAccountTrie) {
+      final Hash hash, final Optional<Bytes> location) {
     super(RequestType.ACCOUNT_TRIE_NODE, hash, location);
-    this.isMainAccountTrie = isMainAccountTrie;
   }
 
   @Override
@@ -49,8 +45,8 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
-      final Optional<Bytes> location, final Hash childHash) {
-    return createAccountDataRequest(childHash, location, false);
+          final Hash childHash, final Optional<Bytes> location) {
+    return createAccountDataRequest(childHash, location);
   }
 
   @Override
@@ -65,23 +61,10 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
       final NodeDataRequest storageNode =
-          createStorageDataRequest(accountValue.getStorageRoot(), Optional.empty());
+          createStorageDataRequest(accountValue.getStorageRoot(), getLocation(), getHash());
       builder.add(storageNode);
     }
     return builder.build();
   }
 
-  @Override
-  protected void writeTo(final RLPOutput out) {
-    out.startList();
-    out.writeByte(getRequestType().getValue());
-    out.writeBytes(getHash());
-    out.writeInt(isMainAccountTrie ? 1 : 0);
-    getLocation().ifPresent(out::writeBytes);
-    out.endList();
-  }
-
-  public boolean isMainAccountTrie() {
-    return isMainAccountTrie;
-  }
 }

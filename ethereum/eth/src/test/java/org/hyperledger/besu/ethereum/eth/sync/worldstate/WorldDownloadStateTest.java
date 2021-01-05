@@ -94,7 +94,7 @@ public class WorldDownloadStateTest {
   @Test
   public void shouldNotCompleteWhenThereArePendingTasks() {
     pendingRequests.add(
-        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty(), true));
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
 
     downloadState.checkCompletion(worldStateStorage, header);
 
@@ -111,9 +111,9 @@ public class WorldDownloadStateTest {
     downloadState.addOutstandingTask(outstandingTask2);
 
     pendingRequests.add(
-        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty(), true));
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
     pendingRequests.add(
-        NodeDataRequest.createAccountDataRequest(Hash.EMPTY, Optional.empty(), false));
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY, Optional.empty()));
     downloadState.setWorldStateDownloadProcess(worldStateDownloadProcess);
 
     future.cancel(true);
@@ -189,9 +189,9 @@ public class WorldDownloadStateTest {
     downloadState.enqueueRequests(
         Stream.of(
             NodeDataRequest.createAccountDataRequest(
-                Hash.EMPTY_TRIE_HASH, Optional.empty(), true)));
+                Hash.EMPTY_TRIE_HASH, Optional.empty())));
     downloadState.enqueueRequest(
-        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty(), false));
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
 
     assertThat(pendingRequests.isEmpty()).isTrue();
   }

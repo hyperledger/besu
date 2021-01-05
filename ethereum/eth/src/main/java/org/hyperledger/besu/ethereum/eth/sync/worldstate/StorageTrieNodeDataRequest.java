@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -25,8 +26,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  StorageTrieNodeDataRequest(final Hash hash, final Optional<Bytes> location) {
+  final Optional<Address> account;
+
+  StorageTrieNodeDataRequest(final Hash hash, final Optional<Bytes> location, final Optional<Address> account) {
     super(RequestType.STORAGE_TRIE_NODE, hash, location);
+    this.account = account;
   }
 
   @Override
@@ -41,7 +45,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
-      final Optional<Bytes> location, final Hash childHash) {
+          final Hash childHash, final Optional<Bytes> location) {
     return NodeDataRequest.createStorageDataRequest(childHash, location);
   }
 

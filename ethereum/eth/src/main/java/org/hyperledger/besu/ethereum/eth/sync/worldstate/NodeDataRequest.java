@@ -48,8 +48,8 @@ public abstract class NodeDataRequest {
   }
 
   public static AccountTrieNodeDataRequest createAccountDataRequest(
-      final Hash hash, final Optional<Bytes> location, final boolean isMainAccount) {
-    return new AccountTrieNodeDataRequest(hash, location, isMainAccount);
+          final Hash hash, final Optional<Bytes> location) {
+    return new AccountTrieNodeDataRequest(hash, location);
   }
 
   public static StorageTrieNodeDataRequest createStorageDataRequest(
@@ -76,9 +76,8 @@ public abstract class NodeDataRequest {
       final NodeDataRequest deserialized;
       switch (requestType) {
         case ACCOUNT_TRIE_NODE:
-          final boolean isMainAccount = in.readInt() == 1;
           location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
-          deserialized = createAccountDataRequest(hash, location, isMainAccount);
+          deserialized = createAccountDataRequest(hash, location);
           break;
         case STORAGE_TRIE_NODE:
           location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);

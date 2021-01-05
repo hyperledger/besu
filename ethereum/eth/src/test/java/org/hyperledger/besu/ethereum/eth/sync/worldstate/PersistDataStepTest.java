@@ -104,7 +104,7 @@ public class PersistDataStepTest {
   private StubTask createTaskWithoutData(final Bytes data) {
     final Hash hash = Hash.hash(data);
     final AccountTrieNodeDataRequest request =
-        NodeDataRequest.createAccountDataRequest(hash, Optional.empty(), true);
+        NodeDataRequest.createAccountDataRequest(hash, Optional.empty());
     return new StubTask(request);
   }
 

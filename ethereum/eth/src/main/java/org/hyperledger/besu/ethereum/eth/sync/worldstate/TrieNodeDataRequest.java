@@ -46,7 +46,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
             node -> {
               if (nodeIsHashReferencedDescendant(node)) {
                 return Stream.of(
-                    createChildNodeDataRequest(node.getLocation(), Hash.wrap(node.getHash())));
+                    createChildNodeDataRequest(Hash.wrap(node.getHash()), node.getLocation()));
               } else {
                 return node.getValue()
                     .map(this::getRequestsFromTrieNodeValue)
@@ -60,7 +60,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   }
 
   protected abstract NodeDataRequest createChildNodeDataRequest(
-      final Optional<Bytes> location, final Hash childHash);
+          final Hash childHash, final Optional<Bytes> location);
 
   protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value);
 }

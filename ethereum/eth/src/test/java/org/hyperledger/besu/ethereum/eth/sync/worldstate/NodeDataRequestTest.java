@@ -29,7 +29,7 @@ public class NodeDataRequestTest {
   public void serializesAccountTrieNodeRequests() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     AccountTrieNodeDataRequest request =
-        NodeDataRequest.createAccountDataRequest(gen.hash(), Optional.empty(), true);
+        NodeDataRequest.createAccountDataRequest(gen.hash(), Optional.empty());
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
     assertThat(request.isMainAccountTrie()).isTrue();
     assertRequestsEquals(sedeRequest, request);
@@ -40,7 +40,7 @@ public class NodeDataRequestTest {
   public void serializesAccountTrieNodeRequestsWithLocation() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     AccountTrieNodeDataRequest request =
-        NodeDataRequest.createAccountDataRequest(gen.hash(), Optional.of(Bytes.of(3)), true);
+        NodeDataRequest.createAccountDataRequest(gen.hash(), Optional.of(Bytes.of(3)));
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
     assertThat(request.isMainAccountTrie()).isTrue();
     assertRequestsEquals(sedeRequest, request);
