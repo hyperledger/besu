@@ -355,7 +355,7 @@ public class PendingTransactions {
     final TransactionsForSenderInfo transactionsForSenderInfo = transactionsBySender.get(sender);
     return transactionsForSenderInfo == null
         ? OptionalLong.empty()
-        : transactionsForSenderInfo.maybeNextNoce();
+        : transactionsForSenderInfo.maybeNextNonce();
   }
 
   public void tryEvictTransactionHash(final Hash hash) {

@@ -70,7 +70,7 @@ class TransactionsForSenderInfo {
     nextGap = OptionalLong.empty();
   }
 
-  OptionalLong maybeNextNoce() {
+  OptionalLong maybeNextNonce() {
     if (transactionsInfos.isEmpty()) {
       return OptionalLong.empty();
     } else {
