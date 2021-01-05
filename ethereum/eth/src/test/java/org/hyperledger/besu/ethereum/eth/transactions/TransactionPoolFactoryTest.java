@@ -166,7 +166,7 @@ public class TransactionPoolFactoryTest {
         .thenReturn(ValidationResult.valid());
     when(transactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(worldStateArchive.get(any())).thenReturn(Optional.of(worldState));
+    when(worldStateArchive.get(any(), any())).thenReturn(Optional.of(worldState));
 
     final TransactionPool pool =
         TransactionPoolFactory.createTransactionPool(
