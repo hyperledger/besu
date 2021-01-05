@@ -57,12 +57,12 @@ public class RoundChangeCertificateValidator {
     final Collection<SignedData<RoundChangePayload>> roundChangeMsgs =
         roundChangeCert.getRoundChangePayloads();
 
-    if (hasDuplicateAuthors(roundChangeMsgs)) {
+    if (roundChangeMsgs.size() < quorum) {
+      LOG.info("Invalid RoundChangeCertificate, insufficient RoundChange messages.");
       return false;
     }
 
-    if (roundChangeMsgs.size() < quorum) {
-      LOG.info("Invalid RoundChangeCertificate, insufficient RoundChange messages.");
+    if (hasDuplicateAuthors(roundChangeMsgs)) {
       return false;
     }
 
