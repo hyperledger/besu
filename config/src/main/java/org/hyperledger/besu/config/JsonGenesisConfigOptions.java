@@ -125,17 +125,17 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public IbftConfigOptions getIbftLegacyConfigOptions() {
+  public BftConfigOptions getIbftLegacyConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
-        .map(IbftConfigOptions::new)
-        .orElse(IbftConfigOptions.DEFAULT);
+        .map(BftConfigOptions::new)
+        .orElse(BftConfigOptions.DEFAULT);
   }
 
   @Override
-  public IbftConfigOptions getIbft2ConfigOptions() {
+  public BftConfigOptions getBftConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT2_CONFIG_KEY)
-        .map(IbftConfigOptions::new)
-        .orElse(IbftConfigOptions.DEFAULT);
+        .map(BftConfigOptions::new)
+        .orElse(BftConfigOptions.DEFAULT);
   }
 
   @Override
@@ -359,7 +359,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
-      builder.put("ibft2", getIbft2ConfigOptions().asMap());
+      builder.put("ibft2", getBftConfigOptions().asMap());
     }
 
     if (isQuorum()) {

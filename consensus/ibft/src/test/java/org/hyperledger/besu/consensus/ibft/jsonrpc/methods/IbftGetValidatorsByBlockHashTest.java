@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -45,14 +45,14 @@ public class IbftGetValidatorsByBlockHashTest {
 
   @Mock private Blockchain blockchain;
   @Mock private BlockHeader blockHeader;
-  @Mock private IbftBlockInterface ibftBlockInterface;
+  @Mock private BftBlockInterface bftBlockInterface;
   @Mock private JsonRpcRequestContext request;
 
   private IbftGetValidatorsByBlockHash method;
 
   @Before
   public void setUp() {
-    method = new IbftGetValidatorsByBlockHash(blockchain, ibftBlockInterface);
+    method = new IbftGetValidatorsByBlockHash(blockchain, bftBlockInterface);
   }
 
   @Test
@@ -65,7 +65,7 @@ public class IbftGetValidatorsByBlockHashTest {
     when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
     final List<Address> addresses = Collections.singletonList(Address.ID);
     final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
-    when(ibftBlockInterface.validatorsInBlock(blockHeader)).thenReturn(addresses);
+    when(bftBlockInterface.validatorsInBlock(blockHeader)).thenReturn(addresses);
     request = requestWithParams(ZERO_HASH);
     JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
     Assertions.assertThat(response.getResult()).isEqualTo(expectedOutput);
