@@ -249,7 +249,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       // descendant simply store the new block hash.
       if (blockHeader != null) {
         if (!worldStateRootHash.equals(blockHeader.getStateRoot())) {
-          throw new RuntimeException("World State Root does not match expected value");
+          throw new RuntimeException(
+              "World State Root does not match expected value, header "
+                  + blockHeader.getStateRoot().toHexString()
+                  + " calcualted "
+                  + worldStateRootHash.toHexString());
         }
         worldStateBlockHash = blockHeader.getHash();
         trieBranchTx.put(WORLD_BLOCK_HASH_KEY, worldStateBlockHash.toArrayUnsafe());
