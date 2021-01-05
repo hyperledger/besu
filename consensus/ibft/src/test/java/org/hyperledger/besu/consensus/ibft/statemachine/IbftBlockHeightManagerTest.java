@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft.statemachine;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 import static org.hyperledger.besu.consensus.ibft.TestHelpers.createFrom;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -30,12 +30,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
-import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
@@ -90,7 +90,7 @@ public class IbftBlockHeightManagerTest {
   @Mock private IbftRoundFactory roundFactory;
   @Mock private Clock clock;
   @Mock private MessageValidatorFactory messageValidatorFactory;
-  @Mock private IbftBlockCreator blockCreator;
+  @Mock private BftBlockCreator blockCreator;
   @Mock private BlockImporter blockImporter;
   @Mock private BlockTimer blockTimer;
   @Mock private RoundTimer roundTimer;
@@ -107,8 +107,8 @@ public class IbftBlockHeightManagerTest {
 
   private void buildCreatedBlock() {
 
-    final IbftExtraData extraData =
-        new IbftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
+    final BftExtraData extraData =
+        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
 
     headerTestFixture.extraData(extraData.encode());
     final BlockHeader header = headerTestFixture.buildHeader();
