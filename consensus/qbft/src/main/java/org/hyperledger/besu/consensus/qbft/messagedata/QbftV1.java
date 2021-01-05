@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.messagedata;
 
-/** Message codes for iBFT v2 messages */
+/** Message codes for QBFT v1 messages */
 public class QbftV1 {
   public static final int PROPOSAL = 0;
   public static final int PREPARE = 1;

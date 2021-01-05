@@ -35,9 +35,7 @@ public class MessageFactory {
   }
 
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
-
     final PreparePayload payload = new PreparePayload(roundIdentifier, digest);
-
     return new Prepare(createSignedMessage(payload));
   }
 
@@ -45,9 +43,7 @@ public class MessageFactory {
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final Signature commitSeal) {
-
     final CommitPayload payload = new CommitPayload(roundIdentifier, digest, commitSeal);
-
     return new Commit(createSignedMessage(payload));
   }
 
