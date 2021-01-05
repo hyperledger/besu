@@ -101,6 +101,6 @@ public class TestCodeExecutor {
     accountSetup.accept(senderAccount);
     worldState.commit();
     initialWorldState.persist(null);
-    return stateArchive.getMutable(initialWorldState.rootHash()).get().updater();
+    return stateArchive.getMutable(initialWorldState.rootHash(), null).get().updater();
   }
 }

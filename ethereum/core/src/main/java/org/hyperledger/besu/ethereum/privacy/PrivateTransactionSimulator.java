@@ -94,7 +94,7 @@ public class PrivateTransactionSimulator {
     }
 
     final MutableWorldState publicWorldState =
-        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
     if (publicWorldState == null) {
       return Optional.empty();
     }
@@ -105,7 +105,10 @@ public class PrivateTransactionSimulator {
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, header.getHash());
 
     final MutableWorldState disposablePrivateState =
-        privacyParameters.getPrivateWorldStateArchive().getMutable(lastRootHash).get();
+        privacyParameters
+            .getPrivateWorldStateArchive()
+            .getMutable(lastRootHash, header.getHash())
+            .get();
 
     final PrivateTransaction transaction =
         getPrivateTransaction(callParams, header, privacyGroupId, disposablePrivateState);
