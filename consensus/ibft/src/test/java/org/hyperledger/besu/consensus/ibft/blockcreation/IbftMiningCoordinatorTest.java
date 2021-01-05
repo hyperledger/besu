@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -47,7 +48,7 @@ public class IbftMiningCoordinatorTest {
   @Mock private BftEventHandler controller;
   @Mock private BftExecutors bftExecutors;
   @Mock private BftProcessor bftProcessor;
-  @Mock private IbftBlockCreatorFactory ibftBlockCreatorFactory;
+  @Mock private BftBlockCreatorFactory bftBlockCreatorFactory;
   @Mock private Blockchain blockChain;
   @Mock private Block block;
   @Mock private BlockBody blockBody;
@@ -59,12 +60,7 @@ public class IbftMiningCoordinatorTest {
   public void setup() {
     ibftMiningCoordinator =
         new IbftMiningCoordinator(
-            bftExecutors,
-            controller,
-            bftProcessor,
-            ibftBlockCreatorFactory,
-            blockChain,
-            eventQueue);
+            bftExecutors, controller, bftProcessor, bftBlockCreatorFactory, blockChain, eventQueue);
     when(block.getBody()).thenReturn(blockBody);
     when(block.getHeader()).thenReturn(blockHeader);
     when(blockBody.getTransactions()).thenReturn(Lists.emptyList());
@@ -89,7 +85,7 @@ public class IbftMiningCoordinatorTest {
   @Test
   public void getsMinTransactionGasPrice() {
     final Wei minGasPrice = Wei.of(10);
-    when(ibftBlockCreatorFactory.getMinTransactionGasPrice()).thenReturn(minGasPrice);
+    when(bftBlockCreatorFactory.getMinTransactionGasPrice()).thenReturn(minGasPrice);
     assertThat(ibftMiningCoordinator.getMinTransactionGasPrice()).isEqualTo(minGasPrice);
   }
 
@@ -97,7 +93,7 @@ public class IbftMiningCoordinatorTest {
   public void setsTheExtraData() {
     final Bytes extraData = Bytes.fromHexStringLenient("0x1234");
     ibftMiningCoordinator.setExtraData(extraData);
-    verify(ibftBlockCreatorFactory).setExtraData(extraData);
+    verify(bftBlockCreatorFactory).setExtraData(extraData);
   }
 
   @Test
