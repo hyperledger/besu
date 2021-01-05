@@ -23,52 +23,25 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 public class PayloadDeserializers {
 
-  public static SignedData<ProposalPayload> readSignedProposalPayloadFrom(final RLPInput rlpInput) {
-
-    rlpInput.enterList();
-    final ProposalPayload unsignedMessageData = ProposalPayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
-    rlpInput.leaveList();
-
-    return from(unsignedMessageData, signature);
-  }
-
   public static SignedData<PreparePayload> readSignedPreparePayloadFrom(final RLPInput rlpInput) {
-
     rlpInput.enterList();
     final PreparePayload unsignedMessageData = PreparePayload.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
-
     return from(unsignedMessageData, signature);
   }
 
   public static SignedData<CommitPayload> readSignedCommitPayloadFrom(final RLPInput rlpInput) {
-
     rlpInput.enterList();
     final CommitPayload unsignedMessageData = CommitPayload.readFrom(rlpInput);
     final Signature signature = readSignature(rlpInput);
     rlpInput.leaveList();
-
-    return from(unsignedMessageData, signature);
-  }
-
-  public static SignedData<RoundChangePayload> readSignedRoundChangePayloadFrom(
-      final RLPInput rlpInput) {
-
-    rlpInput.enterList();
-    final RoundChangePayload unsignedMessageData = RoundChangePayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
-    rlpInput.leaveList();
-
     return from(unsignedMessageData, signature);
   }
 
   protected static <M extends Payload> SignedData<M> from(
       final M unsignedMessageData, final Signature signature) {
-
     final Address sender = recoverSender(unsignedMessageData, signature);
-
     return new SignedData<>(unsignedMessageData, sender, signature);
   }
 
@@ -78,7 +51,6 @@ public class PayloadDeserializers {
 
   protected static Address recoverSender(
       final Payload unsignedMessageData, final Signature signature) {
-
     return Util.signatureToAddress(signature, MessageFactory.hashForSignature(unsignedMessageData));
   }
 }
