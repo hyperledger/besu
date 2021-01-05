@@ -448,12 +448,20 @@ public class BlockDataGenerator {
 
   public TransactionReceipt receipt(final long cumulativeGasUsed) {
     return new TransactionReceipt(
-        hash(), cumulativeGasUsed, Arrays.asList(log(), log()), Optional.empty());
+        transactionType(),
+        random.nextInt(2),
+        cumulativeGasUsed,
+        Arrays.asList(log(), log()),
+        Optional.empty());
   }
 
   public TransactionReceipt receipt(final Bytes revertReason) {
     return new TransactionReceipt(
-        hash(), positiveLong(), Arrays.asList(log(), log()), Optional.of(revertReason));
+        transactionType(),
+        random.nextInt(2),
+        positiveLong(),
+        Arrays.asList(log(), log()),
+        Optional.of(revertReason));
   }
 
   public TransactionReceipt receipt() {
@@ -461,7 +469,8 @@ public class BlockDataGenerator {
   }
 
   public TransactionReceipt receipt(final List<Log> logs) {
-    return new TransactionReceipt(hash(), positiveLong(), logs, Optional.empty());
+    return new TransactionReceipt(
+        transactionType(), random.nextInt(2), positiveLong(), logs, Optional.empty());
   }
 
   public UInt256 storageKey() {
