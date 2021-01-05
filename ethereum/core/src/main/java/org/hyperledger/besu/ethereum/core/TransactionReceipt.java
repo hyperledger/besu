@@ -234,6 +234,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       System.out.println(bytes.toHexString());
     }
 
+    input.enterList();
     // Get the first element to check later to determine the
     // correct transaction receipt encoding to use.
     final RLPInput firstElement = input.readAsRlp();
