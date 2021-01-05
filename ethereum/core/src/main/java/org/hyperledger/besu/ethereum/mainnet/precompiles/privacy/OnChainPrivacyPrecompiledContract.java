@@ -147,7 +147,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
-        privateWorldStateArchive.getMutable(lastRootHash).get();
+        privateWorldStateArchive.getMutable(lastRootHash, null).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
@@ -398,7 +398,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     // privateTransactionProcessor.processTransaction(...) commits the state if the process was
     // successful before it returns
     final MutableWorldState localMutableState =
-        privateWorldStateArchive.getMutable(disposablePrivateState.rootHash()).get();
+        privateWorldStateArchive.getMutable(disposablePrivateState.rootHash(), null).get();
     final WorldUpdater updater = localMutableState.updater();
 
     return privateTransactionProcessor.processTransaction(
