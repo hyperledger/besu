@@ -21,14 +21,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class ForkingVoteTallyCache extends VoteTallyCache {
 
-  private final IbftValidatorOverrides validatorOverrides;
+  private final BftValidatorOverrides validatorOverrides;
 
   public ForkingVoteTallyCache(
       final Blockchain blockchain,
       final VoteTallyUpdater voteTallyUpdater,
       final EpochManager epochManager,
       final BlockInterface blockInterface,
-      final IbftValidatorOverrides validatorOverrides) {
+      final BftValidatorOverrides validatorOverrides) {
     super(blockchain, voteTallyUpdater, epochManager, blockInterface);
     checkNotNull(validatorOverrides);
     this.validatorOverrides = validatorOverrides;

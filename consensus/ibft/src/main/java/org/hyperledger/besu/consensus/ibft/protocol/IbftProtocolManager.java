@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.ibft.protocol;
 
-import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvent;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvents;
+import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
+import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.ibft.network.PeerConnectionTracker;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -28,19 +28,18 @@ import java.util.Arrays;
 import java.util.List;
 
 public class IbftProtocolManager implements ProtocolManager {
-  private final IbftEventQueue ibftEventQueue;
+  private final BftEventQueue bftEventQueue;
 
   private final PeerConnectionTracker peers;
 
   /**
    * Constructor for the ibft protocol manager
    *
-   * @param ibftEventQueue Entry point into the ibft event processor
+   * @param bftEventQueue Entry point into the ibft event processor
    * @param peers Used to track all connected IBFT peers.
    */
-  public IbftProtocolManager(
-      final IbftEventQueue ibftEventQueue, final PeerConnectionTracker peers) {
-    this.ibftEventQueue = ibftEventQueue;
+  public IbftProtocolManager(final BftEventQueue bftEventQueue, final PeerConnectionTracker peers) {
+    this.bftEventQueue = bftEventQueue;
     this.peers = peers;
   }
 
@@ -77,8 +76,8 @@ public class IbftProtocolManager implements ProtocolManager {
    */
   @Override
   public void processMessage(final Capability cap, final Message message) {
-    final IbftEvent messageEvent = IbftEvents.fromMessage(message);
-    ibftEventQueue.add(messageEvent);
+    final BftEvent messageEvent = BftEvents.fromMessage(message);
+    bftEventQueue.add(messageEvent);
   }
 
   @Override

@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
@@ -38,7 +38,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new RequiredBlocksPeerValidator(
-        MainnetProtocolSchedule.create(), new NoOpMetricsSystem(), blockNumber, Hash.ZERO, buffer);
+        ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), blockNumber, Hash.ZERO, buffer);
   }
 
   @Test
@@ -51,7 +51,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            MainnetProtocolSchedule.create(),
+            ProtocolScheduleFixture.MAINNET,
             new NoOpMetricsSystem(),
             requiredBlockNumber,
             requiredBlock.getHash(),
@@ -83,7 +83,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
 
     final PeerValidator validator =
         new RequiredBlocksPeerValidator(
-            MainnetProtocolSchedule.create(),
+            ProtocolScheduleFixture.MAINNET,
             new NoOpMetricsSystem(),
             requiredBlockNumber,
             Hash.ZERO,

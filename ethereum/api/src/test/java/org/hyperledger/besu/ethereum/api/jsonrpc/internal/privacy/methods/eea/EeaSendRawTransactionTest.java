@@ -197,7 +197,7 @@ public class EeaSendRawTransactionTest {
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.retrieveOffChainPrivacyGroup(any(String.class), any(String.class)))
+    when(privacyController.findOffChainPrivacyGroupByGroupId(any(String.class), any(String.class)))
         .thenReturn(
             Optional.of(
                 new PrivacyGroup(
@@ -244,7 +244,7 @@ public class EeaSendRawTransactionTest {
     method =
         new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
 
-    when(privacyController.retrieveOffChainPrivacyGroup(any(String.class), any(String.class)))
+    when(privacyController.findOffChainPrivacyGroupByGroupId(any(String.class), any(String.class)))
         .thenThrow(
             new RuntimeException(JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST.getMessage()));
 

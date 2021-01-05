@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.ibft.network.PeerConnectionTracker;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
@@ -77,7 +78,7 @@ public final class RunnerBuilderTest {
         .thenReturn(
             Collections.singletonList(
                 new IbftProtocolManager(
-                    mock(IbftEventQueue.class), mock(PeerConnectionTracker.class))));
+                    mock(BftEventQueue.class), mock(PeerConnectionTracker.class))));
     when(ethContext.getScheduler()).thenReturn(mock(EthScheduler.class));
     when(ethProtocolManager.ethContext()).thenReturn(ethContext);
     when(subProtocolConfiguration.getSubProtocols())
@@ -119,6 +120,7 @@ public final class RunnerBuilderTest {
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(vertx)
             .dataDir(dataDir.getRoot().toPath())
+            .storageProvider(mock(KeyValueStorageProvider.class))
             .build();
     runner.start();
 

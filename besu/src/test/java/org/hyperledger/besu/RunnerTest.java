@@ -202,7 +202,8 @@ public final class RunnerTest {
             .p2pListenPort(0)
             .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
-            .staticNodes(emptySet());
+            .staticNodes(emptySet())
+            .storageProvider(new InMemoryStorageProvider());
 
     Runner runnerBehind = null;
     final Runner runnerAhead =

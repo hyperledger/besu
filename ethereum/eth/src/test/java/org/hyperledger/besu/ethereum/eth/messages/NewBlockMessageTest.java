@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class NewBlockMessageTest {
-  private static final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
+  private static final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
 
   @Test
   public void roundTripNewBlockMessage() {

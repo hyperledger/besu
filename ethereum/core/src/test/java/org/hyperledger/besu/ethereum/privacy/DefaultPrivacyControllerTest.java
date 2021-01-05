@@ -257,7 +257,8 @@ public class DefaultPrivacyControllerTest {
                     Optional.empty())));
 
     final List<PrivacyGroup> privacyGroups =
-        privacyController.findOnChainPrivacyGroup(privacyGroupAddresses, ENCLAVE_PUBLIC_KEY);
+        privacyController.findOnChainPrivacyGroupByMembers(
+            privacyGroupAddresses, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups.get(0)).isEqualToComparingFieldByField(privacyGroup);
     verify(privateStateStorage).getPrivacyGroupHeadBlockMap(any());
@@ -360,7 +361,8 @@ public class DefaultPrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privacyController.findPrivacyGroup(PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
+        privacyController.findOffChainPrivacyGroupByMembers(
+            PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
     verify(enclave).findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);

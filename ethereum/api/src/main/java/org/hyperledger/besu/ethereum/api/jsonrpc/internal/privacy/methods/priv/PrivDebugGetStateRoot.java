@@ -28,9 +28,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
-import java.util.Collections;
+import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 
@@ -68,13 +69,19 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
         enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
     LOG.trace("Executing {}", this::getName);
 
-    final PrivacyGroup[] privacyGroups =
-        privacyController.findPrivacyGroup(
-            Collections.singletonList(privacyGroupId),
-            enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+    final Optional<PrivacyGroup> privacyGroup;
+    try {
+      privacyGroup = privacyController.findPrivacyGroupByGroupId(privacyGroupId, enclavePublicKey);
+    } catch (final MultiTenancyValidationException e) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
+    } catch (final Exception e) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    }
 
-    if (privacyGroups.length == 0) {
-      LOG.error("Failed to fetch privacy group");
+    if (privacyGroup.isEmpty()) {
+      LOG.error("Failed to retrieve privacy group");
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
     }
@@ -83,10 +90,11 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
         .getStateRootByBlockNumber(privacyGroupId, enclavePublicKey, blockNumber)
         .<JsonRpcResponse>map(
             stateRootHash ->
-                new JsonRpcSuccessResponse(requestContext.getRequest().getId(), stateRootHash))
+                new JsonRpcSuccessResponse(
+                    requestContext.getRequest().getId(), stateRootHash.toString()))
         .orElse(
             new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
+                requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR));
   }
 
   @Override

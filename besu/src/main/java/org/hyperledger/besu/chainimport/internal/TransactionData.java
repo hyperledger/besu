@@ -67,6 +67,7 @@ public class TransactionData {
         .payload(data)
         .value(value)
         .to(to.orElse(null))
+        .guessType()
         .signAndBuild(keyPair);
   }
 

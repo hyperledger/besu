@@ -98,9 +98,35 @@ public class DebugOperationTracer implements OperationTracer {
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
-    if (!traceFrames.isEmpty()) {
-      traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
+    if (traceFrames.isEmpty()) {
+      final TraceFrame traceFrame =
+          new TraceFrame(
+              frame.getPC(),
+              Optional.empty(),
+              frame.getRemainingGas(),
+              Optional.empty(),
+              frame.getGasRefund(),
+              frame.getMessageStackDepth(),
+              Optional.empty(),
+              frame.getRecipientAddress(),
+              frame.getValue(),
+              frame.getInputData(),
+              frame.getOutputData(),
+              Optional.empty(),
+              Optional.empty(),
+              Optional.empty(),
+              frame.getWorldState(),
+              Optional.empty(),
+              Optional.ofNullable(frame.getRefunds()),
+              Optional.ofNullable(frame.getCode()),
+              frame.getMaxStackSize(),
+              Optional.empty(),
+              true,
+              Optional.empty(),
+              Optional.empty());
+      traceFrames.add(traceFrame);
     }
+    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
   }
 
   @Override
