@@ -328,7 +328,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     }
     final TransactionReceipt other = (TransactionReceipt) obj;
     return logs.equals(other.getLogs())
-        && stateRoot.equals(other.stateRoot)
+        && Objects.equals(stateRoot, other.stateRoot)
         && cumulativeGasUsed == other.getCumulativeGasUsed()
         && status == other.status;
   }
