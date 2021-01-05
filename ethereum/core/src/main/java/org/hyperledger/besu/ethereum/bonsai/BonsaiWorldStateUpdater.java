@@ -529,11 +529,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         throw new IllegalStateException(
             String.format("Expected to create code, but the code exists.  Address=%s", address));
       }
-      if (!expectedCode.equals(existingCode)) {
+      if (!Objects.equals(expectedCode, existingCode)) {
         throw new IllegalStateException(
             String.format(
                 "Old value of code does not match expected value.  Address=%s ExpectedHash=%s ActualHash=%s",
-                address, Hash.hash(expectedCode), Hash.hash(codeValue.getUpdated())));
+                address,
+                expectedCode == null ? "null" : Hash.hash(expectedCode),
+                Hash.hash(codeValue.getUpdated())));
       }
       if (replacementCode == null && codeValue.getOriginal() == null) {
         codeToUpdate.remove(address);
@@ -563,7 +565,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       // non-change, a cached read.
       return;
     }
-    if (replacementValue == null && expectedValue.isZero()) {
+    if (replacementValue == null && expectedValue != null && expectedValue.isZero()) {
       // corner case on deletes, non-change
       return;
     }
@@ -603,8 +605,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 "Old value of slot does not match expected value. Account=%s SlotHash=%s Expected=%s Actual=%s",
                 address,
                 slotHash,
-                expectedValue.toShortHexString(),
-                existingSlotValue.toShortHexString()));
+                expectedValue == null ? "null" : expectedValue.toShortHexString(),
+                existingSlotValue == null ? "null" : existingSlotValue.toShortHexString()));
       }
       if (replacementValue == null && slotValue.getOriginal() == null) {
         final Map<Hash, BonsaiValue<UInt256>> thisStorageUpdate =
