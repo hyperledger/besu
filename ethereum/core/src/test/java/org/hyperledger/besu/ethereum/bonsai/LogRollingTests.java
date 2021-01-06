@@ -19,11 +19,15 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -56,8 +60,44 @@ public class LogRollingTests {
   private static final Address addressOne =
       Address.fromHexString("0x1111111111111111111111111111111111111111");
 
-  private static final Hash hashOne = Hash.hash(Bytes.of(1));
-  private static final Hash hashTwo = Hash.hash(Bytes.of(2));
+  private static final BlockHeader headerOne =
+      new BlockHeader(
+          Hash.ZERO,
+          Hash.EMPTY_LIST_HASH,
+          Address.ZERO,
+          Hash.EMPTY_TRIE_HASH,
+          Hash.EMPTY_TRIE_HASH,
+          Hash.EMPTY_LIST_HASH,
+          LogsBloomFilter.builder().build(),
+          Difficulty.ONE,
+          1,
+          0,
+          0,
+          0,
+          Bytes.EMPTY,
+          0L,
+          Hash.ZERO,
+          0,
+          new MainnetBlockHeaderFunctions());
+  private static final BlockHeader headerTwo =
+      new BlockHeader(
+          headerOne.getHash(),
+          Hash.EMPTY_LIST_HASH,
+          Address.ZERO,
+          Hash.EMPTY_TRIE_HASH,
+          Hash.EMPTY_TRIE_HASH,
+          Hash.EMPTY_LIST_HASH,
+          LogsBloomFilter.builder().build(),
+          Difficulty.ONE,
+          1,
+          0,
+          0,
+          0,
+          Bytes.EMPTY,
+          0L,
+          Hash.ZERO,
+          0,
+          new MainnetBlockHeaderFunctions());
 
   @Before
   public void createStorage() {
@@ -117,7 +157,7 @@ public class LogRollingTests {
     mutableAccount.setCode(Bytes.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
-    worldState.persist(hashOne);
+    worldState.persist(headerOne);
 
     final BonsaiPersistedWorldState secondWorldState =
         new BonsaiPersistedWorldState(
@@ -130,7 +170,7 @@ public class LogRollingTests {
     final BonsaiWorldStateUpdater secondUpdater =
         (BonsaiWorldStateUpdater) secondWorldState.updater();
 
-    final Optional<byte[]> value = trieLogStorage.get(hashOne.toArrayUnsafe());
+    final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
 
     final TrieLogLayer layer =
         TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
@@ -166,14 +206,14 @@ public class LogRollingTests {
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
 
-    worldState.persist(hashOne);
+    worldState.persist(headerOne);
 
     final WorldUpdater updater2 = worldState.updater();
     final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
     mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     updater2.commit();
 
-    worldState.persist(hashTwo);
+    worldState.persist(headerTwo);
 
     final BonsaiPersistedWorldState secondWorldState =
         new BonsaiPersistedWorldState(
@@ -186,12 +226,12 @@ public class LogRollingTests {
     final BonsaiWorldStateUpdater secondUpdater =
         (BonsaiWorldStateUpdater) secondWorldState.updater();
 
-    final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, hashOne);
+    final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, headerOne.getHash());
     secondUpdater.rollForward(layerOne);
     secondUpdater.commit();
     secondWorldState.persist(null);
 
-    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, hashTwo);
+    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, headerTwo.getHash());
     secondUpdater.rollForward(layerTwo);
     secondUpdater.commit();
     secondWorldState.persist(null);
@@ -223,21 +263,21 @@ public class LogRollingTests {
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
 
-    worldState.persist(hashOne);
+    worldState.persist(headerOne);
 
     final WorldUpdater updater2 = worldState.updater();
     final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
     mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     updater2.commit();
 
-    worldState.persist(hashTwo);
+    worldState.persist(headerTwo);
     final BonsaiWorldStateUpdater firstRollbackUpdater =
         (BonsaiWorldStateUpdater) worldState.updater();
 
-    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, hashTwo);
+    final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, headerTwo.getHash());
     firstRollbackUpdater.rollBack(layerTwo);
 
-    worldState.persist(hashTwo);
+    worldState.persist(headerTwo);
 
     final BonsaiPersistedWorldState secondWorldState =
         new BonsaiPersistedWorldState(
