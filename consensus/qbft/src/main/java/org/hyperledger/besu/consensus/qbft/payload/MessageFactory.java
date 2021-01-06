@@ -44,16 +44,16 @@ public class MessageFactory {
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
-      final Optional<RoundChangeMetadata> roundChangeCertificate) {
+      final Optional<RoundChangeMetadata> roundChangeMetadata) {
 
     final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
 
     return new Proposal(
         createSignedMessage(payload),
-        roundChangeCertificate
+        roundChangeMetadata
             .map(rc -> new ArrayList<>(rc.getRoundChangePayloads()))
             .orElse(new ArrayList<>()),
-        roundChangeCertificate
+        roundChangeMetadata
             .map(rc -> new ArrayList<>(rc.getPrepares()))
             .orElse(new ArrayList<>()));
   }
