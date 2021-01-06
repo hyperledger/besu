@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.network;
+package org.hyperledger.besu.consensus.common.bft.network;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

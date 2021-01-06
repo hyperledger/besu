@@ -37,19 +37,19 @@ import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.ibft.blockcreation.IbftMiningCoordinator;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
-import org.hyperledger.besu.consensus.ibft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
-import org.hyperledger.besu.consensus.ibft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -83,14 +83,14 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
-  private BftConfigOptions ibftConfig;
+  private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
   private final BlockInterface blockInterface = new BftBlockInterface();
 
   @Override
   protected void prepForBuild() {
-    ibftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
-    bftEventQueue = new BftEventQueue(ibftConfig.getMessageQueueLimit());
+    bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
+    bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
   }
 
   @Override
@@ -127,7 +127,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            ibftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
+            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -140,21 +140,20 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     peers = new ValidatorPeers(voteTallyCache);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
-        new UniqueMessageMulticaster(peers, ibftConfig.getGossipedHistoryLimit());
+        new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
 
     final IbftGossip gossiper = new IbftGossip(uniqueMessageMulticaster);
 
-    final IbftFinalState finalState =
-        new IbftFinalState(
+    final BftFinalState finalState =
+        new BftFinalState(
             voteTallyCache,
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(bftEventQueue, ibftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(bftEventQueue, ibftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
+            new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
+            new BlockTimer(bftEventQueue, bftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
             blockCreatorFactory,
-            new MessageFactory(nodeKey),
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
@@ -166,11 +165,13 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final FutureMessageBuffer futureMessageBuffer =
         new FutureMessageBuffer(
-            ibftConfig.getFutureMessagesMaxDistance(),
-            ibftConfig.getFutureMessagesLimit(),
+            bftConfig.getFutureMessagesMaxDistance(),
+            bftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber());
     final MessageTracker duplicateMessageTracker =
-        new MessageTracker(ibftConfig.getDuplicateMessageLimit());
+        new MessageTracker(bftConfig.getDuplicateMessageLimit());
+
+    final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
     final BftEventHandler ibftController =
         new IbftController(
@@ -183,8 +184,10 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
                     protocolContext,
                     protocolSchedule,
                     minedBlockObservers,
-                    messageValidatorFactory),
-                messageValidatorFactory),
+                    messageValidatorFactory,
+                    messageFactory),
+                messageValidatorFactory,
+                messageFactory),
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
