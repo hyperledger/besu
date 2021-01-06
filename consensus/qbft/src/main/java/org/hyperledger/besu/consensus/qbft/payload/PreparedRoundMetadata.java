@@ -18,16 +18,15 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
 public class PreparedRoundMetadata {
   private final Hash preparedBlockHash;
-  private final BigInteger preparedRound;
+  private final int preparedRound;
 
-  public PreparedRoundMetadata(final Hash preparedBlockHash, final BigInteger preparedRound) {
+  public PreparedRoundMetadata(final Hash preparedBlockHash, final int preparedRound) {
     this.preparedBlockHash = preparedBlockHash;
     this.preparedRound = preparedRound;
   }
@@ -36,7 +35,7 @@ public class PreparedRoundMetadata {
     return preparedBlockHash;
   }
 
-  public BigInteger getPreparedRound() {
+  public int getPreparedRound() {
     return preparedRound;
   }
 
@@ -48,7 +47,7 @@ public class PreparedRoundMetadata {
    */
   public static PreparedRoundMetadata readFrom(final RLPInput in) {
     final Hash preparedBlockHash = Hash.wrap(in.readBytes32());
-    final BigInteger preparedRound = in.readBigIntegerScalar();
+    final int preparedRound = in.readIntScalar();
     return new PreparedRoundMetadata(preparedBlockHash, preparedRound);
   }
 
@@ -59,7 +58,7 @@ public class PreparedRoundMetadata {
    */
   public void writeTo(final RLPOutput out) {
     out.writeBytes(preparedBlockHash);
-    out.writeBigIntegerScalar(preparedRound);
+    out.writeIntScalar(preparedRound);
   }
 
   @Override
@@ -71,7 +70,7 @@ public class PreparedRoundMetadata {
       return false;
     }
     PreparedRoundMetadata that = (PreparedRoundMetadata) o;
-    return preparedRound.equals(that.preparedRound)
+    return preparedRound == that.preparedRound
         && Objects.equals(preparedBlockHash, that.preparedBlockHash);
   }
 

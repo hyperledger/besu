@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
@@ -96,7 +95,7 @@ public class MessageFactory {
               roundIdentifier,
               Optional.of(
                   new PreparedRoundMetadata(
-                      preparedRoundData.get().preparedBlock.getHash(), BigInteger.valueOf(round))));
+                      preparedRoundData.get().preparedBlock.getHash(), round)));
       return new RoundChange(
           createSignedMessage(payload),
           Optional.of(preparedRoundData.get().preparedBlock),

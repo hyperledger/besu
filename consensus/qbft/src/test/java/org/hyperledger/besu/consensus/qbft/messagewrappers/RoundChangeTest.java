@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -59,7 +58,7 @@ public class RoundChangeTest {
     final RoundChangePayload payload =
         new RoundChangePayload(
             new ConsensusRoundIdentifier(1, 1),
-            Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), BigInteger.ZERO)));
+            Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
 
     final SignedData<RoundChangePayload> signedRoundChangePayload =
         new SignedData<>(payload, addr, nodeKey.sign(MessageFactory.hashForSignature(payload)));
