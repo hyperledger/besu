@@ -572,7 +572,7 @@ public class PendingTransactionsTest {
     assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty();
   }
 
-  private Transaction createTransaction(final int transactionNumber) {
+  private Transaction createTransaction(final long transactionNumber) {
     return new TransactionTestFixture()
         .value(Wei.of(transactionNumber))
         .nonce(transactionNumber)
@@ -689,8 +689,28 @@ public class PendingTransactionsTest {
         .hasValue(7);
   }
 
-  private void addLocalTransactions(final int... nonces) {
-    for (int nonce : nonces) {
+  @Test
+  public void assertThatCorrectNonceIsReturnedLargeGap() {
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
+    addLocalTransactions(1, 2, Long.MAX_VALUE);
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(3);
+    addLocalTransactions(3);
+  }
+
+  @Test
+  public void assertThatCorrectNonceIsReturnedWithRepeatedTXes() {
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
+    addLocalTransactions(1, 2, 4, 4, 4, 4, 4, 4, 4, 4);
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(3);
+    addLocalTransactions(3);
+  }
+
+  private void addLocalTransactions(final long... nonces) {
+    for (final long nonce : nonces) {
       transactions.addLocalTransaction(createTransaction(nonce));
     }
   }

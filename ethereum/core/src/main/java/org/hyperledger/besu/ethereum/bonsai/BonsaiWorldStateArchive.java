@@ -53,7 +53,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<WorldState> get(final Hash rootHash) {
+  public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
     if (layeredWorldStates.containsKey(rootHash)) {
       return Optional.of(layeredWorldStates.get(rootHash));
     } else if (rootHash.equals(persistedState.rootHash())) {
@@ -68,13 +68,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public boolean isWorldStateAvailable(final Hash rootHash) {
+  public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return layeredWorldStates.containsKey(rootHash)
         || persistedState.rootHash().equals(rootHash) /* || check disk storage */;
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(final Hash rootHash) {
+  public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
     if (rootHash.equals(persistedState.rootHash())) {
       return Optional.of(persistedState);
     } else {

@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldState.StreamableAccount;
 
 import java.util.Collections;
@@ -75,7 +75,7 @@ public class DebugAccountRange implements JsonRpcMethod {
 
     // TODO deal with mid-block locations
 
-    final Optional<MutableWorldState> state =
+    final Optional<WorldState> state =
         blockchainQueries.get().getWorldState(blockHeaderOptional.get().getNumber());
 
     if (state.isEmpty()) {
