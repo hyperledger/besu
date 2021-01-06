@@ -85,4 +85,34 @@ public class RoundChangeTest {
     assertThat(decodedRoundChange.getPrepares().get(0))
         .isEqualToComparingFieldByField(signedPreparePayload);
   }
+
+  @Test
+  public void canRoundTripEmptyPreparedRoundAndPreparedList() {
+    final NodeKey nodeKey = NodeKeyUtils.generate();
+    final Address addr = Util.publicKeyToAddress(nodeKey.getPublicKey());
+
+    final RoundChangePayload payload =
+        new RoundChangePayload(new ConsensusRoundIdentifier(1, 1), Optional.empty());
+
+    final SignedData<RoundChangePayload> signedRoundChangePayload =
+        new SignedData<>(payload, addr, nodeKey.sign(MessageFactory.hashForSignature(payload)));
+
+    final PreparePayload preparePayload =
+        new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
+    final SignedData<PreparePayload> signedPreparePayload =
+        new SignedData<>(
+            preparePayload, addr, nodeKey.sign(MessageFactory.hashForSignature(preparePayload)));
+
+    final RoundChange roundChange =
+        new RoundChange(signedRoundChangePayload, Optional.empty(), Collections.emptyList());
+
+    final RoundChange decodedRoundChange = RoundChange.decode(roundChange.encode());
+
+    assertThat(decodedRoundChange.getMessageType()).isEqualTo(QbftV1.ROUND_CHANGE);
+    assertThat(decodedRoundChange.getAuthor()).isEqualTo(addr);
+    assertThat(decodedRoundChange.getSignedPayload())
+        .isEqualToComparingFieldByField(signedRoundChangePayload);
+    assertThat(decodedRoundChange.getProposedBlock()).isEmpty();
+    assertThat(decodedRoundChange.getPrepares()).isEmpty();
+  }
 }

@@ -18,15 +18,16 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.math.BigInteger;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
 public class PreparedRoundMetadata {
   private final Hash preparedBlockHash;
-  private final int preparedRound;
+  private final BigInteger preparedRound;
 
-  public PreparedRoundMetadata(final Hash preparedBlockHash, final int preparedRound) {
+  public PreparedRoundMetadata(final Hash preparedBlockHash, final BigInteger preparedRound) {
     this.preparedBlockHash = preparedBlockHash;
     this.preparedRound = preparedRound;
   }
@@ -35,7 +36,7 @@ public class PreparedRoundMetadata {
     return preparedBlockHash;
   }
 
-  public int getPreparedRound() {
+  public BigInteger getPreparedRound() {
     return preparedRound;
   }
 
@@ -43,13 +44,11 @@ public class PreparedRoundMetadata {
    * Constructor that derives the sequence and round information from an RLP encoded message
    *
    * @param in The RLP body of the message to check
-   * @return A derived sequence and round number
+   * @return A PreparedRoundMetadata as extracted from the supplied RLP input
    */
   public static PreparedRoundMetadata readFrom(final RLPInput in) {
-    in.enterList();
     final Hash preparedBlockHash = Hash.wrap(in.readBytes32());
-    final int preparedRound = in.readIntScalar();
-    in.leaveList();
+    final BigInteger preparedRound = in.readBigIntegerScalar();
     return new PreparedRoundMetadata(preparedBlockHash, preparedRound);
   }
 
@@ -59,10 +58,8 @@ public class PreparedRoundMetadata {
    * @param out The RLP buffer to add to
    */
   public void writeTo(final RLPOutput out) {
-    out.startList();
     out.writeBytes(preparedBlockHash);
-    out.writeIntScalar(preparedRound);
-    out.endList();
+    out.writeBigIntegerScalar(preparedRound);
   }
 
   @Override
