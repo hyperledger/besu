@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -77,7 +76,7 @@ public class RollingImport {
         final BonsaiWorldStateUpdater updater = (BonsaiWorldStateUpdater) bonsaiState.updater();
         updater.rollForward(layer);
         updater.commit();
-        bonsaiState.persist(Hash.wrap(layer.getBlockHash()));
+        bonsaiState.persist(null);
         if (count % 10000 == 0) {
           System.out.println(". - " + count);
         } else if (count % 100 == 0) {
@@ -105,7 +104,7 @@ public class RollingImport {
         final BonsaiWorldStateUpdater updater = (BonsaiWorldStateUpdater) bonsaiState.updater();
         updater.rollBack(layer);
         updater.commit();
-        bonsaiState.persist(Hash.wrap(layer.getBlockHash()));
+        bonsaiState.persist(null);
         if (count % 10000 == 0) {
           System.out.println(". - " + count);
         } else if (count % 100 == 0) {
