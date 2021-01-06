@@ -57,7 +57,7 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final List<UInt256> storageKeys = getStorageKeys(requestContext);
 
-    final Optional<WorldState> worldState = blockchain.getWorldState(blockNumber);
+    final Optional<WorldState> worldState = blockchainQueries.get().getWorldState(blockNumber);
 
     if (worldState.isPresent()) {
       Optional<WorldStateProof> proofOptional =
