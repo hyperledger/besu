@@ -19,10 +19,17 @@ import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -34,8 +41,25 @@ public class MessageFactory {
     this.nodeKey = nodeKey;
   }
 
+  public Proposal createProposal(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Block block,
+      final Optional<RoundChangeMetadata> roundChangeMetadata) {
+
+    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
+
+    return new Proposal(
+        createSignedMessage(payload),
+        roundChangeMetadata
+            .map(rc -> new ArrayList<>(rc.getRoundChangePayloads()))
+            .orElse(new ArrayList<>()),
+        roundChangeMetadata.map(rc -> new ArrayList<>(rc.getPrepares())).orElse(new ArrayList<>()));
+  }
+
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
+
     final PreparePayload payload = new PreparePayload(roundIdentifier, digest);
+
     return new Prepare(createSignedMessage(payload));
   }
 
@@ -43,8 +67,43 @@ public class MessageFactory {
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final Signature commitSeal) {
+
     final CommitPayload payload = new CommitPayload(roundIdentifier, digest, commitSeal);
+
     return new Commit(createSignedMessage(payload));
+  }
+
+  public RoundChange createRoundChange(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Optional<PreparedCertificate> preparedRoundData) {
+
+    final RoundChangePayload payload;
+    if (preparedRoundData.isPresent()) {
+      final int round =
+          preparedRoundData
+              .get()
+              .getPrepares()
+              .get(0)
+              .getPayload()
+              .getRoundIdentifier()
+              .getRoundNumber();
+
+      payload =
+          new RoundChangePayload(
+              roundIdentifier,
+              Optional.of(
+                  new PreparedRoundMetadata(
+                      preparedRoundData.get().preparedBlock.getHash(), round)));
+      return new RoundChange(
+          createSignedMessage(payload),
+          Optional.of(preparedRoundData.get().preparedBlock),
+          Collections.emptyList());
+
+    } else {
+      payload = new RoundChangePayload(roundIdentifier, Optional.empty());
+      return new RoundChange(
+          createSignedMessage(payload), Optional.empty(), Collections.emptyList());
+    }
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
