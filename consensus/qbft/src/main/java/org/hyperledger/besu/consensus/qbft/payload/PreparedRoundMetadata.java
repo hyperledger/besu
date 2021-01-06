@@ -71,7 +71,7 @@ public class PreparedRoundMetadata {
       return false;
     }
     PreparedRoundMetadata that = (PreparedRoundMetadata) o;
-    return preparedRound == that.preparedRound
+    return preparedRound.equals(that.preparedRound)
         && Objects.equals(preparedBlockHash, that.preparedBlockHash);
   }
 
