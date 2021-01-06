@@ -98,12 +98,6 @@ public class RoundChangeTest {
     final SignedData<RoundChangePayload> signedRoundChangePayload =
         new SignedData<>(payload, addr, nodeKey.sign(MessageFactory.hashForSignature(payload)));
 
-    final PreparePayload preparePayload =
-        new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
-    final SignedData<PreparePayload> signedPreparePayload =
-        new SignedData<>(
-            preparePayload, addr, nodeKey.sign(MessageFactory.hashForSignature(preparePayload)));
-
     final RoundChange roundChange =
         new RoundChange(signedRoundChangePayload, Optional.empty(), Collections.emptyList());
 

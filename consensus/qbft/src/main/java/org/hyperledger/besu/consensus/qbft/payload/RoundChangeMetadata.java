@@ -19,12 +19,12 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import java.util.Collection;
 import java.util.StringJoiner;
 
-public class RoundChangeCertificate {
+public class RoundChangeMetadata {
 
   private final Collection<SignedData<RoundChangePayload>> roundChangePayloads;
   private final Collection<SignedData<PreparePayload>> prepares;
 
-  public RoundChangeCertificate(
+  public RoundChangeMetadata(
       final Collection<SignedData<RoundChangePayload>> roundChangePayloads,
       final Collection<SignedData<PreparePayload>> prepares) {
     this.roundChangePayloads = roundChangePayloads;
@@ -41,7 +41,7 @@ public class RoundChangeCertificate {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", RoundChangeCertificate.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", RoundChangeMetadata.class.getSimpleName() + "[", "]")
         .add("roundChangePayloads=" + roundChangePayloads)
         .toString();
   }

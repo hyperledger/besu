@@ -45,7 +45,7 @@ public class MessageFactory {
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
-      final Optional<RoundChangeCertificate> roundChangeCertificate) {
+      final Optional<RoundChangeMetadata> roundChangeCertificate) {
 
     final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
 
