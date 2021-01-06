@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 public class IbftRoundFactory {
+
   private final BftFinalState finalState;
   private final BftBlockCreatorFactory blockCreatorFactory;
   private final ProtocolContext protocolContext;
@@ -72,6 +73,9 @@ public class IbftRoundFactory {
     final BftBlockCreator blockCreator =
         blockCreatorFactory.create(parentHeader, roundIdentifier.getRoundNumber());
 
+    final IbftMessageTransmitter messageTransmitter =
+        new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+
     return new IbftRound(
         roundState,
         blockCreator,
@@ -80,7 +84,7 @@ public class IbftRoundFactory {
         minedBlockObservers,
         finalState.getNodeKey(),
         messageFactory,
-        new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster()),
+        messageTransmitter,
         finalState.getRoundTimer());
   }
 }
