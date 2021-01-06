@@ -104,8 +104,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public Bytes getCode(@Nonnull final Address address) {
-    return codeStorage.get(address.toArrayUnsafe()).map(Bytes::wrap).orElse(Bytes.EMPTY);
+  public Optional<Bytes> getCode(@Nonnull final Address address) {
+    return codeStorage.get(address.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override

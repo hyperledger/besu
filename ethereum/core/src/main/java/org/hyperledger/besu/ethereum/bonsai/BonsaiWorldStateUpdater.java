@@ -155,10 +155,11 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if (codeValue != null) {
         codeValue.setUpdated(null);
       } else {
-        final Bytes deletedCode = wrappedWorldView().getCode(deletedAddress);
-        if (deletedCode != null) {
-          codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null));
-        }
+        wrappedWorldView()
+            .getCode(deletedAddress)
+            .ifPresent(
+                deletedCode ->
+                    codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null)));
       }
       final BonsaiValue<BonsaiAccount> accountValue =
           accountsToUpdate.computeIfAbsent(
@@ -226,7 +227,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if (tracked.codeWasUpdated()) {
         final BonsaiValue<Bytes> pendingCode =
             codeToUpdate.computeIfAbsent(
-                updatedAddress, addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr), null));
+                updatedAddress,
+                addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
         pendingCode.setUpdated(updatedAccount.getCode());
       }
 
@@ -262,12 +264,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   }
 
   @Override
-  public Bytes getCode(final Address address) {
+  public Optional<Bytes> getCode(final Address address) {
     final BonsaiValue<Bytes> localCode = codeToUpdate.get(address);
     if (localCode == null) {
       return wrappedWorldView().getCode(address);
     } else {
-      return localCode.getUpdated();
+      return Optional.of(localCode.getUpdated());
     }
   }
 
@@ -506,7 +508,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     }
     BonsaiValue<Bytes> codeValue = codeToUpdate.get(address);
     if (codeValue == null) {
-      final Bytes storedCode = wrappedWorldView().getCode(address);
+      final Bytes storedCode = wrappedWorldView().getCode(address).orElse(Bytes.EMPTY);
       if (!storedCode.isEmpty()) {
         codeValue = new BonsaiValue<>(storedCode, storedCode);
         codeToUpdate.put(address, codeValue);

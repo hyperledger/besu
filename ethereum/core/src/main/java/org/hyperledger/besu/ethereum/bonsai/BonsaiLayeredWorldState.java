@@ -64,14 +64,14 @@ public class BonsaiLayeredWorldState implements BonsaiWorldView, WorldState {
   }
 
   @Override
-  public Bytes getCode(final Address address) {
+  public Optional<Bytes> getCode(final Address address) {
     // this must be iterative and lambda light because the stack may blow up
     // mainly because we don't have tail calls.
     BonsaiLayeredWorldState currentLayer = this;
     while (currentLayer != null) {
       final Optional<Bytes> maybeCode = currentLayer.trieLog.getCode(address);
       if (maybeCode.isPresent()) {
-        return maybeCode.get();
+        return maybeCode;
       }
       if (currentLayer.parent == null) {
         currentLayer = null;
@@ -81,7 +81,7 @@ public class BonsaiLayeredWorldState implements BonsaiWorldView, WorldState {
         return currentLayer.parent.getCode(address);
       }
     }
-    return null;
+    return Optional.empty();
   }
 
   @Override

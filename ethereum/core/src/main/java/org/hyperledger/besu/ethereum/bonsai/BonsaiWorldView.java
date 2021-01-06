@@ -30,7 +30,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public interface BonsaiWorldView extends WorldView {
 
-  Bytes getCode(Address address);
+  Optional<Bytes> getCode(Address address);
 
   Optional<Bytes> getStateTrieNode(Bytes location);
 
