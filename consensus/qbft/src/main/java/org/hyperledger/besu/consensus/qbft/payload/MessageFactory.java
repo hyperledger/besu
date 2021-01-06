@@ -53,9 +53,7 @@ public class MessageFactory {
         roundChangeMetadata
             .map(rc -> new ArrayList<>(rc.getRoundChangePayloads()))
             .orElse(new ArrayList<>()),
-        roundChangeMetadata
-            .map(rc -> new ArrayList<>(rc.getPrepares()))
-            .orElse(new ArrayList<>()));
+        roundChangeMetadata.map(rc -> new ArrayList<>(rc.getPrepares())).orElse(new ArrayList<>()));
   }
 
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
