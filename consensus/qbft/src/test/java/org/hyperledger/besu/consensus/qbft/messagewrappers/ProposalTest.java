@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigInteger;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -70,7 +71,7 @@ public class ProposalTest {
     final RoundChangePayload roundChangePayload =
         new RoundChangePayload(
             new ConsensusRoundIdentifier(1, 0),
-            Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
+            Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), BigInteger.ZERO)));
 
     final SignedData<RoundChangePayload> roundChange =
         new SignedData<>(
