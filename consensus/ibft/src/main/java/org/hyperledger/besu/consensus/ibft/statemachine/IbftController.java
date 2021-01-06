@@ -25,6 +25,7 @@ import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
@@ -46,7 +47,7 @@ public class IbftController implements BftEventHandler {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Blockchain blockchain;
-  private final IbftFinalState ibftFinalState;
+  private final BftFinalState bftFinalState;
   private final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory;
   private final FutureMessageBuffer futureMessageBuffer;
   private BlockHeightManager currentHeightManager;
@@ -58,14 +59,14 @@ public class IbftController implements BftEventHandler {
 
   public IbftController(
       final Blockchain blockchain,
-      final IbftFinalState ibftFinalState,
+      final BftFinalState bftFinalState,
       final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory,
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
       final SynchronizerUpdater sychronizerUpdater) {
     this.blockchain = blockchain;
-    this.ibftFinalState = ibftFinalState;
+    this.bftFinalState = bftFinalState;
     this.ibftBlockHeightManagerFactory = ibftBlockHeightManagerFactory;
     this.futureMessageBuffer = futureMessageBuffer;
     this.gossiper = gossiper;
@@ -223,7 +224,7 @@ public class IbftController implements BftEventHandler {
   private boolean processMessage(final BftMessage<?> msg, final Message rawMsg) {
     final ConsensusRoundIdentifier msgRoundIdentifier = msg.getRoundIdentifier();
     if (isMsgForCurrentHeight(msgRoundIdentifier)) {
-      return isMsgFromKnownValidator(msg) && ibftFinalState.isLocalNodeValidator();
+      return isMsgFromKnownValidator(msg) && bftFinalState.isLocalNodeValidator();
     } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
       LOG.trace("Received message for future block height round={}", msgRoundIdentifier);
       futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), rawMsg);
@@ -242,7 +243,7 @@ public class IbftController implements BftEventHandler {
   }
 
   private boolean isMsgFromKnownValidator(final Authored msg) {
-    return ibftFinalState.getValidators().contains(msg.getAuthor());
+    return bftFinalState.getValidators().contains(msg.getAuthor());
   }
 
   private boolean isMsgForCurrentHeight(final ConsensusRoundIdentifier roundIdentifier) {

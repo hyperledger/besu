@@ -39,6 +39,7 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFa
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.UniqueMessageMulticaster;
@@ -49,7 +50,6 @@ import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -144,8 +144,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final IbftGossip gossiper = new IbftGossip(uniqueMessageMulticaster);
 
-    final IbftFinalState finalState =
-        new IbftFinalState(
+    final BftFinalState finalState =
+        new BftFinalState(
             voteTallyCache,
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),

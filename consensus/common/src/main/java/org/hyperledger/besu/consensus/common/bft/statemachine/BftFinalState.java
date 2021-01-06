@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.statemachine;
+package org.hyperledger.besu.consensus.common.bft.statemachine;
 
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
@@ -28,8 +28,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import java.time.Clock;
 import java.util.Collection;
 
-/** This is the full data set, or context, required for many of the aspects of the IBFT workflow. */
-public class IbftFinalState {
+/** This is the full data set, or context, required for many of the aspects of BFT workflows. */
+public class BftFinalState {
   private final VoteTallyCache voteTallyCache;
   private final NodeKey nodeKey;
   private final Address localAddress;
@@ -40,7 +40,7 @@ public class IbftFinalState {
   private final Clock clock;
   private final ValidatorMulticaster validatorMulticaster;
 
-  public IbftFinalState(
+  public BftFinalState(
       final VoteTallyCache voteTallyCache,
       final NodeKey nodeKey,
       final Address localAddress,

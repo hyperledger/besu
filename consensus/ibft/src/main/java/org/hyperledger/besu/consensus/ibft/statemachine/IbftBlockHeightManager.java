@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
@@ -67,7 +68,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
   private final FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   private final Clock clock;
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
-  private final IbftFinalState finalState;
+  private final BftFinalState finalState;
 
   private Optional<PreparedRoundArtifacts> latestPreparedRoundArtifacts = Optional.empty();
 
@@ -75,7 +76,7 @@ public class IbftBlockHeightManager implements BlockHeightManager {
 
   public IbftBlockHeightManager(
       final BlockHeader parentHeader,
-      final IbftFinalState finalState,
+      final BftFinalState finalState,
       final RoundChangeManager roundChangeManager,
       final IbftRoundFactory ibftRoundFactory,
       final Clock clock,

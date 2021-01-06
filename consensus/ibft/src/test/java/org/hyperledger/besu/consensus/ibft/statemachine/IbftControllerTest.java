@@ -33,6 +33,7 @@ import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
@@ -63,7 +64,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IbftControllerTest {
   @Mock private Blockchain blockChain;
-  @Mock private IbftFinalState ibftFinalState;
+  @Mock private BftFinalState bftFinalState;
   @Mock private IbftBlockHeightManagerFactory blockHeightManagerFactory;
   @Mock private BlockHeader chainHeadBlockHeader;
   @Mock private BlockHeader nextBlock;
@@ -100,7 +101,7 @@ public class IbftControllerTest {
     when(blockChain.getChainHeadHeader()).thenReturn(chainHeadBlockHeader);
     when(blockChain.getChainHeadBlockNumber()).thenReturn(3L);
     when(blockHeightManagerFactory.create(any())).thenReturn(blockHeightManager);
-    when(ibftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
+    when(bftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
 
     when(chainHeadBlockHeader.getNumber()).thenReturn(3L);
     when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
@@ -110,7 +111,7 @@ public class IbftControllerTest {
 
     when(nextBlock.getNumber()).thenReturn(5L);
 
-    when(ibftFinalState.isLocalNodeValidator()).thenReturn(true);
+    when(bftFinalState.isLocalNodeValidator()).thenReturn(true);
     when(messageTracker.hasSeenMessage(any())).thenReturn(false);
   }
 
@@ -118,7 +119,7 @@ public class IbftControllerTest {
     ibftController =
         new IbftController(
             blockChain,
-            ibftFinalState,
+            bftFinalState,
             blockHeightManagerFactory,
             ibftGossip,
             messageTracker,
