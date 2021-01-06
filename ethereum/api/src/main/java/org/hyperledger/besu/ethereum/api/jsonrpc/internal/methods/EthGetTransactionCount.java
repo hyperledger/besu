@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -27,8 +27,7 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-public class EthGetTransactionCount extends AbstractBlockParameterMethod {
-
+public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
   private final Supplier<PendingTransactions> pendingTransactions;
   private final boolean resultAsDecimal;
 
@@ -52,8 +51,9 @@ public class EthGetTransactionCount extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, BlockParameter.class);
+  protected BlockParameterOrBlockHash blockParameterOrBlockHash(
+      final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
   }
 
   @Override

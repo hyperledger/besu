@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -34,42 +34,36 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class EthGetProof extends AbstractBlockParameterMethod {
-
-  private final BlockchainQueries blockchain;
-
+public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
   public EthGetProof(final BlockchainQueries blockchain) {
     super(blockchain);
-    this.blockchain = blockchain;
-  }
-
-  private Address getAddress(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(0, Address.class);
-  }
-
-  private List<UInt256> getStorageKeys(final JsonRpcRequestContext request) {
-    return Arrays.stream(request.getRequiredParameter(1, String[].class))
-        .map(UInt256::fromHexString)
-        .collect(Collectors.toList());
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(2, BlockParameter.class);
+  public String getName() {
+    return RpcMethod.ETH_GET_PROOF.getMethodName();
+  }
+
+  @Override
+  protected BlockParameterOrBlockHash blockParameterOrBlockHash(
+      final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(2, BlockParameterOrBlockHash.class);
   }
 
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
 
-    final Address address = getAddress(requestContext);
+    final Address address = requestContext.getRequiredParameter(0, Address.class);
     final List<UInt256> storageKeys = getStorageKeys(requestContext);
 
-    final Optional<MutableWorldState> worldState = blockchain.getWorldState(blockNumber);
+    final Optional<MutableWorldState> worldState =
+        blockchainQueries.get().getWorldState(blockNumber);
 
     if (worldState.isPresent()) {
       Optional<WorldStateProof> proofOptional =
-          blockchain
+          blockchainQueries
+              .get()
               .getWorldStateArchive()
               .getAccountProof(worldState.get().rootHash(), address, storageKeys);
       return proofOptional
@@ -90,11 +84,12 @@ public class EthGetProof extends AbstractBlockParameterMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    return (JsonRpcResponse) findResultByParamType(requestContext);
+    return (JsonRpcResponse) handleParamTypes(requestContext);
   }
 
-  @Override
-  public String getName() {
-    return RpcMethod.ETH_GET_PROOF.getMethodName();
+  private List<UInt256> getStorageKeys(final JsonRpcRequestContext request) {
+    return Arrays.stream(request.getRequiredParameter(1, String[].class))
+        .map(UInt256::fromHexString)
+        .collect(Collectors.toList());
   }
 }

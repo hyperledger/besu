@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -28,8 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
-public class EthCall extends AbstractBlockParameterMethod {
-
+public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private final TransactionSimulator transactionSimulator;
 
   public EthCall(
@@ -44,8 +43,9 @@ public class EthCall extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, BlockParameter.class);
+  protected BlockParameterOrBlockHash blockParameterOrBlockHash(
+      final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
   }
 
   @Override
@@ -74,13 +74,13 @@ public class EthCall extends AbstractBlockParameterMethod {
         .orElse(validRequestBlockNotFound(request));
   }
 
-  private JsonRpcSuccessResponse validRequestBlockNotFound(final JsonRpcRequestContext request) {
-    return new JsonRpcSuccessResponse(request.getRequest().getId(), null);
-  }
-
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    return (JsonRpcResponse) findResultByParamType(requestContext);
+    return (JsonRpcResponse) handleParamTypes(requestContext);
+  }
+
+  private JsonRpcSuccessResponse validRequestBlockNotFound(final JsonRpcRequestContext request) {
+    return new JsonRpcSuccessResponse(request.getRequest().getId(), null);
   }
 
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {

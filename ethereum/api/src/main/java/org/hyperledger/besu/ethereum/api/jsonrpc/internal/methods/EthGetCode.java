@@ -16,19 +16,17 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
-public class EthGetCode extends AbstractBlockParameterMethod {
-
+public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
   public EthGetCode(final BlockchainQueries blockchainQueries) {
-    super(Suppliers.ofInstance(blockchainQueries));
+    super(blockchainQueries);
   }
 
   public EthGetCode(final Supplier<BlockchainQueries> blockchainQueries) {
@@ -41,8 +39,9 @@ public class EthGetCode extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, BlockParameter.class);
+  protected BlockParameterOrBlockHash blockParameterOrBlockHash(
+      final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
   }
 
   @Override
