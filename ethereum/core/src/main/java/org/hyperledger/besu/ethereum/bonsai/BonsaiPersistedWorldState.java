@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -89,7 +90,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public void persist(final Hash blockHash) {
+  public void persist(final BlockHeader blockHeader) {
+    final Hash blockHash = blockHeader == null ? null : blockHeader.getHash();
     boolean success = false;
     final KeyValueStorageTransaction accountTx = accountStorage.startTransaction();
     final KeyValueStorageTransaction codeTx = codeStorage.startTransaction();

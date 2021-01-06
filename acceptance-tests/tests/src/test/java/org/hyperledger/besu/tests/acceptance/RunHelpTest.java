@@ -38,6 +38,5 @@ public class RunHelpTest extends AcceptanceTestBase {
     final String consoleContents = cluster.getConsoleContents();
     assertThat(consoleContents)
         .startsWith("Usage:\n\nbesu [OPTIONS] [COMMAND]\n\nDescription:\n\n");
-    assertThat(consoleContents).endsWith("\nBesu is licensed under the Apache License 2.0\n");
   }
 }
