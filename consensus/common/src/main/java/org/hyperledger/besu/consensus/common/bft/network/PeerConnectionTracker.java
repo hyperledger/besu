@@ -12,16 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.network;
+package org.hyperledger.besu.consensus.common.bft.network;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
-import java.util.Collection;
+public interface PeerConnectionTracker {
 
-public interface ValidatorMulticaster {
+  void add(final PeerConnection newConnection);
 
-  void send(final MessageData message);
-
-  void send(final MessageData message, final Collection<Address> denylist);
+  void remove(final PeerConnection removedConnection);
 }

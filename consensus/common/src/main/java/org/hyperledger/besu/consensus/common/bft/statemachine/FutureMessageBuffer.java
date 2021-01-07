@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.statemachine;
+package org.hyperledger.besu.consensus.common.bft.statemachine;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
