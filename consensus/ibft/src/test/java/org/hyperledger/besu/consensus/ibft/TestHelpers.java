@@ -16,6 +16,8 @@ package org.hyperledger.besu.consensus.ibft;
 
 import static java.util.Collections.singletonList;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -49,7 +51,7 @@ public class TestHelpers {
   public static Block createProposalBlock(
       final List<Address> validators, final ConsensusRoundIdentifier roundId) {
     final Bytes extraData =
-        new IbftExtraData(
+        new BftExtraData(
                 Bytes.wrap(new byte[32]),
                 Collections.emptyList(),
                 Optional.empty(),
@@ -60,7 +62,7 @@ public class TestHelpers {
         BlockOptions.create()
             .setExtraData(extraData)
             .setBlockNumber(roundId.getSequenceNumber())
-            .setBlockHeaderFunctions(IbftBlockHeaderFunctions.forCommittedSeal());
+            .setBlockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal());
     return new BlockDataGenerator().block(blockOptions);
   }
 

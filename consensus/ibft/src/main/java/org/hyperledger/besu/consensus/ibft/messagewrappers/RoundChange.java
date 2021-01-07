@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
@@ -75,7 +75,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
         PayloadDeserializers.readSignedRoundChangePayloadFrom(rlpIn);
     Optional<Block> block = Optional.empty();
     if (!rlpIn.nextIsNull()) {
-      block = Optional.of(Block.readFrom(rlpIn, IbftBlockHeaderFunctions.forCommittedSeal()));
+      block = Optional.of(Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal()));
     } else {
       rlpIn.skipNext();
     }

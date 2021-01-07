@@ -267,7 +267,7 @@ public class WorldStateDownloaderTest {
     // Check that all expected account data was downloaded
     final WorldStateArchive localWorldStateArchive =
         new DefaultWorldStateArchive(localStorage, createPreimageStorage());
-    final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
+    final WorldState localWorldState = localWorldStateArchive.get(stateRoot, null).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
   }
@@ -336,7 +336,7 @@ public class WorldStateDownloaderTest {
     // Check that all expected account data was downloaded
     final WorldStateArchive localWorldStateArchive =
         new DefaultWorldStateArchive(localStorage, createPreimageStorage());
-    final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
+    final WorldState localWorldState = localWorldStateArchive.get(stateRoot, null).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
   }
@@ -502,7 +502,7 @@ public class WorldStateDownloaderTest {
     // Check that all expected account data was downloaded
     final WorldStateArchive localWorldStateArchive =
         new DefaultWorldStateArchive(localStorage, createPreimageStorage());
-    final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
+    final WorldState localWorldState = localWorldStateArchive.get(stateRoot, null).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
   }
@@ -601,7 +601,7 @@ public class WorldStateDownloaderTest {
     // Check that all expected account data was downloaded
     final WorldStateArchive localWorldStateArchive =
         new DefaultWorldStateArchive(localStorage, createPreimageStorage());
-    final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
+    final WorldState localWorldState = localWorldStateArchive.get(stateRoot, null).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
   }
@@ -734,7 +734,7 @@ public class WorldStateDownloaderTest {
     assertThat(result).isDone();
     final WorldStateArchive localWorldStateArchive =
         new DefaultWorldStateArchive(localStorage, createPreimageStorage());
-    final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
+    final WorldState localWorldState = localWorldStateArchive.get(stateRoot, null).get();
     assertAccountsMatch(localWorldState, accounts);
   }
 
@@ -877,7 +877,7 @@ public class WorldStateDownloaderTest {
     }
 
     // Check that all expected account data was downloaded
-    final WorldState localWorldState = localWorldStateArchive.get(stateRoot).get();
+    final WorldState localWorldState = localWorldStateArchive.get(stateRoot, null).get();
     assertThat(result).isDone();
     assertAccountsMatch(localWorldState, accounts);
 

@@ -57,11 +57,11 @@ public class PrometheusMetricsSystemTest {
 
     counter.inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 1d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 1.0, emptyList()));
 
     counter.inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 2d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 2.0, emptyList()));
   }
 
   @Test
@@ -74,11 +74,11 @@ public class PrometheusMetricsSystemTest {
 
     counter1.labels().inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 1d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 1.0, emptyList()));
 
     counter2.labels().inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 2d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 2.0, emptyList()));
   }
 
   @Test
@@ -92,8 +92,8 @@ public class PrometheusMetricsSystemTest {
 
     assertThat(metricsSystem.streamObservations())
         .containsExactlyInAnyOrder(
-            new Observation(PEERS, "connected", 2d, singletonList("value1")),
-            new Observation(PEERS, "connected", 1d, singletonList("value2")));
+            new Observation(PEERS, "connected", 2.0, singletonList("value1")),
+            new Observation(PEERS, "connected", 1.0, singletonList("value2")));
   }
 
   @Test
@@ -102,11 +102,11 @@ public class PrometheusMetricsSystemTest {
 
     counter.inc(5);
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 5d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 5.0, emptyList()));
 
     counter.inc(6);
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 11d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 11.0, emptyList()));
   }
 
   @Test
@@ -174,10 +174,10 @@ public class PrometheusMetricsSystemTest {
 
   @Test
   public void shouldCreateObservationFromGauge() {
-    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
+    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
 
     assertThat(metricsSystem.streamObservations())
-        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7d, emptyList()));
+        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7.0, emptyList()));
   }
 
   @Test
@@ -185,8 +185,8 @@ public class PrometheusMetricsSystemTest {
     // Gauges have a reference to the source of their data so creating it twice will still only
     // pull data from the first instance, possibly leaking memory and likely returning the wrong
     // results.
-    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
-    assertThatThrownBy(() -> metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d))
+    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
+    assertThatThrownBy(() -> metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0))
         .isInstanceOf(IllegalArgumentException.class);
   }
 

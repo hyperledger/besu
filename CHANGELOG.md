@@ -6,8 +6,10 @@
 * Implemented [EIP-778](https://eips.ethereum.org/EIPS/eip-778): Ethereum Node Records (ENR) [\#1680](https://github.com/hyperledger/besu/pull/1680)
 * Implemented [EIP-868](https://eips.ethereum.org/EIPS/eip-868): Simple Subroutines for the EVM [\#1721](https://github.com/hyperledger/besu/pull/1721)
 * Added revert reason to eth_estimateGas RPC call. [\#1730](https://github.com/hyperledger/besu/pull/1730)
+* Added command line option --static-nodes-file. [#1644](https://github.com/hyperledger/besu/pull/1644)
 
 ### Bug Fixes
+* Accept locally-sourced transactions below the minimum gas price. [#1480](https://github.com/hyperledger/besu/issues/1480) [#1743](https://github.com/hyperledger/besu/pull/1743)
 
 #### Previously identified known issues
 
@@ -16,6 +18,7 @@
 
 ### Download link
 TBA
+
 
 ## 20.10.3
 

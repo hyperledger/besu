@@ -15,7 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.queries.IbftQueryServiceImpl;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -36,7 +36,7 @@ public class IbftQueryPluginServiceFactory implements PluginServiceFactory {
 
   @Override
   public void appendPluginServices(final BesuPluginContextImpl besuContext) {
-    final BlockInterface blockInterface = new IbftBlockInterface();
+    final BlockInterface blockInterface = new BftBlockInterface();
 
     final IbftQueryServiceImpl service =
         new IbftQueryServiceImpl(blockInterface, blockchain, nodeKey);
