@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Optional;
@@ -65,7 +66,7 @@ public class LogRollingTests {
           Hash.ZERO,
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.EMPTY_TRIE_HASH,
+          Hash.fromHexString("0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -84,7 +85,7 @@ public class LogRollingTests {
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.EMPTY_TRIE_HASH,
+          Hash.fromHexString("0x5b675f79cd11ba67266161d79a8d5be3ac330dfbb76300a4f15d76b610b18193"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -102,7 +103,7 @@ public class LogRollingTests {
   @Before
   public void createStorage() {
     final InMemoryStorageProvider provider = new InMemoryStorageProvider();
-    archive = new BonsaiWorldStateArchive(provider);
+    archive = new BonsaiWorldStateArchive(provider, null);
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -121,7 +122,7 @@ public class LogRollingTests {
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
     final InMemoryStorageProvider secondProvider = new InMemoryStorageProvider();
-    secondArchive = new BonsaiWorldStateArchive(secondProvider);
+    secondArchive = new BonsaiWorldStateArchive(secondProvider, null);
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -182,6 +183,9 @@ public class LogRollingTests {
     assertKeyValueStorageEqual(accountStorage, secondAccountStorage);
     assertKeyValueStorageEqual(codeStorage, secondCodeStorage);
     assertKeyValueStorageEqual(storageStorage, secondStorageStorage);
+    final KeyValueStorageTransaction tx = trieBranchStorage.startTransaction();
+    tx.remove(BonsaiPersistedWorldState.WORLD_BLOCK_HASH_KEY);
+    tx.commit();
     assertKeyValueStorageEqual(trieBranchStorage, secondTrieBranchStorage);
     // trie logs won't be the same, we shouldn't generate logs on rolls.
     assertKeyValueSubset(trieLogStorage, secondTrieLogStorage);
@@ -239,6 +243,9 @@ public class LogRollingTests {
     assertKeyValueStorageEqual(accountStorage, secondAccountStorage);
     assertKeyValueStorageEqual(codeStorage, secondCodeStorage);
     assertKeyValueStorageEqual(storageStorage, secondStorageStorage);
+    final KeyValueStorageTransaction tx = trieBranchStorage.startTransaction();
+    tx.remove(BonsaiPersistedWorldState.WORLD_BLOCK_HASH_KEY);
+    tx.commit();
     assertKeyValueStorageEqual(trieBranchStorage, secondTrieBranchStorage);
     // trie logs won't be the same, we shouldn't generate logs on rolls.
     assertKeyValueSubset(trieLogStorage, secondTrieLogStorage);
@@ -277,7 +284,7 @@ public class LogRollingTests {
     final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, headerTwo.getHash());
     firstRollbackUpdater.rollBack(layerTwo);
 
-    worldState.persist(headerTwo);
+    worldState.persist(headerOne);
 
     final BonsaiPersistedWorldState secondWorldState =
         new BonsaiPersistedWorldState(
@@ -300,6 +307,9 @@ public class LogRollingTests {
     assertKeyValueStorageEqual(accountStorage, secondAccountStorage);
     assertKeyValueStorageEqual(codeStorage, secondCodeStorage);
     assertKeyValueStorageEqual(storageStorage, secondStorageStorage);
+    final KeyValueStorageTransaction tx = trieBranchStorage.startTransaction();
+    tx.remove(BonsaiPersistedWorldState.WORLD_BLOCK_HASH_KEY);
+    tx.commit();
     assertKeyValueStorageEqual(trieBranchStorage, secondTrieBranchStorage);
     // trie logs won't be the same, we don't delete the roll back log
     assertKeyValueSubset(trieLogStorage, secondTrieLogStorage);

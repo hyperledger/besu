@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.WorldView;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.Map;
 import java.util.Optional;
@@ -27,9 +28,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public interface BonsaiWorldState extends WorldView {
+public interface BonsaiWorldView extends WorldView {
 
-  Bytes getCode(Address address);
+  Optional<Bytes> getCode(Address address);
+
+  Optional<Bytes> getStateTrieNode(Bytes location);
 
   UInt256 getStorageValue(Address address, UInt256 key);
 
@@ -38,7 +41,7 @@ public interface BonsaiWorldState extends WorldView {
   UInt256 getOriginalStorageValue(Address address, UInt256 key);
 
   /**
-   * Stream all the storage values of a account.
+   * Retrieve all the storage values of a account.
    *
    * @param address the account to stream
    * @param rootHash the root hash of the account storage trie
@@ -46,4 +49,10 @@ public interface BonsaiWorldState extends WorldView {
    *     is the Bytes representation of the storage value.
    */
   Map<Bytes32, Bytes> getAllAccountStorage(Address address, Hash rootHash);
+
+  static Bytes encodeTrieValue(final Bytes bytes) {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.writeBytes(bytes.trimLeadingZeros());
+    return out.encoded();
+  }
 }

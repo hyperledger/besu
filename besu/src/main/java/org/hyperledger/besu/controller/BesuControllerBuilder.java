@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -230,22 +232,23 @@ public abstract class BesuControllerBuilder {
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
-    final WorldStateArchive worldStateArchive = createWorldStateArchive(worldStateStorage);
+
+    final BlockchainStorage blockchainStorage =
+        storageProvider.createBlockchainStorage(protocolSchedule);
+
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(
+            genesisState.getBlock(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
+
+    final WorldStateArchive worldStateArchive =
+        createWorldStateArchive(worldStateStorage, blockchain);
     final ProtocolContext protocolContext =
         ProtocolContext.init(
-            storageProvider,
-            worldStateArchive,
-            genesisState,
-            protocolSchedule,
-            metricsSystem,
-            this::createConsensusContext,
-            reorgLoggingThreshold);
+            blockchain, worldStateArchive, genesisState, this::createConsensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());
-
-    final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     Optional<Pruner> maybePruner = Optional.empty();
     if (isPruningEnabled) {
@@ -427,10 +430,11 @@ public abstract class BesuControllerBuilder {
         genesisConfig.getForks());
   }
 
-  public WorldStateArchive createWorldStateArchive(final WorldStateStorage worldStateStorage) {
+  private WorldStateArchive createWorldStateArchive(
+      final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
-        return new BonsaiWorldStateArchive(storageProvider);
+        return new BonsaiWorldStateArchive(storageProvider, blockchain);
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =
