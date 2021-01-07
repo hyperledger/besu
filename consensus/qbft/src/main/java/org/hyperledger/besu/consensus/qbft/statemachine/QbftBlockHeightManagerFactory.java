@@ -12,22 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.statemachine;
+package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
-import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-public class IbftBlockHeightManagerFactory {
+public class QbftBlockHeightManagerFactory {
 
   private final IbftRoundFactory roundFactory;
   private final BftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
 
-  public IbftBlockHeightManagerFactory(
+  public QbftBlockHeightManagerFactory(
       final BftFinalState finalState,
       final IbftRoundFactory roundFactory,
       final MessageValidatorFactory messageValidatorFactory,
@@ -38,7 +38,7 @@ public class IbftBlockHeightManagerFactory {
     this.messageFactory = messageFactory;
   }
 
-  public BaseIbftBlockHeightManager create(final BlockHeader parentHeader) {
+  public BaseQbftBlockHeightManager create(final BlockHeader parentHeader) {
     if (finalState.isLocalNodeValidator()) {
       return createFullBlockHeightManager(parentHeader);
     } else {
@@ -46,12 +46,12 @@ public class IbftBlockHeightManagerFactory {
     }
   }
 
-  private BaseIbftBlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
+  private BaseQbftBlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }
 
-  private BaseIbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
-    return new IbftBlockHeightManager(
+  private BaseQbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
+    return new QbftBlockHeightManager(
         parentHeader,
         finalState,
         new RoundChangeManager(

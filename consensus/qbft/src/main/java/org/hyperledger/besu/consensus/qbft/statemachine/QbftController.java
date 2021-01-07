@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.statemachine;
+package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
@@ -21,25 +21,25 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BaseBftController;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BaseBlockHeightManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
-import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
-import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
-import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
-import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
+import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
+import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
+import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
+import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
+import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-public class IbftController extends BaseBftController {
+public class QbftController extends BaseBftController {
 
-  private BaseIbftBlockHeightManager currentHeightManager;
-  private final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory;
+  private BaseQbftBlockHeightManager currentHeightManager;
+  private final QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory;
 
-  public IbftController(
+  public QbftController(
       final Blockchain blockchain,
       final BftFinalState bftFinalState,
-      final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory,
+      final QbftBlockHeightManagerFactory qbftBlockHeightManagerFactory,
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
@@ -52,7 +52,7 @@ public class IbftController extends BaseBftController {
         duplicateMessageTracker,
         futureMessageBuffer,
         sychronizerUpdater);
-    this.ibftBlockHeightManagerFactory = ibftBlockHeightManagerFactory;
+    this.qbftBlockHeightManagerFactory = qbftBlockHeightManagerFactory;
   }
 
   @Override
@@ -60,28 +60,28 @@ public class IbftController extends BaseBftController {
     final MessageData messageData = message.getData();
 
     switch (messageData.getCode()) {
-      case IbftV2.PROPOSAL:
+      case QbftV1.PROPOSAL:
         consumeMessage(
             message,
             ProposalMessageData.fromMessageData(messageData).decode(),
             currentHeightManager::handleProposalPayload);
         break;
 
-      case IbftV2.PREPARE:
+      case QbftV1.PREPARE:
         consumeMessage(
             message,
             PrepareMessageData.fromMessageData(messageData).decode(),
             currentHeightManager::handlePreparePayload);
         break;
 
-      case IbftV2.COMMIT:
+      case QbftV1.COMMIT:
         consumeMessage(
             message,
             CommitMessageData.fromMessageData(messageData).decode(),
             currentHeightManager::handleCommitPayload);
         break;
 
-      case IbftV2.ROUND_CHANGE:
+      case QbftV1.ROUND_CHANGE:
         consumeMessage(
             message,
             RoundChangeMessageData.fromMessageData(messageData).decode(),
@@ -98,7 +98,7 @@ public class IbftController extends BaseBftController {
 
   @Override
   protected void createNewHeightManager(final BlockHeader parentHeader) {
-    currentHeightManager = ibftBlockHeightManagerFactory.create(parentHeader);
+    currentHeightManager = qbftBlockHeightManagerFactory.create(parentHeader);
   }
 
   @Override
