@@ -42,6 +42,11 @@ import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
+import org.hyperledger.besu.consensus.common.bft.inttest.NetworkLayout;
+import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
+import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.inttest.StubbedSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
@@ -78,8 +83,10 @@ import org.hyperledger.besu.util.Subscribers;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -220,8 +227,9 @@ public class TestContextBuilder {
                     },
                     LinkedHashMap::new));
 
-    multicaster.addNetworkPeers(remotePeers.values());
-    synchronizerUpdater.addNetworkPeers(remotePeers.values());
+    final List<DefaultValidatorPeer> peerCollection = new ArrayList<>(remotePeers.values());
+    multicaster.addNetworkPeers(peerCollection);
+    synchronizerUpdater.addNetworkPeers(peerCollection);
 
     return new TestContext(
         remotePeers,
