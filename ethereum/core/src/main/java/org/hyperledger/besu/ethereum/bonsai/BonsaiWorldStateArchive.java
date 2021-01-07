@@ -51,25 +51,15 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final BonsaiPersistedWorldState persistedState;
   private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStates;
-  private final KeyValueStorage trieLogStorage;
+  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
     this.blockchain = blockchain;
-    trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+
+    worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     persistedState =
         new BonsaiPersistedWorldState(
-            this,
-<<<<<<< Updated upstream
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
-            provider.getStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
-            trieLogStorage);
-=======
-            new BonsaiWorldStateKeyValueStorage(provider));
->>>>>>> Stashed changes
+            this,worldStateStorage);
     layeredWorldStates = new HashMap<>();
   }
 
@@ -100,7 +90,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return layeredWorldStates.containsKey(blockHash)
         || persistedState.blockHash().equals(blockHash)
-        || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+        || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override

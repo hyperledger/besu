@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -195,15 +196,17 @@ public class MarkSweepPruner {
     long prunedNodeCount = 0;
     WorldStateStorage.Updater updater = worldStateStorage.updater();
     for (long blockNumber = markedBlockNumber - 1; blockNumber >= 0; blockNumber--) {
+      final BlockHeader blockHeader = blockchain.getBlockHeader(blockNumber).get();
       final Hash candidateStateRootHash =
-          blockchain.getBlockHeader(blockNumber).get().getStateRoot();
-
-      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash)) {
+              blockHeader.getStateRoot();
+      final Hash blockHash =
+              blockHeader.getHash();
+      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash,blockHash)) {
         break;
       }
 
       if (!isMarked(candidateStateRootHash)) {
-        updater.removeAccountStateTrieNode(candidateStateRootHash);
+        updater.removeAccountStateTrieNode(candidateStateRootHash, blockHash);
         prunedNodeCount++;
         if (prunedNodeCount % operationsPerTransaction == 0) {
           updater.commit();

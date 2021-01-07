@@ -50,12 +50,12 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return worldStateStorage.isWorldStateAvailable(rootHash);
+    return worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    if (!worldStateStorage.isWorldStateAvailable(rootHash)) {
+    if (!worldStateStorage.isWorldStateAvailable(rootHash, blockHash)) {
       return Optional.empty();
     }
     return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));

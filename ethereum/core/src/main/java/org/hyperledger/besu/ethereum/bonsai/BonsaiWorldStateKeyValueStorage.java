@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -106,8 +107,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public boolean isWorldStateAvailable(final Bytes32 rootHash) {
-    return getWorldStateRootHash().isPresent();
+  public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
+    return trieLogStorage.containsKey(blockHash.toArrayUnsafe());
   }
 
   @Override
