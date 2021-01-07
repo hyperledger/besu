@@ -36,17 +36,17 @@ import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
+import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.UniqueMessageMulticaster;
-import org.hyperledger.besu.consensus.ibft.blockcreation.IbftMiningCoordinator;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
@@ -104,7 +104,10 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
       final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration()
         .withSubProtocol(EthProtocol.get(), ethProtocolManager)
-        .withSubProtocol(IbftSubProtocol.get(), new IbftProtocolManager(bftEventQueue, peers));
+        .withSubProtocol(
+            IbftSubProtocol.get(),
+            new BftProtocolManager(
+                bftEventQueue, peers, IbftSubProtocol.IBFV1, IbftSubProtocol.get().getName()));
   }
 
   @Override
@@ -197,7 +200,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     final BftProcessor bftProcessor = new BftProcessor(bftEventQueue, eventMultiplexer);
 
     final MiningCoordinator ibftMiningCoordinator =
-        new IbftMiningCoordinator(
+        new BftMiningCoordinator(
             bftExecutors,
             ibftController,
             bftProcessor,

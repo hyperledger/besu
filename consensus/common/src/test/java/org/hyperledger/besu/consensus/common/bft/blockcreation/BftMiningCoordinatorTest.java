@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.blockcreation;
+package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -44,7 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class IbftMiningCoordinatorTest {
+public class BftMiningCoordinatorTest {
   @Mock private BftEventHandler controller;
   @Mock private BftExecutors bftExecutors;
   @Mock private BftProcessor bftProcessor;
@@ -54,12 +53,12 @@ public class IbftMiningCoordinatorTest {
   @Mock private BlockBody blockBody;
   @Mock private BlockHeader blockHeader;
   private final BftEventQueue eventQueue = new BftEventQueue(1000);
-  private IbftMiningCoordinator ibftMiningCoordinator;
+  private BftMiningCoordinator bftMiningCoordinator;
 
   @Before
   public void setup() {
-    ibftMiningCoordinator =
-        new IbftMiningCoordinator(
+    bftMiningCoordinator =
+        new BftMiningCoordinator(
             bftExecutors, controller, bftProcessor, bftBlockCreatorFactory, blockChain, eventQueue);
     when(block.getBody()).thenReturn(blockBody);
     when(block.getHeader()).thenReturn(blockHeader);
@@ -68,17 +67,17 @@ public class IbftMiningCoordinatorTest {
 
   @Test
   public void startsMining() {
-    ibftMiningCoordinator.start();
+    bftMiningCoordinator.start();
   }
 
   @Test
   public void stopsMining() {
     // Shouldn't stop without first starting
-    ibftMiningCoordinator.stop();
+    bftMiningCoordinator.stop();
     verify(bftProcessor, never()).stop();
 
-    ibftMiningCoordinator.start();
-    ibftMiningCoordinator.stop();
+    bftMiningCoordinator.start();
+    bftMiningCoordinator.stop();
     verify(bftProcessor).stop();
   }
 
@@ -86,13 +85,13 @@ public class IbftMiningCoordinatorTest {
   public void getsMinTransactionGasPrice() {
     final Wei minGasPrice = Wei.of(10);
     when(bftBlockCreatorFactory.getMinTransactionGasPrice()).thenReturn(minGasPrice);
-    assertThat(ibftMiningCoordinator.getMinTransactionGasPrice()).isEqualTo(minGasPrice);
+    assertThat(bftMiningCoordinator.getMinTransactionGasPrice()).isEqualTo(minGasPrice);
   }
 
   @Test
   public void setsTheExtraData() {
     final Bytes extraData = Bytes.fromHexStringLenient("0x1234");
-    ibftMiningCoordinator.setExtraData(extraData);
+    bftMiningCoordinator.setExtraData(extraData);
     verify(bftBlockCreatorFactory).setExtraData(extraData);
   }
 
@@ -101,7 +100,7 @@ public class IbftMiningCoordinatorTest {
     BlockAddedEvent headAdvancement =
         BlockAddedEvent.createForHeadAdvancement(
             block, Collections.emptyList(), Collections.emptyList());
-    ibftMiningCoordinator.onBlockAdded(headAdvancement);
+    bftMiningCoordinator.onBlockAdded(headAdvancement);
 
     assertThat(eventQueue.size()).isEqualTo(1);
     final NewChainHead ibftEvent = (NewChainHead) eventQueue.poll(1, TimeUnit.SECONDS);
@@ -111,7 +110,7 @@ public class IbftMiningCoordinatorTest {
   @Test
   public void doesntAddNewChainHeadEventWhenNotACanonicalHeadBlockEvent() {
     final BlockAddedEvent fork = BlockAddedEvent.createForFork(block);
-    ibftMiningCoordinator.onBlockAdded(fork);
+    bftMiningCoordinator.onBlockAdded(fork);
     assertThat(eventQueue.isEmpty()).isTrue();
   }
 }
