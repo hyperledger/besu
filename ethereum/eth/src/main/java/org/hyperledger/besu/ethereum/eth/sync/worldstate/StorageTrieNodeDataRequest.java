@@ -26,27 +26,27 @@ import org.apache.tuweni.bytes.Bytes;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  final Optional<Address> account;
+  final Optional<Hash> accountHash;
 
-  StorageTrieNodeDataRequest(final Hash hash, final Optional<Bytes> location, final Optional<Address> account) {
+  StorageTrieNodeDataRequest(final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
     super(RequestType.STORAGE_TRIE_NODE, hash, location);
-    this.account = account;
+    this.accountHash = accountHash;
   }
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putAccountStorageTrieNode(getLocation().orElse(null), getHash(), getData());
+    updater.putAccountStorageTrieNode(accountHash.orElse(null), getLocation().orElse(null), getHash(), getData());
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(getLocation().orElse(null), getHash());
+    return worldStateStorage.getAccountStorageTrieNode(accountHash.orElse(null), getLocation().orElse(null), getHash());
   }
 
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
           final Hash childHash, final Optional<Bytes> location) {
-    return NodeDataRequest.createStorageDataRequest(childHash, location);
+    return NodeDataRequest.createStorageDataRequest(childHash,accountHash.orElse(null), location);
   }
 
   @Override

@@ -55,13 +55,14 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      builder.add(createCodeRequest(accountValue.getCodeHash()));
+      builder.add(createCodeRequest(getHash(), accountValue.getCodeHash()));
     }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
+
       final NodeDataRequest storageNode =
-          createStorageDataRequest(accountValue.getStorageRoot(), getLocation(), getHash());
+          createStorageDataRequest(getHash(), accountValue.getStorageRoot(), getLocation());
       builder.add(storageNode);
     }
     return builder.build();

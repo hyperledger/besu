@@ -53,12 +53,12 @@ public abstract class NodeDataRequest {
   }
 
   public static StorageTrieNodeDataRequest createStorageDataRequest(
-      final Hash hash, final Optional<Bytes> location) {
-    return new StorageTrieNodeDataRequest(hash, location);
+          final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
+    return new StorageTrieNodeDataRequest(hash,accountHash, location);
   }
 
-  public static CodeNodeDataRequest createCodeRequest(final Hash hash) {
-    return new CodeNodeDataRequest(hash);
+  public static CodeNodeDataRequest createCodeRequest(final Hash hash, final Optional<Hash> accountHash) {
+    return new CodeNodeDataRequest(hash, accountHash);
   }
 
   public static Bytes serialize(final NodeDataRequest request) {
@@ -70,6 +70,8 @@ public abstract class NodeDataRequest {
     in.enterList();
     final RequestType requestType = RequestType.fromValue(in.readByte());
     final Hash hash = Hash.wrap(in.readBytes32());
+
+    final Optional<Hash> accountHash;
     final Optional<Bytes> location;
 
     try {
@@ -80,11 +82,13 @@ public abstract class NodeDataRequest {
           deserialized = createAccountDataRequest(hash, location);
           break;
         case STORAGE_TRIE_NODE:
+          accountHash = Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
           location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
-          deserialized = createStorageDataRequest(hash, location);
+          deserialized = createStorageDataRequest(hash,accountHash, location);
           break;
         case CODE:
-          deserialized = createCodeRequest(hash);
+          accountHash = Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
+          deserialized = createCodeRequest(hash,accountHash);
           break;
         default:
           throw new IllegalArgumentException(

@@ -39,6 +39,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 public class BonsaiWorldStateArchive implements WorldStateArchive {
 
@@ -59,12 +60,16 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     persistedState =
         new BonsaiPersistedWorldState(
             this,
+<<<<<<< Updated upstream
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
             provider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
             trieLogStorage);
+=======
+            new BonsaiWorldStateKeyValueStorage(provider));
+>>>>>>> Stashed changes
     layeredWorldStates = new HashMap<>();
   }
 

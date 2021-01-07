@@ -25,13 +25,16 @@ import org.apache.tuweni.bytes.Bytes;
 
 class CodeNodeDataRequest extends NodeDataRequest {
 
-  CodeNodeDataRequest(final Hash hash) {
+  final Optional<Hash> accountHash;
+
+  CodeNodeDataRequest(final Hash hash, final Optional<Hash> accountHash) {
     super(RequestType.CODE, hash);
+    this.accountHash = accountHash;
   }
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putCode(getHash(), getData());
+    updater.putCode(accountHash.orElse(null), getHash(), getData());
   }
 
   @Override
@@ -42,6 +45,6 @@ class CodeNodeDataRequest extends NodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getCode(getHash());
+    return worldStateStorage.getCode(getHash(), accountHash.orElse(null));
   }
 }
