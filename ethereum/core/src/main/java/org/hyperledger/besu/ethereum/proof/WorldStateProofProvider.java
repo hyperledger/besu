@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.proof;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -46,7 +47,7 @@ public class WorldStateProofProvider {
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
 
-    if (!worldStateStorage.isWorldStateAvailable(worldStateRoot)) {
+    if (!worldStateStorage.isWorldStateAvailable(worldStateRoot, null )) {
       return Optional.empty();
     } else {
       final Hash addressHash = Hash.hash(accountAddress);

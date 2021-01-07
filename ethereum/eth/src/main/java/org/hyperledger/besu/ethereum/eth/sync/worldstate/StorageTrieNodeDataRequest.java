@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -25,28 +27,46 @@ import org.apache.tuweni.bytes.Bytes;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  StorageTrieNodeDataRequest(final Hash hash) {
-    super(RequestType.STORAGE_TRIE_NODE, hash);
+  final Optional<Hash> accountHash;
+
+  StorageTrieNodeDataRequest(final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
+    super(RequestType.STORAGE_TRIE_NODE, hash, location);
+    this.accountHash = accountHash;
   }
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putAccountStorageTrieNode(null, getHash(), getData());
+    updater.putAccountStorageTrieNode(accountHash.orElse(null), getLocation().orElse(null), getHash(), getData());
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(null, getHash());
+    return worldStateStorage.getAccountStorageTrieNode(accountHash.orElse(null), getLocation().orElse(null), getHash());
   }
 
   @Override
-  protected NodeDataRequest createChildNodeDataRequest(final Hash childHash) {
-    return NodeDataRequest.createStorageDataRequest(childHash);
+  protected NodeDataRequest createChildNodeDataRequest(
+          final Hash childHash, final Optional<Bytes> location) {
+    return NodeDataRequest.createStorageDataRequest(childHash,accountHash.orElse(null), location);
   }
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value) {
     // Nothing to do for terminal storage node
     return Stream.empty();
+  }
+
+  public Optional<Hash> getAccountHash() {
+    return accountHash;
+  }
+
+  @Override
+  protected void writeTo(final RLPOutput out) {
+    out.startList();
+    out.writeByte(getRequestType().getValue());
+    out.writeBytes(getHash());
+    getAccountHash().ifPresent(out::writeBytes);
+    getLocation().ifPresent(out::writeBytes);
+    out.endList();
   }
 }

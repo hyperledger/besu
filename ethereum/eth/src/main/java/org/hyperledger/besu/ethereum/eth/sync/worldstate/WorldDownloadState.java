@@ -25,6 +25,7 @@ import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Clock;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -185,7 +186,9 @@ class WorldDownloadState {
       final WorldStateStorage worldStateStorage, final BlockHeader header) {
     if (!internalFuture.isDone() && pendingRequests.allTasksCompleted()) {
       if (rootNodeData == null) {
-        enqueueRequest(NodeDataRequest.createAccountDataRequest(header.getStateRoot()));
+        enqueueRequest(
+            NodeDataRequest.createAccountDataRequest(
+                header.getStateRoot(), Optional.empty()));
         return false;
       }
       final Updater updater = worldStateStorage.updater();

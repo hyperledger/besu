@@ -39,6 +39,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 public class BonsaiWorldStateArchive implements WorldStateArchive {
 
@@ -50,21 +51,15 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final BonsaiPersistedWorldState persistedState;
   private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStates;
-  private final KeyValueStorage trieLogStorage;
+  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
     this.blockchain = blockchain;
-    trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+
+    worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     persistedState =
-        new BonsaiPersistedWorldState(
-            this,
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
-            provider.getStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
-            trieLogStorage);
+            new BonsaiPersistedWorldState(
+                    this,worldStateStorage);
     layeredWorldStates = new HashMap<>();
   }
 
@@ -95,7 +90,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return layeredWorldStates.containsKey(blockHash)
         || persistedState.blockHash().equals(blockHash)
-        || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+            || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override

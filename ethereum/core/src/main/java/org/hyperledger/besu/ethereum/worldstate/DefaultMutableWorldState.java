@@ -280,7 +280,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       if (codeHash.equals(Hash.EMPTY)) {
         return Bytes.EMPTY;
       }
-      return worldStateStorage.getCode(codeHash).orElse(Bytes.EMPTY);
+      return worldStateStorage.getCode(codeHash, null).orElse(Bytes.EMPTY);
     }
 
     @Override

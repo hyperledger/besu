@@ -102,7 +102,7 @@ public class WorldStateDownloader implements WorldStateDownloadStatus {
       }
 
       final Hash stateRoot = header.getStateRoot();
-      if (worldStateStorage.isWorldStateAvailable(stateRoot)) {
+      if (worldStateStorage.isWorldStateAvailable(stateRoot, header.getHash())) {
         LOG.info(
             "World state already available for block {} ({}). State root {}",
             header.getNumber(),
@@ -123,7 +123,8 @@ public class WorldStateDownloader implements WorldStateDownloadStatus {
 
       if (!newDownloadState.downloadWasResumed()) {
         // Only queue the root node if we're starting a new download from scratch
-        newDownloadState.enqueueRequest(NodeDataRequest.createAccountDataRequest(stateRoot));
+        newDownloadState.enqueueRequest(
+            NodeDataRequest.createAccountDataRequest(stateRoot, Optional.empty()));
       }
 
       maybeCompleteTask =
