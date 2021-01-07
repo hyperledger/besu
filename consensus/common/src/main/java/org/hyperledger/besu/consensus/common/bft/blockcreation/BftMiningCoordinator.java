@@ -12,14 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.blockcreation;
+package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -39,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
+public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
 
   private enum State {
     IDLE,
@@ -59,7 +58,7 @@ public class IbftMiningCoordinator implements MiningCoordinator, BlockAddedObser
   private long blockAddedObserverId;
   private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
 
-  public IbftMiningCoordinator(
+  public BftMiningCoordinator(
       final BftExecutors bftExecutors,
       final BftEventHandler eventHandler,
       final BftProcessor bftProcessor,
