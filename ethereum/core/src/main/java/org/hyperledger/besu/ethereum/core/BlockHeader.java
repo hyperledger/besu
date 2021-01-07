@@ -15,12 +15,20 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
+import org.hyperledger.besu.ethereum.core.deserializer.QuantityToLongDeserializer;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -36,9 +44,55 @@ public class BlockHeader extends SealableBlockHeader
 
   private final long nonce;
 
-  private final Supplier<Hash> hash;
+  @JsonIgnore private final Supplier<Hash> hash;
 
   private final Supplier<ParsedExtraData> parsedExtraData;
+
+  @VisibleForTesting
+  @JsonCreator
+  public BlockHeader(
+      @JsonProperty("parentHash") final Hash parentHash,
+      @JsonProperty("ommersHash") final Hash ommersHash,
+      @JsonProperty("coinbase") final Address coinbase,
+      @JsonProperty("stateRoot") final Hash stateRoot,
+      @JsonProperty("transactionsRoot") final Hash transactionsRoot,
+      @JsonProperty("receiptsRoot") final Hash receiptsRoot,
+      @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
+      @JsonProperty("difficulty") final Difficulty difficulty,
+      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("number")
+          final long number,
+      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("gasLimit")
+          final long gasLimit,
+      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("gasUsed")
+          final long gasUsed,
+      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("timestamp")
+          final long timestamp,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("extraData")
+          final Bytes extraData,
+      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("baseFee")
+          final Long baseFee,
+      @JsonProperty("mixHash") final Hash mixHash,
+      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("nonce")
+          final long nonce) {
+    this(
+        parentHash,
+        ommersHash,
+        coinbase,
+        stateRoot,
+        transactionsRoot,
+        receiptsRoot,
+        logsBloom,
+        difficulty,
+        number,
+        gasLimit,
+        gasUsed,
+        timestamp,
+        extraData,
+        baseFee,
+        mixHash,
+        nonce,
+        new MainnetBlockHeaderFunctions());
+  }
 
   public BlockHeader(
       final Hash parentHash,
