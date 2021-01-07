@@ -263,6 +263,7 @@ public class RlpBlockImporter implements Closeable {
   public void close() {
     validationExecutor.shutdownNow();
     try {
+      //noinspection ResultOfMethodCallIgnored
       validationExecutor.awaitTermination(5, SECONDS);
     } catch (final Exception e) {
       LOG.error("Error shutting down validatorExecutor.", e);
@@ -270,6 +271,7 @@ public class RlpBlockImporter implements Closeable {
 
     importExecutor.shutdownNow();
     try {
+      //noinspection ResultOfMethodCallIgnored
       importExecutor.awaitTermination(5, SECONDS);
     } catch (final Exception e) {
       LOG.error("Error shutting down importExecutor", e);

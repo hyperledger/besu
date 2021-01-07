@@ -12,12 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.protocol;
+package org.hyperledger.besu.consensus.common.bft.protocol;
 
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
-import org.hyperledger.besu.consensus.ibft.network.PeerConnectionTracker;
+import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -27,30 +27,39 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import java.util.Arrays;
 import java.util.List;
 
-public class IbftProtocolManager implements ProtocolManager {
+public class BftProtocolManager implements ProtocolManager {
   private final BftEventQueue bftEventQueue;
-
   private final PeerConnectionTracker peers;
+  private final Capability supportedCapability;
+  private final String subProtocolName;
 
   /**
    * Constructor for the ibft protocol manager
    *
    * @param bftEventQueue Entry point into the ibft event processor
    * @param peers Used to track all connected IBFT peers.
+   * @param supportedCapability The capability offered by this protocol manager
+   * @param subProtocolName The name of the protocol being supported
    */
-  public IbftProtocolManager(final BftEventQueue bftEventQueue, final PeerConnectionTracker peers) {
+  public BftProtocolManager(
+      final BftEventQueue bftEventQueue,
+      final PeerConnectionTracker peers,
+      final Capability supportedCapability,
+      final String subProtocolName) {
     this.bftEventQueue = bftEventQueue;
     this.peers = peers;
+    this.supportedCapability = supportedCapability;
+    this.subProtocolName = subProtocolName;
   }
 
   @Override
   public String getSupportedProtocol() {
-    return IbftSubProtocol.get().getName();
+    return subProtocolName;
   }
 
   @Override
   public List<Capability> getSupportedCapabilities() {
-    return Arrays.asList(IbftSubProtocol.IBFV1);
+    return Arrays.asList(supportedCapability);
   }
 
   @Override
