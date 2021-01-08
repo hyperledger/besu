@@ -36,7 +36,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
 
   @Rule public TemporaryFolder folder = new TemporaryFolder();
 
-  private static final String GENESIS_FILE = "/ibft/ibft.json";
+  private static final String GENESIS_FILE = "/qbft/ibft.json";
 
   private Account sender;
   private Account beneficiary;
