@@ -14,13 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
-import com.google.common.collect.Sets;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
@@ -30,6 +23,15 @@ import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
+
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.Sets;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 // Data items used to define how a round will operate
 public class RoundState {

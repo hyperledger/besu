@@ -73,7 +73,7 @@ public class IbftRoundFactory {
     final BftBlockCreator blockCreator =
         blockCreatorFactory.create(parentHeader, roundIdentifier.getRoundNumber());
 
-    //TODO(tmm): Why is this created everytime?!
+    // TODO(tmm): Why is this created everytime?!
     final QbftMessageTransmitter messageTransmitter =
         new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
 

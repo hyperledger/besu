@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
 import org.hyperledger.besu.ethereum.core.Block;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class PreparedRoundArtifacts {
 

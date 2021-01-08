@@ -20,13 +20,11 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 
 public class MessageValidator {
 
-  public MessageValidator() {
-  }
+  public MessageValidator() {}
 
   public boolean validateProposal(final Proposal msg) {
     return true;
   }
-
 
   public boolean validatePrepare(final Prepare msg) {
     return true;

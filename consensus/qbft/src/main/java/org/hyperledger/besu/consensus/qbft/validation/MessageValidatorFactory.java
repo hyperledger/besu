@@ -20,17 +20,18 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 public class MessageValidatorFactory {
 
   @SuppressWarnings("UnusedVariables")
-  public RoundChangeMessageValidator createRoundChangeMessageValidator(final long chainHeight,
-      final BlockHeader parentHeader) {
+  public RoundChangeMessageValidator createRoundChangeMessageValidator(
+      final long chainHeight, final BlockHeader parentHeader) {
     return new RoundChangeMessageValidator();
   }
 
-  public MessageValidator createMessageValidator(final ConsensusRoundIdentifier roundIdentifier,
-      final BlockHeader parentHeader) {
+  public MessageValidator createMessageValidator(
+      final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
     return new MessageValidator();
   }
 
-  public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(long chainHeight, BlockHeader parentHeader) {
+  public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
+      long chainHeight, BlockHeader parentHeader) {
     return new FutureRoundProposalMessageValidator();
   }
 }

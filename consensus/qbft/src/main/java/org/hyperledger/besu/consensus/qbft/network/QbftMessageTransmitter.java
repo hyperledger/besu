@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.network;
 
-import java.util.Optional;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
@@ -34,6 +31,11 @@ import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
+
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class QbftMessageTransmitter {
 
