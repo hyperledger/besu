@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+@SuppressWarnings("UnusedVariables")
 public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
@@ -35,7 +36,6 @@ public class MessageValidatorFactory {
     this.protocolContext = protocolContext;
   }
 
-  @SuppressWarnings("UnusedVariables")
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
     return new RoundChangeMessageValidator();
