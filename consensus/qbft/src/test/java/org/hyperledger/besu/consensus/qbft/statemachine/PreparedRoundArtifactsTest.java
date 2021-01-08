@@ -43,11 +43,10 @@ public class PreparedRoundArtifactsTest {
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
   private Block proposedBlock;
-  private BftExtraData proposedExtraData;
 
   @Before
   public void setup() {
-    proposedExtraData =
+    final BftExtraData proposedExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     headerTestFixture.extraData(proposedExtraData.encode());
