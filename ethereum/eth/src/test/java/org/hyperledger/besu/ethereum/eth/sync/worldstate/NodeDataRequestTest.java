@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Optional;
 
@@ -56,11 +57,11 @@ public class NodeDataRequestTest {
   }
 
   @Test
-  public void serializesStorageTrieNodeRequestsWithLocation() {
+  public void serializesStorageTrieNodeRequestsWithAddressAndLocation() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     StorageTrieNodeDataRequest request =
         NodeDataRequest.createStorageDataRequest(
-            gen.hash(), Optional.empty(), Optional.of(Bytes.of(3)));
+            gen.hash(), Optional.of(Hash.ZERO), Optional.of(Bytes.of(3)));
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
     assertRequestsEquals(sedeRequest, request);
     assertThat(sedeRequest).isInstanceOf(StorageTrieNodeDataRequest.class);
@@ -70,6 +71,16 @@ public class NodeDataRequestTest {
   public void serializesCodeRequests() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     CodeNodeDataRequest request = NodeDataRequest.createCodeRequest(gen.hash(), Optional.empty());
+    NodeDataRequest sedeRequest = serializeThenDeserialize(request);
+    assertRequestsEquals(sedeRequest, request);
+    assertThat(sedeRequest).isInstanceOf(CodeNodeDataRequest.class);
+  }
+
+  @Test
+  public void serializesCodeRequestsWithAddress() {
+    BlockDataGenerator gen = new BlockDataGenerator(0);
+    CodeNodeDataRequest request =
+        NodeDataRequest.createCodeRequest(gen.hash(), Optional.of(Hash.ZERO));
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
     assertRequestsEquals(sedeRequest, request);
     assertThat(sedeRequest).isInstanceOf(CodeNodeDataRequest.class);
