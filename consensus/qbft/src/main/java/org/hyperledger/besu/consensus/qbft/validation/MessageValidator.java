@@ -12,25 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.support;
+package org.hyperledger.besu.consensus.qbft.validation;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 
-public class NodeParams {
-  private final Address address;
-  private final NodeKey nodeKey;
+public class MessageValidator {
 
-  public NodeParams(final Address address, final NodeKey nodeKey) {
-    this.address = address;
-    this.nodeKey = nodeKey;
+  public MessageValidator() {}
+
+  public boolean validateProposal(final Proposal msg) {
+    return true;
   }
 
-  public Address getAddress() {
-    return address;
+  public boolean validatePrepare(final Prepare msg) {
+    return true;
   }
 
-  public NodeKey getNodeKey() {
-    return nodeKey;
+  public boolean validateCommit(final Commit msg) {
+    return true;
   }
 }
