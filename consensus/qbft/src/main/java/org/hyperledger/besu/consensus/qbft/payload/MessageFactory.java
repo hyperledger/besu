@@ -27,8 +27,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -44,12 +44,16 @@ public class MessageFactory {
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
-      final List<SignedData<RoundChangePayload>> roundChanges,
-      final List<SignedData<PreparePayload>> prepares) {
+      final Optional<RoundChangeMetadata> roundChangeMetadata) {
 
     final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
 
-    return new Proposal(createSignedMessage(payload), roundChanges, prepares);
+    return new Proposal(
+        createSignedMessage(payload),
+        roundChangeMetadata
+            .map(rc -> new ArrayList<>(rc.getRoundChangePayloads()))
+            .orElse(new ArrayList<>()),
+        roundChangeMetadata.map(rc -> new ArrayList<>(rc.getPrepares())).orElse(new ArrayList<>()));
   }
 
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {

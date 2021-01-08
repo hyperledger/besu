@@ -59,7 +59,7 @@ public class Proposal extends BftMessage<ProposalPayload> {
 
   public Optional<RoundChangeMetadata> getRoundChangeMetadata() {
     if (!roundChanges.isEmpty() && !prepares.isEmpty()) {
-      return Optional.of(new RoundChangeMetadata(Optional.of(getBlock()), roundChanges, prepares));
+      return Optional.of(new RoundChangeMetadata(roundChanges, prepares));
     } else {
       return Optional.empty();
     }

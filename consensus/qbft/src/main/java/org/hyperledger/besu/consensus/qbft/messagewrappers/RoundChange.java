@@ -57,12 +57,6 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     return getPayload().getPreparedRoundMetadata();
   }
 
-  public Optional<Integer> getPreparedRound() {
-    return getPayload()
-        .getPreparedRoundMetadata()
-        .map(preparedRoundMetadata -> preparedRoundMetadata.getPreparedRound());
-  }
-
   @Override
   public Bytes encode() {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
