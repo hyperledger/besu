@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.network;
+package org.hyperledger.besu.consensus.common.bft.network;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
