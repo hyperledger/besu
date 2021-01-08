@@ -18,7 +18,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 
 public class RoundChangeMessageValidator {
 
-  public boolean validateRoundChange(RoundChange msg) {
+  public boolean validateRoundChange(final RoundChange msg) {
     return true;
   }
 }

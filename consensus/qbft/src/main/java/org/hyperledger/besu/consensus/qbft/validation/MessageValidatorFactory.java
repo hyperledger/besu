@@ -31,7 +31,7 @@ public class MessageValidatorFactory {
   }
 
   public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
-      long chainHeight, BlockHeader parentHeader) {
+      final long chainHeight, final BlockHeader parentHeader) {
     return new FutureRoundProposalMessageValidator();
   }
 }

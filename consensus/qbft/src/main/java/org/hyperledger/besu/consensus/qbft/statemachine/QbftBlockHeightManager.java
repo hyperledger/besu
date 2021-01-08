@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -228,11 +229,11 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         startNewRound(targetRound.getRoundNumber());
       }
 
-      final RoundChangeArtifacts roundChangeArtifacts = RoundChangeArtifacts.create(result.get());
+      final RoundChangeMetadata roundChangeMetadata = RoundChangeMetadata.create(result.get());
 
       if (finalState.isLocalNodeProposerForRound(targetRound)) {
         currentRound.startRoundWith(
-            roundChangeArtifacts, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
+            roundChangeMetadata, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
       }
     }
   }

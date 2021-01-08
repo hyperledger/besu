@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft.network;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
@@ -25,13 +26,15 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
+import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -53,10 +56,11 @@ public class QbftMessageTransmitter {
   public void multicastProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
-      final Optional<RoundChangeMetadata> roundChangeMetadata) {
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final List<SignedData<PreparePayload>> prepares) {
     try {
       final Proposal data =
-          messageFactory.createProposal(roundIdentifier, block, roundChangeMetadata);
+          messageFactory.createProposal(roundIdentifier, block, roundChanges, prepares);
 
       final ProposalMessageData message = ProposalMessageData.create(data);
 

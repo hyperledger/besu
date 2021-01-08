@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
+import static java.util.Collections.emptyList;
+
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
@@ -22,13 +24,16 @@ import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
+import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -41,6 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Level;
@@ -92,15 +98,12 @@ public class QbftRound {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     LOG.trace(
         "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
-    updateStateWithProposalAndTransmit(block, Optional.empty());
+    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
   public void startRoundWith(
-      final RoundChangeArtifacts roundChangeArtifacts, final long headerTimestamp) {
-    final Optional<Block> bestBlockFromRoundChange = roundChangeArtifacts.getBlock();
-
-    final RoundChangeMetadata roundChangeCertificate =
-        roundChangeArtifacts.getRoundChangeCertificate();
+      final RoundChangeMetadata roundChangeMetadata, final long headerTimestamp) {
+    final Optional<Block> bestBlockFromRoundChange = roundChangeMetadata.getBlock();
     Block blockToPublish;
     if (!bestBlockFromRoundChange.isPresent()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
@@ -115,21 +118,26 @@ public class QbftRound {
               BftBlockHeaderFunctions.forCommittedSeal());
     }
 
-    updateStateWithProposalAndTransmit(blockToPublish, Optional.of(roundChangeCertificate));
+    updateStateWithProposalAndTransmit(
+        blockToPublish,
+        roundChangeMetadata.getRoundChangePayloads(),
+        roundChangeMetadata.getPrepares());
   }
 
   private void updateStateWithProposalAndTransmit(
-      final Block block, final Optional<RoundChangeMetadata> roundChangeCertificate) {
+      final Block block,
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final List<SignedData<PreparePayload>> prepares) {
     final Proposal proposal;
     try {
-      proposal = messageFactory.createProposal(getRoundIdentifier(), block, roundChangeCertificate);
+      proposal = messageFactory.createProposal(getRoundIdentifier(), block, roundChanges, prepares);
     } catch (final SecurityModuleException e) {
       LOG.warn("Failed to create a signed Proposal, waiting for next round.", e);
       return;
     }
 
     transmitter.multicastProposal(
-        proposal.getRoundIdentifier(), proposal.getBlock(), proposal.getRoundChangeMetadata());
+        proposal.getRoundIdentifier(), proposal.getBlock(), roundChanges, prepares);
     updateStateWithProposedBlock(proposal);
   }
 
