@@ -79,7 +79,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    System.out.println(Hash.wrap(nodeHash).toHexString());
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
