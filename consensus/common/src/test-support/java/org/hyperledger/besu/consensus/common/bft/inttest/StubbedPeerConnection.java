@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.support;
+package org.hyperledger.besu.consensus.common.bft.inttest;
 
 import static java.util.Collections.emptyList;
 import static org.mockito.Mockito.mock;

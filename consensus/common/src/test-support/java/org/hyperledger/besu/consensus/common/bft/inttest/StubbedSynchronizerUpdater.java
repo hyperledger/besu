@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.support;
+package org.hyperledger.besu.consensus.common.bft.inttest;
 
 import static java.util.function.Function.identity;
 
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 public class StubbedSynchronizerUpdater implements SynchronizerUpdater {
 
-  private final Map<PeerConnection, ValidatorPeer> validatorNodes = new HashMap<>();
+  private final Map<PeerConnection, DefaultValidatorPeer> validatorNodes = new HashMap<>();
 
   @Override
   public void updatePeerChainState(
@@ -34,8 +34,9 @@ public class StubbedSynchronizerUpdater implements SynchronizerUpdater {
     validatorNodes.get(peerConnection).updateEstimatedChainHeight(knownBlockNumber);
   }
 
-  public void addNetworkPeers(final Collection<ValidatorPeer> nodes) {
+  public void addNetworkPeers(final Collection<DefaultValidatorPeer> nodes) {
     validatorNodes.putAll(
-        nodes.stream().collect(Collectors.toMap(ValidatorPeer::getPeerConnection, identity())));
+        nodes.stream()
+            .collect(Collectors.toMap(DefaultValidatorPeer::getPeerConnection, identity())));
   }
 }

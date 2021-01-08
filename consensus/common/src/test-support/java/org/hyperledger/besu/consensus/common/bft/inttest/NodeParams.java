@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.support;
+package org.hyperledger.besu.consensus.common.bft.inttest;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
