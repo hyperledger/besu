@@ -231,7 +231,8 @@ public abstract class BesuControllerBuilder {
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
-    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
+    final WorldStateStorage worldStateStorage =
+        storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);

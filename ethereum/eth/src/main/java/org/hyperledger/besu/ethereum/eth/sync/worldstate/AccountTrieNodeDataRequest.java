@@ -40,7 +40,10 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStateTrieNode(getLocation().orElse(null), getHash());
+    if (getLocation().isPresent()) {
+      return worldStateStorage.getAccountStateTrieNode(getLocation().orElse(null), getHash());
+    }
+    return Optional.empty();
   }
 
   @Override
