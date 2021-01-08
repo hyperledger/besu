@@ -94,9 +94,14 @@ public class DefaultMutableWorldState implements MutableWorldState {
         worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(
+      final Hash accountHash, final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, rootHash, b -> b, b -> b);
+        (location, hash) ->
+            worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+        rootHash,
+        b -> b,
+        b -> b);
   }
 
   @Override
@@ -174,11 +179,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
     final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {
-      stateUpdater.putCode(code);
+      stateUpdater.putCode(null, code);
     }
     // Commit account storage tries
     for (final MerklePatriciaTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
-      updatedStorage.commit(stateUpdater::putAccountStorageTrieNode);
+      updatedStorage.commit(
+          (location, hash, value) ->
+              stateUpdater.putAccountStorageTrieNode(null, location, hash, value));
     }
     // Commit account updates
     accountStateTrie.commit(stateUpdater::putAccountStateTrieNode);
@@ -240,7 +247,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         storageTrie = updatedTrie;
       }
       if (storageTrie == null) {
-        storageTrie = newAccountStorageTrie(getStorageRoot());
+        storageTrie = newAccountStorageTrie(addressHash, getStorageRoot());
       }
       return storageTrie;
     }
@@ -407,7 +414,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
           // Apply any storage updates
           final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
               freshState
-                  ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
+                  ? wrapped.newAccountStorageTrie(
+                      Hash.hash(updated.getAddress()), Hash.EMPTY_TRIE_HASH)
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
           final TreeSet<Map.Entry<UInt256, UInt256>> entries =

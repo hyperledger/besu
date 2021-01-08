@@ -24,9 +24,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +37,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 public class BonsaiWorldStateArchive implements WorldStateArchive {
 
@@ -57,9 +54,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.blockchain = blockchain;
 
     worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
-    persistedState =
-            new BonsaiPersistedWorldState(
-                    this,worldStateStorage);
+    persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     layeredWorldStates = new HashMap<>();
   }
 
@@ -82,7 +77,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     if (layeredWorldStates.containsKey(blockHash)) {
       return Optional.of(layeredWorldStates.get(blockHash).getTrieLog());
     } else {
-      return trieLogStorage.get(blockHash.toArrayUnsafe()).map(TrieLogLayer::fromBytes);
+      return worldStateStorage.getStateTrieNode(blockHash).map(TrieLogLayer::fromBytes);
     }
   }
 
@@ -90,7 +85,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return layeredWorldStates.containsKey(blockHash)
         || persistedState.blockHash().equals(blockHash)
-            || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
+        || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override

@@ -48,16 +48,17 @@ public abstract class NodeDataRequest {
   }
 
   public static AccountTrieNodeDataRequest createAccountDataRequest(
-          final Hash hash, final Optional<Bytes> location) {
+      final Hash hash, final Optional<Bytes> location) {
     return new AccountTrieNodeDataRequest(hash, location);
   }
 
   public static StorageTrieNodeDataRequest createStorageDataRequest(
-          final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
-    return new StorageTrieNodeDataRequest(hash,accountHash, location);
+      final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
+    return new StorageTrieNodeDataRequest(hash, accountHash, location);
   }
 
-  public static CodeNodeDataRequest createCodeRequest(final Hash hash, final Optional<Hash> accountHash) {
+  public static CodeNodeDataRequest createCodeRequest(
+      final Hash hash, final Optional<Hash> accountHash) {
     return new CodeNodeDataRequest(hash, accountHash);
   }
 
@@ -82,13 +83,15 @@ public abstract class NodeDataRequest {
           deserialized = createAccountDataRequest(hash, location);
           break;
         case STORAGE_TRIE_NODE:
-          accountHash = Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
+          accountHash =
+              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
           location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
-          deserialized = createStorageDataRequest(hash,accountHash, location);
+          deserialized = createStorageDataRequest(hash, accountHash, location);
           break;
         case CODE:
-          accountHash = Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
-          deserialized = createCodeRequest(hash,accountHash);
+          accountHash =
+              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
+          deserialized = createCodeRequest(hash, accountHash);
           break;
         default:
           throw new IllegalArgumentException(

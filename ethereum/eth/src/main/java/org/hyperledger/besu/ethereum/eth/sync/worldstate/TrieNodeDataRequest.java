@@ -60,7 +60,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   }
 
   protected abstract NodeDataRequest createChildNodeDataRequest(
-          final Hash childHash, final Optional<Bytes> location);
+      final Hash childHash, final Optional<Bytes> location);
 
   protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value);
 }

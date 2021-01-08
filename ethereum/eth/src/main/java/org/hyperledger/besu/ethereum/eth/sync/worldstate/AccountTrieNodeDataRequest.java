@@ -29,8 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  AccountTrieNodeDataRequest(
-      final Hash hash, final Optional<Bytes> location) {
+  AccountTrieNodeDataRequest(final Hash hash, final Optional<Bytes> location) {
     super(RequestType.ACCOUNT_TRIE_NODE, hash, location);
   }
 
@@ -46,7 +45,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
-          final Hash childHash, final Optional<Bytes> location) {
+      final Hash childHash, final Optional<Bytes> location) {
     return createAccountDataRequest(childHash, location);
   }
 
@@ -56,14 +55,15 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      builder.add(createCodeRequest(getHash(), accountValue.getCodeHash()));
+      builder.add(createCodeRequest(accountValue.getCodeHash(), Optional.of(getHash())));
     }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
 
       final NodeDataRequest storageNode =
-          createStorageDataRequest(getHash(), accountValue.getStorageRoot(), getLocation());
+          createStorageDataRequest(
+              accountValue.getStorageRoot(), Optional.of(getHash()), getLocation());
       builder.add(storageNode);
     }
     return builder.build();
@@ -76,6 +76,4 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     out.writeBytes(getHash());
     out.endList();
   }
-
-
 }

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -29,25 +28,28 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   final Optional<Hash> accountHash;
 
-  StorageTrieNodeDataRequest(final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
+  StorageTrieNodeDataRequest(
+      final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
     super(RequestType.STORAGE_TRIE_NODE, hash, location);
     this.accountHash = accountHash;
   }
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putAccountStorageTrieNode(accountHash.orElse(null), getLocation().orElse(null), getHash(), getData());
+    updater.putAccountStorageTrieNode(
+        accountHash.orElse(null), getLocation().orElse(null), getHash(), getData());
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(accountHash.orElse(null), getLocation().orElse(null), getHash());
+    return worldStateStorage.getAccountStorageTrieNode(
+        accountHash.orElse(null), getLocation().orElse(null), getHash());
   }
 
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
-          final Hash childHash, final Optional<Bytes> location) {
-    return NodeDataRequest.createStorageDataRequest(childHash,accountHash.orElse(null), location);
+      final Hash childHash, final Optional<Bytes> location) {
+    return NodeDataRequest.createStorageDataRequest(childHash, accountHash, location);
   }
 
   @Override

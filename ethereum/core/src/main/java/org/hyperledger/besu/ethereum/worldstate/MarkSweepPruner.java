@@ -197,16 +197,14 @@ public class MarkSweepPruner {
     WorldStateStorage.Updater updater = worldStateStorage.updater();
     for (long blockNumber = markedBlockNumber - 1; blockNumber >= 0; blockNumber--) {
       final BlockHeader blockHeader = blockchain.getBlockHeader(blockNumber).get();
-      final Hash candidateStateRootHash =
-              blockHeader.getStateRoot();
-      final Hash blockHash =
-              blockHeader.getHash();
-      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash,blockHash)) {
+      final Hash candidateStateRootHash = blockHeader.getStateRoot();
+      final Hash blockHash = blockHeader.getHash();
+      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash, blockHash)) {
         break;
       }
 
       if (!isMarked(candidateStateRootHash)) {
-        updater.removeAccountStateTrieNode(candidateStateRootHash, blockHash);
+        updater.removeAccountStateTrieNode(null, candidateStateRootHash);
         prunedNodeCount++;
         if (prunedNodeCount % operationsPerTransaction == 0) {
           updater.commit();
@@ -214,6 +212,7 @@ public class MarkSweepPruner {
         }
       }
     }
+
     updater.commit();
     // Sweep non-state-root nodes
     prunedNodeCount += worldStateStorage.prune(this::isMarked);
@@ -250,7 +249,7 @@ public class MarkSweepPruner {
 
   private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode,
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
         rootHash,
         Function.identity(),
         Function.identity());

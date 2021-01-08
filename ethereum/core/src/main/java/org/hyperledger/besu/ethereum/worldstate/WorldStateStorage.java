@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collection;
@@ -26,11 +25,11 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public interface WorldStateStorage {
 
-  Optional<Bytes> getCode(Bytes32 codeHash, Address address);
+  Optional<Bytes> getCode(Bytes32 codeHash, Hash accountHash);
 
   Optional<Bytes> getAccountStateTrieNode(Bytes location, Bytes32 nodeHash);
 
-  Optional<Bytes> getAccountStorageTrieNode(Address address, Bytes location, Bytes32 nodeHash);
+  Optional<Bytes> getAccountStorageTrieNode(Hash accountHash, Bytes location, Bytes32 nodeHash);
 
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
 
@@ -51,19 +50,20 @@ public interface WorldStateStorage {
 
   interface Updater {
 
-    Updater putCode(Address address, Bytes32 nodeHash, Bytes code);
+    Updater putCode(Hash accountHash, Bytes32 nodeHash, Bytes code);
 
-    default Updater putCode(Address address, final Bytes code) {
+    default Updater putCode(final Hash accountHash, final Bytes code) {
       // Skip the hash calculation for empty code
       final Hash codeHash = code.size() == 0 ? Hash.EMPTY : Hash.hash(code);
-      return putCode(address, codeHash, code);
+      return putCode(accountHash, codeHash, code);
     }
 
     Updater putAccountStateTrieNode(Bytes location, Bytes32 nodeHash, Bytes node);
 
     Updater removeAccountStateTrieNode(Bytes location, Bytes32 nodeHash);
 
-    Updater putAccountStorageTrieNode(Address address, Bytes location, Bytes32 nodeHash, Bytes node);
+    Updater putAccountStorageTrieNode(
+        Hash accountHash, Bytes location, Bytes32 nodeHash, Bytes node);
 
     void commit();
 
