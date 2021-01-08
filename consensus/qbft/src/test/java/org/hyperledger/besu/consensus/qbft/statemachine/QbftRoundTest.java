@@ -29,7 +29,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -61,6 +60,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -81,25 +81,16 @@ public class QbftRoundTest {
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
   private ProtocolContext protocolContext;
 
-  @Mock
-  private MutableBlockchain blockChain;
-  @Mock
-  private WorldStateArchive worldStateArchive;
-  @Mock
-  private BlockImporter blockImporter;
-  @Mock
-  private QbftMessageTransmitter transmitter;
-  @Mock
-  private MinedBlockObserver minedBlockObserver;
-  @Mock
-  private BftBlockCreator blockCreator;
-  @Mock
-  private MessageValidator messageValidator;
-  @Mock
-  private RoundTimer roundTimer;
+  @Mock private MutableBlockchain blockChain;
+  @Mock private WorldStateArchive worldStateArchive;
+  @Mock private BlockImporter blockImporter;
+  @Mock private QbftMessageTransmitter transmitter;
+  @Mock private MinedBlockObserver minedBlockObserver;
+  @Mock private BftBlockCreator blockCreator;
+  @Mock private MessageValidator messageValidator;
+  @Mock private RoundTimer roundTimer;
 
-  @Captor
-  private ArgumentCaptor<Block> blockCaptor;
+  @Captor private ArgumentCaptor<Block> blockCaptor;
 
   private Block proposedBlock;
   private BftExtraData proposedExtraData;
@@ -332,13 +323,13 @@ public class QbftRoundTest {
             transmitter,
             roundTimer);
 
-    final SignedData<PreparePayload> preparedPayload = messageFactory
-        .createPrepare(priorRoundChange, proposedBlock.getHash())
-        .getSignedPayload();
+    final SignedData<PreparePayload> preparedPayload =
+        messageFactory.createPrepare(priorRoundChange, proposedBlock.getHash()).getSignedPayload();
 
-    final RoundChange roundChange = messageFactory.createRoundChange(
-        roundIdentifier,
-        Optional.of(new PreparedCertificate(proposedBlock, singletonList(preparedPayload))));
+    final RoundChange roundChange =
+        messageFactory.createRoundChange(
+            roundIdentifier,
+            Optional.of(new PreparedCertificate(proposedBlock, singletonList(preparedPayload))));
 
     final RoundChangeMetadata roundChangeMetadata =
         RoundChangeMetadata.create(singletonList(roundChange));
@@ -346,7 +337,10 @@ public class QbftRoundTest {
     round.startRoundWith(roundChangeMetadata, 15);
     verify(transmitter, times(1))
         .multicastProposal(
-            eq(roundIdentifier), blockCaptor.capture(), eq(singletonList(roundChange.getSignedPayload())), eq(singletonList(preparedPayload)));
+            eq(roundIdentifier),
+            blockCaptor.capture(),
+            eq(singletonList(roundChange.getSignedPayload())),
+            eq(singletonList(preparedPayload)));
 
     final BftExtraData proposedExtraData = BftExtraData.decode(blockCaptor.getValue().getHeader());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
@@ -373,10 +367,8 @@ public class QbftRoundTest {
             transmitter,
             roundTimer);
 
-    final RoundChange roundChange = messageFactory.createRoundChange(
-        roundIdentifier,
-        Optional.empty());
-
+    final RoundChange roundChange =
+        messageFactory.createRoundChange(roundIdentifier, Optional.empty());
 
     final RoundChangeMetadata roundChangeMetadata =
         RoundChangeMetadata.create(List.of(roundChange));
