@@ -83,20 +83,20 @@ public abstract class BaseBftController implements BftEventHandler {
   protected abstract void handleMessage(final Message message);
 
   protected <P extends BftMessage<?>> void consumeMessage(
-      final Message message, final P ibftMessage, final Consumer<P> handleMessage) {
-    LOG.trace("Received IBFT {} message", ibftMessage.getClass().getSimpleName());
+      final Message message, final P bftMessage, final Consumer<P> handleMessage) {
+    LOG.trace("Received BFT {} message", bftMessage.getClass().getSimpleName());
 
     // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
     // the currentHeightManager, but CAN be the same directly following import).
-    if (ibftMessage.getRoundIdentifier().getSequenceNumber()
+    if (bftMessage.getRoundIdentifier().getSequenceNumber()
         <= blockchain.getChainHeadBlockNumber()) {
       LOG.debug("Discarding a message which targets a height not above current chain height.");
       return;
     }
 
-    if (processMessage(ibftMessage, message)) {
+    if (processMessage(bftMessage, message)) {
       gossiper.send(message);
-      handleMessage.accept(ibftMessage);
+      handleMessage.accept(bftMessage);
     }
   }
 
@@ -188,7 +188,7 @@ public abstract class BaseBftController implements BftEventHandler {
           msgRoundIdentifier.getSequenceNumber() - 1L, rawMsg.getConnection());
     } else {
       LOG.trace(
-          "IBFT message discarded as it is from a previous block height messageType={} chainHeight={} eventHeight={}",
+          "BFT message discarded as it is from a previous block height messageType={} chainHeight={} eventHeight={}",
           msg.getMessageType(),
           getCurrentHeightManager().getChainHeight(),
           msgRoundIdentifier.getSequenceNumber());
