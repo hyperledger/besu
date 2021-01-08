@@ -17,10 +17,6 @@ package org.hyperledger.besu.consensus.qbft.test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.Collections;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
@@ -32,6 +28,12 @@ import org.hyperledger.besu.consensus.qbft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
 import org.hyperledger.besu.ethereum.core.Block;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Collections;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -67,7 +69,8 @@ public class LocalNodeIsProposerTest {
   public void setup() {
     expectedProposedBlock = context.createBlockForProposalFromChainHead(0, blockTimeStamp);
     expectedTxProposal =
-        localNodeMessageFactory.createProposal(roundId, expectedProposedBlock, Collections.emptyList(), Collections.emptyList());
+        localNodeMessageFactory.createProposal(
+            roundId, expectedProposedBlock, Collections.emptyList(), Collections.emptyList());
 
     expectedTxCommit =
         new Commit(
