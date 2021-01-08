@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-@SuppressWarnings("UnusedVariables")
+@SuppressWarnings("UnusedVariable")
 public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
