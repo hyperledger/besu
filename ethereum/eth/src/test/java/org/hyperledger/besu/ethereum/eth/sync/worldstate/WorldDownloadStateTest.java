@@ -30,6 +30,7 @@ import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -92,7 +93,8 @@ public class WorldDownloadStateTest {
 
   @Test
   public void shouldNotCompleteWhenThereArePendingTasks() {
-    pendingRequests.add(NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH));
+    pendingRequests.add(
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
 
     downloadState.checkCompletion(worldStateStorage, header);
 
@@ -108,8 +110,9 @@ public class WorldDownloadStateTest {
     downloadState.addOutstandingTask(outstandingTask1);
     downloadState.addOutstandingTask(outstandingTask2);
 
-    pendingRequests.add(NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH));
-    pendingRequests.add(NodeDataRequest.createAccountDataRequest(Hash.EMPTY));
+    pendingRequests.add(
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
+    pendingRequests.add(NodeDataRequest.createAccountDataRequest(Hash.EMPTY, Optional.empty()));
     downloadState.setWorldStateDownloadProcess(worldStateDownloadProcess);
 
     future.cancel(true);
@@ -183,8 +186,10 @@ public class WorldDownloadStateTest {
     downloadState.checkCompletion(worldStateStorage, header);
 
     downloadState.enqueueRequests(
-        Stream.of(NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH)));
-    downloadState.enqueueRequest(NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH));
+        Stream.of(
+            NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty())));
+    downloadState.enqueueRequest(
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
 
     assertThat(pendingRequests.isEmpty()).isTrue();
   }

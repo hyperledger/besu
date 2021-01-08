@@ -59,7 +59,6 @@ class CodeNodeDataRequest extends NodeDataRequest {
     out.writeByte(getRequestType().getValue());
     out.writeBytes(getHash());
     getAccountHash().ifPresent(out::writeBytes);
-    getLocation().ifPresent(out::writeBytes);
     out.endList();
   }
 }

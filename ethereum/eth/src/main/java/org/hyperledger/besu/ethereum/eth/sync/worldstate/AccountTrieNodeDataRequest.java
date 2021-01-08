@@ -74,6 +74,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     out.startList();
     out.writeByte(getRequestType().getValue());
     out.writeBytes(getHash());
+    getLocation().ifPresent(out::writeBytes);
     out.endList();
   }
 }

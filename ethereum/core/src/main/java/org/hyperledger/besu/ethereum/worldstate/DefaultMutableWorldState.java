@@ -94,11 +94,9 @@ public class DefaultMutableWorldState implements MutableWorldState {
         worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(
-      final Hash accountHash, final Bytes32 rootHash) {
+  private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) ->
-            worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
         rootHash,
         b -> b,
         b -> b);
@@ -247,7 +245,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         storageTrie = updatedTrie;
       }
       if (storageTrie == null) {
-        storageTrie = newAccountStorageTrie(addressHash, getStorageRoot());
+        storageTrie = newAccountStorageTrie(getStorageRoot());
       }
       return storageTrie;
     }
@@ -414,8 +412,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
           // Apply any storage updates
           final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
               freshState
-                  ? wrapped.newAccountStorageTrie(
-                      Hash.hash(updated.getAddress()), Hash.EMPTY_TRIE_HASH)
+                  ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
           final TreeSet<Map.Entry<UInt256, UInt256>> entries =

@@ -198,8 +198,7 @@ public class MarkSweepPruner {
     for (long blockNumber = markedBlockNumber - 1; blockNumber >= 0; blockNumber--) {
       final BlockHeader blockHeader = blockchain.getBlockHeader(blockNumber).get();
       final Hash candidateStateRootHash = blockHeader.getStateRoot();
-      final Hash blockHash = blockHeader.getHash();
-      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash, blockHash)) {
+      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash, null)) {
         break;
       }
 
