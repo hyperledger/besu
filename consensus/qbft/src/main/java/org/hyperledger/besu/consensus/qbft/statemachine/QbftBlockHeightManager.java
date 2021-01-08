@@ -56,7 +56,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final IbftRoundFactory roundFactory;
+  private final QbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
   private final BlockHeader parentHeader;
   private final BlockTimer blockTimer;
@@ -76,12 +76,12 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final BlockHeader parentHeader,
       final BftFinalState finalState,
       final RoundChangeManager roundChangeManager,
-      final IbftRoundFactory ibftRoundFactory,
+      final QbftRoundFactory qbftRoundFactory,
       final Clock clock,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory) {
     this.parentHeader = parentHeader;
-    this.roundFactory = ibftRoundFactory;
+    this.roundFactory = qbftRoundFactory;
     this.blockTimer = finalState.getBlockTimer();
     this.transmitter =
         new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
@@ -110,7 +110,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (roundIdentifier.equals(currentRound.getRoundIdentifier())) {
-      currentRound.createAndSendProposalMessage(clock.millis() / 1000);
+      currentRound.createAndSendProposalMessage(clock.millis() / 1000L);
     } else {
       LOG.trace(
           "Block timer expired for a round ({}) other than current ({})",
@@ -191,19 +191,19 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   }
 
   private <P extends Payload, M extends BftMessage<P>> void actionOrBufferMessage(
-      final M ibftMessage,
+      final M qbftMessage,
       final Consumer<M> inRoundHandler,
       final BiConsumer<RoundState, M> buffer) {
     final MessageAge messageAge =
-        determineAgeOfPayload(ibftMessage.getRoundIdentifier().getRoundNumber());
+        determineAgeOfPayload(qbftMessage.getRoundIdentifier().getRoundNumber());
     if (messageAge == MessageAge.CURRENT_ROUND) {
-      inRoundHandler.accept(ibftMessage);
+      inRoundHandler.accept(qbftMessage);
     } else if (messageAge == MessageAge.FUTURE_ROUND) {
-      final ConsensusRoundIdentifier msgRoundId = ibftMessage.getRoundIdentifier();
+      final ConsensusRoundIdentifier msgRoundId = qbftMessage.getRoundIdentifier();
       final RoundState roundstate =
           futureRoundStateBuffer.computeIfAbsent(
               msgRoundId.getRoundNumber(), k -> roundStateCreator.apply(msgRoundId));
-      buffer.accept(roundstate, ibftMessage);
+      buffer.accept(roundstate, qbftMessage);
     }
   }
 

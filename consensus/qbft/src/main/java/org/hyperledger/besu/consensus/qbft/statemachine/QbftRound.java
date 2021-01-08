@@ -105,7 +105,7 @@ public class QbftRound {
       final RoundChangeMetadata roundChangeMetadata, final long headerTimestamp) {
     final Optional<Block> bestBlockFromRoundChange = roundChangeMetadata.getBlock();
     Block blockToPublish;
-    if (!bestBlockFromRoundChange.isPresent()) {
+    if (bestBlockFromRoundChange.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
       blockToPublish = blockCreator.createBlock(headerTimestamp);
     } else {

@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
-public class IbftRoundFactory {
+public class QbftRoundFactory {
 
   private final BftFinalState finalState;
   private final BftBlockCreatorFactory blockCreatorFactory;
@@ -37,7 +37,7 @@ public class IbftRoundFactory {
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
 
-  public IbftRoundFactory(
+  public QbftRoundFactory(
       final BftFinalState finalState,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,

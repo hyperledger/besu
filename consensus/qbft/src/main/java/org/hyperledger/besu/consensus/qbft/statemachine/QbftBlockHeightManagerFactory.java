@@ -22,14 +22,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class QbftBlockHeightManagerFactory {
 
-  private final IbftRoundFactory roundFactory;
+  private final QbftRoundFactory roundFactory;
   private final BftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
 
   public QbftBlockHeightManagerFactory(
       final BftFinalState finalState,
-      final IbftRoundFactory roundFactory,
+      final QbftRoundFactory roundFactory,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory) {
     this.roundFactory = roundFactory;

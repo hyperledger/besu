@@ -91,7 +91,7 @@ public class QbftController extends BaseBftController {
       default:
         throw new IllegalArgumentException(
             String.format(
-                "Received message with messageCode=%d does not conform to any recognised IBFT message structure",
+                "Received message with messageCode=%d does not conform to any recognised QBFT message structure",
                 message.getData().getCode()));
     }
   }
