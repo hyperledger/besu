@@ -57,6 +57,7 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
 
   testSupportImplementation project( path: ':crypto', configuration: 'testSupportArtifacts')
+  testSupportImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testSupportImplementation 'org.mockito:mockito-core'
   testSupportImplementation 'org.assertj:assertj-core'
 }

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.statemachine;
+package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import static org.assertj.core.util.Lists.emptyList;
 import static org.assertj.core.util.Lists.newArrayList;
@@ -35,16 +35,16 @@ import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.ibft.IbftGossip;
-import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
-import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
-import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
-import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
-import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
+import org.hyperledger.besu.consensus.qbft.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
+import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
+import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
+import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
+import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -62,13 +62,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class IbftControllerTest {
+public class QbftControllerTest {
   @Mock private Blockchain blockChain;
   @Mock private BftFinalState bftFinalState;
-  @Mock private IbftBlockHeightManagerFactory blockHeightManagerFactory;
+  @Mock private QbftBlockHeightManagerFactory blockHeightManagerFactory;
   @Mock private BlockHeader chainHeadBlockHeader;
   @Mock private BlockHeader nextBlock;
-  @Mock private BaseIbftBlockHeightManager blockHeightManager;
+  @Mock private BaseQbftBlockHeightManager blockHeightManager;
 
   @Mock private Proposal proposal;
   private Message proposalMessage;
@@ -92,9 +92,9 @@ public class IbftControllerTest {
   private final ConsensusRoundIdentifier futureRoundIdentifier = new ConsensusRoundIdentifier(5, 0);
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(4, 0);
   private final ConsensusRoundIdentifier pastRoundIdentifier = new ConsensusRoundIdentifier(3, 0);
-  @Mock private IbftGossip ibftGossip;
+  @Mock private QbftGossip ibftGossip;
   @Mock private FutureMessageBuffer futureMessageBuffer;
-  private IbftController ibftController;
+  private QbftController qbftController;
 
   @Before
   public void setup() {
@@ -116,8 +116,8 @@ public class IbftControllerTest {
   }
 
   private void constructIbftController() {
-    ibftController =
-        new IbftController(
+    qbftController =
+        new QbftController(
             blockChain,
             bftFinalState,
             blockHeightManagerFactory,
@@ -131,7 +131,7 @@ public class IbftControllerTest {
   public void createsNewBlockHeightManagerWhenStarted() {
     constructIbftController();
     verify(blockHeightManagerFactory, never()).create(chainHeadBlockHeader);
-    ibftController.start();
+    qbftController.start();
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManagerFactory).create(chainHeadBlockHeader);
@@ -151,7 +151,7 @@ public class IbftControllerTest {
     when(futureMessageBuffer.retrieveMessagesForHeight(5L)).thenReturn(height2Msgs);
 
     constructIbftController();
-    ibftController.start();
+    qbftController.start();
 
     verify(futureMessageBuffer).retrieveMessagesForHeight(5L);
     verify(futureMessageBuffer, never()).retrieveMessagesForHeight(6L);
@@ -180,9 +180,9 @@ public class IbftControllerTest {
     when(blockHeightManager.getChainHeight()).thenReturn(5L);
 
     constructIbftController();
-    ibftController.start();
+    qbftController.start();
     final NewChainHead newChainHead = new NewChainHead(nextBlock);
-    ibftController.handleNewBlockEvent(newChainHead);
+    qbftController.handleNewBlockEvent(newChainHead);
 
     verify(blockHeightManagerFactory).create(nextBlock);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
@@ -200,17 +200,17 @@ public class IbftControllerTest {
   @Test
   public void newBlockForCurrentOrPreviousHeightTriggersNoChange() {
     constructIbftController();
-    ibftController.start();
+    qbftController.start();
     long chainHeadHeight = chainHeadBlockHeader.getNumber();
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight);
     when(nextBlock.getHash()).thenReturn(Hash.ZERO);
     final NewChainHead sameHeightBlock = new NewChainHead(nextBlock);
-    ibftController.handleNewBlockEvent(sameHeightBlock);
+    qbftController.handleNewBlockEvent(sameHeightBlock);
     verify(blockHeightManagerFactory, times(1)).create(any()); // initial creation
 
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight - 1);
     final NewChainHead priorBlock = new NewChainHead(nextBlock);
-    ibftController.handleNewBlockEvent(priorBlock);
+    qbftController.handleNewBlockEvent(priorBlock);
     verify(blockHeightManagerFactory, times(1)).create(any());
   }
 
@@ -219,8 +219,8 @@ public class IbftControllerTest {
     final RoundExpiry roundExpiry = new RoundExpiry(roundIdentifier);
 
     constructIbftController();
-    ibftController.start();
-    ibftController.handleRoundExpiry(roundExpiry);
+    qbftController.start();
+    qbftController.handleRoundExpiry(roundExpiry);
 
     verify(blockHeightManager).roundExpired(roundExpiry);
   }
@@ -230,8 +230,8 @@ public class IbftControllerTest {
     final BlockTimerExpiry blockTimerExpiry = new BlockTimerExpiry(roundIdentifier);
 
     constructIbftController();
-    ibftController.start();
-    ibftController.handleBlockTimerExpiry(blockTimerExpiry);
+    qbftController.start();
+    qbftController.handleBlockTimerExpiry(blockTimerExpiry);
 
     verify(blockHeightManager).handleBlockTimerExpiry(roundIdentifier);
   }
@@ -240,8 +240,8 @@ public class IbftControllerTest {
   public void proposalForCurrentHeightIsPassedToBlockHeightManager() {
     setupProposal(roundIdentifier, validator);
     constructIbftController();
-    ibftController.start();
-    ibftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
+    qbftController.start();
+    qbftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleProposalPayload(proposal);
@@ -254,8 +254,8 @@ public class IbftControllerTest {
   public void prepareForCurrentHeightIsPassedToBlockHeightManager() {
     setupPrepare(roundIdentifier, validator);
     constructIbftController();
-    ibftController.start();
-    ibftController.handleMessageEvent(new BftReceivedMessageEvent(prepareMessage));
+    qbftController.start();
+    qbftController.handleMessageEvent(new BftReceivedMessageEvent(prepareMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handlePreparePayload(prepare);
@@ -268,8 +268,8 @@ public class IbftControllerTest {
   public void commitForCurrentHeightIsPassedToBlockHeightManager() {
     setupCommit(roundIdentifier, validator);
     constructIbftController();
-    ibftController.start();
-    ibftController.handleMessageEvent(new BftReceivedMessageEvent(commitMessage));
+    qbftController.start();
+    qbftController.handleMessageEvent(new BftReceivedMessageEvent(commitMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleCommitPayload(commit);
@@ -282,8 +282,8 @@ public class IbftControllerTest {
   public void roundChangeForCurrentHeightIsPassedToBlockHeightManager() {
     setupRoundChange(roundIdentifier, validator);
     constructIbftController();
-    ibftController.start();
-    ibftController.handleMessageEvent(new BftReceivedMessageEvent(roundChangeMessage));
+    qbftController.start();
+    qbftController.handleMessageEvent(new BftReceivedMessageEvent(roundChangeMessage));
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager).handleRoundChangePayload(roundChange);
@@ -320,8 +320,8 @@ public class IbftControllerTest {
   public void roundExpiryForPastHeightIsDiscarded() {
     final RoundExpiry roundExpiry = new RoundExpiry(pastRoundIdentifier);
     constructIbftController();
-    ibftController.start();
-    ibftController.handleRoundExpiry(roundExpiry);
+    qbftController.start();
+    qbftController.handleRoundExpiry(roundExpiry);
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, never()).roundExpired(any());
   }
@@ -330,8 +330,8 @@ public class IbftControllerTest {
   public void blockTimerForPastHeightIsDiscarded() {
     final BlockTimerExpiry blockTimerExpiry = new BlockTimerExpiry(pastRoundIdentifier);
     constructIbftController();
-    ibftController.start();
-    ibftController.handleBlockTimerExpiry(blockTimerExpiry);
+    qbftController.start();
+    qbftController.handleBlockTimerExpiry(blockTimerExpiry);
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, never()).handleBlockTimerExpiry(any());
   }
@@ -397,8 +397,8 @@ public class IbftControllerTest {
     when(messageTracker.hasSeenMessage(proposalMessageData)).thenReturn(false);
     setupProposal(roundIdentifier, validator);
     constructIbftController();
-    ibftController.start();
-    ibftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
+    qbftController.start();
+    qbftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
 
     verify(messageTracker).addSeenMessage(proposalMessageData);
   }
@@ -418,16 +418,16 @@ public class IbftControllerTest {
     when(blockHeightManager.getChainHeight()).thenReturn(blockHeightManagerTargettingBlock);
 
     constructIbftController();
-    ibftController.start();
-    ibftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
+    qbftController.start();
+    qbftController.handleMessageEvent(new BftReceivedMessageEvent(proposalMessage));
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, never()).handleProposalPayload(any());
   }
 
   private void verifyNotHandledAndNoFutureMsgs(final BftReceivedMessageEvent msg) {
     constructIbftController();
-    ibftController.start();
-    ibftController.handleMessageEvent(msg);
+    qbftController.start();
+    qbftController.handleMessageEvent(msg);
 
     verify(futureMessageBuffer, never()).addMessage(anyLong(), any());
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
@@ -436,8 +436,8 @@ public class IbftControllerTest {
 
   private void verifyHasFutureMessages(final long msgHeight, final Message message) {
     constructIbftController();
-    ibftController.start();
-    ibftController.handleMessageEvent(new BftReceivedMessageEvent(message));
+    qbftController.start();
+    qbftController.handleMessageEvent(new BftReceivedMessageEvent(message));
 
     verify(futureMessageBuffer).addMessage(msgHeight, message);
     verify(blockHeightManager, atLeastOnce()).getChainHeight();
@@ -448,7 +448,7 @@ public class IbftControllerTest {
       final ConsensusRoundIdentifier roundIdentifier, final Address validator) {
     when(proposal.getAuthor()).thenReturn(validator);
     when(proposal.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(proposalMessageData.getCode()).thenReturn(IbftV2.PROPOSAL);
+    when(proposalMessageData.getCode()).thenReturn(QbftV1.PROPOSAL);
     when(proposalMessageData.decode()).thenReturn(proposal);
     proposalMessage = new DefaultMessage(null, proposalMessageData);
   }
@@ -457,7 +457,7 @@ public class IbftControllerTest {
       final ConsensusRoundIdentifier roundIdentifier, final Address validator) {
     when(prepare.getAuthor()).thenReturn(validator);
     when(prepare.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(prepareMessageData.getCode()).thenReturn(IbftV2.PREPARE);
+    when(prepareMessageData.getCode()).thenReturn(QbftV1.PREPARE);
     when(prepareMessageData.decode()).thenReturn(prepare);
     prepareMessage = new DefaultMessage(null, prepareMessageData);
   }
@@ -466,7 +466,7 @@ public class IbftControllerTest {
       final ConsensusRoundIdentifier roundIdentifier, final Address validator) {
     when(commit.getAuthor()).thenReturn(validator);
     when(commit.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(commitMessageData.getCode()).thenReturn(IbftV2.COMMIT);
+    when(commitMessageData.getCode()).thenReturn(QbftV1.COMMIT);
     when(commitMessageData.decode()).thenReturn(commit);
     commitMessage = new DefaultMessage(null, commitMessageData);
   }
@@ -475,7 +475,7 @@ public class IbftControllerTest {
       final ConsensusRoundIdentifier roundIdentifier, final Address validator) {
     when(roundChange.getAuthor()).thenReturn(validator);
     when(roundChange.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(roundChangeMessageData.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
+    when(roundChangeMessageData.getCode()).thenReturn(QbftV1.ROUND_CHANGE);
     when(roundChangeMessageData.decode()).thenReturn(roundChange);
     roundChangeMessage = new DefaultMessage(null, roundChangeMessageData);
   }

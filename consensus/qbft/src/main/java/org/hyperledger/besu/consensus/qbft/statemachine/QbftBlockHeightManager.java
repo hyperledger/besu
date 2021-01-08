@@ -12,11 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.statemachine;
-
-import static org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManager.MessageAge.CURRENT_ROUND;
-import static org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManager.MessageAge.FUTURE_ROUND;
-import static org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManager.MessageAge.PRIOR_ROUND;
+package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -24,14 +20,16 @@ import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
-import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
-import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.validation.FutureRoundProposalMessageValidator;
-import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
+import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
+import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
+import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
+import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
@@ -54,15 +52,15 @@ import org.apache.logging.log4j.Logger;
  * and sends a Proposal message. If the round times out prior to importing a block, this class is
  * responsible for creating a RoundChange message and transmitting it.
  */
-public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
+public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final IbftRoundFactory roundFactory;
+  private final QbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
   private final BlockHeader parentHeader;
   private final BlockTimer blockTimer;
-  private final IbftMessageTransmitter transmitter;
+  private final QbftMessageTransmitter transmitter;
   private final MessageFactory messageFactory;
   private final Map<Integer, RoundState> futureRoundStateBuffer = Maps.newHashMap();
   private final FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
@@ -70,23 +68,23 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
   private final BftFinalState finalState;
 
-  private Optional<PreparedRoundArtifacts> latestPreparedRoundArtifacts = Optional.empty();
+  private Optional<PreparedCertificate> latestPreparedRoundArtifacts = Optional.empty();
 
-  private IbftRound currentRound;
+  private QbftRound currentRound;
 
-  public IbftBlockHeightManager(
+  public QbftBlockHeightManager(
       final BlockHeader parentHeader,
       final BftFinalState finalState,
       final RoundChangeManager roundChangeManager,
-      final IbftRoundFactory ibftRoundFactory,
+      final QbftRoundFactory qbftRoundFactory,
       final Clock clock,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory) {
     this.parentHeader = parentHeader;
-    this.roundFactory = ibftRoundFactory;
+    this.roundFactory = qbftRoundFactory;
     this.blockTimer = finalState.getBlockTimer();
     this.transmitter =
-        new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+        new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
     this.messageFactory = messageFactory;
     this.clock = clock;
     this.roundChangeManager = roundChangeManager;
@@ -112,7 +110,7 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (roundIdentifier.equals(currentRound.getRoundIdentifier())) {
-      currentRound.createAndSendProposalMessage(clock.millis() / 1000);
+      currentRound.createAndSendProposalMessage(clock.millis() / 1000L);
     } else {
       LOG.trace(
           "Block timer expired for a round ({}) other than current ({})",
@@ -134,11 +132,11 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
     LOG.debug(
         "Round has expired, creating PreparedCertificate and notifying peers. round={}",
         currentRound.getRoundIdentifier());
-    final Optional<PreparedRoundArtifacts> preparedRoundArtifacts =
-        currentRound.constructPreparedRoundArtifacts();
+    final Optional<PreparedCertificate> preparedCertificate =
+        currentRound.constructPreparedRoundCertificate();
 
-    if (preparedRoundArtifacts.isPresent()) {
-      latestPreparedRoundArtifacts = preparedRoundArtifacts;
+    if (preparedCertificate.isPresent()) {
+      latestPreparedRoundArtifacts = preparedCertificate;
     }
 
     startNewRound(currentRound.getRoundIdentifier().getRoundNumber() + 1);
@@ -165,10 +163,10 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
     final MessageAge messageAge =
         determineAgeOfPayload(proposal.getRoundIdentifier().getRoundNumber());
 
-    if (messageAge == PRIOR_ROUND) {
+    if (messageAge == MessageAge.PRIOR_ROUND) {
       LOG.trace("Received Proposal Payload for a prior round={}", proposal.getRoundIdentifier());
     } else {
-      if (messageAge == FUTURE_ROUND) {
+      if (messageAge == MessageAge.FUTURE_ROUND) {
         if (!futureRoundProposalMessageValidator.validateProposalMessage(proposal)) {
           LOG.info("Received future Proposal which is illegal, no round change triggered.");
           return;
@@ -193,19 +191,19 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
   }
 
   private <P extends Payload, M extends BftMessage<P>> void actionOrBufferMessage(
-      final M ibftMessage,
+      final M qbftMessage,
       final Consumer<M> inRoundHandler,
       final BiConsumer<RoundState, M> buffer) {
     final MessageAge messageAge =
-        determineAgeOfPayload(ibftMessage.getRoundIdentifier().getRoundNumber());
-    if (messageAge == CURRENT_ROUND) {
-      inRoundHandler.accept(ibftMessage);
-    } else if (messageAge == FUTURE_ROUND) {
-      final ConsensusRoundIdentifier msgRoundId = ibftMessage.getRoundIdentifier();
+        determineAgeOfPayload(qbftMessage.getRoundIdentifier().getRoundNumber());
+    if (messageAge == MessageAge.CURRENT_ROUND) {
+      inRoundHandler.accept(qbftMessage);
+    } else if (messageAge == MessageAge.FUTURE_ROUND) {
+      final ConsensusRoundIdentifier msgRoundId = qbftMessage.getRoundIdentifier();
       final RoundState roundstate =
           futureRoundStateBuffer.computeIfAbsent(
               msgRoundId.getRoundNumber(), k -> roundStateCreator.apply(msgRoundId));
-      buffer.accept(roundstate, ibftMessage);
+      buffer.accept(roundstate, qbftMessage);
     }
   }
 
@@ -216,7 +214,7 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
 
     final MessageAge messageAge =
         determineAgeOfPayload(message.getRoundIdentifier().getRoundNumber());
-    if (messageAge == PRIOR_ROUND) {
+    if (messageAge == MessageAge.PRIOR_ROUND) {
       LOG.trace("Received RoundChange Payload for a prior round. targetRound={}", targetRound);
       return;
     }
@@ -227,15 +225,15 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
       LOG.debug(
           "Received sufficient RoundChange messages to change round to targetRound={}",
           targetRound);
-      if (messageAge == FUTURE_ROUND) {
+      if (messageAge == MessageAge.FUTURE_ROUND) {
         startNewRound(targetRound.getRoundNumber());
       }
 
-      final RoundChangeArtifacts roundChangeArtifacts = RoundChangeArtifacts.create(result.get());
+      final RoundChangeMetadata roundChangeMetadata = RoundChangeMetadata.create(result.get());
 
       if (finalState.isLocalNodeProposerForRound(targetRound)) {
         currentRound.startRoundWith(
-            roundChangeArtifacts, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
+            roundChangeMetadata, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
       }
     }
   }
@@ -267,11 +265,11 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
   private MessageAge determineAgeOfPayload(final int messageRoundNumber) {
     final int currentRoundNumber = currentRound.getRoundIdentifier().getRoundNumber();
     if (messageRoundNumber > currentRoundNumber) {
-      return FUTURE_ROUND;
+      return MessageAge.FUTURE_ROUND;
     } else if (messageRoundNumber == currentRoundNumber) {
-      return CURRENT_ROUND;
+      return MessageAge.CURRENT_ROUND;
     }
-    return PRIOR_ROUND;
+    return MessageAge.PRIOR_ROUND;
   }
 
   public enum MessageAge {

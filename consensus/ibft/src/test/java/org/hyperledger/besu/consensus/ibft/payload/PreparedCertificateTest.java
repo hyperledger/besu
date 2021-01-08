@@ -18,8 +18,8 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -82,7 +82,8 @@ public class PreparedCertificateTest {
 
   private SignedData<ProposalPayload> signedProposal() {
     final Block block =
-        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
+        ProposedBlockHelpers.createProposalBlock(
+            singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
     final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     return PayloadDeserializers.from(proposalPayload, signature);
