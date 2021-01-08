@@ -50,6 +50,7 @@ public class BlockHeader extends SealableBlockHeader
 
   @VisibleForTesting
   @JsonCreator
+  // todo see if this works without the @JsonProperty's
   public BlockHeader(
       @JsonProperty("parentHash") final Hash parentHash,
       @JsonProperty("ommersHash") final Hash ommersHash,

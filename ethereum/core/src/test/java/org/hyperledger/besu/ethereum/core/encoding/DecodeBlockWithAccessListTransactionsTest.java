@@ -41,8 +41,8 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class DecodeBlockWithAccessListTransactionsTest {
 
-  private RLPInput rlpInput;
-  private Block expectedBlock;
+  private final RLPInput rlpInput;
+  private final Block expectedBlock;
 
   public DecodeBlockWithAccessListTransactionsTest(
       final RLPInput rlpInput, final Block expectedBlock) {
@@ -50,7 +50,7 @@ public class DecodeBlockWithAccessListTransactionsTest {
     this.expectedBlock = expectedBlock;
   }
 
-  @Parameterized.Parameters(name = "{0}")
+  @Parameterized.Parameters(name = "acl_block_{0}.json")
   public static Iterable<Object[]> data() {
     final ObjectMapper objectMapper = new ObjectMapper();
     return IntStream.rangeClosed(0, 9)
@@ -70,7 +70,7 @@ public class DecodeBlockWithAccessListTransactionsTest {
                 final JsonNode jsonNode = rootNode.get("json");
                 return new Object[] {
                   new BytesValueRLPInput(
-                      Bytes.fromHexString("0x" + jsonNode.get("rlp").textValue()), false),
+                      Bytes.fromHexString("0x" + rootNode.get("rlp").textValue()), false),
                   new Block(
                       objectMapper.treeToValue(jsonNode.get("Header"), BlockHeader.class),
                       new BlockBody(
