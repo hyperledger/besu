@@ -15,11 +15,27 @@
 package org.hyperledger.besu.consensus.qbft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+@SuppressWarnings("UnusedVariable")
 public class MessageValidatorFactory {
 
-  @SuppressWarnings("UnusedVariables")
+  private final ProposerSelector proposerSelector;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
+
+  public MessageValidatorFactory(
+      final ProposerSelector proposerSelector,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext) {
+    this.proposerSelector = proposerSelector;
+    this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
+  }
+
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
     return new RoundChangeMessageValidator();
