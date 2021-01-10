@@ -240,8 +240,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         stateUpdater
             .getTrieBranchStorageTransaction()
             .put(WORLD_BLOCK_HASH_KEY, worldStateBlockHash.toArrayUnsafe());
+        LOG.info("BEfore Writing Trie Log for {} {}", blockHeader.getNumber(), worldStateBlockHash);
+        LOG.info("BEfore Writing Trie Log  {} {}", originalBlockHash, blockHeader.getParentHash());
+
         if (originalBlockHash.equals(blockHeader.getParentHash())) {
-          LOG.debug("Writing Trie Log for {}", worldStateBlockHash);
+          LOG.info("Writing Trie Log for {} {}", blockHeader.getNumber(), worldStateBlockHash);
           final TrieLogLayer trieLog = updater.generateTrieLog(worldStateBlockHash);
           trieLog.freeze();
           archive.addLayeredWorldState(

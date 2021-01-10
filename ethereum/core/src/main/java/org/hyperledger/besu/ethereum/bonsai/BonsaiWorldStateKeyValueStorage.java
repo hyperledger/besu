@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -127,6 +128,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
+    LogManager.getLogger().info("isWorldStateAvailable {}", blockHash);
+
     return trieLogStorage.containsKey(blockHash.toArrayUnsafe());
   }
 
