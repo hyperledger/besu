@@ -216,6 +216,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         // Don't save empty nodes
         return this;
       }
+      LogManager.getLogger().info("putAccountStateTrieNode {}", location.toHexString());
       trieBranchStorageTransaction.put(location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
