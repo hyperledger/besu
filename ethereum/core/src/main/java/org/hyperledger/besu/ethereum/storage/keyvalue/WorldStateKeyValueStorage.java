@@ -152,6 +152,11 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
+    public WorldStateStorage.Updater saveWorldState(Bytes blockHash, Bytes32 nodeHash, Bytes node) {
+      return putAccountStateTrieNode(null, nodeHash, node);
+    }
+
+    @Override
     public Updater putAccountStateTrieNode(
         final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {

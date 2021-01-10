@@ -129,8 +129,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     LogManager.getLogger().info("isWorldStateAvailable {}", blockHash);
-
-    return trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+    return trieBranchStorage
+        .get(WORLD_BLOCK_HASH_KEY)
+        .map(Bytes::wrap)
+        .map(Hash::hash)
+        .filter(hash -> hash.equals(blockHash))
+        .isPresent();
   }
 
   @Override
@@ -206,6 +210,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         return this;
       }
       accountStorageTransaction.put(address.toArrayUnsafe(), accountValue.toArrayUnsafe());
+      return this;
+    }
+
+    @Override
+    public WorldStateStorage.Updater saveWorldState(
+        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
+      trieBranchStorageTransaction.put(WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
       return this;
     }
 

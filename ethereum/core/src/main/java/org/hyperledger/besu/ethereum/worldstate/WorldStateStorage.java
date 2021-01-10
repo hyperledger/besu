@@ -58,6 +58,8 @@ public interface WorldStateStorage {
       return putCode(accountHash, codeHash, code);
     }
 
+    Updater saveWorldState(Bytes blockHash, Bytes32 nodeHash, Bytes node);
+
     Updater putAccountStateTrieNode(Bytes location, Bytes32 nodeHash, Bytes node);
 
     Updater removeAccountStateTrieNode(Bytes location, Bytes32 nodeHash);

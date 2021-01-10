@@ -191,7 +191,7 @@ class WorldDownloadState {
         return false;
       }
       final Updater updater = worldStateStorage.updater();
-      updater.putAccountStateTrieNode(null, header.getStateRoot(), rootNodeData);
+      updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
       updater.commit();
       internalFuture.complete(null);
       // THere are no more inputs to process so make sure we wake up any threads waiting to dequeue
