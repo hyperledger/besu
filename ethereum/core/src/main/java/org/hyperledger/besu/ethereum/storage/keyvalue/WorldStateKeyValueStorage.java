@@ -152,7 +152,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public WorldStateStorage.Updater saveWorldState(Bytes blockHash, Bytes32 nodeHash, Bytes node) {
+    public WorldStateStorage.Updater saveWorldState(
+        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
       return putAccountStateTrieNode(null, nodeHash, node);
     }
 
