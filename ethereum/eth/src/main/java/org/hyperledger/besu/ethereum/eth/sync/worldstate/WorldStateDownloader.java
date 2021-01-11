@@ -31,6 +31,7 @@ import java.util.function.IntSupplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class WorldStateDownloader implements WorldStateDownloadStatus {
   private static final Logger LOG = LogManager.getLogger();
@@ -124,7 +125,7 @@ public class WorldStateDownloader implements WorldStateDownloadStatus {
       if (!newDownloadState.downloadWasResumed()) {
         // Only queue the root node if we're starting a new download from scratch
         newDownloadState.enqueueRequest(
-            NodeDataRequest.createAccountDataRequest(stateRoot, Optional.empty()));
+            NodeDataRequest.createAccountDataRequest(stateRoot, Optional.of(Bytes.EMPTY)));
       }
 
       maybeCompleteTask =
