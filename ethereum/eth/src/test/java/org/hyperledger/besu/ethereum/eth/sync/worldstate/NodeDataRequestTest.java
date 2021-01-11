@@ -30,7 +30,7 @@ public class NodeDataRequestTest {
   public void serializesAccountTrieNodeRequests() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     AccountTrieNodeDataRequest request =
-        NodeDataRequest.createAccountDataRequest(gen.hash(), Optional.empty());
+        NodeDataRequest.createAccountDataRequest(gen.hash(), Optional.of(Bytes.EMPTY));
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
     assertRequestsEquals(sedeRequest, request);
     assertThat(sedeRequest).isInstanceOf(AccountTrieNodeDataRequest.class);
@@ -50,7 +50,8 @@ public class NodeDataRequestTest {
   public void serializesStorageTrieNodeRequests() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     StorageTrieNodeDataRequest request =
-        NodeDataRequest.createStorageDataRequest(gen.hash(), Optional.empty(), Optional.empty());
+        NodeDataRequest.createStorageDataRequest(
+            gen.hash(), Optional.empty(), Optional.of(Bytes.EMPTY));
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
     assertRequestsEquals(sedeRequest, request);
     assertThat(sedeRequest).isInstanceOf(StorageTrieNodeDataRequest.class);
