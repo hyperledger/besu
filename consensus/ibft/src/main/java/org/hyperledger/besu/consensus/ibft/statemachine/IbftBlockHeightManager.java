@@ -54,7 +54,7 @@ import org.apache.logging.log4j.Logger;
  * and sends a Proposal message. If the round times out prior to importing a block, this class is
  * responsible for creating a RoundChange message and transmitting it.
  */
-public class IbftBlockHeightManager implements BlockHeightManager {
+public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
 
   private static final Logger LOG = LogManager.getLogger();
 

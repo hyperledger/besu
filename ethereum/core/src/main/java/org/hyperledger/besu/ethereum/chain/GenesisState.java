@@ -108,7 +108,7 @@ public final class GenesisState {
   private static void writeAccountsTo(
       final MutableWorldState target,
       final List<GenesisAccount> genesisAccounts,
-      final BlockHeader rootHash) {
+      final BlockHeader rootHeader) {
     final WorldUpdater updater = target.updater();
     genesisAccounts.forEach(
         genesisAccount -> {
@@ -120,7 +120,7 @@ public final class GenesisState {
           genesisAccount.storage.forEach(account::setStorageValue);
         });
     updater.commit();
-    target.persist(rootHash);
+    target.persist(rootHeader);
   }
 
   private static Hash calculateGenesisStateHash(final List<GenesisAccount> genesisAccounts) {

@@ -68,7 +68,7 @@ public class IbftControllerTest {
   @Mock private IbftBlockHeightManagerFactory blockHeightManagerFactory;
   @Mock private BlockHeader chainHeadBlockHeader;
   @Mock private BlockHeader nextBlock;
-  @Mock private BlockHeightManager blockHeightManager;
+  @Mock private BaseIbftBlockHeightManager blockHeightManager;
 
   @Mock private Proposal proposal;
   private Message proposalMessage;

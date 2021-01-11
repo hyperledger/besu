@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import java.util.List;
 
 public class PreparedCertificate {
-  final Block preparedBlock;
-  final List<SignedData<PreparePayload>> prepares;
+  private final Block preparedBlock;
+  private final List<SignedData<PreparePayload>> prepares;
 
   public PreparedCertificate(
       final Block preparedBlock, final List<SignedData<PreparePayload>> prepares) {

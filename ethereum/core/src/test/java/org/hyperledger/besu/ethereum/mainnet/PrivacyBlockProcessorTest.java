@@ -121,7 +121,6 @@ public class PrivacyBlockProcessorTest {
             any());
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void mustPerformRehydration() {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
@@ -189,7 +188,6 @@ public class PrivacyBlockProcessorTest {
     return mockPrivateState;
   }
 
-  @SuppressWarnings("rawtypes")
   private ProtocolSpec mockProtocolSpec() {
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
     final MainnetTransactionProcessor mockPublicTransactionProcessor =

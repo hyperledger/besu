@@ -38,7 +38,7 @@ public class IbftBlockHeightManagerFactory {
     this.messageFactory = messageFactory;
   }
 
-  public BlockHeightManager create(final BlockHeader parentHeader) {
+  public BaseIbftBlockHeightManager create(final BlockHeader parentHeader) {
     if (finalState.isLocalNodeValidator()) {
       return createFullBlockHeightManager(parentHeader);
     } else {
@@ -46,11 +46,11 @@ public class IbftBlockHeightManagerFactory {
     }
   }
 
-  private BlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
+  private BaseIbftBlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }
 
-  private BlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
+  private BaseIbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
     return new IbftBlockHeightManager(
         parentHeader,
         finalState,

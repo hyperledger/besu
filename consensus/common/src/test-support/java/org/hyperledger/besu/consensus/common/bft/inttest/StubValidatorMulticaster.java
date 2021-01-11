@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.support;
+package org.hyperledger.besu.consensus.common.bft.inttest;
 
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -25,11 +25,11 @@ import com.google.common.collect.Lists;
 
 public class StubValidatorMulticaster implements ValidatorMulticaster {
 
-  private final List<ValidatorPeer> validatorNodes = Lists.newArrayList();
+  private final List<DefaultValidatorPeer> validatorNodes = Lists.newArrayList();
 
   public StubValidatorMulticaster() {}
 
-  public void addNetworkPeers(final Collection<ValidatorPeer> nodes) {
+  public void addNetworkPeers(final Collection<DefaultValidatorPeer> nodes) {
     validatorNodes.addAll(nodes);
   }
 
