@@ -16,15 +16,20 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
 public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpcMethod {
+  private static final String INVALID_BLOCK_NUMBER_PARAMETER = "Invalid Block Number Parameter.";
+
   protected final Supplier<BlockchainQueries> blockchainQueries;
 
   protected AbstractBlockParameterOrBlockHashMethod(final BlockchainQueries blockchainQueries) {
@@ -70,18 +75,24 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
               requestContext,
               blockParameterOrBlockHash
                   .getNumber()
-                  .orElseThrow(() -> new IllegalStateException("Invalid Block Number Parameter.")));
+                  .orElseThrow(() -> new IllegalStateException(INVALID_BLOCK_NUMBER_PARAMETER)));
     } else {
+      Hash blockHash =
+          blockParameterOrBlockHash
+              .getHash()
+              .orElseThrow(() -> new IllegalStateException(INVALID_BLOCK_NUMBER_PARAMETER));
+      if (Boolean.TRUE.equals(blockParameterOrBlockHash.getRequireCanonical())
+          && !blockchainQueries.get().blockIsOnCanonicalChain(blockHash)) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.JSON_RPC_NOT_CANONICAL_ERROR);
+      }
+
       result =
           resultByBlockNumber(
               requestContext,
               blockchainQueries
                   .get()
-                  .blockByHash(
-                      blockParameterOrBlockHash
-                          .getHash()
-                          .orElseThrow(
-                              () -> new IllegalStateException("Invalid Block Number Parameter.")))
+                  .blockByHash(blockHash)
                   .orElseThrow(
                       () ->
                           new IllegalStateException(
@@ -95,7 +106,12 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), handleParamTypes(requestContext));
+    Object response = handleParamTypes(requestContext);
+
+    if (response instanceof JsonRpcErrorResponse) {
+      return (JsonRpcResponse) response;
+    }
+
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
 }

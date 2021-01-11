@@ -1,0 +1,19 @@
+{
+  "request": {
+    "id": 28,
+    "jsonrpc": "2.0",
+    "method": "eth_getBalance",
+    "params": [
+      "0x8888f1f195afa192cfee860698584c030f4c9db1",
+      {
+        "blockHash": "0xb73cee02246c6f32ac0f459934e89102c2ce904d966a4fc2ab6309c3e104b9cb"
+      }
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "result": "0x6cb0f6ed0e034ae5d"
+  },
+  "statusCode": 200
+}
