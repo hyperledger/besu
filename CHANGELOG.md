@@ -4,7 +4,7 @@
 
 ### Additions and Improvements
 * Implemented [EIP-778](https://eips.ethereum.org/EIPS/eip-778): Ethereum Node Records (ENR) [\#1680](https://github.com/hyperledger/besu/pull/1680)
-* Implemented [EIP-868](https://eips.ethereum.org/EIPS/eip-868): Simple Subroutines for the EVM [\#1721](https://github.com/hyperledger/besu/pull/1721)
+* Implemented [EIP-868](https://eips.ethereum.org/EIPS/eip-868): Node Discovery v4 ENR Extension [\#1721](https://github.com/hyperledger/besu/pull/1721)
 * Added revert reason to eth_estimateGas RPC call. [\#1730](https://github.com/hyperledger/besu/pull/1730)
 * Added command line option --static-nodes-file. [#1644](https://github.com/hyperledger/besu/pull/1644)
 
