@@ -74,18 +74,19 @@ public class DecodeBlockWithAccessListTransactionsTest {
                   new BytesValueRLPInput(
                       Bytes.fromHexString("0x" + rootNode.get("rlp").textValue()), false),
                   new Block(
-                      objectMapper.treeToValue(jsonNode.get("Header"), BlockHeader.class),
+                      objectMapper.treeToValue(jsonNode.get("header"), BlockHeader.class),
                       new BlockBody(
                           Optional.ofNullable(
                                   objectMapper.treeToValue(
-                                      jsonNode.get("Txs"), Transaction[].class))
+                                      jsonNode.get("transactions"), Transaction[].class))
                               .map(Arrays::asList)
                               .orElse(Collections.emptyList()),
                           Optional.ofNullable(
                                   objectMapper.treeToValue(
-                                      jsonNode.get("Uncles"), BlockHeader[].class))
+                                      jsonNode.get("uncles"), BlockHeader[].class))
                               .map(Arrays::asList)
                               .orElse(Collections.emptyList())))
+                  // todo receipts?
                 };
               } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
