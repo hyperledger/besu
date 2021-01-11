@@ -49,7 +49,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -232,7 +231,6 @@ public class EeaSendRawTransactionTest {
             any(String.class), any(PrivateTransaction.class), any(Address.class));
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }
-
 
   @Test
   public void eeaTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
