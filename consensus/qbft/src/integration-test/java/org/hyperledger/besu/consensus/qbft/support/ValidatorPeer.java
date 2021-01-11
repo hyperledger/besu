@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.consensus.qbft.support;
 
+import java.util.List;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
@@ -27,7 +29,9 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
+import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -78,7 +82,8 @@ public class ValidatorPeer extends DefaultValidatorPeer {
 
   public Proposal injectProposalForFutureRound(
       final ConsensusRoundIdentifier rId,
-      final RoundChangeMetadata roundChangeMetadata,
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final List<SignedData<PreparePayload>> prepares,
       final Block blockToPropose) {
 
     final Proposal payload =

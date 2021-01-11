@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -53,9 +54,7 @@ public class MessageFactory {
   }
 
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
-
     final PreparePayload payload = new PreparePayload(roundIdentifier, digest);
-
     return new Prepare(createSignedMessage(payload));
   }
 
@@ -63,9 +62,7 @@ public class MessageFactory {
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final Signature commitSeal) {
-
     final CommitPayload payload = new CommitPayload(roundIdentifier, digest, commitSeal);
-
     return new Commit(createSignedMessage(payload));
   }
 
@@ -84,16 +81,14 @@ public class MessageFactory {
               .getRoundIdentifier()
               .getRoundNumber();
 
+      final Block preparedBlock = preparedRoundData.get().getBlock();
       payload =
           new RoundChangePayload(
               roundIdentifier,
-              Optional.of(
-                  new PreparedRoundMetadata(
-                      preparedRoundData.get().getPreparedBlock().getHash(), round)));
+              Optional.of(new PreparedRoundMetadata(preparedBlock.getHash(), round)));
+
       return new RoundChange(
-          createSignedMessage(payload),
-          Optional.of(preparedRoundData.get().getPreparedBlock()),
-          preparedRoundData.get().getPrepares());
+          createSignedMessage(payload), Optional.of(preparedBlock), Collections.emptyList());
 
     } else {
       payload = new RoundChangePayload(roundIdentifier, Optional.empty());
