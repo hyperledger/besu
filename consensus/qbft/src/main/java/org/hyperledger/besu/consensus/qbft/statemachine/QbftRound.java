@@ -101,11 +101,11 @@ public class QbftRound {
 
   public void startRoundWith(
       final RoundChangeArtifacts roundChangeArtifacts, final long headerTimestamp) {
-    final Optional<PreparedCertificate> peerWasPrepared =
+    final Optional<PreparedCertificate> bestPreparedCertificate =
         roundChangeArtifacts.getBestPreparedPeer();
 
     Block blockToPublish;
-    if (peerWasPrepared.isEmpty()) {
+    if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
       blockToPublish = blockCreator.createBlock(headerTimestamp);
     } else {
@@ -113,7 +113,7 @@ public class QbftRound {
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       blockToPublish =
           BftBlockInterface.replaceRoundInBlock(
-              peerWasPrepared.get().getBlock(),
+              bestPreparedCertificate.get().getBlock(),
               getRoundIdentifier().getRoundNumber(),
               BftBlockHeaderFunctions.forCommittedSeal());
     }
@@ -121,7 +121,7 @@ public class QbftRound {
     updateStateWithProposalAndTransmit(
         blockToPublish,
         roundChangeArtifacts.getRoundChanges(),
-        peerWasPrepared.map(PreparedCertificate::getPrepares).orElse(emptyList()));
+        bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
   }
 
   private void updateStateWithProposalAndTransmit(
