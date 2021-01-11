@@ -136,7 +136,7 @@ public class RoundState {
               proposalMessage.get().getSignedPayload().getPayload().getProposedBlock(),
               prepareMessages.stream()
                   .map(Prepare::getSignedPayload)
-                  .collect(Collectors.toList())));
+                  .collect(Collectors.toList()), roundIdentifier.getRoundNumber()));
     }
     return Optional.empty();
   }

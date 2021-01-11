@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.consensus.qbft.support;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
@@ -30,15 +32,11 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbft.statemachine.PreparedRoundArtifacts;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-
-import java.util.Collections;
-import java.util.Optional;
 
 // Each "inject" function returns the SignedPayload representation of the transmitted message.
 public class ValidatorPeer extends DefaultValidatorPeer {
@@ -90,18 +88,17 @@ public class ValidatorPeer extends DefaultValidatorPeer {
         messageFactory.createProposal(
             rId,
             blockToPropose,
-            roundChangeMetadata.getRoundChangePayloads(),
-            roundChangeMetadata.getPrepares());
+            roundChanges,
+            prepares);
     injectMessage(ProposalMessageData.create(payload));
     return payload;
   }
 
   public RoundChange injectRoundChange(
       final ConsensusRoundIdentifier rId,
-      final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {
+      final Optional<PreparedCertificate> preparedRoundArtifacts) {
     final RoundChange payload =
-        messageFactory.createRoundChange(
-            rId, preparedRoundArtifacts.map(PreparedRoundArtifacts::getPreparedCertificate));
+        messageFactory.createRoundChange(rId, preparedRoundArtifacts);
     injectMessage(RoundChangeMessageData.create(payload));
     return payload;
   }

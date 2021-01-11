@@ -39,8 +39,6 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
-import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -329,10 +327,11 @@ public class QbftRoundTest {
     final RoundChange roundChange =
         messageFactory.createRoundChange(
             roundIdentifier,
-            Optional.of(new PreparedCertificate(proposedBlock, singletonList(preparedPayload))));
+            Optional.of(
+                new PreparedCertificate(proposedBlock, singletonList(preparedPayload), 2)));
 
-    final RoundChangeMetadata roundChangeMetadata =
-        RoundChangeMetadata.create(singletonList(roundChange));
+    final RoundChangeArtifacts roundChangeMetadata =
+        RoundChangeArtifacts.create(singletonList(roundChange));
 
     round.startRoundWith(roundChangeMetadata, 15);
     verify(transmitter, times(1))

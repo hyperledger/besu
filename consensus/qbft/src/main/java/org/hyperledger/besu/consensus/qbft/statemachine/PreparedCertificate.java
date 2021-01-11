@@ -24,10 +24,17 @@ public class PreparedCertificate {
 
   private final Block block;
   private final List<SignedData<PreparePayload>> prepares;
+  private final int round;
 
-  public PreparedCertificate(final Block block, final List<SignedData<PreparePayload>> prepares) {
+  public PreparedCertificate(final Block block, final List<SignedData<PreparePayload>> prepares,
+      final int round) {
     this.block = block;
     this.prepares = prepares;
+    this.round = round;
+  }
+
+  public int getRound() {
+    return round;
   }
 
   public Block getBlock() {

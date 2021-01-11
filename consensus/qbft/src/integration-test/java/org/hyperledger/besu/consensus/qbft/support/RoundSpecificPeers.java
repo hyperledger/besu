@@ -18,6 +18,14 @@ import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
@@ -30,20 +38,10 @@ import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbft.statemachine.PreparedRoundArtifacts;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 public class RoundSpecificPeers {
 
@@ -109,13 +107,13 @@ public class RoundSpecificPeers {
   }
 
   public List<SignedData<RoundChangePayload>> createSignedRoundChangePayload(
-      final ConsensusRoundIdentifier roundId, final PreparedRoundArtifacts preparedRoundArtifacts) {
+      final ConsensusRoundIdentifier roundId, final PreparedCertificate preparedCertificate) {
     return peers.stream()
         .map(
             p ->
                 p.getMessageFactory()
                     .createRoundChange(
-                        roundId, Optional.of(preparedRoundArtifacts.getPreparedCertificate()))
+                        roundId, Optional.of(preparedCertificate))
                     .getSignedPayload())
         .collect(Collectors.toList());
   }

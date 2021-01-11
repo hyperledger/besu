@@ -72,20 +72,13 @@ public class MessageFactory {
 
     final RoundChangePayload payload;
     if (preparedRoundData.isPresent()) {
-      final int round =
-          preparedRoundData
-              .get()
-              .getPrepares()
-              .get(0)
-              .getPayload()
-              .getRoundIdentifier()
-              .getRoundNumber();
 
       final Block preparedBlock = preparedRoundData.get().getBlock();
       payload =
           new RoundChangePayload(
               roundIdentifier,
-              Optional.of(new PreparedRoundMetadata(preparedBlock.getHash(), round)));
+              Optional.of(new PreparedRoundMetadata(preparedBlock.getHash(),
+                  preparedRoundData.get().getRound())));
 
       return new RoundChange(
           createSignedMessage(payload), Optional.of(preparedBlock), Collections.emptyList());

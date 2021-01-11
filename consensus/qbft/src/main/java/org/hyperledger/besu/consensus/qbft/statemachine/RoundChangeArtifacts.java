@@ -70,7 +70,8 @@ public class RoundChangeArtifacts {
           Optional.of(
               new PreparedCertificate(
                   roundChangeWithNewestPrepare.get().getProposedBlock().get(),
-                  roundChangeWithNewestPrepare.get().getPrepares()));
+                  roundChangeWithNewestPrepare.get().getPrepares(),
+                  roundChangeWithNewestPrepare.get().getPreparedRound().get()));
     } else {
       prepCert = Optional.empty();
     }
