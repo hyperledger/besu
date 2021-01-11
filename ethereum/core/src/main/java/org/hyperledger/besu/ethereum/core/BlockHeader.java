@@ -60,20 +60,20 @@ public class BlockHeader extends SealableBlockHeader
       @JsonProperty("receiptsRoot") final Hash receiptsRoot,
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
       @JsonProperty("difficulty") final Difficulty difficulty,
-      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("number")
+      @JsonProperty("number") @JsonDeserialize(using = QuantityToLongDeserializer.class)
           final long number,
-      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("gasLimit")
+      @JsonProperty("gasLimit") @JsonDeserialize(using = QuantityToLongDeserializer.class)
           final long gasLimit,
-      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("gasUsed")
+      @JsonProperty("gasUsed") @JsonDeserialize(using = QuantityToLongDeserializer.class)
           final long gasUsed,
-      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("timestamp")
+      @JsonProperty("timestamp") @JsonDeserialize(using = QuantityToLongDeserializer.class)
           final long timestamp,
-      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("extraData")
+      @JsonProperty("extraData") @JsonDeserialize(using = HexStringDeserializer.class)
           final Bytes extraData,
-      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("baseFee")
+      @JsonProperty("baseFee") @JsonDeserialize(using = QuantityToLongDeserializer.class)
           final Long baseFee,
       @JsonProperty("mixHash") final Hash mixHash,
-      @JsonDeserialize(using = QuantityToLongDeserializer.class) @JsonProperty("nonce")
+      @JsonProperty("nonce") @JsonDeserialize(using = QuantityToLongDeserializer.class)
           final long nonce) {
     this(
         parentHash,
