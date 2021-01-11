@@ -134,9 +134,8 @@ public class RoundState {
       return Optional.of(
           new PreparedCertificate(
               proposalMessage.get().getSignedPayload().getPayload().getProposedBlock(),
-              prepareMessages.stream()
-                  .map(Prepare::getSignedPayload)
-                  .collect(Collectors.toList()), roundIdentifier.getRoundNumber()));
+              prepareMessages.stream().map(Prepare::getSignedPayload).collect(Collectors.toList()),
+              roundIdentifier.getRoundNumber()));
     }
     return Optional.empty();
   }

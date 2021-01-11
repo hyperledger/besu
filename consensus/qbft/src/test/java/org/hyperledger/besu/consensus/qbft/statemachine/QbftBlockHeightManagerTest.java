@@ -45,7 +45,6 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
@@ -266,8 +265,8 @@ public class QbftBlockHeightManagerTest {
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
     final RoundChange roundChange =
         messageFactory.createRoundChange(futureRoundIdentifier, Optional.empty());
-    final RoundChangeMetadata roundChangMetadata =
-        RoundChangeMetadata.create(singletonList(roundChange));
+    final RoundChangeArtifacts roundChangArtifacts =
+        RoundChangeArtifacts.create(singletonList(roundChange));
 
     when(roundChangeManager.appendRoundChangeMessage(any()))
         .thenReturn(Optional.of(singletonList(roundChange)));
@@ -290,8 +289,8 @@ public class QbftBlockHeightManagerTest {
         .multicastProposal(
             eq(futureRoundIdentifier),
             any(),
-            eq(roundChangMetadata.getRoundChangePayloads()),
-            eq(roundChangMetadata.getPrepares()));
+            eq(roundChangArtifacts.getRoundChanges()),
+            eq(roundChangArtifacts.getBestPreparedPeer().get().getPrepares()));
   }
 
   @Test

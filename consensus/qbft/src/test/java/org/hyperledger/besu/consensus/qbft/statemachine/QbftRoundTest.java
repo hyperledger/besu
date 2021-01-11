@@ -300,7 +300,7 @@ public class QbftRoundTest {
             transmitter,
             roundTimer);
 
-    round.startRoundWith(new RoundChangeMetadata(empty(), emptyList(), emptyList()), 15);
+    round.startRoundWith(new RoundChangeArtifacts(emptyList(), Optional.empty()), 15);
     verify(transmitter, times(1))
         .multicastProposal(eq(roundIdentifier), any(), eq(emptyList()), eq(emptyList()));
   }
@@ -327,8 +327,7 @@ public class QbftRoundTest {
     final RoundChange roundChange =
         messageFactory.createRoundChange(
             roundIdentifier,
-            Optional.of(
-                new PreparedCertificate(proposedBlock, singletonList(preparedPayload), 2)));
+            Optional.of(new PreparedCertificate(proposedBlock, singletonList(preparedPayload), 2)));
 
     final RoundChangeArtifacts roundChangeMetadata =
         RoundChangeArtifacts.create(singletonList(roundChange));
@@ -369,10 +368,10 @@ public class QbftRoundTest {
     final RoundChange roundChange =
         messageFactory.createRoundChange(roundIdentifier, Optional.empty());
 
-    final RoundChangeMetadata roundChangeMetadata =
-        RoundChangeMetadata.create(List.of(roundChange));
+    final RoundChangeArtifacts roundChangeArtifacts =
+        RoundChangeArtifacts.create(List.of(roundChange));
 
-    round.startRoundWith(roundChangeMetadata, 15);
+    round.startRoundWith(roundChangeArtifacts, 15);
     verify(transmitter, times(1))
         .multicastProposal(
             eq(roundIdentifier),
@@ -483,7 +482,7 @@ public class QbftRoundTest {
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));
 
     // Verify that no prepare message was constructed by the QbftRound
-    assertThat(roundState.constructPreparedRoundCertificate().get().getPrepares()).isEmpty();
+    assertThat(roundState.constructPreparedCertificate().get().getPrepares()).isEmpty();
 
     verifyNoInteractions(transmitter);
   }

@@ -18,14 +18,6 @@ import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
@@ -42,6 +34,16 @@ import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 public class RoundSpecificPeers {
 
@@ -112,8 +114,7 @@ public class RoundSpecificPeers {
         .map(
             p ->
                 p.getMessageFactory()
-                    .createRoundChange(
-                        roundId, Optional.of(preparedCertificate))
+                    .createRoundChange(roundId, Optional.of(preparedCertificate))
                     .getSignedPayload())
         .collect(Collectors.toList());
   }
@@ -130,7 +131,7 @@ public class RoundSpecificPeers {
     nonProposingPeers.forEach(assertion);
   }
 
-  public Collection<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
+  public List<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
       final ConsensusRoundIdentifier preparedRound, final Hash hash) {
     return nonProposingPeers.stream()
         .map(role -> role.getMessageFactory().createPrepare(preparedRound, hash).getSignedPayload())
