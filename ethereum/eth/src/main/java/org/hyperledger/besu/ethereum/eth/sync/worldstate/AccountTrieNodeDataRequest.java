@@ -40,11 +40,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    if (getLocation().isPresent()) {
-      return worldStateStorage.getAccountStateTrieNode(
-          getLocation().orElse(Bytes.EMPTY), getHash());
-    }
-    return Optional.empty();
+    return worldStateStorage.getAccountStateTrieNode(getLocation().orElse(Bytes.EMPTY), getHash());
   }
 
   @Override
@@ -75,8 +71,6 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected void writeTo(final RLPOutput out) {
-
-    System.out.println(getLocation());
     out.startList();
     out.writeByte(getRequestType().getValue());
     out.writeBytes(getHash());
