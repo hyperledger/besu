@@ -30,8 +30,8 @@ public class RoundChangeArtifacts {
   private final Optional<PreparedCertificate> bestPreparedPeer;
 
   public RoundChangeArtifacts(
-      List<SignedData<RoundChangePayload>> roundChanges,
-      Optional<PreparedCertificate> bestPreparedPeer) {
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final Optional<PreparedCertificate> bestPreparedPeer) {
     this.roundChanges = roundChanges;
     this.bestPreparedPeer = bestPreparedPeer;
   }
