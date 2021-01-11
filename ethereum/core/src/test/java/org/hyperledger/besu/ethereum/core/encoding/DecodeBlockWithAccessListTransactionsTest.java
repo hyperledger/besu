@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -74,11 +76,16 @@ public class DecodeBlockWithAccessListTransactionsTest {
                   new Block(
                       objectMapper.treeToValue(jsonNode.get("Header"), BlockHeader.class),
                       new BlockBody(
-                          Arrays.asList(
-                              objectMapper.treeToValue(jsonNode.get("Txs"), Transaction[].class)),
-                          Arrays.asList(
-                              objectMapper.treeToValue(
-                                  jsonNode.get("Uncles"), BlockHeader[].class))))
+                          Optional.ofNullable(
+                                  objectMapper.treeToValue(
+                                      jsonNode.get("Txs"), Transaction[].class))
+                              .map(Arrays::asList)
+                              .orElse(Collections.emptyList()),
+                          Optional.ofNullable(
+                                  objectMapper.treeToValue(
+                                      jsonNode.get("Uncles"), BlockHeader[].class))
+                              .map(Arrays::asList)
+                              .orElse(Collections.emptyList())))
                 };
               } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
