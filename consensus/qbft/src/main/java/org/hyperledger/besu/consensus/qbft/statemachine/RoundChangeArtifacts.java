@@ -66,12 +66,16 @@ public class RoundChangeArtifacts {
 
     final Optional<PreparedCertificate> prepCert;
     if (roundChangeWithNewestPrepare.isPresent()) {
-      prepCert =
-          Optional.of(
-              new PreparedCertificate(
-                  roundChangeWithNewestPrepare.get().getProposedBlock().get(),
-                  roundChangeWithNewestPrepare.get().getPrepares(),
-                  roundChangeWithNewestPrepare.get().getPreparedRound().get()));
+      if (roundChangeWithNewestPrepare.get().getProposedBlock().isPresent()) {
+        prepCert =
+            Optional.of(
+                new PreparedCertificate(
+                    roundChangeWithNewestPrepare.get().getProposedBlock().get(),
+                    roundChangeWithNewestPrepare.get().getPrepares(),
+                    roundChangeWithNewestPrepare.get().getPreparedRound().get()));
+      } else {
+        prepCert = Optional.empty();
+      }
     } else {
       prepCert = Optional.empty();
     }

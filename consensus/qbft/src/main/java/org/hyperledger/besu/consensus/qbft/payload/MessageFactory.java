@@ -82,7 +82,9 @@ public class MessageFactory {
                       preparedBlock.getHash(), preparedRoundData.get().getRound())));
 
       return new RoundChange(
-          createSignedMessage(payload), Optional.of(preparedBlock), Collections.emptyList());
+          createSignedMessage(payload),
+          Optional.of(preparedBlock),
+          preparedRoundData.get().getPrepares());
 
     } else {
       payload = new RoundChangePayload(roundIdentifier, Optional.empty());

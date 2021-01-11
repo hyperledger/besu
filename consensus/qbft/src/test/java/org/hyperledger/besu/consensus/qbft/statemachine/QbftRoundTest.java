@@ -329,10 +329,10 @@ public class QbftRoundTest {
             roundIdentifier,
             Optional.of(new PreparedCertificate(proposedBlock, singletonList(preparedPayload), 2)));
 
-    final RoundChangeArtifacts roundChangeMetadata =
+    final RoundChangeArtifacts roundChangeArtifacts =
         RoundChangeArtifacts.create(singletonList(roundChange));
 
-    round.startRoundWith(roundChangeMetadata, 15);
+    round.startRoundWith(roundChangeArtifacts, 15);
     verify(transmitter, times(1))
         .multicastProposal(
             eq(roundIdentifier),

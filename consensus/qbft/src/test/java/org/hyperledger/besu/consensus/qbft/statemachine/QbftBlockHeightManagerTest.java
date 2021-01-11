@@ -290,7 +290,7 @@ public class QbftBlockHeightManagerTest {
             eq(futureRoundIdentifier),
             any(),
             eq(roundChangArtifacts.getRoundChanges()),
-            eq(roundChangArtifacts.getBestPreparedPeer().get().getPrepares()));
+            eq(emptyList()));
   }
 
   @Test
