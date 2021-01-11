@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -128,22 +127,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
-    LogManager.getLogger().info("isWorldStateAvailable {}", blockHash);
-    LogManager.getLogger()
-        .info(
-            "isWorldStateAvailable {}",
-            trieBranchStorage
-                .get(WORLD_BLOCK_HASH_KEY)
-                .map(Bytes::wrap)
-                .map(Hash::hash)
-                .orElse(Hash.EMPTY)
-                .toHexString());
-    return trieBranchStorage
-        .get(WORLD_BLOCK_HASH_KEY)
-        .map(Bytes::wrap)
-        .map(Hash::hash)
-        .filter(hash -> hash.equals(blockHash))
-        .isPresent();
+    return trieLogStorage.containsKey(blockHash.toArrayUnsafe());
   }
 
   @Override
@@ -232,11 +216,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     @Override
     public Updater putAccountStateTrieNode(
         final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+
       if (location == null || nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;
       }
-      LogManager.getLogger().info("putAccountStateTrieNode {}", location.toHexString());
       trieBranchStorageTransaction.put(location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
@@ -250,10 +234,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     @Override
     public Updater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      if (location == null || nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-        // Don't save empty nodes
-        return this;
-      }
       trieBranchStorageTransaction.put(
           Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
       return this;

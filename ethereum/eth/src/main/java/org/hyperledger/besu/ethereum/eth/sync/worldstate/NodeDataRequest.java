@@ -79,13 +79,13 @@ public abstract class NodeDataRequest {
       final NodeDataRequest deserialized;
       switch (requestType) {
         case ACCOUNT_TRIE_NODE:
-          location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
+          location = Optional.of((!in.isEndOfCurrentList()) ? in.readBytes() : Bytes.EMPTY);
           deserialized = createAccountDataRequest(hash, location);
           break;
         case STORAGE_TRIE_NODE:
           accountHash =
               Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
-          location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : null);
+          location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : Bytes.EMPTY);
           deserialized = createStorageDataRequest(hash, accountHash, location);
           break;
         case CODE:

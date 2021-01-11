@@ -35,13 +35,14 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putAccountStateTrieNode(getLocation().orElse(null), getHash(), getData());
+    updater.putAccountStateTrieNode(getLocation().orElse(Bytes.EMPTY), getHash(), getData());
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
     if (getLocation().isPresent()) {
-      return worldStateStorage.getAccountStateTrieNode(getLocation().orElse(null), getHash());
+      return worldStateStorage.getAccountStateTrieNode(
+          getLocation().orElse(Bytes.EMPTY), getHash());
     }
     return Optional.empty();
   }
@@ -74,6 +75,8 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected void writeTo(final RLPOutput out) {
+
+    System.out.println(getLocation());
     out.startList();
     out.writeByte(getRequestType().getValue());
     out.writeBytes(getHash());
