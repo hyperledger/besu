@@ -20,9 +20,9 @@ public class JsonRpcErrorResponseException extends RuntimeException {
 
   private final JsonRpcError jsonRpcError;
 
-  public JsonRpcErrorResponseException(final JsonRpcError error) {
+  public JsonRpcErrorResponseException(final JsonRpcError onchainPrivacyGroupIdNotAvailable) {
     super();
-    this.jsonRpcError = error;
+    this.jsonRpcError = onchainPrivacyGroupIdNotAvailable;
   }
 
   public JsonRpcError getJsonRpcError() {

@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -232,6 +233,24 @@ public class EeaSendRawTransactionTest {
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }
 
+
+  @Test
+  public void eeaTransactionFailsWhenOnchainPrivacyGroupFeatureIsEnabled() {
+    method =
+        new OnChainEeaSendRawTransaction(
+            transactionPool, privacyController, enclavePublicKeyProvider);
+
+    final JsonRpcRequestContext request = getJsonRpcRequestContext();
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+  }
+
   private JsonRpcRequestContext getJsonRpcRequestContext() {
     return new JsonRpcRequestContext(
         new JsonRpcRequest(
@@ -240,7 +259,7 @@ public class EeaSendRawTransactionTest {
   }
 
   @Test
-  public void transactionFailsIfPrivacyGroupDoesNotExist() {
+  public void onChainPrivacyGroupTransactionFailsWhenFeatureIsNotEnabled() {
     method =
         new EeaSendRawTransaction(transactionPool, privacyController, enclavePublicKeyProvider);
 
