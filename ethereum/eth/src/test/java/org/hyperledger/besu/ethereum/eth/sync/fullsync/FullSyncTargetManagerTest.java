@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
@@ -90,7 +91,9 @@ public class FullSyncTargetManagerTest {
 
   @Test
   public void findSyncTarget_withHeightEstimates() {
-    when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
+    final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
+    when(localWorldState.isWorldStateAvailable(
+            chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
         .thenReturn(true);
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 4);
@@ -105,7 +108,9 @@ public class FullSyncTargetManagerTest {
 
   @Test
   public void findSyncTarget_noHeightEstimates() {
-    when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
+    final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
+    when(localWorldState.isWorldStateAvailable(
+            chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
         .thenReturn(true);
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.MAX_VALUE, 0);
@@ -118,7 +123,9 @@ public class FullSyncTargetManagerTest {
 
   @Test
   public void shouldDisconnectPeerIfWorldStateIsUnavailableForCommonAncestor() {
-    when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
+    final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
+    when(localWorldState.isWorldStateAvailable(
+            chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
         .thenReturn(false);
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20);
@@ -133,7 +140,9 @@ public class FullSyncTargetManagerTest {
 
   @Test
   public void shouldAllowSyncTargetWhenIfWorldStateIsAvailableForCommonAncestor() {
-    when(localWorldState.isWorldStateAvailable(localBlockchain.getChainHeadHeader().getStateRoot()))
+    final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
+    when(localWorldState.isWorldStateAvailable(
+            chainHeadHeader.getStateRoot(), chainHeadHeader.getHash()))
         .thenReturn(true);
     final RespondingEthPeer bestPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 20);

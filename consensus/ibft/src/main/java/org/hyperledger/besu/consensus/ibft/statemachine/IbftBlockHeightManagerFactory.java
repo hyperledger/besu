@@ -14,26 +14,31 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class IbftBlockHeightManagerFactory {
 
   private final IbftRoundFactory roundFactory;
-  private final IbftFinalState finalState;
+  private final BftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
+  private final MessageFactory messageFactory;
 
   public IbftBlockHeightManagerFactory(
-      final IbftFinalState finalState,
+      final BftFinalState finalState,
       final IbftRoundFactory roundFactory,
-      final MessageValidatorFactory messageValidatorFactory) {
+      final MessageValidatorFactory messageValidatorFactory,
+      final MessageFactory messageFactory) {
     this.roundFactory = roundFactory;
     this.finalState = finalState;
     this.messageValidatorFactory = messageValidatorFactory;
+    this.messageFactory = messageFactory;
   }
 
-  public BlockHeightManager create(final BlockHeader parentHeader) {
+  public BaseIbftBlockHeightManager create(final BlockHeader parentHeader) {
     if (finalState.isLocalNodeValidator()) {
       return createFullBlockHeightManager(parentHeader);
     } else {
@@ -41,20 +46,21 @@ public class IbftBlockHeightManagerFactory {
     }
   }
 
-  private BlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
+  private BaseIbftBlockHeightManager createNoOpBlockHeightManager(final BlockHeader parentHeader) {
     return new NoOpBlockHeightManager(parentHeader);
   }
 
-  private BlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
+  private BaseIbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
     return new IbftBlockHeightManager(
         parentHeader,
         finalState,
         new RoundChangeManager(
-            IbftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
+            BftHelpers.calculateRequiredValidatorQuorum(finalState.getValidators().size()),
             messageValidatorFactory.createRoundChangeMessageValidator(
                 parentHeader.getNumber() + 1L, parentHeader)),
         roundFactory,
         finalState.getClock(),
-        messageValidatorFactory);
+        messageValidatorFactory,
+        messageFactory);
   }
 }

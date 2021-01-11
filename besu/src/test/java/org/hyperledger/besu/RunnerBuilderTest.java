@@ -20,8 +20,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
-import org.hyperledger.besu.consensus.ibft.network.PeerConnectionTracker;
-import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
+import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
+import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -77,8 +77,11 @@ public final class RunnerBuilderTest {
     when(subProtocolConfiguration.getProtocolManagers())
         .thenReturn(
             Collections.singletonList(
-                new IbftProtocolManager(
-                    mock(BftEventQueue.class), mock(PeerConnectionTracker.class))));
+                new BftProtocolManager(
+                    mock(BftEventQueue.class),
+                    mock(PeerConnectionTracker.class),
+                    IbftSubProtocol.IBFV1,
+                    IbftSubProtocol.get().getName())));
     when(ethContext.getScheduler()).thenReturn(mock(EthScheduler.class));
     when(ethProtocolManager.ethContext()).thenReturn(ethContext);
     when(subProtocolConfiguration.getSubProtocols())

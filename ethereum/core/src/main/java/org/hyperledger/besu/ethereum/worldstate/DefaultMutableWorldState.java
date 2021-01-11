@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
@@ -169,7 +170,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public void persist(final Hash blockhash) {
+  public void persist(final BlockHeader blockHeader) {
     final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {

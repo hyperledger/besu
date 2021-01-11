@@ -20,11 +20,14 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -45,10 +48,17 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieLogLayer {
 
   private Hash blockHash;
-  private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts = new TreeMap<>();
-  private final Map<Address, BonsaiValue<Bytes>> code = new TreeMap<>();
-  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage = new TreeMap<>();
+  private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
+  private final Map<Address, BonsaiValue<Bytes>> code;
+  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;
   private boolean frozen = false;
+
+  TrieLogLayer() {
+    // TODO when tuweni fixes zero length byte comparison consider TreeMap
+    accounts = new HashMap<>();
+    code = new HashMap<>();
+    storage = new HashMap<>();
+  }
 
   /** Locks the layer so no new changes can be added; */
   void freeze() {
@@ -64,7 +74,7 @@ public class TrieLogLayer {
     this.blockHash = blockHash;
   }
 
-  public void addAccountChange(
+  void addAccountChange(
       final Address address,
       final StateTrieAccountValue oldValue,
       final StateTrieAccountValue newValue) {
@@ -86,6 +96,10 @@ public class TrieLogLayer {
     storage
         .computeIfAbsent(address, a -> new TreeMap<>())
         .put(slotHash, new BonsaiValue<>(oldValue, newValue));
+  }
+
+  static TrieLogLayer fromBytes(final byte[] bytes) {
+    return readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
   }
 
   static TrieLogLayer readFrom(final RLPInput input) {
@@ -134,6 +148,9 @@ public class TrieLogLayer {
         input.leaveList();
         newLayer.storage.put(address, storageChanges);
       }
+
+      // TODO add trie nodes
+
       // lenient leave list for forward compatible additions.
       input.leaveListLenient();
     }
@@ -186,6 +203,9 @@ public class TrieLogLayer {
         }
         output.endList();
       }
+
+      // TODO write trie nodes
+
       output.endList(); // this change
     }
     output.endList(); // container
@@ -203,6 +223,10 @@ public class TrieLogLayer {
     return storage.entrySet().stream();
   }
 
+  boolean hasStorageChanges(final Address address) {
+    return storage.containsKey(address);
+  }
+
   Stream<Map.Entry<Hash, BonsaiValue<UInt256>>> streamStorageChanges(final Address address) {
     return storage.getOrDefault(address, Map.of()).entrySet().stream();
   }
@@ -214,10 +238,6 @@ public class TrieLogLayer {
     } else {
       return reader.apply(input);
     }
-  }
-
-  boolean isFrozen() {
-    return frozen;
   }
 
   public Optional<Bytes> getCode(final Address address) {
@@ -232,5 +252,53 @@ public class TrieLogLayer {
 
   public Optional<StateTrieAccountValue> getAccount(final Address address) {
     return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getUpdated);
+  }
+
+  public String dump() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append("TrieLogLayer{" + "blockHash=").append(blockHash).append(frozen).append('}');
+    sb.append("accounts\n");
+    for (final Map.Entry<Address, BonsaiValue<StateTrieAccountValue>> account :
+        accounts.entrySet()) {
+      sb.append(" : ").append(account.getKey()).append("\n");
+      if (Objects.equals(account.getValue().getOriginal(), account.getValue().getUpdated())) {
+        sb.append("   = ").append(account.getValue().getUpdated()).append("\n");
+      } else {
+        sb.append("   - ").append(account.getValue().getOriginal()).append("\n");
+        sb.append("   + ").append(account.getValue().getUpdated()).append("\n");
+      }
+    }
+    sb.append("code").append("\n");
+    for (final Map.Entry<Address, BonsaiValue<Bytes>> code : code.entrySet()) {
+      sb.append(" : ").append(code.getKey()).append("\n");
+      if (Objects.equals(code.getValue().getOriginal(), code.getValue().getUpdated())) {
+        sb.append("   = ").append(code.getValue().getOriginal()).append("\n");
+      } else {
+        sb.append("   - ").append(code.getValue().getOriginal()).append("\n");
+        sb.append("   + ").append(code.getValue().getUpdated()).append("\n");
+      }
+    }
+    sb.append("Storage").append("\n");
+    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storage : storage.entrySet()) {
+      sb.append(" : ").append(storage.getKey()).append("\n");
+      for (final Map.Entry<Hash, BonsaiValue<UInt256>> slot : storage.getValue().entrySet()) {
+        final UInt256 originalValue = slot.getValue().getOriginal();
+        final UInt256 updatedValue = slot.getValue().getUpdated();
+        sb.append("   : ").append(slot.getKey()).append("\n");
+        if (Objects.equals(originalValue, updatedValue)) {
+          sb.append("     = ")
+              .append((originalValue == null) ? "null" : originalValue.toShortHexString())
+              .append("\n");
+        } else {
+          sb.append("     - ")
+              .append((originalValue == null) ? "null" : originalValue.toShortHexString())
+              .append("\n");
+          sb.append("     + ")
+              .append((updatedValue == null) ? "null" : updatedValue.toShortHexString())
+              .append("\n");
+        }
+      }
+    }
+    return sb.toString();
   }
 }

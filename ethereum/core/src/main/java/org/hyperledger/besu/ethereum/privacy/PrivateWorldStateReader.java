@@ -50,7 +50,7 @@ public class PrivateWorldStateReader {
             Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)), blockHash);
 
     return privateWorldStateArchive
-        .get(latestStateRoot)
+        .get(latestStateRoot, blockHash)
         .flatMap(worldState -> Optional.ofNullable(worldState.get(contractAddress)))
         .flatMap(account -> Optional.ofNullable(account.getCode()));
   }

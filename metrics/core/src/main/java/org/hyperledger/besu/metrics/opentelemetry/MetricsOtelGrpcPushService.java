@@ -22,23 +22,35 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import io.opentelemetry.exporters.otlp.OtlpGrpcMetricExporter;
+import io.opentelemetry.exporter.otlp.metrics.OtlpGrpcMetricExporter;
+import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.export.IntervalMetricReader;
+import io.opentelemetry.sdk.trace.SpanProcessor;
+import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class MetricsOtelGrpcPushService implements MetricsService {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final MetricsConfiguration configuration;
   private final OpenTelemetrySystem metricsSystem;
   private IntervalMetricReader periodicReader;
+  private SpanProcessor spanProcessor;
 
   public MetricsOtelGrpcPushService(
       final MetricsConfiguration configuration, final OpenTelemetrySystem metricsSystem) {
+
     this.configuration = configuration;
     this.metricsSystem = metricsSystem;
   }
 
   @Override
   public CompletableFuture<?> start() {
+    LOG.info("Starting OpenTelemetry push service");
     OtlpGrpcMetricExporter exporter = OtlpGrpcMetricExporter.getDefault();
     IntervalMetricReader.Builder builder =
         IntervalMetricReader.builder()
@@ -49,6 +61,14 @@ public class MetricsOtelGrpcPushService implements MetricsService {
                 Collections.singleton(metricsSystem.getMeterSdkProvider().getMetricProducer()))
             .setMetricExporter(exporter);
     this.periodicReader = builder.build();
+    this.spanProcessor =
+        BatchSpanProcessor.builder(
+                OtlpGrpcSpanExporter.builder()
+                    .readSystemProperties()
+                    .readEnvironmentVariables()
+                    .build())
+            .build();
+    OpenTelemetrySdk.get().getTracerManagement().addSpanProcessor(spanProcessor);
     return CompletableFuture.completedFuture(null);
   }
 
@@ -56,6 +76,12 @@ public class MetricsOtelGrpcPushService implements MetricsService {
   public CompletableFuture<?> stop() {
     if (periodicReader != null) {
       periodicReader.shutdown();
+    }
+    if (spanProcessor != null) {
+      CompletableResultCode result = spanProcessor.shutdown();
+      CompletableFuture<?> future = new CompletableFuture<>();
+      result.whenComplete(() -> future.complete(null));
+      return future;
     }
     return CompletableFuture.completedFuture(null);
   }
