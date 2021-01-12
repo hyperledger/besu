@@ -85,6 +85,7 @@ public class PivotBlockRetrieverTest {
         spy(
             new PivotBlockRetriever(
                 protocolSchedule,
+                protocolContext.getWorldStateArchive(),
                 ethProtocolManager.ethContext(),
                 metricsSystem,
                 PIVOT_BLOCK_NUMBER,

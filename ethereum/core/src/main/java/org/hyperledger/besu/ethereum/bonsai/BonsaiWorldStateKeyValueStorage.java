@@ -127,7 +127,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
-    return trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+    System.out.println(rootHash + " " + blockHash);
+    return trieBranchStorage
+            .get(WORLD_ROOT_HASH_KEY)
+            .map(Bytes32::wrap)
+            .filter(hash -> hash.equals(rootHash))
+            .isPresent()
+        || trieBranchStorage.containsKey(blockHash.toArrayUnsafe());
   }
 
   @Override
@@ -216,11 +222,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     @Override
     public Updater putAccountStateTrieNode(
         final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-
-      if (location == null || nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-        // Don't save empty nodes
-        return this;
-      }
       trieBranchStorageTransaction.put(location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }

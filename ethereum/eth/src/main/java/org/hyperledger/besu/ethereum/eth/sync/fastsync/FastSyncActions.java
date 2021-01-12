@@ -182,6 +182,7 @@ public class FastSyncActions {
     }
     return new PivotBlockRetriever(
             protocolSchedule,
+            protocolContext.getWorldStateArchive(),
             ethContext,
             metricsSystem,
             currentState.getPivotBlockNumber().getAsLong(),

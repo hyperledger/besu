@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -64,6 +65,11 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   @Override
   public MutableWorldState getMutable() {
     return getMutable(EMPTY_ROOT_HASH, null).get();
+  }
+
+  @Override
+  public void setMutable(final BlockHeader blockHeader) {
+    // ignore for forest
   }
 
   @Override

@@ -35,7 +35,7 @@ class CodeNodeDataRequest extends NodeDataRequest {
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putCode(accountHash.orElse(null), getHash(), getData());
+    updater.putCode(accountHash.orElse(Hash.EMPTY), getHash(), getData());
   }
 
   @Override
@@ -46,7 +46,7 @@ class CodeNodeDataRequest extends NodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getCode(getHash(), accountHash.orElse(null));
+    return worldStateStorage.getCode(getHash(), accountHash.orElse(Hash.EMPTY));
   }
 
   public Optional<Hash> getAccountHash() {

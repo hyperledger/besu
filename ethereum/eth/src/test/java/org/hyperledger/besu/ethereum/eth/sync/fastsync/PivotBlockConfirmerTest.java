@@ -81,6 +81,7 @@ public class PivotBlockConfirmerTest {
         spy(
             new PivotBlockConfirmer(
                 protocolSchedule,
+                protocolContext.getWorldStateArchive(),
                 ethProtocolManager.ethContext(),
                 metricsSystem,
                 PIVOT_BLOCK_NUMBER,

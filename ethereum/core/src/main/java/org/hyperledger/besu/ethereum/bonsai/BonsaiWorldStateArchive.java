@@ -155,6 +155,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
+  public void setMutable(final BlockHeader blockHeader) {
+    persistedState.persist(blockHeader, true);
+  }
+
+  @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
     return Optional.empty();
   }

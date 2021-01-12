@@ -37,15 +37,11 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorldView {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
@@ -85,12 +81,17 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public void persist(final BlockHeader blockHeader) {
+    persist(blockHeader, false);
+  }
+
+  public void persist(final BlockHeader blockHeader, final boolean isPivotBlock) {
     boolean success = false;
     final Hash originalBlockHash = worldStateBlockHash;
     final Hash originalRootHash = worldStateRootHash;
     final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
 
     try {
+
       // first clear storage
       for (final Address address : updater.getStorageToClear()) {
         // because we are clearing persisted values we need the account root as persisted
@@ -218,7 +219,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       accountTrie.commit(
           (location, hash, value) ->
               writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
-      worldStateRootHash = Hash.wrap(accountTrie.getRootHash());
+      worldStateRootHash =
+          isPivotBlock ? blockHeader.getStateRoot() : Hash.wrap(accountTrie.getRootHash());
       stateUpdater
           .getTrieBranchStorageTransaction()
           .put(WORLD_ROOT_HASH_KEY, worldStateRootHash.toArrayUnsafe());
@@ -240,11 +242,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         stateUpdater
             .getTrieBranchStorageTransaction()
             .put(WORLD_BLOCK_HASH_KEY, worldStateBlockHash.toArrayUnsafe());
-        LOG.info("BEfore Writing Trie Log for {} {}", blockHeader.getNumber(), worldStateBlockHash);
-        LOG.info("BEfore Writing Trie Log  {} {}", originalBlockHash, blockHeader.getParentHash());
 
         if (originalBlockHash.equals(blockHeader.getParentHash())) {
-          LOG.info("Writing Trie Log for {} {}", blockHeader.getNumber(), worldStateBlockHash);
           final TrieLogLayer trieLog = updater.generateTrieLog(worldStateBlockHash);
           trieLog.freeze();
           archive.addLayeredWorldState(
