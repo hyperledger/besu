@@ -14,11 +14,16 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+
+import java.util.Collection;
 
 @SuppressWarnings("UnusedVariable")
 public class MessageValidatorFactory {
@@ -36,6 +41,14 @@ public class MessageValidatorFactory {
     this.protocolContext = protocolContext;
   }
 
+  private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
+    return protocolContext
+        .getConsensusState(BftContext.class)
+        .getVoteTallyCache()
+        .getVoteTallyAfterBlock(parentHeader)
+        .getValidators();
+  }
+
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
     return new RoundChangeMessageValidator();
@@ -43,7 +56,17 @@ public class MessageValidatorFactory {
 
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
-    return new MessageValidator();
+
+    final Collection<Address> validatorsAtHeight = getValidatorsAfterBlock(parentHeader);
+
+    final PrepareValidator prepareValidator =
+        new PrepareValidator(
+            validatorsAtHeight,
+            roundIdentifier,
+            Hash.EMPTY); // TODO(tmm): SOMEHOW we need to work out how we're going to do this
+    // (should be in proposal)
+
+    return new MessageValidator(prepareValidator);
   }
 
   public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
