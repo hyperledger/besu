@@ -45,11 +45,11 @@ public class PrepareValidator {
     this.expectedDigest = expectedDigest;
   }
 
-  public boolean validatePrepare(final Prepare msg) {
-    return validatePayload(msg.getSignedPayload());
+  public boolean validate(final Prepare msg) {
+    return validate(msg.getSignedPayload());
   }
 
-  public boolean validatePayload(final SignedData<PreparePayload> signedPayload) {
+  public boolean validate(final SignedData<PreparePayload> signedPayload) {
     if (!validators.contains(signedPayload.getAuthor())) {
       LOG.info("{}: did not originate from a recognised validator.", ERROR_PREFIX);
       return false;

@@ -38,7 +38,7 @@ public class PrepareValidatorTest {
 
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
       final Prepare msg = validators.getMessageFactory(i).createPrepare(round, expectedHash);
-      assertThat(validator.validatePrepare(msg)).isTrue();
+      assertThat(validator.validate(msg)).isTrue();
     }
   }
 
@@ -52,7 +52,7 @@ public class PrepareValidatorTest {
     final QbftNode nonValidator = QbftNode.create();
 
     final Prepare msg = nonValidator.getMessageFactory().createPrepare(round, expectedHash);
-    assertThat(validator.validatePrepare(msg)).isFalse();
+    assertThat(validator.validate(msg)).isFalse();
   }
 
   @Test
@@ -66,7 +66,7 @@ public class PrepareValidatorTest {
             expectedHash);
 
     final Prepare msg = validators.getMessageFactory(0).createPrepare(round, expectedHash);
-    assertThat(validator.validatePrepare(msg)).isFalse();
+    assertThat(validator.validate(msg)).isFalse();
   }
 
   @Test
@@ -81,7 +81,7 @@ public class PrepareValidatorTest {
 
     final Prepare msg = validators.getMessageFactory(0).createPrepare(round, expectedHash);
 
-    assertThat(validator.validatePrepare(msg)).isFalse();
+    assertThat(validator.validate(msg)).isFalse();
   }
 
   @Test
@@ -94,6 +94,6 @@ public class PrepareValidatorTest {
     final Prepare msg =
         validators.getMessageFactory(0).createPrepare(round, Hash.fromHexStringLenient("0x2"));
 
-    assertThat(validator.validatePrepare(msg)).isFalse();
+    assertThat(validator.validate(msg)).isFalse();
   }
 }
