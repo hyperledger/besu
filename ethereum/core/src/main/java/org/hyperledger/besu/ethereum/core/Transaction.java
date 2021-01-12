@@ -579,7 +579,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         && Objects.equals(this.signature, that.signature)
         && Objects.equals(this.to, that.to)
         && Objects.equals(this.value, that.value)
-        && Objects.equals(this.v, that.v);
+        && Objects.equals(this.getV(), that.getV());
   }
 
   @Override
