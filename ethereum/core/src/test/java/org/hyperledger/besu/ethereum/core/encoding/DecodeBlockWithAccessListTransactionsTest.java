@@ -73,7 +73,7 @@ public class DecodeBlockWithAccessListTransactionsTest {
     this.expectedBlock = expectedBlock;
   }
 
-  @Parameterized.Parameters(name = "acl_block_{0}.json")
+  @Parameterized.Parameters(name = "acl_block_{index}.json")
   public static Iterable<Object[]> data() {
     final ObjectMapper objectMapper = new ObjectMapper();
     return IntStream.rangeClosed(0, 9)
