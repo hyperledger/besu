@@ -48,52 +48,6 @@ public class BlockHeader extends SealableBlockHeader
 
   private final Supplier<ParsedExtraData> parsedExtraData;
 
-  @VisibleForTesting
-  @JsonCreator
-  // todo see if this works without the @JsonProperty's
-  public BlockHeader(
-      @JsonProperty("parentHash") final Hash parentHash,
-      @JsonProperty("ommersHash") final Hash ommersHash,
-      @JsonProperty("coinbase") final Address coinbase,
-      @JsonProperty("stateRoot") final Hash stateRoot,
-      @JsonProperty("transactionsRoot") final Hash transactionsRoot,
-      @JsonProperty("receiptsRoot") final Hash receiptsRoot,
-      @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
-      @JsonProperty("difficulty") final Difficulty difficulty,
-      @JsonProperty("number") @JsonDeserialize(using = QuantityToLongDeserializer.class)
-          final long number,
-      @JsonProperty("gasLimit") @JsonDeserialize(using = QuantityToLongDeserializer.class)
-          final long gasLimit,
-      @JsonProperty("gasUsed") @JsonDeserialize(using = QuantityToLongDeserializer.class)
-          final long gasUsed,
-      @JsonProperty("timestamp") @JsonDeserialize(using = QuantityToLongDeserializer.class)
-          final long timestamp,
-      @JsonProperty("extraData") @JsonDeserialize(using = HexStringDeserializer.class)
-          final Bytes extraData,
-      @JsonProperty("baseFee") @JsonDeserialize(using = QuantityToLongDeserializer.class)
-          final Long baseFee,
-      @JsonProperty("mixHash") final Hash mixHash,
-      @JsonProperty("nonce") @JsonDeserialize(using = QuantityToLongDeserializer.class)
-          final long nonce) {
-    this(
-        parentHash,
-        ommersHash,
-        coinbase,
-        stateRoot,
-        transactionsRoot,
-        receiptsRoot,
-        logsBloom,
-        difficulty,
-        number,
-        gasLimit,
-        gasUsed,
-        timestamp,
-        extraData,
-        baseFee,
-        mixHash,
-        nonce,
-        new MainnetBlockHeaderFunctions());
-  }
 
   public BlockHeader(
       final Hash parentHash,
