@@ -231,7 +231,6 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final Bytes bytes = input.readBytes();
       transactionType = TransactionType.of(bytes.get(0));
       input = new BytesValueRLPInput(bytes.slice(1), false);
-      System.out.println(bytes.toHexString());
     }
 
     input.enterList();
