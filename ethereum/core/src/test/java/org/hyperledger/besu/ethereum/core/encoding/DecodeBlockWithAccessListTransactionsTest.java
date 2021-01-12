@@ -128,8 +128,8 @@ public class DecodeBlockWithAccessListTransactionsTest {
     @JsonCreator
     public CustomHeaderForThisTest(
         @JsonProperty("parentHash") final Hash parentHash,
-        @JsonProperty("ommersHash") final Hash ommersHash,
-        @JsonProperty("coinbase") final Address coinbase,
+        @JsonProperty("sha3Uncles") final Hash ommersHash,
+        @JsonProperty("miner") final Address coinbase,
         @JsonProperty("stateRoot") final Hash stateRoot,
         @JsonProperty("transactionsRoot") final Hash transactionsRoot,
         @JsonProperty("receiptsRoot") final Hash receiptsRoot,
