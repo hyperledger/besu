@@ -30,7 +30,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbft.statemachine.PreparedRoundArtifacts;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -78,22 +78,20 @@ public class ValidatorPeer extends DefaultValidatorPeer {
 
   public Proposal injectProposalForFutureRound(
       final ConsensusRoundIdentifier rId,
-      final Block blockToPropose,
-      final List<SignedData<RoundChangePayload>> roundChangePayloads,
-      final List<SignedData<PreparePayload>> prepares) {
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final List<SignedData<PreparePayload>> prepares,
+      final Block blockToPropose) {
 
     final Proposal payload =
-        messageFactory.createProposal(rId, blockToPropose, roundChangePayloads, prepares);
+        messageFactory.createProposal(rId, blockToPropose, roundChanges, prepares);
     injectMessage(ProposalMessageData.create(payload));
     return payload;
   }
 
   public RoundChange injectRoundChange(
       final ConsensusRoundIdentifier rId,
-      final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {
-    final RoundChange payload =
-        messageFactory.createRoundChange(
-            rId, preparedRoundArtifacts.map(PreparedRoundArtifacts::getPreparedCertificate));
+      final Optional<PreparedCertificate> preparedRoundArtifacts) {
+    final RoundChange payload = messageFactory.createRoundChange(rId, preparedRoundArtifacts);
     injectMessage(RoundChangeMessageData.create(payload));
     return payload;
   }
