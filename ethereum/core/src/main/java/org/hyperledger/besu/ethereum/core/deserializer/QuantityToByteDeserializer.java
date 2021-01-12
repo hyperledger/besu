@@ -1,10 +1,10 @@
 package org.hyperledger.besu.ethereum.core.deserializer;
 
+import java.io.IOException;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-
-import java.io.IOException;
 
 public class QuantityToByteDeserializer extends JsonDeserializer<Byte> {
   @Override

@@ -19,17 +19,10 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.util.Collections.emptyList;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class AccessList extends ArrayList<Map.Entry<Address, List<Bytes32>>> {

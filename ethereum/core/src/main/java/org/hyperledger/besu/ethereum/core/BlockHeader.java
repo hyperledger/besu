@@ -15,20 +15,13 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
-import org.hyperledger.besu.ethereum.core.deserializer.QuantityToLongDeserializer;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -47,7 +40,6 @@ public class BlockHeader extends SealableBlockHeader
   @JsonIgnore private final Supplier<Hash> hash;
 
   private final Supplier<ParsedExtraData> parsedExtraData;
-
 
   public BlockHeader(
       final Hash parentHash,

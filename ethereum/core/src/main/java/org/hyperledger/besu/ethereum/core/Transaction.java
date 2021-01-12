@@ -15,18 +15,10 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.Collections.emptyList;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
-import org.hyperledger.besu.ethereum.core.deserializer.QuantityToByteDeserializer;
-import org.hyperledger.besu.ethereum.core.deserializer.QuantityToLongDeserializer;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
