@@ -196,6 +196,7 @@ public class TransactionRLPDecoder {
     final byte recId = (byte) rlpInput.readIntScalar();
     final Transaction transaction =
         preSignatureTransactionBuilder
+            .v(BigInteger.valueOf(recId))
             .signature(
                 SECP256K1.Signature.create(
                     rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
