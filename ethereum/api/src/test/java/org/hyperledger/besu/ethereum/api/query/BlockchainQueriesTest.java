@@ -204,8 +204,10 @@ public class BlockchainQueriesTest {
     final BlockchainWithData data = setupBlockchain(3, addresses, storageKeys);
     final BlockchainQueries queries = data.blockchainQueries;
 
-    final Hash latestStateRoot0 = data.blockData.get(2).block.getHeader().getStateRoot();
-    final WorldState worldState0 = data.worldStateArchive.get(latestStateRoot0).get();
+    final BlockHeader blockHeader0 = data.blockData.get(2).block.getHeader();
+    final Hash latestStateRoot0 = blockHeader0.getStateRoot();
+    final WorldState worldState0 =
+        data.worldStateArchive.get(latestStateRoot0, blockHeader0.getHash()).get();
     addresses.forEach(
         address ->
             storageKeys.forEach(
@@ -215,8 +217,10 @@ public class BlockchainQueriesTest {
                   assertThat(result).contains(actualAccount0.getStorageValue(storageKey));
                 }));
 
-    final Hash latestStateRoot1 = data.blockData.get(1).block.getHeader().getStateRoot();
-    final WorldState worldState1 = data.worldStateArchive.get(latestStateRoot1).get();
+    final BlockHeader header1 = data.blockData.get(1).block.getHeader();
+    final Hash latestStateRoot1 = header1.getStateRoot();
+    final WorldState worldState1 =
+        data.worldStateArchive.get(latestStateRoot1, header1.getHash()).get();
     addresses.forEach(
         address ->
             storageKeys.forEach(
@@ -236,8 +240,9 @@ public class BlockchainQueriesTest {
 
     for (int i = 0; i < blockCount; i++) {
       final long curBlockNumber = i;
-      final Hash stateRoot = data.blockData.get(i).block.getHeader().getStateRoot();
-      final WorldState worldState = data.worldStateArchive.get(stateRoot).get();
+      final BlockHeader header = data.blockData.get(i).block.getHeader();
+      final Hash stateRoot = header.getStateRoot();
+      final WorldState worldState = data.worldStateArchive.get(stateRoot, header.getHash()).get();
       assertThat(addresses).isNotEmpty();
 
       addresses.forEach(

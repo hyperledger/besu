@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.WorldState;
 
 import java.util.Collections;
 import java.util.NavigableMap;
@@ -132,7 +132,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       final Address accountAddress,
       final Hash startKey,
       final int limit,
-      final MutableWorldState worldState) {
+      final WorldState worldState) {
     final Account account = worldState.get(accountAddress);
     final NavigableMap<Bytes32, AccountStorageEntry> entries =
         account.storageEntriesFrom(startKey, limit + 1);
