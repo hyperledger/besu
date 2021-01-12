@@ -176,7 +176,9 @@ public class TransactionRLPDecoder {
             .nonce(rlpInput.readLongScalar())
             .gasPrice(Wei.of(rlpInput.readUInt256Scalar()))
             .gasLimit(rlpInput.readLongScalar())
-            .to(rlpInput.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
+            .to(
+                rlpInput.readBytes(
+                    addressBytes -> addressBytes.size() == 0 ? null : Address.wrap(addressBytes)))
             .value(Wei.of(rlpInput.readUInt256Scalar()))
             .payload(rlpInput.readBytes())
             .accessList(
