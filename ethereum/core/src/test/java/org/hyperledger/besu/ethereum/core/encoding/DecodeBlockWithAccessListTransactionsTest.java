@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.core.deserializer.QuantityToByteDeserializer;
 import org.hyperledger.besu.ethereum.core.deserializer.QuantityToLongDeserializer;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -137,9 +138,13 @@ public class DecodeBlockWithAccessListTransactionsTest {
 
   @Test
   public void decodesBlockWithAccessListTransactionsCorrectly() {
-    assertThat(Block.readFrom(rlpInput, new MainnetBlockHeaderFunctions()))
-        .isEqualTo(expectedBlock);
-    assertThat(transactionReceipts).isNotNull();
+    final Block actualBlock = Block.readFrom(rlpInput, new MainnetBlockHeaderFunctions());
+
+    assertThat(actualBlock).isEqualTo(expectedBlock);
+    assertThat(BodyValidation.transactionsRoot(actualBlock.getBody().getTransactions()))
+        .isEqualTo(BodyValidation.transactionsRoot(expectedBlock.getBody().getTransactions()));
+    assertThat(BodyValidation.receiptsRoot(transactionReceipts))
+        .isEqualTo(actualBlock.getHeader().getReceiptsRoot());
   }
 
   /**
