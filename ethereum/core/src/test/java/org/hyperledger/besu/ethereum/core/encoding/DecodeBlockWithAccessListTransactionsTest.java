@@ -19,6 +19,8 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -35,8 +37,10 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.core.deserializer.QuantityToByteDeserializer;
@@ -48,6 +52,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -66,11 +72,15 @@ public class DecodeBlockWithAccessListTransactionsTest {
 
   private final RLPInput rlpInput;
   private final Block expectedBlock;
+  private final List<TransactionReceipt> transactionReceipts;
 
   public DecodeBlockWithAccessListTransactionsTest(
-      final RLPInput rlpInput, final Block expectedBlock) {
+      final RLPInput rlpInput,
+      final Block expectedBlock,
+      final List<TransactionReceipt> transactionReceipts) {
     this.rlpInput = rlpInput;
     this.expectedBlock = expectedBlock;
+    this.transactionReceipts = transactionReceipts;
   }
 
   @Parameterized.Parameters(name = "acl_block_{index}.json")
@@ -91,26 +101,35 @@ public class DecodeBlockWithAccessListTransactionsTest {
             rootNode -> {
               try {
                 final JsonNode jsonNode = rootNode.get("json");
-                return new Object[] {
-                  new BytesValueRLPInput(
-                      Bytes.fromHexString("0x" + rootNode.get("rlp").textValue()), false),
-                  new Block(
-                      objectMapper.treeToValue(
-                          jsonNode.get("header"), CustomHeaderForThisTest.class),
-                      new BlockBody(
-                          Arrays.asList(
-                              Optional.ofNullable(
-                                      objectMapper.treeToValue(
-                                          jsonNode.get("transactions"),
-                                          CustomTransactionForThisTest[].class))
-                                  .orElse(new CustomTransactionForThisTest[] {})),
-                          Arrays.asList(
-                              Optional.ofNullable(
-                                      objectMapper.treeToValue(
-                                          jsonNode.get("uncles"), CustomHeaderForThisTest[].class))
-                                  .orElse(new CustomHeaderForThisTest[] {}))))
-                  // todo receipts?
-                };
+
+                final BytesValueRLPInput rlpInput =
+                    new BytesValueRLPInput(
+                        Bytes.fromHexString("0x" + rootNode.get("rlp").textValue()), false);
+
+                final Block block =
+                    new Block(
+                        objectMapper.treeToValue(
+                            jsonNode.get("header"), CustomHeaderForThisTest.class),
+                        new BlockBody(
+                            Arrays.asList(
+                                Optional.ofNullable(
+                                        objectMapper.treeToValue(
+                                            jsonNode.get("transactions"),
+                                            CustomTransactionForThisTest[].class))
+                                    .orElse(new CustomTransactionForThisTest[] {})),
+                            Arrays.asList(
+                                Optional.ofNullable(
+                                        objectMapper.treeToValue(
+                                            jsonNode.get("uncles"),
+                                            CustomHeaderForThisTest[].class))
+                                    .orElse(new CustomHeaderForThisTest[] {}))));
+
+                final List<CustomTransactionReceiptForThisTest> receipts =
+                    Arrays.asList(
+                        objectMapper.treeToValue(
+                            jsonNode.get("receipts"), CustomTransactionReceiptForThisTest[].class));
+
+                return new Object[] {rlpInput, block, receipts};
               } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
               }
@@ -122,8 +141,13 @@ public class DecodeBlockWithAccessListTransactionsTest {
   public void decodesBlockWithAccessListTransactionsCorrectly() {
     assertThat(Block.readFrom(rlpInput, new MainnetBlockHeaderFunctions()))
         .isEqualTo(expectedBlock);
+    assertThat(transactionReceipts).isNotNull();
   }
 
+  /**
+   * Test files provided by Martin from EF so the json format is a bit different from what we would
+   * generate. Hence the custom classes below.
+   */
   private static class CustomHeaderForThisTest extends BlockHeader {
     @JsonCreator
     public CustomHeaderForThisTest(
@@ -221,34 +245,68 @@ public class DecodeBlockWithAccessListTransactionsTest {
               ? Optional.empty()
               : Optional.of(BigInteger.valueOf(recIdorV)));
     }
+
+    private static class AccessListDeserializer extends StdDeserializer<AccessList> {
+
+      private AccessListDeserializer() {
+        this(null);
+      }
+
+      private AccessListDeserializer(final Class<?> vc) {
+        super(vc);
+      }
+
+      @Override
+      public AccessList deserialize(final JsonParser jsonParser, final DeserializationContext ctxt)
+          throws IOException {
+        final JsonNode accessListNode = jsonParser.getCodec().readTree(jsonParser);
+        return new AccessList(
+            Streams.stream(accessListNode.elements())
+                .map(
+                    accessListEntryNode ->
+                        Map.entry(
+                            Address.fromHexString(accessListEntryNode.get("address").textValue()),
+                            Streams.stream(accessListEntryNode.get("storageKeys").elements())
+                                .map(
+                                    storageKeyNode ->
+                                        Bytes32.fromHexString(storageKeyNode.textValue()))
+                                .collect(toUnmodifiableList())))
+                .collect(toUnmodifiableList()));
+      }
+    }
   }
 
-  private static class AccessListDeserializer extends StdDeserializer<AccessList> {
+  @JsonIgnoreProperties(
+      value = {
+        "logs",
+        "root",
+        "logsBloom",
+        "transactionHash",
+        "contractAddress",
+        "gasUsed",
+        "blockHash",
+        "transactionIndex"
+      }) // these fields are not used in testing or the values in the test file are nonsense
+  private static class CustomTransactionReceiptForThisTest extends TransactionReceipt {
 
-    private AccessListDeserializer() {
-      this(null);
+    @JsonCreator
+    public CustomTransactionReceiptForThisTest(
+        @JsonProperty("type") final TransactionType transactionType,
+        @JsonProperty("status") @JsonDeserialize(using = QuantityToLongDeserializer.class)
+            final long status,
+        @JsonProperty("cumulativeGasUsed")
+            @JsonDeserialize(using = QuantityToLongDeserializer.class)
+            final long cumulativeGasUsed) {
+      super(
+          fromNullable(transactionType),
+          (int) status,
+          cumulativeGasUsed,
+          Collections.emptyList() /* tests have no logs */,
+          Optional.empty() /* tests have no revert reasons */);
     }
 
-    private AccessListDeserializer(final Class<?> vc) {
-      super(vc);
-    }
-
-    @Override
-    public AccessList deserialize(final JsonParser jsonParser, final DeserializationContext ctxt)
-        throws IOException {
-      final JsonNode accessListNode = jsonParser.getCodec().readTree(jsonParser);
-      return new AccessList(
-          Streams.stream(accessListNode.elements())
-              .map(
-                  accessListEntryNode ->
-                      Map.entry(
-                          Address.fromHexString(accessListEntryNode.get("address").textValue()),
-                          Streams.stream(accessListEntryNode.get("storageKeys").elements())
-                              .map(
-                                  storageKeyNode ->
-                                      Bytes32.fromHexString(storageKeyNode.textValue()))
-                              .collect(toUnmodifiableList())))
-              .collect(toUnmodifiableList()));
+    private static TransactionType fromNullable(final TransactionType transactionType) {
+      return transactionType == null ? TransactionType.FRONTIER : transactionType;
     }
   }
 }
