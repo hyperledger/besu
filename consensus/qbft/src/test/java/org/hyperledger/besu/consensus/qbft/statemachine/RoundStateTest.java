@@ -75,7 +75,7 @@ public class RoundStateTest {
 
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
-    assertThat(roundState.constructPreparedRoundCertificate()).isEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isEmpty();
   }
 
   @Test
@@ -92,7 +92,7 @@ public class RoundStateTest {
     assertThat(roundState.setProposedBlock(proposal)).isFalse();
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
-    assertThat(roundState.constructPreparedRoundCertificate()).isEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isEmpty();
   }
 
   @Test
@@ -108,8 +108,8 @@ public class RoundStateTest {
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isTrue();
     assertThat(roundState.isCommitted()).isFalse();
-    assertThat(roundState.constructPreparedRoundCertificate()).isNotEmpty();
-    assertThat(roundState.constructPreparedRoundCertificate().get().getPreparedBlock())
+    assertThat(roundState.constructPreparedCertificate()).isNotEmpty();
+    assertThat(roundState.constructPreparedCertificate().get().getBlock())
         .isEqualTo(proposal.getBlock());
   }
 
@@ -141,7 +141,7 @@ public class RoundStateTest {
     roundState.addCommitMessage(commit);
     assertThat(roundState.isPrepared()).isTrue();
     assertThat(roundState.isCommitted()).isTrue();
-    assertThat(roundState.constructPreparedRoundCertificate()).isNotEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isNotEmpty();
   }
 
   @Test
@@ -160,12 +160,12 @@ public class RoundStateTest {
     roundState.addPrepareMessage(firstPrepare);
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
-    assertThat(roundState.constructPreparedRoundCertificate()).isEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isEmpty();
 
     roundState.addPrepareMessage(secondPrepare);
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
-    assertThat(roundState.constructPreparedRoundCertificate()).isEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isEmpty();
 
     final Proposal proposal =
         validatorMessageFactories
@@ -175,7 +175,7 @@ public class RoundStateTest {
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isTrue();
     assertThat(roundState.isCommitted()).isFalse();
-    assertThat(roundState.constructPreparedRoundCertificate()).isNotEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isNotEmpty();
   }
 
   @Test
@@ -207,7 +207,7 @@ public class RoundStateTest {
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
-    assertThat(roundState.constructPreparedRoundCertificate()).isEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isEmpty();
   }
 
   @Test
