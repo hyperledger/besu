@@ -56,13 +56,14 @@ class FullSyncTargetManager extends SyncTargetManager {
     final BlockHeader commonAncestor = syncTarget.commonAncestor();
     if (protocolContext
         .getWorldStateArchive()
-        .isWorldStateAvailable(commonAncestor.getStateRoot())) {
+        .isWorldStateAvailable(commonAncestor.getStateRoot(), commonAncestor.getHash())) {
       return Optional.of(syncTarget);
     } else {
       LOG.warn(
-          "Disconnecting {} because world state is not available at common ancestor at block {}",
+          "Disconnecting {} because world state is not available at common ancestor at block {} ({})",
           syncTarget.peer(),
-          commonAncestor.getNumber());
+          commonAncestor.getNumber(),
+          commonAncestor.getHash());
       syncTarget.peer().disconnect(DisconnectReason.USELESS_PEER);
       return Optional.empty();
     }

@@ -76,7 +76,7 @@ public class EthEstimateGasTest {
     when(blockchain.getBlockHeader(eq(1L))).thenReturn(Optional.of(blockHeader));
     when(blockHeader.getGasLimit()).thenReturn(Long.MAX_VALUE);
     when(blockHeader.getNumber()).thenReturn(1L);
-    when(worldStateArchive.isWorldStateAvailable(any())).thenReturn(true);
+    when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(true);
 
     method = new EthEstimateGas(blockchainQueries, transactionSimulator);
   }
@@ -223,7 +223,7 @@ public class EthEstimateGasTest {
 
   @Test
   public void shouldReturnErrorWhenWorldStateIsNotAvailable() {
-    when(worldStateArchive.isWorldStateAvailable(any())).thenReturn(false);
+    when(worldStateArchive.isWorldStateAvailable(any(), any())).thenReturn(false);
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
     mockTransientProcessorResultGasEstimate(1L, false, false);

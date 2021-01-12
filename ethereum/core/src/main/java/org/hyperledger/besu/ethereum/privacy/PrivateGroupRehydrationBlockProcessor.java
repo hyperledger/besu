@@ -121,7 +121,7 @@ public class PrivateGroupRehydrationBlockProcessor {
             privateStateRootResolver.resolveLastStateRoot(privacyGroupId, metadataUpdater);
 
         final MutableWorldState disposablePrivateState =
-            privateWorldStateArchive.getMutable(lastRootHash).get();
+            privateWorldStateArchive.getMutable(lastRootHash, null).get();
         final WorldUpdater privateStateUpdater = disposablePrivateState.updater();
         maybeInjectDefaultManagementAndProxy(
             lastRootHash, disposablePrivateState, privateStateUpdater);

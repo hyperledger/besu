@@ -90,8 +90,10 @@ public class MainnetBlockValidator implements BlockValidator {
     }
 
     final Optional<MutableWorldState> maybeWorldState =
-        context.getWorldStateArchive().getMutable(parentHeader.getStateRoot());
-    if (maybeWorldState.isEmpty()) {
+        context
+            .getWorldStateArchive()
+            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
+    if (!maybeWorldState.isPresent()) {
       LOG.debug(
           "Unable to process block {} because parent world state {} is not available",
           block.getHeader().getNumber(),
@@ -127,6 +129,8 @@ public class MainnetBlockValidator implements BlockValidator {
    */
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
+    System.out.println("Using the MainnetBlockValidator");
+
     return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
   }
 

@@ -57,34 +57,37 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
 
+    System.out.println("Using the GoQuormBlockValidator");
     final MutableWorldState privateWorldState =
-        getPrivateWorldState(context, worldState.rootHash());
+        getPrivateWorldState(context, worldState.rootHash(), block.getHash());
 
     return ((GoQuorumBlockProcessor) blockProcessor)
         .processBlock(context.getBlockchain(), worldState, privateWorldState, block);
   }
 
   private MutableWorldState getPrivateWorldState(
-      final ProtocolContext context, final Hash publicWorldStateRootHash) {
+      final ProtocolContext context, final Hash worldStateRootHash, final Hash publicBlockHash) {
     final Hash privateStateRootHash =
         goQuorumPrivateStorage
-            .getPrivateStateRootHash(publicWorldStateRootHash)
+            .getPrivateStateRootHash(worldStateRootHash)
             .orElse(Hash.EMPTY_TRIE_HASH);
 
     final Optional<MutableWorldState> maybePrivateWorldState =
-        context.getPrivateWorldStateArchive().flatMap(p -> p.getMutable(privateStateRootHash));
+        context
+            .getPrivateWorldStateArchive()
+            .flatMap(p -> p.getMutable(privateStateRootHash, publicBlockHash));
     if (maybePrivateWorldState.isEmpty()) {
       LOG.debug(
-          "Private world state not available for public world state root hash {}",
-          publicWorldStateRootHash);
+          "Private world state not available for public world state root hash {}, public block hash {}",
+          worldStateRootHash,
+          publicBlockHash);
 
       /*
        This should never happen because privateStateRootResolver will either return a matching
        private world state root hash, or the hash for an empty world state (first private tx ever).
       */
       throw new IllegalStateException(
-          "Private world state not available for public world state root hash "
-              + publicWorldStateRootHash);
+          "Private world state not available for public world state root hash " + publicBlockHash);
     }
     return maybePrivateWorldState.get();
   }

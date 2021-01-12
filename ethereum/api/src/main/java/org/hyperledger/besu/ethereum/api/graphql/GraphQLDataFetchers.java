@@ -32,10 +32,10 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -183,7 +183,7 @@ public class GraphQLDataFetchers {
       final Address addr = dataFetchingEnvironment.getArgument("address");
       final Long bn = dataFetchingEnvironment.getArgument("blockNumber");
       if (bn != null) {
-        final Optional<MutableWorldState> ws = blockchainQuery.getWorldState(bn);
+        final Optional<WorldState> ws = blockchainQuery.getWorldState(bn);
         if (ws.isPresent()) {
           final Account account = ws.get().get(addr);
           Preconditions.checkArgument(
@@ -199,7 +199,7 @@ public class GraphQLDataFetchers {
       } else {
         // return account on latest block
         final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
-        final Optional<MutableWorldState> ows = blockchainQuery.getWorldState(latestBn);
+        final Optional<WorldState> ows = blockchainQuery.getWorldState(latestBn);
         return ows.flatMap(
                 ws -> {
                   Account account = ws.get(addr);

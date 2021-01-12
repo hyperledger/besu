@@ -235,7 +235,9 @@ public class PendingTransactions {
 
   private AccountTransactionOrder createSenderTransactionOrder(final Address address) {
     return new AccountTransactionOrder(
-        transactionsBySender.get(address).getTransactionsInfos().values().stream()
+        transactionsBySender
+            .get(address)
+            .streamTransactionInfos()
             .map(TransactionInfo::getTransaction));
   }
 
@@ -292,13 +294,8 @@ public class PendingTransactions {
   private void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
     Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
         .ifPresent(
-            transactionsForSender -> {
-              transactionsForSender.getTransactionsInfos().remove(transaction.getNonce());
-              if (transactionsForSender.getTransactionsInfos().isEmpty()) {
-                transactionsBySender.remove(transaction.getSender());
-                transactionsForSender.updateGaps();
-              }
-            });
+            transactionsForSender ->
+                transactionsForSender.removeTrackedTransaction(transaction.getNonce()));
   }
 
   private TransactionInfo getTrackedTransactionBySenderAndNonce(
@@ -306,7 +303,7 @@ public class PendingTransactions {
     final TransactionsForSenderInfo transactionsForSenderInfo =
         transactionsBySender.computeIfAbsent(
             transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
-    return transactionsForSenderInfo.getTransactionsInfos().get(transactionInfo.getNonce());
+    return transactionsForSenderInfo.getTransactionInfoForNonce(transactionInfo.getNonce());
   }
 
   private void notifyTransactionAdded(final Transaction transaction) {
@@ -356,15 +353,9 @@ public class PendingTransactions {
 
   public OptionalLong getNextNonceForSender(final Address sender) {
     final TransactionsForSenderInfo transactionsForSenderInfo = transactionsBySender.get(sender);
-    if (transactionsForSenderInfo == null
-        || transactionsForSenderInfo.getTransactionsInfos().isEmpty()) {
-      return OptionalLong.empty();
-    } else {
-      final OptionalLong maybeNextGap = transactionsForSenderInfo.maybeNextGap();
-      return maybeNextGap.isEmpty()
-          ? OptionalLong.of(transactionsForSenderInfo.getTransactionsInfos().lastKey() + 1)
-          : maybeNextGap;
-    }
+    return transactionsForSenderInfo == null
+        ? OptionalLong.empty()
+        : transactionsForSenderInfo.maybeNextNonce();
   }
 
   public void tryEvictTransactionHash(final Hash hash) {

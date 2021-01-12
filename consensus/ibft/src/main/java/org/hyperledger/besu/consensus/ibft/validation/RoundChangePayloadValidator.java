@@ -96,6 +96,10 @@ public class RoundChangePayloadValidator {
       return false;
     }
 
+    if (hasDuplicateAuthors(certificate.getPreparePayloads())) {
+      return false;
+    }
+
     if (certificate.getPreparePayloads().size() < minimumPrepareMessages) {
       LOG.info(
           "Invalid RoundChange message, insufficient Prepare messages exist to justify "
@@ -111,6 +115,18 @@ public class RoundChangePayloadValidator {
     }
 
     return true;
+  }
+
+  private boolean hasDuplicateAuthors(
+      final Collection<SignedData<PreparePayload>> preparePayloads) {
+    final long distinctAuthorCount =
+        preparePayloads.stream().map(SignedData::getAuthor).distinct().count();
+
+    if (distinctAuthorCount != preparePayloads.size()) {
+      LOG.info("Invalid PreparePayloads list, multiple payloads from the same author.");
+      return true;
+    }
+    return false;
   }
 
   private boolean validatePreparedCertificateRound(

@@ -171,7 +171,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
-    worldState.persist(blockHeader.getHash());
+    worldState.persist(blockHeader);
     privateWorldState.persist(null);
 
     privateStorageUpdater.putPrivateStateRootHashMapping(
