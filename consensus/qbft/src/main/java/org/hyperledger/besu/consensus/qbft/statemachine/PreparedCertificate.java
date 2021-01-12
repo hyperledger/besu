@@ -12,25 +12,33 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.payload;
+package org.hyperledger.besu.consensus.qbft.statemachine;
 
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;
 
 public class PreparedCertificate {
-  private final Block preparedBlock;
+
+  private final Block block;
   private final List<SignedData<PreparePayload>> prepares;
+  private final int round;
 
   public PreparedCertificate(
-      final Block preparedBlock, final List<SignedData<PreparePayload>> prepares) {
-    this.preparedBlock = preparedBlock;
+      final Block block, final List<SignedData<PreparePayload>> prepares, final int round) {
+    this.block = block;
     this.prepares = prepares;
+    this.round = round;
   }
 
-  public Block getPreparedBlock() {
-    return preparedBlock;
+  public int getRound() {
+    return round;
+  }
+
+  public Block getBlock() {
+    return block;
   }
 
   public List<SignedData<PreparePayload>> getPrepares() {

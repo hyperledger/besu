@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -27,7 +26,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -55,14 +53,6 @@ public class Proposal extends BftMessage<ProposalPayload> {
 
   public Block getBlock() {
     return getPayload().getProposedBlock();
-  }
-
-  public Optional<RoundChangeMetadata> getRoundChangeMetadata() {
-    if (!roundChanges.isEmpty() && !prepares.isEmpty()) {
-      return Optional.of(new RoundChangeMetadata(Optional.of(getBlock()), roundChanges, prepares));
-    } else {
-      return Optional.empty();
-    }
   }
 
   @Override
