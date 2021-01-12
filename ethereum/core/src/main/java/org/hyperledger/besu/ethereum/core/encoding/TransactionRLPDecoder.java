@@ -191,7 +191,7 @@ public class TransactionRLPDecoder {
                           accessListEntryRLPInput.leaveList();
                           return accessListEntry;
                         })));
-    final byte recId = rlpInput.readByte();
+    final byte recId = (byte) rlpInput.readIntScalar();
     final Transaction transaction =
         preSignatureTransactionBuilder
             .signature(
