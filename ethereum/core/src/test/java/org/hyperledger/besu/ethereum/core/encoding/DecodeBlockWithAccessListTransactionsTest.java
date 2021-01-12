@@ -216,7 +216,7 @@ public class DecodeBlockWithAccessListTransactionsTest {
           payload,
           Optional.ofNullable(accessListNullable).orElse(AccessList.EMPTY),
           null,
-          Optional.ofNullable(chainId).map(BigInteger::valueOf),
+          Optional.of(BigInteger.ONE),
           fromString(transactionTypeString).equals(TransactionType.FRONTIER)
               ? Optional.empty()
               : Optional.of(BigInteger.valueOf(recIdorV)));
