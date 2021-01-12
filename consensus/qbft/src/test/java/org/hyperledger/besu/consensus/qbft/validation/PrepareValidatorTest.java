@@ -28,14 +28,13 @@ public class PrepareValidatorTest {
   private static final int VALIDATOR_COUNT = 4;
 
   private final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
+  final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
+  final Hash expectedHash = Hash.fromHexStringLenient("0x1");
+  final PrepareValidator validator =
+      new PrepareValidator(validators.getNodeAddresses(), round, expectedHash);
 
   @Test
   public void prepareIsValidIfItMatchesExpectedValues() {
-    final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
-    final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-    final PrepareValidator validator =
-        new PrepareValidator(validators.getNodeAddresses(), round, expectedHash);
-
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
       final Prepare msg = validators.getMessageFactory(i).createPrepare(round, expectedHash);
       assertThat(validator.validate(msg)).isTrue();
@@ -44,11 +43,6 @@ public class PrepareValidatorTest {
 
   @Test
   public void prepareSignedByANonValidatorFails() {
-    final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
-    final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-    final PrepareValidator validator =
-        new PrepareValidator(validators.getNodeAddresses(), round, expectedHash);
-
     final QbftNode nonValidator = QbftNode.create();
 
     final Prepare msg = nonValidator.getMessageFactory().createPrepare(round, expectedHash);
@@ -57,43 +51,26 @@ public class PrepareValidatorTest {
 
   @Test
   public void prepareForWrongRoundFails() {
-    final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
-    final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-    final PrepareValidator validator =
-        new PrepareValidator(
-            validators.getNodeAddresses(),
-            ConsensusRoundHelpers.createFrom(round, 0, +1),
-            expectedHash);
-
-    final Prepare msg = validators.getMessageFactory(0).createPrepare(round, expectedHash);
+    final Prepare msg =
+        validators
+            .getMessageFactory(0)
+            .createPrepare(ConsensusRoundHelpers.createFrom(round, 0, +1), expectedHash);
     assertThat(validator.validate(msg)).isFalse();
   }
 
   @Test
   public void prepareForWrongSequenceFails() {
-    final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
-    final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-    final PrepareValidator validator =
-        new PrepareValidator(
-            validators.getNodeAddresses(),
-            ConsensusRoundHelpers.createFrom(round, +1, 0),
-            expectedHash);
-
-    final Prepare msg = validators.getMessageFactory(0).createPrepare(round, expectedHash);
-
+    final Prepare msg =
+        validators
+            .getMessageFactory(0)
+            .createPrepare(ConsensusRoundHelpers.createFrom(round, +1, 0), expectedHash);
     assertThat(validator.validate(msg)).isFalse();
   }
 
   @Test
   public void prepareWithWrongDigestFails() {
-    final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
-    final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-    final PrepareValidator validator =
-        new PrepareValidator(validators.getNodeAddresses(), round, expectedHash);
-
     final Prepare msg =
         validators.getMessageFactory(0).createPrepare(round, Hash.fromHexStringLenient("0x2"));
-
     assertThat(validator.validate(msg)).isFalse();
   }
 }
