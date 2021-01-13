@@ -156,7 +156,7 @@ public class RoundSpecificPeers {
   }
 
   @SafeVarargs
-  public final void verifyMessagesReceivedNonPropsingExcluding(
+  public final void verifyMessagesReceivedNonProposingExcluding(
       final ValidatorPeer exclude, final BftMessage<? extends Payload>... msgs) {
     final Collection<ValidatorPeer> candidates = Lists.newArrayList(nonProposingPeers);
     candidates.remove(exclude);
@@ -207,7 +207,7 @@ public class RoundSpecificPeers {
         actualSignedPayload = RoundChangeMessageData.fromMessageData(actual).decode();
         break;
       default:
-        fail("Illegal IBFTV2 message type.");
+        fail("Illegal QBFTV1 message type.");
         break;
     }
     assertThat(expectedMessage).isEqualToComparingFieldByFieldRecursively(actualSignedPayload);
