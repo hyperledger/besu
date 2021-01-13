@@ -141,6 +141,7 @@ public class RoundChangeMessageValidator {
 
     if (!hasSufficientEntries(prepares, quorumMessageCount)) {
       LOG.info("{}: insufficient Prepare messages piggybacked.", ERROR_PREFIX);
+      return false;
     }
 
     return prepares.stream().allMatch(validator::validate);
