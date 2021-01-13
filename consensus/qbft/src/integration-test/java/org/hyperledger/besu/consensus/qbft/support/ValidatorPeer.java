@@ -53,11 +53,8 @@ public class ValidatorPeer extends DefaultValidatorPeer {
   }
 
   public Proposal injectProposal(final ConsensusRoundIdentifier rId, final Block block) {
-    final Proposal payload =
-        messageFactory.createProposal(rId, block, Collections.emptyList(), Collections.emptyList());
-
-    injectMessage(ProposalMessageData.create(payload));
-    return payload;
+    return injectProposalForFutureRound(
+        rId, Collections.emptyList(), Collections.emptyList(), block);
   }
 
   public Prepare injectPrepare(final ConsensusRoundIdentifier rId, final Hash digest) {
