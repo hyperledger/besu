@@ -37,7 +37,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Ensure the Ibft component responds appropriately when a future round Proposal message is
+ * Ensure the Qbft component responds appropriately when a future round Proposal message is
  * received.
  */
 public class ReceivedFutureProposalTest {

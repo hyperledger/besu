@@ -163,10 +163,9 @@ public class GossipTest {
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(block, peers.sign(block.getHash()));
 
-    ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
-    Prepare futurePrepare = sender.injectPrepare(futureRoundId, block.getHash());
+    final ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
+    final Prepare futurePrepare = sender.injectPrepare(futureRoundId, block.getHash());
     peers.verifyNoMessagesReceivedNonProposing();
-    ;
 
     // add block to chain so we can move to next block height
     context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());

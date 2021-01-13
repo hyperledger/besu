@@ -207,7 +207,7 @@ public class RoundSpecificPeers {
         actualSignedPayload = RoundChangeMessageData.fromMessageData(actual).decode();
         break;
       default:
-        fail("Illegal IBFTV2 message type.");
+        fail("Illegal QBFTV1 message type.");
         break;
     }
     assertThat(expectedMessage).isEqualToComparingFieldByFieldRecursively(actualSignedPayload);
