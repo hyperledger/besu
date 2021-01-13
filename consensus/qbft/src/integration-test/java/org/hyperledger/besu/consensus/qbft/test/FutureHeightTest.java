@@ -144,7 +144,6 @@ public class FutureHeightTest {
 
     peers.clearReceivedMessages();
 
-    // inject a NewHeight FOR THE CURRENT HEIGHT
     context
         .getController()
         .handleNewBlockEvent(new NewChainHead(context.getBlockchain().getChainHeadHeader()));

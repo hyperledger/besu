@@ -161,7 +161,7 @@ public class TestContextBuilder {
     return this;
   }
 
-  public TestContextBuilder bftEventQueue(final BftEventQueue bftEventQueue) {
+  public TestContextBuilder eventQueue(final BftEventQueue bftEventQueue) {
     this.bftEventQueue = bftEventQueue;
     return this;
   }
