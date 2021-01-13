@@ -18,16 +18,12 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.statemachine.PreparedRoundArtifacts;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
-
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 public class IntegrationTestHelpers {
 
@@ -45,17 +41,13 @@ public class IntegrationTestHelpers {
     return messageFactory.createCommit(roundId, block.getHash(), commitSeal).getSignedPayload();
   }
 
-  public static PreparedRoundArtifacts createValidPreparedRoundArtifacts(
+  public static PreparedCertificate createValidPreparedCertificate(
       final TestContext context, final ConsensusRoundIdentifier preparedRound, final Block block) {
     final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
 
-    return new PreparedRoundArtifacts(
-        peers
-            .getProposer()
-            .getMessageFactory()
-            .createProposal(preparedRound, block, Collections.emptyList(), Collections.emptyList()),
-        peers.createSignedPreparePayloadOfNonProposing(preparedRound, block.getHash()).stream()
-            .map(Prepare::new)
-            .collect(Collectors.toList()));
+    return new PreparedCertificate(
+        block,
+        peers.createSignedPreparePayloadOfNonProposing(preparedRound, block.getHash()),
+        preparedRound.getRoundNumber());
   }
 }

@@ -26,8 +26,6 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -68,7 +66,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
   private final BftFinalState finalState;
 
-  private Optional<PreparedCertificate> latestPreparedRoundArtifacts = Optional.empty();
+  private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
 
   private QbftRound currentRound;
 
@@ -133,10 +131,10 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         "Round has expired, creating PreparedCertificate and notifying peers. round={}",
         currentRound.getRoundIdentifier());
     final Optional<PreparedCertificate> preparedCertificate =
-        currentRound.constructPreparedRoundCertificate();
+        currentRound.constructPreparedCertificate();
 
     if (preparedCertificate.isPresent()) {
-      latestPreparedRoundArtifacts = preparedCertificate;
+      latestPreparedCertificate = preparedCertificate;
     }
 
     startNewRound(currentRound.getRoundIdentifier().getRoundNumber() + 1);
@@ -144,7 +142,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     try {
       final RoundChange localRoundChange =
           messageFactory.createRoundChange(
-              currentRound.getRoundIdentifier(), latestPreparedRoundArtifacts);
+              currentRound.getRoundIdentifier(), latestPreparedCertificate);
 
       // Its possible the locally created RoundChange triggers the transmission of a NewRound
       // message - so it must be handled accordingly.
@@ -153,8 +151,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       LOG.warn("Failed to create signed RoundChange message.", e);
     }
 
-    transmitter.multicastRoundChange(
-        currentRound.getRoundIdentifier(), latestPreparedRoundArtifacts);
+    transmitter.multicastRoundChange(currentRound.getRoundIdentifier(), latestPreparedCertificate);
   }
 
   @Override
@@ -229,7 +226,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         startNewRound(targetRound.getRoundNumber());
       }
 
-      final RoundChangeMetadata roundChangeMetadata = RoundChangeMetadata.create(result.get());
+      final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
 
       if (finalState.isLocalNodeProposerForRound(targetRound)) {
         currentRound.startRoundWith(

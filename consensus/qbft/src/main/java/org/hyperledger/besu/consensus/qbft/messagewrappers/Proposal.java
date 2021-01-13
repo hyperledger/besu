@@ -16,10 +16,8 @@ package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -27,7 +25,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -57,14 +54,6 @@ public class Proposal extends BftMessage<ProposalPayload> {
     return getPayload().getProposedBlock();
   }
 
-  public Optional<RoundChangeMetadata> getRoundChangeMetadata() {
-    if (!roundChanges.isEmpty() && !prepares.isEmpty()) {
-      return Optional.of(new RoundChangeMetadata(Optional.of(getBlock()), roundChanges, prepares));
-    } else {
-      return Optional.empty();
-    }
-  }
-
   @Override
   public Bytes encode() {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
@@ -79,12 +68,11 @@ public class Proposal extends BftMessage<ProposalPayload> {
   public static Proposal decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<ProposalPayload> payload =
-        PayloadDeserializers.readSignedProposalPayloadFrom(rlpIn);
+    final SignedData<ProposalPayload> payload = readPayload(rlpIn, ProposalPayload::readFrom);
     final List<SignedData<RoundChangePayload>> roundChanges =
-        rlpIn.readList(PayloadDeserializers::readSignedRoundChangePayloadFrom);
+        rlpIn.readList(r -> readPayload(r, RoundChangePayload::readFrom));
     final List<SignedData<PreparePayload>> prepares =
-        rlpIn.readList(PayloadDeserializers::readSignedPreparePayloadFrom);
+        rlpIn.readList(r -> readPayload(r, PreparePayload::readFrom));
 
     rlpIn.leaveList();
     return new Proposal(payload, roundChanges, prepares);

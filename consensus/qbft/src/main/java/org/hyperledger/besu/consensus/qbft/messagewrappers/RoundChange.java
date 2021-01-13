@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.messagewrappers;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
@@ -58,9 +57,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
   }
 
   public Optional<Integer> getPreparedRound() {
-    return getPayload()
-        .getPreparedRoundMetadata()
-        .map(preparedRoundMetadata -> preparedRoundMetadata.getPreparedRound());
+    return getPayload().getPreparedRoundMetadata().map(PreparedRoundMetadata::getPreparedRound);
   }
 
   @Override
@@ -78,8 +75,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<RoundChangePayload> payload =
-        PayloadDeserializers.readSignedRoundChangePayloadFrom(rlpIn);
+    final SignedData<RoundChangePayload> payload = readPayload(rlpIn, RoundChangePayload::readFrom);
 
     final Optional<Block> block;
     if (rlpIn.nextIsNull()) {
@@ -90,7 +86,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     }
 
     final List<SignedData<PreparePayload>> prepares =
-        rlpIn.readList(PayloadDeserializers::readSignedPreparePayloadFrom);
+        rlpIn.readList(r -> readPayload(r, PreparePayload::readFrom));
     rlpIn.leaveList();
 
     return new RoundChange(payload, block, prepares);

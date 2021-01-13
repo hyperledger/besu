@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
@@ -27,13 +28,15 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
-import org.hyperledger.besu.consensus.qbft.statemachine.PreparedRoundArtifacts;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
+import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 // Each "inject" function returns the SignedPayload representation of the transmitted message.
@@ -50,11 +53,8 @@ public class ValidatorPeer extends DefaultValidatorPeer {
   }
 
   public Proposal injectProposal(final ConsensusRoundIdentifier rId, final Block block) {
-    final Proposal payload =
-        messageFactory.createProposal(rId, block, Collections.emptyList(), Collections.emptyList());
-
-    injectMessage(ProposalMessageData.create(payload));
-    return payload;
+    return injectProposalForFutureRound(
+        rId, Collections.emptyList(), Collections.emptyList(), block);
   }
 
   public Prepare injectPrepare(final ConsensusRoundIdentifier rId, final Hash digest) {
@@ -78,25 +78,20 @@ public class ValidatorPeer extends DefaultValidatorPeer {
 
   public Proposal injectProposalForFutureRound(
       final ConsensusRoundIdentifier rId,
-      final RoundChangeMetadata roundChangeMetadata,
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final List<SignedData<PreparePayload>> prepares,
       final Block blockToPropose) {
 
     final Proposal payload =
-        messageFactory.createProposal(
-            rId,
-            blockToPropose,
-            roundChangeMetadata.getRoundChangePayloads(),
-            roundChangeMetadata.getPrepares());
+        messageFactory.createProposal(rId, blockToPropose, roundChanges, prepares);
     injectMessage(ProposalMessageData.create(payload));
     return payload;
   }
 
   public RoundChange injectRoundChange(
       final ConsensusRoundIdentifier rId,
-      final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {
-    final RoundChange payload =
-        messageFactory.createRoundChange(
-            rId, preparedRoundArtifacts.map(PreparedRoundArtifacts::getPreparedCertificate));
+      final Optional<PreparedCertificate> preparedRoundArtifacts) {
+    final RoundChange payload = messageFactory.createRoundChange(rId, preparedRoundArtifacts);
     injectMessage(RoundChangeMessageData.create(payload));
     return payload;
   }
