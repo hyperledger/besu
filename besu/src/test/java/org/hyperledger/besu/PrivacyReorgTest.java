@@ -98,7 +98,7 @@ public class PrivacyReorgTest {
       "0x66fbc6ad12ef1da78740093ea2b3362e773e510e27d8f88b68c27bfc1f4d58c8";
   private static final String BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT =
       "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461";
-  private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE =
+  private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE =
       "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590";
   private static final Bytes32 PRIVACY_GROUP_BYTES32 =
       Bytes32.fromHexString("0xf250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa");
@@ -233,7 +233,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Block forkBlock =
@@ -276,7 +276,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Difficulty remainingDifficultyToOutpace =
@@ -323,7 +323,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Block forkBlock =
@@ -335,7 +335,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root did not change
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     final String secondForkBlockStateRoot =
         "0x57ccc80f4e50d2e669d82aefa7d3bbe763cf47df27665af14c90b2f8641953f5";
@@ -369,7 +369,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state did change after reorg
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
   }
 
   @SuppressWarnings("unchecked")

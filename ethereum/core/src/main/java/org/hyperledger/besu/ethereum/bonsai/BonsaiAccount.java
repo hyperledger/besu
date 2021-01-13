@@ -41,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiAccount implements MutableAccount, EvmAccount {
-  private final BonsaiWorldState context;
+  private final BonsaiWorldView context;
   private final boolean mutable;
 
   private final Address address;
@@ -56,7 +56,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
   BonsaiAccount(
-      final BonsaiWorldState context,
+      final BonsaiWorldView context,
       final Address address,
       final Hash addressHash,
       final long nonce,
@@ -78,7 +78,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   BonsaiAccount(
-      final BonsaiWorldState context,
+      final BonsaiWorldView context,
       final Address address,
       final StateTrieAccountValue stateTrieAccount,
       final boolean mutable) {
@@ -98,7 +98,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this(toCopy, toCopy.context, false);
   }
 
-  BonsaiAccount(final BonsaiAccount toCopy, final BonsaiWorldState context, final boolean mutable) {
+  BonsaiAccount(final BonsaiAccount toCopy, final BonsaiWorldView context, final boolean mutable) {
     this.context = context;
     this.address = toCopy.address;
     this.addressHash = toCopy.addressHash;
@@ -113,8 +113,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  BonsaiAccount(
-      final BonsaiWorldState context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+  BonsaiAccount(final BonsaiWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
     this.context = context;
     this.address = tracked.getAddress();
     this.addressHash = tracked.getAddressHash();
@@ -130,7 +129,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   static BonsaiAccount fromRLP(
-      final BonsaiWorldState context,
+      final BonsaiWorldView context,
       final Address address,
       final Bytes encoded,
       final boolean mutable)
@@ -202,7 +201,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public Bytes getCode() {
     if (code == null) {
-      code = context.getCode(address);
+      code = context.getCode(address).orElse(Bytes.EMPTY);
     }
     return code;
   }

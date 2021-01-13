@@ -14,17 +14,24 @@
  */
 package org.hyperledger.besu.consensus.qbft.payload;
 
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
+
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Util;
 
-import org.apache.tuweni.bytes.Bytes;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public class MessageFactory {
 
@@ -32,6 +39,17 @@ public class MessageFactory {
 
   public MessageFactory(final NodeKey nodeKey) {
     this.nodeKey = nodeKey;
+  }
+
+  public Proposal createProposal(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Block block,
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final List<SignedData<PreparePayload>> prepares) {
+
+    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block);
+
+    return new Proposal(createSignedMessage(payload), roundChanges, prepares);
   }
 
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
@@ -47,14 +65,35 @@ public class MessageFactory {
     return new Commit(createSignedMessage(payload));
   }
 
-  private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
-    final Signature signature = nodeKey.sign(hashForSignature(payload));
-    return new SignedData<>(payload, Util.publicKeyToAddress(nodeKey.getPublicKey()), signature);
+  public RoundChange createRoundChange(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Optional<PreparedCertificate> preparedRoundData) {
+
+    final RoundChangePayload payload;
+    if (preparedRoundData.isPresent()) {
+
+      final Block preparedBlock = preparedRoundData.get().getBlock();
+      payload =
+          new RoundChangePayload(
+              roundIdentifier,
+              Optional.of(
+                  new PreparedRoundMetadata(
+                      preparedBlock.getHash(), preparedRoundData.get().getRound())));
+
+      return new RoundChange(
+          createSignedMessage(payload),
+          Optional.of(preparedBlock),
+          preparedRoundData.get().getPrepares());
+
+    } else {
+      payload = new RoundChangePayload(roundIdentifier, Optional.empty());
+      return new RoundChange(
+          createSignedMessage(payload), Optional.empty(), Collections.emptyList());
+    }
   }
 
-  public static Hash hashForSignature(final Payload unsignedMessageData) {
-    return Hash.hash(
-        Bytes.concatenate(
-            Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
+  private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
+    final Signature signature = nodeKey.sign(hashForSignature(payload));
+    return SignedData.create(payload, signature);
   }
 }

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
@@ -77,7 +77,7 @@ public class MessageValidatorTest {
           AddressHelpers.ofValue(2),
           AddressHelpers.ofValue(3));
 
-  private final Block block = TestHelpers.createProposalBlock(validators, roundIdentifier);
+  private final Block block = ProposedBlockHelpers.createProposalBlock(validators, roundIdentifier);
 
   @Before
   public void setup() {

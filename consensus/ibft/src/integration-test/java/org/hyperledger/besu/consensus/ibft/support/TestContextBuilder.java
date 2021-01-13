@@ -39,16 +39,21 @@ import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
+import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
+import org.hyperledger.besu.consensus.common.bft.inttest.NetworkLayout;
+import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
+import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
+import org.hyperledger.besu.consensus.common.bft.inttest.StubbedSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
-import org.hyperledger.besu.consensus.ibft.UniqueMessageMulticaster;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -78,8 +83,10 @@ import org.hyperledger.besu.util.Subscribers;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -96,18 +103,21 @@ public class TestContextBuilder {
 
     private final BftExecutors bftExecutors;
     private final BftEventHandler eventHandler;
-    private final IbftFinalState finalState;
+    private final BftFinalState finalState;
     private final EventMultiplexer eventMultiplexer;
+    private final MessageFactory messageFactory;
 
     public ControllerAndState(
         final BftExecutors bftExecutors,
         final BftEventHandler eventHandler,
-        final IbftFinalState finalState,
-        final EventMultiplexer eventMultiplexer) {
+        final BftFinalState finalState,
+        final EventMultiplexer eventMultiplexer,
+        final MessageFactory messageFactory) {
       this.bftExecutors = bftExecutors;
       this.eventHandler = eventHandler;
       this.finalState = finalState;
       this.eventMultiplexer = eventMultiplexer;
+      this.messageFactory = messageFactory;
     }
 
     public BftExecutors getIbftExecutors() {
@@ -118,12 +128,16 @@ public class TestContextBuilder {
       return eventHandler;
     }
 
-    public IbftFinalState getFinalState() {
+    public BftFinalState getFinalState() {
       return finalState;
     }
 
     public EventMultiplexer getEventMultiplexer() {
       return eventMultiplexer;
+    }
+
+    public MessageFactory getMessageFactory() {
+      return messageFactory;
     }
   }
 
@@ -213,8 +227,9 @@ public class TestContextBuilder {
                     },
                     LinkedHashMap::new));
 
-    multicaster.addNetworkPeers(remotePeers.values());
-    synchronizerUpdater.addNetworkPeers(remotePeers.values());
+    final List<DefaultValidatorPeer> peerCollection = new ArrayList<>(remotePeers.values());
+    multicaster.addNetworkPeers(peerCollection);
+    synchronizerUpdater.addNetworkPeers(peerCollection);
 
     return new TestContext(
         remotePeers,
@@ -222,7 +237,8 @@ public class TestContextBuilder {
         controllerAndState.getIbftExecutors(),
         controllerAndState.getEventHandler(),
         controllerAndState.getFinalState(),
-        controllerAndState.getEventMultiplexer());
+        controllerAndState.getEventMultiplexer(),
+        controllerAndState.getMessageFactory());
   }
 
   public TestContext buildAndStart() {
@@ -321,8 +337,8 @@ public class TestContextBuilder {
         new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);
 
     final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
-    final IbftFinalState finalState =
-        new IbftFinalState(
+    final BftFinalState finalState =
+        new BftFinalState(
             protocolContext.getConsensusState(BftContext.class).getVoteTallyCache(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
@@ -331,8 +347,9 @@ public class TestContextBuilder {
             new RoundTimer(bftEventQueue, ROUND_TIMER_SEC * 1000, bftExecutors),
             new BlockTimer(bftEventQueue, BLOCK_TIMER_SEC * 1000, bftExecutors, TestClock.fixed()),
             blockCreatorFactory,
-            new MessageFactory(nodeKey),
             clock);
+
+    final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
@@ -357,8 +374,10 @@ public class TestContextBuilder {
                     protocolContext,
                     protocolSchedule,
                     minedBlockObservers,
-                    messageValidatorFactory),
-                messageValidatorFactory),
+                    messageValidatorFactory,
+                    messageFactory),
+                messageValidatorFactory,
+                messageFactory),
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
@@ -367,6 +386,7 @@ public class TestContextBuilder {
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
     //////////////////////////// END IBFT BesuController ////////////////////////////
 
-    return new ControllerAndState(bftExecutors, ibftController, finalState, eventMultiplexer);
+    return new ControllerAndState(
+        bftExecutors, ibftController, finalState, eventMultiplexer, messageFactory);
   }
 }

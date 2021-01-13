@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -728,9 +727,11 @@ public class BlockchainQueries {
    * @param blockNumber the block number
    * @return the world state at the block number
    */
-  public Optional<MutableWorldState> getWorldState(final long blockNumber) {
+  public Optional<WorldState> getWorldState(final long blockNumber) {
     final Optional<BlockHeader> header = blockchain.getBlockHeader(blockNumber);
-    return header.map(BlockHeader::getStateRoot).flatMap(worldStateArchive::getMutable);
+    return header.flatMap(
+        blockHeader ->
+            worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getHash()));
   }
 
   public Optional<Long> gasPrice() {
