@@ -56,8 +56,6 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
   @Override
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
-
-    System.out.println("Using the GoQuormBlockValidator");
     final MutableWorldState privateWorldState =
         getPrivateWorldState(context, worldState.rootHash(), block.getHash());
 
