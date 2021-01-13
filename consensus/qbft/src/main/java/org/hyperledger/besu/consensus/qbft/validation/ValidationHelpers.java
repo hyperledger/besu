@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
-import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Collection;
-import java.util.List;
 
 public class ValidationHelpers {
 
