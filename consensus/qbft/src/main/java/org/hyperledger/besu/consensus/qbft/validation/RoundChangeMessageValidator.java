@@ -107,11 +107,9 @@ public class RoundChangeMessageValidator {
     final PreparedRoundMetadata metadata = msg.getPreparedRoundMetadata().get();
 
     if (!metadata.getPreparedBlockHash().equals(block.getHash())) {
-      LOG.info("Invalid RoundChange message: Prepared metadata does not align with supplied block");
+      LOG.info("Invalid RoundChange message: Prepared metadata hash does not match supplied block");
       return false;
     }
-
-    // NO NEED TO VERIFY PreparedRound is related to currentRound - its irrelevant.
 
     final BftExtraData extraData = BftExtraData.decode(block.getHeader());
     if (metadata.getPreparedRound() != extraData.getRound()) {

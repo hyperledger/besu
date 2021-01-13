@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
+import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
@@ -44,6 +45,7 @@ import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.junit.Before;
@@ -54,6 +56,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RoundChangeMessageValidatorTest {
+
   @Mock
   private RoundChangePayloadValidator payloadValidator;
   @Mock
@@ -340,16 +343,11 @@ public class RoundChangeMessageValidatorTest {
 
     final Block block =
         ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
+    final PreparedCertificate prepCert = createPreparedCertificate(block, roundIdentifier,
+        validators.getNode(0), validators.getNode(1), validators.getNode(1));
 
-    final RoundChangePayload payload = new RoundChangePayload(
-        targetRound,
-        Optional.empty());
-    final Signature signature = validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
-
-    final RoundChange message = new RoundChange(
-        SignedData.create(payload, signature),
-        Optional.of(block),
-        emptyList());
+    final RoundChange message = validators.getMessageFactory(0).createRoundChange(
+        targetRound, Optional.of(prepCert));
 
     assertThat(messageValidator.validate(message)).isFalse();
   }
@@ -371,24 +369,68 @@ public class RoundChangeMessageValidatorTest {
     final Block block =
         ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
 
+    final RoundChangePayload payload = new RoundChangePayload(
+        targetRound,
+        Optional.empty());
+    final Signature signature = validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
+
+    final RoundChange message = new RoundChange(
+        SignedData.create(payload, signature),
+        Optional.of(block),
+        emptyList());
+
+    assertThat(messageValidator.validate(message)).isFalse();
   }
 
   @Test
   public void validationFailsIfBlockHashDoesNotMatchPreparedMetadata() {
+    when(blockValidator.validateAndProcessBlock(any(), any(), eq(HeaderValidationMode.LIGHT),
+        eq(HeaderValidationMode.FULL)))
+        .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
+    when(payloadValidator.validate(any())).thenReturn(true);
+    messageValidator = new RoundChangeMessageValidator(
+        payloadValidator,
+        BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
+        CHAIN_HEIGHT,
+        validators.getNodeAddresses(),
+        blockValidator,
+        protocolContext);
 
+    final Block block =
+        ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
+
+    final RoundChangePayload payload = new RoundChangePayload(
+        targetRound,
+        Optional.of(new PreparedRoundMetadata(
+            Hash.fromHexStringLenient("0x1"), roundIdentifier.getRoundNumber())));
+    final Signature signature = validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
+
+    final RoundChange message = new RoundChange(
+        SignedData.create(payload, signature),
+        Optional.of(block),
+        createPreparePayloads(roundIdentifier, block.getHash(),
+            toArray(validators.getNodes(), QbftNode.class)));
+
+    assertThat(messageValidator.validate(message)).isFalse();
   }
 
   private PreparedCertificate createPreparedCertificate(final Block block,
       final ConsensusRoundIdentifier reportedRound,
       final QbftNode... preparedNodes) {
-    final List<SignedData<PreparePayload>> prepares =
-        Stream.of(preparedNodes)
-            .map(p -> p.getMessageFactory().createPrepare(reportedRound, block.getHash())
-                .getSignedPayload())
-            .collect(Collectors.toList());
+
     return new PreparedCertificate(
         block,
-        prepares,
+        createPreparePayloads(reportedRound, block.getHash(), preparedNodes),
         reportedRound.getRoundNumber());
+  }
+
+  private List<SignedData<PreparePayload>> createPreparePayloads(
+      final ConsensusRoundIdentifier reportedRound, final Hash blockHash,
+      final QbftNode... preparedNodes) {
+    return
+        Stream.of(preparedNodes)
+            .map(p -> p.getMessageFactory().createPrepare(reportedRound, blockHash)
+                .getSignedPayload())
+            .collect(Collectors.toList());
   }
 }
