@@ -46,4 +46,8 @@ public class QbftNodeList {
   public MessageFactory getMessageFactory(final int index) {
     return nodes.get(index).getMessageFactory();
   }
+
+  public QbftNode getNode(final int index) {
+    return nodes.get(index);
+  }
 }
