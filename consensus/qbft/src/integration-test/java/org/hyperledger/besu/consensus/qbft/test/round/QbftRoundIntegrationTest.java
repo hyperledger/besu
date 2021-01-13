@@ -97,7 +97,7 @@ public class QbftRoundIntegrationTest {
     throwingMessageFactory = new MessageFactory(nodeKey);
     transmitter = new QbftMessageTransmitter(throwingMessageFactory, multicaster);
 
-    BftExtraData proposedExtraData =
+    final BftExtraData proposedExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     headerTestFixture.extraData(proposedExtraData.encode());
