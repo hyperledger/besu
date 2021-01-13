@@ -93,30 +93,6 @@ public class LocalNodeNotProposerTest {
   }
 
   @Test
-  public void prepareFromProposerIsIgnored() {
-    peers.getProposer().injectProposal(roundId, blockToPropose);
-    peers.verifyMessagesReceived(expectedTxPrepare);
-
-    // No commit message transmitted after receiving prepare from proposer
-    peers.getProposer().injectPrepare(roundId, blockToPropose.getHash());
-    peers.verifyNoMessagesReceived();
-    assertThat(context.getCurrentChainHeight()).isEqualTo(0);
-
-    peers.getNonProposing(1).injectPrepare(roundId, blockToPropose.getHash());
-    peers.verifyMessagesReceived(expectedTxCommit);
-
-    // Inject a commit, ensure blockChain is not updated, and no message are sent (not quorum yet)
-    peers.getNonProposing(0).injectCommit(roundId, blockToPropose.getHash());
-    peers.verifyNoMessagesReceived();
-    assertThat(context.getCurrentChainHeight()).isEqualTo(0);
-
-    // A second commit message means quorum is reached, and blockchain should be updated.
-    peers.getNonProposing(1).injectCommit(roundId, blockToPropose.getHash());
-    peers.verifyNoMessagesReceived();
-    assertThat(context.getCurrentChainHeight()).isEqualTo(1);
-  }
-
-  @Test
   public void commitMessagesReceivedBeforePrepareCorrectlyImports() {
     // All peers send a commit, then all non-proposing peers send a prepare, when then Proposal
     // arrives last, the chain is updated, and a prepare and commit message are transmitted.
