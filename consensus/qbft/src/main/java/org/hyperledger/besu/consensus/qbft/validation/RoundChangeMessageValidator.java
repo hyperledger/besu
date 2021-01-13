@@ -101,6 +101,7 @@ public class RoundChangeMessageValidator {
 
     if (msg.getPreparedRoundMetadata().isEmpty()) {
       LOG.info("{}: Prepared block specified, but prepared metadata absent", ERROR_PREFIX);
+      return false;
     }
 
     final PreparedRoundMetadata metadata = msg.getPreparedRoundMetadata().get();
