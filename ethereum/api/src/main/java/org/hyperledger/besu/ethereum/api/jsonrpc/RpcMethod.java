@@ -63,6 +63,7 @@ public enum RpcMethod {
   PRIV_UNSUBSCRIBE("priv_unsubscribe"),
   PRIVX_FIND_PRIVACY_GROUP("privx_findOnChainPrivacyGroup"),
   EEA_SEND_RAW_TRANSACTION("eea_sendRawTransaction"),
+  ETH_SEND_RAW_PRIVATE_TRANSACTION("eth_sendRawPrivateTransaction"),
   ETH_ACCOUNTS("eth_accounts"),
   ETH_BLOCK_NUMBER("eth_blockNumber"),
   ETH_CALL("eth_call"),

@@ -83,21 +83,21 @@ public class NodePermissioningControllerFactory {
       syncStatusProviderOptional = Optional.empty();
     }
 
-    final Optional<QuorumQip714Gate> quorumQip714Gate =
+    final Optional<GoQuorumQip714Gate> goQuorumQip714Gate =
         permissioningConfiguration
             .getQuorumPermissioningConfig()
             .flatMap(
                 config -> {
                   if (config.isEnabled()) {
                     return Optional.of(
-                        QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
+                        GoQuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
                   } else {
                     return Optional.empty();
                   }
                 });
 
     final NodePermissioningController nodePermissioningController =
-        new NodePermissioningController(syncStatusProviderOptional, providers, quorumQip714Gate);
+        new NodePermissioningController(syncStatusProviderOptional, providers, goQuorumQip714Gate);
 
     permissioningConfiguration
         .getSmartContractConfig()

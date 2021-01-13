@@ -188,7 +188,9 @@ public class MainnetTransactionValidator {
               transaction.getChainId().get(), chainId.get()));
     }
 
-    if (!chainId.isPresent() && transaction.getChainId().isPresent()) {
+    if (!transaction.isGoQuorumPrivateTransaction()
+        && !chainId.isPresent()
+        && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
           "replay protected signatures is not supported");
@@ -213,7 +215,6 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.INVALID_SIGNATURE,
           "sender could not be extracted from transaction signature");
     }
-
     return ValidationResult.valid();
   }
 
