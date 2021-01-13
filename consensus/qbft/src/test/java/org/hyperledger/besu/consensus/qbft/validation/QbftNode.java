@@ -38,6 +38,10 @@ public class QbftNode {
     return messageFactory;
   }
 
+  public NodeKey getNodeKey() {
+    return nodeKey;
+  }
+
   public static QbftNode create() {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final MessageFactory factory = new MessageFactory(nodeKey);
