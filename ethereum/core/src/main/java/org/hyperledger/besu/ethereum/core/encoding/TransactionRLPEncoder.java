@@ -121,21 +121,22 @@ public class TransactionRLPEncoder {
     rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
     rlpOutput.writeUInt256Scalar(value);
     rlpOutput.writeBytes(payload);
-    // Access List encoding should look like this
-    // where hex strings represent raw bytes
-    // [
-    //   [
-    //     "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-    //     [
-    //       "0x0000000000000000000000000000000000000000000000000000000000000003",
-    //       "0x0000000000000000000000000000000000000000000000000000000000000007"
-    //     ]
-    //   ],
-    //   [
-    //     "0xbb9bc244d798123fde783fcc1c72d3bb8c189413",
-    //     []
-    //   ]
-    // ]
+    /*
+    Access List encoding should look like this
+    where hex strings represent raw bytes
+    [
+      [
+        "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
+        [
+          "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "0x0000000000000000000000000000000000000000000000000000000000000007"
+        ]
+      ],
+      [
+        "0xbb9bc244d798123fde783fcc1c72d3bb8c189413",
+        []
+      ]
+    ] */
     rlpOutput.writeList(
         accessList,
         (accessListEntry, accessListEntryRLPOutput) -> {
