@@ -17,8 +17,6 @@ package org.hyperledger.besu.consensus.ibft.payload;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 public class PayloadDeserializers {
@@ -66,19 +64,10 @@ public class PayloadDeserializers {
 
   protected static <M extends Payload> SignedData<M> from(
       final M unsignedMessageData, final Signature signature) {
-
-    final Address sender = recoverSender(unsignedMessageData, signature);
-
-    return new SignedData<>(unsignedMessageData, sender, signature);
+    return SignedData.create(unsignedMessageData, signature);
   }
 
   protected static Signature readSignature(final RLPInput signedMessage) {
     return signedMessage.readBytes(Signature::decode);
-  }
-
-  protected static Address recoverSender(
-      final Payload unsignedMessageData, final Signature signature) {
-
-    return Util.signatureToAddress(signature, MessageFactory.hashForSignature(unsignedMessageData));
   }
 }

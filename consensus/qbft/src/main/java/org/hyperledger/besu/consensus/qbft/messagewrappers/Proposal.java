@@ -69,8 +69,7 @@ public class Proposal extends BftMessage<ProposalPayload> {
   public static Proposal decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<ProposalPayload> payload =
-        PayloadDeserializers.readSignedProposalPayloadFrom(rlpIn);
+    final SignedData<ProposalPayload> payload = readPayload(rlpIn, ProposalPayload::readFrom);
     final List<SignedData<RoundChangePayload>> roundChanges =
         rlpIn.readList(PayloadDeserializers::readSignedRoundChangePayloadFrom);
     final List<SignedData<PreparePayload>> prepares =

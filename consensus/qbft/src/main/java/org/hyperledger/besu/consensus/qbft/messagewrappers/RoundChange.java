@@ -78,8 +78,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<RoundChangePayload> payload =
-        PayloadDeserializers.readSignedRoundChangePayloadFrom(rlpIn);
+    final SignedData<RoundChangePayload> payload = readPayload(rlpIn, RoundChangePayload::readFrom);
 
     final Optional<Block> block;
     if (rlpIn.nextIsNull()) {
