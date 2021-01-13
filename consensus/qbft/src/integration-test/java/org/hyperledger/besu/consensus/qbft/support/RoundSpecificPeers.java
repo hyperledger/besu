@@ -156,7 +156,7 @@ public class RoundSpecificPeers {
   }
 
   @SafeVarargs
-  public final void verifyMessagesReceivedNonPropsingExcluding(
+  public final void verifyMessagesReceivedNonProposingExcluding(
       final ValidatorPeer exclude, final BftMessage<? extends Payload>... msgs) {
     final Collection<ValidatorPeer> candidates = Lists.newArrayList(nonProposingPeers);
     candidates.remove(exclude);

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.test;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
@@ -22,7 +23,6 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.support.TestContext;
@@ -32,9 +32,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.Test;
 
@@ -92,18 +90,12 @@ public class FutureRoundTest {
 
     // inject a newRound to move to 'futureRoundId', and ensure localnode sends prepare, commit
     // and updates blockchain
-    final RoundChangeMetadata roundChangeMetadata =
-        new RoundChangeMetadata(
-            Optional.of(futureBlock),
-            futurePeers.createSignedRoundChangePayload(futureRoundId),
-            Collections.emptyList());
+    final List<SignedData<RoundChangePayload>> signedRoundChangePayload =
+        futurePeers.createSignedRoundChangePayload(futureRoundId);
     futurePeers
         .getProposer()
         .injectProposalForFutureRound(
-            futureRoundId,
-            futureBlock,
-            roundChangeMetadata.getRoundChangePayloads(),
-            roundChangeMetadata.getPrepares());
+            futureRoundId, signedRoundChangePayload, emptyList(), futureBlock);
 
     final Prepare expectedPrepare =
         localNodeMessageFactory.createPrepare(futureRoundId, futureBlock.getHash());
@@ -148,7 +140,7 @@ public class FutureRoundTest {
     futurePeers
         .getProposer()
         .injectProposalForFutureRound(
-            futureRoundId, futureBlock, signedRoundChangePayload, Collections.emptyList());
+            futureRoundId, signedRoundChangePayload, emptyList(), futureBlock);
 
     final Prepare expectedFuturePrepare =
         localNodeMessageFactory.createPrepare(futureRoundId, futureBlock.getHash());

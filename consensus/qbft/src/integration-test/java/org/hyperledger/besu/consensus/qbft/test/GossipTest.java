@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class GossipTest {
@@ -94,9 +95,9 @@ public class GossipTest {
     final Proposal nextRoundProposal =
         sender.injectProposalForFutureRound(
             roundId,
-            block,
             Collections.singletonList(roundChange.getSignedPayload()),
-            roundChange.getPrepares());
+            roundChange.getPrepares(),
+            block);
     peers.verifyMessagesReceivedNonPropsing(nextRoundProposal);
     peers.verifyNoMessagesReceivedProposer();
 
@@ -127,6 +128,7 @@ public class GossipTest {
     peers.verifyNoMessagesReceived();
   }
 
+  @Ignore("Requires validation")
   @Test
   public void messageIsNotGossipedToSenderOrCreator() {
     final ValidatorPeer msgCreator = peers.getFirstNonProposer();
@@ -136,7 +138,7 @@ public class GossipTest {
 
     sender.injectMessage(ProposalMessageData.create(proposalFromPeer));
 
-    peers.verifyMessagesReceivedNonPropsingExcluding(msgCreator, proposalFromPeer);
+    peers.verifyMessagesReceivedNonProposingExcluding(msgCreator, proposalFromPeer);
     peers.verifyNoMessagesReceivedProposer();
   }
 

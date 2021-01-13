@@ -54,7 +54,7 @@ public class ValidatorPeer extends DefaultValidatorPeer {
 
   public Proposal injectProposal(final ConsensusRoundIdentifier rId, final Block block) {
     return injectProposalForFutureRound(
-        rId, block, Collections.emptyList(), Collections.emptyList());
+        rId, Collections.emptyList(), Collections.emptyList(), block);
   }
 
   public Prepare injectPrepare(final ConsensusRoundIdentifier rId, final Hash digest) {

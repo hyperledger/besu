@@ -61,7 +61,7 @@ public class LocalNodeNotProposerTest {
   }
 
   @Test
-  public void basicCase() {
+  public void preparesReceivedFromNonProposerIsValid() {
     peers.getProposer().injectProposal(roundId, blockToPropose);
 
     peers.verifyMessagesReceived(expectedTxPrepare);
