@@ -31,8 +31,6 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
-import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
@@ -102,10 +100,12 @@ public class QbftRound {
   }
 
   public void startRoundWith(
-      final RoundChangeMetadata roundChangeMetadata, final long headerTimestamp) {
-    final Optional<Block> bestBlockFromRoundChange = roundChangeMetadata.getBlock();
+      final RoundChangeArtifacts roundChangeArtifacts, final long headerTimestamp) {
+    final Optional<PreparedCertificate> bestPreparedCertificate =
+        roundChangeArtifacts.getBestPreparedPeer();
+
     Block blockToPublish;
-    if (bestBlockFromRoundChange.isEmpty()) {
+    if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
       blockToPublish = blockCreator.createBlock(headerTimestamp);
     } else {
@@ -113,15 +113,15 @@ public class QbftRound {
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
       blockToPublish =
           BftBlockInterface.replaceRoundInBlock(
-              bestBlockFromRoundChange.get(),
+              bestPreparedCertificate.get().getBlock(),
               getRoundIdentifier().getRoundNumber(),
               BftBlockHeaderFunctions.forCommittedSeal());
     }
 
     updateStateWithProposalAndTransmit(
         blockToPublish,
-        roundChangeMetadata.getRoundChangePayloads(),
-        roundChangeMetadata.getPrepares());
+        roundChangeArtifacts.getRoundChanges(),
+        bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
   }
 
   private void updateStateWithProposalAndTransmit(
@@ -137,13 +137,16 @@ public class QbftRound {
     }
 
     transmitter.multicastProposal(
-        proposal.getRoundIdentifier(), proposal.getBlock(), roundChanges, prepares);
+        proposal.getRoundIdentifier(),
+        proposal.getSignedPayload().getPayload().getProposedBlock(),
+        roundChanges,
+        prepares);
     updateStateWithProposedBlock(proposal);
   }
 
   public void handleProposalMessage(final Proposal msg) {
     LOG.debug("Received a proposal message. round={}", roundState.getRoundIdentifier());
-    final Block block = msg.getBlock();
+    final Block block = msg.getSignedPayload().getPayload().getProposedBlock();
 
     if (updateStateWithProposedBlock(msg)) {
       LOG.debug("Sending prepare message. round={}", roundState.getRoundIdentifier());
@@ -169,8 +172,8 @@ public class QbftRound {
     peerIsCommitted(msg);
   }
 
-  public Optional<PreparedCertificate> constructPreparedRoundCertificate() {
-    return roundState.constructPreparedRoundCertificate();
+  public Optional<PreparedCertificate> constructPreparedCertificate() {
+    return roundState.constructPreparedCertificate();
   }
 
   private boolean updateStateWithProposedBlock(final Proposal msg) {
