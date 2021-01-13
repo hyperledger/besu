@@ -17,10 +17,10 @@ package org.hyperledger.besu.consensus.qbft.messagewrappers;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
-import org.hyperledger.besu.consensus.qbft.payload.PayloadDeserializers;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -39,6 +39,8 @@ public class Commit extends BftMessage<CommitPayload> {
   }
 
   public static Commit decode(final Bytes data) {
-    return new Commit(PayloadDeserializers.readSignedCommitPayloadFrom(RLP.input(data)));
+    final RLPInput rlpIn = RLP.input(data);
+
+    return new Commit(readPayload(rlpIn, CommitPayload::readFrom));
   }
 }

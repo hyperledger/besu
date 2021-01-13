@@ -30,7 +30,7 @@ import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbft.statemachine.PreparedRoundArtifacts;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -109,13 +109,12 @@ public class RoundSpecificPeers {
   }
 
   public List<SignedData<RoundChangePayload>> createSignedRoundChangePayload(
-      final ConsensusRoundIdentifier roundId, final PreparedRoundArtifacts preparedRoundArtifacts) {
+      final ConsensusRoundIdentifier roundId, final PreparedCertificate preparedCertificate) {
     return peers.stream()
         .map(
             p ->
                 p.getMessageFactory()
-                    .createRoundChange(
-                        roundId, Optional.of(preparedRoundArtifacts.getPreparedCertificate()))
+                    .createRoundChange(roundId, Optional.of(preparedCertificate))
                     .getSignedPayload())
         .collect(Collectors.toList());
   }
@@ -132,7 +131,7 @@ public class RoundSpecificPeers {
     nonProposingPeers.forEach(assertion);
   }
 
-  public Collection<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
+  public List<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
       final ConsensusRoundIdentifier preparedRound, final Hash hash) {
     return nonProposingPeers.stream()
         .map(role -> role.getMessageFactory().createPrepare(preparedRound, hash).getSignedPayload())
@@ -157,7 +156,7 @@ public class RoundSpecificPeers {
   }
 
   @SafeVarargs
-  public final void verifyMessagesReceivedNonPropsingExcluding(
+  public final void verifyMessagesReceivedNonProposingExcluding(
       final ValidatorPeer exclude, final BftMessage<? extends Payload>... msgs) {
     final Collection<ValidatorPeer> candidates = Lists.newArrayList(nonProposingPeers);
     candidates.remove(exclude);
@@ -208,7 +207,7 @@ public class RoundSpecificPeers {
         actualSignedPayload = RoundChangeMessageData.fromMessageData(actual).decode();
         break;
       default:
-        fail("Illegal IBFTV2 message type.");
+        fail("Illegal QBFTV1 message type.");
         break;
     }
     assertThat(expectedMessage).isEqualToComparingFieldByFieldRecursively(actualSignedPayload);

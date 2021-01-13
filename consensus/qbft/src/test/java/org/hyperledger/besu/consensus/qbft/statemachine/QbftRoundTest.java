@@ -39,8 +39,6 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
-import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
-import org.hyperledger.besu.consensus.qbft.payload.RoundChangeMetadata;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -302,7 +300,7 @@ public class QbftRoundTest {
             transmitter,
             roundTimer);
 
-    round.startRoundWith(new RoundChangeMetadata(empty(), emptyList(), emptyList()), 15);
+    round.startRoundWith(new RoundChangeArtifacts(emptyList(), Optional.empty()), 15);
     verify(transmitter, times(1))
         .multicastProposal(eq(roundIdentifier), any(), eq(emptyList()), eq(emptyList()));
   }
@@ -329,12 +327,12 @@ public class QbftRoundTest {
     final RoundChange roundChange =
         messageFactory.createRoundChange(
             roundIdentifier,
-            Optional.of(new PreparedCertificate(proposedBlock, singletonList(preparedPayload))));
+            Optional.of(new PreparedCertificate(proposedBlock, singletonList(preparedPayload), 2)));
 
-    final RoundChangeMetadata roundChangeMetadata =
-        RoundChangeMetadata.create(singletonList(roundChange));
+    final RoundChangeArtifacts roundChangeArtifacts =
+        RoundChangeArtifacts.create(singletonList(roundChange));
 
-    round.startRoundWith(roundChangeMetadata, 15);
+    round.startRoundWith(roundChangeArtifacts, 15);
     verify(transmitter, times(1))
         .multicastProposal(
             eq(roundIdentifier),
@@ -370,10 +368,10 @@ public class QbftRoundTest {
     final RoundChange roundChange =
         messageFactory.createRoundChange(roundIdentifier, Optional.empty());
 
-    final RoundChangeMetadata roundChangeMetadata =
-        RoundChangeMetadata.create(List.of(roundChange));
+    final RoundChangeArtifacts roundChangeArtifacts =
+        RoundChangeArtifacts.create(List.of(roundChange));
 
-    round.startRoundWith(roundChangeMetadata, 15);
+    round.startRoundWith(roundChangeArtifacts, 15);
     verify(transmitter, times(1))
         .multicastProposal(
             eq(roundIdentifier),
@@ -484,7 +482,7 @@ public class QbftRoundTest {
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));
 
     // Verify that no prepare message was constructed by the QbftRound
-    assertThat(roundState.constructPreparedRoundCertificate().get().getPrepares()).isEmpty();
+    assertThat(roundState.constructPreparedCertificate().get().getPrepares()).isEmpty();
 
     verifyNoInteractions(transmitter);
   }

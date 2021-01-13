@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
-import org.hyperledger.besu.consensus.qbft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -130,14 +129,13 @@ public class RoundState {
         .collect(Collectors.toList());
   }
 
-  public Optional<PreparedCertificate> constructPreparedRoundCertificate() {
+  public Optional<PreparedCertificate> constructPreparedCertificate() {
     if (isPrepared()) {
       return Optional.of(
           new PreparedCertificate(
               proposalMessage.get().getSignedPayload().getPayload().getProposedBlock(),
-              prepareMessages.stream()
-                  .map(Prepare::getSignedPayload)
-                  .collect(Collectors.toList())));
+              prepareMessages.stream().map(Prepare::getSignedPayload).collect(Collectors.toList()),
+              roundIdentifier.getRoundNumber()));
     }
     return Optional.empty();
   }

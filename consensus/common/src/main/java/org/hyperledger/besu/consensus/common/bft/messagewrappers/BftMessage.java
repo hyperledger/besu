@@ -19,10 +19,13 @@ import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.RoundSpecific;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.StringJoiner;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -67,5 +70,15 @@ public class BftMessage<P extends Payload> implements Authored, RoundSpecific {
     return new StringJoiner(", ", BftMessage.class.getSimpleName() + "[", "]")
         .add("payload=" + payload)
         .toString();
+  }
+
+  protected static <T extends Payload> SignedData<T> readPayload(
+      final RLPInput rlpInput, final Function<RLPInput, T> decoder) {
+    rlpInput.enterList();
+    final T unsignedMessageData = decoder.apply(rlpInput);
+    final Signature signature = rlpInput.readBytes((Signature::decode));
+    rlpInput.leaveList();
+
+    return SignedData.create(unsignedMessageData, signature);
   }
 }
