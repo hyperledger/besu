@@ -93,7 +93,7 @@ public class TransactionRLPEncoder {
         transaction.getPayload(),
         transaction.getAccessList(),
         rlpOutput);
-    rlpOutput.writeByte(transaction.getSignature().getRecId());
+    rlpOutput.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, rlpOutput);
     rlpOutput.endList();
   }
