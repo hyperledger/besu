@@ -68,6 +68,7 @@ public class RoundChangeMessageValidator {
   public boolean validate(final RoundChange msg) {
 
     if (!roundChangePayloadValidator.validate(msg.getSignedPayload())) {
+      LOG.info("{}: embedded payload was invalid", ERROR_PREFIX);
       return false;
     }
 
@@ -83,7 +84,7 @@ public class RoundChangeMessageValidator {
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
-    if (!validationResult.isPresent()) {
+    if (validationResult.isEmpty()) {
       LOG.info("{}: block did not pass validation.", ERROR_PREFIX);
       return false;
     }
@@ -99,7 +100,7 @@ public class RoundChangeMessageValidator {
     }
 
     if (msg.getPreparedRoundMetadata().isEmpty()) {
-      LOG.info("{}: Prepared block specified, but prepared metaadata absent", ERROR_PREFIX);
+      LOG.info("{}: Prepared block specified, but prepared metadata absent", ERROR_PREFIX);
     }
 
     final PreparedRoundMetadata metadata = msg.getPreparedRoundMetadata().get();
