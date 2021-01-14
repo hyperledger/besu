@@ -110,11 +110,9 @@ public class DecodeBlockWithAccessListTransactionsTest {
                             jsonNode.get("header"), CustomHeaderForThisTest.class),
                         new BlockBody(
                             Arrays.asList(
-                                Optional.ofNullable(
-                                        objectMapper.treeToValue(
-                                            jsonNode.get("transactions"),
-                                            CustomTransactionForThisTest[].class))
-                                    .orElse(new CustomTransactionForThisTest[] {})),
+                                objectMapper.treeToValue(
+                                    jsonNode.get("transactions"),
+                                    CustomTransactionForThisTest[].class)),
                             Arrays.asList(
                                 Optional.ofNullable(
                                         objectMapper.treeToValue(
