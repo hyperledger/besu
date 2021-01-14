@@ -52,7 +52,7 @@ public class ProposalValidator {
       final int quorumMessageCount,
       final Collection<Address> validators,
       final ConsensusRoundIdentifier roundIdentifier,
-  final Address expectedProposer) {
+      final Address expectedProposer) {
     this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
     this.quorumMessageCount = quorumMessageCount;
@@ -115,7 +115,7 @@ public class ProposalValidator {
           return false;
         }
       } else {
-        //no one prepared, so prepres should be empty
+        //no one prepared, so prepares should be empty
         if (!proposal.getPrepares().isEmpty()) {
           LOG.info("{}: No PreparedMetadata exists, so prepare list must be empty", ERROR_PREFIX);
           return false;
@@ -136,8 +136,6 @@ public class ProposalValidator {
 
   private boolean validateRoundChanges(final Proposal proposal,
       final List<SignedData<RoundChangePayload>> roundChanges) {
-    final RoundChangePayloadValidator roundChangePayloadValidator = new RoundChangePayloadValidator(
-        validators, roundIdentifier.getSequenceNumber());
 
     if (hasDuplicateAuthors(roundChanges)) {
       LOG.info("{}}: multiple round changes from the same author.", ERROR_PREFIX);
@@ -149,6 +147,8 @@ public class ProposalValidator {
       return false;
     }
 
+    final RoundChangePayloadValidator roundChangePayloadValidator = new RoundChangePayloadValidator(
+        validators, roundIdentifier.getSequenceNumber());
     for (final SignedData<RoundChangePayload> payload : roundChanges) {
       if (!roundChangePayloadValidator.validate(payload)) {
         LOG.info("{}: invalid proposal, round changes did not pass validation", ERROR_PREFIX);
@@ -215,7 +215,8 @@ public class ProposalValidator {
           return Integer.compare(o1Round, o2Round);
         };
 
-    return roundChanges.stream().max(preparedRoundComparator);
+    return roundChanges.stream().max(preparedRoundComparator)
+        .flatMap(rc -> rc.getPayload().getPreparedRoundMetadata().map(metadata -> rc));
   }
 
   public static <T extends Payload> boolean allMessagesTargetRound(

@@ -19,6 +19,8 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparedCertificate;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
@@ -449,23 +451,5 @@ public class RoundChangeMessageValidatorTest {
     assertThat(messageValidator.validate(message)).isFalse();
   }
 
-  private PreparedCertificate createPreparedCertificate(
-      final Block block,
-      final ConsensusRoundIdentifier reportedRound,
-      final QbftNode... preparedNodes) {
 
-    return new PreparedCertificate(
-        block,
-        createPreparePayloads(reportedRound, block.getHash(), preparedNodes),
-        reportedRound.getRoundNumber());
-  }
-
-  private List<SignedData<PreparePayload>> createPreparePayloads(
-      final ConsensusRoundIdentifier reportedRound,
-      final Hash blockHash,
-      final QbftNode... preparedNodes) {
-    return Stream.of(preparedNodes)
-        .map(p -> p.getMessageFactory().createPrepare(reportedRound, blockHash).getSignedPayload())
-        .collect(Collectors.toList());
-  }
 }

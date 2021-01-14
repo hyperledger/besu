@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -27,9 +28,11 @@ import java.util.Optional;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
+import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -60,6 +63,7 @@ public class ProposalValidatorTest {
   private ProposalValidator roundZeroMessageValidator;
   private ProposalValidator roundOneMessageValidator;
   private Block roundZeroBlock;
+  private Block firstRoundBlock;
 
   @Before
   public void setup() {
@@ -73,6 +77,9 @@ public class ProposalValidatorTest {
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
     roundZeroBlock =
+        ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), zeroRoundIdentifier);
+
+    firstRoundBlock =
         ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), firstRoundIdentifier);
 
     roundZeroMessageValidator = new ProposalValidator(
@@ -80,7 +87,7 @@ public class ProposalValidatorTest {
         protocolContext,
         BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
         validators.getNodeAddresses(),
-        firstRoundIdentifier,
+        zeroRoundIdentifier,
         validators.getNode(0).getAddress());
 
     roundOneMessageValidator = new ProposalValidator(
@@ -98,18 +105,15 @@ public class ProposalValidatorTest {
   @Test
   public void validationPassesForRoundZeroWithNoPiggybackedPayloads() {
     final Proposal proposal = validators.getMessageFactory(0).createProposal(
-        firstRoundIdentifier, roundZeroBlock, emptyList(), emptyList());
+        zeroRoundIdentifier, roundZeroBlock, emptyList(), emptyList());
 
     assertThat(roundZeroMessageValidator.validate(proposal)).isTrue();
   }
 
   @Test
   public void validationFailsIfBlockIsInvalid() {
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), firstRoundIdentifier);
-
     final Proposal proposal = validators.getMessageFactory(0).createProposal(
-        firstRoundIdentifier, block, emptyList(), emptyList());
+        firstRoundIdentifier, roundZeroBlock, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
         eq(protocolContext), any(), eq(HeaderValidationMode.LIGHT),
@@ -122,7 +126,8 @@ public class ProposalValidatorTest {
   @Test
   public void validationFailsIfRoundZeroHasNonEmptyPrepares() {
     final Prepare prepareMsg =
-        validators.getMessageFactory(1).createPrepare(firstRoundIdentifier, roundZeroBlock.getHash());
+        validators.getMessageFactory(1)
+            .createPrepare(firstRoundIdentifier, roundZeroBlock.getHash());
 
     final Proposal proposal = validators.getMessageFactory(0).createProposal(
         firstRoundIdentifier, roundZeroBlock, emptyList(), List.of(prepareMsg.getSignedPayload()));
@@ -144,20 +149,26 @@ public class ProposalValidatorTest {
 
   @Test
   public void validationPassesAtNonRoundZeroIfRoundChangesAreSufficientAndMatchTargetRound() {
-    final RoundChange roundChange = validators.getMessageFactory(1).createRoundChange(
-        firstRoundIdentifier, Optional.empty());
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(firstRoundIdentifier,
+            validators.getNode(0), validators.getNode(1), validators.getNode(2));
 
     final Proposal proposal = validators.getMessageFactory(0).createProposal(
-        firstRoundIdentifier, roundZeroBlock, List.of(roundChange.getSignedPayload()), emptyList());
+        firstRoundIdentifier, firstRoundBlock, roundChanges, emptyList());
 
-    assertThat(roundZeroMessageValidator.validate(proposal)).isFalse();
+    assertThat(roundOneMessageValidator.validate(proposal)).isTrue();
   }
 
   @Test
   public void validationFailsAtNonRoundZeroIfInsufficientRoundChangesExist() {
-    final RoundChange roundChange = validators.getMessageFactory(1).createRoundChange(
-        firstRoundIdentifier, Optional.empty());
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(firstRoundIdentifier,
+            validators.getNode(0), validators.getNode(1));
 
+    final Proposal proposal = validators.getMessageFactory(0).createProposal(
+        firstRoundIdentifier, roundZeroBlock, roundChanges, emptyList());
+
+    assertThat(roundZeroMessageValidator.validate(proposal)).isFalse();
 
   }
 
