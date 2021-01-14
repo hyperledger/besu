@@ -51,14 +51,14 @@ public class PrepareValidator {
 
   public boolean validate(final SignedData<PreparePayload> signedPayload) {
     if (!validators.contains(signedPayload.getAuthor())) {
-      LOG.info("{}: did not originate from a recognised validator.", ERROR_PREFIX);
+      LOG.info("{}: did not originate from a recognized validator.", ERROR_PREFIX);
       return false;
     }
 
     final PreparePayload payload = signedPayload.getPayload();
 
     if (!payload.getRoundIdentifier().equals(targetRound)) {
-      LOG.info("{}: did not target expected round", ERROR_PREFIX);
+      LOG.info("{}: did not target expected round/height", ERROR_PREFIX);
       return false;
     }
 
