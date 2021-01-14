@@ -47,7 +47,7 @@ public class IntegrationTestHelpers {
 
     return new PreparedCertificate(
         block,
-        peers.createSignedPreparePayloadOfNonProposing(preparedRound, block.getHash()),
+        peers.createSignedPreparePayloadOfAllPeers(preparedRound, block.getHash()),
         preparedRound.getRoundNumber());
   }
 }
