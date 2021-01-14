@@ -29,6 +29,8 @@ public interface GenesisConfigOptions {
 
   boolean isIbft2();
 
+  boolean isQbft();
+
   boolean isClique();
 
   String getConsensusEngine();
@@ -37,7 +39,9 @@ public interface GenesisConfigOptions {
 
   CliqueConfigOptions getCliqueConfigOptions();
 
-  BftConfigOptions getBftConfigOptions();
+  BftConfigOptions getIbftConfigOptions();
+
+  BftConfigOptions getQBftConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
 

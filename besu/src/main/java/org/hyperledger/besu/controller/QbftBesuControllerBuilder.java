@@ -44,14 +44,14 @@ import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
-import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
-import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.protocol.QbftSubProtocol;
+import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
+import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
+import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
+import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -79,7 +79,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftBesuControllerBuilder extends BesuControllerBuilder {
+public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
@@ -105,9 +105,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     return new SubProtocolConfiguration()
         .withSubProtocol(EthProtocol.get(), ethProtocolManager)
         .withSubProtocol(
-            IbftSubProtocol.get(),
+            QbftSubProtocol.get(),
             new BftProtocolManager(
-                bftEventQueue, peers, IbftSubProtocol.IBFV1, IbftSubProtocol.get().getName()));
+                bftEventQueue, peers, QbftSubProtocol.QBFV1, QbftSubProtocol.get().getName()));
   }
 
   @Override
@@ -145,7 +145,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
 
-    final IbftGossip gossiper = new IbftGossip(uniqueMessageMulticaster);
+    final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster);
 
     final BftFinalState finalState =
         new BftFinalState(
@@ -176,13 +176,13 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
-    final BftEventHandler ibftController =
-        new IbftController(
+    final BftEventHandler qbftController =
+        new QbftController(
             blockchain,
             finalState,
-            new IbftBlockHeightManagerFactory(
+            new QbftBlockHeightManagerFactory(
                 finalState,
-                new IbftRoundFactory(
+                new QbftRoundFactory(
                     finalState,
                     protocolContext,
                     protocolSchedule,
@@ -196,20 +196,20 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             futureMessageBuffer,
             new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers()));
 
-    final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
+    final EventMultiplexer eventMultiplexer = new EventMultiplexer(qbftController);
     final BftProcessor bftProcessor = new BftProcessor(bftEventQueue, eventMultiplexer);
 
-    final MiningCoordinator ibftMiningCoordinator =
+    final MiningCoordinator miningCoordinator =
         new BftMiningCoordinator(
             bftExecutors,
-            ibftController,
+            qbftController,
             bftProcessor,
             blockCreatorFactory,
             blockchain,
             bftEventQueue);
-    ibftMiningCoordinator.enable();
+    miningCoordinator.enable();
 
-    return ibftMiningCoordinator;
+    return miningCoordinator;
   }
 
   @Override
@@ -239,11 +239,11 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     final GenesisConfigOptions configOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides);
-    final BftConfigOptions ibftConfig = configOptions.getIbftConfigOptions();
-    final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
+    final BftConfigOptions bftConfig = configOptions.getIbftConfigOptions();
+    final EpochManager epochManager = new EpochManager(bftConfig.getEpochLength());
 
-    final Map<Long, List<Address>> ibftValidatorForkMap =
-        convertIbftForks(configOptions.getTransitions().getBftForks());
+    final Map<Long, List<Address>> bftValidatorForkMap =
+        convertBftForks(configOptions.getTransitions().getBftForks());
 
     return new BftContext(
         new ForkingVoteTallyCache(
@@ -251,13 +251,13 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             new VoteTallyUpdater(epochManager, new BftBlockInterface()),
             epochManager,
             new BftBlockInterface(),
-            new BftValidatorOverrides(ibftValidatorForkMap)),
+            new BftValidatorOverrides(bftValidatorForkMap)),
         new VoteProposer(),
         epochManager,
         blockInterface);
   }
 
-  private Map<Long, List<Address>> convertIbftForks(final List<BftFork> bftForks) {
+  private Map<Long, List<Address>> convertBftForks(final List<BftFork> bftForks) {
     final Map<Long, List<Address>> result = new HashMap<>();
 
     for (final BftFork fork : bftForks) {

@@ -48,7 +48,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class IbftQueryServiceImplTest {
+public class BftQueryServiceImplTest {
 
   @Mock private Blockchain blockchain;
 
@@ -107,7 +107,7 @@ public class IbftQueryServiceImplTest {
   @Test
   public void roundNumberFromBlockIsReturned() {
     final IbftQueryService service =
-        new IbftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
 
     assertThat(service.getRoundNumberFrom(blockHeader)).isEqualTo(ROUND_NUMBER_IN_BLOCK);
   }
@@ -119,7 +119,7 @@ public class IbftQueryServiceImplTest {
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
     final IbftQueryService service =
-        new IbftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getRoundNumberFrom(header));
   }
@@ -127,7 +127,7 @@ public class IbftQueryServiceImplTest {
   @Test
   public void getSignersReturnsAddressesOfSignersInBlock() {
     final IbftQueryService service =
-        new IbftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
 
     final List<Address> signers =
         signingKeys.stream()
@@ -144,7 +144,7 @@ public class IbftQueryServiceImplTest {
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
     final IbftQueryService service =
-        new IbftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getSignersFrom(header));
   }

@@ -39,6 +39,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String ETHASH_CONFIG_KEY = "ethash";
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
+  private static final String QBFT_CONFIG_KEY = "qbft";
   private static final String CLIQUE_CONFIG_KEY = "clique";
 
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
@@ -97,6 +98,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       return IBFT2_CONFIG_KEY;
     } else if (isIbftLegacy()) {
       return IBFT_LEGACY_CONFIG_KEY;
+    } else if (isQbft()) {
+      return QBFT_CONFIG_KEY;
     } else if (isClique()) {
       return CLIQUE_CONFIG_KEY;
     } else {
@@ -125,6 +128,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isQbft() {
+    return configRoot.has(QBFT_CONFIG_KEY);
+  }
+
+  @Override
   public BftConfigOptions getIbftLegacyConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
         .map(BftConfigOptions::new)
@@ -132,8 +140,15 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public BftConfigOptions getBftConfigOptions() {
+  public BftConfigOptions getIbftConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT2_CONFIG_KEY)
+        .map(BftConfigOptions::new)
+        .orElse(BftConfigOptions.DEFAULT);
+  }
+
+  @Override
+  public BftConfigOptions getQBftConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, QBFT_CONFIG_KEY)
         .map(BftConfigOptions::new)
         .orElse(BftConfigOptions.DEFAULT);
   }
@@ -359,7 +374,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
-      builder.put("ibft2", getBftConfigOptions().asMap());
+      builder.put("ibft2", getIbftConfigOptions().asMap());
     }
 
     if (isQuorum()) {

@@ -68,17 +68,17 @@ public class JsonGenesisConfigOptionsTest {
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
     assertThat(configOptions.getTransitions()).isNotNull();
-    assertThat(configOptions.getTransitions().getIbftForks().size()).isEqualTo(2);
-    assertThat(configOptions.getTransitions().getIbftForks().get(0).getForkBlock()).isEqualTo(20);
-    assertThat(configOptions.getTransitions().getIbftForks().get(0).getValidators()).isNotEmpty();
-    assertThat(configOptions.getTransitions().getIbftForks().get(0).getValidators().get())
+    assertThat(configOptions.getTransitions().getBftForks().size()).isEqualTo(2);
+    assertThat(configOptions.getTransitions().getBftForks().get(0).getForkBlock()).isEqualTo(20);
+    assertThat(configOptions.getTransitions().getBftForks().get(0).getValidators()).isNotEmpty();
+    assertThat(configOptions.getTransitions().getBftForks().get(0).getValidators().get())
         .containsExactly(
             "0x1234567890123456789012345678901234567890",
             "0x9876543210987654321098765432109876543210");
 
-    assertThat(configOptions.getTransitions().getIbftForks().get(1).getForkBlock()).isEqualTo(25);
-    assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators()).isNotEmpty();
-    assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators().get())
+    assertThat(configOptions.getTransitions().getBftForks().get(1).getForkBlock()).isEqualTo(25);
+    assertThat(configOptions.getTransitions().getBftForks().get(1).getValidators()).isNotEmpty();
+    assertThat(configOptions.getTransitions().getBftForks().get(1).getValidators().get())
         .containsExactly("0x1234567890123456789012345678901234567890");
   }
 
@@ -90,7 +90,7 @@ public class JsonGenesisConfigOptionsTest {
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
     assertThat(configOptions.getTransitions()).isNotNull();
-    assertThat(configOptions.getTransitions().getIbftForks().size()).isZero();
+    assertThat(configOptions.getTransitions().getBftForks().size()).isZero();
   }
 
   @Test
@@ -101,7 +101,7 @@ public class JsonGenesisConfigOptionsTest {
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
     assertThat(configOptions.getTransitions()).isNotNull();
-    assertThat(configOptions.getTransitions().getIbftForks().size()).isZero();
+    assertThat(configOptions.getTransitions().getBftForks().size()).isZero();
   }
 
   @Test
@@ -111,9 +111,9 @@ public class JsonGenesisConfigOptionsTest {
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getTransitions().getIbftForks().get(0).getValidators().isPresent())
+    assertThat(configOptions.getTransitions().getBftForks().get(0).getValidators().isPresent())
         .isFalse();
-    assertThat(configOptions.getTransitions().getIbftForks().get(1).getValidators().get().size())
+    assertThat(configOptions.getTransitions().getBftForks().get(1).getValidators().get().size())
         .isEqualTo(1);
   }
 
@@ -123,10 +123,10 @@ public class JsonGenesisConfigOptionsTest {
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
-    assertThat(configOptions.getBftConfigOptions().getMiningBeneficiary()).isNotEmpty();
-    assertThat(configOptions.getBftConfigOptions().getMiningBeneficiary().get())
+    assertThat(configOptions.getIbftConfigOptions().getMiningBeneficiary()).isNotEmpty();
+    assertThat(configOptions.getIbftConfigOptions().getMiningBeneficiary().get())
         .isEqualTo("0x1234567890123456789012345678901234567890");
-    assertThat(configOptions.getBftConfigOptions().getBlockRewardWei()).isEqualTo(21);
+    assertThat(configOptions.getIbftConfigOptions().getBlockRewardWei()).isEqualTo(21);
   }
 
   @Test
@@ -138,7 +138,7 @@ public class JsonGenesisConfigOptionsTest {
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getBftConfigOptions().getMiningBeneficiary()).isEmpty();
+    assertThat(configOptions.getIbftConfigOptions().getMiningBeneficiary()).isEmpty();
   }
 
   @Test
@@ -150,7 +150,7 @@ public class JsonGenesisConfigOptionsTest {
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getBftConfigOptions().getBlockRewardWei()).isEqualTo(0);
+    assertThat(configOptions.getIbftConfigOptions().getBlockRewardWei()).isEqualTo(0);
   }
 
   @Test
@@ -162,6 +162,6 @@ public class JsonGenesisConfigOptionsTest {
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getBftConfigOptions().getBlockRewardWei()).isEqualTo(12);
+    assertThat(configOptions.getIbftConfigOptions().getBlockRewardWei()).isEqualTo(12);
   }
 }

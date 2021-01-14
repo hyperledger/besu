@@ -30,9 +30,9 @@ import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes32;
 
-public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQueryService {
+public class BftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQueryService {
 
-  public IbftQueryServiceImpl(
+  public BftQueryServiceImpl(
       final BlockInterface blockInterface, final Blockchain blockchain, final NodeKey nodeKey) {
     super(blockInterface, blockchain, nodeKey);
   }

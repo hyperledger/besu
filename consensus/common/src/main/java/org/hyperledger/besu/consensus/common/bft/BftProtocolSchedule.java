@@ -43,7 +43,7 @@ public class BftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyBftChanges(config.getBftConfigOptions(), builder),
+            builder -> applyBftChanges(config.getIbftConfigOptions(), builder),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
