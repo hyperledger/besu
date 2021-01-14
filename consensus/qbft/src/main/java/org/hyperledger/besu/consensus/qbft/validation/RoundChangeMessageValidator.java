@@ -119,16 +119,15 @@ public class RoundChangeMessageValidator {
       return false;
     }
 
-    return validatePrepares(metadata, chainHeight, msg.getPrepares());
+    return validatePrepares(metadata, msg.getPrepares());
   }
 
   private boolean validatePrepares(
       final PreparedRoundMetadata metaData,
-      final long currentHeight,
       final List<SignedData<PreparePayload>> prepares) {
 
     final ConsensusRoundIdentifier preparedRoundIdentifier =
-        new ConsensusRoundIdentifier(currentHeight, metaData.getPreparedRound());
+        new ConsensusRoundIdentifier(chainHeight, metaData.getPreparedRound());
 
     final PrepareValidator validator =
         new PrepareValidator(validators, preparedRoundIdentifier, metaData.getPreparedBlockHash());
