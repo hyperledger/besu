@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
-import org.hyperledger.besu.ethereum.core.deserializer.QuantityToByteDeserializer;
 import org.hyperledger.besu.ethereum.core.deserializer.QuantityToLongDeserializer;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -221,8 +220,8 @@ public class DecodeBlockWithAccessListTransactionsTest {
             final Bytes payload,
         @JsonProperty("accessList") @JsonDeserialize(using = AccessListDeserializer.class)
             final AccessList accessListNullable,
-        @JsonProperty("v") @JsonDeserialize(using = QuantityToByteDeserializer.class)
-            final byte recIdorV,
+        @JsonProperty("v") @JsonDeserialize(using = HexStringDeserializer.class)
+            final Bytes recIdorV,
         @JsonProperty("r") @JsonDeserialize(using = HexStringDeserializer.class) final Bytes r,
         @JsonProperty("s") @JsonDeserialize(using = HexStringDeserializer.class) final Bytes s) {
       super(
@@ -238,15 +237,15 @@ public class DecodeBlockWithAccessListTransactionsTest {
               UInt256.fromBytes(r).toBigInteger(),
               UInt256.fromBytes(s).toBigInteger(),
               fromString(transactionTypeString).equals(TransactionType.ACCESS_LIST)
-                  ? recIdorV
-                  : (byte) (1 - recIdorV % 2)),
+                  ? recIdorV.get(0)
+                  : (byte) (1 - recIdorV.toBigInteger().mod(BigInteger.TWO).intValue())),
           payload,
           Optional.ofNullable(accessListNullable).orElse(AccessList.EMPTY),
           null,
           Optional.of(BigInteger.ONE),
           fromString(transactionTypeString).equals(TransactionType.FRONTIER)
               ? Optional.empty()
-              : Optional.of(BigInteger.valueOf(recIdorV)));
+              : Optional.of(recIdorV.toBigInteger()));
     }
 
     private static class AccessListDeserializer extends StdDeserializer<AccessList> {
