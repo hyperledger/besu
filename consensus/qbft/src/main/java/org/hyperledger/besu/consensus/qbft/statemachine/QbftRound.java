@@ -142,6 +142,7 @@ public class QbftRound {
         roundChanges,
         prepares);
     updateStateWithProposedBlock(proposal);
+    sendPrepare(block);
   }
 
   public void handleProposalMessage(final Proposal msg) {
@@ -149,16 +150,20 @@ public class QbftRound {
     final Block block = msg.getSignedPayload().getPayload().getProposedBlock();
 
     if (updateStateWithProposedBlock(msg)) {
-      LOG.debug("Sending prepare message. round={}", roundState.getRoundIdentifier());
-      try {
-        final Prepare localPrepareMessage =
-            messageFactory.createPrepare(getRoundIdentifier(), block.getHash());
-        peerIsPrepared(localPrepareMessage);
-        transmitter.multicastPrepare(
-            localPrepareMessage.getRoundIdentifier(), localPrepareMessage.getDigest());
-      } catch (final SecurityModuleException e) {
-        LOG.warn("Failed to create a signed Prepare; {}", e.getMessage());
-      }
+      sendPrepare(block);
+    }
+  }
+
+  private void sendPrepare(final Block block) {
+    LOG.debug("Sending prepare message. round={}", roundState.getRoundIdentifier());
+    try {
+      final Prepare localPrepareMessage =
+          messageFactory.createPrepare(getRoundIdentifier(), block.getHash());
+      peerIsPrepared(localPrepareMessage);
+      transmitter.multicastPrepare(
+          localPrepareMessage.getRoundIdentifier(), localPrepareMessage.getDigest());
+    } catch (final SecurityModuleException e) {
+      LOG.warn("Failed to create a signed Prepare; {}", e.getMessage());
     }
   }
 

@@ -96,24 +96,6 @@ public class RoundStateTest {
   }
 
   @Test
-  public void singleValidatorIsPreparedWithJustProposal() {
-    when(messageValidator.validateProposal(any())).thenReturn(true);
-    final RoundState roundState = new RoundState(roundIdentifier, 1, messageValidator);
-
-    final Proposal proposal =
-        validatorMessageFactories
-            .get(0)
-            .createProposal(
-                roundIdentifier, block, Collections.emptyList(), Collections.emptyList());
-    assertThat(roundState.setProposedBlock(proposal)).isTrue();
-    assertThat(roundState.isPrepared()).isTrue();
-    assertThat(roundState.isCommitted()).isFalse();
-    assertThat(roundState.constructPreparedCertificate()).isNotEmpty();
-    assertThat(roundState.constructPreparedCertificate().get().getBlock())
-        .isEqualTo(proposal.getBlock());
-  }
-
-  @Test
   public void singleValidatorRequiresCommitMessageToBeCommitted() {
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validateCommit(any())).thenReturn(true);
@@ -127,7 +109,7 @@ public class RoundStateTest {
                 roundIdentifier, block, Collections.emptyList(), Collections.emptyList());
 
     assertThat(roundState.setProposedBlock(proposal)).isTrue();
-    assertThat(roundState.isPrepared()).isTrue();
+    assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
 
     final Commit commit =
@@ -139,9 +121,9 @@ public class RoundStateTest {
                 Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1));
 
     roundState.addCommitMessage(commit);
-    assertThat(roundState.isPrepared()).isTrue();
+    assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isTrue();
-    assertThat(roundState.constructPreparedCertificate()).isNotEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isEmpty();
   }
 
   @Test
@@ -157,12 +139,20 @@ public class RoundStateTest {
     final Prepare secondPrepare =
         validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
 
+    final Prepare thirdPrepare =
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+
     roundState.addPrepareMessage(firstPrepare);
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
     assertThat(roundState.constructPreparedCertificate()).isEmpty();
 
     roundState.addPrepareMessage(secondPrepare);
+    assertThat(roundState.isPrepared()).isFalse();
+    assertThat(roundState.isCommitted()).isFalse();
+    assertThat(roundState.constructPreparedCertificate()).isEmpty();
+
+    roundState.addPrepareMessage(thirdPrepare);
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
     assertThat(roundState.constructPreparedCertificate()).isEmpty();
@@ -220,6 +210,9 @@ public class RoundStateTest {
     final Prepare secondPrepare =
         validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
 
+    final Prepare thirdPrepare =
+        validatorMessageFactories.get(2).createPrepare(roundIdentifier, block.getHash());
+
     final Proposal proposal =
         validatorMessageFactories
             .get(0)
@@ -229,6 +222,7 @@ public class RoundStateTest {
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(firstPrepare)).thenReturn(false);
     when(messageValidator.validatePrepare(secondPrepare)).thenReturn(true);
+    when(messageValidator.validatePrepare(thirdPrepare)).thenReturn(true);
 
     roundState.setProposedBlock(proposal);
     assertThat(roundState.isPrepared()).isFalse();
@@ -237,6 +231,9 @@ public class RoundStateTest {
     assertThat(roundState.isPrepared()).isFalse();
 
     roundState.addPrepareMessage(secondPrepare);
+    assertThat(roundState.isPrepared()).isFalse();
+
+    roundState.addPrepareMessage(thirdPrepare);
     assertThat(roundState.isPrepared()).isTrue();
   }
 
