@@ -68,11 +68,7 @@ public class FutureRoundTest {
     final ConsensusRoundIdentifier subsequentRoundId = new ConsensusRoundIdentifier(1, 6);
     final RoundSpecificPeers subsequentRoles = context.roundSpecificPeers(subsequentRoundId);
 
-    // required remotely received Prepares = quorum-2
-    // required remote received commits = quorum-1
-
-    // Inject 1 too few Commit messages (but sufficient Prepare)
-    for (int i = 0; i < quorum - 3; i++) {
+    for (int i = 0; i < quorum - 2; i++) {
       futurePeers.getNonProposing(i).injectPrepare(futureRoundId, futureBlock.getHash());
     }
 
@@ -103,7 +99,7 @@ public class FutureRoundTest {
     peers.verifyMessagesReceived(expectedPrepare);
 
     // following 1 more prepare, a commit msg will be sent
-    futurePeers.getNonProposing(quorum - 3).injectPrepare(futureRoundId, futureBlock.getHash());
+    futurePeers.getNonProposing(quorum - 2).injectPrepare(futureRoundId, futureBlock.getHash());
 
     final Commit expectedCommit =
         localNodeMessageFactory.createCommit(

@@ -22,6 +22,7 @@ import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.support.RoundSpecificPeers;
@@ -64,6 +65,7 @@ public class LocalNodeIsProposerTest {
   private Block expectedProposedBlock;
   private Proposal expectedTxProposal;
   private Commit expectedTxCommit;
+  private Prepare expectedTxPrepare;
 
   @Before
   public void setup() {
@@ -71,6 +73,9 @@ public class LocalNodeIsProposerTest {
     expectedTxProposal =
         localNodeMessageFactory.createProposal(
             roundId, expectedProposedBlock, Collections.emptyList(), Collections.emptyList());
+
+    expectedTxPrepare =
+        localNodeMessageFactory.createPrepare(roundId, expectedProposedBlock.getHash());
 
     expectedTxCommit =
         new Commit(
@@ -83,7 +88,7 @@ public class LocalNodeIsProposerTest {
 
   @Test
   public void basicCase() {
-    peers.verifyMessagesReceived(expectedTxProposal);
+    peers.verifyMessagesReceived(expectedTxProposal, expectedTxPrepare);
 
     // NOTE: In these test roles.getProposer() will return NULL.
     peers.getNonProposing(0).injectPrepare(roundId, expectedProposedBlock.getHash());
@@ -103,7 +108,7 @@ public class LocalNodeIsProposerTest {
 
   @Test
   public void importsToChainWithoutReceivingPrepareMessages() {
-    peers.verifyMessagesReceived(expectedTxProposal);
+    peers.verifyMessagesReceived(expectedTxProposal, expectedTxPrepare);
 
     peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
@@ -116,7 +121,7 @@ public class LocalNodeIsProposerTest {
 
   @Test
   public void nodeDoesNotSendRoundChangeIfRoundTimesOutAfterBlockImportButBeforeNewBlock() {
-    peers.verifyMessagesReceived(expectedTxProposal);
+    peers.verifyMessagesReceived(expectedTxProposal, expectedTxPrepare);
     peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock.getHash());
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
     peers.verifyNoMessagesReceived();
@@ -136,7 +141,7 @@ public class LocalNodeIsProposerTest {
 
   @Test
   public void nodeDoesNotSendCommitMessageAfterBlockIsImportedAndBeforeNewBlockEvent() {
-    peers.verifyMessagesReceived(expectedTxProposal);
+    peers.verifyMessagesReceived(expectedTxProposal, expectedTxPrepare);
     peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock.getHash());
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
     peers.verifyNoMessagesReceived();

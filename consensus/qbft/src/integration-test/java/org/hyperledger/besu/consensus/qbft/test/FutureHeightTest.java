@@ -140,6 +140,7 @@ public class FutureHeightTest {
     final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
 
     peers.getProposer().injectProposal(roundId, currentHeightBlock);
+    peers.getProposer().injectPrepare(roundId, currentHeightBlock.getHash());
     peers.getNonProposing(0).injectPrepare(roundId, currentHeightBlock.getHash());
 
     peers.clearReceivedMessages();

@@ -166,6 +166,7 @@ public class ReceivedFutureProposalTest {
 
     nextProposer.injectProposalForFutureRound(
         nextRoundId, roundChanges, preparedRoundArtifacts.getPrepares(), reproposedBlock);
+    nextProposer.injectPrepare(nextRoundId, reproposedBlock.getHash());
     peers.verifyNoMessagesReceived();
 
     nextRoles.getNonProposing(1).injectPrepare(nextRoundId, reproposedBlock.getHash());

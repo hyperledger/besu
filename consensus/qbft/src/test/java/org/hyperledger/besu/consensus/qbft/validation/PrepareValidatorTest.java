@@ -28,9 +28,9 @@ public class PrepareValidatorTest {
   private static final int VALIDATOR_COUNT = 4;
 
   private final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
-  final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
-  final Hash expectedHash = Hash.fromHexStringLenient("0x1");
-  final PrepareValidator validator =
+  private final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
+  private final Hash expectedHash = Hash.fromHexStringLenient("0x1");
+  private final PrepareValidator validator =
       new PrepareValidator(validators.getNodeAddresses(), round, expectedHash);
 
   @Test
