@@ -123,8 +123,7 @@ public class RoundChangeMessageValidator {
   }
 
   private boolean validatePrepares(
-      final PreparedRoundMetadata metaData,
-      final List<SignedData<PreparePayload>> prepares) {
+      final PreparedRoundMetadata metaData, final List<SignedData<PreparePayload>> prepares) {
 
     final ConsensusRoundIdentifier preparedRoundIdentifier =
         new ConsensusRoundIdentifier(chainHeight, metaData.getPreparedRound());
