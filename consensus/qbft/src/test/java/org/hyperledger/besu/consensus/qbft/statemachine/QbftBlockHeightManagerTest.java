@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -210,10 +211,9 @@ public class QbftBlockHeightManagerTest {
             messageFactory);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(messageTransmitter, times(1))
+    verify(messageTransmitter, atMostOnce())
         .multicastProposal(eq(roundIdentifier), any(), any(), any());
-    verify(messageTransmitter, never()).multicastPrepare(any(), any());
-    verify(messageTransmitter, never()).multicastPrepare(any(), any());
+    verify(messageTransmitter, atMostOnce()).multicastPrepare(eq(roundIdentifier), any());
   }
 
   @Test
@@ -348,6 +348,9 @@ public class QbftBlockHeightManagerTest {
 
     manager.handleBlockTimerExpiry(roundIdentifier); // Trigger a Proposal creation.
 
+    final Prepare localPrepare =
+        messageFactory.createPrepare(roundIdentifier, createdBlock.getHash());
+
     final Prepare firstPrepare =
         validatorMessageFactory
             .get(0)
@@ -356,8 +359,13 @@ public class QbftBlockHeightManagerTest {
         validatorMessageFactory
             .get(1)
             .createPrepare(roundIdentifier, Hash.fromHexStringLenient("0"));
+    final Prepare thirdPrepare =
+        validatorMessageFactory
+            .get(2)
+            .createPrepare(roundIdentifier, Hash.fromHexStringLenient("0"));
     manager.handlePreparePayload(firstPrepare);
     manager.handlePreparePayload(secondPrepare);
+    manager.handlePreparePayload(thirdPrepare);
 
     manager.roundExpired(new RoundExpiry(roundIdentifier));
 
@@ -372,7 +380,11 @@ public class QbftBlockHeightManagerTest {
     Assertions.assertThat(receivedRoundChange.getPreparedRoundMetadata()).isNotEmpty();
 
     assertThat(receivedRoundChange.getPrepares())
-        .containsOnly(firstPrepare.getSignedPayload(), secondPrepare.getSignedPayload());
+        .containsOnly(
+            localPrepare.getSignedPayload(),
+            firstPrepare.getSignedPayload(),
+            secondPrepare.getSignedPayload(),
+            thirdPrepare.getSignedPayload());
   }
 
   @Test

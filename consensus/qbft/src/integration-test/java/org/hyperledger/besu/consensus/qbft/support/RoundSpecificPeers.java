@@ -131,9 +131,9 @@ public class RoundSpecificPeers {
     nonProposingPeers.forEach(assertion);
   }
 
-  public List<SignedData<PreparePayload>> createSignedPreparePayloadOfNonProposing(
+  public List<SignedData<PreparePayload>> createSignedPreparePayloadOfAllPeers(
       final ConsensusRoundIdentifier preparedRound, final Hash hash) {
-    return nonProposingPeers.stream()
+    return peers.stream()
         .map(role -> role.getMessageFactory().createPrepare(preparedRound, hash).getSignedPayload())
         .collect(Collectors.toList());
   }
