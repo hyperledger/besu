@@ -68,10 +68,6 @@ public class FutureRoundTest {
     final ConsensusRoundIdentifier subsequentRoundId = new ConsensusRoundIdentifier(1, 6);
     final RoundSpecificPeers subsequentRoles = context.roundSpecificPeers(subsequentRoundId);
 
-    // required remotely received Prepares = quorum-1
-    // required remote received commits = quorum-1
-
-    // Inject 1 too few Commit messages (but sufficient Prepare)
     for (int i = 0; i < quorum - 2; i++) {
       futurePeers.getNonProposing(i).injectPrepare(futureRoundId, futureBlock.getHash());
     }
