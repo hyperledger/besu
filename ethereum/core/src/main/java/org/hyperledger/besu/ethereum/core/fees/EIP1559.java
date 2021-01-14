@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import static java.lang.Math.floorDiv;
 import static java.lang.Math.max;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+
+import java.math.BigInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,19 +46,19 @@ public class EIP1559 {
       return parentBaseFee;
     } else if (parentBlockGasUsed > targetGasUsed) {
       gasDelta = parentBlockGasUsed - targetGasUsed;
-      feeDelta =
-          max(
-              floorDiv(
-                  floorDiv(parentBaseFee * gasDelta, targetGasUsed),
-                  feeMarket.getBasefeeMaxChangeDenominator()),
-              1);
+      final BigInteger pBaseFee = BigInteger.valueOf(parentBaseFee);
+      final BigInteger gDelta = BigInteger.valueOf(gasDelta);
+      final BigInteger target = BigInteger.valueOf(targetGasUsed);
+      final BigInteger denominator = BigInteger.valueOf(feeMarket.getBasefeeMaxChangeDenominator());
+      feeDelta = max(pBaseFee.multiply(gDelta).divide(target).divide(denominator).longValue(), 1);
       baseFee = parentBaseFee + feeDelta;
     } else {
       gasDelta = targetGasUsed - parentBlockGasUsed;
-      feeDelta =
-          floorDiv(
-              floorDiv(parentBaseFee * gasDelta, targetGasUsed),
-              feeMarket.getBasefeeMaxChangeDenominator());
+      final BigInteger pBaseFee = BigInteger.valueOf(parentBaseFee);
+      final BigInteger gDelta = BigInteger.valueOf(gasDelta);
+      final BigInteger target = BigInteger.valueOf(targetGasUsed);
+      final BigInteger denominator = BigInteger.valueOf(feeMarket.getBasefeeMaxChangeDenominator());
+      feeDelta = pBaseFee.multiply(gDelta).divide(target).divide(denominator).longValue();
       baseFee = parentBaseFee - feeDelta;
     }
     LOG.trace(
