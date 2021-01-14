@@ -67,6 +67,9 @@ public class LocalNodeNotProposerTest {
     peers.verifyMessagesReceived(expectedTxPrepare);
 
     peers.getNonProposing(0).injectPrepare(roundId, blockToPropose.getHash());
+    peers.verifyNoMessagesReceived();
+
+    peers.getNonProposing(1).injectPrepare(roundId, blockToPropose.getHash());
     peers.verifyMessagesReceived(expectedTxCommit);
 
     // Ensure the local blockchain has NOT incremented yet.
