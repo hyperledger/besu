@@ -206,50 +206,6 @@ public class QbftRoundTest {
   }
 
   @Test
-  public void twoValidatorNetworkSendsPrepareOnProposalReceptionThenSendsCommitOnCommitReceive() {
-    final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
-    final QbftRound round =
-        new QbftRound(
-            roundState,
-            blockCreator,
-            protocolContext,
-            blockImporter,
-            subscribers,
-            nodeKey,
-            messageFactory,
-            transmitter,
-            roundTimer);
-
-    final Hash commitSealHash =
-        BftBlockHashing.calculateDataHashForCommittedSeal(
-            proposedBlock.getHeader(), proposedExtraData);
-    final Signature localCommitSeal = nodeKey.sign(commitSealHash);
-
-    // Receive Proposal Message
-    round.handleProposalMessage(
-        messageFactory.createProposal(
-            roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));
-    verify(transmitter, times(1)).multicastPrepare(roundIdentifier, proposedBlock.getHash());
-    verify(transmitter, times(1))
-        .multicastCommit(roundIdentifier, proposedBlock.getHash(), localCommitSeal);
-    verify(blockImporter, never()).importBlock(any(), any(), any());
-
-    // Receive Commit Message
-
-    round.handleCommitMessage(
-        messageFactory.createCommit(roundIdentifier, proposedBlock.getHash(), remoteCommitSeal));
-
-    // Should import block when both commit seals are available.
-    final ArgumentCaptor<Block> capturedBlock = ArgumentCaptor.forClass(Block.class);
-    verify(blockImporter, times(1)).importBlock(any(), capturedBlock.capture(), any());
-
-    // Ensure imported block contains both commit seals.
-    final BftExtraData importedExtraData =
-        BftExtraData.decode(capturedBlock.getValue().getHeader());
-    assertThat(importedExtraData.getSeals()).containsOnly(remoteCommitSeal, localCommitSeal);
-  }
-
-  @Test
   public void localNodeProposesToNetworkOfTwoValidatorsImportsOnReceptionOfCommitFromPeer() {
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
     final QbftRound round =
@@ -482,7 +438,7 @@ public class QbftRoundTest {
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList()));
 
     // Verify that no prepare message was constructed by the QbftRound
-    assertThat(roundState.constructPreparedCertificate().get().getPrepares()).isEmpty();
+    assertThat(roundState.constructPreparedCertificate()).isEmpty();
 
     verifyNoInteractions(transmitter);
   }
