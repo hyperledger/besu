@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
@@ -69,12 +68,11 @@ public class Proposal extends BftMessage<ProposalPayload> {
   public static Proposal decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<ProposalPayload> payload =
-        PayloadDeserializers.readSignedProposalPayloadFrom(rlpIn);
+    final SignedData<ProposalPayload> payload = readPayload(rlpIn, ProposalPayload::readFrom);
     final List<SignedData<RoundChangePayload>> roundChanges =
-        rlpIn.readList(PayloadDeserializers::readSignedRoundChangePayloadFrom);
+        rlpIn.readList(r -> readPayload(r, RoundChangePayload::readFrom));
     final List<SignedData<PreparePayload>> prepares =
-        rlpIn.readList(PayloadDeserializers::readSignedPreparePayloadFrom);
+        rlpIn.readList(r -> readPayload(r, PreparePayload::readFrom));
 
     rlpIn.leaveList();
     return new Proposal(payload, roundChanges, prepares);

@@ -12,27 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.tests;
+package org.hyperledger.besu.consensus.qbft.test;
 
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
-import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createValidPreparedRoundArtifacts;
+import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers.createValidPreparedCertificate;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
-import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
-import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.consensus.ibft.support.RoundSpecificPeers;
-import org.hyperledger.besu.consensus.ibft.support.TestContext;
-import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
-import org.hyperledger.besu.consensus.ibft.support.ValidatorPeer;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
+import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
+import org.hyperledger.besu.consensus.qbft.support.RoundSpecificPeers;
+import org.hyperledger.besu.consensus.qbft.support.TestContext;
+import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
+import org.hyperledger.besu.consensus.qbft.support.ValidatorPeer;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.time.Clock;
@@ -40,8 +39,10 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class RoundChangeTest {
@@ -112,7 +113,8 @@ public class RoundChangeTest {
     final Prepare localPrepareMessage =
         localNodeMessageFactory.createPrepare(roundId, blockToPropose.getHash());
 
-    final Proposal proposal = peers.getProposer().injectProposal(roundId, blockToPropose);
+    peers.getProposer().injectProposal(roundId, blockToPropose);
+    final Prepare p0 = peers.getProposer().injectPrepare(roundId, blockToPropose.getHash());
     peers.clearReceivedMessages();
 
     final Prepare p1 = peers.getNonProposing(0).injectPrepare(roundId, blockToPropose.getHash());
@@ -125,8 +127,12 @@ public class RoundChangeTest {
         localNodeMessageFactory.createRoundChange(
             targetRound,
             Optional.of(
-                new PreparedRoundArtifacts(
-                    proposal, Lists.newArrayList(localPrepareMessage, p1, p2))));
+                new PreparedCertificate(
+                    blockToPropose,
+                    List.of(localPrepareMessage, p0, p1, p2).stream()
+                        .map(Prepare::getSignedPayload)
+                        .collect(Collectors.toList()),
+                    roundId.getRoundNumber())));
 
     context.getController().handleRoundExpiry(new RoundExpiry(roundId));
     peers.verifyMessagesReceived(expectedTxRoundChange);
@@ -148,29 +154,31 @@ public class RoundChangeTest {
         localNodeMessageFactory.createProposal(
             targetRound,
             locallyProposedBlock,
-            Optional.of(
-                new RoundChangeCertificate(
-                    Lists.newArrayList(
-                        rc1.getSignedPayload(),
-                        rc2.getSignedPayload(),
-                        rc3.getSignedPayload(),
-                        rc4.getSignedPayload()))));
+            Lists.newArrayList(
+                rc1.getSignedPayload(),
+                rc2.getSignedPayload(),
+                rc3.getSignedPayload(),
+                rc4.getSignedPayload()),
+            emptyList());
 
-    peers.verifyMessagesReceived(expectedProposal);
+    final Prepare expectedPrepare =
+        localNodeMessageFactory.createPrepare(targetRound, locallyProposedBlock.getHash());
+
+    peers.verifyMessagesReceived(expectedProposal, expectedPrepare);
   }
 
   @Test
   public void proposalMessageContainsBlockOnWhichPeerPrepared() {
     final long ARBITRARY_BLOCKTIME = 1500;
 
-    final PreparedRoundArtifacts earlierPrepCert =
-        createValidPreparedRoundArtifacts(
+    final PreparedCertificate earlierPrepCert =
+        createValidPreparedCertificate(
             context,
             new ConsensusRoundIdentifier(1, 1),
             context.createBlockForProposalFromChainHead(1, ARBITRARY_BLOCKTIME / 2));
 
-    final PreparedRoundArtifacts bestPrepCert =
-        createValidPreparedRoundArtifacts(
+    final PreparedCertificate bestPrepCert =
+        createValidPreparedCertificate(
             context,
             new ConsensusRoundIdentifier(1, 2),
             context.createBlockForProposalFromChainHead(2, ARBITRARY_BLOCKTIME));
@@ -201,15 +209,17 @@ public class RoundChangeTest {
         localNodeMessageFactory.createProposal(
             targetRound,
             expectedBlockToPropose,
-            Optional.of(
-                new RoundChangeCertificate(
-                    Lists.newArrayList(
-                        rc1.getSignedPayload(),
-                        rc2.getSignedPayload(),
-                        rc3.getSignedPayload(),
-                        rc4.getSignedPayload()))));
+            Lists.newArrayList(
+                rc1.getSignedPayload(),
+                rc2.getSignedPayload(),
+                rc3.getSignedPayload(),
+                rc4.getSignedPayload()),
+            bestPrepCert.getPrepares());
 
-    peers.verifyMessagesReceived(expectedProposal);
+    final Prepare expectedPrepare =
+        localNodeMessageFactory.createPrepare(targetRound, expectedBlockToPropose.getHash());
+
+    peers.verifyMessagesReceived(expectedProposal, expectedPrepare);
   }
 
   @Test
@@ -227,11 +237,12 @@ public class RoundChangeTest {
 
     final Proposal expectedProposal =
         localNodeMessageFactory.createProposal(
-            futureRound,
-            locallyProposedBlock,
-            Optional.of(new RoundChangeCertificate(roundChangeMessages)));
+            futureRound, locallyProposedBlock, roundChangeMessages, emptyList());
 
-    peers.verifyMessagesReceived(expectedProposal);
+    final Prepare expectedPrepare =
+        localNodeMessageFactory.createPrepare(futureRound, locallyProposedBlock.getHash());
+
+    peers.verifyMessagesReceived(expectedProposal, expectedPrepare);
   }
 
   @Test
@@ -254,8 +265,8 @@ public class RoundChangeTest {
 
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 4);
 
-    final PreparedRoundArtifacts prepCert =
-        createValidPreparedRoundArtifacts(
+    final PreparedCertificate prepCert =
+        createValidPreparedCertificate(
             context,
             new ConsensusRoundIdentifier(1, 2),
             context.createBlockForProposalFromChainHead(2, ARBITRARY_BLOCKTIME));
@@ -281,9 +292,13 @@ public class RoundChangeTest {
         localNodeMessageFactory.createProposal(
             targetRound,
             expectedBlockToPropose,
-            Optional.of(new RoundChangeCertificate(Lists.newArrayList(roundChangeMessages))));
+            Lists.newArrayList(roundChangeMessages),
+            prepCert.getPrepares());
 
-    peers.verifyMessagesReceived(expectedProposal);
+    final Prepare expectedPrepare =
+        localNodeMessageFactory.createPrepare(targetRound, expectedBlockToPropose.getHash());
+
+    peers.verifyMessagesReceived(expectedProposal, expectedPrepare);
   }
 
   @Test
@@ -309,6 +324,7 @@ public class RoundChangeTest {
     peers.verifyNoMessagesReceived();
   }
 
+  @Ignore("Requires validation")
   @Test
   public void illegallyConstructedRoundChangeMessageIsDiscarded() {
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 4);
@@ -318,13 +334,12 @@ public class RoundChangeTest {
     peers.getNonProposing(2).injectRoundChange(targetRound, empty());
 
     // create illegal RoundChangeMessage
-    final PreparedRoundArtifacts illegalPreparedRoundArtifacts =
-        new PreparedRoundArtifacts(
-            peers
-                .getNonProposing(0)
-                .getMessageFactory()
-                .createProposal(roundId, blockToPropose, Optional.empty()),
-            emptyList());
+    peers
+        .getNonProposing(0)
+        .getMessageFactory()
+        .createProposal(roundId, blockToPropose, emptyList(), emptyList());
+    final PreparedCertificate illegalPreparedRoundArtifacts =
+        new PreparedCertificate(blockToPropose, emptyList(), 1);
 
     peers.getProposer().injectRoundChange(targetRound, Optional.of(illegalPreparedRoundArtifacts));
 

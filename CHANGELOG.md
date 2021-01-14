@@ -17,8 +17,8 @@
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
 ### Download link
-TBA
-
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.4.zip
+sha256: f15cd5243b809659bba1706c1745aecafc012d3fc44a91419522da925493537c
 
 ## 20.10.3
 

@@ -15,12 +15,12 @@
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
-import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
@@ -61,13 +61,12 @@ public class RoundChangeTest {
             Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
 
     final SignedData<RoundChangePayload> signedRoundChangePayload =
-        new SignedData<>(payload, addr, nodeKey.sign(MessageFactory.hashForSignature(payload)));
+        SignedData.create(payload, nodeKey.sign(hashForSignature(payload)));
 
     final PreparePayload preparePayload =
         new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
     final SignedData<PreparePayload> signedPreparePayload =
-        new SignedData<>(
-            preparePayload, addr, nodeKey.sign(MessageFactory.hashForSignature(preparePayload)));
+        SignedData.create(preparePayload, nodeKey.sign(hashForSignature(preparePayload)));
 
     final RoundChange roundChange =
         new RoundChange(
@@ -95,7 +94,7 @@ public class RoundChangeTest {
         new RoundChangePayload(new ConsensusRoundIdentifier(1, 1), Optional.empty());
 
     final SignedData<RoundChangePayload> signedRoundChangePayload =
-        new SignedData<>(payload, addr, nodeKey.sign(MessageFactory.hashForSignature(payload)));
+        SignedData.create(payload, nodeKey.sign(hashForSignature(payload)));
 
     final RoundChange roundChange =
         new RoundChange(signedRoundChangePayload, Optional.empty(), Collections.emptyList());

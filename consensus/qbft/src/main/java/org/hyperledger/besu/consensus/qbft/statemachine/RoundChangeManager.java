@@ -110,7 +110,7 @@ public class RoundChangeManager {
   }
 
   private boolean isMessageValid(final RoundChange msg) {
-    return roundChangeMessageValidator.validateRoundChange(msg);
+    return roundChangeMessageValidator.validate(msg);
   }
 
   private RoundChangeStatus storeRoundChangeMessage(final RoundChange msg) {
