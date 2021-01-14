@@ -204,6 +204,13 @@ public class BonsaiLayeredWorldState implements BonsaiWorldView, WorldState {
     return worldStateRootHash;
   }
 
+  @Override
+  public Hash frontierRootHash() {
+    // maybe throw?
+    return rootHash();
+  }
+
+
   public Hash blockHash() {
     return trieLog.getBlockHash();
   }
