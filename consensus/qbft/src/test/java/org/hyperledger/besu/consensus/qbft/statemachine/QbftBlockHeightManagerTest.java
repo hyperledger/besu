@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -210,10 +211,9 @@ public class QbftBlockHeightManagerTest {
             messageFactory);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(messageTransmitter, times(1))
+    verify(messageTransmitter, atMostOnce())
         .multicastProposal(eq(roundIdentifier), any(), any(), any());
-    verify(messageTransmitter, never()).multicastPrepare(any(), any());
-    verify(messageTransmitter, never()).multicastPrepare(any(), any());
+    verify(messageTransmitter, atMostOnce()).multicastPrepare(eq(roundIdentifier), any());
   }
 
   @Test

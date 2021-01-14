@@ -178,7 +178,7 @@ public class QbftRoundTest {
     verify(transmitter, times(1))
         .multicastProposal(
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList());
-    verify(transmitter, never()).multicastPrepare(any(), any());
+    verify(transmitter, times(1)).multicastPrepare(roundIdentifier, proposedBlock.getHash());
     verify(transmitter, never()).multicastCommit(any(), any(), any());
   }
 
@@ -200,7 +200,7 @@ public class QbftRoundTest {
     verify(transmitter, times(1))
         .multicastProposal(
             roundIdentifier, proposedBlock, Collections.emptyList(), Collections.emptyList());
-    verify(transmitter, never()).multicastPrepare(any(), any());
+    verify(transmitter, times(1)).multicastPrepare(roundIdentifier, proposedBlock.getHash());
     verify(transmitter, times(1)).multicastCommit(any(), any(), any());
     verify(blockImporter, times(1)).importBlock(any(), any(), any());
   }
