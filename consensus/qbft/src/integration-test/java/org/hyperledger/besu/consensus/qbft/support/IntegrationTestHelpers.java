@@ -41,7 +41,7 @@ public class IntegrationTestHelpers {
     return messageFactory.createCommit(roundId, block.getHash(), commitSeal).getSignedPayload();
   }
 
-  public static PreparedCertificate createValidPreparedRoundArtifacts(
+  public static PreparedCertificate createValidPreparedCertificate(
       final TestContext context, final ConsensusRoundIdentifier preparedRound, final Block block) {
     final RoundSpecificPeers peers = context.roundSpecificPeers(preparedRound);
 

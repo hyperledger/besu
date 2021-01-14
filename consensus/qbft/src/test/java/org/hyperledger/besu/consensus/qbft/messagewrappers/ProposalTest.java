@@ -15,12 +15,12 @@
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
-import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
@@ -59,13 +59,12 @@ public class ProposalTest {
     final ProposalPayload payload = new ProposalPayload(new ConsensusRoundIdentifier(1, 1), BLOCK);
 
     final SignedData<ProposalPayload> signedPayload =
-        new SignedData<>(payload, addr, nodeKey.sign(MessageFactory.hashForSignature(payload)));
+        SignedData.create(payload, nodeKey.sign(hashForSignature(payload)));
 
     final PreparePayload preparePayload =
         new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
     final SignedData<PreparePayload> prepare =
-        new SignedData<>(
-            preparePayload, addr, nodeKey.sign(MessageFactory.hashForSignature(preparePayload)));
+        SignedData.create(preparePayload, nodeKey.sign(hashForSignature(preparePayload)));
 
     final RoundChangePayload roundChangePayload =
         new RoundChangePayload(
@@ -73,10 +72,7 @@ public class ProposalTest {
             Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
 
     final SignedData<RoundChangePayload> roundChange =
-        new SignedData<>(
-            roundChangePayload,
-            addr,
-            nodeKey.sign(MessageFactory.hashForSignature(roundChangePayload)));
+        SignedData.create(roundChangePayload, nodeKey.sign(hashForSignature(roundChangePayload)));
 
     final Proposal proposal = new Proposal(signedPayload, List.of(roundChange), List.of(prepare));
 
