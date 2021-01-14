@@ -160,7 +160,7 @@ public class QbftRoundTest {
   }
 
   @Test
-  public void sendsAProposalWhenRequested() {
+  public void sendsAProposalAndPrepareWhenSendProposalRequested() {
     final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
     final QbftRound round =
         new QbftRound(
@@ -259,6 +259,7 @@ public class QbftRoundTest {
     round.startRoundWith(new RoundChangeArtifacts(emptyList(), Optional.empty()), 15);
     verify(transmitter, times(1))
         .multicastProposal(eq(roundIdentifier), any(), eq(emptyList()), eq(emptyList()));
+    verify(transmitter, times(1)).multicastPrepare(eq(roundIdentifier), any());
   }
 
   @Test
@@ -295,6 +296,8 @@ public class QbftRoundTest {
             blockCaptor.capture(),
             eq(singletonList(roundChange.getSignedPayload())),
             eq(singletonList(preparedPayload)));
+    verify(transmitter, times(1))
+        .multicastPrepare(eq(roundIdentifier), eq(blockCaptor.getValue().getHash()));
 
     final BftExtraData proposedExtraData = BftExtraData.decode(blockCaptor.getValue().getHeader());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
@@ -334,6 +337,8 @@ public class QbftRoundTest {
             blockCaptor.capture(),
             eq(List.of(roundChange.getSignedPayload())),
             eq(Collections.emptyList()));
+    verify(transmitter, times(1))
+        .multicastPrepare(eq(roundIdentifier), eq(blockCaptor.getValue().getHash()));
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
     // indicates the block has entered the roundState (note: all msgs are deemed valid due to mocks)
