@@ -89,7 +89,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getIbftConfigOptions();
+    bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQBftConfigOptions();
     bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
   }
 
@@ -239,7 +239,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     final GenesisConfigOptions configOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides);
-    final BftConfigOptions bftConfig = configOptions.getIbftConfigOptions();
+    final BftConfigOptions bftConfig = configOptions.getQBftConfigOptions();
     final EpochManager epochManager = new EpochManager(bftConfig.getEpochLength());
 
     final Map<Long, List<Address>> bftValidatorForkMap =
