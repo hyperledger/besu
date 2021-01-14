@@ -129,7 +129,6 @@ public class MainnetBlockValidator implements BlockValidator {
    */
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
-    System.out.println("Using the MainnetBlockValidator");
 
     return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
   }

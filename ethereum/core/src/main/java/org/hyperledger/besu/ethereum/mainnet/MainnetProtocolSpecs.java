@@ -154,20 +154,16 @@ public abstract class MainnetProtocolSpecs {
 
   public static BlockValidatorBuilder blockValidatorBuilder() {
     if (GoQuorumOptions.goquorumCompatibilityMode) {
-      System.out.println("GoQuorumBlockValidator &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
       return GoQuorumBlockValidator::new;
     } else {
-      System.out.println("MainnetBlockValidator &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
       return MainnetBlockValidator::new;
     }
   }
 
   public static BlockProcessorBuilder blockProcessorBuilder() {
     if (GoQuorumOptions.goquorumCompatibilityMode) {
-      System.out.println("GoQuorumBlockProcessor &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
       return GoQuorumBlockProcessor::new;
     } else {
-      System.out.println("MainnetBlockProcessor &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
       return MainnetBlockProcessor::new;
     }
   }

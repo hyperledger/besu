@@ -128,7 +128,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final PrivateMetadataUpdater privateMetadataUpdater) {
-    Span globalProcessBlock =
+    final Span globalProcessBlock =
         tracer.spanBuilder("processBlock").setSpanKind(Span.Kind.INTERNAL).startSpan();
     try {
       final List<TransactionReceipt> receipts = new ArrayList<>();

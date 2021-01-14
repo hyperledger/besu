@@ -50,13 +50,13 @@ public class TransactionGoQuorumTest {
 
   @Test
   public void givenPublicTransaction_assertThatIsGoQuorumFlagIsFalse() {
-    Transaction transaction = Transaction.readFrom(ETHEREUM_PUBLIC_TX_RLP);
+    final Transaction transaction = Transaction.readFrom(ETHEREUM_PUBLIC_TX_RLP);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isFalse();
   }
 
   @Test
   public void givenGoQuorumTransactionV37_assertThatIsGoQuorumFlagIsTrue() {
-    Transaction transaction = Transaction.readFrom(GOQUORUM_PRIVATE_TX_RLP_V37);
+    final Transaction transaction = Transaction.readFrom(GOQUORUM_PRIVATE_TX_RLP_V37);
 
     assertThat(transaction.getV()).isEqualTo(37);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
@@ -64,7 +64,7 @@ public class TransactionGoQuorumTest {
 
   @Test
   public void givenGoQuorumTransactionV38_assertThatIsGoQuorumFlagIsTrue() {
-    Transaction transaction = Transaction.readFrom(GOQUORUM_PRIVATE_TX_RLP_V38);
+    final Transaction transaction = Transaction.readFrom(GOQUORUM_PRIVATE_TX_RLP_V38);
 
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();

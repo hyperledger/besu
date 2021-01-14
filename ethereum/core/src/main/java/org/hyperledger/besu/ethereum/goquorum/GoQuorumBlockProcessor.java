@@ -76,7 +76,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
   @Override
   public Result processBlock(
       final Blockchain blockchain,
-      final MutableWorldState worldState,
+      final MutableWorldState publicWorldState,
       final MutableWorldState privateWorldState,
       final Block block) {
     final BlockHeader blockHeader = block.getHeader();
@@ -93,7 +93,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         return AbstractBlockProcessor.Result.failed();
       }
 
-      final WorldUpdater publicWorldStateUpdater = worldState.updater();
+      final WorldUpdater publicWorldStateUpdater = publicWorldState.updater();
       final BlockHashLookup blockHashLookup = new BlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
@@ -107,7 +107,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
         effectiveTransaction = retrievePrivateTransactionFromEnclave(transaction);
       } else {
-        effectiveWorldUpdater = worldState.updater();
+        effectiveWorldUpdater = publicWorldState.updater();
         effectiveTransaction = transaction;
       }
 
@@ -131,7 +131,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
             transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
       } else {
-        // TODO-goquorum We need to increment the sender's public nonce. Ss there a better way of
+        // TODO-goquorum We need to increment the sender's public nonce. Is there a better way of
         // doing this??
         publicWorldStateUpdater.getAccount(transaction.getSender()).getMutable().incrementNonce();
       }
@@ -152,7 +152,8 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
                 result.getValidationResult());
 
         publicTxReceipts.add(
-            transactionReceiptFactory.create(transaction.getType(), publicResult, worldState, 0));
+            transactionReceiptFactory.create(
+                transaction.getType(), publicResult, publicWorldState, 0));
 
         final TransactionReceipt privateTransactionReceipt =
             transactionReceiptFactory.create(
@@ -162,30 +163,28 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       } else {
         publicTxReceipts.add(
             transactionReceiptFactory.create(
-                transaction.getType(), result, worldState, currentGasUsed));
+                transaction.getType(), result, publicWorldState, currentGasUsed));
       }
     }
 
-    if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
+    if (!rewardCoinbase(publicWorldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
       return AbstractBlockProcessor.Result.failed();
     }
 
-    worldState.persist(blockHeader);
+    publicWorldState.persist(blockHeader);
     privateWorldState.persist(null);
 
     privateStorageUpdater.putPrivateStateRootHashMapping(
-        worldState.rootHash(), privateWorldState.rootHash());
+        publicWorldState.rootHash(), privateWorldState.rootHash());
     privateStorageUpdater.commit();
 
     return Result.successful(publicTxReceipts);
   }
 
   private Transaction retrievePrivateTransactionFromEnclave(final Transaction transaction) {
-    // TODO-goquorum we don't need the enclave key (after Tessera is updated)
     final GoQuorumReceiveResponse receive =
-        goQuorumEnclave.receive(
-            transaction.getPayload().toBase64String(), GoQuorumPrivacyParameters.enclaveKey);
+        goQuorumEnclave.receive(transaction.getPayload().toBase64String());
 
     final Bytes privatePayload = Bytes.wrap(receive.getPayload());
 

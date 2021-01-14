@@ -70,15 +70,15 @@ public class GoQuorumEnclave {
   }
 
   // TODO not needed after we upgrade Tessera
-  public GoQuorumReceiveResponse receive(final String payloadKey, final String to) {
-    final ReceiveRequest request = new ReceiveRequest(payloadKey, to);
-    return get(
-        JSON,
-        request,
-        "/receive",
-        (statusCode, body) ->
-            handleJsonResponse(statusCode, body, GoQuorumReceiveResponse.class, 200));
-  }
+  //  public GoQuorumReceiveResponse receive(final String payloadKey, final String to) {
+  //    final ReceiveRequest request = new ReceiveRequest(payloadKey, to);
+  //    return get(
+  //        JSON,
+  //        request,
+  //        "/receive",
+  //        (statusCode, body) ->
+  //            handleJsonResponse(statusCode, body, GoQuorumReceiveResponse.class, 200));
+  //  }
 
   public GoQuorumReceiveResponse receive(final String payloadKey) {
     final ReceiveRequest request = new ReceiveRequest(payloadKey);
