@@ -140,7 +140,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
-    peers = new ValidatorPeers(voteTallyCache);
+    peers = new ValidatorPeers(voteTallyCache, IbftSubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
