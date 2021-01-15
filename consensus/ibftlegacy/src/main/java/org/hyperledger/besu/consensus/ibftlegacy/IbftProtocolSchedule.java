@@ -44,7 +44,7 @@ public class IbftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyIbftChanges(blockPeriod, builder),
+            builder -> applyIbftChanges(blockPeriod, builder, config.isQuorum()),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -57,12 +57,14 @@ public class IbftProtocolSchedule {
   }
 
   private static ProtocolSpecBuilder applyIbftChanges(
-      final long secondsBetweenBlocks, final ProtocolSpecBuilder builder) {
+      final long secondsBetweenBlocks,
+      final ProtocolSpecBuilder builder,
+      final boolean goQuorumMode) {
     return builder
         .blockHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks))
         .ommerHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.ZERO)

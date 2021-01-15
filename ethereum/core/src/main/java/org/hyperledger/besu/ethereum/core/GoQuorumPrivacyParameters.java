@@ -18,9 +18,20 @@ import org.hyperledger.besu.enclave.GoQuorumEnclave;
 
 public class GoQuorumPrivacyParameters {
 
-  public static boolean isEnabled = false;
+  private final GoQuorumEnclave enclave;
 
-  public static GoQuorumEnclave goQuorumEnclave;
+  private final String enclaveKey;
 
-  public static String enclaveKey;
+  public GoQuorumPrivacyParameters(final GoQuorumEnclave enclave, final String enclaveKey) {
+    this.enclave = enclave;
+    this.enclaveKey = enclaveKey;
+  }
+
+  public GoQuorumEnclave enclave() {
+    return enclave;
+  }
+
+  public String enclaveKey() {
+    return enclaveKey;
+  }
 }

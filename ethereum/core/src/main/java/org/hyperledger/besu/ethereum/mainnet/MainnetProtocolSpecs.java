@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -87,7 +86,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder frontierDefinition(
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode) {
+      final boolean goQuorumMode) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
@@ -106,7 +105,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, false, Optional.empty(), quorumCompatibilityMode))
+                    gasCalculator, false, Optional.empty(), goQuorumMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -144,24 +143,24 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .blockProcessorBuilder(MainnetProtocolSpecs.blockProcessorBuilder())
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
+        .blockProcessorBuilder(MainnetProtocolSpecs.blockProcessorBuilder(goQuorumMode))
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .name("Frontier");
   }
 
-  public static BlockValidatorBuilder blockValidatorBuilder() {
-    if (GoQuorumOptions.goquorumCompatibilityMode) {
+  public static BlockValidatorBuilder blockValidatorBuilder(final boolean goQuorumMode) {
+    if (goQuorumMode) {
       return GoQuorumBlockValidator::new;
     } else {
       return MainnetBlockValidator::new;
     }
   }
 
-  public static BlockProcessorBuilder blockProcessorBuilder() {
-    if (GoQuorumOptions.goquorumCompatibilityMode) {
+  public static BlockProcessorBuilder blockProcessorBuilder(final boolean goQuorumMode) {
+    if (goQuorumMode) {
       return GoQuorumBlockProcessor::new;
     } else {
       return MainnetBlockProcessor::new;
@@ -205,7 +204,8 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                gasBudgetCalculator) ->
+                gasBudgetCalculator,
+                goQuorumPrivacyParameters) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
                         transactionProcessor,
@@ -213,7 +213,8 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        gasBudgetCalculator)))
+                        gasBudgetCalculator,
+                        Optional.empty())))
         .name("DaoRecoveryInit");
   }
 

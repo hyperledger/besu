@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConve
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
 
+import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.privacy.GoQuorumSendRawTxArgs;
@@ -43,10 +43,13 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
   final TransactionPool transactionPool;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final GoQuorumEnclave enclave;
 
   public GoQuorumSendRawPrivateTransaction(
+      final GoQuorumEnclave enclave,
       final TransactionPool transactionPool,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+    this.enclave = enclave;
     this.transactionPool = transactionPool;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
@@ -119,8 +122,7 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
     if (txId == null || txId.isEmpty()) {
       throw new JsonRpcErrorResponseException(JsonRpcError.QUORUM_LOOKUP_ID_NOT_AVAILABLE);
     }
-    GoQuorumPrivacyParameters.goQuorumEnclave.sendSignedTransaction(
-        txId.toArray(), rawTxArgs.getPrivateFor());
+    enclave.sendSignedTransaction(txId.toArray(), rawTxArgs.getPrivateFor());
   }
 
   JsonRpcErrorResponse getJsonRpcErrorResponse(

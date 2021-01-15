@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
 
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
 import java.util.Optional;
@@ -29,8 +28,8 @@ public interface EnclavePublicKeyProvider {
   String getEnclaveKey(Optional<User> user);
 
   static EnclavePublicKeyProvider build(final PrivacyParameters privacyParameters) {
-    if (GoQuorumPrivacyParameters.isEnabled) {
-      return goQuorumEnclavePublicKeyProvider();
+    if (privacyParameters.getGoQuorumPrivacyParameters().isPresent()) {
+      return goQuorumEnclavePublicKeyProvider(privacyParameters);
     } else if (privacyParameters.isMultiTenancyEnabled()) {
       return multiTenancyEnclavePublicKeyProvider();
     }
@@ -49,7 +48,8 @@ public interface EnclavePublicKeyProvider {
     return user -> privacyParameters.getEnclavePublicKey();
   }
 
-  private static EnclavePublicKeyProvider goQuorumEnclavePublicKeyProvider() {
-    return user -> GoQuorumPrivacyParameters.enclaveKey;
+  private static EnclavePublicKeyProvider goQuorumEnclavePublicKeyProvider(
+      final PrivacyParameters privacyParameters) {
+    return user -> privacyParameters.getGoQuorumPrivacyParameters().get().enclaveKey();
   }
 }

@@ -60,16 +60,18 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final TransactionGasBudgetCalculator gasBudgetCalculator) {
+      final TransactionGasBudgetCalculator gasBudgetCalculator,
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        gasBudgetCalculator);
+        gasBudgetCalculator,
+        Optional.empty());
 
-    this.goQuorumEnclave = GoQuorumPrivacyParameters.goQuorumEnclave;
+    this.goQuorumEnclave = goQuorumPrivacyParameters.orElseThrow().enclave();
     this.goQuorumPrivateStorage = GoQuorumKeyValueStorage.INSTANCE;
   }
 

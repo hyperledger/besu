@@ -43,7 +43,7 @@ public class BftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyBftChanges(config.getBftConfigOptions(), builder),
+            builder -> applyBftChanges(config.getBftConfigOptions(), builder, config.isQuorum()),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -60,7 +60,9 @@ public class BftProtocolSchedule {
   }
 
   private static ProtocolSpecBuilder applyBftChanges(
-      final BftConfigOptions configOptions, final ProtocolSpecBuilder builder) {
+      final BftConfigOptions configOptions,
+      final ProtocolSpecBuilder builder,
+      final boolean goQuorumMode) {
 
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
@@ -74,7 +76,7 @@ public class BftProtocolSchedule {
         .blockHeaderValidatorBuilder(bftBlockHeaderValidator(configOptions.getBlockPeriodSeconds()))
         .ommerHeaderValidatorBuilder(bftBlockHeaderValidator(configOptions.getBlockPeriodSeconds()))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))

@@ -57,6 +57,7 @@ public class PrivacyParameters {
   private boolean onchainPrivacyGroupsEnabled;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
+  private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
 
   public Integer getPrivacyAddress() {
     return onchainPrivacyGroupsEnabled ? Address.PRIVACY - 1 : Address.PRIVACY;
@@ -168,6 +169,15 @@ public class PrivacyParameters {
     this.privateWorldStateReader = privateWorldStateReader;
   }
 
+  public Optional<GoQuorumPrivacyParameters> getGoQuorumPrivacyParameters() {
+    return goQuorumPrivacyParameters;
+  }
+
+  private void setGoQuorumPrivacyParameters(
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+    this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{"
@@ -197,6 +207,7 @@ public class PrivacyParameters {
     private Path privacyKeyStorePasswordFile;
     private Path privacyTlsKnownEnclaveFile;
     private boolean onchainPrivacyGroupsEnabled;
+    private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -292,6 +303,7 @@ public class PrivacyParameters {
       config.setEnclaveUri(enclaveUrl);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
+      config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
       return config;
     }
 
@@ -309,6 +321,12 @@ public class PrivacyParameters {
       }
       // throws exception if invalid base 64
       Base64.getDecoder().decode(this.enclavePublicKey);
+    }
+
+    public Builder setGoQuorumParameters(
+        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+      this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
+      return this;
     }
   }
 }

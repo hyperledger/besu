@@ -1513,21 +1513,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
 
-    if (isGoQuorumCompatibilityMode) {
-      configureGoQuorumPrivacy();
-    }
-
     logger.info("Security Module: {}", securityModuleName);
     return this;
   }
 
-  private void configureGoQuorumPrivacy() {
-
-    GoQuorumPrivacyParameters.isEnabled = true;
-
-    GoQuorumPrivacyParameters.goQuorumEnclave = createGoQuorumEnclave();
-
-    GoQuorumPrivacyParameters.enclaveKey = readEnclaveKey();
+  private GoQuorumPrivacyParameters configureGoQuorumPrivacy() {
+    return new GoQuorumPrivacyParameters(createGoQuorumEnclave(), readEnclaveKey());
   }
 
   private GoQuorumEnclave createGoQuorumEnclave() {
@@ -2062,10 +2053,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         privacyParametersBuilder.setPrivacyTlsKnownEnclaveFile(privacyTlsKnownEnclaveFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
-    } else {
-      if (anyPrivacyApiEnabled()) {
-        logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
-      }
+    } else if (isGoQuorumCompatibilityMode) {
+      privacyParametersBuilder.setGoQuorumParameters(Optional.of(configureGoQuorumPrivacy()));
+    }
+
+    if (!isPrivacyEnabled && anyPrivacyApiEnabled()) {
+      logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
     }
 
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();

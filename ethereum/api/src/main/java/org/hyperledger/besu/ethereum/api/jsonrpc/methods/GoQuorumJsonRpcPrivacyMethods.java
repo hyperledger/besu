@@ -20,14 +20,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.GoQuorumSendRawPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 public class GoQuorumJsonRpcPrivacyMethods extends PrivacyApiGroupJsonRpcMethods {
+
+  private final Optional<GoQuorumPrivacyParameters> goQuorumParameters;
 
   public GoQuorumJsonRpcPrivacyMethods(
       final BlockchainQueries blockchainQueries,
@@ -35,14 +40,20 @@ public class GoQuorumJsonRpcPrivacyMethods extends PrivacyApiGroupJsonRpcMethods
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+    this.goQuorumParameters = privacyParameters.getGoQuorumPrivacyParameters();
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    return mapOf(
-        new GoQuorumSendRawPrivateTransaction(getTransactionPool(), enclavePublicKeyProvider));
+    if (goQuorumParameters.isPresent()) {
+      return mapOf(
+          new GoQuorumSendRawPrivateTransaction(
+              goQuorumParameters.get().enclave(), getTransactionPool(), enclavePublicKeyProvider));
+    } else {
+      return Collections.emptyMap();
+    }
   }
 
   @Override
