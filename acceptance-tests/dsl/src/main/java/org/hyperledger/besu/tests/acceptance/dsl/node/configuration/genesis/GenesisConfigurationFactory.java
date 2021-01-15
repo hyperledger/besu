@@ -69,6 +69,11 @@ public class GenesisConfigurationFactory {
     return updateGenesisExtraData(validators, template, BftExtraData::createGenesisExtraDataString);
   }
 
+  public Optional<String> createQbftGenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    return createIbft2GenesisConfig(validators, "/qbft/qbft.json");
+  }
+
   private Optional<String> updateGenesisExtraData(
       final Collection<? extends RunnableNode> validators,
       final String genesisTemplate,

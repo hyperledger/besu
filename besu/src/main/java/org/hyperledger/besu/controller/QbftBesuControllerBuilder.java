@@ -140,7 +140,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
-    peers = new ValidatorPeers(voteTallyCache);
+    peers = new ValidatorPeers(voteTallyCache, QbftSubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
