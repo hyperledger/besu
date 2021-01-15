@@ -451,12 +451,13 @@ public class BlockchainQueriesTest {
     final BlockchainWithData data = setupBlockchain(3);
     final BlockchainQueries queries = data.blockchainQueries;
     final Block targetBlock = data.blockData.get(data.blockData.size() - 1).block;
-    final BlockHeader ommerBlockHeader = targetBlock.getBody().getOmmers().get(1);
+    final List<BlockHeader> ommers = targetBlock.getBody().getOmmers();
+    final int ommerIndex = ommers.size() - 1;
 
     final BlockHeader retrievedOmmerBlockHeader =
-        queries.getOmmer(targetBlock.getHeader().getNumber(), 1).get();
+        queries.getOmmer(targetBlock.getHeader().getNumber(), ommerIndex).get();
 
-    assertThat(retrievedOmmerBlockHeader).isEqualTo(ommerBlockHeader);
+    assertThat(retrievedOmmerBlockHeader).isEqualTo(ommers.get(ommerIndex));
   }
 
   @Test
