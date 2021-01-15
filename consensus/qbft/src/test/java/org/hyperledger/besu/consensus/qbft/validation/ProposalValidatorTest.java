@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.Map;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -32,12 +34,15 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
+import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
+import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -248,23 +253,93 @@ public class ProposalValidatorTest {
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
 
   }
-/*
-  @Test
-  public void validationFailsIfPiggybackedRoundChangePayloadHasDuplicatedAuthors() {
-  }
 
   @Test
-  public void validationFailsIfInsufficientRoundChangePayloadMessages() {
+  public void validationFailsIfPiggybackedRoundChangePayloadHasDuplicatedAuthors() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(
+            roundItem.roundIdentifier,
+            validators.getNode(0),
+            validators.getNode(1),
+            validators.getNode(1));
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, emptyList());
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
 
   @Test
   public void validationFailsIfRoundChangePayloadsTargetADifferentRoundToProposal() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(
+            ConsensusRoundHelpers.createFrom(roundItem.roundIdentifier, 0, +1),
+            validators.getNode(0),
+            validators.getNode(1),
+            validators.getNode(2));
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, emptyList());
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
+  }
+
+  @Test
+  public void validationFailsIfRoundChangePayloadsTargetADifferentHeightToProposal() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(
+            ConsensusRoundHelpers.createFrom(roundItem.roundIdentifier, +1, 0),
+            validators.getNode(0),
+            validators.getNode(1),
+            validators.getNode(2));
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, emptyList());
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
 
   @Test
   public void validationFailsIfBlockHashInMetadataDoesNotMatchProposedBlock() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(
+            roundItem.roundIdentifier,
+            validators.getNode(0),
+            validators.getNode(1));
+
+    final RoundChangePayload illegalPayload = new RoundChangePayload(
+        roundItem.roundIdentifier,
+        Optional.of(new PreparedRoundMetadata(Hash.fromHexStringLenient("0x1"),
+            roundItems.get(ROUND_ID.ZERO).roundIdentifier.getRoundNumber())));
+
+    final SignedData<RoundChangePayload> preparedRoundChange = SignedData.create(
+        illegalPayload, validators.getNode(2).getNodeKey().sign(hashForSignature(illegalPayload)));
+
+    roundChanges.add(preparedRoundChange);
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, emptyList());
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
+
   }
 
+  /*
   // Piggybacked RoundChange tests
   @Test
   public void validationFailsIfPreparesAreNonEmptyButNoRoundChangeHasPreapredMetadata() {
