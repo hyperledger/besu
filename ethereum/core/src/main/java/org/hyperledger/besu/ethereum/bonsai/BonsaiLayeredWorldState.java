@@ -210,7 +210,6 @@ public class BonsaiLayeredWorldState implements BonsaiWorldView, WorldState {
     return rootHash();
   }
 
-
   public Hash blockHash() {
     return trieLog.getBlockHash();
   }
