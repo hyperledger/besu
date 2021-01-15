@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
-import java.util.Optional;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -28,6 +25,11 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class ProposalPayloadValidator {
 
   private static final String ERROR_PREFIX = "Invalid Proposal Payload";
@@ -38,9 +40,11 @@ public class ProposalPayloadValidator {
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
 
-  public ProposalPayloadValidator(final Address expectedProposer,
+  public ProposalPayloadValidator(
+      final Address expectedProposer,
       final ConsensusRoundIdentifier targetRound,
-      final BlockValidator blockValidator, final ProtocolContext protocolContext) {
+      final BlockValidator blockValidator,
+      final ProtocolContext protocolContext) {
     this.expectedProposer = expectedProposer;
     this.targetRound = targetRound;
     this.blockValidator = blockValidator;
@@ -56,19 +60,20 @@ public class ProposalPayloadValidator {
 
     final ProposalPayload payload = signedPayload.getPayload();
 
-    if(!payload.getRoundIdentifier().equals(targetRound)) {
+    if (!payload.getRoundIdentifier().equals(targetRound)) {
       LOG.info("{}: proposal is not for expected round", ERROR_PREFIX);
       return false;
     }
 
     final Block block = payload.getProposedBlock();
-    if(!validateBlock(block)) {
+    if (!validateBlock(block)) {
       return false;
     }
 
     final BftExtraData extraData = BftExtraData.decode(block.getHeader());
     if (payload.getRoundIdentifier().getRoundNumber() != extraData.getRound()) {
-      LOG.info("{}: Proposal round contains a different round to that in the supplied block",
+      LOG.info(
+          "{}: Proposal round contains a different round to that in the supplied block",
           ERROR_PREFIX);
       return false;
     }
@@ -88,5 +93,4 @@ public class ProposalPayloadValidator {
 
     return true;
   }
-
 }

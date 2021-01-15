@@ -62,18 +62,20 @@ public class RoundChangeArtifacts {
         };
 
     final Optional<RoundChange> roundChangeWithNewestPrepare =
-        roundChanges.stream().max(preparedRoundComparator)
+        roundChanges.stream()
+            .max(preparedRoundComparator)
             .flatMap(rc -> rc.getProposedBlock().map(pb -> rc));
 
     final Optional<PreparedCertificate> prepCert =
-        roundChangeWithNewestPrepare.map(roundChange -> new PreparedCertificate(
-            roundChange.getProposedBlock().get(),
-            roundChange.getPrepares(),
-            roundChange.getPreparedRound().get()));
+        roundChangeWithNewestPrepare.map(
+            roundChange ->
+                new PreparedCertificate(
+                    roundChange.getProposedBlock().get(),
+                    roundChange.getPrepares(),
+                    roundChange.getPreparedRound().get()));
 
-    return new RoundChangeArtifacts(roundChanges.stream().
-        map(RoundChange::getSignedPayload).
-        collect(Collectors.toList()),
+    return new RoundChangeArtifacts(
+        roundChanges.stream().map(RoundChange::getSignedPayload).collect(Collectors.toList()),
         prepCert);
   }
 }

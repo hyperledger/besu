@@ -17,12 +17,8 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasDuplicateAuthors;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasSufficientEntries;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -33,6 +29,16 @@ import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 public class ProposalValidator {
 
@@ -63,11 +69,9 @@ public class ProposalValidator {
 
   public boolean validate(final Proposal msg) {
 
-    final ProposalPayloadValidator payloadValidator = new ProposalPayloadValidator(
-        expectedProposer,
-        roundIdentifier,
-        blockValidator,
-        protocolContext);
+    final ProposalPayloadValidator payloadValidator =
+        new ProposalPayloadValidator(
+            expectedProposer, roundIdentifier, blockValidator, protocolContext);
 
     if (!payloadValidator.validate(msg.getSignedPayload())) {
       LOG.info("{}: invalid proposal payload in proposal message", ERROR_PREFIX);
@@ -102,20 +106,34 @@ public class ProposalValidator {
         final PreparedRoundMetadata metadata =
             roundChangeWithLatestPreparedRound.get().getPayload().getPreparedRoundMetadata().get();
 
-        if (!metadata.getPreparedBlockHash().equals(proposal.getBlock().getHash())) {
-          LOG.info("{}: Latest Prepared Metadata blockhash does not align with proposed block",
+        // The Hash in the roundchange/proposals is NOT the same as the value in the prepares/roundchanges
+        // as said payloads reference the block with an OLD round number in it - therefore, need
+        // to create a block with the old round in it, then re-calc expected hash
+        // Need to check that if we substitute the LatestPrepareCert round number into the supplied
+        // block that we get the SAME hash as PreparedCert.
+        final Block currentBlockWithOldRound =
+            BftBlockInterface.replaceRoundInBlock(
+                proposal.getBlock(),
+                metadata.getPreparedRound(),
+                BftBlockHeaderFunctions.forCommittedSeal());
+
+        final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
+
+        if (!metadata.getPreparedBlockHash().equals(expectedPriorBlockHash)) {
+          LOG.info(
+              "{}: Latest Prepared Metadata blockhash does not align with proposed block",
               ERROR_PREFIX);
           return false;
         }
 
-        //validate the prepares
-        if (!validatePrepares(metadata, proposal.getRoundIdentifier().getSequenceNumber(),
-            proposal.getPrepares())) {
+        // validate the prepares
+        if (!validatePrepares(
+            metadata, proposal.getRoundIdentifier().getSequenceNumber(), proposal.getPrepares())) {
           LOG.info("{}: Piggy-backed prepares failed validation", ERROR_PREFIX);
           return false;
         }
       } else {
-        //no one prepared, so prepares should be empty
+        // no one prepared, so prepares should be empty
         if (!proposal.getPrepares().isEmpty()) {
           LOG.info("{}: No PreparedMetadata exists, so prepare list must be empty", ERROR_PREFIX);
           return false;
@@ -134,8 +152,8 @@ public class ProposalValidator {
     return true;
   }
 
-  private boolean validateRoundChanges(final Proposal proposal,
-      final List<SignedData<RoundChangePayload>> roundChanges) {
+  private boolean validateRoundChanges(
+      final Proposal proposal, final List<SignedData<RoundChangePayload>> roundChanges) {
 
     if (hasDuplicateAuthors(roundChanges)) {
       LOG.info("{}}: multiple round changes from the same author.", ERROR_PREFIX);
@@ -147,8 +165,8 @@ public class ProposalValidator {
       return false;
     }
 
-    final RoundChangePayloadValidator roundChangePayloadValidator = new RoundChangePayloadValidator(
-        validators, roundIdentifier.getSequenceNumber());
+    final RoundChangePayloadValidator roundChangePayloadValidator =
+        new RoundChangePayloadValidator(validators, roundIdentifier.getSequenceNumber());
     for (final SignedData<RoundChangePayload> payload : roundChanges) {
       if (!roundChangePayloadValidator.validate(payload)) {
         LOG.info("{}: invalid proposal, round changes did not pass validation", ERROR_PREFIX);
@@ -156,7 +174,7 @@ public class ProposalValidator {
       }
     }
 
-    //This is required as the RoundChangePayloadValidator only checks height, not round.
+    // This is required as the RoundChangePayloadValidator only checks height, not round.
     if (!allMessagesTargetRound(roundChanges, proposal.getRoundIdentifier())) {
       LOG.info("{}: not all roundChange payloads target the proposal round.", ERROR_PREFIX);
       return false;
@@ -184,8 +202,7 @@ public class ProposalValidator {
         new ConsensusRoundIdentifier(currentHeight, metaData.getPreparedRound());
 
     final PrepareValidator prepareValidator =
-        new PrepareValidator(validators, preparedRoundIdentifier,
-            metaData.getPreparedBlockHash());
+        new PrepareValidator(validators, preparedRoundIdentifier, metaData.getPreparedBlockHash());
 
     for (final SignedData<PreparePayload> payload : prepares) {
       if (!prepareValidator.validate(payload)) {
@@ -215,7 +232,8 @@ public class ProposalValidator {
           return Integer.compare(o1Round, o2Round);
         };
 
-    return roundChanges.stream().max(preparedRoundComparator)
+    return roundChanges.stream()
+        .max(preparedRoundComparator)
         .flatMap(rc -> rc.getPayload().getPreparedRoundMetadata().map(metadata -> rc));
   }
 

@@ -14,19 +14,18 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import oracle.jdbc.replay.ReplayableConnection.StatisticsReportType;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ValidationTestHelpers {
 
@@ -51,13 +50,13 @@ public class ValidationTestHelpers {
   }
 
   public static List<SignedData<RoundChangePayload>> createEmptyRoundChangePayloads(
-      final ConsensusRoundIdentifier targetRound,
-      final QbftNode... roundChangingNodes) {
-    return Stream.of(roundChangingNodes).map(
-        r -> r.getMessageFactory().createRoundChange(targetRound, Optional.empty())
-            .getSignedPayload()).collect(
-        Collectors.toList());
+      final ConsensusRoundIdentifier targetRound, final QbftNode... roundChangingNodes) {
+    return Stream.of(roundChangingNodes)
+        .map(
+            r ->
+                r.getMessageFactory()
+                    .createRoundChange(targetRound, Optional.empty())
+                    .getSignedPayload())
+        .collect(Collectors.toList());
   }
-
-
 }

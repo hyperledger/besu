@@ -21,7 +21,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
@@ -38,6 +37,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+
+import java.util.Optional;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,12 +49,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ProposalPayloadValidatorTest {
 
-  @Mock
-  private BlockValidator blockValidator;
-  @Mock
-  private MutableBlockchain blockChain;
-  @Mock
-  private WorldStateArchive worldStateArchive;
+  @Mock private BlockValidator blockValidator;
+  @Mock private MutableBlockchain blockChain;
+  @Mock private WorldStateArchive worldStateArchive;
   private ProtocolContext protocolContext;
 
   private static final int CHAIN_HEIGHT = 3;
@@ -75,16 +74,17 @@ public class ProposalPayloadValidatorTest {
   public void validationPassesWhenProposerAndRoundMatchAndBlockIsValid() {
 
     final ProposalPayloadValidator payloadValidator =
-        new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator,
-            protocolContext);
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
-    final Proposal proposal = messageFactory
-        .createProposal(roundIdentifier, block, emptyList(), emptyList());
+        new ProposalPayloadValidator(
+            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final Proposal proposal =
+        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext), eq(block), eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            eq(block),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
@@ -96,16 +96,17 @@ public class ProposalPayloadValidatorTest {
         ConsensusRoundHelpers.createFrom(targetRound, 1, 0);
 
     final ProposalPayloadValidator payloadValidator =
-        new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator,
-            protocolContext);
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
-    final Proposal proposal = messageFactory
-        .createProposal(roundIdentifier, block, emptyList(), emptyList());
+        new ProposalPayloadValidator(
+            expectedProposer, roundIdentifier, blockValidator, protocolContext);
+    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final Proposal proposal =
+        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext), eq(block), eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            eq(block),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.empty());
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
@@ -114,12 +115,11 @@ public class ProposalPayloadValidatorTest {
   @Test
   public void validationFailsWhenExpectedProposerDoesNotMatchPayloadsAuthor() {
     final ProposalPayloadValidator payloadValidator =
-        new ProposalPayloadValidator(Address.fromHexString("0x1"), roundIdentifier, blockValidator,
-            protocolContext);
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
-    final Proposal proposal = messageFactory
-        .createProposal(roundIdentifier, block, emptyList(), emptyList());
+        new ProposalPayloadValidator(
+            Address.fromHexString("0x1"), roundIdentifier, blockValidator, protocolContext);
+    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final Proposal proposal =
+        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
     verifyNoMoreInteractions(blockValidator);
@@ -128,14 +128,16 @@ public class ProposalPayloadValidatorTest {
   @Test
   public void validationFailsWhenMessageMismatchesExpectedRound() {
     final ProposalPayloadValidator payloadValidator =
-        new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator,
-            protocolContext);
+        new ProposalPayloadValidator(
+            expectedProposer, roundIdentifier, blockValidator, protocolContext);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
-    final Proposal proposal = messageFactory
-        .createProposal(ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1), block,
-            emptyList(), emptyList());
+    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final Proposal proposal =
+        messageFactory.createProposal(
+            ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1),
+            block,
+            emptyList(),
+            emptyList());
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
     verifyNoMoreInteractions(blockValidator);
@@ -144,14 +146,16 @@ public class ProposalPayloadValidatorTest {
   @Test
   public void validationFailsWhenMessageMismatchesExpectedHeight() {
     final ProposalPayloadValidator payloadValidator =
-        new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator,
-            protocolContext);
+        new ProposalPayloadValidator(
+            expectedProposer, roundIdentifier, blockValidator, protocolContext);
 
-    final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
-    final Proposal proposal = messageFactory
-        .createProposal(ConsensusRoundHelpers.createFrom(roundIdentifier, +1, 0), block,
-            emptyList(), emptyList());
+    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
+    final Proposal proposal =
+        messageFactory.createProposal(
+            ConsensusRoundHelpers.createFrom(roundIdentifier, +1, 0),
+            block,
+            emptyList(),
+            emptyList());
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
     verifyNoMoreInteractions(blockValidator);
@@ -160,22 +164,22 @@ public class ProposalPayloadValidatorTest {
   @Test
   public void validationFailsIfBlockRoundDoesNotMatchProposalRound() {
     final ProposalPayloadValidator payloadValidator =
-        new ProposalPayloadValidator(expectedProposer, roundIdentifier, blockValidator,
-            protocolContext);
+        new ProposalPayloadValidator(
+            expectedProposer, roundIdentifier, blockValidator, protocolContext);
 
     final Block block =
-        ProposedBlockHelpers.createProposalBlock(emptyList(),
-            ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1));
-    final Proposal proposal = messageFactory
-        .createProposal(roundIdentifier, block, emptyList(), emptyList());
+        ProposedBlockHelpers.createProposalBlock(
+            emptyList(), ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1));
+    final Proposal proposal =
+        messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext), eq(block), eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            eq(block),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
   }
-
-
 }
