@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasDuplicateAuthors;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasSufficientEntries;
 
-import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -30,16 +29,17 @@ import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 public class ProposalValidator {
 
@@ -107,7 +107,8 @@ public class ProposalValidator {
         final PreparedRoundMetadata metadata =
             roundChangeWithLatestPreparedRound.get().getPayload().getPreparedRoundMetadata().get();
 
-        // The Hash in the roundchange/proposals is NOT the same as the value in the prepares/roundchanges
+        // The Hash in the roundchange/proposals is NOT the same as the value in the
+        // prepares/roundchanges
         // as said payloads reference the block with an OLD round number in it - therefore, need
         // to create a block with the old round in it, then re-calc expected hash
         // Need to check that if we substitute the LatestPrepareCert round number into the supplied
@@ -166,7 +167,7 @@ public class ProposalValidator {
       return false;
     }
 
-    if(!metadataIsConsistentAcrossRoundChanges(roundChanges)) {
+    if (!metadataIsConsistentAcrossRoundChanges(roundChanges)) {
       return false;
     }
 
@@ -245,16 +246,21 @@ public class ProposalValidator {
   private boolean metadataIsConsistentAcrossRoundChanges(
       final List<SignedData<RoundChangePayload>> roundChanges) {
     final List<PreparedRoundMetadata> distinctMetadatas =
-        roundChanges.stream().map(rc -> rc.getPayload().getPreparedRoundMetadata())
-            .filter(Optional::isPresent).map(Optional::get).distinct().collect(
-            Collectors.toList());
+        roundChanges.stream()
+            .map(rc -> rc.getPayload().getPreparedRoundMetadata())
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .distinct()
+            .collect(Collectors.toList());
 
     final List<Integer> preparedRounds =
-        distinctMetadatas.stream().map(PreparedRoundMetadata::getPreparedRound).collect(
-            Collectors.toList());
+        distinctMetadatas.stream()
+            .map(PreparedRoundMetadata::getPreparedRound)
+            .collect(Collectors.toList());
 
-    for(final Integer preparedRound: preparedRounds) {
-      if(distinctMetadatas.stream().filter(dm -> dm.getPreparedRound()==preparedRound).count() > 1) {
+    for (final Integer preparedRound : preparedRounds) {
+      if (distinctMetadatas.stream().filter(dm -> dm.getPreparedRound() == preparedRound).count()
+          > 1) {
         LOG.info("{}: Roundchanges have different prepared metadata for same round", ERROR_PREFIX);
         return false;
       }

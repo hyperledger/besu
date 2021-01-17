@@ -24,8 +24,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -37,7 +35,6 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -48,7 +45,9 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -71,7 +70,8 @@ public class ProposalValidatorTest {
     public final ConsensusRoundIdentifier roundIdentifier;
     public final ProposalValidator messageValidator;
 
-    public RoundSpecificItems(final Block block,
+    public RoundSpecificItems(
+        final Block block,
         final ConsensusRoundIdentifier roundIdentifier,
         final ProposalValidator messageValidator) {
       this.block = block;
@@ -82,12 +82,9 @@ public class ProposalValidatorTest {
 
   private static final int VALIDATOR_COUNT = 4;
   private static final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
-  @Mock
-  private BlockValidator blockValidator;
-  @Mock
-  private MutableBlockchain blockChain;
-  @Mock
-  private WorldStateArchive worldStateArchive;
+  @Mock private BlockValidator blockValidator;
+  @Mock private MutableBlockchain blockChain;
+  @Mock private WorldStateArchive worldStateArchive;
   private ProtocolContext protocolContext;
 
   private Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
@@ -99,10 +96,10 @@ public class ProposalValidatorTest {
 
     // typically tests require the blockValidation to be successful
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext),
-        any(),
-        eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            any(),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
     roundItems.put(ROUND_ID.ZERO, createRoundSpecificItems(0));
@@ -110,8 +107,7 @@ public class ProposalValidatorTest {
   }
 
   private RoundSpecificItems createRoundSpecificItems(final int roundNumber) {
-    final ConsensusRoundIdentifier roundIdentifier =
-        new ConsensusRoundIdentifier(1, roundNumber);
+    final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, roundNumber);
 
     return new RoundSpecificItems(
         ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier),
@@ -128,14 +124,13 @@ public class ProposalValidatorTest {
   // NOTE: tests herein assume the ProposalPayloadValidator works as expected, so other than
   // a bad-block test (to ensure invocation) - no tests exist which fail based on payload data.
 
-  private Proposal createProposal(final RoundSpecificItems roundItem,
+  private Proposal createProposal(
+      final RoundSpecificItems roundItem,
       List<SignedData<RoundChangePayload>> roundChanges,
       List<SignedData<PreparePayload>> prepares) {
-    return
-        validators
-            .getMessageFactory(0)
-            .createProposal(roundItem.roundIdentifier,
-                roundItem.block, roundChanges, prepares);
+    return validators
+        .getMessageFactory(0)
+        .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, prepares);
   }
 
   @Test
@@ -148,14 +143,13 @@ public class ProposalValidatorTest {
   @Test
   public void validationFailsIfBlockIsInvalid() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ZERO);
-    final Proposal proposal =
-        createProposal(roundItem, emptyList(), emptyList());
+    final Proposal proposal = createProposal(roundItem, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext),
-        any(),
-        eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            any(),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.empty());
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
@@ -166,7 +160,8 @@ public class ProposalValidatorTest {
     final Prepare prepareMsg =
         validators
             .getMessageFactory(1)
-            .createPrepare(roundItems.get(ROUND_ID.ZERO).roundIdentifier,
+            .createPrepare(
+                roundItems.get(ROUND_ID.ZERO).roundIdentifier,
                 roundItems.get(ROUND_ID.ZERO).block.getHash());
 
     final Proposal proposal =
@@ -184,7 +179,8 @@ public class ProposalValidatorTest {
   @Test
   public void validationFailsIfRoundZeroHasNonEmptyRoundChanges() {
     final RoundChange roundChange =
-        validators.getMessageFactory(1)
+        validators
+            .getMessageFactory(1)
             .createRoundChange(roundItems.get(ROUND_ID.ZERO).roundIdentifier, Optional.empty());
 
     final Proposal proposal =
@@ -205,14 +201,15 @@ public class ProposalValidatorTest {
 
     final List<SignedData<RoundChangePayload>> roundChanges =
         createEmptyRoundChangePayloads(
-            roundItem.roundIdentifier, validators.getNode(0), validators.getNode(1),
+            roundItem.roundIdentifier,
+            validators.getNode(0),
+            validators.getNode(1),
             validators.getNode(2));
 
     final Proposal proposal =
         validators
             .getMessageFactory(0)
-            .createProposal(roundItem.roundIdentifier,
-                roundItem.block, roundChanges, emptyList());
+            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, emptyList());
 
     assertThat(roundItem.messageValidator.validate(proposal)).isTrue();
   }
@@ -252,7 +249,6 @@ public class ProposalValidatorTest {
             .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, emptyList());
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
-
   }
 
   @Test
@@ -317,24 +313,30 @@ public class ProposalValidatorTest {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges =
         createEmptyRoundChangePayloads(
+            roundItem.roundIdentifier, validators.getNode(0), validators.getNode(1));
+
+    final RoundChangePayload illegalPayload =
+        new RoundChangePayload(
             roundItem.roundIdentifier,
-            validators.getNode(0),
-            validators.getNode(1));
+            Optional.of(
+                new PreparedRoundMetadata(
+                    Hash.fromHexStringLenient("0x1"),
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier.getRoundNumber())));
 
-    final RoundChangePayload illegalPayload = new RoundChangePayload(
-        roundItem.roundIdentifier,
-        Optional.of(new PreparedRoundMetadata(Hash.fromHexStringLenient("0x1"),
-            roundItems.get(ROUND_ID.ZERO).roundIdentifier.getRoundNumber())));
-
-    final SignedData<RoundChangePayload> preparedRoundChange = SignedData.create(
-        illegalPayload, validators.getNode(2).getNodeKey().sign(hashForSignature(illegalPayload)));
+    final SignedData<RoundChangePayload> preparedRoundChange =
+        SignedData.create(
+            illegalPayload,
+            validators.getNode(2).getNodeKey().sign(hashForSignature(illegalPayload)));
 
     roundChanges.add(preparedRoundChange);
 
     final Proposal proposal =
         validators
             .getMessageFactory(0)
-            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges,
+            .createProposal(
+                roundItem.roundIdentifier,
+                roundItem.block,
+                roundChanges,
                 createPreparePayloads(
                     roundItems.get(ROUND_ID.ZERO).roundIdentifier,
                     Hash.fromHexStringLenient("0x1"),
@@ -359,7 +361,10 @@ public class ProposalValidatorTest {
     final Proposal proposal =
         validators
             .getMessageFactory(0)
-            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges,
+            .createProposal(
+                roundItem.roundIdentifier,
+                roundItem.block,
+                roundChanges,
                 createPreparePayloads(
                     roundItems.get(ROUND_ID.ZERO).roundIdentifier,
                     Hash.fromHexStringLenient("0x1"),
@@ -371,28 +376,16 @@ public class ProposalValidatorTest {
   @Test
   public void validationFailsIfPiggybackedPreparePayloadIsFromNonValidator() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
-    final List<SignedData<RoundChangePayload>> roundChanges =
-        createEmptyRoundChangePayloads(
-            roundItem.roundIdentifier,
-            validators.getNode(0),
-            validators.getNode(1));
-
-    final RoundChangePayload preparedRoundChangePayload = new RoundChangePayload(
-        roundItem.roundIdentifier,
-        Optional.of(new PreparedRoundMetadata(roundItems.get(ROUND_ID.ZERO).block.getHash(),
-            roundItems.get(ROUND_ID.ZERO).roundIdentifier.getRoundNumber())));
-
-    final SignedData<RoundChangePayload> preparedRoundChange = SignedData.create(
-        preparedRoundChangePayload,
-        validators.getNode(2).getNodeKey().sign(hashForSignature(preparedRoundChangePayload)));
-
-    roundChanges.add(preparedRoundChange);
+    final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
 
     final QbftNode nonValidator = QbftNode.create();
     final Proposal proposal =
         validators
             .getMessageFactory(0)
-            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges,
+            .createProposal(
+                roundItem.roundIdentifier,
+                roundItem.block,
+                roundChanges,
                 createPreparePayloads(
                     roundItems.get(ROUND_ID.ZERO).roundIdentifier,
                     roundItems.get(ROUND_ID.ZERO).block.getHash(),
@@ -403,21 +396,154 @@ public class ProposalValidatorTest {
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
 
-  /*
   @Test
   public void validationFailsIfPiggybackedPreparePayloadHasDuplicatedAuthors() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(
+                roundItem.roundIdentifier,
+                roundItem.block,
+                roundChanges,
+                createPreparePayloads(
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier,
+                    roundItems.get(ROUND_ID.ZERO).block.getHash(),
+                    validators.getNode(0),
+                    validators.getNode(1),
+                    validators.getNode(1)));
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
 
   @Test
   public void validationFailsIfInsufficientPiggybackedPreparePayloads() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(
+                roundItem.roundIdentifier,
+                roundItem.block,
+                roundChanges,
+                createPreparePayloads(
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier,
+                    roundItems.get(ROUND_ID.ZERO).block.getHash(),
+                    validators.getNode(0),
+                    validators.getNode(1)));
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
 
   @Test
   public void validationFailsIfPreparePayloadsDoNotMatchMetadataInRoundChanges() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(
+                roundItem.roundIdentifier,
+                roundItem.block,
+                roundChanges,
+                createPreparePayloads(
+                    roundItems.get(ROUND_ID.ONE).roundIdentifier,
+                    roundItems.get(ROUND_ID.ZERO).block.getHash(),
+                    validators.getNode(0),
+                    validators.getNode(1),
+                    validators.getNode(2)));
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
 
   @Test
   public void validationFailsIfPreparePayloadsDoNotMatchBlockHashInRoundChanges() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(
+                roundItem.roundIdentifier,
+                roundItem.block,
+                roundChanges,
+                createPreparePayloads(
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier,
+                    Hash.fromHexStringLenient("0x1"),
+                    validators.getNode(0),
+                    validators.getNode(1),
+                    validators.getNode(2)));
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
- */
+
+  @Test
+  public void validationFailsIfTwoRoundChangesArePreparedOnSameRoundDifferentBlock() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges = createPreparedRoundZeroRoundChanges();
+
+    final RoundChangePayload illegalPreparedRoundChangePayload =
+        new RoundChangePayload(
+            roundItem.roundIdentifier,
+            Optional.of(
+                new PreparedRoundMetadata(
+                    roundItems.get(ROUND_ID.ONE).block.getHash(),
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier.getRoundNumber())));
+
+    final SignedData<RoundChangePayload> preparedRoundChange =
+        SignedData.create(
+            illegalPreparedRoundChangePayload,
+            validators
+                .getNode(3)
+                .getNodeKey()
+                .sign(hashForSignature(illegalPreparedRoundChangePayload)));
+
+    roundChanges.add(preparedRoundChange);
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(
+                roundItem.roundIdentifier,
+                roundItem.block,
+                roundChanges,
+                createPreparePayloads(
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier,
+                    Hash.fromHexStringLenient("0x1"),
+                    validators.getNode(0),
+                    validators.getNode(1),
+                    validators.getNode(2)));
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
+  }
+
+  private List<SignedData<RoundChangePayload>> createPreparedRoundZeroRoundChanges() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(
+            roundItem.roundIdentifier, validators.getNode(0), validators.getNode(1));
+
+    final RoundChangePayload preparedRoundChangePayload =
+        new RoundChangePayload(
+            roundItem.roundIdentifier,
+            Optional.of(
+                new PreparedRoundMetadata(
+                    roundItems.get(ROUND_ID.ZERO).block.getHash(),
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier.getRoundNumber())));
+
+    final SignedData<RoundChangePayload> preparedRoundChange =
+        SignedData.create(
+            preparedRoundChangePayload,
+            validators.getNode(2).getNodeKey().sign(hashForSignature(preparedRoundChangePayload)));
+
+    roundChanges.add(preparedRoundChange);
+
+    return roundChanges;
+  }
 }
