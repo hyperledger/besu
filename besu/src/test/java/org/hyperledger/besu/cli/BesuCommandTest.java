@@ -4090,8 +4090,7 @@ public class BesuCommandTest extends CommandTestAbstract {
                 + "3a08f21f7750b5d5e17f311091f732c9f917b02e1ae6d39f076903779fd1e7"
                 + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
     parseCommand("--static-nodes-file", tempfile.toString());
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Failed to decode:Cannot deserialize instance of");
+    assertThat(commandErrorOutput.toString()).startsWith("Failed to decode:Cannot deserialize ");
   }
 
   @Test
