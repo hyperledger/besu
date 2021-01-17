@@ -64,7 +64,7 @@ public class ProposalValidatorTest {
     ONE
   }
 
-  private class RoundSpecificItems {
+  private static class RoundSpecificItems {
 
     public final Block block;
     public final ConsensusRoundIdentifier roundIdentifier;
@@ -87,7 +87,7 @@ public class ProposalValidatorTest {
   @Mock private WorldStateArchive worldStateArchive;
   private ProtocolContext protocolContext;
 
-  private Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
+  private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
 
   @Before
   public void setup() {
@@ -126,8 +126,8 @@ public class ProposalValidatorTest {
 
   private Proposal createProposal(
       final RoundSpecificItems roundItem,
-      List<SignedData<RoundChangePayload>> roundChanges,
-      List<SignedData<PreparePayload>> prepares) {
+      final List<SignedData<RoundChangePayload>> roundChanges,
+      final List<SignedData<PreparePayload>> prepares) {
     return validators
         .getMessageFactory(0)
         .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, prepares);
