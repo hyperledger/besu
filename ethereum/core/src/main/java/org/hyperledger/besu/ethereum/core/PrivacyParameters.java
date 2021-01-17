@@ -57,7 +57,7 @@ public class PrivacyParameters {
   private boolean onchainPrivacyGroupsEnabled;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
-  private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
+  private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
 
   public Integer getPrivacyAddress() {
     return onchainPrivacyGroupsEnabled ? Address.PRIVACY - 1 : Address.PRIVACY;
