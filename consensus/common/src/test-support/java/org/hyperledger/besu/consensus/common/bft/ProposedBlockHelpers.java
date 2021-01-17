@@ -31,17 +31,19 @@ public class ProposedBlockHelpers {
       final List<Address> validators, final ConsensusRoundIdentifier roundId) {
     final Bytes extraData =
         new BftExtraData(
-                Bytes.wrap(new byte[32]),
-                Collections.emptyList(),
-                Optional.empty(),
-                roundId.getRoundNumber(),
-                validators)
+            Bytes.wrap(new byte[32]),
+            Collections.emptyList(),
+            Optional.empty(),
+            roundId.getRoundNumber(),
+            validators)
             .encode();
     final BlockOptions blockOptions =
         BlockOptions.create()
             .setExtraData(extraData)
             .setBlockNumber(roundId.getSequenceNumber())
-            .setBlockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal());
+            .setBlockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal())
+            .hasOmmers(false)
+            .hasTransactions(false);
     return new BlockDataGenerator().block(blockOptions);
   }
 }

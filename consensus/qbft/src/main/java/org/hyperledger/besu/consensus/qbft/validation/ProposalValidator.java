@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasDuplicateAuthors;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasSufficientEntries;
 
+import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -156,12 +157,16 @@ public class ProposalValidator {
       final Proposal proposal, final List<SignedData<RoundChangePayload>> roundChanges) {
 
     if (hasDuplicateAuthors(roundChanges)) {
-      LOG.info("{}}: multiple round changes from the same author.", ERROR_PREFIX);
+      LOG.info("{}: multiple round changes from the same author.", ERROR_PREFIX);
       return false;
     }
 
     if (!hasSufficientEntries(roundChanges, quorumMessageCount)) {
       LOG.info("{}: Insufficient round changes for proposal", ERROR_PREFIX);
+      return false;
+    }
+
+    if(!metadataIsConsistentAcrossRoundChanges(roundChanges)) {
       return false;
     }
 
@@ -237,9 +242,29 @@ public class ProposalValidator {
         .flatMap(rc -> rc.getPayload().getPreparedRoundMetadata().map(metadata -> rc));
   }
 
+  private boolean metadataIsConsistentAcrossRoundChanges(
+      final List<SignedData<RoundChangePayload>> roundChanges) {
+    final List<PreparedRoundMetadata> distinctMetadatas =
+        roundChanges.stream().map(rc -> rc.getPayload().getPreparedRoundMetadata())
+            .filter(Optional::isPresent).map(Optional::get).distinct().collect(
+            Collectors.toList());
+
+    final List<Integer> preparedRounds =
+        distinctMetadatas.stream().map(PreparedRoundMetadata::getPreparedRound).collect(
+            Collectors.toList());
+
+    for(final Integer preparedRound: preparedRounds) {
+      if(distinctMetadatas.stream().filter(dm -> dm.getPreparedRound()==preparedRound).count() > 1) {
+        LOG.info("{}: Roundchanges have different prepared metadata for same round", ERROR_PREFIX);
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static <T extends Payload> boolean allMessagesTargetRound(
-      final Collection<SignedData<T>> msgs, final ConsensusRoundIdentifier requiredRound) {
-    return msgs.stream()
-        .allMatch(msg -> msg.getPayload().getRoundIdentifier().equals(requiredRound));
+      final Collection<SignedData<T>> payloads, final ConsensusRoundIdentifier requiredRound) {
+    return payloads.stream()
+        .allMatch(payload -> payload.getPayload().getRoundIdentifier().equals(requiredRound));
   }
 }

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
+import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -312,7 +313,7 @@ public class ProposalValidatorTest {
   }
 
   @Test
-  public void validationFailsIfBlockHashInMetadataDoesNotMatchProposedBlock() {
+  public void validationFailsIfBlockHashInLatestPreparedMetadataDoesNotMatchProposedBlock() {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
     final List<SignedData<RoundChangePayload>> roundChanges =
         createEmptyRoundChangePayloads(
@@ -333,22 +334,76 @@ public class ProposalValidatorTest {
     final Proposal proposal =
         validators
             .getMessageFactory(0)
-            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, emptyList());
+            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges,
+                createPreparePayloads(
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier,
+                    Hash.fromHexStringLenient("0x1"),
+                    validators.getNode(0),
+                    validators.getNode(1),
+                    validators.getNode(2)));
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
+  }
 
+  // Piggybacked RoundChange tests
+  @Test
+  public void validationFailsIfPreparesAreNonEmptyButNoRoundChangeHasPreparedMetadata() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(
+            roundItem.roundIdentifier,
+            validators.getNode(0),
+            validators.getNode(1),
+            validators.getNode(2));
+
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges,
+                createPreparePayloads(
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier,
+                    Hash.fromHexStringLenient("0x1"),
+                    validators.getNode(0)));
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
+  }
+
+  @Test
+  public void validationFailsIfPiggybackedPreparePayloadIsFromNonValidator() {
+    final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ONE);
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        createEmptyRoundChangePayloads(
+            roundItem.roundIdentifier,
+            validators.getNode(0),
+            validators.getNode(1));
+
+    final RoundChangePayload preparedRoundChangePayload = new RoundChangePayload(
+        roundItem.roundIdentifier,
+        Optional.of(new PreparedRoundMetadata(roundItems.get(ROUND_ID.ZERO).block.getHash(),
+            roundItems.get(ROUND_ID.ZERO).roundIdentifier.getRoundNumber())));
+
+    final SignedData<RoundChangePayload> preparedRoundChange = SignedData.create(
+        preparedRoundChangePayload,
+        validators.getNode(2).getNodeKey().sign(hashForSignature(preparedRoundChangePayload)));
+
+    roundChanges.add(preparedRoundChange);
+
+    final QbftNode nonValidator = QbftNode.create();
+    final Proposal proposal =
+        validators
+            .getMessageFactory(0)
+            .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges,
+                createPreparePayloads(
+                    roundItems.get(ROUND_ID.ZERO).roundIdentifier,
+                    roundItems.get(ROUND_ID.ZERO).block.getHash(),
+                    validators.getNode(0),
+                    validators.getNode(1),
+                    nonValidator));
+
+    assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
   }
 
   /*
-  // Piggybacked RoundChange tests
-  @Test
-  public void validationFailsIfPreparesAreNonEmptyButNoRoundChangeHasPreapredMetadata() {
-  }
-
-  @Test
-  public void validationFailsIfPiggybackedPreparePayloadIsFromNonValidation() {
-  }
-
   @Test
   public void validationFailsIfPiggybackedPreparePayloadHasDuplicatedAuthors() {
   }
