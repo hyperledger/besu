@@ -15,8 +15,8 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.IbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -140,7 +140,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
-    peers = new ValidatorPeers(voteTallyCache);
+    peers = new ValidatorPeers(voteTallyCache, IbftSubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
@@ -257,10 +257,10 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         blockInterface);
   }
 
-  private Map<Long, List<Address>> convertIbftForks(final List<IbftFork> ibftForks) {
+  private Map<Long, List<Address>> convertIbftForks(final List<BftFork> bftForks) {
     final Map<Long, List<Address>> result = new HashMap<>();
 
-    for (final IbftFork fork : ibftForks) {
+    for (final BftFork fork : bftForks) {
       fork.getValidators()
           .map(
               validators ->

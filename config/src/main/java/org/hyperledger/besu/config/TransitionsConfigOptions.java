@@ -39,7 +39,7 @@ public class TransitionsConfigOptions {
     this.customForkConfigRoot = customForkConfigRoot;
   }
 
-  public List<IbftFork> getIbftForks() {
+  public List<BftFork> getIbftForks() {
     final Optional<ArrayNode> ibftForksNode =
         JsonUtil.getArrayNode(customForkConfigRoot, IBFT2_FORKS);
 
@@ -47,7 +47,7 @@ public class TransitionsConfigOptions {
       return emptyList();
     }
 
-    final List<IbftFork> ibftForks = Lists.newArrayList();
+    final List<BftFork> bftForks = Lists.newArrayList();
 
     ibftForksNode
         .get()
@@ -57,9 +57,9 @@ public class TransitionsConfigOptions {
               if (!node.isObject()) {
                 throw new IllegalArgumentException("Ibft2 fork is illegally formatted.");
               }
-              ibftForks.add(new IbftFork((ObjectNode) node));
+              bftForks.add(new BftFork((ObjectNode) node));
             });
 
-    return Collections.unmodifiableList(ibftForks);
+    return Collections.unmodifiableList(bftForks);
   }
 }
