@@ -103,7 +103,6 @@ public class QbftMiningAcceptanceTest extends AcceptanceTestBase {
     final BesuNode minerNode2 = besu.createQbftNode("miner2");
     final BesuNode minerNode3 = besu.createQbftNode("miner3");
     final BesuNode minerNode4 = besu.createQbftNode("miner4");
-    // TODO create generic bft conditions
     final List<BesuNode> validators =
         ibftTwo.validators(new BesuNode[] {minerNode1, minerNode2, minerNode3, minerNode4});
     final BesuNode nonProposerNode = validators.get(validators.size() - 1);
