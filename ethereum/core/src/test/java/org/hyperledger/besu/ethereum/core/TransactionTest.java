@@ -97,7 +97,7 @@ public class TransactionTest {
 
   @Test
   public void petersburg() {
-    milestone("Petersburg");
+    milestone("ConstantinopleFix");
   }
 
   public void milestone(final String milestone) {
