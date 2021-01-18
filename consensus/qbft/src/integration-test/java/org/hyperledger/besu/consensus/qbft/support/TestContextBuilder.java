@@ -120,7 +120,7 @@ public class TestContextBuilder {
       this.messageFactory = messageFactory;
     }
 
-    public BftExecutors getIbftExecutors() {
+    public BftExecutors getBftExecutors() {
       return bftExecutors;
     }
 
@@ -161,7 +161,7 @@ public class TestContextBuilder {
     return this;
   }
 
-  public TestContextBuilder ibftEventQueue(final BftEventQueue bftEventQueue) {
+  public TestContextBuilder eventQueue(final BftEventQueue bftEventQueue) {
     this.bftEventQueue = bftEventQueue;
     return this;
   }
@@ -234,7 +234,7 @@ public class TestContextBuilder {
     return new TestContext(
         remotePeers,
         blockChain,
-        controllerAndState.getIbftExecutors(),
+        controllerAndState.getBftExecutors(),
         controllerAndState.getEventHandler(),
         controllerAndState.getFinalState(),
         controllerAndState.getEventMultiplexer(),
@@ -283,7 +283,7 @@ public class TestContextBuilder {
         new MiningParameters(
             AddressHelpers.ofValue(1),
             Wei.ZERO,
-            Bytes.wrap("Ibft Int tests".getBytes(UTF_8)),
+            Bytes.wrap("Qbft Int tests".getBytes(UTF_8)),
             true);
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
@@ -363,7 +363,7 @@ public class TestContextBuilder {
             FUTURE_MESSAGES_LIMIT,
             blockChain.getChainHeadBlockNumber());
 
-    final BftEventHandler ibftController =
+    final BftEventHandler qbftController =
         new QbftController(
             blockChain,
             finalState,
@@ -383,10 +383,10 @@ public class TestContextBuilder {
             futureMessageBuffer,
             synchronizerUpdater);
 
-    final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
+    final EventMultiplexer eventMultiplexer = new EventMultiplexer(qbftController);
     //////////////////////////// END IBFT BesuController ////////////////////////////
 
     return new ControllerAndState(
-        bftExecutors, ibftController, finalState, eventMultiplexer, messageFactory);
+        bftExecutors, qbftController, finalState, eventMultiplexer, messageFactory);
   }
 }

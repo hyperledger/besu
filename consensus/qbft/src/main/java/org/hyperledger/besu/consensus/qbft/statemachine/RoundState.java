@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
-import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -96,17 +95,14 @@ public class RoundState {
   }
 
   private void updateState() {
-    // NOTE: The quorum for Prepare messages is 1 less than the quorum size as the proposer
-    // does not supply a prepare message
-    final long prepareQuorum = BftHelpers.prepareMessageCountForQuorum(quorum);
-    prepared = (prepareMessages.size() >= prepareQuorum) && proposalMessage.isPresent();
+    prepared = (prepareMessages.size() >= quorum) && proposalMessage.isPresent();
     committed = (commitMessages.size() >= quorum) && proposalMessage.isPresent();
     LOG.trace(
         "Round state updated prepared={} committed={} preparedQuorum={}/{} committedQuorum={}/{}",
         prepared,
         committed,
         prepareMessages.size(),
-        prepareQuorum,
+        quorum,
         commitMessages.size(),
         quorum);
   }
