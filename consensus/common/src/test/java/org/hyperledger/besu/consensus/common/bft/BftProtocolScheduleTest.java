@@ -46,7 +46,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
 
-    when(genesisConfig.getIbftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     final ProtocolSchedule schedule = BftProtocolSchedule.create(genesisConfig);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
@@ -63,7 +63,7 @@ public class BftProtocolScheduleTest {
     final String miningBeneficiary = "notHexStringOfTwentyBytes";
     final BftConfigOptions configOptions = mock(BftConfigOptions.class);
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(genesisConfig.getIbftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
 
@@ -79,7 +79,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
-    when(genesisConfig.getIbftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     final ProtocolSchedule schedule = BftProtocolSchedule.create(genesisConfig);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
@@ -100,7 +100,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
-    when(genesisConfig.getIbftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
         .isInstanceOf(IllegalArgumentException.class)
@@ -114,7 +114,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(configOptions.getEpochLength()).thenReturn(0L);
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(genesisConfig.getIbftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
         .isInstanceOf(IllegalArgumentException.class)
@@ -128,7 +128,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.empty());
     when(configOptions.getEpochLength()).thenReturn(-3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(genesisConfig.getIbftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
         .isInstanceOf(IllegalArgumentException.class)

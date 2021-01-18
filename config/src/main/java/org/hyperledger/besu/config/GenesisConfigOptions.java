@@ -39,9 +39,7 @@ public interface GenesisConfigOptions {
 
   CliqueConfigOptions getCliqueConfigOptions();
 
-  BftConfigOptions getIbftConfigOptions();
-
-  BftConfigOptions getQBftConfigOptions();
+  BftConfigOptions getBftConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
 

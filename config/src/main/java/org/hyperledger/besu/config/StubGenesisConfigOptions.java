@@ -95,12 +95,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public BftConfigOptions getIbftConfigOptions() {
-    return BftConfigOptions.DEFAULT;
-  }
-
-  @Override
-  public BftConfigOptions getQBftConfigOptions() {
+  public BftConfigOptions getBftConfigOptions() {
     return BftConfigOptions.DEFAULT;
   }
 
@@ -268,7 +263,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
-      builder.put("ibft2", getIbftConfigOptions().asMap());
+      builder.put("ibft2", getBftConfigOptions().asMap());
     }
     return builder.build();
   }
