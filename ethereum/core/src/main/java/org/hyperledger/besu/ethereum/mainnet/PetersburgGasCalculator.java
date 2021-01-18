@@ -25,7 +25,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  * <p>Neither {@link TangerineWhistleGasCalculator} nor {@link SpuriousDragonGasCalculator} overrode
  * these two methods so {@link FrontierGasCalculator} is the source.
  */
-public class ConstantinopleFixGasCalculator extends ConstantinopleGasCalculator {
+public class PetersburgGasCalculator extends ConstantinopleGasCalculator {
 
   /** Same as {#link {@link FrontierGasCalculator#STORAGE_SET_GAS_COST} */
   private static final Gas STORAGE_SET_GAS_COST = Gas.of(20_000L);

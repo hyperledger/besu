@@ -162,8 +162,8 @@ public class ProtocolScheduleBuilder {
             quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
-        config.getConstantinopleFixBlockNumber(),
-        MainnetProtocolSpecs.constantinopleFixDefinition(
+        config.getPetersburgBlockNumber(),
+        MainnetProtocolSpecs.petersburgDefinition(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
@@ -362,8 +362,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock =
         validateForkOrder("Constantinople", config.getConstantinopleBlockNumber(), lastForkBlock);
     lastForkBlock =
-        validateForkOrder(
-            "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
+        validateForkOrder("Petersburg", config.getPetersburgBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
