@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.test;
 
 import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers.createValidPreparedCertificate;
 
-import java.util.stream.Collectors;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -135,8 +135,8 @@ public class ReceivedFutureProposalTest {
 
     final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
 
-    nextProposer.injectProposalForFutureRound(nextRoundId, roundChanges, prepares.subList(0, 2),
-        reproposedBlock);
+    nextProposer.injectProposalForFutureRound(
+        nextRoundId, roundChanges, prepares.subList(0, 2), reproposedBlock);
 
     peers.verifyNoMessagesReceived();
   }
@@ -155,20 +155,23 @@ public class ReceivedFutureProposalTest {
 
     List<SignedData<PreparePayload>> prepares =
         peers.createSignedPreparePayloadOfAllPeers(roundId, initialBlock.getHash());
-    prepares = prepares.stream()
-        .filter(p -> !p.getAuthor().equals(peers.getFirstNonProposer().getNodeAddress())).collect(
-            Collectors.toList());
+    prepares =
+        prepares.stream()
+            .filter(p -> !p.getAuthor().equals(peers.getFirstNonProposer().getNodeAddress()))
+            .collect(Collectors.toList());
 
     final SignedData<PreparePayload> invalidPrepare =
-        peers.getFirstNonProposer().getMessageFactory()
-            .createPrepare(nextRoundId, initialBlock.getHash()).getSignedPayload();
+        peers
+            .getFirstNonProposer()
+            .getMessageFactory()
+            .createPrepare(nextRoundId, initialBlock.getHash())
+            .getSignedPayload();
 
     prepares.add(invalidPrepare);
 
     final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
 
-    nextProposer.injectProposalForFutureRound(nextRoundId, roundChanges, prepares,
-        reproposedBlock);
+    nextProposer.injectProposalForFutureRound(nextRoundId, roundChanges, prepares, reproposedBlock);
 
     peers.verifyNoMessagesReceived();
   }
