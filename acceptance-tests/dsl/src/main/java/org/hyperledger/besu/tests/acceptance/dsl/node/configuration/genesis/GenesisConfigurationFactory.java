@@ -71,7 +71,8 @@ public class GenesisConfigurationFactory {
 
   public Optional<String> createQbftGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
-    return createIbft2GenesisConfig(validators, "/qbft/qbft.json");
+    final String template = readGenesisFile("/qbft/qbft.json");
+    return updateGenesisExtraData(validators, template, BftExtraData::createGenesisExtraDataString);
   }
 
   private Optional<String> updateGenesisExtraData(
