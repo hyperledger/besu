@@ -53,7 +53,8 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value) {
+  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
+      final WorldStateStorage worldStateStorage, final Bytes value) {
     // Nothing to do for terminal storage node
     return Stream.empty();
   }

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -73,8 +72,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     return codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
-  public Optional<Bytes> getAccount(final Address address) {
-    return accountStorage.get(address.toArrayUnsafe()).map(Bytes::wrap);
+  public Optional<Bytes> getAccount(final Hash accountHash) {
+    return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
@@ -127,7 +126,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
-    System.out.println(rootHash + " " + blockHash);
     return trieBranchStorage
             .get(WORLD_ROOT_HASH_KEY)
             .map(Bytes32::wrap)
@@ -198,24 +196,24 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       return this;
     }
 
-    public Updater removeAccountInfoState(final Address address) {
-      accountStorageTransaction.remove(address.toArrayUnsafe());
+    public Updater removeAccountInfoState(final Hash accountHash) {
+      accountStorageTransaction.remove(accountHash.toArrayUnsafe());
       return this;
     }
 
-    public Updater putAccountInfoState(final Address address, final Bytes accountValue) {
+    public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
       if (accountValue.size() == 0) {
         // Don't save empty values
         return this;
       }
-      accountStorageTransaction.put(address.toArrayUnsafe(), accountValue.toArrayUnsafe());
+      accountStorageTransaction.put(accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
       return this;
     }
 
     @Override
     public WorldStateStorage.Updater saveWorldState(
         final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
-      trieBranchStorageTransaction.put(WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
+      trieBranchStorageTransaction.put(Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 

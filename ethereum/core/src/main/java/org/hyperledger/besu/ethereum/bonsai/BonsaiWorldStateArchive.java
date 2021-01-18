@@ -155,8 +155,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public void setMutable(final BlockHeader blockHeader) {
-    persistedState.persist(blockHeader, true);
+  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
+    persistedState.setArchiveStateUnSafe(blockHeader);
   }
 
   @Override

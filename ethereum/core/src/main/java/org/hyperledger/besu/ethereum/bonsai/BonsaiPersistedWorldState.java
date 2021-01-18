@@ -79,12 +79,13 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     return worldStateStorage.getCode(null, Hash.hash(address));
   }
 
-  @Override
-  public void persist(final BlockHeader blockHeader) {
-    persist(blockHeader, false);
+  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
+    worldStateBlockHash = blockHeader.getHash();
+    worldStateRootHash = blockHeader.getStateRoot();
   }
 
-  public void persist(final BlockHeader blockHeader, final boolean isPivotBlock) {
+  @Override
+  public void persist(final BlockHeader blockHeader) {
     boolean success = false;
     final Hash originalBlockHash = worldStateBlockHash;
     final Hash originalRootHash = worldStateRootHash;
@@ -97,7 +98,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         // because we are clearing persisted values we need the account root as persisted
         final BonsaiAccount oldAccount =
             worldStateStorage
-                .getAccount(address)
+                .getAccount(Hash.hash(address))
                 .map(bytes -> fromRLP(BonsaiPersistedWorldState.this, address, bytes, true))
                 .orElse(null);
         if (oldAccount == null) {
@@ -205,11 +206,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         if (updatedAccount == null) {
           final Hash addressHash = Hash.hash(accountKey);
           accountTrie.remove(addressHash);
-          stateUpdater.removeAccountInfoState(accountUpdate.getKey());
+          stateUpdater.removeAccountInfoState(addressHash);
         } else {
           final Hash addressHash = updatedAccount.getAddressHash();
           final Bytes accountValue = updatedAccount.serializeAccount();
-          stateUpdater.putAccountInfoState(accountUpdate.getKey(), accountValue);
+          stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
           accountTrie.put(addressHash, accountValue);
         }
       }
@@ -219,8 +220,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       accountTrie.commit(
           (location, hash, value) ->
               writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
-      worldStateRootHash =
-          isPivotBlock ? blockHeader.getStateRoot() : Hash.wrap(accountTrie.getRootHash());
+      worldStateRootHash = Hash.wrap(accountTrie.getRootHash());
       stateUpdater
           .getTrieBranchStorageTransaction()
           .put(WORLD_ROOT_HASH_KEY, worldStateRootHash.toArrayUnsafe());
@@ -298,7 +298,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   @Override
   public Account get(final Address address) {
     return worldStateStorage
-        .getAccount(address)
+        .getAccount(Hash.hash(address))
         .map(bytes -> fromRLP(updater, address, bytes, true))
         .orElse(null);
   }

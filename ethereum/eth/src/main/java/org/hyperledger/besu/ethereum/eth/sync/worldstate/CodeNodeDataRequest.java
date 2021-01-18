@@ -39,7 +39,7 @@ class CodeNodeDataRequest extends NodeDataRequest {
   }
 
   @Override
-  public Stream<NodeDataRequest> getChildRequests() {
+  public Stream<NodeDataRequest> getChildRequests(final WorldStateStorage worldStateStorage) {
     // Code nodes have nothing further to download
     return Stream.empty();
   }

@@ -39,7 +39,7 @@ public interface WorldStateArchive {
 
   MutableWorldState getMutable();
 
-  void setMutable(BlockHeader blockHeader);
+  void setArchiveStateUnSafe(BlockHeader blockHeader);
 
   Optional<Bytes> getNodeData(Hash hash);
 

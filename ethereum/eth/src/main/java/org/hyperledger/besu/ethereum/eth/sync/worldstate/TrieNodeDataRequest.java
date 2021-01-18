@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,7 +34,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   }
 
   @Override
-  public Stream<NodeDataRequest> getChildRequests() {
+  public Stream<NodeDataRequest> getChildRequests(final WorldStateStorage worldStateStorage) {
     if (getData() == null) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
@@ -49,7 +50,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
                     createChildNodeDataRequest(Hash.wrap(node.getHash()), node.getLocation()));
               } else {
                 return node.getValue()
-                    .map(this::getRequestsFromTrieNodeValue)
+                    .map(value -> getRequestsFromTrieNodeValue(worldStateStorage, value))
                     .orElseGet(Stream::empty);
               }
             });
@@ -62,5 +63,6 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   protected abstract NodeDataRequest createChildNodeDataRequest(
       final Hash childHash, final Optional<Bytes> location);
 
-  protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value);
+  protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
+      final WorldStateStorage worldStateStorage, final Bytes value);
 }

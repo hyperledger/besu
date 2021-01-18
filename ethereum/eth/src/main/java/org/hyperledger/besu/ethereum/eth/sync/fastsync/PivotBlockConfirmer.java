@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.FutureUtils;
 
@@ -69,18 +68,15 @@ class PivotBlockConfirmer {
 
   private final AtomicBoolean isStarted = new AtomicBoolean(false);
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
-  private final WorldStateArchive worldStateArchive;
 
   PivotBlockConfirmer(
       final ProtocolSchedule protocolSchedule,
-      final WorldStateArchive worldStateArchive,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final long pivotBlockNumber,
       final int numberOfPeersToQuery,
       final int numberOfRetriesPerPeer) {
     this.protocolSchedule = protocolSchedule;
-    this.worldStateArchive = worldStateArchive;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.pivotBlockNumber = pivotBlockNumber;
@@ -132,7 +128,6 @@ class PivotBlockConfirmer {
     } else if (votes >= numberOfPeersToQuery) {
       // We've received the required number of votes and have selected our pivot block
       LOG.info("Confirmed pivot block at {}: {}", pivotBlockNumber, blockHeader.getHash());
-      worldStateArchive.setMutable(blockHeader);
       result.complete(new FastSyncState(blockHeader));
     } else {
       LOG.info(

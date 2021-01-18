@@ -72,7 +72,8 @@ public class CompleteTaskStepTest {
     verify(downloadState).enqueueRequests(streamCaptor.capture());
     assertThat(streamCaptor.getValue())
         .usingRecursiveFieldByFieldElementComparator()
-        .containsExactlyInAnyOrderElementsOf(() -> task.getData().getChildRequests().iterator());
+        .containsExactlyInAnyOrderElementsOf(
+            () -> task.getData().getChildRequests(worldStateStorage).iterator());
 
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
   }

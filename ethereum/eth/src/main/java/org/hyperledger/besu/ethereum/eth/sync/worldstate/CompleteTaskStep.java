@@ -105,7 +105,7 @@ public class CompleteTaskStep {
     final NodeDataRequest request = task.getData();
     // Only queue rootnode children if we started from scratch
     if (!downloadState.downloadWasResumed() || !isRootState(blockHeader, request)) {
-      downloadState.enqueueRequests(request.getChildRequests());
+      downloadState.enqueueRequests(request.getChildRequests(worldStateStorage));
     }
   }
 
