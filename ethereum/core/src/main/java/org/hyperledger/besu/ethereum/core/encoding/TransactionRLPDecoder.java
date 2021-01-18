@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
@@ -192,8 +191,8 @@ public class TransactionRLPDecoder {
     return builder.signature(signature).build();
   }
 
-  private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
-    return v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
-        || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
-  }
+  //  private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
+  //    return v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
+  //        || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
+  //  }
 }
