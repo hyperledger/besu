@@ -15,10 +15,37 @@
 package org.hyperledger.besu.consensus.qbft.validation;
 
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FutureRoundProposalMessageValidator {
 
-  public boolean validateProposalMessage(final Proposal proposal) {
-    return true;
+  private static final Logger LOG = LogManager.getLogger();
+
+  private final MessageValidatorFactory messageValidatorFactory;
+  private final long chainHeight;
+  private final BlockHeader parentHeader;
+
+  public FutureRoundProposalMessageValidator(
+      final MessageValidatorFactory messageValidatorFactory,
+      final long chainHeight,
+      final BlockHeader parentHeader) {
+    this.messageValidatorFactory = messageValidatorFactory;
+    this.chainHeight = chainHeight;
+    this.parentHeader = parentHeader;
+  }
+
+  public boolean validateProposalMessage(final Proposal msg) {
+    if (msg.getRoundIdentifier().getSequenceNumber() != chainHeight) {
+      LOG.info("Illegal Proposal message, does not target the correct round height.");
+      return false;
+    }
+
+    final MessageValidator messageValidator =
+        messageValidatorFactory.createMessageValidator(msg.getRoundIdentifier(), parentHeader);
+
+    return messageValidator.validateProposal(msg);
   }
 }

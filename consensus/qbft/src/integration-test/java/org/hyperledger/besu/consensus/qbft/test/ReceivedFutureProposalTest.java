@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -76,7 +76,6 @@ public class ReceivedFutureProposalTest {
     peers.verifyMessagesReceived(expectedPrepare);
   }
 
-  @Ignore("Requires validation")
   @Test
   public void proposalFromIllegalSenderIsDiscardedAndNoPrepareForNewRoundIsSent() {
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
@@ -107,10 +106,13 @@ public class ReceivedFutureProposalTest {
     final List<SignedData<RoundChangePayload>> roundChanges =
         peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtifacts);
 
+    final List<SignedData<PreparePayload>> prepares =
+        peers.createSignedPreparePayloadOfAllPeers(roundId, initialBlock.getHash());
+
     final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
 
     nextProposer.injectProposalForFutureRound(
-        nextRoundId, roundChanges, Collections.emptyList(), reproposedBlock);
+        nextRoundId, roundChanges, prepares, reproposedBlock);
 
     peers.verifyMessagesReceived(
         localNodeMessageFactory.createPrepare(nextRoundId, reproposedBlock.getHash()));

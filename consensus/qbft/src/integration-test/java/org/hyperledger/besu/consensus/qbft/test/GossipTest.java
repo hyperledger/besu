@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class GossipTest {
@@ -128,7 +127,6 @@ public class GossipTest {
     peers.verifyNoMessagesReceived();
   }
 
-  @Ignore("Requires validation")
   @Test
   public void messageIsNotGossipedToSenderOrCreator() {
     final ValidatorPeer msgCreator = peers.getFirstNonProposer();

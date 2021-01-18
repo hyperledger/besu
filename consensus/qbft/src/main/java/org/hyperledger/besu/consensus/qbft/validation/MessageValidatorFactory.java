@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 
-@SuppressWarnings("UnusedVariable")
 public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
@@ -72,11 +71,29 @@ public class MessageValidatorFactory {
 
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
-    return new MessageValidator();
+
+    final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
+    final BlockValidator blockValidator =
+        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
+
+    final ProposalValidator proposalValidator =
+        new ProposalValidator(
+            blockValidator,
+            protocolContext,
+            BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
+            validatorsForHeight,
+            roundIdentifier,
+            proposerSelector.selectProposerForRound(roundIdentifier));
+
+    return new MessageValidator(
+        expectedDigest ->
+            new PrepareValidator(validatorsForHeight, roundIdentifier, expectedDigest),
+        expectedDigest -> new CommitValidator(validatorsForHeight, roundIdentifier, expectedDigest),
+        proposalValidator);
   }
 
   public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
-    return new FutureRoundProposalMessageValidator();
+    return new FutureRoundProposalMessageValidator(this, chainHeight, parentHeader);
   }
 }

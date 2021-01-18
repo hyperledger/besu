@@ -42,7 +42,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class RoundChangeTest {
@@ -324,7 +323,6 @@ public class RoundChangeTest {
     peers.verifyNoMessagesReceived();
   }
 
-  @Ignore("Requires validation")
   @Test
   public void illegallyConstructedRoundChangeMessageIsDiscarded() {
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 4);
