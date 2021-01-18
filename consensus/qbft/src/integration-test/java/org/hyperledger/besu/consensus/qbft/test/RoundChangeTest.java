@@ -114,6 +114,7 @@ public class RoundChangeTest {
         localNodeMessageFactory.createPrepare(roundId, blockToPropose.getHash());
 
     peers.getProposer().injectProposal(roundId, blockToPropose);
+    final Prepare p0 = peers.getProposer().injectPrepare(roundId, blockToPropose.getHash());
     peers.clearReceivedMessages();
 
     final Prepare p1 = peers.getNonProposing(0).injectPrepare(roundId, blockToPropose.getHash());
@@ -128,7 +129,7 @@ public class RoundChangeTest {
             Optional.of(
                 new PreparedCertificate(
                     blockToPropose,
-                    List.of(localPrepareMessage, p1, p2).stream()
+                    List.of(localPrepareMessage, p0, p1, p2).stream()
                         .map(Prepare::getSignedPayload)
                         .collect(Collectors.toList()),
                     roundId.getRoundNumber())));
@@ -160,7 +161,10 @@ public class RoundChangeTest {
                 rc4.getSignedPayload()),
             emptyList());
 
-    peers.verifyMessagesReceived(expectedProposal);
+    final Prepare expectedPrepare =
+        localNodeMessageFactory.createPrepare(targetRound, locallyProposedBlock.getHash());
+
+    peers.verifyMessagesReceived(expectedProposal, expectedPrepare);
   }
 
   @Test
@@ -212,7 +216,10 @@ public class RoundChangeTest {
                 rc4.getSignedPayload()),
             bestPrepCert.getPrepares());
 
-    peers.verifyMessagesReceived(expectedProposal);
+    final Prepare expectedPrepare =
+        localNodeMessageFactory.createPrepare(targetRound, expectedBlockToPropose.getHash());
+
+    peers.verifyMessagesReceived(expectedProposal, expectedPrepare);
   }
 
   @Test
@@ -232,7 +239,10 @@ public class RoundChangeTest {
         localNodeMessageFactory.createProposal(
             futureRound, locallyProposedBlock, roundChangeMessages, emptyList());
 
-    peers.verifyMessagesReceived(expectedProposal);
+    final Prepare expectedPrepare =
+        localNodeMessageFactory.createPrepare(futureRound, locallyProposedBlock.getHash());
+
+    peers.verifyMessagesReceived(expectedProposal, expectedPrepare);
   }
 
   @Test
@@ -285,7 +295,10 @@ public class RoundChangeTest {
             Lists.newArrayList(roundChangeMessages),
             prepCert.getPrepares());
 
-    peers.verifyMessagesReceived(expectedProposal);
+    final Prepare expectedPrepare =
+        localNodeMessageFactory.createPrepare(targetRound, expectedBlockToPropose.getHash());
+
+    peers.verifyMessagesReceived(expectedProposal, expectedPrepare);
   }
 
   @Test

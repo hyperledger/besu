@@ -96,9 +96,7 @@ public class TransactionRLPDecoder {
     } else {
       // otherwise this is an EIP-1559 transaction
       builder.type(TransactionType.EIP1559);
-      builder
-          .gasPremium(Wei.of(maybeGasPremiumOrV.toBigInteger()))
-          .feeCap(Wei.of(maybeFeeCapOrR.toBigInteger()));
+      builder.gasPremium(Wei.wrap(maybeGasPremiumOrV)).feeCap(Wei.wrap(maybeFeeCapOrR));
       v = maybeVOrS.toBigInteger();
       r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
       s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();

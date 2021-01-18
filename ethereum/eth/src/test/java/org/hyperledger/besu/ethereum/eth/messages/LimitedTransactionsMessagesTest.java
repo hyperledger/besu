@@ -42,7 +42,6 @@ public class LimitedTransactionsMessagesTest {
   @Test
   public void createLimited() {
     final Set<Transaction> transactions = generator.transactions(6000);
-
     final Set<Transaction> remainingTransactions = new HashSet<>(transactions);
 
     final LimitedTransactionsMessages firstMessage =

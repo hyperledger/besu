@@ -129,7 +129,7 @@ public class QbftRoundIntegrationTest {
             roundIdentifier, proposedBlock, emptyList(), emptyList()));
 
     assertThat(roundState.getProposedBlock()).isNotEmpty();
-    assertThat(roundState.isPrepared()).isTrue();
+    assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
 
     verifyNoInteractions(multicaster);
@@ -163,7 +163,7 @@ public class QbftRoundIntegrationTest {
     round.handlePrepareMessage(peerMessageFactory.createPrepare(roundIdentifier, Hash.EMPTY));
 
     assertThat(roundState.getProposedBlock()).isNotEmpty();
-    assertThat(roundState.isPrepared()).isTrue();
+    assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
     verifyNoInteractions(multicaster);
 

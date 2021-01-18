@@ -326,9 +326,7 @@ public class RoundChangeTest {
                 .createProposal(roundId, blockToPropose, Optional.empty()),
             emptyList());
 
-    peers
-        .getNonProposing(2)
-        .injectRoundChange(targetRound, Optional.of(illegalPreparedRoundArtifacts));
+    peers.getProposer().injectRoundChange(targetRound, Optional.of(illegalPreparedRoundArtifacts));
 
     // Ensure no Proposal message is sent.
     peers.verifyNoMessagesReceived();
