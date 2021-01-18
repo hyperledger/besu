@@ -111,8 +111,7 @@ public class ReceivedFutureProposalTest {
 
     final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
 
-    nextProposer.injectProposalForFutureRound(
-        nextRoundId, roundChanges, prepares, reproposedBlock);
+    nextProposer.injectProposalForFutureRound(nextRoundId, roundChanges, prepares, reproposedBlock);
 
     peers.verifyMessagesReceived(
         localNodeMessageFactory.createPrepare(nextRoundId, reproposedBlock.getHash()));
