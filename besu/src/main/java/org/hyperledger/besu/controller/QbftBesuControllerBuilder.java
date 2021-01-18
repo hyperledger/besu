@@ -128,14 +128,14 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             localAddress,
             bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
 
-    // NOTE: peers should not be used for accessing the network as it does not enforce the
-    // "only send once" filter applied by the UniqueMessageMulticaster.
     final VoteTallyCache voteTallyCache =
         protocolContext.getConsensusState(BftContext.class).getVoteTallyCache();
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
+    // NOTE: peers should not be used for accessing the network as it does not enforce the
+    // "only send once" filter applied by the UniqueMessageMulticaster.
     peers = new ValidatorPeers(voteTallyCache, QbftSubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
