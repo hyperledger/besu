@@ -191,8 +191,8 @@ public class BlockDataGenerator {
 
   public List<Block> blockSequence(final Block previousBlock, final int count) {
     final WorldStateArchive worldState = InMemoryStorageProvider.createInMemoryWorldStateArchive();
-    Hash parentHash = previousBlock.getHeader().getHash();
-    long blockNumber = previousBlock.getHeader().getNumber() + 1;
+    final Hash parentHash = previousBlock.getHeader().getHash();
+    final long blockNumber = previousBlock.getHeader().getNumber() + 1;
     return blockSequence(
         count,
         blockNumber,

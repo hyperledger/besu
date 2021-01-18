@@ -32,7 +32,7 @@ public enum TransactionType {
     if (serializedTypeValue >= 0xc0 && serializedTypeValue <= 0xfe) {
       return FRONTIER;
     }
-    for (TransactionType transactionType : TransactionType.values()) {
+    for (final TransactionType transactionType : TransactionType.values()) {
       if (transactionType.typeValue == serializedTypeValue) {
         return transactionType;
       }

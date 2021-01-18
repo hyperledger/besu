@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -99,7 +100,10 @@ public class TransactionRLPDecoder {
     }
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (isGoQuorumPrivateTransaction(v)) {
+    if (GoQuorumOptions
+        .goquorumCompatibilityMode) { // TODO: I don't like relying on this static here ...
+      //      if (isGoQuorumPrivateTransaction(v)) { // This does not always work as we can have
+      // v=37 when chain id is 1
       // GoQuorum private TX. No chain ID. Preserve the v value as provided.
       builder.v(v);
       recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
