@@ -39,7 +39,7 @@ public class TransitionsConfigOptions {
     this.customForkConfigRoot = customForkConfigRoot;
   }
 
-  public List<BftFork> getBftForks() {
+  public List<BftFork> getIBftForks() {
     final Optional<ArrayNode> ibftForksNode =
         JsonUtil.getArrayNode(customForkConfigRoot, IBFT2_FORKS);
 
