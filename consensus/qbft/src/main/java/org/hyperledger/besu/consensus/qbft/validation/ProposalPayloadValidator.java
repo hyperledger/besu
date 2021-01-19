@@ -70,6 +70,11 @@ public class ProposalPayloadValidator {
       return false;
     }
 
+    if (block.getHeader().getNumber() != payload.getRoundIdentifier().getSequenceNumber()) {
+      LOG.info("{}: block number does not match sequence number", ERROR_PREFIX);
+      return false;
+    }
+
     final BftExtraData extraData = BftExtraData.decode(block.getHeader());
     if (payload.getRoundIdentifier().getRoundNumber() != extraData.getRound()) {
       LOG.info(

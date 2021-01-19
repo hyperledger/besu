@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
-import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasDuplicateAuthors;
-import static org.hyperledger.besu.consensus.qbft.validation.ValidationHelpers.hasSufficientEntries;
+import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasDuplicateAuthors;
+import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasSufficientEntries;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
@@ -90,7 +90,11 @@ public class ProposalValidator {
     final ConsensusRoundIdentifier proposalRoundIdentifier = proposal.getRoundIdentifier();
 
     if (proposalRoundIdentifier.getRoundNumber() == 0) {
-      return validateRoundZeroProposalHasNoRoundChangesOrPrepares(proposal);
+      if (!validateRoundZeroProposalHasNoRoundChangesOrPrepares(proposal)) {
+        return false;
+      }
+
+      return validateBlockCoinbaseMatchesMsgAuthor(proposal);
     } else {
 
       if (!validateRoundChanges(proposal, proposal.getRoundChanges())) {
@@ -140,6 +144,8 @@ public class ProposalValidator {
           LOG.info("{}: No PreparedMetadata exists, so prepare list must be empty", ERROR_PREFIX);
           return false;
         }
+
+        return validateBlockCoinbaseMatchesMsgAuthor(proposal);
       }
 
       return true;
@@ -151,6 +157,7 @@ public class ProposalValidator {
       LOG.info("{}: round-0 proposal must not contain any prepares or roundchanges", ERROR_PREFIX);
       return false;
     }
+
     return true;
   }
 
@@ -173,11 +180,10 @@ public class ProposalValidator {
 
     final RoundChangePayloadValidator roundChangePayloadValidator =
         new RoundChangePayloadValidator(validators, roundIdentifier.getSequenceNumber());
-    for (final SignedData<RoundChangePayload> payload : roundChanges) {
-      if (!roundChangePayloadValidator.validate(payload)) {
-        LOG.info("{}: invalid proposal, round changes did not pass validation", ERROR_PREFIX);
-        return false;
-      }
+
+    if (!roundChanges.stream().allMatch(roundChangePayloadValidator::validate)) {
+      LOG.info("{}: invalid proposal, round changes did not pass validation", ERROR_PREFIX);
+      return false;
     }
 
     // This is required as the RoundChangePayloadValidator only checks height, not round.
@@ -210,11 +216,9 @@ public class ProposalValidator {
     final PrepareValidator prepareValidator =
         new PrepareValidator(validators, preparedRoundIdentifier, metaData.getPreparedBlockHash());
 
-    for (final SignedData<PreparePayload> payload : prepares) {
-      if (!prepareValidator.validate(payload)) {
-        LOG.info("{}: Prepare failed validation", ERROR_PREFIX);
-        return false;
-      }
+    if (!prepares.stream().allMatch(prepareValidator::validate)) {
+      LOG.info("{}: Prepare failed validation", ERROR_PREFIX);
+      return false;
     }
 
     return true;
@@ -264,6 +268,14 @@ public class ProposalValidator {
         LOG.info("{}: Roundchanges have different prepared metadata for same round", ERROR_PREFIX);
         return false;
       }
+    }
+    return true;
+  }
+
+  private boolean validateBlockCoinbaseMatchesMsgAuthor(final Proposal msg) {
+    if (!msg.getBlock().getHeader().getCoinbase().equals(msg.getAuthor())) {
+      LOG.info("{}: block coinbase does not match the proposer's address", ERROR_PREFIX);
+      return false;
     }
     return true;
   }

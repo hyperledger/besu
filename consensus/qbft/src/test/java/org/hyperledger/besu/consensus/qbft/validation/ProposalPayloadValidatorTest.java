@@ -91,7 +91,7 @@ public class ProposalPayloadValidatorTest {
   }
 
   @Test
-  public void validationFailsWhenBLockFailsValidation() {
+  public void validationFailsWhenBlockFailsValidation() {
     final ConsensusRoundIdentifier roundIdentifier =
         ConsensusRoundHelpers.createFrom(targetRound, 1, 0);
 
