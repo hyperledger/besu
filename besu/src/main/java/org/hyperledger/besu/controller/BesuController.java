@@ -197,6 +197,8 @@ public class BesuController implements java.io.Closeable {
         builder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
         builder = new IbftLegacyBesuControllerBuilder();
+      } else if (configOptions.isQbft()) {
+        builder = new QbftBesuControllerBuilder();
       } else if (configOptions.isClique()) {
         builder = new CliqueBesuControllerBuilder();
       } else {
