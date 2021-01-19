@@ -1,5 +1,22 @@
 # Changelog
 
+## 21.2.0-RC1
+
+### 21.2 Breaking Changes
+There are currently no breaking changes in 21.2
+
+### Additions and Improvements
+* Removed unused flags in default genesis configs [\#1812](https://github.com/hyperledger/besu/pull/1812)
+
+### Bug Fixes
+
+### Early Access Features
+
+#### Previously identified known issues
+
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
 ## 20.10.4
 
 ### Additions and Improvements

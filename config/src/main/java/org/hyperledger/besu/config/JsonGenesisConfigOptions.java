@@ -201,7 +201,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getConstantinopleFixBlockNumber() {
+  public OptionalLong getPetersburgBlockNumber() {
     final OptionalLong petersburgBlock = getOptionalLong("petersburgblock");
     final OptionalLong constantinopleFixBlock = getOptionalLong("constantinoplefixblock");
     if (constantinopleFixBlock.isPresent()) {
@@ -331,24 +331,20 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .ifPresent(
             l -> {
               builder.put("daoForkBlock", l);
-              builder.put("daoForkSupport", Boolean.TRUE);
             });
     getTangerineWhistleBlockNumber()
         .ifPresent(
             l -> {
               builder.put("eip150Block", l);
-              getOptionalString("eip150hash")
-                  .ifPresent(eip150hash -> builder.put("eip150Hash", eip150hash));
             });
     getSpuriousDragonBlockNumber()
         .ifPresent(
             l -> {
-              builder.put("eip155Block", l);
               builder.put("eip158Block", l);
             });
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
-    getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
+    getPetersburgBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
@@ -377,15 +373,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
 
     return builder.build();
-  }
-
-  private Optional<String> getOptionalString(final String key) {
-    if (configOverrides.containsKey(key)) {
-      final String value = configOverrides.get(key);
-      return value == null || value.isEmpty() ? Optional.empty() : Optional.of(value);
-    } else {
-      return JsonUtil.getString(configRoot, key);
-    }
   }
 
   private OptionalLong getOptionalLong(final String key) {
@@ -442,7 +429,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getSpuriousDragonBlockNumber(),
             getByzantiumBlockNumber(),
             getConstantinopleBlockNumber(),
-            getConstantinopleFixBlockNumber(),
+            getPetersburgBlockNumber(),
             getIstanbulBlockNumber(),
             getMuirGlacierBlockNumber(),
             getEIP1559BlockNumber(),

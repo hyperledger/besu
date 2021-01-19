@@ -321,7 +321,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Constantinople");
   }
 
-  public static ProtocolSpecBuilder constantinopleFixDefinition(
+  public static ProtocolSpecBuilder petersburgDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -333,8 +333,8 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode)
-        .gasCalculator(ConstantinopleFixGasCalculator::new)
-        .name("ConstantinopleFix");
+        .gasCalculator(PetersburgGasCalculator::new)
+        .name("Petersburg");
   }
 
   public static ProtocolSpecBuilder istanbulDefinition(
@@ -345,7 +345,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    return constantinopleFixDefinition(
+    return petersburgDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,

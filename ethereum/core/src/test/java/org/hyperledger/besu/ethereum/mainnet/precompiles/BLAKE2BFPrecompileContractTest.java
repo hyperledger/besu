@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.mainnet.ConstantinopleFixGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.PetersburgGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -29,7 +29,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class BLAKE2BFPrecompileContractTest {
   private final BLAKE2BFPrecompileContract contract =
-      new BLAKE2BFPrecompileContract(new ConstantinopleFixGasCalculator());
+      new BLAKE2BFPrecompileContract(new PetersburgGasCalculator());
 
   public BLAKE2BFPrecompileContractTest() {}
 
