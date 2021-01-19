@@ -150,8 +150,7 @@ public class ReceivedFutureProposalTest {
   public void futureProposalWithInvalidPrepareDoesNotTriggerNextRound() {
     final Block initialBlock =
         context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
-    final Block reproposedBlock =
-        context.createBlockForProposalFromChainHead(1, 15);
+    final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =
