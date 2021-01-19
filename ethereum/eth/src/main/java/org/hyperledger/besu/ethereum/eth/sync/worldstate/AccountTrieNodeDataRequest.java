@@ -80,7 +80,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
       // If storage is non-empty queue download
 
       final NodeDataRequest storageNode =
-          createStorageDataRequest(accountValue.getStorageRoot(), accountHash, getLocation());
+          createStorageDataRequest(accountValue.getStorageRoot(), accountHash, Optional.empty());
       builder.add(storageNode);
     }
     return builder.build();

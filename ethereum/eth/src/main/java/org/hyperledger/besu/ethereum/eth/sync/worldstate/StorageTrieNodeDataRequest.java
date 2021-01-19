@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -49,13 +51,21 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   @Override
   protected NodeDataRequest createChildNodeDataRequest(
       final Hash childHash, final Optional<Bytes> location) {
-    return NodeDataRequest.createStorageDataRequest(childHash, accountHash, location);
+    return NodeDataRequest.createStorageDataRequest(childHash, getAccountHash(), location);
   }
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
       final WorldStateStorage worldStateStorage, final Bytes value) {
     // Nothing to do for terminal storage node
+
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      final Hash slotHash =
+          Hash.hash(getLocation().map(UInt256::fromBytes).orElse(UInt256.ZERO).toBytes());
+      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
+          .putStorageValueBySlotHash(accountHash.get(), slotHash, value)
+          .commit();
+    }
     return Stream.empty();
   }
 

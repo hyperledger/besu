@@ -238,10 +238,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       return this;
     }
 
-    public void putStorageValueBySlotHash(
+    public Updater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
+      return this;
     }
 
     public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
