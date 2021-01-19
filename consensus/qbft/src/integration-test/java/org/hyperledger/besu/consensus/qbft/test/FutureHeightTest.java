@@ -65,7 +65,8 @@ public class FutureHeightTest {
         BftHelpers.createSealedBlock(currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
 
     final Block futureHeightBlock =
-        context.createBlockForProposal(signedCurrentHeightBlock.getHeader(), 0, 60);
+        context.createBlockForProposal(
+            signedCurrentHeightBlock.getHeader(), 0, 60, peers.getProposer().getNodeAddress());
 
     peers.getProposer().injectProposal(futureHeightRoundId, futureHeightBlock);
     peers.verifyNoMessagesReceived();
@@ -107,7 +108,8 @@ public class FutureHeightTest {
 
   @Test
   public void messagesFromPreviousHeightAreDiscarded() {
-    final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
+    final Block currentHeightBlock =
+        context.createBlockForProposalFromChainHead(0, 30, peers.getProposer().getNodeAddress());
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
 
@@ -137,7 +139,8 @@ public class FutureHeightTest {
 
   @Test
   public void multipleNewChainHeadEventsDoesNotRestartCurrentHeightManager() {
-    final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
+    final Block currentHeightBlock =
+        context.createBlockForProposalFromChainHead(0, 30, peers.getProposer().getNodeAddress());
 
     peers.getProposer().injectProposal(roundId, currentHeightBlock);
     peers.getProposer().injectPrepare(roundId, currentHeightBlock.getHash());
@@ -166,12 +169,14 @@ public class FutureHeightTest {
         BftHelpers.createSealedBlock(currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
 
     final Block nextHeightBlock =
-        context.createBlockForProposal(signedCurrentHeightBlock.getHeader(), 0, 60);
+        context.createBlockForProposal(
+            signedCurrentHeightBlock.getHeader(), 0, 60, peers.getProposer().getNodeAddress());
     final Block signedNextHeightBlock =
         BftHelpers.createSealedBlock(nextHeightBlock, peers.sign(nextHeightBlock.getHash()));
 
     final Block futureHeightBlock =
-        context.createBlockForProposal(signedNextHeightBlock.getHeader(), 0, 90);
+        context.createBlockForProposal(
+            signedNextHeightBlock.getHeader(), 0, 90, peers.getNonProposing(0).getNodeAddress());
 
     final ConsensusRoundIdentifier nextHeightRoundId = new ConsensusRoundIdentifier(2, 0);
     final ConsensusRoundIdentifier futureHeightRoundId = new ConsensusRoundIdentifier(3, 0);
@@ -197,7 +202,8 @@ public class FutureHeightTest {
     // messages have not been used.
     peers.verifyMessagesReceived(expectedPrepareMessage);
 
-    peers.getProposer().injectProposal(futureHeightRoundId, futureHeightBlock);
+    // Future height proposal needs to come from the NEXT nonProposer.
+    peers.getNonProposing(0).injectProposal(futureHeightRoundId, futureHeightBlock);
 
     // Change to the FutureRound, and confirm prepare and commit msgs are sent
     context.getBlockchain().appendBlock(signedNextHeightBlock, emptyList());

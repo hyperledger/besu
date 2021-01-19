@@ -63,7 +63,8 @@ public class FutureRoundTest {
   @Test
   public void messagesForFutureRoundAreNotActionedUntilRoundIsActive() {
     final Block futureBlock =
-        context.createBlockForProposalFromChainHead(futureRoundId.getRoundNumber(), 60);
+        context.createBlockForProposalFromChainHead(
+            futureRoundId.getRoundNumber(), 60, peers.getProposer().getNodeAddress());
     final int quorum = BftHelpers.calculateRequiredValidatorQuorum(NETWORK_SIZE);
     final ConsensusRoundIdentifier subsequentRoundId = new ConsensusRoundIdentifier(1, 6);
     final RoundSpecificPeers subsequentRoles = context.roundSpecificPeers(subsequentRoundId);
@@ -117,9 +118,11 @@ public class FutureRoundTest {
   @Test
   public void priorRoundsCannotBeCompletedAfterReceptionOfNewRound() {
     final Block initialBlock =
-        context.createBlockForProposalFromChainHead(roundId.getRoundNumber(), 30);
+        context.createBlockForProposalFromChainHead(
+            roundId.getRoundNumber(), 30, peers.getProposer().getNodeAddress());
     final Block futureBlock =
-        context.createBlockForProposalFromChainHead(futureRoundId.getRoundNumber(), 60);
+        context.createBlockForProposalFromChainHead(
+            futureRoundId.getRoundNumber(), 60, peers.getProposer().getNodeAddress());
 
     peers.getProposer().injectProposal(roundId, initialBlock);
 

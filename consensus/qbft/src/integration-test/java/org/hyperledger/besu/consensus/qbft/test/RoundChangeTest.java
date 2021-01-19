@@ -64,7 +64,8 @@ public class RoundChangeTest {
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
-  private final Block blockToPropose = context.createBlockForProposalFromChainHead(0, 15);
+  private final Block blockToPropose =
+      context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
 
   @Test
   public void onRoundChangeTimerExpiryEventRoundChangeMessageIsSent() {
@@ -174,13 +175,15 @@ public class RoundChangeTest {
         createValidPreparedCertificate(
             context,
             new ConsensusRoundIdentifier(1, 1),
-            context.createBlockForProposalFromChainHead(1, ARBITRARY_BLOCKTIME / 2));
+            context.createBlockForProposalFromChainHead(
+                1, ARBITRARY_BLOCKTIME / 2, peers.getProposer().getNodeAddress()));
 
     final PreparedCertificate bestPrepCert =
         createValidPreparedCertificate(
             context,
             new ConsensusRoundIdentifier(1, 2),
-            context.createBlockForProposalFromChainHead(2, ARBITRARY_BLOCKTIME));
+            context.createBlockForProposalFromChainHead(
+                2, ARBITRARY_BLOCKTIME, peers.getProposer().getNodeAddress()));
 
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 4);
 
@@ -202,7 +205,9 @@ public class RoundChangeTest {
     // round number.
     final Block expectedBlockToPropose =
         context.createBlockForProposalFromChainHead(
-            targetRound.getRoundNumber(), ARBITRARY_BLOCKTIME);
+            targetRound.getRoundNumber(),
+            ARBITRARY_BLOCKTIME,
+            peers.getProposer().getNodeAddress());
 
     final Proposal expectedProposal =
         localNodeMessageFactory.createProposal(
@@ -223,8 +228,7 @@ public class RoundChangeTest {
 
   @Test
   public void cannotRoundChangeToAnEarlierRound() {
-    // Controller always starts at 1:0. This test moves to 1:7, then attempts to move back to 1:3.
-
+    // Controller always starts at 1:0. This test moves to 1:9, then attempts to move back to 1:4.
     final ConsensusRoundIdentifier futureRound = new ConsensusRoundIdentifier(1, 9);
     final List<SignedData<RoundChangePayload>> roundChangeMessages = peers.roundChange(futureRound);
 
@@ -268,7 +272,8 @@ public class RoundChangeTest {
         createValidPreparedCertificate(
             context,
             new ConsensusRoundIdentifier(1, 2),
-            context.createBlockForProposalFromChainHead(2, ARBITRARY_BLOCKTIME));
+            context.createBlockForProposalFromChainHead(
+                2, ARBITRARY_BLOCKTIME, peers.getProposer().getNodeAddress()));
 
     final List<SignedData<RoundChangePayload>> roundChangeMessages = Lists.newArrayList();
     // Create a roundChange containing a PreparedCertificate
@@ -285,7 +290,9 @@ public class RoundChangeTest {
 
     final Block expectedBlockToPropose =
         context.createBlockForProposalFromChainHead(
-            targetRound.getRoundNumber(), ARBITRARY_BLOCKTIME);
+            targetRound.getRoundNumber(),
+            ARBITRARY_BLOCKTIME,
+            peers.getProposer().getNodeAddress());
 
     final Proposal expectedProposal =
         localNodeMessageFactory.createProposal(

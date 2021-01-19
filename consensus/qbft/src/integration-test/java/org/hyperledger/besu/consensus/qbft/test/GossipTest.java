@@ -65,7 +65,9 @@ public class GossipTest {
 
   @Before
   public void setup() {
-    block = context.createBlockForProposalFromChainHead(roundId.getRoundNumber(), 30);
+    block =
+        context.createBlockForProposalFromChainHead(
+            roundId.getRoundNumber(), 30, peers.getProposer().getNodeAddress());
     sender = peers.getProposer();
     msgFactory = sender.getMessageFactory();
   }

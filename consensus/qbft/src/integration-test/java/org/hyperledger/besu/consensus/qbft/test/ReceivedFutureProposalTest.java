@@ -58,15 +58,15 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void proposalWithEmptyPrepareCertificatesOfferNewBlock() {
-    final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
-    final Block blockToPropose =
-        context.createBlockForProposalFromChainHead(nextRoundId.getRoundNumber(), 15);
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
 
     final List<SignedData<RoundChangePayload>> roundChanges =
         peers.createSignedRoundChangePayload(targetRound);
 
-    final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
+    final ValidatorPeer nextProposer = context.roundSpecificPeers(targetRound).getProposer();
+    final Block blockToPropose =
+        context.createBlockForProposalFromChainHead(
+            targetRound.getRoundNumber(), 15, nextProposer.getNodeAddress());
 
     nextProposer.injectProposalForFutureRound(
         targetRound, roundChanges, Collections.emptyList(), blockToPropose);
@@ -81,7 +81,8 @@ public class ReceivedFutureProposalTest {
   public void proposalFromIllegalSenderIsDiscardedAndNoPrepareForNewRoundIsSent() {
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
     final Block blockToPropose =
-        context.createBlockForProposalFromChainHead(nextRoundId.getRoundNumber(), 15);
+        context.createBlockForProposalFromChainHead(
+            nextRoundId.getRoundNumber(), 15, peers.getProposer().getNodeAddress());
 
     final List<SignedData<RoundChangePayload>> roundChanges =
         peers.createSignedRoundChangePayload(nextRoundId);
@@ -97,8 +98,10 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void proposalWithPrepareCertificateResultsInNewRoundStartingWithExpectedBlock() {
-    final Block initialBlock = context.createBlockForProposalFromChainHead(0, 15);
-    final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
+    final Block initialBlock =
+        context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+    final Block reproposedBlock =
+        context.createBlockForProposalFromChainHead(1, 15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =
@@ -120,8 +123,10 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void futureProposalWithInsufficientPreparesDoesNotTriggerNextRound() {
-    final Block initialBlock = context.createBlockForProposalFromChainHead(0, 15);
-    final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
+    final Block initialBlock =
+        context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+    final Block reproposedBlock =
+        context.createBlockForProposalFromChainHead(1, 15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =
@@ -143,8 +148,10 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void futureProposalWithInvalidPrepareDoesNotTriggerNextRound() {
-    final Block initialBlock = context.createBlockForProposalFromChainHead(0, 15);
-    final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
+    final Block initialBlock =
+        context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+    final Block reproposedBlock =
+        context.createBlockForProposalFromChainHead(1, 15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =
@@ -194,15 +201,17 @@ public class ReceivedFutureProposalTest {
         interimRound,
         roundChangePayloads,
         Collections.emptyList(),
-        context.createBlockForProposalFromChainHead(1, 30));
+        context.createBlockForProposalFromChainHead(1, 30, peers.getProposer().getNodeAddress()));
 
     peers.verifyNoMessagesReceived();
   }
 
   @Test
   public void receiveRoundStateIsNotLostIfASecondProposalMessageIsReceivedForCurrentRound() {
-    final Block initialBlock = context.createBlockForProposalFromChainHead(0, 15);
-    final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
+    final Block initialBlock =
+        context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+    final Block reproposedBlock =
+        context.createBlockForProposalFromChainHead(1, 15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =
