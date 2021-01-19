@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +109,7 @@ public class ProposalValidatorTest {
     final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, roundNumber);
 
     return new RoundSpecificItems(
-        ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier),
+        ProposedBlockHelpers.createProposalBlock(validators.getNodeAddresses(), roundIdentifier),
         roundIdentifier,
         new ProposalValidator(
             blockValidator,

@@ -44,6 +44,10 @@ public class ProposedBlockHelpers {
             .setBlockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal())
             .hasOmmers(false)
             .hasTransactions(false);
+
+    if (validators.size() > 0) {
+      blockOptions.setCoinbase(validators.get(0));
+    }
     return new BlockDataGenerator().block(blockOptions);
   }
 }
