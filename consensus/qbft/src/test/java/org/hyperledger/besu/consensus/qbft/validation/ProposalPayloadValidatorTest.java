@@ -49,12 +49,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ProposalPayloadValidatorTest {
 
-  @Mock
-  private BlockValidator blockValidator;
-  @Mock
-  private MutableBlockchain blockChain;
-  @Mock
-  private WorldStateArchive worldStateArchive;
+  @Mock private BlockValidator blockValidator;
+  @Mock private MutableBlockchain blockChain;
+  @Mock private WorldStateArchive worldStateArchive;
   private ProtocolContext protocolContext;
 
   private static final int CHAIN_HEIGHT = 3;
@@ -83,10 +80,10 @@ public class ProposalPayloadValidatorTest {
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext),
-        eq(block),
-        eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            eq(block),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
@@ -105,10 +102,10 @@ public class ProposalPayloadValidatorTest {
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext),
-        eq(block),
-        eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            eq(block),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.empty());
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
@@ -176,10 +173,10 @@ public class ProposalPayloadValidatorTest {
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext),
-        eq(block),
-        eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            eq(block),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
@@ -190,16 +187,17 @@ public class ProposalPayloadValidatorTest {
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
             expectedProposer, roundIdentifier, blockValidator, protocolContext);
-    final Block block = ProposedBlockHelpers
-        .createProposalBlock(emptyList(), ConsensusRoundHelpers.createFrom(roundIdentifier, +1, 0));
+    final Block block =
+        ProposedBlockHelpers.createProposalBlock(
+            emptyList(), ConsensusRoundHelpers.createFrom(roundIdentifier, +1, 0));
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
     when(blockValidator.validateAndProcessBlock(
-        eq(protocolContext),
-        eq(block),
-        eq(HeaderValidationMode.LIGHT),
-        eq(HeaderValidationMode.FULL)))
+            eq(protocolContext),
+            eq(block),
+            eq(HeaderValidationMode.LIGHT),
+            eq(HeaderValidationMode.FULL)))
         .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
