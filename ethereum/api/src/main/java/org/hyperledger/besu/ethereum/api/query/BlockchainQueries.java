@@ -155,6 +155,22 @@ public class BlockchainQueries {
   }
 
   /**
+   * Determines the block header for the address associated with this storage index.
+   *
+   * @param address The address of the account that owns the storage being queried.
+   * @param storageIndex The storage index whose value is being retrieved.
+   * @param blockHash The blockHash that is being queried.
+   * @return The value at the storage index being queried.
+   */
+  public Optional<UInt256> storageAt(
+      final Address address, final UInt256 storageIndex, final Hash blockHash) {
+    final long blockNumber =
+        getBlockHeaderByHash(blockHash).map(BlockHeader::getNumber).orElse(Long.MAX_VALUE);
+
+    return storageAt(address, storageIndex, blockNumber);
+  }
+
+  /**
    * Returns the balance of the given account at a specific block number.
    *
    * @param address The address of the account being queried.
@@ -166,6 +182,20 @@ public class BlockchainQueries {
   }
 
   /**
+   * Returns the balance of the given account at a specific block hash.
+   *
+   * @param address The address of the account being queried.
+   * @param blockHash The block hash being queried.
+   * @return The balance of the account in Wei.
+   */
+  public Optional<Wei> accountBalance(final Address address, final Hash blockHash) {
+    final long blockNumber =
+        getBlockHeaderByHash(blockHash).map(BlockHeader::getNumber).orElse(Long.MAX_VALUE);
+
+    return accountBalance(address, blockNumber);
+  }
+
+  /**
    * Retrieves the code associated with the given account at a particular block number.
    *
    * @param address The account address being queried.
@@ -174,6 +204,20 @@ public class BlockchainQueries {
    */
   public Optional<Bytes> getCode(final Address address, final long blockNumber) {
     return fromAccount(address, blockNumber, Account::getCode, Bytes.EMPTY);
+  }
+
+  /**
+   * Retrieves the code associated with the given account at a particular block hash.
+   *
+   * @param address The account address being queried.
+   * @param blockHash The hash of the block to be checked.
+   * @return The code associated with this address.
+   */
+  public Optional<Bytes> getCode(final Address address, final Hash blockHash) {
+    final long blockNumber =
+        getBlockHeaderByHash(blockHash).map(BlockHeader::getNumber).orElse(Long.MAX_VALUE);
+
+    return getCode(address, blockNumber);
   }
 
   /**
@@ -324,7 +368,7 @@ public class BlockchainQueries {
                             blockchain
                                 .getTotalDifficultyByHash(blockHeaderHash)
                                 .map(
-                                    (td) -> {
+                                    td -> {
                                       final List<Transaction> txs = body.getTransactions();
                                       final List<TransactionWithMetadata> formattedTxs =
                                           formatTransactions(
@@ -379,7 +423,7 @@ public class BlockchainQueries {
                             blockchain
                                 .getTotalDifficultyByHash(blockHeaderHash)
                                 .map(
-                                    (td) -> {
+                                    td -> {
                                       final List<Hash> txs =
                                           body.getTransactions().stream()
                                               .map(Transaction::getHash)
@@ -732,6 +776,19 @@ public class BlockchainQueries {
     return header.flatMap(
         blockHeader ->
             worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getHash()));
+  }
+
+  /**
+   * Returns the world state for the corresponding block hash
+   *
+   * @param blockHash the block hash
+   * @return the world state at the block hash
+   */
+  public Optional<WorldState> getWorldState(final Hash blockHash) {
+    final long blockNumber =
+        getBlockHeaderByHash(blockHash).map(BlockHeader::getNumber).orElse(Long.MAX_VALUE);
+
+    return getWorldState(blockNumber);
   }
 
   public Optional<Long> gasPrice() {

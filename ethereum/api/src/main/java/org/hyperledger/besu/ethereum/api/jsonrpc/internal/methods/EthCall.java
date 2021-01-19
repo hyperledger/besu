@@ -24,9 +24,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private final TransactionSimulator transactionSimulator;
@@ -49,16 +48,11 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   @Override
-  protected Object resultByBlockNumber(
-      final JsonRpcRequestContext request, final long blockNumber) {
+  protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     final JsonCallParameter callParams = validateAndGetCallParams(request);
 
     return transactionSimulator
-        .process(
-            callParams,
-            TransactionValidationParams.transactionSimulator(),
-            OperationTracer.NO_TRACING,
-            blockNumber)
+        .process(callParams, blockHash)
         .map(
             result ->
                 result

@@ -23,12 +23,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
 public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpcMethod {
-  private static final String INVALID_BLOCK_NUMBER_PARAMETER = "Invalid Block Number Parameter.";
 
   protected final Supplier<BlockchainQueries> blockchainQueries;
 
@@ -44,7 +45,7 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
   protected abstract BlockParameterOrBlockHash blockParameterOrBlockHash(
       JsonRpcRequestContext request);
 
-  protected abstract Object resultByBlockNumber(JsonRpcRequestContext request, long blockNumber);
+  protected abstract Object resultByBlockHash(JsonRpcRequestContext request, Hash blockHash);
 
   protected BlockchainQueries getBlockchainQueries() {
     return blockchainQueries.get();
@@ -57,7 +58,8 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
   }
 
   protected Object latestResult(final JsonRpcRequestContext request) {
-    return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
+    return resultByBlockHash(
+        request, getBlockchainQueries().getBlockchain().getChainHead().getHash());
   }
 
   protected Object handleParamTypes(final JsonRpcRequestContext requestContext) {
@@ -70,35 +72,33 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
     } else if (blockParameterOrBlockHash.isPending()) {
       result = pendingResult(requestContext);
     } else if (blockParameterOrBlockHash.isNumeric() || blockParameterOrBlockHash.isEarliest()) {
+      OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
+      if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+      }
+
       result =
-          resultByBlockNumber(
+          resultByBlockHash(
               requestContext,
-              blockParameterOrBlockHash
-                  .getNumber()
-                  .orElseThrow(() -> new IllegalStateException(INVALID_BLOCK_NUMBER_PARAMETER)));
+              blockchainQueries
+                  .get()
+                  .getBlockHashByNumber(blockNumber.getAsLong())
+                  .orElse(Hash.EMPTY));
     } else {
-      Hash blockHash =
-          blockParameterOrBlockHash
-              .getHash()
-              .orElseThrow(() -> new IllegalStateException(INVALID_BLOCK_NUMBER_PARAMETER));
+      Optional<Hash> blockHash = blockParameterOrBlockHash.getHash();
+      if (blockHash.isEmpty()) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+      }
+
       if (Boolean.TRUE.equals(blockParameterOrBlockHash.getRequireCanonical())
-          && !blockchainQueries.get().blockIsOnCanonicalChain(blockHash)) {
+          && !getBlockchainQueries().blockIsOnCanonicalChain(blockHash.get())) {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), JsonRpcError.JSON_RPC_NOT_CANONICAL_ERROR);
       }
 
-      result =
-          resultByBlockNumber(
-              requestContext,
-              blockchainQueries
-                  .get()
-                  .blockByHash(blockHash)
-                  .orElseThrow(
-                      () ->
-                          new IllegalStateException(
-                              "Block not found, " + blockParameterOrBlockHash.getHash().get()))
-                  .getHeader()
-                  .getNumber());
+      result = resultByBlockHash(requestContext, blockHash.get());
     }
 
     return result;

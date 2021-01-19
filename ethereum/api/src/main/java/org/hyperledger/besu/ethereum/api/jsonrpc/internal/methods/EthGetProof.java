@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 
@@ -51,18 +52,17 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   @Override
-  protected Object resultByBlockNumber(
-      final JsonRpcRequestContext requestContext, final long blockNumber) {
+  protected Object resultByBlockHash(
+      final JsonRpcRequestContext requestContext, final Hash blockHash) {
 
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final List<UInt256> storageKeys = getStorageKeys(requestContext);
 
-    final Optional<WorldState> worldState = blockchainQueries.get().getWorldState(blockNumber);
+    final Optional<WorldState> worldState = getBlockchainQueries().getWorldState(blockHash);
 
     if (worldState.isPresent()) {
       Optional<WorldStateProof> proofOptional =
-          blockchainQueries
-              .get()
+          getBlockchainQueries()
               .getWorldStateArchive()
               .getAccountProof(worldState.get().rootHash(), address, storageKeys);
       return proofOptional

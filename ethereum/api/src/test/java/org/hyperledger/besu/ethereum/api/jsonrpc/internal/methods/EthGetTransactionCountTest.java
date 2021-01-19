@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -22,20 +24,28 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.junit.Test;
 
 public class EthGetTransactionCountTest {
 
-  private final BlockchainQueries blockchain = mock(BlockchainQueries.class);
+  private final Blockchain blockchain = mock(Blockchain.class);
+  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
+  private final ChainHead chainHead = mock(ChainHead.class);
+  private final BlockHeader blockHeader = mock(BlockHeader.class);
   private final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
 
   private final EthGetTransactionCount ethGetTransactionCount =
-      new EthGetTransactionCount(blockchain, pendingTransactions);
+      new EthGetTransactionCount(blockchainQueries, pendingTransactions);
   private final String pendingTransactionString = "0x00000000000000000000000000000000000000AA";
   private final Object[] pendingParams = new Object[] {pendingTransactionString, "pending"};
 
@@ -55,8 +65,16 @@ public class EthGetTransactionCountTest {
   public void shouldUseLatestTransactionsWhenNoPendingTransactions() {
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.empty());
-    when(blockchain.headBlockNumber()).thenReturn(1L);
-    when(blockchain.getTransactionCount(address, 1L)).thenReturn(7L);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
+    when(blockchainQueries.getBlockHeaderByHash(any()))
+        .thenReturn(Optional.ofNullable(blockHeader));
+    assertThat(blockHeader).isNotNull();
+    when(blockHeader.getNumber()).thenReturn(1L);
+    when(blockchainQueries.headBlockNumber()).thenReturn(1L);
+    when(blockchainQueries.getTransactionCount(address, 1L)).thenReturn(7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));

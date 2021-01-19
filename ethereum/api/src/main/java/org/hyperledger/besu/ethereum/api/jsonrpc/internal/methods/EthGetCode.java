@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.function.Supplier;
 
@@ -45,9 +46,8 @@ public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   @Override
-  protected String resultByBlockNumber(
-      final JsonRpcRequestContext request, final long blockNumber) {
+  protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    return getBlockchainQueries().getCode(address, blockNumber).map(Bytes::toString).orElse(null);
+    return getBlockchainQueries().getCode(address, blockHash).map(Bytes::toString).orElse(null);
   }
 }
