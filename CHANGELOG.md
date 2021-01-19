@@ -3,10 +3,11 @@
 ## 21.2.0-RC1
 
 ### 21.2 Breaking Changes
-`--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated.
+* `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated.
 
 ### Additions and Improvements
 * Removed unused flags in default genesis configs [\#1812](https://github.com/hyperledger/besu/pull/1812)
+* `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated. [\#1815](https://github.com/hyperledger/besu/pull/1815)
 
 ### Bug Fixes
 
