@@ -72,7 +72,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         Optional.empty());
 
     this.goQuorumEnclave = goQuorumPrivacyParameters.orElseThrow().enclave();
-    this.goQuorumPrivateStorage = GoQuorumKeyValueStorage.INSTANCE;
+    this.goQuorumPrivateStorage = goQuorumPrivacyParameters.orElseThrow().privateStorage();
   }
 
   @Override

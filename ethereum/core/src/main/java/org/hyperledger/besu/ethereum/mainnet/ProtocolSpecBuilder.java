@@ -335,7 +335,11 @@ public class ProtocolSpecBuilder {
 
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+            blockHeaderValidator,
+            blockBodyValidator,
+            blockProcessor,
+            badBlockManager,
+            privacyParameters.getGoQuorumPrivacyParameters());
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
         name,
@@ -400,7 +404,8 @@ public class ProtocolSpecBuilder {
         BlockHeaderValidator blockHeaderValidator,
         BlockBodyValidator blockBodyValidator,
         BlockProcessor blockProcessor,
-        BadBlockManager badBlockManager);
+        BadBlockManager badBlockManager,
+        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
   }
 
   public interface BlockImporterBuilder {

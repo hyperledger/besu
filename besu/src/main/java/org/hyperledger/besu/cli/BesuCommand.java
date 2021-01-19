@@ -906,7 +906,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "The URL on which the enclave is running")
   private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
 
-  @CommandLine.Option(
+  @Option(
       names = {"--privacy-public-key-file"},
       description = "The enclave's public key file")
   private final File privacyPublicKeyFile = null;
@@ -1076,6 +1076,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(() -> MetricsSystemFactory.create(metricsConfiguration()));
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
+  private KeyValueStorageProvider keyValueStorageProvider;
 
   public BesuCommand(
       final Logger logger,
@@ -1518,7 +1519,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GoQuorumPrivacyParameters configureGoQuorumPrivacy() {
-    return new GoQuorumPrivacyParameters(createGoQuorumEnclave(), readEnclaveKey());
+    return new GoQuorumPrivacyParameters(
+        createGoQuorumEnclave(),
+        readEnclaveKey(),
+        keyValueStorageProvider(keyValueStorageName).createGoQuorumPrivateStorage());
   }
 
   private GoQuorumEnclave createGoQuorumEnclave() {
@@ -1607,7 +1611,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
-        .storageProvider(keyStorageProvider(keyValueStorageName))
+        .storageProvider(keyValueStorageProvider(keyValueStorageName))
         .isPruningEnabled(isPruningEnabled())
         .pruningConfiguration(
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
@@ -2054,7 +2058,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else if (isGoQuorumCompatibilityMode) {
-      privacyParametersBuilder.setGoQuorumParameters(Optional.of(configureGoQuorumPrivacy()));
+      privacyParametersBuilder.setGoQuorumPrivacyParameters(
+          Optional.of(configureGoQuorumPrivacy()));
     }
 
     if (!isPrivacyEnabled && anyPrivacyApiEnabled()) {
@@ -2094,16 +2099,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
-  private KeyValueStorageProvider keyStorageProvider(final String name) {
-    return new KeyValueStorageProviderBuilder()
-        .withStorageFactory(
-            storageService
-                .getByName(name)
-                .orElseThrow(
-                    () -> new StorageException("No KeyValueStorageFactory found for key: " + name)))
-        .withCommonConfiguration(pluginCommonConfiguration)
-        .withMetricsSystem(getMetricsSystem())
-        .build();
+  private KeyValueStorageProvider keyValueStorageProvider(final String name) {
+    if (this.keyValueStorageProvider == null) {
+      this.keyValueStorageProvider =
+          new KeyValueStorageProviderBuilder()
+              .withStorageFactory(
+                  storageService
+                      .getByName(name)
+                      .orElseThrow(
+                          () ->
+                              new StorageException(
+                                  "No KeyValueStorageFactory found for key: " + name)))
+              .withCommonConfiguration(pluginCommonConfiguration)
+              .withMetricsSystem(getMetricsSystem())
+              .build();
+    }
+    return this.keyValueStorageProvider;
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
@@ -2187,7 +2198,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
             .ethstatsUrl(unstableEthstatsOptions.getEthstatsUrl())
             .ethstatsContact(unstableEthstatsOptions.getEthstatsContact())
-            .storageProvider(keyStorageProvider(keyValueStorageName))
+            .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .build();
 
     addShutdownHook(runner);

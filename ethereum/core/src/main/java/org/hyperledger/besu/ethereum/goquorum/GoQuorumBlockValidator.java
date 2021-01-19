@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
@@ -35,22 +36,27 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
 
   private static final Logger LOG = getLogger();
 
-  // TODO-goquorum proper wiring of GoQuorumPrivateStorage instead of static references?
   private final GoQuorumPrivateStorage goQuorumPrivateStorage;
 
   public GoQuorumBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor,
-      final BadBlockManager badBlockManager) {
-    super(blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+      final BadBlockManager badBlockManager,
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+    super(
+        blockHeaderValidator,
+        blockBodyValidator,
+        blockProcessor,
+        badBlockManager,
+        goQuorumPrivacyParameters);
 
     if (!(blockProcessor instanceof GoQuorumBlockProcessor)) {
       throw new IllegalStateException(
           "GoQuorumBlockValidator requires an instance of GoQuorumBlockProcessor");
     }
 
-    goQuorumPrivateStorage = GoQuorumKeyValueStorage.INSTANCE;
+    goQuorumPrivateStorage = goQuorumPrivacyParameters.orElseThrow().privateStorage();
   }
 
   @Override

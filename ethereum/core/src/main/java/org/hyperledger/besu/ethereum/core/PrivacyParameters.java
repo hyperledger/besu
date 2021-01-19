@@ -324,7 +324,7 @@ public class PrivacyParameters {
       Base64.getDecoder().decode(this.enclavePublicKey);
     }
 
-    public Builder setGoQuorumParameters(
+    public Builder setGoQuorumPrivacyParameters(
         final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
       this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
       return this;

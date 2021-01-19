@@ -55,7 +55,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
             original.getBlockHeaderValidator(),
             original.getBlockBodyValidator(),
             noRewardBlockProcessor,
-            original.getBadBlocksManager());
+            original.getBadBlocksManager(),
+            Optional.empty());
     final BlockImporter noRewardBlockImporter = new MainnetBlockImporter(noRewardBlockValidator);
     return new ProtocolSpec(
         original.getName(),
