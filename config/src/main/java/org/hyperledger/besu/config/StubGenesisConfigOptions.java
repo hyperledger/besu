@@ -80,6 +80,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isQbft() {
+    return false;
+  }
+
+  @Override
   public BftConfigOptions getIbftLegacyConfigOptions() {
     return BftConfigOptions.DEFAULT;
   }

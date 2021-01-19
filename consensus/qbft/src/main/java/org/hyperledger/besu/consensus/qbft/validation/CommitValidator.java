@@ -52,7 +52,7 @@ public class CommitValidator {
 
   public boolean validate(final SignedData<CommitPayload> signedPayload) {
     if (!validators.contains(signedPayload.getAuthor())) {
-      LOG.info("{}: did not originate from a recognised validator.", ERROR_PREFIX);
+      LOG.info("{}: did not originate from a recognized validator.", ERROR_PREFIX);
       return false;
     }
 
