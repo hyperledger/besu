@@ -110,7 +110,7 @@ public class ProposalValidatorTest {
     final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, roundNumber);
 
     return new RoundSpecificItems(
-        ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier),
+        ProposedBlockHelpers.createProposalBlock(validators.getNodeAddresses(), roundIdentifier),
         roundIdentifier,
         new ProposalValidator(
             blockValidator,
