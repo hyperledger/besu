@@ -175,7 +175,8 @@ public class PrivacyParameters {
 
   private void setGoQuorumPrivacyParameters(
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
-    this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
+    this.goQuorumPrivacyParameters =
+        goQuorumPrivacyParameters != null ? goQuorumPrivacyParameters : Optional.empty();
   }
 
   @Override
