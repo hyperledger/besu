@@ -41,8 +41,7 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(4_730_000L).getName()).isEqualTo("Byzantium");
     // Constantinople was originally scheduled for 7_080_000, but postponed
     Assertions.assertThat(sched.getByBlockNumber(7_080_000L).getName()).isEqualTo("Byzantium");
-    Assertions.assertThat(sched.getByBlockNumber(7_280_000L).getName())
-        .isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(7_280_000L).getName()).isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockNumber(9_069_000L).getName()).isEqualTo("Istanbul");
     Assertions.assertThat(sched.getByBlockNumber(9_200_000L).getName()).isEqualTo("MuirGlacier");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
@@ -60,7 +59,7 @@ public class MainnetProtocolScheduleTest {
   @Test
   public void createFromConfigWithSettings() {
     final String json =
-        "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"constantinopleFixBlock\": 19, \"chainId\":1234}}";
+        "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"petersburgBlock\": 19, \"chainId\":1234}}";
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(GenesisConfigFile.fromConfig(json).getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(1).getName()).isEqualTo("Frontier");
@@ -72,16 +71,16 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(15).getName()).isEqualTo("SpuriousDragon");
     Assertions.assertThat(sched.getByBlockNumber(16).getName()).isEqualTo("Byzantium");
     Assertions.assertThat(sched.getByBlockNumber(18).getName()).isEqualTo("Constantinople");
-    Assertions.assertThat(sched.getByBlockNumber(19).getName()).isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(19).getName()).isEqualTo("Petersburg");
   }
 
   @Test
   public void outOfOrderConstantinoplesFail() {
     final String json =
-        "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"constantinopleFixBlock\": 17, \"chainId\":1234}}";
+        "{\"config\": {\"homesteadBlock\": 2, \"daoForkBlock\": 3, \"eip150Block\": 14, \"eip158Block\": 15, \"byzantiumBlock\": 16, \"constantinopleBlock\": 18, \"petersburgBlock\": 17, \"chainId\":1234}}";
     Assertions.assertThatExceptionOfType(RuntimeException.class)
         .describedAs(
-            "Genesis Config Error: 'ConstantinopleFix' is scheduled for block 17 but it must be on or after block 18.")
+            "Genesis Config Error: 'Petersburg' is scheduled for block 17 but it must be on or after block 18.")
         .isThrownBy(
             () ->
                 MainnetProtocolSchedule.fromConfig(
@@ -101,8 +100,7 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(10L).getName()).isEqualTo("SpuriousDragon");
     Assertions.assertThat(sched.getByBlockNumber(1_700_000L).getName()).isEqualTo("Byzantium");
     Assertions.assertThat(sched.getByBlockNumber(4_230_000L).getName()).isEqualTo("Constantinople");
-    Assertions.assertThat(sched.getByBlockNumber(4_939_394L).getName())
-        .isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(4_939_394L).getName()).isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockNumber(6_485_846L).getName()).isEqualTo("Istanbul");
     Assertions.assertThat(sched.getByBlockNumber(7_117_117L).getName()).isEqualTo("MuirGlacier");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
@@ -117,7 +115,7 @@ public class MainnetProtocolScheduleTest {
                     Resources.toString(
                         this.getClass().getResource("/goerli.json"), StandardCharsets.UTF_8))
                 .getConfigOptions());
-    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockNumber(1_561_651L).getName()).isEqualTo("Istanbul");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
   }
@@ -136,8 +134,7 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(3L).getName()).isEqualTo("SpuriousDragon");
     Assertions.assertThat(sched.getByBlockNumber(1_035_301L).getName()).isEqualTo("Byzantium");
     Assertions.assertThat(sched.getByBlockNumber(3_660_663L).getName()).isEqualTo("Constantinople");
-    Assertions.assertThat(sched.getByBlockNumber(4_321_234L).getName())
-        .isEqualTo("ConstantinopleFix");
+    Assertions.assertThat(sched.getByBlockNumber(4_321_234L).getName()).isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockNumber(5_435_345L).getName()).isEqualTo("Istanbul");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
   }

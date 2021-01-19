@@ -187,7 +187,7 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .evmBuilder(MainnetEvmRegistries::constantinople)
-        .gasCalculator(ConstantinopleFixGasCalculator::new)
+        .gasCalculator(PetersburgGasCalculator::new)
         .evmBuilder(gasCalculator -> MainnetEvmRegistries.constantinople(gasCalculator))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .name("Agharta");
