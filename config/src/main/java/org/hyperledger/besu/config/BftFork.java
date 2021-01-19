@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 
-public class IbftFork {
+public class BftFork {
 
   private static final String FORK_BLOCK_KEY = "block";
   private static final String VALIDATORS_KEY = "validators";
@@ -32,7 +32,7 @@ public class IbftFork {
   private final ObjectNode forkConfigRoot;
 
   @JsonCreator
-  public IbftFork(final ObjectNode forkConfigRoot) {
+  public BftFork(final ObjectNode forkConfigRoot) {
     this.forkConfigRoot = forkConfigRoot;
   }
 

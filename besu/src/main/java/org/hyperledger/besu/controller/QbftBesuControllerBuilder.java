@@ -15,7 +15,6 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftConfigOptions;
-import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
@@ -44,14 +43,14 @@ import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
-import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftController;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftRoundFactory;
-import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.protocol.QbftSubProtocol;
+import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
+import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
+import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
+import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -71,15 +70,12 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftBesuControllerBuilder extends BesuControllerBuilder {
+public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
@@ -105,9 +101,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     return new SubProtocolConfiguration()
         .withSubProtocol(EthProtocol.get(), ethProtocolManager)
         .withSubProtocol(
-            IbftSubProtocol.get(),
+            QbftSubProtocol.get(),
             new BftProtocolManager(
-                bftEventQueue, peers, IbftSubProtocol.IBFV1, IbftSubProtocol.get().getName()));
+                bftEventQueue, peers, QbftSubProtocol.QBFV1, QbftSubProtocol.get().getName()));
   }
 
   @Override
@@ -132,20 +128,20 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             localAddress,
             bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
 
-    // NOTE: peers should not be used for accessing the network as it does not enforce the
-    // "only send once" filter applied by the UniqueMessageMulticaster.
     final VoteTallyCache voteTallyCache =
         protocolContext.getConsensusState(BftContext.class).getVoteTallyCache();
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
-    peers = new ValidatorPeers(voteTallyCache, IbftSubProtocol.NAME);
+    // NOTE: peers should not be used for accessing the network as it does not enforce the
+    // "only send once" filter applied by the UniqueMessageMulticaster.
+    peers = new ValidatorPeers(voteTallyCache, QbftSubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
 
-    final IbftGossip gossiper = new IbftGossip(uniqueMessageMulticaster);
+    final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster);
 
     final BftFinalState finalState =
         new BftFinalState(
@@ -176,13 +172,13 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
-    final BftEventHandler ibftController =
-        new IbftController(
+    final BftEventHandler qbftController =
+        new QbftController(
             blockchain,
             finalState,
-            new IbftBlockHeightManagerFactory(
+            new QbftBlockHeightManagerFactory(
                 finalState,
-                new IbftRoundFactory(
+                new QbftRoundFactory(
                     finalState,
                     protocolContext,
                     protocolSchedule,
@@ -196,25 +192,25 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             futureMessageBuffer,
             new EthSynchronizerUpdater(ethProtocolManager.ethContext().getEthPeers()));
 
-    final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
+    final EventMultiplexer eventMultiplexer = new EventMultiplexer(qbftController);
     final BftProcessor bftProcessor = new BftProcessor(bftEventQueue, eventMultiplexer);
 
-    final MiningCoordinator ibftMiningCoordinator =
+    final MiningCoordinator miningCoordinator =
         new BftMiningCoordinator(
             bftExecutors,
-            ibftController,
+            qbftController,
             bftProcessor,
             blockCreatorFactory,
             blockchain,
             bftEventQueue);
-    ibftMiningCoordinator.enable();
+    miningCoordinator.enable();
 
-    return ibftMiningCoordinator;
+    return miningCoordinator;
   }
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain, nodeKey);
+    return new NoopPluginServiceFactory();
   }
 
   @Override
@@ -239,11 +235,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     final GenesisConfigOptions configOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides);
-    final BftConfigOptions ibftConfig = configOptions.getBftConfigOptions();
-    final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
-
-    final Map<Long, List<Address>> ibftValidatorForkMap =
-        convertIbftForks(configOptions.getTransitions().getIbftForks());
+    final BftConfigOptions bftConfig = configOptions.getBftConfigOptions();
+    final EpochManager epochManager = new EpochManager(bftConfig.getEpochLength());
 
     return new BftContext(
         new ForkingVoteTallyCache(
@@ -251,27 +244,10 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             new VoteTallyUpdater(epochManager, new BftBlockInterface()),
             epochManager,
             new BftBlockInterface(),
-            new BftValidatorOverrides(ibftValidatorForkMap)),
+            new BftValidatorOverrides(Collections.emptyMap())),
         new VoteProposer(),
         epochManager,
         blockInterface);
-  }
-
-  private Map<Long, List<Address>> convertIbftForks(final List<BftFork> bftForks) {
-    final Map<Long, List<Address>> result = new HashMap<>();
-
-    for (final BftFork fork : bftForks) {
-      fork.getValidators()
-          .map(
-              validators ->
-                  result.put(
-                      fork.getForkBlock(),
-                      validators.stream()
-                          .map(Address::fromHexString)
-                          .collect(Collectors.toList())));
-    }
-
-    return result;
   }
 
   private static MinedBlockObserver blockLogger(
