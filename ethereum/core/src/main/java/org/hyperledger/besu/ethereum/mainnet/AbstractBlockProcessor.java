@@ -195,7 +195,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
   }
 
-  // TODO Stefan: is this method used anywhere?
+  // TODO-goquorum Only seems to be used in GoQuorumBlockProcessor. Should it be used in the
+  // MainnetBlockProcessor? @Lucas
   protected boolean hasAvailableBlockBudget(
       final BlockHeader blockHeader, final Transaction transaction, final long currentGasUsed) {
     if (!gasBudgetCalculator.hasBudget(

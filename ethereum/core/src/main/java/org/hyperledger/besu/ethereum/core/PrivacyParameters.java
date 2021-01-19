@@ -260,6 +260,12 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setGoQuorumPrivacyParameters(
+        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+      this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
+      return this;
+    }
+
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -322,12 +328,6 @@ public class PrivacyParameters {
       }
       // throws exception if invalid base 64
       Base64.getDecoder().decode(this.enclavePublicKey);
-    }
-
-    public Builder setGoQuorumPrivacyParameters(
-        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
-      this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
-      return this;
     }
   }
 }

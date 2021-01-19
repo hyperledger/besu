@@ -45,6 +45,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class DebugTraceBlockTest {
 
@@ -116,7 +117,7 @@ public class DebugTraceBlockTest {
     when(transaction2Trace.getResult()).thenReturn(transaction2Result);
     when(transaction1Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
     when(transaction2Result.getOutput()).thenReturn(Bytes.fromHexString("1234"));
-    when(blockTracer.trace((Block) any(), any()))
+    when(blockTracer.trace(Mockito.eq(block), any()))
         .thenReturn(
             Optional.of(
                 blockTrace)); // TODO: Why do I have to make that change to make the test work?

@@ -100,11 +100,7 @@ public class TransactionRLPDecoder {
     }
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (GoQuorumOptions.goquorumCompatibilityMode
-        && isGoQuorumPrivateTransaction(v)) { // TODO: I don't like relying on this static here ...
-      //      if (isGoQuorumPrivateTransaction(v)) { // This does not always work as we can have
-      // v=37 when chain id is 1
-      // GoQuorum private TX. No chain ID. Preserve the v value as provided.
+    if (isGoQuorumPrivateTransaction(v)) {
       builder.v(v);
       recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
     } else if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
@@ -193,7 +189,13 @@ public class TransactionRLPDecoder {
   }
 
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
-    return v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
-        || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
+    return GoQuorumOptions.goquorumCompatibilityMode
+        && (v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
+            || v.equals(
+                GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN)); // TODO: It is possible that v = 37 or
+    // 38 on mainnet (chainId * 2 + 35 +
+    // recId), so I have to check whether
+    // we are in goquorumcompatibilityMode.
+    // Is there any other way to do that?
   }
 }

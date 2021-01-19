@@ -30,10 +30,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class GoQuorumKeyValueStorage implements GoQuorumPrivateStorage {
 
-  // TODO-goquorum do we need to implement something like PrivateMetadataUpdater? (Stefan knows
-  // everything about it)
-
-  public static GoQuorumPrivateStorage INSTANCE;
+  // TODO-goquorum We need to think about whether we have to have the atomic commit of public and
+  // private data. I think we should do it ...
 
   private static final Bytes PRIVATE_STATEROOT_SUFFIX = Bytes.of("PRIVSTATEROOT".getBytes(UTF_8));
   private static final Bytes TX_RECEIPT_SUFFIX = Bytes.of("RECEIPT".getBytes(UTF_8));

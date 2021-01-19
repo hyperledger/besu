@@ -33,9 +33,13 @@ public interface GoQuorumPrivateStorage {
 
   interface Updater {
 
+    // TODO-goquorum Do we need this? I think in quorum they do not have both the public and the
+    // private receipt
     Updater putPrivateStateRootHashMapping(
         final Hash publicStateRootHash, final Hash privateStateRootHash);
 
+    // TODO-goquorum Do we need this? I think we are storing the private Tx receipts instead of the
+    // public one in the public DB
     Updater putTransactionReceipt(
         final Hash blockHash,
         final Hash transactionHash,

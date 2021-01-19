@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
 
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.util.Optional;
 
@@ -50,6 +51,11 @@ public interface EnclavePublicKeyProvider {
 
   private static EnclavePublicKeyProvider goQuorumEnclavePublicKeyProvider(
       final PrivacyParameters privacyParameters) {
-    return user -> privacyParameters.getGoQuorumPrivacyParameters().get().enclaveKey();
+    return user ->
+        privacyParameters
+            .getGoQuorumPrivacyParameters()
+            .orElseThrow(
+                () -> new InvalidConfigurationException("GoQuorumPrivacyParameters no set"))
+            .enclaveKey();
   }
 }
