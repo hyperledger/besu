@@ -151,7 +151,7 @@ public class ReceivedFutureProposalTest {
     final Block initialBlock =
         context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
     final Block reproposedBlock =
-        context.createBlockForProposalFromChainHead(1, 15, peers.getProposer().getNodeAddress());
+        context.createBlockForProposalFromChainHead(1, 15);
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =
@@ -201,7 +201,7 @@ public class ReceivedFutureProposalTest {
         interimRound,
         roundChangePayloads,
         Collections.emptyList(),
-        context.createBlockForProposalFromChainHead(1, 30, peers.getProposer().getNodeAddress()));
+        context.createBlockForProposalFromChainHead(1, 30));
 
     peers.verifyNoMessagesReceived();
   }
