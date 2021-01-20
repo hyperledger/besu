@@ -245,17 +245,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     @Override
     public Updater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      if (location.equals(Bytes.EMPTY)) {
-        System.out.println(
-            "putAccountStorageTrieNode "
-                + accountHash
-                + " "
-                + location
-                + " "
-                + nodeHash
-                + " "
-                + nodeHash);
-      }
       trieBranchStorageTransaction.put(
           Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
       return this;

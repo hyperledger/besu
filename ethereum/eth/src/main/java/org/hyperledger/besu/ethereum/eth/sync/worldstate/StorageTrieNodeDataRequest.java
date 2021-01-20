@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -24,9 +25,13 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.rlp.RLP;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
+
+  private static final byte LEAF_PREFIX = 0x20;
 
   final Optional<Hash> accountHash;
 
@@ -38,17 +43,14 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected void doPersist(final Updater updater) {
-    if (getLocation().isEmpty()) {
-      System.out.println("doPersist " + accountHash + " " + getLocation().orElse(Bytes.EMPTY));
-    }
     updater.putAccountStorageTrieNode(
         accountHash.orElse(Hash.EMPTY), getLocation().orElse(Bytes.EMPTY), getHash(), getData());
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(
-        accountHash.orElse(Hash.EMPTY), getLocation().orElse(Bytes.EMPTY), getHash());
+    return worldStateStorage.isExistingAccountStorageTrieNodeData(
+        getAccountHash().orElse(Hash.EMPTY), getLocation().orElse(Hash.EMPTY), getHash());
   }
 
   @Override
@@ -63,12 +65,16 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     // Nothing to do for terminal storage node
 
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      final Hash slotHash =
-          Hash.hash(getLocation().map(UInt256::fromBytes).orElse(UInt256.ZERO).toBytes());
-      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putStorageValueBySlotHash(accountHash.get(), slotHash, value)
-          .commit();
+      getSlotHash()
+          .ifPresent(
+              slotHash -> {
+                ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
+                    .putStorageValueBySlotHash(
+                        accountHash.get(), slotHash, Bytes32.leftPad(RLP.decodeValue(value)))
+                    .commit();
+              });
     }
+
     return Stream.empty();
   }
 
@@ -84,5 +90,40 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     getAccountHash().ifPresent(out::writeBytes);
     getLocation().ifPresent(out::writeBytes);
     out.endList();
+  }
+
+  private Optional<Hash> getSlotHash() {
+    if (getLocation().isPresent()) {
+      final Bytes location = getLocation().orElseThrow();
+      final RLPInput input = org.hyperledger.besu.ethereum.rlp.RLP.input(getData());
+      input.enterList();
+      return Optional.of(Hash.wrap(Bytes32.wrap(mergeSlot(location, input.readBytes()))));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  private static Bytes mergeSlot(final Bytes path, final Bytes data) {
+    int pathIndex = 0;
+    int dataIndex = 0;
+    int accountHashIndex = 0;
+    final MutableBytes accountHash = MutableBytes.create(Bytes32.SIZE);
+    if (data.get(0) == LEAF_PREFIX) {
+      dataIndex = 1;
+    }
+    while (pathIndex < path.size()) {
+      final byte high = path.get(pathIndex++);
+      final byte low;
+      if (pathIndex >= path.size()) {
+        low = data.get(dataIndex++);
+      } else {
+        low = path.get(pathIndex++);
+      }
+      accountHash.set(accountHashIndex++, (byte) (high << 4 | (low & 0x0f)));
+    }
+    while (accountHashIndex < accountHash.size()) {
+      accountHash.set(accountHashIndex++, data.get(dataIndex++));
+    }
+    return accountHash;
   }
 }
