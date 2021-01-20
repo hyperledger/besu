@@ -558,6 +558,10 @@ public class JsonRpcHttpServiceTest {
 
   @Test
   public void ethGetUncleCountByBlockNumberPending() throws Exception {
+    final int uncleCount = 0;
+    when(blockchainQueries.headBlockNumber()).thenReturn(0L);
+    when(blockchainQueries.getOmmerCount(eq(0L))).thenReturn(Optional.of(uncleCount));
+
     final String id = "123";
     final String params = "\"params\": [\"pending\"]";
     final RequestBody body =
