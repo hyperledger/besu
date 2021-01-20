@@ -36,7 +36,8 @@ public class BftDiscardValidatorVote implements JsonRpcMethod {
     this(voteProposer, false);
   }
 
-  public BftDiscardValidatorVote(final VoteProposer voteProposer, final boolean legacyRpcMethodName) {
+  public BftDiscardValidatorVote(
+      final VoteProposer voteProposer, final boolean legacyRpcMethodName) {
     this.voteProposer = voteProposer;
     this.legacyRpcMethodName = legacyRpcMethodName;
   }
