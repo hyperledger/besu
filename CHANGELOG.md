@@ -4,10 +4,12 @@
 
 ### 21.2 Breaking Changes
 * `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated.
+* Deprecating `ibft_*` JSON-RPC methods in favor of `bft_*`. 
 
 ### Additions and Improvements
 * Removed unused flags in default genesis configs [\#1812](https://github.com/hyperledger/besu/pull/1812)
 * `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated. [\#1815](https://github.com/hyperledger/besu/pull/1815)
+* Adding `bft_*` JSON-RPC methods that will work with BFT networks i.e. IBFT2 and QBFT [\#1819](https://github.com/hyperledger/besu/pull/1819)
 
 ### Bug Fixes
 

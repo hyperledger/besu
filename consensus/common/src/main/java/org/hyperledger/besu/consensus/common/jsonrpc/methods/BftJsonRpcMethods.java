@@ -49,6 +49,7 @@ public class BftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this(context, bftRpcApi, false);
   }
 
+  @Deprecated(forRemoval = true)
   public BftJsonRpcMethods(
       final ProtocolContext context, final RpcApi bftRpcApi, final boolean addLegacyRpcMethods) {
     this.context = context;
@@ -63,8 +64,10 @@ public class BftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
+    // Adds bft_ methods
     final List<JsonRpcMethod> rpcMethodsList = new ArrayList<>(createRpcMethods(false));
 
+    // soon to be deprecated. Adds legacy ibft_ methods for backward compatibility.
     if (addLegacyRpcMethods) {
       rpcMethodsList.addAll(createRpcMethods(true));
     }
@@ -81,21 +84,15 @@ public class BftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockInterface blockInterface = new BftBlockInterface();
 
     final VoteTallyCache voteTallyCache = createVoteTallyCache(context, mutableBlockchain);
-    final ArrayList<JsonRpcMethod> rpcMethodsList = new ArrayList<>();
-
-    rpcMethodsList.add(new BftProposeValidatorVote(voteProposer, useLegacyRpcMethods));
-    rpcMethodsList.add(
-        new BftGetValidatorsByBlockNumber(blockchainQueries, blockInterface, useLegacyRpcMethods));
-    rpcMethodsList.add(new BftDiscardValidatorVote(voteProposer, useLegacyRpcMethods));
-    rpcMethodsList.add(
+    return List.of(
+        new BftProposeValidatorVote(voteProposer, useLegacyRpcMethods),
+        new BftGetValidatorsByBlockNumber(blockchainQueries, blockInterface, useLegacyRpcMethods),
+        new BftDiscardValidatorVote(voteProposer, useLegacyRpcMethods),
         new BftGetValidatorsByBlockHash(
-            context.getBlockchain(), blockInterface, useLegacyRpcMethods));
-    rpcMethodsList.add(
+            context.getBlockchain(), blockInterface, useLegacyRpcMethods),
         new BftGetSignerMetrics(
-            voteTallyCache, blockInterface, blockchainQueries, useLegacyRpcMethods));
-    rpcMethodsList.add(new BftGetPendingVotes(voteProposer, useLegacyRpcMethods));
-
-    return rpcMethodsList;
+            voteTallyCache, blockInterface, blockchainQueries, useLegacyRpcMethods),
+        new BftGetPendingVotes(voteProposer, useLegacyRpcMethods));
   }
 
   private VoteTallyCache createVoteTallyCache(

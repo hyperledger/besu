@@ -83,6 +83,7 @@ import org.apache.logging.log4j.Logger;
 public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final boolean ADD_LEGACY_IBFT_RPC_METHODS = true;
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
@@ -97,7 +98,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext) {
-    return new BftJsonRpcMethods(protocolContext, IbftRpcApis.IBFT, true);
+    return new BftJsonRpcMethods(protocolContext, IbftRpcApis.IBFT, ADD_LEGACY_IBFT_RPC_METHODS);
   }
 
   @Override
