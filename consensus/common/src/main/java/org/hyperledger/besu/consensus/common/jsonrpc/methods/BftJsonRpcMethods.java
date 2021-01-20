@@ -49,7 +49,8 @@ public class BftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this(context, bftRpcApi, false);
   }
 
-  @Deprecated(forRemoval = true)
+  @Deprecated
+  // constructor to be removed in future release. Used for backward compatibility with ibft_
   public BftJsonRpcMethods(
       final ProtocolContext context, final RpcApi bftRpcApi, final boolean addLegacyRpcMethods) {
     this.context = context;
