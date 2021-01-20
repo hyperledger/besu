@@ -150,8 +150,10 @@ public class BlockchainQueries {
    */
   public Optional<UInt256> storageAt(
       final Address address, final UInt256 storageIndex, final long blockNumber) {
-    return fromAccount(
-        address, blockNumber, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return storageAt(address, storageIndex, blockHash);
   }
 
   /**
@@ -164,10 +166,8 @@ public class BlockchainQueries {
    */
   public Optional<UInt256> storageAt(
       final Address address, final UInt256 storageIndex, final Hash blockHash) {
-    final long blockNumber =
-        getBlockHeaderByHash(blockHash).map(BlockHeader::getNumber).orElse(Long.MAX_VALUE);
-
-    return storageAt(address, storageIndex, blockNumber);
+    return fromAccount(
+        address, blockHash, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
   }
 
   /**
@@ -178,7 +178,10 @@ public class BlockchainQueries {
    * @return The balance of the account in Wei.
    */
   public Optional<Wei> accountBalance(final Address address, final long blockNumber) {
-    return fromAccount(address, blockNumber, Account::getBalance, Wei.ZERO);
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return accountBalance(address, blockHash);
   }
 
   /**
@@ -189,10 +192,7 @@ public class BlockchainQueries {
    * @return The balance of the account in Wei.
    */
   public Optional<Wei> accountBalance(final Address address, final Hash blockHash) {
-    final long blockNumber =
-        getBlockHeaderByHash(blockHash).map(BlockHeader::getNumber).orElse(Long.MAX_VALUE);
-
-    return accountBalance(address, blockNumber);
+    return fromAccount(address, blockHash, Account::getBalance, Wei.ZERO);
   }
 
   /**
@@ -203,7 +203,10 @@ public class BlockchainQueries {
    * @return The code associated with this address.
    */
   public Optional<Bytes> getCode(final Address address, final long blockNumber) {
-    return fromAccount(address, blockNumber, Account::getCode, Bytes.EMPTY);
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return getCode(address, blockHash);
   }
 
   /**
@@ -214,10 +217,7 @@ public class BlockchainQueries {
    * @return The code associated with this address.
    */
   public Optional<Bytes> getCode(final Address address, final Hash blockHash) {
-    final long blockNumber =
-        getBlockHeaderByHash(blockHash).map(BlockHeader::getNumber).orElse(Long.MAX_VALUE);
-
-    return getCode(address, blockNumber);
+    return fromAccount(address, blockHash, Account::getCode, Bytes.EMPTY);
   }
 
   /**
@@ -261,7 +261,21 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final long blockNumber) {
-    return getWorldState(blockNumber)
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return getTransactionCount(address, blockHash);
+  }
+
+  /**
+   * Returns the number of transactions sent from the given address in the block at the given hash.
+   *
+   * @param address The address whose sent transactions we want to count.
+   * @param blockHash The hash of the block being queried.
+   * @return The number of transactions sent from the given address.
+   */
+  public long getTransactionCount(final Address address, final Hash blockHash) {
+    return getWorldState(blockHash)
         .map(worldState -> worldState.get(address))
         .map(Account::getNonce)
         .orElse(0L);
@@ -772,10 +786,10 @@ public class BlockchainQueries {
    * @return the world state at the block number
    */
   public Optional<WorldState> getWorldState(final long blockNumber) {
-    final Optional<BlockHeader> header = blockchain.getBlockHeader(blockNumber);
-    return header.flatMap(
-        blockHeader ->
-            worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getHash()));
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return getWorldState(blockHash);
   }
 
   /**
@@ -785,10 +799,10 @@ public class BlockchainQueries {
    * @return the world state at the block hash
    */
   public Optional<WorldState> getWorldState(final Hash blockHash) {
-    final long blockNumber =
-        getBlockHeaderByHash(blockHash).map(BlockHeader::getNumber).orElse(Long.MAX_VALUE);
-
-    return getWorldState(blockNumber);
+    final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
+    return header.flatMap(
+        blockHeader ->
+            worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getHash()));
   }
 
   public Optional<Long> gasPrice() {
@@ -821,20 +835,17 @@ public class BlockchainQueries {
   }
 
   private <T> Optional<T> fromWorldState(
-      final long blockNumber, final Function<WorldState, T> getter) {
-    if (outsideBlockchainRange(blockNumber)) {
-      return Optional.empty();
-    }
-    return getWorldState(blockNumber).map(getter);
+      final Hash blockHash, final Function<WorldState, T> getter) {
+    return getWorldState(blockHash).map(getter);
   }
 
   private <T> Optional<T> fromAccount(
       final Address address,
-      final long blockNumber,
+      final Hash blockHash,
       final Function<Account, T> getter,
       final T noAccountValue) {
     return fromWorldState(
-        blockNumber,
+        blockHash,
         worldState ->
             Optional.ofNullable(worldState.get(address)).map(getter).orElse(noAccountValue));
   }

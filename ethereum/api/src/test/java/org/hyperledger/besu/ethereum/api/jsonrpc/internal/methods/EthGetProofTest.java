@@ -118,6 +118,8 @@ public class EthGetProofTest {
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.NO_ACCOUNT_FOUND);
 
+    when(blockchainQueries.headBlockNumber()).thenReturn(14L);
+
     final JsonRpcRequestContext request =
         requestWithParams(
             Address.fromHexString("0x0000000000000000000000000000000000000000"),
@@ -126,12 +128,13 @@ public class EthGetProofTest {
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
   public void errorWhenWorldStateUnavailable() {
 
+    when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     when(blockchainQueries.getWorldState(any())).thenReturn(Optional.empty());
 
     final JsonRpcErrorResponse expectedResponse =
@@ -145,13 +148,15 @@ public class EthGetProofTest {
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
   public void getProof() {
 
     final GetProofResult expectedResponse = generateWorldState();
+
+    when(blockchainQueries.headBlockNumber()).thenReturn(14L);
 
     final JsonRpcRequestContext request =
         requestWithParams(

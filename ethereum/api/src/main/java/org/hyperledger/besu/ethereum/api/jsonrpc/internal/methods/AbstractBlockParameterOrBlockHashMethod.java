@@ -73,7 +73,9 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
       result = pendingResult(requestContext);
     } else if (blockParameterOrBlockHash.isNumeric() || blockParameterOrBlockHash.isEarliest()) {
       OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
-      if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
+      if (blockNumber.isEmpty()
+          || blockNumber.getAsLong() < 0
+          || blockNumber.getAsLong() > getBlockchainQueries().headBlockNumber()) {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
       }

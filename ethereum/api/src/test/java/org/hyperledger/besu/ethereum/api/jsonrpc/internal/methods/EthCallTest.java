@@ -109,7 +109,7 @@ public class EthCallTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionSimulator).process(any(), any());
   }
 
@@ -175,6 +175,7 @@ public class EthCallTest {
   @Test
   public void shouldUseCorrectBlockNumberWhenSpecified() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), Quantity.create(13L));
+    when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
     when(transactionSimulator.process(any(), any())).thenReturn(Optional.empty());
 

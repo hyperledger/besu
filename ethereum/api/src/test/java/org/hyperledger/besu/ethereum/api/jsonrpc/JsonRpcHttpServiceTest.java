@@ -734,6 +734,7 @@ public class JsonRpcHttpServiceTest {
     final long blockNumber = 13L;
     final Hash blockHash =
         Hash.fromHexString("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
+    when(blockchainQueries.headBlockNumber()).thenReturn(21L);
     when(blockchainQueries.accountBalance(eq(address), eq(blockHash)))
         .thenReturn(Optional.of(Wei.fromHexString(mockBalance)));
 
