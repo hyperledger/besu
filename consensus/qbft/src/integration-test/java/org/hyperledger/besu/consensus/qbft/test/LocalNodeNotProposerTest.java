@@ -45,7 +45,8 @@ public class LocalNodeNotProposerTest {
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
-  private final Block blockToPropose = context.createBlockForProposalFromChainHead(0, 15);
+  private final Block blockToPropose =
+      context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
 
   private Prepare expectedTxPrepare;
   private Commit expectedTxCommit;
