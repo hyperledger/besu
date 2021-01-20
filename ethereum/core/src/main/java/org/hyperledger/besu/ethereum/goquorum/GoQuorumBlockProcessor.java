@@ -132,8 +132,6 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
             transaction.getHash().toHexString());
         return AbstractBlockProcessor.Result.failed();
       } else {
-        // TODO-goquorum We need to increment the sender's public nonce. Is there a better way of
-        // doing this??
         publicWorldStateUpdater.getAccount(transaction.getSender()).getMutable().incrementNonce();
       }
 

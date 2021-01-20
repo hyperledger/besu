@@ -134,16 +134,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<TransactionReceipt> receipts = new ArrayList<>();
       long currentGasUsed = 0;
       for (final Transaction transaction : transactions) {
-        final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
-        if (!gasBudgetCalculator.hasBudget(
-            transaction, blockHeader.getNumber(), blockHeader.getGasLimit(), currentGasUsed)) {
-          LOG.info(
-              "Block processing error: transaction gas limit {} exceeds available block budget"
-                  + " remaining {}. Block {} Transaction {}",
-              transaction.getGasLimit(),
-              remainingGasBudget,
-              blockHeader.getHash().toHexString(),
-              transaction.getHash().toHexString());
+        if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
           return AbstractBlockProcessor.Result.failed();
         }
 
@@ -195,8 +186,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
   }
 
-  // TODO-goquorum Only seems to be used in GoQuorumBlockProcessor. Should it be used in the
-  // MainnetBlockProcessor? @Lucas
   protected boolean hasAvailableBlockBudget(
       final BlockHeader blockHeader, final Transaction transaction, final long currentGasUsed) {
     if (!gasBudgetCalculator.hasBudget(
