@@ -150,7 +150,6 @@ public class MainnetTransactionValidator {
               transaction.getUpfrontCost(), senderBalance));
     }
 
-    //    if (!goQuorumCompatibilityMode) { // TODO-goquorum remove if that still works!!
     if (transaction.getNonce() < senderNonce) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_LOW,
@@ -166,7 +165,6 @@ public class MainnetTransactionValidator {
               "transaction nonce %s does not match sender account nonce %s.",
               transaction.getNonce(), senderNonce));
     }
-    //    }
 
     if (!isSenderAllowed(transaction, validationParams)) {
       return ValidationResult.invalid(

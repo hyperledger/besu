@@ -50,7 +50,6 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  // TODO-goquorum proper wiring instead of static references?
   private final GoQuorumEnclave goQuorumEnclave;
   private final GoQuorumPrivateStorage goQuorumPrivateStorage;
 
