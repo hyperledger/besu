@@ -44,8 +44,9 @@ import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
+import org.hyperledger.besu.consensus.common.jsonrpc.methods.BftJsonRpcMethods;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
+import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftRpcApis;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
@@ -96,7 +97,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext) {
-    return new IbftJsonRpcMethods(protocolContext);
+    return new BftJsonRpcMethods(protocolContext, IbftRpcApis.IBFT, true);
   }
 
   @Override

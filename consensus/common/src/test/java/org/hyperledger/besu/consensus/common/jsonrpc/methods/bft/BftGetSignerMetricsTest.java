@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.methods.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalMatchers.lt;
@@ -46,15 +46,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class IbftGetSignerMetricsTest {
+public class BftGetSignerMetricsTest {
 
   private static final Address[] VALIDATORS = {
     Address.fromHexString("0x1"), Address.fromHexString("0x2"), Address.fromHexString("0x3"),
   };
 
-  private final String IBFT_METHOD = "ibft_getSignerMetrics";
+  private final String BFT_METHOD = "bft_getSignerMetrics";
   private final String JSON_RPC_VERSION = "2.0";
-  private IbftGetSignerMetrics method;
+  private BftGetSignerMetrics method;
 
   private VoteTallyCache voteTallyCache;
   private BlockchainQueries blockchainQueries;
@@ -67,12 +67,12 @@ public class IbftGetSignerMetricsTest {
     voteTallyCache = mock(VoteTallyCache.class);
     blockchainQueries = mock(BlockchainQueries.class);
     blockInterface = mock(BlockInterface.class);
-    method = new IbftGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries);
+    method = new BftGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries);
   }
 
   @Test
   public void returnsCorrectMethodName() {
-    assertThat(method.getName()).isEqualTo(IBFT_METHOD);
+    assertThat(method.getName()).isEqualTo(BFT_METHOD);
   }
 
   @Test
@@ -249,7 +249,7 @@ public class IbftGetSignerMetricsTest {
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
-    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, IBFT_METHOD, params));
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, BFT_METHOD, params));
   }
 
   private SignerMetricResult generateBlock(final long number) {

@@ -12,26 +12,40 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.methods.bft;
+
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.BFT_GET_SIGNER_METRICS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.IBFT_GET_SIGNER_METRICS;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractGetSignerMetricsMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
-public class IbftGetSignerMetrics extends AbstractGetSignerMetricsMethod implements JsonRpcMethod {
+public class BftGetSignerMetrics extends AbstractGetSignerMetricsMethod implements JsonRpcMethod {
+  private final boolean legacyRpcMethodName;
 
-  public IbftGetSignerMetrics(
+  public BftGetSignerMetrics(
       final VoteTallyCache voteTallyCache,
       final BlockInterface blockInterface,
       final BlockchainQueries blockchainQueries) {
+    this(voteTallyCache, blockInterface, blockchainQueries, false);
+  }
+
+  public BftGetSignerMetrics(
+      final VoteTallyCache voteTallyCache,
+      final BlockInterface blockInterface,
+      final BlockchainQueries blockchainQueries,
+      final boolean legacyRpcMethodName) {
     super(voteTallyCache, blockInterface, blockchainQueries);
+    this.legacyRpcMethodName = legacyRpcMethodName;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.IBFT_GET_SIGNER_METRICS.getMethodName();
+    return legacyRpcMethodName
+        ? IBFT_GET_SIGNER_METRICS.getMethodName()
+        : BFT_GET_SIGNER_METRICS.getMethodName();
   }
 }

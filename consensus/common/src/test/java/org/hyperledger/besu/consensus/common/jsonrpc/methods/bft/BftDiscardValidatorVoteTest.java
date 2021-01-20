@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.methods.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -31,22 +31,22 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class IbftProposeValidatorVoteTest {
+public class BftDiscardValidatorVoteTest {
   private final VoteProposer voteProposer = mock(VoteProposer.class);
-  private final String IBFT_METHOD = "ibft_proposeValidatorVote";
+  private final String BFT_METHOD = "bft_discardValidatorVote";
   private final String JSON_RPC_VERSION = "2.0";
-  private IbftProposeValidatorVote method;
+  private BftDiscardValidatorVote method;
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
-    method = new IbftProposeValidatorVote(voteProposer);
+    method = new BftDiscardValidatorVote(voteProposer);
   }
 
   @Test
   public void returnsCorrectMethodName() {
-    assertThat(method.getName()).isEqualTo(IBFT_METHOD);
+    assertThat(method.getName()).isEqualTo(BFT_METHOD);
   }
 
   @Test
@@ -60,18 +60,8 @@ public class IbftProposeValidatorVoteTest {
   }
 
   @Test
-  public void exceptionWhenNoAuthSupplied() {
-    final JsonRpcRequestContext request = requestWithParams(Address.fromHexString("1"));
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Missing required json rpc parameter at index 1");
-
-    method.response(request);
-  }
-
-  @Test
-  public void exceptionWhenNoAddressSupplied() {
-    final JsonRpcRequestContext request = requestWithParams("true");
+  public void exceptionWhenInvalidAddressParameterSupplied() {
+    final JsonRpcRequestContext request = requestWithParams("InvalidAddress");
 
     expectedException.expect(InvalidJsonRpcParameters.class);
     expectedException.expectMessage("Invalid json rpc parameter at index 0");
@@ -80,19 +70,10 @@ public class IbftProposeValidatorVoteTest {
   }
 
   @Test
-  public void exceptionWhenInvalidBoolParameterSupplied() {
-    final JsonRpcRequestContext request = requestWithParams(Address.fromHexString("1"), "c");
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Invalid json rpc parameter at index 1");
-
-    method.response(request);
-  }
-
-  @Test
-  public void addValidator() {
+  public void discardValidator() {
     final Address parameterAddress = Address.fromHexString("1");
-    final JsonRpcRequestContext request = requestWithParams(parameterAddress, "true");
+    final JsonRpcRequestContext request = requestWithParams(parameterAddress);
+
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), true);
 
@@ -100,24 +81,10 @@ public class IbftProposeValidatorVoteTest {
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
-    verify(voteProposer).auth(parameterAddress);
-  }
-
-  @Test
-  public void removeValidator() {
-    final Address parameterAddress = Address.fromHexString("1");
-    final JsonRpcRequestContext request = requestWithParams(parameterAddress, "false");
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), true);
-
-    final JsonRpcResponse response = method.response(request);
-
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
-
-    verify(voteProposer).drop(parameterAddress);
+    verify(voteProposer).discard(parameterAddress);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
-    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, IBFT_METHOD, params));
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, BFT_METHOD, params));
   }
 }

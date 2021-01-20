@@ -12,10 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.methods.bft;
+
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.BFT_GET_VALIDATORS_BY_BLOCK_HASH;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.IBFT_GET_VALIDATORS_BY_BLOCK_HASH;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -30,21 +32,32 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
+public class BftGetValidatorsByBlockHash implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Blockchain blockchain;
   private final BlockInterface blockInterface;
+  private final boolean legacyRpcMethodName;
 
-  public IbftGetValidatorsByBlockHash(
+  public BftGetValidatorsByBlockHash(
       final Blockchain blockchain, final BlockInterface blockInterface) {
+    this(blockchain, blockInterface, false);
+  }
+
+  public BftGetValidatorsByBlockHash(
+      final Blockchain blockchain,
+      final BlockInterface blockInterface,
+      final boolean legacyRpcMethodName) {
     this.blockchain = blockchain;
     this.blockInterface = blockInterface;
+    this.legacyRpcMethodName = legacyRpcMethodName;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.IBFT_GET_VALIDATORS_BY_BLOCK_HASH.getMethodName();
+    return legacyRpcMethodName
+        ? IBFT_GET_VALIDATORS_BY_BLOCK_HASH.getMethodName()
+        : BFT_GET_VALIDATORS_BY_BLOCK_HASH.getMethodName();
   }
 
   @Override

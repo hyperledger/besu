@@ -108,6 +108,7 @@ public enum RpcMethod {
   ETH_UNINSTALL_FILTER("eth_uninstallFilter"),
   ETH_UNSUBSCRIBE("eth_unsubscribe"),
 
+  // Deprecated - ibft_ are deprecated in favor of bft_.
   IBFT_DISCARD_VALIDATOR_VOTE("ibft_discardValidatorVote"),
   IBFT_GET_PENDING_VOTES("ibft_getPendingVotes"),
   IBFT_GET_VALIDATORS_BY_BLOCK_HASH("ibft_getValidatorsByBlockHash"),

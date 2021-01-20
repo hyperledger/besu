@@ -12,11 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.methods.bft;
+
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.BFT_DISCARD_VALIDATOR_VOTE;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.IBFT_DISCARD_VALIDATOR_VOTE;
 
 import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -26,35 +27,32 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class IbftProposeValidatorVote implements JsonRpcMethod {
+public class BftDiscardValidatorVote implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
   private final VoteProposer voteProposer;
+  private final boolean legacyRpcMethodName;
 
-  public IbftProposeValidatorVote(final VoteProposer voteProposer) {
+  public BftDiscardValidatorVote(final VoteProposer voteProposer) {
+    this(voteProposer, false);
+  }
+
+  public BftDiscardValidatorVote(final VoteProposer voteProposer, final boolean legacyRpcMethodName) {
     this.voteProposer = voteProposer;
+    this.legacyRpcMethodName = legacyRpcMethodName;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.IBFT_PROPOSE_VALIDATOR_VOTE.getMethodName();
+    return legacyRpcMethodName
+        ? IBFT_DISCARD_VALIDATOR_VOTE.getMethodName()
+        : BFT_DISCARD_VALIDATOR_VOTE.getMethodName();
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-
     final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
-    final Boolean add = requestContext.getRequiredParameter(1, Boolean.class);
-    LOG.trace(
-        "Received RPC rpcName={} voteType={} address={}",
-        getName(),
-        add ? VoteType.ADD : VoteType.DROP,
-        validatorAddress);
-
-    if (add) {
-      voteProposer.auth(validatorAddress);
-    } else {
-      voteProposer.drop(validatorAddress);
-    }
+    LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
+    voteProposer.discard(validatorAddress);
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
   }

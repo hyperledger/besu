@@ -12,23 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.methods.bft;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,40 +37,41 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class IbftGetValidatorsByBlockNumberTest {
+public class BftGetValidatorsByBlockHashTest {
 
-  @Mock private BlockchainQueries blockchainQueries;
+  private static final String ETH_METHOD = "bft_getValidatorsByBlockHash";
+  private static final String JSON_RPC_VERSION = "2.0";
+  private static final String ZERO_HASH = String.valueOf(Hash.ZERO);
+
+  @Mock private Blockchain blockchain;
   @Mock private BlockHeader blockHeader;
   @Mock private BftBlockInterface bftBlockInterface;
   @Mock private JsonRpcRequestContext request;
 
-  private IbftGetValidatorsByBlockNumber method;
+  private BftGetValidatorsByBlockHash method;
 
   @Before
   public void setUp() {
-    method = new IbftGetValidatorsByBlockNumber(blockchainQueries, bftBlockInterface);
-  }
-
-  @Test
-  public void blockParameterIsParameter0() {
-    request = new JsonRpcRequestContext(new JsonRpcRequest("?", "ignore", new String[] {"0x1245"}));
-    BlockParameter blockParameter = method.blockParameter(request);
-    assertThat(blockParameter.getNumber()).isPresent();
-    assertThat(blockParameter.getNumber().get()).isEqualTo(0x1245);
+    method = new BftGetValidatorsByBlockHash(blockchain, bftBlockInterface);
   }
 
   @Test
   public void nameShouldBeCorrect() {
-    assertThat(method.getName()).isEqualTo("ibft_getValidatorsByBlockNumber");
+    Assertions.assertThat(method.getName()).isEqualTo(ETH_METHOD);
   }
 
   @Test
   public void shouldReturnListOfValidatorsFromBlock() {
-    when(blockchainQueries.getBlockHeaderByNumber(12)).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
     final List<Address> addresses = Collections.singletonList(Address.ID);
     final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
     when(bftBlockInterface.validatorsInBlock(blockHeader)).thenReturn(addresses);
-    Object result = method.resultByBlockNumber(request, 12);
-    assertThat(result).isEqualTo(expectedOutput);
+    request = requestWithParams(ZERO_HASH);
+    JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
+    Assertions.assertThat(response.getResult()).isEqualTo(expectedOutput);
+  }
+
+  private JsonRpcRequestContext requestWithParams(final Object... params) {
+    return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 }

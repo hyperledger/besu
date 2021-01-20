@@ -43,8 +43,9 @@ import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
+import org.hyperledger.besu.consensus.common.jsonrpc.methods.BftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
+import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftRpcApis;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.protocol.QbftSubProtocol;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
@@ -92,7 +93,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
       final ProtocolContext protocolContext) {
-    return new IbftJsonRpcMethods(protocolContext);
+    return new BftJsonRpcMethods(protocolContext, QbftRpcApis.QBFT);
   }
 
   @Override

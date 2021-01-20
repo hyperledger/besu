@@ -12,21 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.jsonrpc.AbstractVoteProposerMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 
-public class IbftGetPendingVotes extends AbstractVoteProposerMethod implements JsonRpcMethod {
+import java.util.Optional;
 
-  public IbftGetPendingVotes(final VoteProposer voteProposer) {
-    super(voteProposer);
-  }
+public class QbftRpcApis {
+  public static final RpcApi QBFT = new RpcApi("QBFT");
 
-  @Override
-  public String getName() {
-    return RpcMethod.IBFT_GET_PENDING_VOTES.getMethodName();
+  public static final Optional<RpcApi> valueOf(final String name) {
+    if (name.equals(QBFT.getCliValue())) {
+      return Optional.of(QBFT);
+    } else {
+      return Optional.empty();
+    }
   }
 }
