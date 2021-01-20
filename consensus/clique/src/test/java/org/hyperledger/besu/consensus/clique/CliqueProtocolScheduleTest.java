@@ -42,7 +42,6 @@ public class CliqueProtocolScheduleTest {
             + "{\"chainId\": 4,\n"
             + "\"homesteadBlock\": 1,\n"
             + "\"eip150Block\": 2,\n"
-            + "\"eip155Block\": 3,\n"
             + "\"eip158Block\": 3,\n"
             + "\"byzantiumBlock\": 1035301}"
             + "}";
