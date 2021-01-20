@@ -146,6 +146,20 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void callingBlockImportSubCommandWithJSONAndSkipPOWFails() {
+    parseCommand(
+        BLOCK_SUBCOMMAND_NAME,
+        BLOCK_IMPORT_SUBCOMMAND_NAME,
+        "--format",
+        "JSON",
+        "--skip-pow-validation-enabled",
+        "blocks.file");
+    final String expectedErrorOutputStart = "Can't skip";
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith(expectedErrorOutputStart);
+  }
+
+  @Test
   public void callingBlockImportSubCommandHelpMustDisplayUsage() {
     parseCommand(BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--help");
     assertThat(commandOutput.toString()).isEqualTo(EXPECTED_BLOCK_IMPORT_USAGE);
