@@ -50,7 +50,7 @@ public class BftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   public BftJsonRpcMethods(
-      final ProtocolContext context, final RpcApi bftRpcApi, boolean addLegacyRpcMethods) {
+      final ProtocolContext context, final RpcApi bftRpcApi, final boolean addLegacyRpcMethods) {
     this.context = context;
     this.bftRpcApi = bftRpcApi;
     this.addLegacyRpcMethods = addLegacyRpcMethods;
