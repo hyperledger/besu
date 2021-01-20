@@ -1,14 +1,7 @@
 {
   "config": {
     "chainId": 999,
-    "homesteadBlock": 0,
-    "daoForkBlock": 0,
-    "eip150Block": 0,
-    "eip155Block": 0,
-    "eip158Block": 0,
-    "byzantiumBlock": 0,
-    "constantinopleBlock": 0,
-    "constantinopleFixBlock": 0,
+    "petersburgBlock": 0,
     "ibft2": {
       "blockperiodseconds": 5,
       "epochlength": 30000,

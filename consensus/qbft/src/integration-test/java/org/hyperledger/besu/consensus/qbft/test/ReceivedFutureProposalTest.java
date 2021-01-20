@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers;
@@ -32,8 +33,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -57,15 +58,15 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void proposalWithEmptyPrepareCertificatesOfferNewBlock() {
-    final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
-    final Block blockToPropose =
-        context.createBlockForProposalFromChainHead(nextRoundId.getRoundNumber(), 15);
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
 
     final List<SignedData<RoundChangePayload>> roundChanges =
         peers.createSignedRoundChangePayload(targetRound);
 
-    final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
+    final ValidatorPeer nextProposer = context.roundSpecificPeers(targetRound).getProposer();
+    final Block blockToPropose =
+        context.createBlockForProposalFromChainHead(
+            targetRound.getRoundNumber(), 15, nextProposer.getNodeAddress());
 
     nextProposer.injectProposalForFutureRound(
         targetRound, roundChanges, Collections.emptyList(), blockToPropose);
@@ -76,12 +77,12 @@ public class ReceivedFutureProposalTest {
     peers.verifyMessagesReceived(expectedPrepare);
   }
 
-  @Ignore("Requires validation")
   @Test
   public void proposalFromIllegalSenderIsDiscardedAndNoPrepareForNewRoundIsSent() {
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
     final Block blockToPropose =
-        context.createBlockForProposalFromChainHead(nextRoundId.getRoundNumber(), 15);
+        context.createBlockForProposalFromChainHead(
+            nextRoundId.getRoundNumber(), 15, peers.getProposer().getNodeAddress());
 
     final List<SignedData<RoundChangePayload>> roundChanges =
         peers.createSignedRoundChangePayload(nextRoundId);
@@ -97,7 +98,58 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void proposalWithPrepareCertificateResultsInNewRoundStartingWithExpectedBlock() {
-    final Block initialBlock = context.createBlockForProposalFromChainHead(0, 15);
+    final Block initialBlock =
+        context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+    final Block reproposedBlock =
+        context.createBlockForProposalFromChainHead(1, 15, peers.getProposer().getNodeAddress());
+    final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
+
+    final PreparedCertificate preparedRoundArtifacts =
+        createValidPreparedCertificate(context, roundId, initialBlock);
+
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtifacts);
+
+    final List<SignedData<PreparePayload>> prepares =
+        peers.createSignedPreparePayloadOfAllPeers(roundId, initialBlock.getHash());
+
+    final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
+
+    nextProposer.injectProposalForFutureRound(nextRoundId, roundChanges, prepares, reproposedBlock);
+
+    peers.verifyMessagesReceived(
+        localNodeMessageFactory.createPrepare(nextRoundId, reproposedBlock.getHash()));
+  }
+
+  @Test
+  public void futureProposalWithInsufficientPreparesDoesNotTriggerNextRound() {
+    final Block initialBlock =
+        context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+    final Block reproposedBlock =
+        context.createBlockForProposalFromChainHead(1, 15, peers.getProposer().getNodeAddress());
+    final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
+
+    final PreparedCertificate preparedRoundArtifacts =
+        createValidPreparedCertificate(context, roundId, initialBlock);
+
+    final List<SignedData<RoundChangePayload>> roundChanges =
+        peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtifacts);
+
+    final List<SignedData<PreparePayload>> prepares =
+        peers.createSignedPreparePayloadOfAllPeers(roundId, initialBlock.getHash());
+
+    final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
+
+    nextProposer.injectProposalForFutureRound(
+        nextRoundId, roundChanges, prepares.subList(0, 2), reproposedBlock);
+
+    peers.verifyNoMessagesReceived();
+  }
+
+  @Test
+  public void futureProposalWithInvalidPrepareDoesNotTriggerNextRound() {
+    final Block initialBlock =
+        context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
     final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
@@ -107,13 +159,27 @@ public class ReceivedFutureProposalTest {
     final List<SignedData<RoundChangePayload>> roundChanges =
         peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtifacts);
 
+    List<SignedData<PreparePayload>> prepares =
+        peers.createSignedPreparePayloadOfAllPeers(roundId, initialBlock.getHash());
+    prepares =
+        prepares.stream()
+            .filter(p -> !p.getAuthor().equals(peers.getFirstNonProposer().getNodeAddress()))
+            .collect(Collectors.toList());
+
+    final SignedData<PreparePayload> invalidPrepare =
+        peers
+            .getFirstNonProposer()
+            .getMessageFactory()
+            .createPrepare(nextRoundId, initialBlock.getHash())
+            .getSignedPayload();
+
+    prepares.add(invalidPrepare);
+
     final ValidatorPeer nextProposer = context.roundSpecificPeers(nextRoundId).getProposer();
 
-    nextProposer.injectProposalForFutureRound(
-        nextRoundId, roundChanges, Collections.emptyList(), reproposedBlock);
+    nextProposer.injectProposalForFutureRound(nextRoundId, roundChanges, prepares, reproposedBlock);
 
-    peers.verifyMessagesReceived(
-        localNodeMessageFactory.createPrepare(nextRoundId, reproposedBlock.getHash()));
+    peers.verifyNoMessagesReceived();
   }
 
   @Test
@@ -141,8 +207,10 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void receiveRoundStateIsNotLostIfASecondProposalMessageIsReceivedForCurrentRound() {
-    final Block initialBlock = context.createBlockForProposalFromChainHead(0, 15);
-    final Block reproposedBlock = context.createBlockForProposalFromChainHead(1, 15);
+    final Block initialBlock =
+        context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+    final Block reproposedBlock =
+        context.createBlockForProposalFromChainHead(1, 15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =

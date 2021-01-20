@@ -40,7 +40,7 @@ public class RefundSstoreGasTest {
   @Parameters(name = "calculator: {0}, original: {2}, current: {3}, new: {4}")
   public static Object[][] scenarios() {
     final GasCalculator constantinople = new ConstantinopleGasCalculator();
-    final GasCalculator petersburg = new ConstantinopleFixGasCalculator();
+    final GasCalculator petersburg = new PetersburgGasCalculator();
     final GasCalculator istanbul = new IstanbulGasCalculator();
     return new Object[][] {
       // Zero no-op

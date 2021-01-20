@@ -128,13 +128,13 @@ public class GenesisConfigOptionsTest {
   public void shouldGetConstantinopleFixBlockNumber() {
     final GenesisConfigOptions config =
         fromConfigOptions(singletonMap("constantinopleFixBlock", 1000));
-    assertThat(config.getConstantinopleFixBlockNumber()).hasValue(1000);
+    assertThat(config.getPetersburgBlockNumber()).hasValue(1000);
   }
 
   @Test
   public void shouldGetPetersburgBlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("petersburgBlock", 1000));
-    assertThat(config.getConstantinopleFixBlockNumber()).hasValue(1000);
+    assertThat(config.getPetersburgBlockNumber()).hasValue(1000);
   }
 
   @Test
@@ -144,7 +144,7 @@ public class GenesisConfigOptionsTest {
     configMap.put("petersburgBlock", 1000);
     final GenesisConfigOptions config = fromConfigOptions(configMap);
     assertThatExceptionOfType(RuntimeException.class)
-        .isThrownBy(config::getConstantinopleFixBlockNumber)
+        .isThrownBy(config::getPetersburgBlockNumber)
         .withMessage(
             "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
   }
@@ -204,7 +204,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getSpuriousDragonBlockNumber()).isEmpty();
     assertThat(config.getByzantiumBlockNumber()).isEmpty();
     assertThat(config.getConstantinopleBlockNumber()).isEmpty();
-    assertThat(config.getConstantinopleFixBlockNumber()).isEmpty();
+    assertThat(config.getPetersburgBlockNumber()).isEmpty();
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();

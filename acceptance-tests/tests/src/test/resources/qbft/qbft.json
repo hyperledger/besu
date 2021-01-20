@@ -1,19 +1,25 @@
 {
   "config": {
-    "chainId": 2018,
-    "petersburgBlock": 0,
-    "contractSizeLimit": 2147483647,
-    "clique": {
-      "blockperiodseconds": 15,
-      "epochlength": 30000
+    "chainId": 4,
+    "homesteadBlock": 1,
+    "eip150Block": 2,
+    "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "eip155Block": 3,
+    "eip158Block": 3,
+    "byzantiumBlock": 1035301,
+    "qbft": {
+      "blockperiodseconds": 1,
+      "epochlength": 30000,
+      "requesttimeoutseconds": 5,
+      "blockreward": "5000000000000000000"
     }
   },
-  "nonce": "0x42",
-  "timestamp": "0x0",
-  "extraData": "0x52657370656374206d7920617574686f7269746168207e452e436172746d616e42eb768f2244c8811c63729a21a3569731535f067ffc57839b00206d1ad20c69a1981b489f772031b279182d99e65703f0076e4812653aab85fca0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-  "gasLimit": "0x1fffffffffffff",
-  "difficulty": "0x10000",
-  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "nonce": "0x0",
+  "timestamp": "0x58ee40ba",
+  "extraData": "%extraData%",
+  "gasLimit": "0x47b760",
+  "difficulty": "0x1",
+  "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
   "coinbase": "0x0000000000000000000000000000000000000000",
   "alloc": {
     "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {

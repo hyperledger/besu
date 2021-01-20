@@ -377,7 +377,6 @@ public final class RunnerTest {
         (node) -> {
           // Clear DAO block so that inability to validate DAO block won't interfere with fast sync
           node.remove("daoForkBlock");
-          node.put("daoForkSupport", false);
         });
     return GenesisConfigFile.fromConfig(jsonNode);
   }

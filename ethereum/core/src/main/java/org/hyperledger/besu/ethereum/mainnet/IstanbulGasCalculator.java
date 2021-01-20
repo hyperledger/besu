@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
+public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   private static final Gas TX_DATA_ZERO_COST = Gas.of(4L);
   private static final Gas ISTANBUL_TX_DATA_NON_ZERO_COST = Gas.of(16L);

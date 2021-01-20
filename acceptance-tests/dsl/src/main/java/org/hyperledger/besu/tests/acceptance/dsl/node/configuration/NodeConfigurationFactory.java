@@ -58,6 +58,10 @@ public class NodeConfigurationFactory {
     return createJsonRpcWithRpcApiEnabledConfig(IBFT, ADMIN);
   }
 
+  public JsonRpcConfiguration createJsonRpcWithQbftEnabledConfig(final boolean minerEnabled) {
+    return createJsonRpcWithIbft2EnabledConfig(minerEnabled);
+  }
+
   public JsonRpcConfiguration createJsonRpcEnabledConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setEnabled(true);

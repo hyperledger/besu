@@ -273,7 +273,7 @@ public class BlockDataGenerator {
     return BlockHeaderBuilder.create()
         .parentHash(options.getParentHash(hash()))
         .ommersHash(BodyValidation.ommersHash(body.getOmmers()))
-        .coinbase(address())
+        .coinbase(options.getCoinbase(address()))
         .stateRoot(options.getStateRoot(hash()))
         .transactionsRoot(BodyValidation.transactionsRoot(body.getTransactions()))
         .receiptsRoot(options.getReceiptsRoot(hash()))
@@ -612,6 +612,7 @@ public class BlockDataGenerator {
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
     private TransactionType[] transactionTypes = TransactionType.values();
+    private Optional<Address> coinbase = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -754,6 +755,15 @@ public class BlockDataGenerator {
     public BlockOptions setTimestamp(final Long timestamp) {
       this.timestamp = Optional.of(timestamp);
       return this;
+    }
+
+    public BlockOptions setCoinbase(final Address coinbase) {
+      this.coinbase = Optional.of(coinbase);
+      return this;
+    }
+
+    public Address getCoinbase(final Address defaultValue) {
+      return coinbase.orElse(defaultValue);
     }
   }
 }

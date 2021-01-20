@@ -29,6 +29,8 @@ public interface GenesisConfigOptions {
 
   boolean isIbft2();
 
+  boolean isQbft();
+
   boolean isClique();
 
   String getConsensusEngine();
@@ -53,7 +55,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getConstantinopleBlockNumber();
 
-  OptionalLong getConstantinopleFixBlockNumber();
+  OptionalLong getPetersburgBlockNumber();
 
   OptionalLong getIstanbulBlockNumber();
 
