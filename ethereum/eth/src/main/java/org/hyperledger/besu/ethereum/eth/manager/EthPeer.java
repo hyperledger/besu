@@ -91,7 +91,7 @@ public class EthPeer {
     knownBlocks =
         Collections.newSetFromMap(
             Collections.synchronizedMap(
-                new LinkedHashMap<Hash, Boolean>(16, 0.75f, true) {
+                new LinkedHashMap<>(16, 0.75f, true) {
                   @Override
                   protected boolean removeEldestEntry(final Map.Entry<Hash, Boolean> eldest) {
                     return size() > maxTrackedSeenBlocks;
