@@ -79,7 +79,7 @@ public class SpuriousBehaviourTest {
   }
 
   @Test
-  public void badlyFormedRlpDoesNotPreventOngoingBftOperation() {
+  public void badlyFormedRlpDoesNotPreventOngoingIbftOperation() {
     final MessageData illegalCommitMsg = new RawMessage(IbftV2.PREPARE, Bytes.EMPTY);
     peers.getNonProposing(0).injectMessage(illegalCommitMsg);
 
@@ -88,7 +88,7 @@ public class SpuriousBehaviourTest {
   }
 
   @Test
-  public void messageWithIllegalMessageCodeAreDiscardedAndDoNotPreventOngoingBftOperation() {
+  public void messageWithIllegalMessageCodeAreDiscardedAndDoNotPreventOngoingIbftOperation() {
     final MessageData illegalCommitMsg = new RawMessage(IbftV2.MESSAGE_SPACE, Bytes.EMPTY);
     peers.getNonProposing(0).injectMessage(illegalCommitMsg);
 
@@ -115,7 +115,7 @@ public class SpuriousBehaviourTest {
   }
 
   @Test
-  public void preparesWithMisMatchedDigestAreNotRespondedTo() {
+  public void preparesWithMisMatchedDigestAreNotRepondedTo() {
     peers.getProposer().injectProposal(roundId, proposedBlock);
     peers.verifyMessagesReceived(expectedPrepare);
 
