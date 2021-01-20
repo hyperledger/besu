@@ -38,6 +38,9 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected void doPersist(final Updater updater) {
+    if (getLocation().isEmpty()) {
+      System.out.println("doPersist " + accountHash + " " + getLocation().orElse(Bytes.EMPTY));
+    }
     updater.putAccountStorageTrieNode(
         accountHash.orElse(Hash.EMPTY), getLocation().orElse(Bytes.EMPTY), getHash(), getData());
   }
