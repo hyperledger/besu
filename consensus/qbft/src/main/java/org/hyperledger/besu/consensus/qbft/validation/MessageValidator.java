@@ -14,11 +14,14 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -28,52 +31,65 @@ public class MessageValidator {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  @FunctionalInterface
-  public interface PrepareValidatorFactory {
-    PrepareValidator create(final Hash expectedDigest);
+  public static class SubsequentMessageValidator {
+
+    private final PrepareValidator prepareValidator;
+    private final CommitValidator commitValidator;
+
+    public SubsequentMessageValidator(
+        final Collection<Address> validators,
+        final ConsensusRoundIdentifier targetRound,
+        final Hash expectedDigest) {
+      prepareValidator = new PrepareValidator(validators, targetRound, expectedDigest);
+      commitValidator = new CommitValidator(validators, targetRound, expectedDigest);
+    }
+
+    public boolean validate(final Prepare msg) {
+      return prepareValidator.validate(msg);
+    }
+
+    public boolean validate(final Commit msg) {
+      return commitValidator.validate(msg);
+    }
   }
 
   @FunctionalInterface
-  public interface CommitValidatorFactory {
-    CommitValidator create(final Hash expectedDigest);
+  public interface SubsequentMessageValidatorFactory {
+    SubsequentMessageValidator create(Hash expectedDigest);
   }
 
-  private final PrepareValidatorFactory prepareValidatorFactory;
-  private final CommitValidatorFactory commitValidatorFactory;
+  private final SubsequentMessageValidatorFactory subsequentMessageValidatorFactory;
   private final ProposalValidator proposalValidator;
 
-  private Optional<PrepareValidator> prepareValidator = Optional.empty();
-  private Optional<CommitValidator> commitValidator = Optional.empty();
+  private Optional<SubsequentMessageValidator> subsequentMessageValidator = Optional.empty();
 
   public MessageValidator(
-      final PrepareValidatorFactory prepareValidatorFactory,
-      final CommitValidatorFactory commitValidatorFactory,
+      final SubsequentMessageValidatorFactory subsequentMessageValidatorFactory,
       final ProposalValidator proposalValidator) {
-    this.prepareValidatorFactory = prepareValidatorFactory;
-    this.commitValidatorFactory = commitValidatorFactory;
+    this.subsequentMessageValidatorFactory = subsequentMessageValidatorFactory;
     this.proposalValidator = proposalValidator;
   }
 
   public boolean validateProposal(final Proposal msg) {
-    if (prepareValidator.isPresent()) {
+    if (subsequentMessageValidator.isPresent()) {
       LOG.info("Received subsequent Proposal for current round, discarding.");
       return false;
     }
 
     final boolean result = proposalValidator.validate(msg);
     if (result) {
-      prepareValidator = Optional.of(prepareValidatorFactory.create(msg.getBlock().getHash()));
-      commitValidator = Optional.of(commitValidatorFactory.create(msg.getBlock().getHash()));
+      subsequentMessageValidator =
+          Optional.of(subsequentMessageValidatorFactory.create(msg.getBlock().getHash()));
     }
 
     return result;
   }
 
   public boolean validatePrepare(final Prepare msg) {
-    return prepareValidator.map(pv -> pv.validate(msg)).orElse(false);
+    return subsequentMessageValidator.map(pv -> pv.validate(msg)).orElse(false);
   }
 
   public boolean validateCommit(final Commit msg) {
-    return commitValidator.map(cv -> cv.validate(msg)).orElse(false);
+    return subsequentMessageValidator.map(cv -> cv.validate(msg)).orElse(false);
   }
 }

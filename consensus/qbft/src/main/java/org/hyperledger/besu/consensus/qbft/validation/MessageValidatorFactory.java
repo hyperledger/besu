@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.qbft.validation.MessageValidator.SubsequentMessageValidator;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -87,8 +88,7 @@ public class MessageValidatorFactory {
 
     return new MessageValidator(
         expectedDigest ->
-            new PrepareValidator(validatorsForHeight, roundIdentifier, expectedDigest),
-        expectedDigest -> new CommitValidator(validatorsForHeight, roundIdentifier, expectedDigest),
+            new SubsequentMessageValidator(validatorsForHeight, roundIdentifier, expectedDigest),
         proposalValidator);
   }
 
