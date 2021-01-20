@@ -107,12 +107,21 @@ public enum RpcMethod {
   ETH_SYNCING("eth_syncing"),
   ETH_UNINSTALL_FILTER("eth_uninstallFilter"),
   ETH_UNSUBSCRIBE("eth_unsubscribe"),
+
   IBFT_DISCARD_VALIDATOR_VOTE("ibft_discardValidatorVote"),
   IBFT_GET_PENDING_VOTES("ibft_getPendingVotes"),
   IBFT_GET_VALIDATORS_BY_BLOCK_HASH("ibft_getValidatorsByBlockHash"),
   IBFT_GET_VALIDATORS_BY_BLOCK_NUMBER("ibft_getValidatorsByBlockNumber"),
   IBFT_PROPOSE_VALIDATOR_VOTE("ibft_proposeValidatorVote"),
   IBFT_GET_SIGNER_METRICS("ibft_getSignerMetrics"),
+
+  BFT_DISCARD_VALIDATOR_VOTE("bft_discardValidatorVote"),
+  BFT_GET_PENDING_VOTES("bft_getPendingVotes"),
+  BFT_GET_VALIDATORS_BY_BLOCK_HASH("bft_getValidatorsByBlockHash"),
+  BFT_GET_VALIDATORS_BY_BLOCK_NUMBER("bft_getValidatorsByBlockNumber"),
+  BFT_PROPOSE_VALIDATOR_VOTE("bft_proposeValidatorVote"),
+  BFT_GET_SIGNER_METRICS("bft_getSignerMetrics"),
+
   MINER_CHANGE_TARGET_GAS_LIMIT("miner_changeTargetGasLimit"),
   MINER_SET_COINBASE("miner_setCoinbase"),
   MINER_SET_ETHERBASE("miner_setEtherbase"),
