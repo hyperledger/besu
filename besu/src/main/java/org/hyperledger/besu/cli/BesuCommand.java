@@ -2487,7 +2487,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isGoQuorumCompatibilityMode) {
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
       // this static flag is read by the RLP decoder
-      GoQuorumOptions.goquorumCompatibilityMode = true;
+      GoQuorumOptions.goQuorumCompatibilityMode = true;
 
       if (!genesisConfigOptions.isQuorum()) {
         throw new IllegalStateException(

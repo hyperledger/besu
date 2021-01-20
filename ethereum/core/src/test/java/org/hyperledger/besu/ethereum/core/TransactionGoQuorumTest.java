@@ -39,12 +39,12 @@ public class TransactionGoQuorumTest {
 
   @BeforeClass
   public static void beforeClass() {
-    GoQuorumOptions.goquorumCompatibilityMode = true;
+    GoQuorumOptions.goQuorumCompatibilityMode = true;
   }
 
   @AfterClass
   public static void afterClass() {
-    GoQuorumOptions.goquorumCompatibilityMode =
+    GoQuorumOptions.goQuorumCompatibilityMode =
         GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 

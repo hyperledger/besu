@@ -189,7 +189,7 @@ public class TransactionRLPDecoder {
   }
 
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
-    return GoQuorumOptions.goquorumCompatibilityMode
+    return GoQuorumOptions.goQuorumCompatibilityMode
         && (v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
             || v.equals(
                 GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN)); // TODO: It is possible that v = 37 or
