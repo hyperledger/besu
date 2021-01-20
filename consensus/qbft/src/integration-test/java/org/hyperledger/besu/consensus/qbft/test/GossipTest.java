@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class GossipTest {
@@ -66,7 +65,9 @@ public class GossipTest {
 
   @Before
   public void setup() {
-    block = context.createBlockForProposalFromChainHead(roundId.getRoundNumber(), 30);
+    block =
+        context.createBlockForProposalFromChainHead(
+            roundId.getRoundNumber(), 30, peers.getProposer().getNodeAddress());
     sender = peers.getProposer();
     msgFactory = sender.getMessageFactory();
   }
@@ -128,7 +129,6 @@ public class GossipTest {
     peers.verifyNoMessagesReceived();
   }
 
-  @Ignore("Requires validation")
   @Test
   public void messageIsNotGossipedToSenderOrCreator() {
     final ValidatorPeer msgCreator = peers.getFirstNonProposer();
