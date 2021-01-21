@@ -342,6 +342,18 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createQbftNode(final String name) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(genesis::createQbftGenesisConfig)
+            .build());
+  }
+
   public BesuNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
     return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
@@ -401,6 +413,23 @@ public class BesuNodeFactory {
                 nodes ->
                     node.createGenesisConfigForValidators(
                         asList(validators), nodes, genesis::createIbft2GenesisConfig))
+            .build());
+  }
+
+  public BesuNode createQbftNodeWithValidators(final String name, final String... validators)
+      throws IOException {
+
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(
+                nodes ->
+                    node.createGenesisConfigForValidators(
+                        asList(validators), nodes, genesis::createQbftGenesisConfig))
             .build());
   }
 

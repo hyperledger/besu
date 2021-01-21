@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 
-public class IbftFork {
+public class BftFork {
 
   private static final String FORK_BLOCK_KEY = "block";
   private static final String VALIDATORS_KEY = "validators";
@@ -32,7 +32,7 @@ public class IbftFork {
   private final ObjectNode forkConfigRoot;
 
   @JsonCreator
-  public IbftFork(final ObjectNode forkConfigRoot) {
+  public BftFork(final ObjectNode forkConfigRoot) {
     this.forkConfigRoot = forkConfigRoot;
   }
 
@@ -41,7 +41,7 @@ public class IbftFork {
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
-                    "Fork block not specified for IBFT2 fork in custom forks"));
+                    "Fork block not specified for Bft fork in custom forks"));
   }
 
   public OptionalInt getBlockPeriodSeconds() {
@@ -63,7 +63,7 @@ public class IbftFork {
             value -> {
               if (!value.isTextual()) {
                 throw new IllegalArgumentException(
-                    "Ibft Validator fork does not contain a string " + value.toString());
+                    "Bft Validator fork does not contain a string " + value.toString());
               }
 
               validators.add(value.asText());

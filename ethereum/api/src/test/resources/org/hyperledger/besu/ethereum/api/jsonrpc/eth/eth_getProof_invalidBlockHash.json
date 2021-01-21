@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 28,
+    "jsonrpc": "2.0",
+    "method": "eth_getProof",
+    "params": [
+      "0x8888f1f195afa192cfee860698584c030f4c9db1",
+      ["0x0000000000000000000000000000000000000000000000000000000000000347"],
+      "0xb73cee02246c6f32ac0f459934e89102c2ce904d966a4fc2ab6309c3e104b9cb1234"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "error" : {
+      "code" : -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode": 400
+}

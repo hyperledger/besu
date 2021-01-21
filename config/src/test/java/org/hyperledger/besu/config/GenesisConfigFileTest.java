@@ -292,7 +292,7 @@ public class GenesisConfigFileTest {
   public void testNoOverride() {
     final GenesisConfigFile config = GenesisConfigFile.development();
 
-    assertThat(config.getConfigOptions().getConstantinopleFixBlockNumber()).hasValue(0);
+    assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(2018));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
@@ -305,14 +305,14 @@ public class GenesisConfigFileTest {
     // petersburg node
     final GenesisConfigFile config = GenesisConfigFile.development();
 
-    assertThat(config.getConfigOptions().getConstantinopleFixBlockNumber()).hasValue(0);
+    assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
 
     // constantinopleFix node
     final Map<String, String> override = new HashMap<>();
     override.put("constantinopleFixBlock", "1000");
 
     assertThatExceptionOfType(RuntimeException.class)
-        .isThrownBy(() -> config.getConfigOptions(override).getConstantinopleFixBlockNumber())
+        .isThrownBy(() -> config.getConfigOptions(override).getPetersburgBlockNumber())
         .withMessage(
             "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
     ;
