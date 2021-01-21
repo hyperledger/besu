@@ -113,6 +113,7 @@ dependencyManagement {
     dependency 'org.bouncycastle:bcprov-jdk15on:1.68'
 
     dependency 'org.fusesource.jansi:jansi:2.1.1'
+    dependency 'net.consensys.services:quorum-mainnet-launcher:1.0.1'
 
     dependency 'org.hyperledger.besu:bls12-381:0.3.0'
     dependency 'org.hyperledger.besu:secp256k1:0.3.0'

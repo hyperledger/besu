@@ -125,6 +125,7 @@ allprojects {
     mavenLocal()
     maven { url "https://hyperledger-org.bintray.com/besu-repo" }
     maven { url "https://consensys.bintray.com/pegasys-repo" }
+    maven { url "https://consensys.bintray.com/consensys" }
     maven { url "https://repo.spring.io/libs-release" }
     maven { url "https://dl.bintray.com/open-telemetry/maven" }
   }
