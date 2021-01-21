@@ -132,7 +132,7 @@ public final class RunnerTest {
 
   @Test
   public void fullSyncFromGenesis() throws Exception {
-    syncFromGenesis(SyncMode.FULL, GenesisConfigFile.mainnet());
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis());
   }
 
   @Test
