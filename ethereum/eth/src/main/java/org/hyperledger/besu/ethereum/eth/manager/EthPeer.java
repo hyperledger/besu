@@ -103,6 +103,7 @@ public class EthPeer {
     for (final PeerValidator peerValidator : peerValidators) {
       validationStatus.put(peerValidator, false);
     }
+    fullyValidated.set(peerValidators.isEmpty());
   }
 
   public void markValidated(final PeerValidator validator) {
