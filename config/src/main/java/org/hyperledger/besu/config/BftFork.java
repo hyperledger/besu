@@ -41,7 +41,7 @@ public class BftFork {
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
-                    "Fork block not specified for IBFT2 fork in custom forks"));
+                    "Fork block not specified for Bft fork in custom forks"));
   }
 
   public OptionalInt getBlockPeriodSeconds() {
@@ -63,7 +63,7 @@ public class BftFork {
             value -> {
               if (!value.isTextual()) {
                 throw new IllegalArgumentException(
-                    "Ibft Validator fork does not contain a string " + value.toString());
+                    "Bft Validator fork does not contain a string " + value.toString());
               }
 
               validators.add(value.asText());
