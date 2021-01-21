@@ -61,11 +61,17 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
     getMergedHash(worldStateStorage)
         .ifPresent(
-            slotHash ->
+            slotHash -> {
+              try {
                 ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
                     .putStorageValueBySlotHash(
                         accountHash.get(), slotHash, Bytes32.leftPad(RLP.decodeValue(value)))
-                    .commit());
+                    .commit();
+              } catch (Exception e) {
+                System.out.println(getLocation() + " " + getData() + " " + value);
+                throw e;
+              }
+            });
 
     return Stream.empty();
   }

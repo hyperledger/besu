@@ -65,22 +65,18 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
   }
 
   protected Optional<Hash> getMergedHash(final WorldStateStorage worldStateStorage) {
-    try {
-      if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-        final Bytes location = getLocation().orElse(Bytes.EMPTY);
-        final RLPInput input = org.hyperledger.besu.ethereum.rlp.RLP.input(getData());
-        input.enterList();
-        return Optional.of(Hash.wrap(Bytes32.wrap(mergeLocation(location, input.readBytes()))));
-      } else {
-        return Optional.empty();
-      }
-    } catch (Exception e) {
-      System.out.println(getLocation() + " " + getData());
-      throw e;
+
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      final Bytes location = getLocation().orElse(Bytes.EMPTY);
+      final RLPInput input = org.hyperledger.besu.ethereum.rlp.RLP.input(getData());
+      input.enterList();
+      return Optional.of(Hash.wrap(Bytes32.wrap(mergeLocation(location, input.readBytes()))));
+    } else {
+      return Optional.empty();
     }
   }
 
-  private Bytes mergeLocation(final Bytes location, final Bytes data) {
+  private static Bytes mergeLocation(final Bytes location, final Bytes data) {
     int locationIndex = 0;
     int dataIndex = 0;
     int hashIndex = 0;
