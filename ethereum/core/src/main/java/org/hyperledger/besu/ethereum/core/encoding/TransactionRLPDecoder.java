@@ -50,9 +50,6 @@ public class TransactionRLPDecoder {
           ImmutableMap.of(TransactionType.EIP1559, TransactionRLPDecoder::decodeEIP1559);
 
   public static Transaction decode(final RLPInput rlpInput) {
-    if (GoQuorumOptions.goquorumCompatibilityMode) {
-      return decodeGoQuorum(rlpInput);
-    }
     if (rlpInput.nextIsList()) {
       return decodeFrontier(rlpInput);
     } else {
