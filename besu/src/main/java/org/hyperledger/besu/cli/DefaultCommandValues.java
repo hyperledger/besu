@@ -31,7 +31,6 @@ import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
 public interface DefaultCommandValues {
-
   String CONFIG_FILE_OPTION_NAME = "--config-file";
 
   String MANDATORY_PATH_FORMAT_HELP = "<PATH>";

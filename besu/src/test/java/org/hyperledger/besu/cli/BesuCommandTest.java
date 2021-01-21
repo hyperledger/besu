@@ -1516,7 +1516,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void launcherDefautOptionAreValue() {
+  public void launcherDefaultOptionValue() {
     TestBesuCommand besuCommand = parseCommand();
 
     assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isFalse();
