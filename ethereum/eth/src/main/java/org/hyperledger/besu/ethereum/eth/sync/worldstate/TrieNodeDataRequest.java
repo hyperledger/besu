@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -25,6 +27,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 abstract class TrieNodeDataRequest extends NodeDataRequest {
 
@@ -58,6 +62,41 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
 
   private boolean nodeIsHashReferencedDescendant(final Node<Bytes> node) {
     return !Objects.equals(node.getHash(), getHash()) && node.isReferencedByHash();
+  }
+
+  protected Optional<Hash> getMergedHash(final WorldStateStorage worldStateStorage) {
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      final Bytes location = getLocation().orElse(Bytes.EMPTY);
+      final RLPInput input = org.hyperledger.besu.ethereum.rlp.RLP.input(getData());
+      input.enterList();
+      return Optional.of(Hash.wrap(Bytes32.wrap(mergeLocation(location, input.readBytes()))));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  private Bytes mergeLocation(final Bytes location, final Bytes data) {
+    int locationIndex = 0;
+    int dataIndex = 0;
+    int hashIndex = 0;
+    final MutableBytes hash = MutableBytes.create(Bytes32.SIZE);
+    if (data.get(0) == 0x20) {
+      dataIndex = 1;
+    }
+    while (locationIndex < location.size()) {
+      final byte high = location.get(locationIndex++);
+      final byte low;
+      if (locationIndex >= location.size()) {
+        low = data.get(dataIndex++);
+      } else {
+        low = location.get(locationIndex++);
+      }
+      hash.set(hashIndex++, (byte) (high << 4 | (low & 0x0f)));
+    }
+    while (hashIndex < hash.size()) {
+      hash.set(hashIndex++, data.get(dataIndex++));
+    }
+    return hash;
   }
 
   protected abstract NodeDataRequest createChildNodeDataRequest(
