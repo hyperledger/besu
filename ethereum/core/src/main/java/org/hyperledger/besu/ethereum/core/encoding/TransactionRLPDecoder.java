@@ -106,7 +106,6 @@ public class TransactionRLPDecoder {
   }
 
   static Transaction decodeEIP1559(final RLPInput input) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
     input.enterList();
 
     final Transaction.Builder builder =
