@@ -16,7 +16,7 @@ package org.hyperledger.besu.cli.converter;
 
 import org.hyperledger.besu.cli.converter.exception.RpcApisConversionException;
 import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueRpcApis;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftRpcApis;
+import org.hyperledger.besu.consensus.common.jsonrpc.BftRpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 
@@ -31,7 +31,7 @@ public class RpcApisConverter implements CommandLine.ITypeConverter<RpcApi> {
   @Override
   public RpcApi convert(final String name) throws RpcApisConversionException {
     return Stream.<Function<String, Optional<RpcApi>>>of(
-            RpcApis::valueOf, CliqueRpcApis::valueOf, IbftRpcApis::valueOf)
+            RpcApis::valueOf, CliqueRpcApis::valueOf, BftRpcApis::valueOf)
         .map(f -> f.apply(name.trim().toUpperCase()))
         .filter(Optional::isPresent)
         .map(Optional::get)

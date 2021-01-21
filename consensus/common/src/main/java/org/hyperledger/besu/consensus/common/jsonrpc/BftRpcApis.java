@@ -12,20 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc;
+package org.hyperledger.besu.consensus.common.jsonrpc;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-public class IbftRpcApis {
+public class BftRpcApis {
   public static final RpcApi IBFT = new RpcApi("IBFT");
+  public static final RpcApi QBFT = new RpcApi("QBFT");
 
-  public static final Optional<RpcApi> valueOf(final String name) {
-    if (name.equals(IBFT.getCliValue())) {
-      return Optional.of(IBFT);
-    } else {
-      return Optional.empty();
-    }
+  private static final List<RpcApi> BFT_RPC_APIS = List.of(IBFT, QBFT);
+
+  public static Optional<RpcApi> valueOf(final String name) {
+    return BFT_RPC_APIS.stream().filter(api -> Objects.equals(api.getCliValue(), name)).findAny();
   }
 }

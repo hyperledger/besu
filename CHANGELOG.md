@@ -8,8 +8,12 @@
 ### Additions and Improvements
 * Removed unused flags in default genesis configs [\#1812](https://github.com/hyperledger/besu/pull/1812)
 * `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated. [\#1815](https://github.com/hyperledger/besu/pull/1815)
+* JSON-RPC Adding `bft_` namespace to provide common rpc methods for BFT consensus i.e. IBFT2 and QBFT
 
 ### Bug Fixes
+
+### Deprecated
+* JSON-RPC methods in `ibft_` namespace are deprecated in favor of `bft_` namespace.
 
 ### Early Access Features
 

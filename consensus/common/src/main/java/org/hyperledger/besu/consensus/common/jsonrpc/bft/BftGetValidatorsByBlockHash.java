@@ -12,16 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.bft;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,30 +30,33 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Deprecated
-public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
-    implements JsonRpcMethod {
+public class BftGetValidatorsByBlockHash implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
 
+  private final Blockchain blockchain;
   private final BlockInterface blockInterface;
 
-  public IbftGetValidatorsByBlockNumber(
-      final BlockchainQueries blockchainQueries, final BlockInterface blockInterface) {
-    super(blockchainQueries);
+  public BftGetValidatorsByBlockHash(
+      final Blockchain blockchain, final BlockInterface blockInterface) {
+    this.blockchain = blockchain;
     this.blockInterface = blockInterface;
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(0, BlockParameter.class);
+  public String getName() {
+    return RpcMethod.BFT_GET_VALIDATORS_BY_BLOCK_HASH.getMethodName();
   }
 
   @Override
-  protected Object resultByBlockNumber(
-      final JsonRpcRequestContext request, final long blockNumber) {
-    final Optional<BlockHeader> blockHeader =
-        getBlockchainQueries().getBlockHeaderByNumber(blockNumber);
-    LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), blockResult(requestContext));
+  }
+
+  private Object blockResult(final JsonRpcRequestContext request) {
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
+    LOG.trace("Received RPC rpcName={} blockHash={}", getName(), hash);
+    final Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(hash);
     return blockHeader
         .map(
             header ->
@@ -60,10 +64,5 @@ public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
                     .map(validator -> validator.toString())
                     .collect(Collectors.toList()))
         .orElse(null);
-  }
-
-  @Override
-  public String getName() {
-    return RpcMethod.IBFT_GET_VALIDATORS_BY_BLOCK_NUMBER.getMethodName();
   }
 }

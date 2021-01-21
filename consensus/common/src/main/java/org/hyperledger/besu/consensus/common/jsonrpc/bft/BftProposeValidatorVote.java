@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.bft;
 
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteType;
@@ -26,18 +26,17 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Deprecated
-public class IbftProposeValidatorVote implements JsonRpcMethod {
+public class BftProposeValidatorVote implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
   private final VoteProposer voteProposer;
 
-  public IbftProposeValidatorVote(final VoteProposer voteProposer) {
+  public BftProposeValidatorVote(final VoteProposer voteProposer) {
     this.voteProposer = voteProposer;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.IBFT_PROPOSE_VALIDATOR_VOTE.getMethodName();
+    return RpcMethod.BFT_PROPOSE_VALIDATOR_VOTE.getMethodName();
   }
 
   @Override

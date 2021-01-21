@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.bft;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -29,14 +29,13 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Deprecated
-public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
+public class BftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
     implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
 
   private final BlockInterface blockInterface;
 
-  public IbftGetValidatorsByBlockNumber(
+  public BftGetValidatorsByBlockNumber(
       final BlockchainQueries blockchainQueries, final BlockInterface blockInterface) {
     super(blockchainQueries);
     this.blockInterface = blockInterface;
@@ -64,6 +63,6 @@ public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
 
   @Override
   public String getName() {
-    return RpcMethod.IBFT_GET_VALIDATORS_BY_BLOCK_NUMBER.getMethodName();
+    return RpcMethod.BFT_GET_VALIDATORS_BY_BLOCK_NUMBER.getMethodName();
   }
 }

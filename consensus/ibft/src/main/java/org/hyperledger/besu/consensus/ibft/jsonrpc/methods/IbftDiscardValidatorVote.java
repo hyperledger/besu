@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+@Deprecated
 public class IbftDiscardValidatorVote implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
   private final VoteProposer voteProposer;

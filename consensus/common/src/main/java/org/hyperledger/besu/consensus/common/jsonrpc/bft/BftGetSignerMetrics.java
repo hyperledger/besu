@@ -12,22 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
+package org.hyperledger.besu.consensus.common.jsonrpc.bft;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.jsonrpc.AbstractVoteProposerMethod;
+import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.jsonrpc.AbstractGetSignerMetricsMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
-@Deprecated
-public class IbftGetPendingVotes extends AbstractVoteProposerMethod implements JsonRpcMethod {
+public class BftGetSignerMetrics extends AbstractGetSignerMetricsMethod implements JsonRpcMethod {
 
-  public IbftGetPendingVotes(final VoteProposer voteProposer) {
-    super(voteProposer);
+  public BftGetSignerMetrics(
+      final VoteTallyCache voteTallyCache,
+      final BlockInterface blockInterface,
+      final BlockchainQueries blockchainQueries) {
+    super(voteTallyCache, blockInterface, blockchainQueries);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.IBFT_GET_PENDING_VOTES.getMethodName();
+    return RpcMethod.BFT_GET_SIGNER_METRICS.getMethodName();
   }
 }

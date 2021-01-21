@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.jsonrpc;
+package org.hyperledger.besu.consensus.common.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -21,14 +21,12 @@ import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.jsonrpc.BftJsonRpcMethods;
-import org.hyperledger.besu.consensus.common.jsonrpc.BftRpcApis;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftDiscardValidatorVote;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetPendingVotes;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetSignerMetrics;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBlockHash;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetValidatorsByBlockNumber;
-import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftProposeValidatorVote;
+import org.hyperledger.besu.consensus.common.jsonrpc.bft.BftDiscardValidatorVote;
+import org.hyperledger.besu.consensus.common.jsonrpc.bft.BftGetPendingVotes;
+import org.hyperledger.besu.consensus.common.jsonrpc.bft.BftGetSignerMetrics;
+import org.hyperledger.besu.consensus.common.jsonrpc.bft.BftGetValidatorsByBlockHash;
+import org.hyperledger.besu.consensus.common.jsonrpc.bft.BftGetValidatorsByBlockNumber;
+import org.hyperledger.besu.consensus.common.jsonrpc.bft.BftProposeValidatorVote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -36,27 +34,25 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 
-import java.util.HashMap;
 import java.util.Map;
 
-@Deprecated // Subject to be removed in future.
-public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
+public class BftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final ProtocolContext context;
-  private final BftJsonRpcMethods bftJsonRpcMethods;
+  private final RpcApi apiGroup;
 
-  public IbftJsonRpcMethods(final ProtocolContext context) {
+  public BftJsonRpcMethods(final ProtocolContext context, final RpcApi apiGroup) {
     this.context = context;
-    bftJsonRpcMethods = new BftJsonRpcMethods(context, BftRpcApis.IBFT);
+    this.apiGroup = apiGroup;
   }
 
   @Override
   protected RpcApi getApiGroup() {
-    return BftRpcApis.IBFT;
+    return apiGroup;
   }
 
   @Override
-  protected Map<String, JsonRpcMethod> create() {
+  public Map<String, JsonRpcMethod> create() {
     final MutableBlockchain mutableBlockchain = context.getBlockchain();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
@@ -65,21 +61,13 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
     final VoteTallyCache voteTallyCache = createVoteTallyCache(context, mutableBlockchain);
 
-    final Map<String, JsonRpcMethod> ibftJsonRpcMethods =
-        mapOf(
-            new IbftProposeValidatorVote(voteProposer),
-            new IbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface),
-            new IbftDiscardValidatorVote(voteProposer),
-            new IbftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface),
-            new IbftGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries),
-            new IbftGetPendingVotes(voteProposer));
-
-    // return both bft_ and ibft_ namespace jsonrpc methods for backward compatibility
-    final Map<String, JsonRpcMethod> bftJsonRpcMethods =
-        new HashMap<>(this.bftJsonRpcMethods.create());
-    bftJsonRpcMethods.putAll(ibftJsonRpcMethods);
-
-    return bftJsonRpcMethods;
+    return mapOf(
+        new BftProposeValidatorVote(voteProposer),
+        new BftGetValidatorsByBlockNumber(blockchainQueries, blockInterface),
+        new BftDiscardValidatorVote(voteProposer),
+        new BftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface),
+        new BftGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries),
+        new BftGetPendingVotes(voteProposer));
   }
 
   private VoteTallyCache createVoteTallyCache(

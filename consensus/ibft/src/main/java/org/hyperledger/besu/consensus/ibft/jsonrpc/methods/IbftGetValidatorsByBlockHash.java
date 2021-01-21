@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+@Deprecated
 public class IbftGetValidatorsByBlockHash implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
 
