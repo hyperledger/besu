@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.ibft.payload;
 
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
+
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -26,11 +28,8 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class MessageFactory {
 
@@ -81,12 +80,6 @@ public class MessageFactory {
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
     final Signature signature = nodeKey.sign(hashForSignature(payload));
-    return new SignedData<>(payload, Util.publicKeyToAddress(nodeKey.getPublicKey()), signature);
-  }
-
-  public static Hash hashForSignature(final Payload unsignedMessageData) {
-    return Hash.hash(
-        Bytes.concatenate(
-            Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
+    return SignedData.create(payload, signature);
   }
 }

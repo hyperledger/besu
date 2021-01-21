@@ -121,13 +121,14 @@
     },
     {
       "prompt-type": "CONFIRM",
-      "question": "Do you want to use Ethstats (experimental feature) ?",
+      "question": "Do you want to use Ethstats ?",
       "default-option": "no",
       "sub-questions": [
         {
           "prompt-type": "INPUT",
           "question": "What is the URL of Ethstats (nodename:secret@host:port) ?",
-          "config-key": "Xethstats"
+          "config-key": "Xethstats",
+          "regex": "([-\\w]+):([\\w]+)?@([-.\\w]+):([\\d]+)"
         },
         {
           "prompt-type": "INPUT",

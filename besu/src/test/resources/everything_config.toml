@@ -15,6 +15,7 @@ color-enabled=false
 node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 reorg-logging-threshold=0
+static-nodes-file="~/besudata/static-nodes.json"
 
 # Security Module plugin to use
 security-module="localfile"

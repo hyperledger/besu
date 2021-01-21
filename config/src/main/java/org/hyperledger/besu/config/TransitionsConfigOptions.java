@@ -27,8 +27,6 @@ import com.google.common.collect.Lists;
 
 public class TransitionsConfigOptions {
 
-  public static final String IBFT2_FORKS = "ibft2";
-
   public static final TransitionsConfigOptions DEFAULT =
       new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
 
@@ -39,27 +37,34 @@ public class TransitionsConfigOptions {
     this.customForkConfigRoot = customForkConfigRoot;
   }
 
-  public List<IbftFork> getIbftForks() {
-    final Optional<ArrayNode> ibftForksNode =
-        JsonUtil.getArrayNode(customForkConfigRoot, IBFT2_FORKS);
+  public List<BftFork> getIbftForks() {
+    return getBftForks("ibft2");
+  }
 
-    if (ibftForksNode.isEmpty()) {
+  public List<BftFork> getQbftForks() {
+    return getBftForks("qbft");
+  }
+
+  private List<BftFork> getBftForks(final String fieldKey) {
+    final Optional<ArrayNode> bftForksNode = JsonUtil.getArrayNode(customForkConfigRoot, fieldKey);
+
+    if (bftForksNode.isEmpty()) {
       return emptyList();
     }
 
-    final List<IbftFork> ibftForks = Lists.newArrayList();
+    final List<BftFork> bftForks = Lists.newArrayList();
 
-    ibftForksNode
+    bftForksNode
         .get()
         .elements()
         .forEachRemaining(
             node -> {
               if (!node.isObject()) {
-                throw new IllegalArgumentException("Ibft2 fork is illegally formatted.");
+                throw new IllegalArgumentException("Bft fork is illegally formatted.");
               }
-              ibftForks.add(new IbftFork((ObjectNode) node));
+              bftForks.add(new BftFork((ObjectNode) node));
             });
 
-    return Collections.unmodifiableList(ibftForks);
+    return Collections.unmodifiableList(bftForks);
   }
 }

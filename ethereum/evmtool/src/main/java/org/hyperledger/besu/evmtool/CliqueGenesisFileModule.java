@@ -16,8 +16,8 @@
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -45,6 +45,6 @@ class CliqueGenesisFileModule extends GenesisFileModule {
 
   @Override
   BlockHeaderFunctions blockHashFunction() {
-    return IbftBlockHeaderFunctions.forOnChainBlock();
+    return new CliqueBlockHeaderFunctions();
   }
 }

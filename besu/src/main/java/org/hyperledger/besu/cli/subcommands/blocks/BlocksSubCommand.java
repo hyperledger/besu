@@ -188,6 +188,10 @@ public class BlocksSubCommand implements Runnable {
       if (blockImportFiles.isEmpty()) {
         throw new ParameterException(spec.commandLine(), "No files specified to import.");
       }
+      if (skipPow && format.equals(BlockImportFormat.JSON)) {
+        throw new ParameterException(
+            spec.commandLine(), "Can't skip proof of work validation for JSON blocks");
+      }
       LOG.info("Import {} block data from {} files", format, blockImportFiles.size());
       final Optional<MetricsService> metricsService = initMetrics(parentCommand);
 

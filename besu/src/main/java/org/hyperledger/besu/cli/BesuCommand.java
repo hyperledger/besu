@@ -1061,6 +1061,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Start Besu in GoQuorum compatibility mode (default: ${DEFAULT-VALUE})")
   private final Boolean isGoQuorumCompatibilityMode = false;
 
+  @CommandLine.Option(
+      names = {"--static-nodes-file"},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description =
+          "Specifies the static node file containing the static nodes for this node to connect to")
+  private final Path staticNodesFile = null;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -2431,9 +2438,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private Set<EnodeURL> loadStaticNodes() throws IOException {
-    final String staticNodesFilename = "static-nodes.json";
-    final Path staticNodesPath = dataDir().resolve(staticNodesFilename);
-
+    final Path staticNodesPath;
+    if (staticNodesFile != null) {
+      staticNodesPath = staticNodesFile.toAbsolutePath();
+      if (!staticNodesPath.toFile().exists()) {
+        throw new ParameterException(
+            commandLine, String.format("Static nodes file %s does not exist", staticNodesPath));
+      }
+    } else {
+      final String staticNodesFilename = "static-nodes.json";
+      staticNodesPath = dataDir().resolve(staticNodesFilename);
+    }
+    logger.info("Static Nodes file = {}", staticNodesPath);
     return StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
   }
 
