@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -331,18 +330,17 @@ public class MessageFrame {
 
     // the warmed up addresses will always be a superset of the address keys in the warmed up
     // storage so we can do both warm ups in one pass
-    accessListWarmAddresses
-        .parallelStream()
+    accessListWarmAddresses.parallelStream()
         .forEach(
-            address -> {
-              final Account account = worldState.get(address);
-              warmedUpStorage
-                  .get(address)
-                  .parallelStream()
-                  .forEach(
-                      storageKeyBytes ->
-                          account.getStorageValue(UInt256.fromBytes(storageKeyBytes)));
-            });
+            address ->
+                Optional.ofNullable(worldState.get(address))
+                    .ifPresent(
+                        account ->
+                            warmedUpStorage.get(address).parallelStream()
+                                .forEach(
+                                    storageKeyBytes ->
+                                        account.getStorageValue(
+                                            UInt256.fromBytes(storageKeyBytes)))));
   }
 
   /**
