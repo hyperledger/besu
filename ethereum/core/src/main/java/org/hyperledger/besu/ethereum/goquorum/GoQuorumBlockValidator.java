@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
@@ -37,6 +38,7 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
   private static final Logger LOG = getLogger();
 
   private final GoQuorumPrivateStorage goQuorumPrivateStorage;
+  private final WorldStateArchive goQuorumWorldStateArchive;
 
   public GoQuorumBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
@@ -57,29 +59,28 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
     }
 
     goQuorumPrivateStorage = goQuorumPrivacyParameters.orElseThrow().privateStorage();
+    goQuorumWorldStateArchive = goQuorumPrivacyParameters.orElseThrow().worldStateArchive();
   }
 
   @Override
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
     final MutableWorldState privateWorldState =
-        getPrivateWorldState(context, worldState.rootHash(), block.getHash());
+        getPrivateWorldState(worldState.rootHash(), block.getHash());
 
     return ((GoQuorumBlockProcessor) blockProcessor)
         .processBlock(context.getBlockchain(), worldState, privateWorldState, block);
   }
 
   private MutableWorldState getPrivateWorldState(
-      final ProtocolContext context, final Hash worldStateRootHash, final Hash publicBlockHash) {
+      final Hash worldStateRootHash, final Hash publicBlockHash) {
     final Hash privateStateRootHash =
         goQuorumPrivateStorage
             .getPrivateStateRootHash(worldStateRootHash)
             .orElse(Hash.EMPTY_TRIE_HASH);
 
     final Optional<MutableWorldState> maybePrivateWorldState =
-        context
-            .getPrivateWorldStateArchive()
-            .flatMap(p -> p.getMutable(privateStateRootHash, publicBlockHash));
+        goQuorumWorldStateArchive.getMutable(privateStateRootHash, publicBlockHash);
     if (maybePrivateWorldState.isEmpty()) {
       LOG.debug(
           "Private world state not available for public world state root hash {}, public block hash {}",

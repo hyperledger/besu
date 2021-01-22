@@ -98,13 +98,13 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
     // available
 
     if (rawTxArgs.getPrivateFor() == null) {
-      LOG.error(JsonRpcError.QUORUM_NO_PRIVATE_FOR.getMessage());
-      throw new JsonRpcErrorResponseException(JsonRpcError.QUORUM_NO_PRIVATE_FOR);
+      LOG.error(JsonRpcError.GOQUORUM_NO_PRIVATE_FOR.getMessage());
+      throw new JsonRpcErrorResponseException(JsonRpcError.GOQUORUM_NO_PRIVATE_FOR);
     }
 
     if (rawTxArgs.getPrivacyFlag() != 0) {
-      LOG.error(JsonRpcError.QUORUM_ONLY_STANDARD_MODE_SUPPORTED.getMessage());
-      throw new JsonRpcErrorResponseException(JsonRpcError.QUORUM_ONLY_STANDARD_MODE_SUPPORTED);
+      LOG.error(JsonRpcError.GOQUORUM_ONLY_STANDARD_MODE_SUPPORTED.getMessage());
+      throw new JsonRpcErrorResponseException(JsonRpcError.GOQUORUM_ONLY_STANDARD_MODE_SUPPORTED);
     }
 
     if (rawTxArgs.getPrivateFrom() != null) {
@@ -120,7 +120,7 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
 
     final Bytes txId = transaction.getPayload();
     if (txId == null || txId.isEmpty()) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.QUORUM_LOOKUP_ID_NOT_AVAILABLE);
+      throw new JsonRpcErrorResponseException(JsonRpcError.GOQUORUM_LOOKUP_ID_NOT_AVAILABLE);
     }
     enclave.sendSignedTransaction(txId.toArray(), rawTxArgs.getPrivateFor());
   }

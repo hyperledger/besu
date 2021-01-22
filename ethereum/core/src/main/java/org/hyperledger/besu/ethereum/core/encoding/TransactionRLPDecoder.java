@@ -191,11 +191,6 @@ public class TransactionRLPDecoder {
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
     return GoQuorumOptions.goQuorumCompatibilityMode
         && (v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
-            || v.equals(
-                GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN)); // TODO: It is possible that v = 37 or
-    // 38 on mainnet (chainId * 2 + 35 +
-    // recId), so I have to check whether
-    // we are in goquorumcompatibilityMode.
-    // Is there any other way to do that?
+            || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN));
   }
 }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 public class GoQuorumPrivacyParameters {
 
@@ -24,14 +25,17 @@ public class GoQuorumPrivacyParameters {
   private final String enclaveKey;
 
   private final GoQuorumPrivateStorage goQuorumPrivateStorage;
+  private final WorldStateArchive privateWorldStateArchive;
 
   public GoQuorumPrivacyParameters(
       final GoQuorumEnclave enclave,
       final String enclaveKey,
-      final GoQuorumPrivateStorage goQuorumPrivateStorage) {
+      final GoQuorumPrivateStorage goQuorumPrivateStorage,
+      final WorldStateArchive privateWorldStateArchive) {
     this.enclave = enclave;
     this.enclaveKey = enclaveKey;
     this.goQuorumPrivateStorage = goQuorumPrivateStorage;
+    this.privateWorldStateArchive = privateWorldStateArchive;
   }
 
   public GoQuorumEnclave enclave() {
@@ -44,5 +48,9 @@ public class GoQuorumPrivacyParameters {
 
   public GoQuorumPrivateStorage privateStorage() {
     return goQuorumPrivateStorage;
+  }
+
+  public WorldStateArchive worldStateArchive() {
+    return privateWorldStateArchive;
   }
 }

@@ -55,7 +55,7 @@ public interface EnclavePublicKeyProvider {
         privacyParameters
             .getGoQuorumPrivacyParameters()
             .orElseThrow(
-                () -> new InvalidConfigurationException("GoQuorumPrivacyParameters no set"))
+                () -> new InvalidConfigurationException("GoQuorumPrivacyParameters not set"))
             .enclaveKey();
   }
 }

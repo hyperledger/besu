@@ -58,6 +58,6 @@ public class GoQuorumJsonRpcPrivacyMethods extends PrivacyApiGroupJsonRpcMethods
 
   @Override
   protected RpcApi getApiGroup() {
-    return RpcApis.QUORUM;
+    return RpcApis.GOQUORUM;
   }
 }
