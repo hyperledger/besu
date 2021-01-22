@@ -40,6 +40,13 @@ public interface WorldState extends WorldView {
   Hash rootHash();
 
   /**
+   * Get the mid-block root hash for Frontier transactions.
+   *
+   * @return the world state root hash.
+   */
+  Hash frontierRootHash();
+
+  /**
    * A stream of all the accounts in this world state.
    *
    * @param startKeyHash The trie key at which to start iterating

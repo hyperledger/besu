@@ -11,6 +11,7 @@
 * Added a new CLI option `--Xlauncher` to start a mainnet launcher. It will help to configure Besu easily.
  
 ### Bug Fixes
+* Ethereum classic heights will no longer be reported in mainnet metrics.  Issue [\#1751]((https://github.com/hyperledger/besu/pull/1751) Fix [\#1820](https://github.com/hyperledger/besu/pull/1820)
 
 ### Early Access Features
 
