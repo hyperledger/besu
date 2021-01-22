@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
@@ -409,7 +408,17 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     if (hashNoSignature == null) {
       hashNoSignature =
           computeSenderRecoveryHash(
-              nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
+              transactionType,
+              nonce,
+              gasPrice,
+              gasPremium,
+              feeCap,
+              gasLimit,
+              to,
+              value,
+              payload,
+              accessList,
+              chainId);
     }
     return hashNoSignature;
   }
@@ -523,6 +532,74 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   private static Bytes32 computeSenderRecoveryHash(
+      final TransactionType transactionType,
+      final long nonce,
+      final Wei gasPrice,
+      final Wei gasPremium,
+      final Wei feeCap,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final AccessList accessList,
+      final Optional<BigInteger> chainId) {
+    final Bytes preimage;
+    switch (transactionType) {
+      case FRONTIER:
+        preimage = frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
+        break;
+      case EIP1559:
+        preimage =
+            eip1559Preimage(
+                nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
+        break;
+      case ACCESS_LIST:
+        preimage =
+            accessListPreimage(
+                transactionType,
+                nonce,
+                gasPrice,
+                gasLimit,
+                to,
+                value,
+                payload,
+                accessList,
+                chainId);
+        break;
+      default:
+        throw new IllegalStateException(
+            "Developer error. Didn't specify signing hash preimage computation");
+    }
+    return keccak256(preimage);
+  }
+
+  private static Bytes frontierPreimage(
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<BigInteger> chainId) {
+    return RLP.encode(
+        rlpOutput -> {
+          rlpOutput.startList();
+          rlpOutput.writeLongScalar(nonce);
+          rlpOutput.writeUInt256Scalar(gasPrice);
+          rlpOutput.writeLongScalar(gasLimit);
+          rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+          rlpOutput.writeUInt256Scalar(value);
+          rlpOutput.writeBytes(payload);
+          if (chainId.isPresent()) {
+            rlpOutput.writeBigIntegerScalar(chainId.get());
+            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
+            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
+          }
+          rlpOutput.endList();
+        });
+  }
+
+  private static Bytes eip1559Preimage(
       final long nonce,
       final Wei gasPrice,
       final Wei gasPremium,
@@ -532,27 +609,44 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Wei value,
       final Bytes payload,
       final Optional<BigInteger> chainId) {
-    return keccak256(
-        RLP.encode(
-            out -> {
-              out.startList();
-              out.writeLongScalar(nonce);
-              out.writeUInt256Scalar(gasPrice);
-              out.writeLongScalar(gasLimit);
-              out.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
-              out.writeUInt256Scalar(value);
-              out.writeBytes(payload);
-              if (ExperimentalEIPs.eip1559Enabled && gasPremium != null && feeCap != null) {
-                out.writeUInt256Scalar(gasPremium);
-                out.writeUInt256Scalar(feeCap);
-              }
-              if (chainId.isPresent()) {
-                out.writeBigIntegerScalar(chainId.get());
-                out.writeUInt256Scalar(UInt256.ZERO);
-                out.writeUInt256Scalar(UInt256.ZERO);
-              }
-              out.endList();
-            }));
+    return RLP.encode(
+        rlpOutput -> {
+          rlpOutput.startList();
+          rlpOutput.writeLongScalar(nonce);
+          rlpOutput.writeUInt256Scalar(gasPrice);
+          rlpOutput.writeLongScalar(gasLimit);
+          rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+          rlpOutput.writeUInt256Scalar(value);
+          rlpOutput.writeBytes(payload);
+          rlpOutput.writeUInt256Scalar(gasPremium);
+          rlpOutput.writeUInt256Scalar(feeCap);
+          if (chainId.isPresent()) {
+            rlpOutput.writeBigIntegerScalar(chainId.get());
+            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
+            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
+          }
+          rlpOutput.endList();
+        });
+  }
+
+  private static Bytes accessListPreimage(
+      final TransactionType transactionType,
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final AccessList accessList,
+      final Optional<BigInteger> chainId) {
+    return RLP.encode(
+        rlpOutput -> {
+          rlpOutput.startList();
+          rlpOutput.writeIntScalar(transactionType.getSerializedType());
+          TransactionRLPEncoder.encodeAccessListInner(
+              chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
+          rlpOutput.endList();
+        });
   }
 
   @Override
@@ -749,33 +843,20 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     SECP256K1.Signature computeSignature(final SECP256K1.KeyPair keys) {
-      final Bytes32 hash;
-      switch (transactionType) {
-        case FRONTIER:
-        case EIP1559:
-          hash =
-              computeSenderRecoveryHash(
-                  nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
-          break;
-        case ACCESS_LIST:
-          hash = keccak256(accessListData());
-          break;
-        default:
-          throw new IllegalStateException(
-              "Developer error. Didn't specify signing hash computation");
-      }
-      return SECP256K1.sign(hash, keys);
-    }
-
-    private Bytes accessListData() {
-      return RLP.encode(
-          rlpOutput -> {
-            rlpOutput.startList();
-            rlpOutput.writeInt(transactionType.getSerializedType());
-            TransactionRLPEncoder.encodeAccessListInner(
-                chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
-            rlpOutput.endList();
-          });
+      return SECP256K1.sign(
+          computeSenderRecoveryHash(
+              transactionType,
+              nonce,
+              gasPrice,
+              gasPremium,
+              feeCap,
+              gasLimit,
+              to,
+              value,
+              payload,
+              accessList,
+              chainId),
+          keys);
     }
   }
 }
