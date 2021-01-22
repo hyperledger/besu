@@ -20,11 +20,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createI
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.KeyPairSecurityModule;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -38,7 +34,6 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
@@ -129,19 +124,7 @@ public class BlockchainSetupUtil {
     return create(
         chainResources,
         BlockchainSetupUtil::mainnetProtocolScheduleProvider,
-        BlockchainSetupUtil::protocolContextProvider,
-        new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
-  }
-
-  public static BlockchainSetupUtil createForCliqueChain(final ChainResources chainResources) {
-    return create(
-        chainResources,
-        genesisConfigFile ->
-            CliqueProtocolSchedule.create(
-                genesisConfigFile.getConfigOptions(),
-                new NodeKey(new KeyPairSecurityModule(SECP256K1.KeyPair.generate())),
-                true),
-        BlockchainSetupUtil::protocolContextProvider,
+        BlockchainSetupUtil::mainnetProtocolContextProvider,
         new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
   }
 
@@ -150,7 +133,7 @@ public class BlockchainSetupUtil {
     return MainnetProtocolSchedule.fromConfig(genesisConfigFile.getConfigOptions());
   }
 
-  private static ProtocolContext protocolContextProvider(
+  private static ProtocolContext mainnetProtocolContextProvider(
       final MutableBlockchain blockchain, final WorldStateArchive worldStateArchive) {
     return new ProtocolContext(blockchain, worldStateArchive, null);
   }
@@ -235,12 +218,7 @@ public class BlockchainSetupUtil {
     return transactionPool;
   }
 
-  public void importBlocks(final List<Block> blocks) {
-    importBlocks(blocks, HeaderValidationMode.FULL);
-  }
-
-  public void importBlocks(
-      final List<Block> blocks, final HeaderValidationMode headerValidationMode) {
+  private void importBlocks(final List<Block> blocks) {
     for (final Block block : blocks) {
       if (block.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
         continue;
@@ -249,7 +227,7 @@ public class BlockchainSetupUtil {
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final boolean result =
-          blockImporter.importBlock(protocolContext, block, headerValidationMode);
+          blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);
       if (!result) {
         throw new IllegalStateException("Unable to import block " + block.getHeader().getNumber());
       }
