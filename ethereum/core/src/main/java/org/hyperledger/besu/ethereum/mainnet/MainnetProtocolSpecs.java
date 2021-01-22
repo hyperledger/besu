@@ -491,7 +491,7 @@ public abstract class MainnetProtocolSpecs {
       final WorldState worldState,
       final long gasUsed) {
     return new TransactionReceipt(
-        worldState.rootHash(),
+        worldState.frontierRootHash(),
         gasUsed,
         result.getLogs(),
         Optional.empty()); // No revert reason in frontier

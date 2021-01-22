@@ -8,8 +8,10 @@
 ### Additions and Improvements
 * Removed unused flags in default genesis configs [\#1812](https://github.com/hyperledger/besu/pull/1812)
 * `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated. [\#1815](https://github.com/hyperledger/besu/pull/1815)
-
+* Added a new CLI option `--Xlauncher` to start a mainnet launcher. It will help to configure Besu easily.
+ 
 ### Bug Fixes
+* Ethereum classic heights will no longer be reported in mainnet metrics.  Issue [\#1751]((https://github.com/hyperledger/besu/pull/1751) Fix [\#1820](https://github.com/hyperledger/besu/pull/1820)
 
 ### Early Access Features
 

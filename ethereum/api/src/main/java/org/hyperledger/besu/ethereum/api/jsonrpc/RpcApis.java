@@ -36,6 +36,10 @@ public class RpcApis {
 
   public static final List<RpcApi> DEFAULT_JSON_RPC_APIS = Arrays.asList(ETH, NET, WEB3);
 
+  @SuppressWarnings("unused")
+  public static final List<RpcApi> ALL_JSON_RPC_APIS =
+      Arrays.asList(ETH, DEBUG, MINER, NET, PERM, WEB3, ADMIN, EEA, PRIV, TX_POOL, TRACE, PLUGINS);
+
   public static Optional<RpcApi> valueOf(final String name) {
     if (name.equals(ETH.getCliValue())) {
       return Optional.of(ETH);

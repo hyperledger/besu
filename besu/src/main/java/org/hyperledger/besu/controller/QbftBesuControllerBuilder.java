@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
@@ -70,7 +71,10 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -238,16 +242,36 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final BftConfigOptions bftConfig = configOptions.getBftConfigOptions();
     final EpochManager epochManager = new EpochManager(bftConfig.getEpochLength());
 
+    final Map<Long, List<Address>> bftValidatorForkMap =
+        convertBftForks(configOptions.getTransitions().getQbftForks());
+
     return new BftContext(
         new ForkingVoteTallyCache(
             blockchain,
             new VoteTallyUpdater(epochManager, new BftBlockInterface()),
             epochManager,
             new BftBlockInterface(),
-            new BftValidatorOverrides(Collections.emptyMap())),
+            new BftValidatorOverrides(bftValidatorForkMap)),
         new VoteProposer(),
         epochManager,
         blockInterface);
+  }
+
+  private Map<Long, List<Address>> convertBftForks(final List<BftFork> bftForks) {
+    final Map<Long, List<Address>> result = new HashMap<>();
+
+    for (final BftFork fork : bftForks) {
+      fork.getValidators()
+          .map(
+              validators ->
+                  result.put(
+                      fork.getForkBlock(),
+                      validators.stream()
+                          .map(Address::fromHexString)
+                          .collect(Collectors.toList())));
+    }
+
+    return result;
   }
 
   private static MinedBlockObserver blockLogger(
