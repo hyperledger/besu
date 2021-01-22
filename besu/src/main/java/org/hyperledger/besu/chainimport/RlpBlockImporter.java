@@ -137,7 +137,7 @@ public class RlpBlockImporter implements Closeable {
           do {
             final Throwable t = (Exception) threadedException.get();
             if (t != null) {
-              throw new RuntimeException("Error importing block", t);
+              throw new RuntimeException("Error importing block " + header.getNumber(), t);
             }
           } while (!blockBacklog.tryAcquire(1, SECONDS));
         } catch (final InterruptedException e) {

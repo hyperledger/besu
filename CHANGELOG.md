@@ -8,8 +8,10 @@
 ### Additions and Improvements
 * Removed unused flags in default genesis configs [\#1812](https://github.com/hyperledger/besu/pull/1812)
 * `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated. [\#1815](https://github.com/hyperledger/besu/pull/1815)
-
+* Added a new CLI option `--Xlauncher` to start a mainnet launcher. It will help to configure Besu easily.
+ 
 ### Bug Fixes
+* Ethereum classic heights will no longer be reported in mainnet metrics.  Issue [\#1751]((https://github.com/hyperledger/besu/pull/1751) Fix [\#1820](https://github.com/hyperledger/besu/pull/1820)
 
 ### Early Access Features
 
@@ -25,6 +27,7 @@
 * Implemented [EIP-868](https://eips.ethereum.org/EIPS/eip-868): Node Discovery v4 ENR Extension [\#1721](https://github.com/hyperledger/besu/pull/1721)
 * Added revert reason to eth_estimateGas RPC call. [\#1730](https://github.com/hyperledger/besu/pull/1730)
 * Added command line option --static-nodes-file. [#1644](https://github.com/hyperledger/besu/pull/1644)
+* Implemented [EIP-1898](https://eips.ethereum.org/EIPS/eip-1898): Add `blockHash` to JSON-RPC methods which accept a default block parameter [\#1757](https://github.com/hyperledger/besu/pull/1757)
 
 ### Bug Fixes
 * Accept locally-sourced transactions below the minimum gas price. [#1480](https://github.com/hyperledger/besu/issues/1480) [#1743](https://github.com/hyperledger/besu/pull/1743)
