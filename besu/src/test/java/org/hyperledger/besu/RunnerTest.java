@@ -132,7 +132,7 @@ public final class RunnerTest {
 
   @Test
   public void fullSyncFromGenesis() throws Exception {
-    syncFromGenesis(SyncMode.FULL, GenesisConfigFile.mainnet());
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis());
   }
 
   @Test
@@ -315,13 +315,13 @@ public final class RunnerTest {
                       UInt256.fromHexString(
                               new JsonObject(resp.body().string()).getString("result"))
                           .intValue();
+                  final JsonObject responseJson = new JsonObject(syncingResp.body().string());
                   if (currentBlock < blockCount) {
                     // if not yet at blockCount, we should get a sync result from eth_syncing
+                    assertThat(responseJson.getValue("result")).isInstanceOf(JsonObject.class);
                     final int syncResultCurrentBlock =
                         UInt256.fromHexString(
-                                new JsonObject(syncingResp.body().string())
-                                    .getJsonObject("result")
-                                    .getString("currentBlock"))
+                                responseJson.getJsonObject("result").getString("currentBlock"))
                             .intValue();
                     assertThat(syncResultCurrentBlock).isLessThan(blockCount);
                   }
@@ -329,8 +329,7 @@ public final class RunnerTest {
                   resp.close();
 
                   // when we have synced to blockCount, eth_syncing should return false
-                  final boolean syncResult =
-                      new JsonObject(syncingResp.body().string()).getBoolean("result");
+                  final boolean syncResult = responseJson.getBoolean("result");
                   assertThat(syncResult).isFalse();
                   syncingResp.close();
                 }

@@ -147,6 +147,7 @@ public enum JsonRpcError {
   ENODE_ID_INVALID(
       -32000,
       "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix."),
+  JSON_RPC_NOT_CANONICAL_ERROR(-32000, "Invalid input"),
 
   // Enclave errors
   NODE_MISSING_PEER_URL(-50200, "NodeMissingPeerUrl"),
