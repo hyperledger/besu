@@ -1,5 +1,5 @@
 
-FROM ghcr.io/graalvm/graalvm-ce:latest
+FROM ghcr.io/graalvm/graalvm-ce:ol7-java11-21.0.0
 
 RUN adduser --home /opt/besu besu && \
     chown besu:besu /opt/besu
