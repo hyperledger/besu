@@ -2,7 +2,7 @@
 
 ## 21.2.0-RC1
 
-### 21.2 Breaking Changes
+### 21.2.0 Breaking Changes
 * `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated.
 
 ### Additions and Improvements
