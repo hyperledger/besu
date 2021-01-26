@@ -54,6 +54,20 @@ public class TransactionRLPEncoder {
     } else if (TransactionType.EIP1559.equals(transactionType)) {
       encodeEIP1559(transaction, rlpOutput);
     } else {
+      rlpOutput.writeBytes(RLP.encode(output -> encodeForTransactionTrie(transaction, output)));
+    }
+  }
+
+  public static void encodeForTransactionTrie(
+      final Transaction transaction, final RLPOutput rlpOutput) {
+    final TransactionType transactionType =
+        checkNotNull(
+            transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    if (TransactionType.FRONTIER.equals(transactionType)) {
+      encodeFrontier(transaction, rlpOutput);
+    } else if (TransactionType.EIP1559.equals(transactionType)) {
+      encodeEIP1559(transaction, rlpOutput);
+    } else {
       final Encoder encoder =
           Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(transactionType))
               .orElseThrow(
@@ -62,10 +76,8 @@ public class TransactionRLPEncoder {
                           String.format(
                               "Developer Error. A supported transaction type %s has no associated encoding logic",
                               transactionType)));
-      rlpOutput.writeBytes(
-          Bytes.concatenate(
-              Bytes.of((byte) transactionType.getSerializedType()),
-              RLP.encode(output -> encoder.encode(transaction, output))));
+      rlpOutput.writeIntScalar(transactionType.getSerializedType());
+      encoder.encode(transaction, rlpOutput);
     }
   }
 

@@ -21,11 +21,13 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -54,9 +56,15 @@ public final class BodyValidation {
   public static Hash transactionsRoot(final List<Transaction> transactions) {
     final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
-    for (int i = 0; i < transactions.size(); ++i) {
-      trie.put(indexKey(i), RLP.encode(transactions.get(i)::writeTo));
-    }
+    IntStream.range(0, transactions.size())
+        .forEach(
+            i ->
+                trie.put(
+                    indexKey(i),
+                    RLP.encode(
+                        rlpOutput ->
+                            TransactionRLPEncoder.encodeForTransactionTrie(
+                                transactions.get(i), rlpOutput))));
 
     return Hash.wrap(trie.getRootHash());
   }

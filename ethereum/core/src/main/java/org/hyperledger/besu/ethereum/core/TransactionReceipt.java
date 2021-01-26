@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -174,36 +173,26 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   }
 
   private void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason) {
-    final Bytes receiptBytes =
-        RLP.encode(
-            out -> {
-              out.startList();
-
-              // Determine whether it's a state root-encoded transaction receipt
-              // or is a status code-encoded transaction receipt.
-              if (stateRoot != null) {
-                out.writeBytes(stateRoot);
-              } else {
-                out.writeLongScalar(status);
-              }
-              out.writeLongScalar(cumulativeGasUsed);
-              out.writeBytes(bloomFilter);
-              out.writeList(logs, Log::writeTo);
-              if (withRevertReason && revertReason.isPresent()) {
-                out.writeBytes(revertReason.get());
-              }
-              out.endList();
-            });
-
-    switch (transactionType) {
-      case FRONTIER:
-      case EIP1559:
-        rlpOutput.writeRaw(receiptBytes);
-        break;
-      default:
-        rlpOutput.writeBytes(
-            Bytes.concatenate(Bytes.of((byte) transactionType.getSerializedType()), receiptBytes));
+    if (!transactionType.equals(TransactionType.FRONTIER)) {
+      rlpOutput.writeIntScalar(transactionType.getSerializedType());
     }
+
+    rlpOutput.startList();
+
+    // Determine whether it's a state root-encoded transaction receipt
+    // or is a status code-encoded transaction receipt.
+    if (stateRoot != null) {
+      rlpOutput.writeBytes(stateRoot);
+    } else {
+      rlpOutput.writeLongScalar(status);
+    }
+    rlpOutput.writeLongScalar(cumulativeGasUsed);
+    rlpOutput.writeBytes(bloomFilter);
+    rlpOutput.writeList(logs, Log::writeTo);
+    if (withRevertReason && revertReason.isPresent()) {
+      rlpOutput.writeBytes(revertReason.get());
+    }
+    rlpOutput.endList();
   }
 
   /**
