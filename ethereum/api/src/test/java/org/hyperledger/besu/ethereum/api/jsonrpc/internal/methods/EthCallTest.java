@@ -206,6 +206,7 @@ public class EthCallTest {
   private void mockTransactionProcessorSuccessResult(final Bytes output) {
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
 
+    when(result.isSuccessful()).thenReturn(true);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);
     when(transactionSimulator.process(any(), any())).thenReturn(Optional.of(result));
