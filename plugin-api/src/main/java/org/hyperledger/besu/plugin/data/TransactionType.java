@@ -16,7 +16,7 @@ package org.hyperledger.besu.plugin.data;
 
 public enum TransactionType {
   FRONTIER(0xf8 /* doesn't end up being used as we don't serialize legacy txs with their type */),
-  EIP1559(0x3 /* placeholder value until we know what the real type byte will be */);
+  EIP1559(0xf /* placeholder value until we know what the real type byte will be */);
 
   private final int typeValue;
 
