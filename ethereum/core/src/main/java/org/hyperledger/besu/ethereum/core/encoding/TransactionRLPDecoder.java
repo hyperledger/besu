@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
@@ -69,13 +70,10 @@ public class TransactionRLPDecoder {
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
       final Decoder decoder =
-          Optional.ofNullable(TYPED_TRANSACTION_DECODERS.get(transactionType))
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          String.format(
-                              "Developer Error. A supported transaction type %s has no associated decoding logic",
-                              transactionType)));
+          checkNotNull(
+              TYPED_TRANSACTION_DECODERS.get(transactionType),
+              "Developer Error. A supported transaction type %s has no associated decoding logic",
+              transactionType);
       return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
     }
   }
