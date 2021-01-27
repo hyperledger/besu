@@ -105,12 +105,12 @@ public class EthCallTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-    when(transactionSimulator.process(any(), any())).thenReturn(Optional.empty());
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
 
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionSimulator).process(any(), any());
+    verify(transactionSimulator).process(any(), any(), any(), any());
   }
 
   @Test
@@ -130,7 +130,7 @@ public class EthCallTest {
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionSimulator).process(eq(callParameter), any());
+    verify(transactionSimulator).process(eq(callParameter), any(), any(), any());
   }
 
   @Test
@@ -146,7 +146,7 @@ public class EthCallTest {
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionSimulator).process(eq(callParameter()), any());
+    verify(transactionSimulator).process(eq(callParameter()), any(), any(), any());
   }
 
   @Test
@@ -155,21 +155,23 @@ public class EthCallTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-    when(transactionSimulator.process(any(), any())).thenReturn(Optional.empty());
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
 
     method.response(request);
 
-    verify(transactionSimulator).process(any(), eq(Hash.ZERO));
+    verify(blockchainQueries).getBlockHeaderByHash(eq(Hash.ZERO));
+    verify(transactionSimulator).process(any(), any(), any(), any());
   }
 
   @Test
   public void shouldUseCorrectBlockNumberWhenEarliest() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "earliest");
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
-    when(transactionSimulator.process(any(), any())).thenReturn(Optional.empty());
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
     method.response(request);
 
-    verify(transactionSimulator).process(any(), eq(Hash.ZERO));
+    verify(blockchainQueries).getBlockHeaderByHash(eq(Hash.ZERO));
+    verify(transactionSimulator).process(any(), any(), any(), any());
   }
 
   @Test
@@ -177,11 +179,12 @@ public class EthCallTest {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), Quantity.create(13L));
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
-    when(transactionSimulator.process(any(), any())).thenReturn(Optional.empty());
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.empty());
 
     method.response(request);
 
-    verify(transactionSimulator).process(any(), eq(Hash.ZERO));
+    verify(blockchainQueries).getBlockHeaderByHash(eq(Hash.ZERO));
+    verify(transactionSimulator).process(any(), any(), any(), any());
   }
 
   private JsonCallParameter callParameter() {
@@ -209,6 +212,6 @@ public class EthCallTest {
     when(result.isSuccessful()).thenReturn(true);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getOutput()).thenReturn(output);
-    when(transactionSimulator.process(any(), any())).thenReturn(Optional.of(result));
+    when(transactionSimulator.process(any(), any(), any(), any())).thenReturn(Optional.of(result));
   }
 }
