@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 public enum JsonRpcResponseKey {
+  CHAIN_ID,
   COINBASE,
   DIFFICULTY,
   EXTRA_DATA,
@@ -26,6 +27,8 @@ public enum JsonRpcResponseKey {
   NUMBER,
   OMMERS_HASH,
   PARENT_HASH,
+  PUBLIC_KEY,
+  RAW,
   RECEIPTS_ROOT,
   SIZE,
   STATE_ROOT,
