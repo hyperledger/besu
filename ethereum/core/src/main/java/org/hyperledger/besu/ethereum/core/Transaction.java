@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -402,6 +403,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
     }
     return sender;
+  }
+
+  /**
+   * Returns the public key extracted from the signature.
+   *
+   * @return the public key
+   */
+  public Optional<String> getPublicKey() {
+    return SECP256K1.PublicKey.recoverFromSignature(getOrComputeSenderRecoveryHash(), signature)
+        .map(PublicKey::toString);
   }
 
   private Bytes32 getOrComputeSenderRecoveryHash() {
