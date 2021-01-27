@@ -59,9 +59,7 @@ public class LimitedTransactionsMessagesTest {
         .forEach(
             messageSize ->
                 assertThat(messageSize)
-                    .isLessThan(
-                        LimitedTransactionsMessages.LIMIT
-                            + MAX_ADDITIONAL_BYTES));
+                    .isLessThan(LimitedTransactionsMessages.LIMIT + MAX_ADDITIONAL_BYTES));
 
     final Set<Transaction> includedTransactions = new HashSet<>();
     includedTransactions.addAll(firstMessage.getIncludedTransactions());
