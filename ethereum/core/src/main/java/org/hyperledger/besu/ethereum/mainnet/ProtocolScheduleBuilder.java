@@ -221,7 +221,7 @@ public class ProtocolScheduleBuilder {
         .getClassicForkBlock()
         .ifPresent(
             classicBlockNumber -> {
-              final ProtocolSpec originalProtocolSpce =
+              final ProtocolSpec originalProtocolSpec =
                   protocolSchedule.getByBlockNumber(classicBlockNumber);
               addProtocolSpec(
                   protocolSchedule,
@@ -230,7 +230,7 @@ public class ProtocolScheduleBuilder {
                       config.getContractSizeLimit(),
                       config.getEvmStackSize(),
                       quorumCompatibilityMode));
-              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpce);
+              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
             });
 
     addProtocolSpec(
