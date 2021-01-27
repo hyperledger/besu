@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -173,6 +174,14 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   }
 
   private void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason) {
+    if (transactionType.equals(TransactionType.FRONTIER)) {
+      writeToForTransactionTrie(rlpOutput, withRevertReason);
+    } else {
+      rlpOutput.writeBytes(RLP.encode(out -> writeToForTransactionTrie(out, withRevertReason)));
+    }
+  }
+
+  public void writeToForTransactionTrie(final RLPOutput rlpOutput, final boolean withRevertReason) {
     if (!transactionType.equals(TransactionType.FRONTIER)) {
       rlpOutput.writeIntScalar(transactionType.getSerializedType());
     }
@@ -214,40 +223,43 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    */
   public static TransactionReceipt readFrom(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
-    final TransactionType transactionType =
-        rlpInput.nextIsList()
-            ? TransactionType.FRONTIER
-            : TransactionType.of(rlpInput.readIntScalar());
+    TransactionType transactionType = TransactionType.FRONTIER;
+    RLPInput rlpIn = rlpInput;
+    if (!rlpInput.nextIsList()) {
+      final Bytes typedTransactionReceiptBytes = rlpIn.readBytes();
+      transactionType = TransactionType.of(typedTransactionReceiptBytes.get(0));
+      rlpIn = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
+    }
 
-    rlpInput.enterList();
+    rlpIn.enterList();
     // Get the first element to check later to determine the
     // correct transaction receipt encoding to use.
-    final RLPInput firstElement = rlpInput.readAsRlp();
-    final long cumulativeGas = rlpInput.readLongScalar();
+    final RLPInput firstElement = rlpIn.readAsRlp();
+    final long cumulativeGas = rlpIn.readLongScalar();
     // The logs below will populate the bloom filter upon construction.
     // TODO consider validating that the logs and bloom filter match.
-    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(rlpInput);
-    final List<Log> logs = rlpInput.readList(Log::readFrom);
+    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(rlpIn);
+    final List<Log> logs = rlpIn.readList(Log::readFrom);
     final Optional<Bytes> revertReason;
-    if (rlpInput.isEndOfCurrentList()) {
+    if (rlpIn.isEndOfCurrentList()) {
       revertReason = Optional.empty();
     } else {
       if (!revertReasonAllowed) {
         throw new RLPException("Unexpected value at end of TransactionReceipt");
       }
-      revertReason = Optional.of(rlpInput.readBytes());
+      revertReason = Optional.of(rlpIn.readBytes());
     }
 
     // Status code-encoded transaction receipts have a single
     // byte for success (0x01) or failure (0x80).
     if (firstElement.raw().size() == 1) {
       final int status = firstElement.readIntScalar();
-      rlpInput.leaveList();
+      rlpIn.leaveList();
       return new TransactionReceipt(
           transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
     } else {
       final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-      rlpInput.leaveList();
+      rlpIn.leaveList();
       return new TransactionReceipt(
           transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
     }

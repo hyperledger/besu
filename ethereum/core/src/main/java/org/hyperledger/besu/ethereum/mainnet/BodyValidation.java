@@ -78,9 +78,13 @@ public final class BodyValidation {
   public static Hash receiptsRoot(final List<TransactionReceipt> receipts) {
     final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
-    for (int i = 0; i < receipts.size(); ++i) {
-      trie.put(indexKey(i), RLP.encode(receipts.get(i)::writeTo));
-    }
+    IntStream.range(0, receipts.size())
+        .forEach(
+            i ->
+                trie.put(
+                    indexKey(i),
+                    RLP.encode(
+                        rlpOutput -> receipts.get(i).writeToForTransactionTrie(rlpOutput, false))));
 
     return Hash.wrap(trie.getRootHash());
   }
