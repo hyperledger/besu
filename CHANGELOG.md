@@ -38,6 +38,11 @@
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
+
+### Download link
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-21.1.0-RC1.zip
+sha256: `b0fe3942052b8fd43fc3025a298a6c701f9edae2e100f0c563a1c5a4ceef71f1`
+
 ## 20.10.4
 
 ### Additions and Improvements
