@@ -77,8 +77,6 @@ public class TransactionRLPEncoderTest {
             BlockDataGenerator.BlockOptions.create()
                 .addTransaction(gen.transactionsWithAllTypes().toArray(new Transaction[] {})));
 
-    System.out.println(RLP.encode(block::writeTo).toHexString());
-
     assertThat(
             Block.readFrom(
                 RLP.input(RLP.encode(block::writeTo)), new MainnetBlockHeaderFunctions()))
