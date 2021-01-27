@@ -331,8 +331,7 @@ public class EthPeer {
    * @return true if the peer is ready to accept requests for data.
    */
   public boolean readyForRequests() {
-    return statusHasBeenSentToPeer.get()
-        && statusHasBeenReceivedFromPeer.get();
+    return statusHasBeenSentToPeer.get() && statusHasBeenReceivedFromPeer.get();
   }
 
   /**
