@@ -330,13 +330,16 @@ public class MessageFrame {
 
     // the warmed up addresses will always be a superset of the address keys in the warmed up
     // storage so we can do both warm ups in one pass
-    accessListWarmAddresses.parallelStream()
+    accessListWarmAddresses
+        .parallelStream()
         .forEach(
             address ->
                 Optional.ofNullable(worldState.get(address))
                     .ifPresent(
                         account ->
-                            warmedUpStorage.get(address).parallelStream()
+                            warmedUpStorage
+                                .get(address)
+                                .parallelStream()
                                 .forEach(
                                     storageKeyBytes ->
                                         account.getStorageValue(
