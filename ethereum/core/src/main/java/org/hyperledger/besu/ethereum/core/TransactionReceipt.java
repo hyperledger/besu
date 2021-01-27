@@ -214,43 +214,40 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    */
   public static TransactionReceipt readFrom(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
-    RLPInput input = rlpInput;
-    TransactionType transactionType = TransactionType.FRONTIER;
-    if (!input.nextIsList()) {
-      final Bytes bytes = input.readBytes();
-      transactionType = TransactionType.of(bytes.get(0));
-      input = new BytesValueRLPInput(bytes.slice(1), false);
-    }
+    final TransactionType transactionType =
+        rlpInput.nextIsList()
+            ? TransactionType.FRONTIER
+            : TransactionType.of(rlpInput.readIntScalar());
 
-    input.enterList();
+    rlpInput.enterList();
     // Get the first element to check later to determine the
     // correct transaction receipt encoding to use.
-    final RLPInput firstElement = input.readAsRlp();
-    final long cumulativeGas = input.readLongScalar();
+    final RLPInput firstElement = rlpInput.readAsRlp();
+    final long cumulativeGas = rlpInput.readLongScalar();
     // The logs below will populate the bloom filter upon construction.
     // TODO consider validating that the logs and bloom filter match.
-    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
-    final List<Log> logs = input.readList(Log::readFrom);
+    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(rlpInput);
+    final List<Log> logs = rlpInput.readList(Log::readFrom);
     final Optional<Bytes> revertReason;
-    if (input.isEndOfCurrentList()) {
+    if (rlpInput.isEndOfCurrentList()) {
       revertReason = Optional.empty();
     } else {
       if (!revertReasonAllowed) {
         throw new RLPException("Unexpected value at end of TransactionReceipt");
       }
-      revertReason = Optional.of(input.readBytes());
+      revertReason = Optional.of(rlpInput.readBytes());
     }
 
     // Status code-encoded transaction receipts have a single
     // byte for success (0x01) or failure (0x80).
     if (firstElement.raw().size() == 1) {
       final int status = firstElement.readIntScalar();
-      input.leaveList();
+      rlpInput.leaveList();
       return new TransactionReceipt(
           transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
     } else {
       final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-      input.leaveList();
+      rlpInput.leaveList();
       return new TransactionReceipt(
           transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
     }
