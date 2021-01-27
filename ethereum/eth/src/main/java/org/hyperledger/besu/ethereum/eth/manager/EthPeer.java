@@ -332,8 +332,7 @@ public class EthPeer {
    */
   public boolean readyForRequests() {
     return statusHasBeenSentToPeer.get()
-        && statusHasBeenReceivedFromPeer.get()
-        && fullyValidated.get();
+        && statusHasBeenReceivedFromPeer.get();
   }
 
   /**
