@@ -130,7 +130,7 @@ public enum JsonRpcError {
       -50100, "No privateFor specified in rawTxArgs for GoQuorum raw private transaction."),
   GOQUORUM_ONLY_STANDARD_MODE_SUPPORTED(
       -50100,
-      "Mode other than 'standard' mode defined in rawTxArgs for GoQuorum raw private transaction."),
+      "Invalid private transaction mode defined in rawTxArgs for GoQuorum raw private transaction."),
   GOQUORUM_LOOKUP_ID_NOT_AVAILABLE(
       -50100, "No lookup id specified in GoQuorum raw private transaction."),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),

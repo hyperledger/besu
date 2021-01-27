@@ -61,8 +61,7 @@ public class LimitedTransactionsMessagesTest {
                 assertThat(messageSize)
                     .isLessThan(
                         LimitedTransactionsMessages.LIMIT
-                            + MAX_ADDITIONAL_BYTES)); // TODO: Sally/Mark/Lucas please check that 5
-    // is really the max!
+                            + MAX_ADDITIONAL_BYTES));
 
     final Set<Transaction> includedTransactions = new HashSet<>();
     includedTransactions.addAll(firstMessage.getIncludedTransactions());
