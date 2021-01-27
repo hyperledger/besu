@@ -2,7 +2,7 @@
 
 ## 21.2.0-RC1
 
-### 21.2 Breaking Changes
+### 21.2.0 Breaking Changes
 * `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated.
 * `eth_call` will not return a JSON-RPC result if the call fails, but will return an error instead. If it was for a revert the revert reason will be included.
 * `eth_call` will not fail for account balance issues by default. An parameter `"strict": true` can be added to the call parameters (with `to` and `from`) to enforce balance checks.
