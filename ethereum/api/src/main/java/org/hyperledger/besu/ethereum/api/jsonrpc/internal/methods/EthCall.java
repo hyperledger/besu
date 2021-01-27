@@ -25,12 +25,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private final TransactionSimulator transactionSimulator;
@@ -55,9 +59,17 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     final JsonCallParameter callParams = validateAndGetCallParams(request);
+    final BlockHeader header = blockchainQueries.get().getBlockHeaderByHash(blockHash).orElse(null);
 
     return transactionSimulator
-        .process(callParams, blockHash)
+        .process(
+            callParams,
+            ImmutableTransactionValidationParams.builder()
+                .from(TransactionValidationParams.transactionSimulator())
+                .isAllowExceedingBalance(!callParams.isStrict())
+                .build(),
+            OperationTracer.NO_TRACING,
+            header)
         .map(
             result ->
                 result
