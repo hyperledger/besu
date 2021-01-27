@@ -396,7 +396,7 @@ public class ProtocolSpecBuilder {
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
         TransactionGasBudgetCalculator gasBudgetCalculator,
-        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
+        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
   }
 
   public interface BlockValidatorBuilder {
@@ -405,7 +405,7 @@ public class ProtocolSpecBuilder {
         BlockBodyValidator blockBodyValidator,
         BlockProcessor blockProcessor,
         BadBlockManager badBlockManager,
-        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
+        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
   }
 
   public interface BlockImporterBuilder {
