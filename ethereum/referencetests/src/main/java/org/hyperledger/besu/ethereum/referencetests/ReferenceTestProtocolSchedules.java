@@ -64,7 +64,7 @@ public class ReferenceTestProtocolSchedules {
     builder.put("MuirGlacier", createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0)));
     if (ExperimentalEIPs.berlinEnabled) {
       builder.put("Berlin", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
-      builder.put("YOLOv2", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
+      builder.put("YOLOv3", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
     }
     return new ReferenceTestProtocolSchedules(builder.build());
   }
