@@ -37,7 +37,7 @@ public class BlockHeader extends SealableBlockHeader
 
   private final long nonce;
 
-  @JsonIgnore private final Supplier<Hash> hash;
+  private final Supplier<Hash> hash;
 
   private final Supplier<ParsedExtraData> parsedExtraData;
 
