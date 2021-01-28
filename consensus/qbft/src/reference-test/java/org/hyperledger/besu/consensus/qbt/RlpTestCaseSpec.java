@@ -3,7 +3,9 @@ package org.hyperledger.besu.consensus.qbt;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
+import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Hash;
 
@@ -99,25 +101,62 @@ public class RlpTestCaseSpec {
           new CommitPayload(
               new ConsensusRoundIdentifier(unsignedCommit.sequence, unsignedCommit.round),
               Hash.fromHexStringLenient(unsignedCommit.digest),
-              Signature.decode(Bytes.fromHexStringLenient(unsignedCommit.commitSeal)));
-
+              Signature.decode(Bytes.fromHexString(unsignedCommit.commitSeal)));
       final SignedData<CommitPayload> signedCommitPayload =
           SignedData.create(commitPayload, Signature.decode(Bytes.fromHexString(signature)));
-
       return signedCommitPayload.encode();
     }
   }
 
+  public static class UnsignedPrepare {
+
+    private final long sequence;
+    private final int round;
+    private final String digest;
+
+    @JsonCreator
+    public UnsignedPrepare(
+        @JsonProperty("sequence") final long sequence,
+        @JsonProperty("round") final int round,
+        @JsonProperty("digest") final String digest) {
+      this.sequence = sequence;
+      this.round = round;
+      this.digest = digest;
+    }
+  }
+
   public static class PrepareMessage implements RlpTestInput {
+    private final UnsignedPrepare unsignedPrepare;
+    private final String signature;
+
+    @JsonCreator
+    public PrepareMessage(
+        @JsonProperty("unsignedPrepare") UnsignedPrepare unsignedPrepare,
+        @JsonProperty("signature") final String signature) {
+      this.unsignedPrepare = unsignedPrepare;
+      this.signature = signature;
+    }
 
     @Override
     public RlpTestInput fromRlp(final Bytes rlp) {
-      return null;
+      final Prepare prepare = Prepare.decode(rlp);
+      return new PrepareMessage(
+          new UnsignedPrepare(
+              prepare.getRoundIdentifier().getSequenceNumber(),
+              prepare.getRoundIdentifier().getRoundNumber(),
+              prepare.getDigest().toHexString()),
+          prepare.getSignedPayload().getSignature().encodedBytes().toHexString());
     }
 
     @Override
     public Bytes toRlp() {
-      return null;
+      final PreparePayload preparePayload =
+          new PreparePayload(
+              new ConsensusRoundIdentifier(unsignedPrepare.sequence, unsignedPrepare.round),
+              Hash.fromHexStringLenient(unsignedPrepare.digest));
+      final SignedData<PreparePayload> signedPreparePayload =
+          SignedData.create(preparePayload, Signature.decode(Bytes.fromHexString(signature)));
+      return signedPreparePayload.encode();
     }
   }
 
