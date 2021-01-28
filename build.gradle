@@ -120,7 +120,6 @@ allprojects {
   targetCompatibility = 11
 
   repositories {
-    jcenter()
     mavenCentral()
     mavenLocal()
     maven { url "https://hyperledger-org.bintray.com/besu-repo" }
@@ -564,9 +563,7 @@ distZip {
 }
 
 def dockerVariants = [
-  "openjdk-11",
-  "graalvm",
-  "openjdk-latest"
+  "openjdk-11"
 ]
 
 // rename the top level dir from besu-<version> to besu and this makes it really
@@ -593,7 +590,7 @@ task distDocker {
   inputs.dir("build/docker-besu/")
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def dockerBuildDir = "build/docker-besu/"
-  def imageName = "hyperledger/besu"
+  def imageName = "ghcr.io/lacchain/besu"
 
   doLast {
     for (def variant in dockerVariants) {
@@ -627,7 +624,7 @@ task testDocker {
   doLast {
     for (def variant in dockerVariants) {
       exec {
-        def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+        def image = project.hasProperty('release.releaseVersion') ? "ghcr.io/lacchain/besu:" + project.property('release.releaseVersion') : "ghcr.io/lacchain/besu:${project.version}"
         workingDir "docker/${variant}"
         executable "sh"
         args "-c", "bash ../test.sh ${image}-${variant}"
@@ -639,18 +636,13 @@ task testDocker {
 task dockerUpload {
   dependsOn distDocker
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "hyperledger/besu"
+  def imageName = "ghcr.io/lacchain/besu"
   def azureImageName = "hyperledger.azurecr.io/besu"
   def image = "${imageName}:${dockerBuildVersion}"
   def additionalTags = []
 
   if (project.hasProperty('branch') && project.property('branch') == 'master') {
     additionalTags.add('develop')
-  }
-
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
-    additionalTags.add('latest')
-    additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
   doLast {
