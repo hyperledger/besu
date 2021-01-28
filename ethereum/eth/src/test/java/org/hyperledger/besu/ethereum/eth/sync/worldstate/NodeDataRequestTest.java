@@ -51,14 +51,14 @@ public class NodeDataRequestTest {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     StorageTrieNodeDataRequest request =
         NodeDataRequest.createStorageDataRequest(
-            gen.hash(), Optional.empty(), Optional.of(Bytes.EMPTY));
+            gen.hash(), Optional.of(Hash.EMPTY), Optional.of(Bytes.EMPTY));
     NodeDataRequest sedeRequest = serializeThenDeserialize(request);
     assertRequestsEquals(sedeRequest, request);
     assertThat(sedeRequest).isInstanceOf(StorageTrieNodeDataRequest.class);
   }
 
   @Test
-  public void serializesStorageTrieNodeRequestsWithAddressAndLocation() {
+  public void serializesStorageTrieNodeRequestsWithAccountHashAndLocation() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     StorageTrieNodeDataRequest request =
         NodeDataRequest.createStorageDataRequest(
@@ -78,7 +78,7 @@ public class NodeDataRequestTest {
   }
 
   @Test
-  public void serializesCodeRequestsWithAddress() {
+  public void serializesCodeRequestsWithAccountHash() {
     BlockDataGenerator gen = new BlockDataGenerator(0);
     CodeNodeDataRequest request =
         NodeDataRequest.createCodeRequest(gen.hash(), Optional.of(Hash.ZERO));

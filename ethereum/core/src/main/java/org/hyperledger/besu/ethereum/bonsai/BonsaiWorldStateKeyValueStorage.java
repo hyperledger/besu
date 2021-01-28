@@ -77,6 +77,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public Optional<Bytes> getAccountTrieNodeData(final Bytes location, final Bytes32 hash) {
+    // for Bonsai trie fast sync this method should return an empty
+    return Optional.empty();
+  }
+
+  @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
