@@ -307,6 +307,15 @@ public class ProtocolScheduleBuilder {
             isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
             quorumCompatibilityMode));
+    addProtocolSpec(
+        protocolSchedule,
+        config.getLacchainPostQuantumBlockNumber(),
+        LacchainProtocolSpecs.postQuantumDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled,
+            quorumCompatibilityMode));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;

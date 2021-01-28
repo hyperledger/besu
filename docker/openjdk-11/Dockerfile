@@ -1,5 +1,22 @@
 
-FROM openjdk:11.0.7-jre-slim-buster
+FROM openjdk:11.0.7-jre-slim-buster as base
+
+RUN apt-get update && apt-get install --no-install-recommends -yV \
+    dpkg-dev \
+    wget \
+    ca-certificates
+
+RUN mkdir /debs/
+RUN wget --directory-prefix=/debs/ https://github.com/lacchain/liboqs-debian/releases/download/0.4.0/liboqs_0.4.0_amd64.deb
+RUN wget --directory-prefix=/debs/ https://github.com/lacchain/liboqs-debian/releases/download/0.4.0/SHA256SUMS
+RUN cd /debs/ && sha256sum --check --ignore-missing --status SHA256SUMS && dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz
+RUN echo "deb [trusted=yes] file:/debs ./" >> /etc/apt/sources.list
+
+FROM base as runner
+
+RUN apt-get update && apt-get install --no-install-recommends -yV \
+    liboqs \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
     chown besu:besu /opt/besu

@@ -50,6 +50,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static final Address BLS12_PAIRING = Address.precompiled(0x10);
   public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x11);
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x12);
+  public static final Address LACCHAIN_FALCON = Address.precompiled(0x13);
 
   // Last address that can be generated for a pre-compiled contract
   public static final Integer PRIVACY = Byte.MAX_VALUE - 1;

@@ -49,6 +49,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private final OptionalLong aghartaBlockNumber = OptionalLong.empty();
   private final OptionalLong phoenixBlockNumber = OptionalLong.empty();
   private final OptionalLong thanosBlockNumber = OptionalLong.empty();
+  private final OptionalLong lacchainPostQuantumBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -198,6 +199,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getThanosBlockNumber() {
     return thanosBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getLacchainPostQuantumBlockNumber() {
+    return lacchainPostQuantumBlockNumber;
   }
 
   @Override

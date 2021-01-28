@@ -9,6 +9,7 @@
     "byzantiumBlock": 0,
     "constantinopleBlock": 0,
     "petersburgBlock": 0,
+    "lacchainpqblock": 0,
     "contractSizeLimit": 2147483647,
     "ethash": {
       "fixeddifficulty": 100
