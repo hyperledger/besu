@@ -40,4 +40,4 @@ jobs:
         uses: shemnon/github-action-repolinter@master
         with:
           # a path to a custom-repolint-file you wish to use
-         custom-repolint-url: https://github.com/hyperledger-labs/hyperledger-community-management-tools/blob/main/repo_structure/repolint.json
+         custom-repolint-url: https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/main/repo_structure/repolint.json
