@@ -223,43 +223,43 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    */
   public static TransactionReceipt readFrom(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
+    RLPInput input = rlpInput;
     TransactionType transactionType = TransactionType.FRONTIER;
-    RLPInput rlpIn = rlpInput;
     if (!rlpInput.nextIsList()) {
-      final Bytes typedTransactionReceiptBytes = rlpIn.readBytes();
+      final Bytes typedTransactionReceiptBytes = input.readBytes();
       transactionType = TransactionType.of(typedTransactionReceiptBytes.get(0));
-      rlpIn = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
+      input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
     }
 
-    rlpIn.enterList();
+    input.enterList();
     // Get the first element to check later to determine the
     // correct transaction receipt encoding to use.
-    final RLPInput firstElement = rlpIn.readAsRlp();
-    final long cumulativeGas = rlpIn.readLongScalar();
+    final RLPInput firstElement = input.readAsRlp();
+    final long cumulativeGas = input.readLongScalar();
     // The logs below will populate the bloom filter upon construction.
     // TODO consider validating that the logs and bloom filter match.
-    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(rlpIn);
-    final List<Log> logs = rlpIn.readList(Log::readFrom);
+    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
+    final List<Log> logs = input.readList(Log::readFrom);
     final Optional<Bytes> revertReason;
-    if (rlpIn.isEndOfCurrentList()) {
+    if (input.isEndOfCurrentList()) {
       revertReason = Optional.empty();
     } else {
       if (!revertReasonAllowed) {
         throw new RLPException("Unexpected value at end of TransactionReceipt");
       }
-      revertReason = Optional.of(rlpIn.readBytes());
+      revertReason = Optional.of(input.readBytes());
     }
 
     // Status code-encoded transaction receipts have a single
     // byte for success (0x01) or failure (0x80).
     if (firstElement.raw().size() == 1) {
       final int status = firstElement.readIntScalar();
-      rlpIn.leaveList();
+      input.leaveList();
       return new TransactionReceipt(
           transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
     } else {
       final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-      rlpIn.leaveList();
+      input.leaveList();
       return new TransactionReceipt(
           transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
     }
