@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.qbft.validation.MessageValidator.SubsequentMessageValidator;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -26,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 
-@SuppressWarnings("UnusedVariable")
 public class MessageValidatorFactory {
 
   private final ProposerSelector proposerSelector;
@@ -72,11 +72,28 @@ public class MessageValidatorFactory {
 
   public MessageValidator createMessageValidator(
       final ConsensusRoundIdentifier roundIdentifier, final BlockHeader parentHeader) {
-    return new MessageValidator();
+
+    final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
+    final BlockValidator blockValidator =
+        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
+
+    final ProposalValidator proposalValidator =
+        new ProposalValidator(
+            blockValidator,
+            protocolContext,
+            BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
+            validatorsForHeight,
+            roundIdentifier,
+            proposerSelector.selectProposerForRound(roundIdentifier));
+
+    return new MessageValidator(
+        expectedDigest ->
+            new SubsequentMessageValidator(validatorsForHeight, roundIdentifier, expectedDigest),
+        proposalValidator);
   }
 
   public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
-    return new FutureRoundProposalMessageValidator();
+    return new FutureRoundProposalMessageValidator(this, chainHeight, parentHeader);
   }
 }

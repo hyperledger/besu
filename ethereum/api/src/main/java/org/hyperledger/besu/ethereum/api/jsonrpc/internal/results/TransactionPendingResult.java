@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -38,12 +39,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 })
 public class TransactionPendingResult implements TransactionResult {
 
+  private final String chainId;
   private final String from;
   private final String gas;
   private final String gasPrice;
   private final String hash;
   private final String input;
   private final String nonce;
+  private final String publicKey;
+  private final String raw;
   private final String to;
   private final String value;
   private final String v;
@@ -51,17 +55,27 @@ public class TransactionPendingResult implements TransactionResult {
   private final String s;
 
   public TransactionPendingResult(final Transaction transaction) {
+    this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
     this.gasPrice = Quantity.create(transaction.getGasPrice());
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
+    this.publicKey = transaction.getPublicKey().orElse(null);
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    transaction.writeTo(out);
+    this.raw = out.encoded().toString();
     this.to = transaction.getTo().map(Address::toHexString).orElse(null);
     this.value = Quantity.create(transaction.getValue());
     this.v = Quantity.create(transaction.getV());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
+  }
+
+  @JsonGetter(value = "chainId")
+  public String getChainId() {
+    return chainId;
   }
 
   @JsonGetter(value = "from")
@@ -92,6 +106,16 @@ public class TransactionPendingResult implements TransactionResult {
   @JsonGetter(value = "nonce")
   public String getNonce() {
     return nonce;
+  }
+
+  @JsonGetter(value = "publicKey")
+  public String getPublicKey() {
+    return publicKey;
+  }
+
+  @JsonGetter(value = "raw")
+  public String getRaw() {
+    return raw;
   }
 
   @JsonGetter(value = "to")

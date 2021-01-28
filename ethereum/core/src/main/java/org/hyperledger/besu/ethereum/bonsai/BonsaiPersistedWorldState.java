@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.Map;
@@ -37,11 +38,15 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorldView {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
@@ -84,6 +89,136 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     worldStateRootHash = blockHeader.getStateRoot();
   }
 
+  private Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
+    // first clear storage
+    for (final Address address : updater.getStorageToClear()) {
+      // because we are clearing persisted values we need the account root as persisted
+      final BonsaiAccount oldAccount =
+          worldStateStorage
+              .getAccount(Hash.hash(address))
+              .map(bytes -> fromRLP(BonsaiPersistedWorldState.this, address, bytes, true))
+              .orElse(null);
+      if (oldAccount == null) {
+        // This is when an account is both created and deleted within the scope of the same
+        // block.  A not-uncommon DeFi bot pattern.
+        continue;
+      }
+      final Hash addressHash = Hash.hash(address);
+      final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+          new StoredMerklePatriciaTrie<>(
+              (location, key) -> getStorageTrieNode(addressHash, location, key),
+              oldAccount.getStorageRoot(),
+              Function.identity(),
+              Function.identity());
+      Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+      while (!entriesToDelete.isEmpty()) {
+        entriesToDelete
+            .keySet()
+            .forEach(
+                k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
+        if (entriesToDelete.size() == 256) {
+          entriesToDelete.keySet().forEach(storageTrie::remove);
+          entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+        } else {
+          break;
+        }
+      }
+    }
+
+    // second update account storage state.  This must be done before updating the accounts so
+    // that we can get the storage state hash
+    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
+        updater.getStorageToUpdate().entrySet()) {
+      final Address updatedAddress = storageAccountUpdate.getKey();
+      final Hash updatedAddressHash = Hash.hash(updatedAddress);
+      final BonsaiValue<BonsaiAccount> accountValue =
+          updater.getAccountsToUpdate().get(updatedAddress);
+      final BonsaiAccount accountOriginal = accountValue.getOriginal();
+      final Hash storageRoot =
+          (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
+      final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+          new StoredMerklePatriciaTrie<>(
+              (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
+              storageRoot,
+              Function.identity(),
+              Function.identity());
+
+      // for manicured tries and composting, collect branches here (not implemented)
+
+      for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
+          storageAccountUpdate.getValue().entrySet()) {
+        final Hash keyHash = storageUpdate.getKey();
+        final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
+        if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+          stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
+          storageTrie.remove(keyHash);
+        } else {
+          final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
+          stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorageBytes);
+          storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
+        }
+      }
+
+      final BonsaiAccount accountUpdated = accountValue.getUpdated();
+      if (accountUpdated != null) {
+        storageTrie.commit(
+            (location, key, value) ->
+                writeStorageTrieNode(stateUpdater, updatedAddressHash, location, key, value));
+        final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
+        accountUpdated.setStorageRoot(newStorageRoot);
+      }
+      // for manicured tries and composting, trim and compost here
+    }
+
+    // Third update the code.  This has the side effect of ensuring a code hash is calculated.
+    for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate :
+        updater.getCodeToUpdate().entrySet()) {
+      final Bytes updatedCode = codeUpdate.getValue().getUpdated();
+      final Hash accountHash = Hash.hash(codeUpdate.getKey());
+      if (updatedCode == null || updatedCode.size() == 0) {
+        stateUpdater.removeCode(accountHash);
+      } else {
+        stateUpdater.putCode(accountHash, null, updatedCode);
+      }
+    }
+
+    // next walk the account trie
+    final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+        new StoredMerklePatriciaTrie<>(
+            this::getAccountStateTrieNode,
+            worldStateRootHash,
+            Function.identity(),
+            Function.identity());
+
+    // for manicured tries and composting, collect branches here (not implemented)
+
+    // now add the accounts
+    for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
+        updater.getAccountsToUpdate().entrySet()) {
+      final Bytes accountKey = accountUpdate.getKey();
+      final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
+      final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
+      if (updatedAccount == null) {
+        final Hash addressHash = Hash.hash(accountKey);
+        accountTrie.remove(addressHash);
+        stateUpdater.removeAccountInfoState(addressHash);
+      } else {
+        final Hash addressHash = updatedAccount.getAddressHash();
+        final Bytes accountValue = updatedAccount.serializeAccount();
+        stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
+        accountTrie.put(addressHash, accountValue);
+      }
+    }
+
+    // TODO write to a cache and then generate a layer update from that and the
+    // DB tx updates.  Right now it is just DB updates.
+    accountTrie.commit(
+        (location, hash, value) ->
+            writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
+    final Bytes32 rootHash = accountTrie.getRootHash();
+    return Hash.wrap(rootHash);
+  }
+
   @Override
   public void persist(final BlockHeader blockHeader) {
     boolean success = false;
@@ -92,140 +227,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
 
     try {
-
-      // first clear storage
-      for (final Address address : updater.getStorageToClear()) {
-        // because we are clearing persisted values we need the account root as persisted
-        final BonsaiAccount oldAccount =
-            worldStateStorage
-                .getAccount(Hash.hash(address))
-                .map(bytes -> fromRLP(BonsaiPersistedWorldState.this, address, bytes, true))
-                .orElse(null);
-        if (oldAccount == null) {
-          // This is when an account is both created and deleted within the scope of the same
-          // block.  A not-uncommon DeFi bot pattern.
-          continue;
-        }
-
-        final Hash addressHash = Hash.hash(address);
-        final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-            new StoredMerklePatriciaTrie<>(
-                (location, key) -> getStorageTrieNode(addressHash, location, key),
-                oldAccount.getStorageRoot(),
-                Function.identity(),
-                Function.identity());
-        Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-        while (!entriesToDelete.isEmpty()) {
-          entriesToDelete
-              .keySet()
-              .forEach(
-                  k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
-          if (entriesToDelete.size() == 256) {
-            entriesToDelete.keySet().forEach(storageTrie::remove);
-            entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-          } else {
-            break;
-          }
-        }
-      }
-
-      // second update account storage state.  This must be done before updating the accounts so
-      // that we can get the storage state hash
-      for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
-          updater.getStorageToUpdate().entrySet()) {
-        final Address updatedAddress = storageAccountUpdate.getKey();
-        final Hash updatedAddressHash = Hash.hash(updatedAddress);
-        final BonsaiValue<BonsaiAccount> accountValue =
-            updater.getAccountsToUpdate().get(updatedAddress);
-        final BonsaiAccount accountOriginal = accountValue.getOriginal();
-        final Hash storageRoot =
-            (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
-        final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-            new StoredMerklePatriciaTrie<>(
-                (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
-                storageRoot,
-                Function.identity(),
-                Function.identity());
-
-        // for manicured tries and composting, collect branches here (not implemented)
-
-        for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
-            storageAccountUpdate.getValue().entrySet()) {
-          final Hash keyHash = storageUpdate.getKey();
-          final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
-          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-            stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
-            storageTrie.remove(keyHash);
-          } else {
-            final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
-            stateUpdater.putStorageValueBySlotHash(
-                updatedAddressHash, keyHash, updatedStorageBytes);
-            storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
-          }
-        }
-
-        final BonsaiAccount accountUpdated = accountValue.getUpdated();
-        if (accountUpdated != null) {
-          storageTrie.commit(
-              (location, key, value) ->
-                  writeStorageTrieNode(stateUpdater, updatedAddressHash, location, key, value));
-          final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
-          accountUpdated.setStorageRoot(newStorageRoot);
-        }
-        // for manicured tries and composting, trim and compost here
-      }
-
-      // Third update the code.  This has the side effect of ensuring a code hash is calculated.
-      for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate :
-          updater.getCodeToUpdate().entrySet()) {
-        final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-        final Hash accountHash = Hash.hash(codeUpdate.getKey());
-        if (updatedCode == null || updatedCode.size() == 0) {
-          stateUpdater.removeCode(accountHash);
-        } else {
-          stateUpdater.putCode(accountHash, null, updatedCode);
-        }
-      }
-
-      // next collect the branches that will be trimmed
-      final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
-          new StoredMerklePatriciaTrie<>(
-              this::getAccountStateTrieNode,
-              worldStateRootHash,
-              Function.identity(),
-              Function.identity());
-
-      // for manicured tries and composting, collect branches here (not implemented)
-
-      // now add the accounts
-      for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
-          updater.getAccountsToUpdate().entrySet()) {
-        final Bytes accountKey = accountUpdate.getKey();
-        final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
-        final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
-        if (updatedAccount == null) {
-          final Hash addressHash = Hash.hash(accountKey);
-          accountTrie.remove(addressHash);
-          stateUpdater.removeAccountInfoState(addressHash);
-        } else {
-          final Hash addressHash = updatedAccount.getAddressHash();
-          final Bytes accountValue = updatedAccount.serializeAccount();
-          stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
-          accountTrie.put(addressHash, accountValue);
-        }
-      }
-
-      // TODO write to a cache and then generate a layer update from that and the
-      // DB tx updates.  Right now it is just DB updates.
-      accountTrie.commit(
-          (location, hash, value) ->
-              writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
-      worldStateRootHash = Hash.wrap(accountTrie.getRootHash());
+      worldStateRootHash = calculateRootHash(stateUpdater);
       stateUpdater
           .getTrieBranchStorageTransaction()
           .put(WORLD_ROOT_HASH_KEY, worldStateRootHash.toArrayUnsafe());
-
-      // for manicured tries and composting, trim and compost branches here
 
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.  If specified but not a direct
@@ -235,15 +240,15 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
           throw new RuntimeException(
               "World State Root does not match expected value, header "
                   + blockHeader.getStateRoot().toHexString()
-                  + " calcualted "
+                  + " calculated "
                   + worldStateRootHash.toHexString());
         }
         worldStateBlockHash = blockHeader.getHash();
         stateUpdater
             .getTrieBranchStorageTransaction()
             .put(WORLD_BLOCK_HASH_KEY, worldStateBlockHash.toArrayUnsafe());
-
         if (originalBlockHash.equals(blockHeader.getParentHash())) {
+          LOG.debug("Writing Trie Log for {}", worldStateBlockHash);
           final TrieLogLayer trieLog = updater.generateTrieLog(worldStateBlockHash);
           trieLog.freeze();
           archive.addLayeredWorldState(
@@ -284,6 +289,36 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   @Override
   public Hash rootHash() {
     return Hash.wrap(worldStateRootHash);
+  }
+
+  static final KeyValueStorageTransaction noOpTx =
+      new KeyValueStorageTransaction() {
+
+        @Override
+        public void put(final byte[] key, final byte[] value) {
+          // no-op
+        }
+
+        @Override
+        public void remove(final byte[] key) {
+          // no-op
+        }
+
+        @Override
+        public void commit() throws StorageException {
+          // no-op
+        }
+
+        @Override
+        public void rollback() {
+          // no-op
+        }
+      };
+
+  @Override
+  public Hash frontierRootHash() {
+    return calculateRootHash(
+        new BonsaiWorldStateKeyValueStorage.Updater(noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
   }
 
   public Hash blockHash() {

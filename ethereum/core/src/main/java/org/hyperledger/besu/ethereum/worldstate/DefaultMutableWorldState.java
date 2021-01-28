@@ -108,6 +108,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
+  public Hash frontierRootHash() {
+    return rootHash();
+  }
+
+  @Override
   public MutableWorldState copy() {
     return new DefaultMutableWorldState(rootHash(), worldStateStorage, preimageStorage);
   }

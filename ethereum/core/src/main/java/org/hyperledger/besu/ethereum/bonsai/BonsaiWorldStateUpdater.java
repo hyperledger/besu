@@ -150,7 +150,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public void commit() {
     for (final Address deletedAddress : getDeletedAccounts()) {
-      storageToClear.add(deletedAddress);
+      final BonsaiValue<BonsaiAccount> accountValue =
+          accountsToUpdate.computeIfAbsent(
+              deletedAddress,
+              __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
+      if (accountValue.getOriginal() != null) {
+        storageToClear.add(deletedAddress);
+      }
       final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
         codeValue.setUpdated(null);
@@ -161,10 +167,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 deletedCode ->
                     codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null)));
       }
-      final BonsaiValue<BonsaiAccount> accountValue =
-          accountsToUpdate.computeIfAbsent(
-              deletedAddress,
-              __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
 
       // mark all updated storage as to be cleared
       final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
@@ -181,11 +183,11 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         }
       }
 
-      final BonsaiAccount effective = accountValue.effective();
-      if (effective != null) {
+      final BonsaiAccount originalValue = accountValue.getOriginal();
+      if (originalValue != null) {
         // Enumerate and delete addresses not updated
         wrappedWorldView()
-            .getAllAccountStorage(deletedAddress, effective.getStorageRoot())
+            .getAllAccountStorage(deletedAddress, originalValue.getStorageRoot())
             .forEach(
                 (keyHash, entryValue) -> {
                   final Hash slotHash = Hash.wrap(keyHash);

@@ -162,8 +162,8 @@ public class ProtocolScheduleBuilder {
             quorumCompatibilityMode));
     addProtocolSpec(
         protocolSchedule,
-        config.getConstantinopleFixBlockNumber(),
-        MainnetProtocolSpecs.constantinopleFixDefinition(
+        config.getPetersburgBlockNumber(),
+        MainnetProtocolSpecs.petersburgDefinition(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
@@ -221,7 +221,7 @@ public class ProtocolScheduleBuilder {
         .getClassicForkBlock()
         .ifPresent(
             classicBlockNumber -> {
-              final ProtocolSpec originalProtocolSpce =
+              final ProtocolSpec originalProtocolSpec =
                   protocolSchedule.getByBlockNumber(classicBlockNumber);
               addProtocolSpec(
                   protocolSchedule,
@@ -230,7 +230,7 @@ public class ProtocolScheduleBuilder {
                       config.getContractSizeLimit(),
                       config.getEvmStackSize(),
                       quorumCompatibilityMode));
-              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpce);
+              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
             });
 
     addProtocolSpec(
@@ -362,8 +362,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock =
         validateForkOrder("Constantinople", config.getConstantinopleBlockNumber(), lastForkBlock);
     lastForkBlock =
-        validateForkOrder(
-            "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
+        validateForkOrder("Petersburg", config.getPetersburgBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);

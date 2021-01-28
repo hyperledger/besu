@@ -68,8 +68,4 @@ public class BonsaiValue<T> {
   boolean isUnchanged() {
     return Objects.equals(updated, original);
   }
-
-  T effective() {
-    return updated == null ? original : updated;
-  }
 }

@@ -120,7 +120,10 @@ class StoredNode<V> implements Node<V> {
               .orElseThrow(
                   () ->
                       new MerkleTrieException(
-                          "Unable to load trie node value for hash " + hash + " " + location));
+                          "Unable to load trie node value for hash "
+                              + hash
+                              + " location "
+                              + location));
     }
 
     return loaded;

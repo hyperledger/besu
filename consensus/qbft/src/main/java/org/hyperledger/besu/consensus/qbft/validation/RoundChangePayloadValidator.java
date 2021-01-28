@@ -45,7 +45,7 @@ public class RoundChangePayloadValidator {
   public boolean validate(final SignedData<RoundChangePayload> signedPayload) {
 
     if (!validators.contains(signedPayload.getAuthor())) {
-      LOG.info("{}: did not originate from a recognised validator.", ERROR_PREFIX);
+      LOG.info("{}: did not originate from a recognized validator.", ERROR_PREFIX);
       return false;
     }
 
