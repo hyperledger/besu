@@ -55,6 +55,10 @@ public class SignedData<M extends Payload> implements Authored {
     return unsignedPayload;
   }
 
+  public Signature getSignature() {
+    return signature;
+  }
+
   public void writeTo(final RLPOutput output) {
     output.startList();
     unsignedPayload.writeTo(output);

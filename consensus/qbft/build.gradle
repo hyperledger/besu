@@ -27,6 +27,32 @@ jar {
   }
 }
 
+sourceSets {
+  referenceTest {
+    java {
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+      srcDir file('src/reference-test/java')
+    }
+    resources.srcDir file('src/reference-test/resources')
+  }
+}
+
+task referenceTest(type: Test, dependsOn: ["compileTestJava"]) {
+  group = "verification"
+  description = "Runs the Besu QBFT reference tests"
+
+  jvmArgs = [
+    '--add-opens',
+    'java.base/java.util=ALL-UNNAMED',
+    '--add-opens',
+    'java.base/java.util.concurrent=ALL-UNNAMED'
+  ]
+  testClassesDirs = sourceSets.referenceTest.output.classesDirs
+  classpath = sourceSets.referenceTest.runtimeClasspath
+  outputs.upToDateWhen { false }
+}
+
 dependencies {
   implementation project(':config')
   implementation project(':consensus:common')
@@ -68,6 +94,17 @@ dependencies {
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
+
+  referenceTestImplementation 'junit:junit'
+  referenceTestImplementation 'org.assertj:assertj-core'
+  referenceTestImplementation 'org.mockito:mockito-core'
+  referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  referenceTestImplementation 'org.apache.tuweni:bytes'
+  referenceTestImplementation project(':crypto')
+  referenceTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  referenceTestImplementation project(':consensus:common')
+  referenceTestImplementation project(':ethereum:core')
+  referenceTestImplementation project(':config')
 
   testSupportImplementation 'org.mockito:mockito-core'
 }
