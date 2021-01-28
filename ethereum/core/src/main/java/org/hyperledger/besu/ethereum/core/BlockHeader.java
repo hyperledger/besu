@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
