@@ -33,11 +33,6 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
 
-  Optional<Bytes> isExistingAccountStateTrieNodeData2(Bytes location, Bytes32 hash);
-
-  Optional<Bytes> isExistingAccountStorageTrieNodeData(
-      Hash accountHash, Bytes location, Bytes32 nodeHash);
-
   boolean isWorldStateAvailable(Bytes32 rootHash, Hash blockHash);
 
   default boolean contains(final Bytes32 hash) {

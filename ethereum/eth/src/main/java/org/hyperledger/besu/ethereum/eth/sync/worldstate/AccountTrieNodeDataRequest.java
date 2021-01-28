@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
@@ -52,27 +54,32 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage, final Bytes value) {
+      final WorldStateStorage worldStateStorage, final Bytes path, final Bytes value) {
     final Stream.Builder<NodeDataRequest> builder = Stream.builder();
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     // Add code, if appropriate
 
-    final Optional<Hash> accountHash = getMergedHash(worldStateStorage);
-    accountHash.ifPresent(
-        hash ->
-            ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-                .putAccountInfoState(hash, value)
-                .commit());
+    final Hash accountHash =
+        Hash.wrap(
+            Bytes32.wrap(
+                CompactEncoding.pathToBytes(
+                    Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path))));
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
+          .putAccountInfoState(accountHash, value)
+          .commit();
+    }
 
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      builder.add(createCodeRequest(accountValue.getCodeHash(), accountHash));
+      builder.add(createCodeRequest(accountValue.getCodeHash(), Optional.of(accountHash)));
     }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
 
       final NodeDataRequest storageNode =
-          createStorageDataRequest(accountValue.getStorageRoot(), accountHash, Optional.empty());
+          createStorageDataRequest(
+              accountValue.getStorageRoot(), Optional.of(accountHash), Optional.empty());
       builder.add(storageNode);
     }
     return builder.build();

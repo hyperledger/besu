@@ -83,18 +83,6 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> isExistingAccountStateTrieNodeData2(
-      final Bytes location, final Bytes32 hash) {
-    return getAccountStateTrieNode(location, hash);
-  }
-
-  @Override
-  public Optional<Bytes> isExistingAccountStorageTrieNodeData(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return getAccountStorageTrieNode(accountHash, location, nodeHash);
-  }
-
-  @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return getAccountStateTrieNode(Bytes.EMPTY, rootHash).isPresent();
   }
@@ -191,8 +179,6 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     @Override
     public Updater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      System.out.println(
-          "putAccountStorageTrieNode2 " + accountHash + " " + location + " " + nodeHash);
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;

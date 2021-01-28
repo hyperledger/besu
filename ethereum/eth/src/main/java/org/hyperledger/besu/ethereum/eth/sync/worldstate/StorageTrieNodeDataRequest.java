@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -45,7 +46,7 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.isExistingAccountStorageTrieNodeData(
+    return worldStateStorage.getAccountStorageTrieNode(
         getAccountHash().orElse(Hash.EMPTY), getLocation().orElse(Hash.EMPTY), getHash());
   }
 
@@ -57,21 +58,14 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage, final Bytes value) {
+      final WorldStateStorage worldStateStorage, final Bytes path, final Bytes value) {
 
-    getMergedHash(worldStateStorage)
-        .ifPresent(
-            slotHash -> {
-              try {
-                ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-                    .putStorageValueBySlotHash(
-                        accountHash.get(), slotHash, Bytes32.leftPad(RLP.decodeValue(value)))
-                    .commit();
-              } catch (Exception e) {
-                System.out.println(getLocation() + " " + getData() + " " + value);
-                throw e;
-              }
-            });
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
+          .putStorageValueBySlotHash(
+              accountHash.get(), getSlotHash(path), Bytes32.leftPad(RLP.decodeValue(value)))
+          .commit();
+    }
 
     return Stream.empty();
   }
@@ -88,5 +82,17 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     getAccountHash().ifPresent(out::writeBytes);
     getLocation().ifPresent(out::writeBytes);
     out.endList();
+  }
+
+  private Hash getSlotHash(final Bytes path) {
+    final Bytes location = getLocation().orElse(Bytes.EMPTY);
+    final boolean isLeaf = path.get(path.size() - 1) == 0x10;
+    Bytes mergedPath;
+    if ((location.size() + path.size()) % 2 == 0) {
+      mergedPath = Bytes.concatenate(Bytes.of(isLeaf ? 0x03 : 0x01), location, path);
+    } else {
+      mergedPath = Bytes.concatenate(location, path);
+    }
+    return Hash.wrap(Bytes32.wrap(CompactEncoding.pathToBytes(mergedPath)));
   }
 }

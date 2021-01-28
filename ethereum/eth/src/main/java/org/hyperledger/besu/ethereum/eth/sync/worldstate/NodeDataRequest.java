@@ -84,7 +84,7 @@ public abstract class NodeDataRequest {
           break;
         case STORAGE_TRIE_NODE:
           accountHash =
-              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
+              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.wrap(in.readBytes32()) : null);
           location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : Bytes.EMPTY);
           deserialized = createStorageDataRequest(hash, accountHash, location);
           break;
