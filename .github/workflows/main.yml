@@ -37,7 +37,7 @@ jobs:
       - name: repolinter
           # You may pin to the exact commit or the version.
           # uses: philips-labs/github-action-repolinter@2d7dc7e43a8d8d52db80b010434df2b8388b5817
-        uses: shemnon/github-action-repolinter@95b293a09b194502a163787996d2d5aa89eb1c12
+        uses: shemnon/github-action-repolinter@master
         with:
           # a path to a custom-repolint-file you wish to use
          custom-repolint-url: https://github.com/hyperledger-labs/hyperledger-community-management-tools/blob/main/repo_structure/repolint.json
