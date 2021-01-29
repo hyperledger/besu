@@ -18,12 +18,12 @@ import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderValidation
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
@@ -43,7 +43,7 @@ public class BftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyBftChanges(config.getBftConfigOptions(), builder),
+            builder -> applyBftChanges(config.getBftConfigOptions(), builder, config.isQuorum()),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -60,7 +60,9 @@ public class BftProtocolSchedule {
   }
 
   private static ProtocolSpecBuilder applyBftChanges(
-      final BftConfigOptions configOptions, final ProtocolSpecBuilder builder) {
+      final BftConfigOptions configOptions,
+      final ProtocolSpecBuilder builder,
+      final boolean goQuorumMode) {
 
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
@@ -74,7 +76,7 @@ public class BftProtocolSchedule {
         .blockHeaderValidatorBuilder(bftBlockHeaderValidator(configOptions.getBlockPeriodSeconds()))
         .ommerHeaderValidatorBuilder(bftBlockHeaderValidator(configOptions.getBlockPeriodSeconds()))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetBlockValidator::new)
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))

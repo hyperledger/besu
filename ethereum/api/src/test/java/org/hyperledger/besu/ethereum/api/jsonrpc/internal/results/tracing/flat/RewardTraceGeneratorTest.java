@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -92,7 +93,8 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            TransactionGasBudgetCalculator.frontier());
+            TransactionGasBudgetCalculator.frontier(),
+            Optional.empty());
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =
