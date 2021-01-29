@@ -25,8 +25,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class NodePermissioningControllerTest {
   Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProviderOptional;
   @Mock private NodeLocalConfigPermissioningController localConfigNodePermissioningProvider;
   @Mock private NodePermissioningProvider otherPermissioningProvider;
-  @Mock private QuorumQip714Gate quorumQip714Gate;
+  @Mock private GoQuorumQip714Gate goQuorumQip714Gate;
 
   private NodePermissioningController controller;
 
@@ -201,9 +201,9 @@ public class NodePermissioningControllerTest {
         new NodePermissioningController(
             syncStatusNodePermissioningProviderOptional,
             Collections.emptyList(),
-            Optional.of(quorumQip714Gate));
+            Optional.of(goQuorumQip714Gate));
 
-    when(quorumQip714Gate.shouldCheckPermissions()).thenReturn(false);
+    when(goQuorumQip714Gate.shouldCheckPermissions()).thenReturn(false);
 
     assertThat(controller.isPermitted(enode1, enode2)).isTrue();
 
@@ -216,9 +216,9 @@ public class NodePermissioningControllerTest {
         new NodePermissioningController(
             syncStatusNodePermissioningProviderOptional,
             Collections.emptyList(),
-            Optional.of(quorumQip714Gate));
+            Optional.of(goQuorumQip714Gate));
 
-    when(quorumQip714Gate.shouldCheckPermissions()).thenReturn(true);
+    when(goQuorumQip714Gate.shouldCheckPermissions()).thenReturn(true);
 
     controller.isPermitted(enode1, enode2);
 

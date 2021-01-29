@@ -68,9 +68,6 @@ public class TransactionRLPDecoder {
   }
 
   static Transaction decodeFrontier(final RLPInput input) {
-    if (GoQuorumOptions.goquorumCompatibilityMode) {
-      return decodeGoQuorum(input);
-    }
     input.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
@@ -85,7 +82,10 @@ public class TransactionRLPDecoder {
     final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+    if (isGoQuorumPrivateTransaction(v)) {
+      builder.v(v);
+      recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
+    } else if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
       recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
     } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
       chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
@@ -139,46 +139,9 @@ public class TransactionRLPDecoder {
     return builder.signature(signature).build();
   }
 
-  static Transaction decodeGoQuorum(final RLPInput input) {
-    input.enterList();
-
-    final Transaction.Builder builder =
-        Transaction.builder()
-            .type(TransactionType.FRONTIER)
-            .nonce(input.readLongScalar())
-            .gasPrice(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readLongScalar())
-            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(Wei.of(input.readUInt256Scalar()))
-            .payload(input.readBytes());
-
-    final BigInteger v = input.readBigIntegerScalar();
-    final byte recId;
-    Optional<BigInteger> chainId = Optional.empty();
-    if (isGoQuorumPrivateTransaction(v)) {
-      // GoQuorum private TX. No chain ID. Preserve the v value as provided.
-      builder.v(v);
-      recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
-    } else if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-    } else {
-      throw new RuntimeException(
-          String.format("An unsupported encoded `v` value of %s was found", v));
-    }
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
-
-    input.leaveList();
-    chainId.ifPresent(builder::chainId);
-    return builder.signature(signature).build();
-  }
-
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
-    return v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
-        || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN);
+    return GoQuorumOptions.goQuorumCompatibilityMode
+        && (v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX)
+            || v.equals(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN));
   }
 }

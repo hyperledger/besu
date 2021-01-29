@@ -14,24 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-public class QuorumPermissioningConfiguration {
+public class GoQuorumPermissioningConfiguration {
 
   public static final long QIP714_DEFAULT_BLOCK = 0;
 
   private final long qip714Block;
   private final boolean enabled;
 
-  public QuorumPermissioningConfiguration(final long qip714Block, final boolean enabled) {
+  public GoQuorumPermissioningConfiguration(final long qip714Block, final boolean enabled) {
     this.qip714Block = qip714Block;
     this.enabled = enabled;
   }
 
-  public static QuorumPermissioningConfiguration enabled(final long qip714Block) {
-    return new QuorumPermissioningConfiguration(qip714Block, true);
+  public static GoQuorumPermissioningConfiguration enabled(final long qip714Block) {
+    return new GoQuorumPermissioningConfiguration(qip714Block, true);
   }
 
-  public static QuorumPermissioningConfiguration disabled() {
-    return new QuorumPermissioningConfiguration(QIP714_DEFAULT_BLOCK, false);
+  public static GoQuorumPermissioningConfiguration disabled() {
+    return new GoQuorumPermissioningConfiguration(QIP714_DEFAULT_BLOCK, false);
   }
 
   public long getQip714Block() {
