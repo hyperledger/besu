@@ -32,8 +32,6 @@ public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
   private final SubscriptionManager subscriptionManager;
   private final Optional<PrivacyQueries> privacyQueries;
 
-  // TODO-goquorum GoQuorum private txs events
-
   public LogsSubscriptionService(
       final SubscriptionManager subscriptionManager,
       final Optional<PrivacyQueries> privacyQueries) {

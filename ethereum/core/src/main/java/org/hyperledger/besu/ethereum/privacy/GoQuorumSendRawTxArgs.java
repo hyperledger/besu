@@ -19,7 +19,6 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-// Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
 public class GoQuorumSendRawTxArgs {
 
   private final String privateFrom;
