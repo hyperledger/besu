@@ -37,12 +37,10 @@ public class ENRRequestPacketDataTest {
 
   @Test
   public void readFrom() {
-    final int version = 4;
     final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    out.writeIntScalar(version);
     out.writeLongScalar(time);
     out.endList();
 
@@ -54,12 +52,10 @@ public class ENRRequestPacketDataTest {
 
   @Test
   public void readFrom_withExtraFields() {
-    final int version = 4;
     final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    out.writeIntScalar(version);
     out.writeLongScalar(time);
     // Add extra field
     out.writeLongScalar(11);
@@ -73,12 +69,10 @@ public class ENRRequestPacketDataTest {
 
   @Test
   public void readFrom_unknownVersion() {
-    final int version = 99;
     final long time = System.currentTimeMillis();
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    out.writeIntScalar(version);
     out.writeLongScalar(time);
     out.endList();
 

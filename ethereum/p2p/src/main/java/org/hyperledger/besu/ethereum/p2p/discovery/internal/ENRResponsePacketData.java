@@ -19,10 +19,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
-import org.ethereum.beacon.discovery.schema.IdentitySchemaInterpreter;
+import org.apache.tuweni.units.bigints.UInt64;
+import org.ethereum.beacon.discovery.schema.EnrField;
+import org.ethereum.beacon.discovery.schema.IdentitySchema;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
+import org.ethereum.beacon.discovery.util.RlpUtil;
 
 public class ENRResponsePacketData implements PacketData {
   /* The hash of the entire ENRRequest packet being replied to. */
@@ -39,16 +46,40 @@ public class ENRResponsePacketData implements PacketData {
     this.enr = enr;
   }
 
-  static ENRResponsePacketData create(final Bytes requestHash, final NodeRecord enr) {
+  public static ENRResponsePacketData create(final Bytes requestHash, final NodeRecord enr) {
     return new ENRResponsePacketData(requestHash, enr);
   }
 
   public static ENRResponsePacketData readFrom(final RLPInput in) {
     in.enterList();
     final Bytes requestHash = in.readBytes();
-    final NodeRecord enr =
-        new NodeRecordFactory(IdentitySchemaInterpreter.V4).fromBytes(in.readBytes());
+    in.enterList();
+    final Bytes signature = in.readBytes();
+    final UInt64 sequence = UInt64.fromBytes(RlpUtil.decodeSingleString(in.readBytes()));
+    List<EnrField> enrFields = new ArrayList<>();
+    while (!in.isEndOfCurrentList()) {
+      String key = new String(in.readBytes().toArray(), StandardCharsets.UTF_8);
+      if (key.equals(EnrField.ID)) {
+        enrFields.add(
+            new EnrField(
+                key,
+                IdentitySchema.fromString(
+                    new String(in.readBytes().toArray(), StandardCharsets.UTF_8))));
+      } else if (key.equals(EnrField.TCP)
+          || key.equals(EnrField.UDP)
+          || key.equals(EnrField.TCP_V6)
+          || key.equals(EnrField.UDP_V6)) {
+        enrFields.add(new EnrField(key, in.readIntScalar()));
+      } else {
+        enrFields.add(new EnrField(key, in.readBytes()));
+      }
+    }
+    in.leaveList();
     in.leaveListLenient();
+
+    final NodeRecord enr = NodeRecordFactory.DEFAULT.createFromValues(sequence, enrFields);
+    enr.setSignature(signature);
+
     return new ENRResponsePacketData(requestHash, enr);
   }
 
@@ -56,7 +87,7 @@ public class ENRResponsePacketData implements PacketData {
   public void writeTo(final RLPOutput out) {
     out.startList();
     out.writeBytes(requestHash);
-    out.writeBytes(enr.serialize());
+    out.writeRLPBytes(enr.serialize());
     out.endList();
   }
 
