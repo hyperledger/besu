@@ -36,15 +36,16 @@ import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBaseProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorPeers;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
+import org.hyperledger.besu.consensus.ibft.blockcreation.IbftProposerSelector;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
@@ -137,8 +138,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     final VoteTallyCache voteTallyCache =
         protocolContext.getConsensusState(BftContext.class).getVoteTallyCache();
 
-    final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+    final BftBaseProposerSelector bftProposerSelector =
+        new IbftProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
     peers = new ValidatorPeers(voteTallyCache, IbftSubProtocol.NAME);
 
@@ -152,7 +153,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             voteTallyCache,
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
-            proposerSelector,
+            bftProposerSelector,
             uniqueMessageMulticaster,
             new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
             new BlockTimer(bftEventQueue, bftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
@@ -160,7 +161,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
+        new MessageValidatorFactory(bftProposerSelector, protocolSchedule, protocolContext);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);

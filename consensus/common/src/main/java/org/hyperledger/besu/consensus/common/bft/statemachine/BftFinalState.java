@@ -19,8 +19,8 @@ import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBaseProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -33,7 +33,7 @@ public class BftFinalState {
   private final VoteTallyCache voteTallyCache;
   private final NodeKey nodeKey;
   private final Address localAddress;
-  private final ProposerSelector proposerSelector;
+  private final BftBaseProposerSelector bftProposerSelector;
   private final RoundTimer roundTimer;
   private final BlockTimer blockTimer;
   private final BftBlockCreatorFactory blockCreatorFactory;
@@ -44,7 +44,7 @@ public class BftFinalState {
       final VoteTallyCache voteTallyCache,
       final NodeKey nodeKey,
       final Address localAddress,
-      final ProposerSelector proposerSelector,
+      final BftBaseProposerSelector bftProposerSelector,
       final ValidatorMulticaster validatorMulticaster,
       final RoundTimer roundTimer,
       final BlockTimer blockTimer,
@@ -53,7 +53,7 @@ public class BftFinalState {
     this.voteTallyCache = voteTallyCache;
     this.nodeKey = nodeKey;
     this.localAddress = localAddress;
-    this.proposerSelector = proposerSelector;
+    this.bftProposerSelector = bftProposerSelector;
     this.roundTimer = roundTimer;
     this.blockTimer = blockTimer;
     this.blockCreatorFactory = blockCreatorFactory;
@@ -98,7 +98,7 @@ public class BftFinalState {
   }
 
   public Address getProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
-    return proposerSelector.selectProposerForRound(roundIdentifier);
+    return bftProposerSelector.selectProposerForRound(roundIdentifier);
   }
 
   public ValidatorMulticaster getValidatorMulticaster() {

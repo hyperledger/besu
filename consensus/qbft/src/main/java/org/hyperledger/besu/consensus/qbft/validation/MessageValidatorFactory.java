@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBaseProposerSelector;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator.SubsequentMessageValidator;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -29,15 +29,15 @@ import java.util.Collection;
 
 public class MessageValidatorFactory {
 
-  private final ProposerSelector proposerSelector;
+  private final BftBaseProposerSelector bftProposerSelector;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
 
   public MessageValidatorFactory(
-      final ProposerSelector proposerSelector,
+      final BftBaseProposerSelector bftProposerSelector,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext) {
-    this.proposerSelector = proposerSelector;
+    this.bftProposerSelector = bftProposerSelector;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
   }
@@ -84,7 +84,7 @@ public class MessageValidatorFactory {
             BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
             validatorsForHeight,
             roundIdentifier,
-            proposerSelector.selectProposerForRound(roundIdentifier));
+            bftProposerSelector.selectProposerForRound(roundIdentifier));
 
     return new MessageValidator(
         expectedDigest ->

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.blockcreation;
+package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBaseProposerSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -43,7 +44,7 @@ import org.apache.logging.log4j.Logger;
  * ValidatorProvider}), such that each new round for the given height is serviced by a different
  * validator.
  */
-public class ProposerSelector {
+public class IbftProposerSelector implements BftBaseProposerSelector {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -59,7 +60,7 @@ public class ProposerSelector {
 
   private final BlockInterface blockInterface;
 
-  public ProposerSelector(
+  public IbftProposerSelector(
       final Blockchain blockchain,
       final BlockInterface blockInterface,
       final boolean changeEachBlock,
@@ -76,6 +77,7 @@ public class ProposerSelector {
    * @param roundIdentifier Identifies the chain height and proposal attempt number.
    * @return The address of the node which is to propose a block for the provided Round.
    */
+  @Override
   public Address selectProposerForRound(final ConsensusRoundIdentifier roundIdentifier) {
     checkArgument(roundIdentifier.getRoundNumber() >= 0);
     checkArgument(roundIdentifier.getSequenceNumber() > 0);

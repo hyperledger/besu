@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.blockcreation;
+package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,7 +38,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-public class ProposerSelectorTest {
+public class IbftProposerSelectorTest {
 
   private final BlockInterface blockInterface = mock(BlockInterface.class);
   private final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
@@ -97,8 +97,8 @@ public class ProposerSelectorTest {
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+    final IbftProposerSelector uut =
+        new IbftProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
@@ -116,8 +116,8 @@ public class ProposerSelectorTest {
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+    final IbftProposerSelector uut =
+        new IbftProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
     final ConsensusRoundIdentifier roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 0);
 
@@ -136,8 +136,8 @@ public class ProposerSelectorTest {
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, false, voteTallyCache);
+    final IbftProposerSelector uut =
+        new IbftProposerSelector(blockchain, blockInterface, false, voteTallyCache);
     final Address nextProposer = uut.selectProposerForRound(roundId);
 
     assertThat(nextProposer).isEqualTo(localAddr);
@@ -154,8 +154,8 @@ public class ProposerSelectorTest {
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, false, voteTallyCache);
+    final IbftProposerSelector uut =
+        new IbftProposerSelector(blockchain, blockInterface, false, voteTallyCache);
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(localAddr);
 
     roundId = new ConsensusRoundIdentifier(PREV_BLOCK_NUMBER + 1, 1);
@@ -181,8 +181,8 @@ public class ProposerSelectorTest {
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, false, voteTallyCache);
+    final IbftProposerSelector uut =
+        new IbftProposerSelector(blockchain, blockInterface, false, voteTallyCache);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(2));
   }
@@ -202,8 +202,8 @@ public class ProposerSelectorTest {
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, true, voteTallyCache);
+    final IbftProposerSelector uut =
+        new IbftProposerSelector(blockchain, blockInterface, true, voteTallyCache);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(2));
   }
@@ -224,8 +224,8 @@ public class ProposerSelectorTest {
     final Blockchain blockchain =
         createMockedBlockChainWithHeadOf(PREV_BLOCK_NUMBER, localAddr, validatorList);
 
-    final ProposerSelector uut =
-        new ProposerSelector(blockchain, blockInterface, false, voteTallyCache);
+    final IbftProposerSelector uut =
+        new IbftProposerSelector(blockchain, blockInterface, false, voteTallyCache);
 
     assertThat(uut.selectProposerForRound(roundId)).isEqualTo(validatorList.get(0));
   }
