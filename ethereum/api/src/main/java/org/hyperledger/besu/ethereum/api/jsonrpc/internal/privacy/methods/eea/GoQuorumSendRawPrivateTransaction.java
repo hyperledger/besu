@@ -18,10 +18,8 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
-import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
 
-import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -30,40 +28,35 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.GoQuorumSendRawTxArgs;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import java.util.Optional;
-
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class EeaSendRawTransaction implements JsonRpcMethod {
+public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   final TransactionPool transactionPool;
-  final PrivacyController privacyController;
   private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final GoQuorumEnclave enclave;
 
-  public EeaSendRawTransaction(
+  public GoQuorumSendRawPrivateTransaction(
+      final GoQuorumEnclave enclave,
       final TransactionPool transactionPool,
-      final PrivacyController privacyController,
       final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+    this.enclave = enclave;
     this.transactionPool = transactionPool;
-    this.privacyController = privacyController;
     this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.EEA_SEND_RAW_TRANSACTION.getMethodName();
+    return RpcMethod.ETH_SEND_RAW_PRIVATE_TRANSACTION.getMethodName();
   }
 
   @Override
@@ -71,40 +64,20 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     final Object id = requestContext.getRequest().getId();
     final String rawPrivateTransaction = requestContext.getRequiredParameter(0, String.class);
 
+    final GoQuorumSendRawTxArgs rawTxArgs =
+        requestContext.getRequiredParameter(1, GoQuorumSendRawTxArgs.class);
+
     try {
-      final PrivateTransaction privateTransaction =
-          PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
+      final Transaction transaction =
+          Transaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
 
-      final String enclavePublicKey =
-          enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
+      checkAndHandlePrivateTransaction(transaction, rawTxArgs, requestContext);
 
-      if (!privateTransaction.getPrivateFrom().equals(Bytes.fromBase64String(enclavePublicKey))) {
-        return new JsonRpcErrorResponse(id, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
-      }
-
-      final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
-
-      final Optional<PrivacyGroup> maybePrivacyGroup =
-          findPrivacyGroup(
-              privacyController, maybePrivacyGroupId, enclavePublicKey, privateTransaction);
-
-      final ValidationResult<TransactionInvalidReason> validationResult =
-          privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
-
-      if (!validationResult.isValid()) {
-        return new JsonRpcErrorResponse(
-            id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
-      }
-
-      final JsonRpcResponse ret =
-          createPMTAndAddToTxPool(
-              id,
-              privateTransaction,
-              maybePrivacyGroup,
-              maybePrivacyGroupId,
-              enclavePublicKey,
-              Address.DEFAULT_PRIVACY);
-      return ret;
+      return transactionPool
+          .addLocalTransaction(transaction)
+          .either(
+              () -> new JsonRpcSuccessResponse(id, transaction.getHash().toString()),
+              errorReason -> getJsonRpcErrorResponse(id, errorReason));
 
     } catch (final JsonRpcErrorResponseException e) {
       return new JsonRpcErrorResponse(id, e.getJsonRpcError());
@@ -112,37 +85,44 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       LOG.error(e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
+      LOG.error(e);
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
   }
 
-  Optional<PrivacyGroup> findPrivacyGroup(
-      final PrivacyController privacyController,
-      final Optional<Bytes> maybePrivacyGroupId,
-      final String enclavePublicKey,
-      final PrivateTransaction privateTransaction) {
-    final Optional<PrivacyGroup> maybePrivacyGroup =
-        findOffchainPrivacyGroup(privacyController, maybePrivacyGroupId, enclavePublicKey);
-    return maybePrivacyGroup;
-  }
+  private void checkAndHandlePrivateTransaction(
+      final Transaction transaction,
+      final GoQuorumSendRawTxArgs rawTxArgs,
+      final JsonRpcRequestContext requestContext) {
+    // rawTxArgs cannot be null as the call to getRequiredParameter would have failed if it was not
+    // available
 
-  JsonRpcResponse createPMTAndAddToTxPool(
-      final Object id,
-      final PrivateTransaction privateTransaction,
-      final Optional<PrivacyGroup> maybePrivacyGroup,
-      final Optional<Bytes> maybePrivacyGroupId,
-      final String enclavePublicKey,
-      final Address privacyPrecompileAddress) {
-    final String privateTransactionLookupId =
-        privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
-    final Transaction privacyMarkerTransaction =
-        privacyController.createPrivacyMarkerTransaction(
-            privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
-    return transactionPool
-        .addLocalTransaction(privacyMarkerTransaction)
-        .either(
-            () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
-            errorReason -> getJsonRpcErrorResponse(id, errorReason));
+    if (rawTxArgs.getPrivateFor() == null) {
+      LOG.error(JsonRpcError.GOQUORUM_NO_PRIVATE_FOR.getMessage());
+      throw new JsonRpcErrorResponseException(JsonRpcError.GOQUORUM_NO_PRIVATE_FOR);
+    }
+
+    if (rawTxArgs.getPrivacyFlag() != 0) {
+      LOG.error(JsonRpcError.GOQUORUM_ONLY_STANDARD_MODE_SUPPORTED.getMessage());
+      throw new JsonRpcErrorResponseException(JsonRpcError.GOQUORUM_ONLY_STANDARD_MODE_SUPPORTED);
+    }
+
+    if (rawTxArgs.getPrivateFrom() != null) {
+      final String privateFrom = rawTxArgs.getPrivateFrom();
+      final String enclavePublicKey =
+          enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
+      if (!privateFrom.equals(enclavePublicKey)) {
+        LOG.error(JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY.getMessage());
+        throw new JsonRpcErrorResponseException(
+            JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
+      }
+    }
+
+    final Bytes txId = transaction.getPayload();
+    if (txId == null || txId.isEmpty()) {
+      throw new JsonRpcErrorResponseException(JsonRpcError.GOQUORUM_LOOKUP_ID_NOT_AVAILABLE);
+    }
+    enclave.sendSignedTransaction(txId.toArray(), rawTxArgs.getPrivateFor());
   }
 
   JsonRpcErrorResponse getJsonRpcErrorResponse(

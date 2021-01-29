@@ -20,12 +20,21 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
 public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private final TransactionSimulator transactionSimulator;
@@ -50,17 +59,27 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     final JsonCallParameter callParams = validateAndGetCallParams(request);
+    final BlockHeader header = blockchainQueries.get().getBlockHeaderByHash(blockHash).orElse(null);
 
     return transactionSimulator
-        .process(callParams, blockHash)
+        .process(
+            callParams,
+            ImmutableTransactionValidationParams.builder()
+                .from(TransactionValidationParams.transactionSimulator())
+                .isAllowExceedingBalance(!callParams.isStrict())
+                .build(),
+            OperationTracer.NO_TRACING,
+            header)
         .map(
             result ->
                 result
                     .getValidationResult()
                     .either(
                         (() ->
-                            new JsonRpcSuccessResponse(
-                                request.getRequest().getId(), result.getOutput().toString())),
+                            result.isSuccessful()
+                                ? new JsonRpcSuccessResponse(
+                                    request.getRequest().getId(), result.getOutput().toString())
+                                : errorResponse(request, result)),
                         reason ->
                             new JsonRpcErrorResponse(
                                 request.getRequest().getId(),
@@ -75,6 +94,33 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
 
   private JsonRpcSuccessResponse validRequestBlockNotFound(final JsonRpcRequestContext request) {
     return new JsonRpcSuccessResponse(request.getRequest().getId(), null);
+  }
+
+  private JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
+    final JsonRpcError jsonRpcError;
+
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        result.getValidationResult();
+    if (validationResult != null && !validationResult.isValid()) {
+      jsonRpcError =
+          JsonRpcErrorConverter.convertTransactionInvalidReason(
+              validationResult.getInvalidReason());
+    } else {
+      final TransactionProcessingResult resultTrx = result.getResult();
+      if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
+        jsonRpcError = JsonRpcError.REVERT_ERROR;
+        jsonRpcError.setData(resultTrx.getRevertReason().get().toHexString());
+      } else {
+        jsonRpcError = JsonRpcError.INTERNAL_ERROR;
+      }
+    }
+    return errorResponse(request, jsonRpcError);
+  }
+
+  private JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
+    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
   }
 
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {

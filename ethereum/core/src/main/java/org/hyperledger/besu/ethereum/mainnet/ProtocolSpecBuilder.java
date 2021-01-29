@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
@@ -294,7 +295,8 @@ public class ProtocolSpecBuilder {
             blockReward,
             miningBeneficiaryCalculator,
             skipZeroBlockRewards,
-            gasBudgetCalculator);
+            gasBudgetCalculator,
+            privacyParameters.getGoQuorumPrivacyParameters());
     // Set private Tx Processor
     PrivateTransactionProcessor privateTransactionProcessor = null;
     if (privacyParameters.isEnabled()) {
@@ -333,7 +335,11 @@ public class ProtocolSpecBuilder {
 
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+            blockHeaderValidator,
+            blockBodyValidator,
+            blockProcessor,
+            badBlockManager,
+            privacyParameters.getGoQuorumPrivacyParameters());
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
         name,
@@ -389,7 +395,8 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        TransactionGasBudgetCalculator gasBudgetCalculator);
+        TransactionGasBudgetCalculator gasBudgetCalculator,
+        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
   }
 
   public interface BlockValidatorBuilder {
@@ -397,7 +404,8 @@ public class ProtocolSpecBuilder {
         BlockHeaderValidator blockHeaderValidator,
         BlockBodyValidator blockBodyValidator,
         BlockProcessor blockProcessor,
-        BadBlockManager badBlockManager);
+        BadBlockManager badBlockManager,
+        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
   }
 
   public interface BlockImporterBuilder {

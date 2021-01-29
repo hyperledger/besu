@@ -20,9 +20,9 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -61,14 +61,14 @@ public class AccountPermissioningControllerFactory {
     if (accountLocalConfigPermissioningController.isPresent()
         || transactionSmartContractPermissioningController.isPresent()) {
 
-      final Optional<QuorumQip714Gate> quorumQip714Gate =
+      final Optional<GoQuorumQip714Gate> goQuorumQip714Gate =
           permissioningConfiguration
               .getQuorumPermissioningConfig()
               .flatMap(
                   config -> {
                     if (config.isEnabled()) {
                       return Optional.of(
-                          QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
+                          GoQuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
                     } else {
                       return Optional.empty();
                     }
@@ -78,7 +78,7 @@ public class AccountPermissioningControllerFactory {
           new AccountPermissioningController(
               accountLocalConfigPermissioningController,
               transactionSmartContractPermissioningController,
-              quorumQip714Gate);
+              goQuorumQip714Gate);
 
       return Optional.of(controller);
     } else {

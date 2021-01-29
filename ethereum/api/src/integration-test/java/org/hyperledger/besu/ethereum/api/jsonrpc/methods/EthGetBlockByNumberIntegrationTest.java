@@ -112,7 +112,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -154,7 +154,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   private JsonRpcResponse expectedLatestBlockHashes() {
@@ -203,7 +203,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   private JsonRpcResponse expectedLatestBlockTransactions() {
@@ -244,12 +244,15 @@ public class EthGetBlockByNumberIntegrationTest {
             responseUtils.transaction(
                 "0x71d59849ddd98543bdfbe8548f5eed559b07b8aaf196369f39134500eab68e53",
                 "0x20",
+                null,
                 "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
                 "0x4cb2f",
                 "0x1",
                 "0xcef53f2311d7c80e9086d661e69ac11a5f3d081e28e02a9ba9b66749407ac310",
                 "0x9dc2c8f5",
                 "0x1f",
+                "0x3a514176466fa815ed481ffad09110a2d344f6c9b78c1d14afc351c3a51be33d8072e77939dc03ba44790779b7a1025baf3003f6732430e20cd9b76d953391b3",
+                "0xf8641f018304cb2f946295ee1b4f6dd65047762f924ecd367c17eabf8f0a849dc2c8f51ba0705b002a7df60707d33812e0298411721be20ea5a2f533707295140d89263b79a078024390784f24160739533b3ceea2698289a02afd9cc768581b4aa3d5f4b105",
                 "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
                 "0x0",
                 "0xa",
@@ -266,7 +269,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -276,7 +279,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -286,7 +289,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -331,7 +334,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -373,12 +376,15 @@ public class EthGetBlockByNumberIntegrationTest {
             responseUtils.transaction(
                 "0x609427ccfeae6d2a930927c9a29a0a3077cac7e4b5826159586b10e25770eef9",
                 "0x5",
+                null,
                 "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
                 "0x4cb2f",
                 "0x1",
                 "0xec7e53d1b99ef586b3e43c1c7068311f6861d51ac3d6fbf257ac0b54ba3f2032",
                 "0xf5b53e17",
                 "0x4",
+                "0x3a514176466fa815ed481ffad09110a2d344f6c9b78c1d14afc351c3a51be33d8072e77939dc03ba44790779b7a1025baf3003f6732430e20cd9b76d953391b3",
+                "0xf86404018304cb2f946295ee1b4f6dd65047762f924ecd367c17eabf8f0a84f5b53e171ca01c07bd41fc821f95b9f543b080c520654727f9cf829800f789c3b03b8de8b326a0259c8aceea2d462192d95f9d6b7cb9e0bf2a6d549c3a4111194fdd22105728f5",
                 "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
                 "0x0",
                 "0xa",
@@ -390,7 +396,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     final JsonRpcResponse actual = ethGetBlockNumber().response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   /** The Tag | Quantity is the first parameter, either a String or a number */
