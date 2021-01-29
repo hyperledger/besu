@@ -11,8 +11,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -21,17 +21,19 @@ import org.junit.Test;
 public class RlpTest {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
   public void messagesCanBeRLPEncodedAndDecoded() throws IOException, URISyntaxException {
+    final ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new Jdk8Module());
+
     final Path rlpPath = Path.of(RlpTest.class.getResource("/rlp").toURI());
     Files.newDirectoryStream(rlpPath)
         .forEach(
             rlpTestFile -> {
               try {
                 List<RlpTestCaseSpec> testCases =
-                    objectMapper.readValue(rlpTestFile.toFile(), new TypeReference<>() {});
+                    mapper.readValue(rlpTestFile.toFile(), new TypeReference<>() {});
                 for (RlpTestCaseSpec testCase : testCases) {
                   // message -> RLP
                   assertThat(Bytes.fromHexStringLenient(testCase.getOutput()))
@@ -49,9 +51,5 @@ public class RlpTest {
                 throw new IllegalStateException(e);
               }
             });
-  }
-
-  private Bytes rlpEncode(final JsonNode message) {
-    return null;
   }
 }

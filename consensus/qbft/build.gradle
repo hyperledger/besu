@@ -99,11 +99,13 @@ dependencies {
   referenceTestImplementation 'org.assertj:assertj-core'
   referenceTestImplementation 'org.mockito:mockito-core'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  referenceTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   referenceTestImplementation 'org.apache.tuweni:bytes'
   referenceTestImplementation project(':crypto')
   referenceTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(':consensus:common')
   referenceTestImplementation project(':ethereum:core')
+  referenceTestImplementation project(':ethereum:rlp')
   referenceTestImplementation project(':config')
 
   testSupportImplementation 'org.mockito:mockito-core'
