@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import java.util.Arrays;
+
 public enum TransactionType {
   FRONTIER(0xf8 /* doesn't end up being used as we don't serialize legacy txs with their type */),
+  ACCESS_LIST(0x1),
   EIP1559(0xf /* placeholder value until we know what the real type byte will be */);
 
   private final int typeValue;
@@ -29,15 +32,12 @@ public enum TransactionType {
   }
 
   public static TransactionType of(final int serializedTypeValue) {
-    if (serializedTypeValue >= 0xc0 && serializedTypeValue <= 0xfe) {
-      return FRONTIER;
-    }
-    for (TransactionType transactionType : TransactionType.values()) {
-      if (transactionType.typeValue == serializedTypeValue) {
-        return transactionType;
-      }
-    }
-    throw new IllegalArgumentException(
-        String.format("Unsupported transaction type %x", serializedTypeValue));
+    return Arrays.stream(TransactionType.values())
+        .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format("Unsupported transaction type %x", serializedTypeValue)));
   }
 }
