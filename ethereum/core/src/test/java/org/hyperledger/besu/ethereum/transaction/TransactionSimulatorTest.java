@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -149,7 +150,7 @@ public class TransactionSimulatorTest {
         OperationTracer.NO_TRACING,
         1L);
 
-    verify(mutableAccount).incrementBalance(Wei.of(Long.MAX_VALUE));
+    verify(mutableAccount).setBalance(Wei.of(UInt256.MAX_VALUE));
   }
 
   @Test

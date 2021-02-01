@@ -87,7 +87,8 @@ public class ClassicProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                gasBudgetCalculator) ->
+                gasBudgetCalculator,
+                goQuorumPrivacyParameters) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
                     transactionReceiptFactory,
