@@ -156,7 +156,7 @@ public class EthCallIntegrationTest {
   }
 
   @Test
-  public void shouldReturnErrorWithGasPriceTooHigh() {
+  public void shouldReturnErrorWithGasPriceTooHighAndStrict() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
@@ -167,10 +167,33 @@ public class EthCallIntegrationTest {
             null,
             null,
             Bytes.fromHexString("0x12a7b914"),
-            null);
+            true);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnSuccessWithGasPriceTooHighNotStrict() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            null,
+            Wei.fromHexString("0x10000000000000"),
+            null,
+            null,
+            null,
+            Bytes.fromHexString("0x12a7b914"),
+            false);
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            null, "0x0000000000000000000000000000000000000000000000000000000000000001");
 
     final JsonRpcResponse response = method.response(request);
 
