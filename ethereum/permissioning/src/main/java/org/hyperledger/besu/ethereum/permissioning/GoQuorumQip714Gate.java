@@ -21,25 +21,25 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class QuorumQip714Gate {
+public class GoQuorumQip714Gate {
 
-  private static QuorumQip714Gate SINGLE_INSTANCE = null;
+  private static GoQuorumQip714Gate SINGLE_INSTANCE = null;
 
   private final long qip714Block;
   private final AtomicLong latestBlock = new AtomicLong(0L);
 
   @VisibleForTesting
-  QuorumQip714Gate(final long qip714Block, final Blockchain blockchain) {
+  GoQuorumQip714Gate(final long qip714Block, final Blockchain blockchain) {
     this.qip714Block = qip714Block;
 
     blockchain.observeBlockAdded(this::checkChainHeight);
   }
 
   // this is only called during start-up, synchronized access won't hurt performance
-  public static synchronized QuorumQip714Gate getInstance(
+  public static synchronized GoQuorumQip714Gate getInstance(
       final long qip714Block, final Blockchain blockchain) {
     if (SINGLE_INSTANCE == null) {
-      SINGLE_INSTANCE = new QuorumQip714Gate(qip714Block, blockchain);
+      SINGLE_INSTANCE = new GoQuorumQip714Gate(qip714Block, blockchain);
     } else {
       if (SINGLE_INSTANCE.qip714Block != qip714Block) {
         throw new IllegalStateException(

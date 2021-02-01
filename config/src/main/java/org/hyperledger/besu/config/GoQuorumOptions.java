@@ -22,5 +22,5 @@ public class GoQuorumOptions {
   // To make it easier for tests to reset the value to default
   public static final boolean GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE = false;
 
-  public static boolean goquorumCompatibilityMode = GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
+  public static boolean goQuorumCompatibilityMode = GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
 }

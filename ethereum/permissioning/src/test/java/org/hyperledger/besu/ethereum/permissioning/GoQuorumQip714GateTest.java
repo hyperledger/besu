@@ -31,10 +31,10 @@ import org.junit.Test;
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-public class QuorumQip714GateTest {
+public class GoQuorumQip714GateTest {
 
   private Blockchain blockchain;
-  private QuorumQip714Gate gate;
+  private GoQuorumQip714Gate gate;
 
   @Before
   public void before() {
@@ -43,21 +43,21 @@ public class QuorumQip714GateTest {
 
   @Test
   public void gateShouldSubscribeAsBlockAddedObserver() {
-    gate = new QuorumQip714Gate(100, blockchain);
+    gate = new GoQuorumQip714Gate(100, blockchain);
 
     verify(blockchain).observeBlockAdded(any());
   }
 
   @Test
   public void whenTargetBlockIsZeroCheckPermissionsReturnTrue() {
-    gate = new QuorumQip714Gate(0, blockchain);
+    gate = new GoQuorumQip714Gate(0, blockchain);
 
     assertThat(gate.shouldCheckPermissions()).isTrue();
   }
 
   @Test
   public void whenBelowTargetBlockCheckPermissionsReturnFalse() {
-    gate = new QuorumQip714Gate(99, blockchain);
+    gate = new GoQuorumQip714Gate(99, blockchain);
 
     updateChainHead(55);
 
@@ -66,7 +66,7 @@ public class QuorumQip714GateTest {
 
   @Test
   public void whenAboveTargetBlockCheckPermissionsReturnTrue() {
-    gate = new QuorumQip714Gate(99, blockchain);
+    gate = new GoQuorumQip714Gate(99, blockchain);
 
     updateChainHead(100);
 
@@ -75,7 +75,7 @@ public class QuorumQip714GateTest {
 
   @Test
   public void latestBlockCheckShouldKeepUpToChainHeight() {
-    gate = new QuorumQip714Gate(0, blockchain);
+    gate = new GoQuorumQip714Gate(0, blockchain);
     assertThat(gate.getLatestBlock()).isEqualTo(0);
 
     updateChainHead(1);
@@ -91,10 +91,10 @@ public class QuorumQip714GateTest {
   @Test
   public void getInstanceForbidInstancesWithDifferentQip714BlockNumber() {
     // creating singleton with qip714block = 1
-    QuorumQip714Gate.getInstance(1L, blockchain);
+    GoQuorumQip714Gate.getInstance(1L, blockchain);
 
     // creating new instance with qip714block != 1 should fail
-    assertThatThrownBy(() -> QuorumQip714Gate.getInstance(2L, blockchain))
+    assertThatThrownBy(() -> GoQuorumQip714Gate.getInstance(2L, blockchain))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage(
             "Tried to create Quorum QIP-714 gate with different block config from already instantiated gate block config");

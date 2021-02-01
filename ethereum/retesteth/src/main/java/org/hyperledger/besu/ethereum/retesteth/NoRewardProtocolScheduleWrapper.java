@@ -48,13 +48,15 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
             Wei.ZERO,
             original.getMiningBeneficiaryCalculator(),
             original.isSkipZeroBlockRewards(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionGasBudgetCalculator.frontier(),
+            Optional.empty());
     final BlockValidator noRewardBlockValidator =
         new MainnetBlockValidator(
             original.getBlockHeaderValidator(),
             original.getBlockBodyValidator(),
             noRewardBlockProcessor,
-            original.getBadBlocksManager());
+            original.getBadBlocksManager(),
+            Optional.empty());
     final BlockImporter noRewardBlockImporter = new MainnetBlockImporter(noRewardBlockValidator);
     return new ProtocolSpec(
         original.getName(),

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -51,20 +52,20 @@ public class MainnetTransactionProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final GasCalculator gasCalculator;
+  protected final GasCalculator gasCalculator;
 
-  private final MainnetTransactionValidator transactionValidator;
+  protected final MainnetTransactionValidator transactionValidator;
 
   private final AbstractMessageProcessor contractCreationProcessor;
 
   private final AbstractMessageProcessor messageCallProcessor;
 
-  private final int maxStackSize;
+  protected final int maxStackSize;
 
-  private final int createContractAccountVersion;
+  protected final int createContractAccountVersion;
 
-  private final TransactionPriceCalculator transactionPriceCalculator;
-  private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
+  protected final TransactionPriceCalculator transactionPriceCalculator;
+  protected final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
   /**
    * Applies a transaction to the current system state.
@@ -213,7 +214,7 @@ public class MainnetTransactionProcessor {
         null);
   }
 
-  private final boolean clearEmptyAccounts;
+  protected final boolean clearEmptyAccounts;
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -288,7 +289,9 @@ public class MainnetTransactionProcessor {
           previousBalance,
           sender.getBalance());
 
-      final Gas intrinsicGas = gasCalculator.transactionIntrinsicGasCost(transaction);
+      final GasAndAccessedState gasAndAccessedState =
+          gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction);
+      final Gas intrinsicGas = gasAndAccessedState.getGas();
       final Gas gasAvailable = Gas.of(transaction.getGasLimit()).minus(intrinsicGas);
       LOG.trace(
           "Gas available for execution {} = {} - {} (limit - intrinsic)",
@@ -318,6 +321,8 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .isPersistingPrivateState(isPersistingPrivateState)
               .transactionHash(transaction.getHash())
+              .accessListWarmAddresses(gasAndAccessedState.getAccessListAddressSet())
+              .accessListWarmStorage(gasAndAccessedState.getAccessListStorageByAddress())
               .privateMetadataUpdater(privateMetadataUpdater);
 
       final MessageFrame initialFrame;
@@ -380,8 +385,7 @@ public class MainnetTransactionProcessor {
 
       final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
       final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-      if (blockHeader.getBaseFee().isPresent()
-          && transaction.getType().equals(TransactionType.EIP1559)) {
+      if (blockHeader.getBaseFee().isPresent()) {
         final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
         if (transactionGasPrice.compareTo(baseFee) < 0) {
           return TransactionProcessingResult.failed(
@@ -431,12 +435,12 @@ public class MainnetTransactionProcessor {
     }
   }
 
-  private static void clearEmptyAccounts(final WorldUpdater worldState) {
+  protected static void clearEmptyAccounts(final WorldUpdater worldState) {
     new ArrayList<>(worldState.getTouchedAccounts())
         .stream().filter(Account::isEmpty).forEach(a -> worldState.deleteAccount(a.getAddress()));
   }
 
-  private void process(final MessageFrame frame, final OperationTracer operationTracer) {
+  protected void process(final MessageFrame frame, final OperationTracer operationTracer) {
     final AbstractMessageProcessor executor = getMessageProcessor(frame.getType());
 
     executor.process(frame, operationTracer);
@@ -453,7 +457,7 @@ public class MainnetTransactionProcessor {
     }
   }
 
-  private static Gas refunded(
+  protected static Gas refunded(
       final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
     final Gas maxRefundAllowance =

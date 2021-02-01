@@ -44,7 +44,7 @@ public final class LimitedTransactionsMessages {
     for (final Transaction transaction : transactions) {
       final BytesValueRLPOutput encodedTransaction = new BytesValueRLPOutput();
       transaction.writeTo(encodedTransaction);
-      Bytes encodedBytes = encodedTransaction.encoded();
+      final Bytes encodedBytes = encodedTransaction.encoded();
       if (messageSize != 0 // always at least one message
           && messageSize + encodedBytes.size() > LIMIT) {
         break;
