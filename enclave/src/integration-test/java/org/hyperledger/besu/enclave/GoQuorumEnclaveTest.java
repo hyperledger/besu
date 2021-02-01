@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.hyperledger.besu.enclave.types.StoreRawResponse;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,7 +31,6 @@ import java.util.Base64;
 import java.util.List;
 
 import io.vertx.core.Vertx;
-import org.hyperledger.besu.enclave.types.StoreRawResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;

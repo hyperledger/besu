@@ -16,7 +16,6 @@ package org.hyperledger.besu.enclave.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import java.util.List;
 
 @JsonPropertyOrder({"payload", "from", "to"})
 public class GoQuorumStoreRawRequest {
