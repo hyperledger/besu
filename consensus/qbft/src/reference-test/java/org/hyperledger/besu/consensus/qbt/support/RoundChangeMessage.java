@@ -37,13 +37,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChangeMessage implements RlpTestInput {
-
   private final SignedRoundChange signedRoundChange;
   private final Optional<String> block;
   private final List<SignedPrepare> prepares;
 
   public RoundChangeMessage(
-      @JsonProperty("signedRoundChange") SignedRoundChange signedRoundChange,
+      @JsonProperty("signedRoundChange") final SignedRoundChange signedRoundChange,
       @JsonProperty("block") final Optional<String> block,
       @JsonProperty("prepares") final List<SignedPrepare> prepares) {
     this.signedRoundChange = signedRoundChange;
@@ -159,7 +158,7 @@ public class RoundChangeMessage implements RlpTestInput {
     private final String signature;
 
     public SignedRoundChange(
-        @JsonProperty("unsignedRoundChange") UnsignedRoundChange unsignedRoundChange,
+        @JsonProperty("unsignedRoundChange") final UnsignedRoundChange unsignedRoundChange,
         @JsonProperty("signature") final String signature) {
       this.unsignedRoundChange = unsignedRoundChange;
       this.signature = signature;

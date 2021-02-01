@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.qbt.support.RlpTestInput;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -43,28 +44,27 @@ public class RlpTest {
     mapper.registerModule(new Jdk8Module());
 
     final Path rlpPath = Path.of(RlpTest.class.getResource("/rlp").toURI());
-    Files.newDirectoryStream(rlpPath)
-        .forEach(
-            rlpTestFile -> {
-              try {
-                List<RlpTestCaseSpec> testCases =
-                    mapper.readValue(rlpTestFile.toFile(), new TypeReference<>() {});
-                for (RlpTestCaseSpec testCase : testCases) {
-                  // message -> RLP
-                  assertThat(Bytes.fromHexStringLenient(testCase.getOutput()))
-                      .isEqualTo(testCase.getInput().toRlp());
+    try (DirectoryStream<Path> rlpFiles = Files.newDirectoryStream(rlpPath)) {
+      rlpFiles.forEach(
+          rlpTestFile -> {
+            try {
+              List<RlpTestCaseSpec> testCases =
+                  mapper.readValue(rlpTestFile.toFile(), new TypeReference<>() {});
+              for (RlpTestCaseSpec testCase : testCases) {
+                // message -> RLP
+                assertThat(Bytes.fromHexStringLenient(testCase.getOutput()))
+                    .isEqualTo(testCase.getInput().toRlp());
 
-                  // RLP -> message
-                  final RlpTestInput rlpTestInput =
-                      testCase.getInput().fromRlp(Bytes.fromHexString(testCase.getOutput()));
-                  assertThat(testCase.getInput())
-                      .usingRecursiveComparison()
-                      .isEqualTo(rlpTestInput);
-                }
-              } catch (IOException e) {
-                LOG.error("Unable to read rlp test file", e);
-                throw new IllegalStateException(e);
+                // RLP -> message
+                final RlpTestInput rlpTestInput =
+                    testCase.getInput().fromRlp(Bytes.fromHexString(testCase.getOutput()));
+                assertThat(testCase.getInput()).usingRecursiveComparison().isEqualTo(rlpTestInput);
               }
-            });
+            } catch (IOException e) {
+              LOG.error("Unable to read rlp test file", e);
+              throw new IllegalStateException(e);
+            }
+          });
+    }
   }
 }
