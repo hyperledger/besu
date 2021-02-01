@@ -110,6 +110,7 @@ public class IntrinsicGasTest {
   @Test
   public void validateGasCost() {
     Transaction t = Transaction.readFrom(RLP.input(Bytes.fromHexString(txRlp)));
-    Assertions.assertThat(gasCalculator.transactionIntrinsicGasCost(t)).isEqualTo(expectedGas);
+    Assertions.assertThat(gasCalculator.transactionIntrinsicGasCostAndAccessedState(t).getGas())
+        .isEqualTo(expectedGas);
   }
 }

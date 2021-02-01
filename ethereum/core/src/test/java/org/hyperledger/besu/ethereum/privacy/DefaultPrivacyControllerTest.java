@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
@@ -106,6 +107,7 @@ public class DefaultPrivacyControllerTest {
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
+          .type(TransactionType.FRONTIER)
           .nonce(0)
           .gasPrice(Wei.of(1000))
           .gasLimit(3000000)
