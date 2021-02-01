@@ -80,7 +80,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 @SuppressWarnings("rawtypes")
-// todo request lucas look at this pr
 public class PrivacyReorgTest {
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
@@ -93,9 +92,9 @@ public class PrivacyReorgTest {
       Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
   private static final String FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT =
-      "0xc9dcaffbebc7edc20839c80e706430a8fa885e8f703bb89f6e95633cc2b05d4d";
+      "0xe368938a01d983e331eb0e4ea61224726d06075c1ad525569b369f664067ff26";
   private static final String FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT =
-      "0x66fbc6ad12ef1da78740093ea2b3362e773e510e27d8f88b68c27bfc1f4d58c8";
+      "0x9c88988f9602184efc538cf1c2f482a6b8757ff918d234602884dc8e3b983edd";
   private static final String BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT =
       "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461";
   private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE =
@@ -338,7 +337,7 @@ public class PrivacyReorgTest {
         privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     final String secondForkBlockStateRoot =
-        "0x57ccc80f4e50d2e669d82aefa7d3bbe763cf47df27665af14c90b2f8641953f5";
+        "0x2c37a360a700c614b10c980138f64be9ad66fc4a14cd5145199cd0d8ec43d51d";
     final Block secondForkBlock =
         gen.block(
             getBlockOptionsNoTransactionWithDifficulty(
@@ -368,8 +367,7 @@ public class PrivacyReorgTest {
     appendBlock(besuController, blockchain, protocolContext, thirdForkBlock);
 
     // Check that the private state did change after reorg
-    assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
+    assertPrivateStateRoot(privateStateRootResolver, blockchain, EMPTY_ROOT_HASH);
   }
 
   @SuppressWarnings("unchecked")
