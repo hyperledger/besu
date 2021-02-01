@@ -66,19 +66,4 @@ public class ENRRequestPacketDataTest {
 
     assertThat(deserialized.getExpiration()).isEqualTo(time);
   }
-
-  @Test
-  public void readFrom_unknownVersion() {
-    final long time = System.currentTimeMillis();
-
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.startList();
-    out.writeLongScalar(time);
-    out.endList();
-
-    final Bytes serialized = out.encoded();
-    final ENRRequestPacketData deserialized = ENRRequestPacketData.readFrom(RLP.input(serialized));
-
-    assertThat(deserialized.getExpiration()).isEqualTo(time);
-  }
 }

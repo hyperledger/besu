@@ -54,7 +54,9 @@ public class ENRResponsePacketDataTest {
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
     assertThat(nodeRecord.asEnr())
         .isEqualTo(
-            "enr:-KS4QHWjNgmcnxf-dwC_paPSLEi1N-eW0Swoa4lLNOLe09UOEZ4qoDy3a8dl8wmprsu84JMFzvdc-WZrrqWefDWpf3IBgmlkgnY0gmlwhH8AAAGDaXA2hAAAAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA8yWM0xOIN0Y3CCH5CEdGNwNoIfkIN1ZHCCdl-EdWRwNoJ2Xw");
+            "enr:-KS4QHWjNgmcnxf-dwC_paPSLEi1N-eW0Swoa4lLNOLe09UOEZ4qoDy3a8dl8wmprsu84JMFzvdc-WZrrqW"
+                + "efDWpf3IBgmlkgnY0gmlwhH8AAAGDaXA2hAAAAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0R"
+                + "W_QAdpzBQA8yWM0xOIN0Y3CCH5CEdGNwNoIfkIN1ZHCCdl-EdWRwNoJ2Xw");
 
     final ENRResponsePacketData packet = ENRResponsePacketData.create(requestHash, nodeRecord);
     final Bytes serialized = RLP.encode(packet::writeTo);
@@ -86,7 +88,9 @@ public class ENRResponsePacketDataTest {
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
     assertThat(nodeRecord.asEnr())
         .isEqualTo(
-            "enr:-IS4QHCYrYZbAKWCBRlAy5zzaDZXJBGkcnh4MHcBFZntXNFrdvJjX04jRzjzCBOonrkTfj499SZuOh8R33Ls8RRcy5wBgmlkgnY0gmlwhH8AAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA8yWM0xOIN1ZHCCdl8");
+            "enr:-IS4QHCYrYZbAKWCBRlAy5zzaDZXJBGkcnh4MHcBFZntXNFrdvJjX04jRzjzCBOonrkTfj499SZuOh8R33L"
+                + "s8RRcy5wBgmlkgnY0gmlwhH8AAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA8y"
+                + "WM0xOIN1ZHCCdl8");
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -121,7 +125,9 @@ public class ENRResponsePacketDataTest {
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
     assertThat(nodeRecord.asEnr())
         .isEqualTo(
-            "enr:-IS4QHCYrYZbAKWCBRlAy5zzaDZXJBGkcnh4MHcBFZntXNFrdvJjX04jRzjzCBOonrkTfj499SZuOh8R33Ls8RRcy5wBgmlkgnY0gmlwhH8AAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA8yWM0xOIN1ZHCCdl8");
+            "enr:-IS4QHCYrYZbAKWCBRlAy5zzaDZXJBGkcnh4MHcBFZntXNFrdvJjX04jRzjzCBOonrkTfj499SZuOh8R33L"
+                + "s8RRcy5wBgmlkgnY0gmlwhH8AAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA8y"
+                + "WM0xOIN1ZHCCdl8");
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     final ENRResponsePacketData packet = ENRResponsePacketData.create(requestHash, nodeRecord);
@@ -154,7 +160,9 @@ public class ENRResponsePacketDataTest {
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
     assertThat(nodeRecord.asEnr())
         .isEqualTo(
-            "enr:-Iu4QDokK026ShDdi-PmzNgTr-oaQEslAfoLuphwEznSx0xsVwD0KZV1m7k4enZpf0aEQmCYWZOgD4kptYEFo2QKX28Bg2Zvb4ISNIJpZIJ2NIJpcIR_AAABiXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEVv0AHacwUAPMljNMTiDdWRwgnZf");
+            "enr:-Iu4QDokK026ShDdi-PmzNgTr-oaQEslAfoLuphwEznSx0xsVwD0KZV1m7k4enZpf0aEQmCYWZOgD4kptYE"
+                + "Fo2QKX28Bg2Zvb4ISNIJpZIJ2NIJpcIR_AAABiXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEVv0"
+                + "AHacwUAPMljNMTiDdWRwgnZf");
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -168,5 +176,35 @@ public class ENRResponsePacketDataTest {
     final ENRResponsePacketData deserialized = ENRResponsePacketData.readFrom(RLP.input(encoded));
     assertThat(deserialized.getRequestHash()).isEqualTo(requestHash);
     assertThat(deserialized.getEnr()).isEqualTo(nodeRecord);
+  }
+
+  @Test
+  public void readFrom_invalidSignature() {
+    final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
+    final Bytes privateKey =
+        Bytes.fromHexString("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f292");
+
+    NodeRecord nodeRecord =
+        NodeRecordFactory.DEFAULT.createFromValues(
+            UInt64.ONE,
+            new EnrField(EnrField.ID, IdentitySchema.V4),
+            new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
+            new EnrField(EnrField.UDP, 30303),
+            new EnrField(
+                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+    nodeRecord.sign(privateKey);
+    nodeRecord.set(EnrField.UDP, 1234);
+
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeBytes(requestHash);
+    out.writeRLPBytes(nodeRecord.serialize());
+    out.endList();
+    final Bytes encoded = out.encoded();
+
+    final ENRResponsePacketData deserialized = ENRResponsePacketData.readFrom(RLP.input(encoded));
+    assertThat(deserialized.getRequestHash()).isEqualTo(requestHash);
+    assertThat(deserialized.getEnr()).isEqualTo(nodeRecord);
+    assertThat(deserialized.getEnr().isValid()).isFalse();
   }
 }
