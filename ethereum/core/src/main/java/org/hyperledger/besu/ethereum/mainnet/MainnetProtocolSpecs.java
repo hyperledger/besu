@@ -32,6 +32,10 @@ import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -82,7 +86,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder frontierDefinition(
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode) {
+      final boolean goQuorumMode) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
@@ -101,7 +105,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, false, Optional.empty(), quorumCompatibilityMode))
+                    gasCalculator, false, Optional.empty(), goQuorumMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -139,12 +143,28 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .blockProcessorBuilder(MainnetBlockProcessor::new)
-        .blockValidatorBuilder(MainnetBlockValidator::new)
+        .blockProcessorBuilder(MainnetProtocolSpecs.blockProcessorBuilder(goQuorumMode))
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .name("Frontier");
+  }
+
+  public static BlockValidatorBuilder blockValidatorBuilder(final boolean goQuorumMode) {
+    if (goQuorumMode) {
+      return GoQuorumBlockValidator::new;
+    } else {
+      return MainnetBlockValidator::new;
+    }
+  }
+
+  public static BlockProcessorBuilder blockProcessorBuilder(final boolean goQuorumMode) {
+    if (goQuorumMode) {
+      return GoQuorumBlockProcessor::new;
+    } else {
+      return MainnetBlockProcessor::new;
+    }
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
@@ -184,7 +204,8 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                gasBudgetCalculator) ->
+                gasBudgetCalculator,
+                goQuorumPrivacyParameters) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
                         transactionProcessor,
@@ -192,7 +213,8 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        gasBudgetCalculator)))
+                        gasBudgetCalculator,
+                        Optional.empty())))
         .name("DaoRecoveryInit");
   }
 
@@ -321,7 +343,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Constantinople");
   }
 
-  public static ProtocolSpecBuilder constantinopleFixDefinition(
+  public static ProtocolSpecBuilder petersburgDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -333,8 +355,8 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode)
-        .gasCalculator(ConstantinopleFixGasCalculator::new)
-        .name("ConstantinopleFix");
+        .gasCalculator(PetersburgGasCalculator::new)
+        .name("Petersburg");
   }
 
   public static ProtocolSpecBuilder istanbulDefinition(
@@ -345,7 +367,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    return constantinopleFixDefinition(
+    return petersburgDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
@@ -469,7 +491,7 @@ public abstract class MainnetProtocolSpecs {
       final WorldState worldState,
       final long gasUsed) {
     return new TransactionReceipt(
-        worldState.rootHash(),
+        worldState.frontierRootHash(),
         gasUsed,
         result.getLogs(),
         Optional.empty()); // No revert reason in frontier

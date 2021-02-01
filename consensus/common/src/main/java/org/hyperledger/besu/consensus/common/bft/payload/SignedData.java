@@ -14,8 +14,12 @@
  */
 package org.hyperledger.besu.consensus.common.bft.payload;
 
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
+
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -30,7 +34,13 @@ public class SignedData<M extends Payload> implements Authored {
   private final Signature signature;
   private final M unsignedPayload;
 
-  public SignedData(final M unsignedPayload, final Address sender, final Signature signature) {
+  public static <T extends Payload> SignedData<T> create(
+      final T payload, final Signature signature) {
+    final Hash msgHash = hashForSignature(payload);
+    return new SignedData<>(payload, Util.signatureToAddress(signature, msgHash), signature);
+  }
+
+  private SignedData(final M unsignedPayload, final Address sender, final Signature signature) {
     this.unsignedPayload = unsignedPayload;
     this.sender = sender;
     this.signature = signature;
@@ -46,7 +56,6 @@ public class SignedData<M extends Payload> implements Authored {
   }
 
   public void writeTo(final RLPOutput output) {
-
     output.startList();
     unsignedPayload.writeTo(output);
     output.writeBytes(signature.encodedBytes());

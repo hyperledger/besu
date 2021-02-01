@@ -26,7 +26,7 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_JSON_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
-import static org.hyperledger.besu.ethereum.permissioning.QuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
+import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
@@ -52,6 +52,7 @@ import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
@@ -111,16 +112,21 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
+import org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
-import org.hyperledger.besu.ethereum.permissioning.QuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.MetricCategoryRegistryImpl;
 import org.hyperledger.besu.metrics.MetricsProtocol;
@@ -190,6 +196,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
+import net.consensys.quorum.mainnet.launcher.LauncherManager;
+import net.consensys.quorum.mainnet.launcher.config.ImmutableLauncherConfig;
+import net.consensys.quorum.mainnet.launcher.exception.LauncherException;
+import net.consensys.quorum.mainnet.launcher.util.ParseArgsHelper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -241,6 +251,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
+  final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
 
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
@@ -906,7 +917,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "The URL on which the enclave is running")
   private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
 
-  @CommandLine.Option(
+  @Option(
       names = {"--privacy-public-key-file"},
       description = "The enclave's public key file")
   private final File privacyPublicKeyFile = null;
@@ -1076,6 +1087,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(() -> MetricsSystemFactory.create(metricsConfiguration()));
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
+  private KeyValueStorageProvider keyValueStorageProvider;
 
   public BesuCommand(
       final Logger logger,
@@ -1131,6 +1143,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuExceptionHandler exceptionHandler,
       final InputStream in,
       final String... args) {
+
     commandLine =
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
@@ -1145,6 +1158,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Override
   public void run() {
+
     try {
       configureLogging(true);
       configureNativeLibs();
@@ -1228,6 +1242,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Data Storage Options", unstableDataStorageOptions)
+            .put("Launcher", unstableLauncherOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1270,10 +1285,34 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // Create a handler that will search for a config file option and use it for
     // default values
     // and eventually it will run regular parsing of the remaining options.
+
     final ConfigOptionSearchAndRunHandler configParsingHandler =
         new ConfigOptionSearchAndRunHandler(
             resultHandler, exceptionHandler, CONFIG_FILE_OPTION_NAME, environment);
-    commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
+
+    ParseArgsHelper.getLauncherOptions(unstableLauncherOptions, args);
+    if (unstableLauncherOptions.isLauncherMode()
+        || unstableLauncherOptions.isLauncherModeForced()) {
+      try {
+        final ImmutableLauncherConfig launcherConfig =
+            ImmutableLauncherConfig.builder()
+                .launcherScript(BesuCommand.class.getResourceAsStream("launcher.json"))
+                .addCommandClasses(
+                    this, unstableNatOptions, unstableEthstatsOptions, unstableMiningOptions)
+                .isLauncherForced(unstableLauncherOptions.isLauncherModeForced())
+                .build();
+        final File file = new LauncherManager(launcherConfig).run();
+        logger.info("Config file location : {}", file.getAbsolutePath());
+        commandLine.parseWithHandlers(
+            configParsingHandler,
+            exceptionHandler,
+            String.format("%s=%s", CONFIG_FILE_OPTION_NAME, file.getAbsolutePath()));
+      } catch (LauncherException e) {
+        logger.warn("Unable to run the launcher {}", e.getMessage());
+      }
+    } else {
+      commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
+    }
   }
 
   private void startSynchronization() {
@@ -1513,21 +1552,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
 
-    if (isGoQuorumCompatibilityMode) {
-      configureGoQuorumPrivacy();
-    }
-
     logger.info("Security Module: {}", securityModuleName);
     return this;
   }
 
-  private void configureGoQuorumPrivacy() {
-
-    GoQuorumPrivacyParameters.isEnabled = true;
-
-    GoQuorumPrivacyParameters.goQuorumEnclave = createGoQuorumEnclave();
-
-    GoQuorumPrivacyParameters.enclaveKey = readEnclaveKey();
+  private GoQuorumPrivacyParameters configureGoQuorumPrivacy(
+      final KeyValueStorageProvider storageProvider) {
+    return new GoQuorumPrivacyParameters(
+        createGoQuorumEnclave(),
+        readEnclaveKey(),
+        storageProvider.createGoQuorumPrivateStorage(),
+        createPrivateWorldStateArchive(storageProvider));
   }
 
   private GoQuorumEnclave createGoQuorumEnclave() {
@@ -1591,6 +1626,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public BesuControllerBuilder getControllerBuilder() {
+    final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(getNetwork()), genesisConfigOverrides)
         .synchronizerConfiguration(buildSyncConfig())
@@ -1613,10 +1649,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
-        .privacyParameters(privacyParameters())
+        .privacyParameters(privacyParameters(storageProvider))
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
-        .storageProvider(keyStorageProvider(keyValueStorageName))
+        .storageProvider(storageProvider)
         .isPruningEnabled(isPruningEnabled())
         .pruningConfiguration(
             new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
@@ -1957,7 +1993,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.of(permissioningConfiguration);
   }
 
-  private Optional<QuorumPermissioningConfiguration> quorumPermissioningConfig() {
+  private Optional<GoQuorumPermissioningConfiguration> quorumPermissioningConfig() {
     if (!isGoQuorumCompatibilityMode) {
       return Optional.empty();
     }
@@ -1966,7 +2002,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
       final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
       return Optional.of(
-          QuorumPermissioningConfiguration.enabled(qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK)));
+          GoQuorumPermissioningConfiguration.enabled(
+              qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK)));
     } catch (final Exception e) {
       throw new IllegalStateException("Error reading GoQuorum permissioning options", e);
     }
@@ -1980,7 +2017,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return permissionsNodesContractEnabled || permissionsAccountsContractEnabled;
   }
 
-  private PrivacyParameters privacyParameters() {
+  private PrivacyParameters privacyParameters(final KeyValueStorageProvider storageProvider) {
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -2061,10 +2098,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         privacyParametersBuilder.setPrivacyTlsKnownEnclaveFile(privacyTlsKnownEnclaveFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
-    } else {
-      if (anyPrivacyApiEnabled()) {
-        logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
-      }
+    } else if (isGoQuorumCompatibilityMode) {
+      privacyParametersBuilder.setGoQuorumPrivacyParameters(
+          Optional.of(configureGoQuorumPrivacy(storageProvider)));
+    }
+
+    if (!isPrivacyEnabled && anyPrivacyApiEnabled()) {
+      logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+    }
+
+    if (!isGoQuorumCompatibilityMode
+        && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
+      logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
 
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
@@ -2075,6 +2120,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     return privacyParameters;
+  }
+
+  public WorldStateArchive createPrivateWorldStateArchive(final StorageProvider storageProvider) {
+    final WorldStateStorage privateWorldStateStorage =
+        storageProvider.createPrivateWorldStateStorage();
+    final WorldStatePreimageStorage preimageStorage =
+        storageProvider.createPrivateWorldStatePreimageStorage();
+    return new DefaultWorldStateArchive(privateWorldStateStorage, preimageStorage);
   }
 
   private boolean anyPrivacyApiEnabled() {
@@ -2100,16 +2153,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 () -> new StorageException("No KeyValueStorageFactory found for key: " + name));
   }
 
-  private KeyValueStorageProvider keyStorageProvider(final String name) {
-    return new KeyValueStorageProviderBuilder()
-        .withStorageFactory(
-            storageService
-                .getByName(name)
-                .orElseThrow(
-                    () -> new StorageException("No KeyValueStorageFactory found for key: " + name)))
-        .withCommonConfiguration(pluginCommonConfiguration)
-        .withMetricsSystem(getMetricsSystem())
-        .build();
+  private KeyValueStorageProvider keyValueStorageProvider(final String name) {
+    if (this.keyValueStorageProvider == null) {
+      this.keyValueStorageProvider =
+          new KeyValueStorageProviderBuilder()
+              .withStorageFactory(
+                  storageService
+                      .getByName(name)
+                      .orElseThrow(
+                          () ->
+                              new StorageException(
+                                  "No KeyValueStorageFactory found for key: " + name)))
+              .withCommonConfiguration(pluginCommonConfiguration)
+              .withMetricsSystem(getMetricsSystem())
+              .build();
+    }
+    return this.keyValueStorageProvider;
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
@@ -2193,7 +2252,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
             .ethstatsUrl(unstableEthstatsOptions.getEthstatsUrl())
             .ethstatsContact(unstableEthstatsOptions.getEthstatsContact())
-            .storageProvider(keyStorageProvider(keyValueStorageName))
+            .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .build();
 
     addShutdownHook(runner);
@@ -2482,7 +2541,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isGoQuorumCompatibilityMode) {
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
       // this static flag is read by the RLP decoder
-      GoQuorumOptions.goquorumCompatibilityMode = true;
+      GoQuorumOptions.goQuorumCompatibilityMode = true;
 
       if (!genesisConfigOptions.isQuorum()) {
         throw new IllegalStateException(

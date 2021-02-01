@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -45,8 +44,6 @@ public class TransactionRLPEncoder {
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
       encodeFrontier(transaction, rlpOutput);
-    } else if (TransactionType.EIP1559.equals(transactionType)) {
-      encodeEIP1559(transaction, rlpOutput);
     } else {
       final Encoder encoder =
           Optional.ofNullable(TYPED_TRANSACTION_ENCODERS.get(transactionType))
@@ -54,10 +51,9 @@ public class TransactionRLPEncoder {
                   () ->
                       new IllegalStateException(
                           String.format(
-                              "Developer Error. A supported transaction type %s has no associated"
-                                  + " encoding logic",
+                              "Developer Error. A supported transaction type %s has no associated encoding logic",
                               transactionType)));
-      rlpOutput.writeRaw(
+      rlpOutput.writeBytes(
           Bytes.concatenate(
               Bytes.of((byte) transactionType.getSerializedType()),
               RLP.encode(output -> encoder.encode(transaction, output))));
@@ -77,8 +73,6 @@ public class TransactionRLPEncoder {
   }
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
-
     out.startList();
     out.writeLongScalar(transaction.getNonce());
     out.writeNull();

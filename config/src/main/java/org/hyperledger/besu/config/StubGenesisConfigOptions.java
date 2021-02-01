@@ -34,7 +34,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong spuriousDragonBlockNumber = OptionalLong.empty();
   private OptionalLong byzantiumBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
-  private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
+  private OptionalLong petersburgBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
@@ -76,6 +76,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public boolean isIbft2() {
+    return false;
+  }
+
+  @Override
+  public boolean isQbft() {
     return false;
   }
 
@@ -130,8 +135,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getConstantinopleFixBlockNumber() {
-    return constantinopleFixBlockNumber;
+  public OptionalLong getPetersburgBlockNumber() {
+    return petersburgBlockNumber;
   }
 
   @Override
@@ -229,18 +234,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
         .ifPresent(
             l -> {
               builder.put("daoForkBlock", l);
-              builder.put("daoForkSupport", Boolean.TRUE);
             });
     getTangerineWhistleBlockNumber().ifPresent(l -> builder.put("eip150Block", l));
     getSpuriousDragonBlockNumber()
         .ifPresent(
             l -> {
-              builder.put("eip155Block", l);
               builder.put("eip158Block", l);
             });
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
-    getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
+    getPetersburgBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
@@ -313,8 +316,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions constantinopleFixBlock(final long blockNumber) {
-    constantinopleFixBlockNumber = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions petersburgBlock(final long blockNumber) {
+    petersburgBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

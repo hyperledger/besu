@@ -32,6 +32,7 @@ import org.junit.Test;
 public class LimitedTransactionsMessagesTest {
 
   private static final int TX_PAYLOAD_LIMIT = LimitedTransactionsMessages.LIMIT - 180;
+  private static final int MAX_ADDITIONAL_BYTES = 5;
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Set<Transaction> sampleTxs = generator.transactions(1);
   private final TransactionsMessage sampleTransactionMessages =
@@ -42,7 +43,6 @@ public class LimitedTransactionsMessagesTest {
   @Test
   public void createLimited() {
     final Set<Transaction> transactions = generator.transactions(6000);
-
     final Set<Transaction> remainingTransactions = new HashSet<>(transactions);
 
     final LimitedTransactionsMessages firstMessage =
@@ -57,7 +57,9 @@ public class LimitedTransactionsMessagesTest {
     List.of(firstMessage, secondMessage).stream()
         .map(message -> message.getTransactionsMessage().getSize())
         .forEach(
-            messageSize -> assertThat(messageSize).isLessThan(LimitedTransactionsMessages.LIMIT));
+            messageSize ->
+                assertThat(messageSize)
+                    .isLessThan(LimitedTransactionsMessages.LIMIT + MAX_ADDITIONAL_BYTES));
 
     final Set<Transaction> includedTransactions = new HashSet<>();
     includedTransactions.addAll(firstMessage.getIncludedTransactions());

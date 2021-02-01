@@ -54,8 +54,8 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
           new TreeSet<>(bftExtraData.getValidators());
 
       if (!Iterables.elementsEqual(bftExtraData.getValidators(), sortedReportedValidators)) {
-        LOGGER.trace(
-            "Validators are not sorted in ascending order. Expected {} but got {}.",
+        LOGGER.info(
+            "Invalid block header: Validators are not sorted in ascending order. Expected {} but got {}.",
             sortedReportedValidators,
             bftExtraData.getValidators());
         return false;
@@ -63,8 +63,8 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
 
       final Collection<Address> storedValidators = validatorProvider.getValidators();
       if (!Iterables.elementsEqual(bftExtraData.getValidators(), storedValidators)) {
-        LOGGER.trace(
-            "Incorrect validators. Expected {} but got {}.",
+        LOGGER.info(
+            "Invalid block header: Incorrect validators. Expected {} but got {}.",
             storedValidators,
             bftExtraData.getValidators());
         return false;

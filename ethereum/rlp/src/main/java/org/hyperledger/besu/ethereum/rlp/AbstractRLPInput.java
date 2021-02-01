@@ -24,6 +24,7 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -521,5 +522,23 @@ abstract class AbstractRLPInput implements RLPInput {
   @Override
   public void reset() {
     setTo(0);
+  }
+
+  @Override
+  public Bytes currentListAsBytes() {
+    if (currentItem >= size) {
+      throw error("Cannot read list, input is fully consumed");
+    }
+    if (!currentKind.isList()) {
+      throw error("Cannot read list, current item is not a list list");
+    }
+
+    final MutableBytes scratch = MutableBytes.create(currentPayloadSize + 10);
+    final int headerSize = RLPEncodingHelpers.writeListHeader(currentPayloadSize, scratch, 0);
+    payloadSlice().copyTo(scratch, headerSize);
+    final Bytes res = scratch.slice(0, currentPayloadSize + headerSize);
+
+    setTo(nextItem());
+    return res;
   }
 }
