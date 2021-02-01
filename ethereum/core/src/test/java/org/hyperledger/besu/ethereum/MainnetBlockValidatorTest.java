@@ -63,7 +63,11 @@ public class MainnetBlockValidatorTest {
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     mainnetBlockValidator =
         new MainnetBlockValidator(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+            blockHeaderValidator,
+            blockBodyValidator,
+            blockProcessor,
+            badBlockManager,
+            Optional.empty());
     badBlock =
         new BlockDataGenerator()
             .block(

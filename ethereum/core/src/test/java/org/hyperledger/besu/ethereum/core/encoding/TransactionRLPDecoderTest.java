@@ -38,7 +38,7 @@ public class TransactionRLPDecoderTest {
 
   @Test
   public void decodeGoQuorumPrivateTransactionRlp() {
-    GoQuorumOptions.goquorumCompatibilityMode = true;
+    GoQuorumOptions.goQuorumCompatibilityMode = true;
     RLPInput input = RLP.input(Bytes.fromHexString(GOQUORUM_PRIVATE_TX_RLP));
 
     final Transaction transaction = TransactionRLPDecoder.decode(input);
@@ -46,7 +46,7 @@ public class TransactionRLPDecoderTest {
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.getSender())
         .isEqualByComparingTo(Address.fromHexString("0xed9d02e382b34818e88b88a309c7fe71e65f419d"));
-    GoQuorumOptions.goquorumCompatibilityMode =
+    GoQuorumOptions.goQuorumCompatibilityMode =
         GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 

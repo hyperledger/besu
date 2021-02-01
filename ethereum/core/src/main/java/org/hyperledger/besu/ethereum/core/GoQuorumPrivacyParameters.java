@@ -15,12 +15,42 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 public class GoQuorumPrivacyParameters {
 
-  public static boolean isEnabled = false;
+  private final GoQuorumEnclave enclave;
 
-  public static GoQuorumEnclave goQuorumEnclave;
+  private final String enclaveKey;
 
-  public static String enclaveKey;
+  private final GoQuorumPrivateStorage goQuorumPrivateStorage;
+  private final WorldStateArchive privateWorldStateArchive;
+
+  public GoQuorumPrivacyParameters(
+      final GoQuorumEnclave enclave,
+      final String enclaveKey,
+      final GoQuorumPrivateStorage goQuorumPrivateStorage,
+      final WorldStateArchive privateWorldStateArchive) {
+    this.enclave = enclave;
+    this.enclaveKey = enclaveKey;
+    this.goQuorumPrivateStorage = goQuorumPrivateStorage;
+    this.privateWorldStateArchive = privateWorldStateArchive;
+  }
+
+  public GoQuorumEnclave enclave() {
+    return enclave;
+  }
+
+  public String enclaveKey() {
+    return enclaveKey;
+  }
+
+  public GoQuorumPrivateStorage privateStorage() {
+    return goQuorumPrivateStorage;
+  }
+
+  public WorldStateArchive worldStateArchive() {
+    return privateWorldStateArchive;
+  }
 }
