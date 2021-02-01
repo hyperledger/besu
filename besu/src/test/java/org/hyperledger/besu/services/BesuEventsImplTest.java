@@ -299,11 +299,22 @@ public class BesuEventsImplTest {
     blockchain.appendBlock(block, gen.receipts(block));
     assertThat(result.get()).isNull();
 
-    final var reorgBlock =
+    final var forkBlock =
         gen.block(
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash())
-                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 2));
+                .setDifficulty(block.getHeader().getDifficulty().subtract(1))
+                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
+    blockchain.appendBlock(forkBlock, gen.receipts(forkBlock));
+    assertThat(result.get()).isNull();
+
+    final var reorgBlock =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(forkBlock.getHash())
+                .setDifficulty(Difficulty.of(10000000))
+                .setBlockNumber(forkBlock.getHeader().getNumber() + 1));
+
     List<TransactionReceipt> transactionReceipts = gen.receipts(reorgBlock);
     blockchain.appendBlock(reorgBlock, transactionReceipts);
     assertThat(result.get()).isNotNull();
