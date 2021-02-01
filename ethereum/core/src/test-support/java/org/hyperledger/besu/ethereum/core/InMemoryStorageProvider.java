@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumKeyValueStorage;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -88,6 +90,21 @@ public class InMemoryStorageProvider implements StorageProvider {
   @Override
   public WorldStatePreimageStorage createWorldStatePreimageStorage() {
     return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public WorldStateStorage createPrivateWorldStateStorage() {
+    return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public WorldStatePreimageStorage createPrivateWorldStatePreimageStorage() {
+    return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public GoQuorumPrivateStorage createGoQuorumPrivateStorage() {
+    return new GoQuorumKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   @Override

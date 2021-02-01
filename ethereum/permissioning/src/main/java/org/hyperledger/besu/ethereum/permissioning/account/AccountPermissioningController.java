@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
+import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 
 import java.util.Optional;
@@ -35,18 +35,18 @@ public class AccountPermissioningController {
       accountLocalConfigPermissioningController;
   private final Optional<TransactionSmartContractPermissioningController>
       transactionSmartContractPermissioningController;
-  private final Optional<QuorumQip714Gate> quorumQip714Gate;
+  private final Optional<GoQuorumQip714Gate> goQuorumQip714Gate;
 
   public AccountPermissioningController(
       final Optional<AccountLocalConfigPermissioningController>
           accountLocalConfigPermissioningController,
       final Optional<TransactionSmartContractPermissioningController>
           transactionSmartContractPermissioningController,
-      final Optional<QuorumQip714Gate> quorumQip714Gate) {
+      final Optional<GoQuorumQip714Gate> goQuorumQip714Gate) {
     this.accountLocalConfigPermissioningController = accountLocalConfigPermissioningController;
     this.transactionSmartContractPermissioningController =
         transactionSmartContractPermissioningController;
-    this.quorumQip714Gate = quorumQip714Gate;
+    this.goQuorumQip714Gate = goQuorumQip714Gate;
   }
 
   public boolean isPermitted(
@@ -54,7 +54,7 @@ public class AccountPermissioningController {
       final boolean includeLocalCheck,
       final boolean includeOnChainCheck) {
     final boolean checkPermissions =
-        quorumQip714Gate.map(QuorumQip714Gate::shouldCheckPermissions).orElse(true);
+        goQuorumQip714Gate.map(GoQuorumQip714Gate::shouldCheckPermissions).orElse(true);
     if (!checkPermissions) {
       LOG.trace("Skipping account permissioning check due to qip714block config");
 
