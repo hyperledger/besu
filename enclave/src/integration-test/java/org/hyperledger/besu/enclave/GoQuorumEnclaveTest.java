@@ -30,6 +30,7 @@ import java.util.Base64;
 import java.util.List;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.enclave.types.StoreRawResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
@@ -92,6 +93,17 @@ public class GoQuorumEnclaveTest {
     final List<String> publicKeys = Arrays.asList("/+UuD63zItL1EbjxkKUljMgG8Z1w0AJ8pNOR4iq2yQc=");
 
     final SendResponse sr = enclave.sendSignedTransaction(PAYLOAD, publicKeys);
+    assertThat(sr.getKey()).isEqualTo(KEY);
+  }
+
+  @Test
+  public void storeRawTransaction() {
+    when(vertxTransmitter.post(any(), any(), ArgumentMatchers.contains("/storeraw"), any()))
+        .thenReturn(new StoreRawResponse(KEY));
+
+    final List<String> publicKeys = Arrays.asList("/+UuD63zItL1EbjxkKUljMgG8Z1w0AJ8pNOR4iq2yQc=");
+
+    final StoreRawResponse sr = enclave.storeRaw(PAYLOAD, publicKeys.get(0));
     assertThat(sr.getKey()).isEqualTo(KEY);
   }
 
