@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -281,7 +282,9 @@ public class MessageFrame {
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Hash transactionHash,
       final Optional<Bytes> revertReason,
-      final int maxStackSize) {
+      final int maxStackSize,
+      final Set<Address> accessListWarmAddresses,
+      final Multimap<Address, Bytes32> accessListWarmStorage) {
     this.type = type;
     this.blockchain = blockchain;
     this.messageFrameStack = messageFrameStack;
@@ -320,10 +323,27 @@ public class MessageFrame {
     this.transactionHash = transactionHash;
     this.revertReason = revertReason;
 
-    this.warmedUpAddresses = new HashSet<>();
-    warmedUpAddresses.add(sender);
-    warmedUpAddresses.add(contract);
-    this.warmedUpStorage = HashMultimap.create();
+    this.warmedUpAddresses = new HashSet<>(accessListWarmAddresses);
+    this.warmedUpAddresses.add(sender);
+    this.warmedUpAddresses.add(contract);
+    this.warmedUpStorage = HashMultimap.create(accessListWarmStorage);
+
+    // the warmed up addresses will always be a superset of the address keys in the warmed up
+    // storage so we can do both warm ups in one pass
+    accessListWarmAddresses
+        .parallelStream()
+        .forEach(
+            address ->
+                Optional.ofNullable(worldState.get(address))
+                    .ifPresent(
+                        account ->
+                            warmedUpStorage
+                                .get(address)
+                                .parallelStream()
+                                .forEach(
+                                    storageKeyBytes ->
+                                        account.getStorageValue(
+                                            UInt256.fromBytes(storageKeyBytes)))));
   }
 
   /**
@@ -1143,6 +1163,8 @@ public class MessageFrame {
     private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
     private ReturnStack returnStack = new ReturnStack();
+    private Set<Address> accessListWarmAddresses = emptySet();
+    private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     public Builder type(final Type type) {
       this.type = type;
@@ -1280,6 +1302,16 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder accessListWarmAddresses(final Set<Address> accessListWarmAddresses) {
+      this.accessListWarmAddresses = accessListWarmAddresses;
+      return this;
+    }
+
+    public Builder accessListWarmStorage(final Multimap<Address, Bytes32> accessListWarmStorage) {
+      this.accessListWarmStorage = accessListWarmStorage;
+      return this;
+    }
+
     private void validate() {
       checkState(type != null, "Missing message frame type");
       checkState(blockchain != null, "Missing message frame blockchain");
@@ -1335,7 +1367,9 @@ public class MessageFrame {
           privateMetadataUpdater,
           transactionHash,
           reason,
-          maxStackSize);
+          maxStackSize,
+          accessListWarmAddresses,
+          accessListWarmStorage);
     }
   }
 }
