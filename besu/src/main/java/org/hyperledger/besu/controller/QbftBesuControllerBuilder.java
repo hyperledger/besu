@@ -214,7 +214,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new NoopPluginServiceFactory();
+    return new BftQueryPluginServiceFactory(blockchain, nodeKey, "qbft");
   }
 
   @Override
