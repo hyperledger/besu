@@ -20,10 +20,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public class ENRRequestPacketData implements PacketData {
-
-  /* Fixed value that represents we're using v5 of the P2P discovery protocol. */
-  private static final int VERSION = 5;
-
   /* In seconds after epoch. */
   private final long expiration;
 
@@ -43,8 +39,6 @@ public class ENRRequestPacketData implements PacketData {
 
   public static ENRRequestPacketData readFrom(final RLPInput in) {
     in.enterList();
-    // The first element signifies the "version", but this value is ignored as of EIP-8
-    in.readBigIntegerScalar();
     final long expiration = in.readLongScalar();
     in.leaveListLenient();
     return new ENRRequestPacketData(expiration);
@@ -53,7 +47,6 @@ public class ENRRequestPacketData implements PacketData {
   @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
-    out.writeIntScalar(VERSION);
     out.writeLongScalar(expiration);
     out.endList();
   }
