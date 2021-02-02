@@ -15,25 +15,15 @@
 package org.hyperledger.besu.enclave.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"payload", "from", "to"})
 public class GoQuorumStoreRawRequest {
   private final byte[] payload;
-  private final String from;
 
-  public GoQuorumStoreRawRequest(
-      @JsonProperty(value = "payload") final byte[] payload,
-      @JsonProperty(value = "from") final String from) {
+  public GoQuorumStoreRawRequest(@JsonProperty(value = "payload") final byte[] payload) {
     this.payload = payload;
-    this.from = from;
   }
 
   public byte[] getPayload() {
     return payload;
-  }
-
-  public String getFrom() {
-    return from;
   }
 }

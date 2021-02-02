@@ -103,7 +103,7 @@ public class GoQuorumEnclaveTest {
 
     final List<String> publicKeys = Arrays.asList("/+UuD63zItL1EbjxkKUljMgG8Z1w0AJ8pNOR4iq2yQc=");
 
-    final StoreRawResponse sr = enclave.storeRaw(PAYLOAD, publicKeys.get(0));
+    final StoreRawResponse sr = enclave.storeRaw(PAYLOAD);
     assertThat(sr.getKey()).isEqualTo(KEY);
   }
 
