@@ -138,7 +138,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
 
         final int size = path.size();
         if (size > 0 && path.get(size - 1) == CompactEncoding.LEAF_TERMINATOR) {
-          final LeafNode<V> leafNode = decodeLeaf(path, nodeRLPs, errMessage);
+          final LeafNode<V> leafNode = decodeLeaf(location, path, nodeRLPs, errMessage);
           nodeRLPs.leaveList();
           return leafNode;
         } else {
@@ -185,7 +185,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
         nodeRLPs.skipNext();
         children.add(NULL_NODE);
       } else if (nodeRLPs.nextIsList()) {
-        final Node<V> child = decode(location, nodeRLPs, errMessage);
+        final Node<V> child =
+            decode(Bytes.concatenate(location, Bytes.of((byte) i)), nodeRLPs, errMessage);
         children.add(child);
       } else {
         final Bytes32 childHash = nodeRLPs.readBytes32();
@@ -209,12 +210,15 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
   }
 
   private LeafNode<V> decodeLeaf(
-      final Bytes path, final RLPInput valueRlp, final Supplier<String> errMessage) {
+      final Bytes location,
+      final Bytes path,
+      final RLPInput valueRlp,
+      final Supplier<String> errMessage) {
     if (valueRlp.nextIsNull()) {
       throw new MerkleTrieException(errMessage.get() + ": leaf has null value");
     }
     final V value = decodeValue(valueRlp, errMessage);
-    return new LeafNode<>(path, value, this, valueSerializer);
+    return new LeafNode<>(location, path, value, this, valueSerializer);
   }
 
   @SuppressWarnings("unchecked")

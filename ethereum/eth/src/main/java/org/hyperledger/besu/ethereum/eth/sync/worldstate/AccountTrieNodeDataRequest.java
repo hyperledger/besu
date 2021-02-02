@@ -54,32 +54,36 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage, final Bytes path, final Bytes value) {
+      final WorldStateStorage worldStateStorage,
+      final Optional<Bytes> location,
+      final Bytes path,
+      final Bytes value) {
     final Stream.Builder<NodeDataRequest> builder = Stream.builder();
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     // Add code, if appropriate
 
-    final Hash accountHash =
-        Hash.wrap(
-            Bytes32.wrap(
-                CompactEncoding.pathToBytes(
-                    Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path))));
+    Optional<Hash> accountHash = Optional.empty();
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      accountHash =
+          Optional.of(
+              Hash.wrap(
+                  Bytes32.wrap(
+                      CompactEncoding.pathToBytes(
+                          Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path)))));
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putAccountInfoState(accountHash, value)
+          .putAccountInfoState(accountHash.get(), value)
           .commit();
     }
 
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      builder.add(createCodeRequest(accountValue.getCodeHash(), Optional.of(accountHash)));
+      builder.add(createCodeRequest(accountValue.getCodeHash(), accountHash));
     }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       // If storage is non-empty queue download
 
       final NodeDataRequest storageNode =
-          createStorageDataRequest(
-              accountValue.getStorageRoot(), Optional.of(accountHash), Optional.empty());
+          createStorageDataRequest(accountValue.getStorageRoot(), accountHash, Optional.empty());
       builder.add(storageNode);
     }
     return builder.build();

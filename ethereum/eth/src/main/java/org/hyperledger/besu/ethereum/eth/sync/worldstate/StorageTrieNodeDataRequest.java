@@ -58,12 +58,16 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage, final Bytes path, final Bytes value) {
-
+      final WorldStateStorage worldStateStorage,
+      final Optional<Bytes> location,
+      final Bytes path,
+      final Bytes value) {
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putStorageValueBySlotHash(
-              accountHash.get(), getSlotHash(path), Bytes32.leftPad(RLP.decodeValue(value)))
+              accountHash.get(),
+              getSlotHash(location, path),
+              Bytes32.leftPad(RLP.decodeValue(value)))
           .commit();
     }
 
@@ -84,15 +88,9 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     out.endList();
   }
 
-  private Hash getSlotHash(final Bytes path) {
-    final Bytes location = getLocation().orElse(Bytes.EMPTY);
-    final boolean isLeaf = path.get(path.size() - 1) == 0x10;
-    Bytes mergedPath;
-    if ((location.size() + path.size()) % 2 == 0) {
-      mergedPath = Bytes.concatenate(Bytes.of(isLeaf ? 0x03 : 0x01), location, path);
-    } else {
-      mergedPath = Bytes.concatenate(location, path);
-    }
-    return Hash.wrap(Bytes32.wrap(CompactEncoding.pathToBytes(mergedPath)));
+  private Hash getSlotHash(final Optional<Bytes> location, final Bytes path) {
+    return Hash.wrap(
+        Bytes32.wrap(
+            CompactEncoding.pathToBytes(Bytes.concatenate(location.orElse(Bytes.EMPTY), path))));
   }
 }

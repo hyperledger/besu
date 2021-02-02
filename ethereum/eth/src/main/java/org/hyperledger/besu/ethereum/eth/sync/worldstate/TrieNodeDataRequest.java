@@ -49,11 +49,11 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
                 return Stream.of(
                     createChildNodeDataRequest(Hash.wrap(node.getHash()), node.getLocation()));
               } else {
-
                 return node.getValue()
                     .map(
                         value ->
-                            getRequestsFromTrieNodeValue(worldStateStorage, node.getPath(), value))
+                            getRequestsFromTrieNodeValue(
+                                worldStateStorage, node.getLocation(), node.getPath(), value))
                     .orElseGet(Stream::empty);
               }
             });
@@ -67,5 +67,8 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
       final Hash childHash, final Optional<Bytes> location);
 
   protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
-      final WorldStateStorage worldStateStorage, final Bytes path, final Bytes value);
+      final WorldStateStorage worldStateStorage,
+      final Optional<Bytes> location,
+      final Bytes path,
+      final Bytes value);
 }
