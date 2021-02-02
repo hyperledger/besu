@@ -400,7 +400,7 @@ public class BlockchainQueriesTest {
 
   @Test
   public void getOmmerByBlockHashAndIndexShouldReturnExpectedOmmerHeader() {
-    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainWithData data = setupBlockchain(4);
     final BlockchainQueries queries = data.blockchainQueries;
     final Block targetBlock = data.blockData.get(data.blockData.size() - 1).block;
     final BlockHeader ommerBlockHeader = targetBlock.getBody().getOmmers().get(0);
@@ -448,7 +448,7 @@ public class BlockchainQueriesTest {
 
   @Test
   public void getOmmerByBlockNumberAndIndexShouldReturnExpectedOmmerHeader() {
-    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainWithData data = setupBlockchain(4);
     final BlockchainQueries queries = data.blockchainQueries;
     final Block targetBlock = data.blockData.get(data.blockData.size() - 1).block;
     final List<BlockHeader> ommers = targetBlock.getBody().getOmmers();
@@ -485,7 +485,7 @@ public class BlockchainQueriesTest {
 
   @Test
   public void getLatestBlockOmmerByIndexShouldReturnExpectedOmmerHeader() {
-    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainWithData data = setupBlockchain(4);
     final BlockchainQueries queries = data.blockchainQueries;
     final Block targetBlock = data.blockData.get(data.blockData.size() - 1).block;
     final BlockHeader ommerBlockHeader = targetBlock.getBody().getOmmers().get(0);
