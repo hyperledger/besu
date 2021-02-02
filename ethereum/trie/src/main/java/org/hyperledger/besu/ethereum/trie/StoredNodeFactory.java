@@ -209,7 +209,7 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
       value = Optional.of(decodeValue(nodeRLPs, errMessage));
     }
 
-    return new BranchNode<>(children, value, this, valueSerializer);
+    return new BranchNode<>(location, children, value, this, valueSerializer);
   }
 
   private LeafNode<V> decodeLeaf(
