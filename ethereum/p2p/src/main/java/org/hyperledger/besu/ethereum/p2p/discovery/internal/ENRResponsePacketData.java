@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.ethereum.beacon.discovery.schema.IdentitySchemaInterpreter;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 
@@ -39,16 +38,16 @@ public class ENRResponsePacketData implements PacketData {
     this.enr = enr;
   }
 
-  static ENRResponsePacketData create(final Bytes requestHash, final NodeRecord enr) {
+  public static ENRResponsePacketData create(final Bytes requestHash, final NodeRecord enr) {
     return new ENRResponsePacketData(requestHash, enr);
   }
 
   public static ENRResponsePacketData readFrom(final RLPInput in) {
     in.enterList();
     final Bytes requestHash = in.readBytes();
-    final NodeRecord enr =
-        new NodeRecordFactory(IdentitySchemaInterpreter.V4).fromBytes(in.readBytes());
     in.leaveListLenient();
+    final NodeRecord enr = NodeRecordFactory.DEFAULT.fromBytes(in.currentListAsBytes());
+
     return new ENRResponsePacketData(requestHash, enr);
   }
 
@@ -56,7 +55,7 @@ public class ENRResponsePacketData implements PacketData {
   public void writeTo(final RLPOutput out) {
     out.startList();
     out.writeBytes(requestHash);
-    out.writeBytes(enr.serialize());
+    out.writeRLPBytes(enr.serialize());
     out.endList();
   }
 

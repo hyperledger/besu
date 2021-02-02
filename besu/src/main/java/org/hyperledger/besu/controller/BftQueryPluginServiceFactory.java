@@ -17,37 +17,34 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.queries.BftQueryServiceImpl;
-import org.hyperledger.besu.consensus.ibft.queries.IbftQueryServiceImpl;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.query.BftQueryService;
-import org.hyperledger.besu.plugin.services.query.IbftQueryService;
 import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-public class IbftQueryPluginServiceFactory implements PluginServiceFactory {
+public class BftQueryPluginServiceFactory implements PluginServiceFactory {
 
   private final Blockchain blockchain;
   private final NodeKey nodeKey;
+  private final String consensusMechanismName;
 
-  public IbftQueryPluginServiceFactory(final Blockchain blockchain, final NodeKey nodeKey) {
+  public BftQueryPluginServiceFactory(
+      final Blockchain blockchain, final NodeKey nodeKey, final String consensusMechanismName) {
     this.blockchain = blockchain;
     this.nodeKey = nodeKey;
+    this.consensusMechanismName = consensusMechanismName;
   }
 
   @Override
   public void appendPluginServices(final BesuPluginContextImpl besuContext) {
     final BlockInterface blockInterface = new BftBlockInterface();
 
-    final IbftQueryServiceImpl service =
-        new IbftQueryServiceImpl(blockInterface, blockchain, nodeKey);
-    besuContext.addService(IbftQueryService.class, service);
+    final BftQueryServiceImpl service =
+        new BftQueryServiceImpl(blockInterface, blockchain, nodeKey, consensusMechanismName);
+    besuContext.addService(BftQueryService.class, service);
     besuContext.addService(PoaQueryService.class, service);
     besuContext.addService(PoAMetricsService.class, service);
-
-    final BftQueryServiceImpl bftService =
-        new BftQueryServiceImpl(blockInterface, blockchain, nodeKey, "ibft");
-    besuContext.addService(BftQueryService.class, bftService);
   }
 }

@@ -307,6 +307,13 @@ public interface RLPInput {
   void reset();
 
   /**
+   * Returns a raw {@link Bytes} representation of this RLP list.
+   *
+   * @return The raw RLP list.
+   */
+  Bytes currentListAsBytes();
+
+  /**
    * Reads a full list from the input given a method that knows how to read its elements.
    *
    * @param valueReader A method that can decode a single list element.

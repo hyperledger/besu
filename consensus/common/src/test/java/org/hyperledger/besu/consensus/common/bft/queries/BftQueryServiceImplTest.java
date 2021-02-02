@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft.queries;
+package org.hyperledger.besu.consensus.common.bft.queries;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.NonBesuBlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.plugin.services.query.IbftQueryService;
+import org.hyperledger.besu.plugin.services.query.BftQueryService;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -48,7 +48,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class IbftQueryServiceImplTest {
+public class BftQueryServiceImplTest {
 
   @Mock private Blockchain blockchain;
 
@@ -106,8 +106,8 @@ public class IbftQueryServiceImplTest {
 
   @Test
   public void roundNumberFromBlockIsReturned() {
-    final IbftQueryService service =
-        new IbftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
+    final BftQueryService service =
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, null);
 
     assertThat(service.getRoundNumberFrom(blockHeader)).isEqualTo(ROUND_NUMBER_IN_BLOCK);
   }
@@ -118,16 +118,16 @@ public class IbftQueryServiceImplTest {
         new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.getExtraData());
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
-    final IbftQueryService service =
-        new IbftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
+    final BftQueryService service =
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, null);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getRoundNumberFrom(header));
   }
 
   @Test
   public void getSignersReturnsAddressesOfSignersInBlock() {
-    final IbftQueryService service =
-        new IbftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
+    final BftQueryService service =
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, null);
 
     final List<Address> signers =
         signingKeys.stream()
@@ -143,9 +143,16 @@ public class IbftQueryServiceImplTest {
         new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.getExtraData());
     when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
 
-    final IbftQueryService service =
-        new IbftQueryServiceImpl(new BftBlockInterface(), blockchain, null);
+    final BftQueryService service =
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, null);
     assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> service.getSignersFrom(header));
+  }
+
+  @Test
+  public void consensusMechanismNameReturnedIsSameAsThatPassedDuringCreation() {
+    final BftQueryService service =
+        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, "consensusMechanism");
+    assertThat(service.getConsensusMechanismName()).isEqualTo("consensusMechanism");
   }
 }
