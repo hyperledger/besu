@@ -22,7 +22,6 @@ import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbt.support.PrepareMessage.SignedPrepare;
 import org.hyperledger.besu.consensus.qbt.support.PrepareMessage.UnsignedPrepare;
 import org.hyperledger.besu.consensus.qbt.support.RoundChangeMessage.SignedRoundChange;
 import org.hyperledger.besu.consensus.qbt.support.RoundChangeMessage.UnsignedRoundChange;
@@ -42,12 +41,12 @@ import org.apache.tuweni.bytes.Bytes;
 public class ProposalMessage implements RlpTestInput {
   private final SignedProposal signedProposal;
   private final List<SignedRoundChange> roundChanges;
-  private final List<SignedPrepare> prepares;
+  private final List<PrepareMessage> prepares;
 
   public ProposalMessage(
       @JsonProperty("signedProposal") final SignedProposal signedProposal,
       @JsonProperty("roundChanges") final List<SignedRoundChange> roundChanges,
-      @JsonProperty("prepares") final List<SignedPrepare> prepares) {
+      @JsonProperty("prepares") final List<PrepareMessage> prepares) {
     this.signedProposal = signedProposal;
     this.roundChanges = roundChanges;
     this.prepares = prepares;
@@ -79,11 +78,11 @@ public class ProposalMessage implements RlpTestInput {
                                 .map(PreparedRoundMetadata::getPreparedRound)),
                         r.getSignature().encodedBytes().toHexString()))
             .collect(Collectors.toList());
-    final List<SignedPrepare> signedPrepares =
+    final List<PrepareMessage> signedPrepares =
         proposal.getPrepares().stream()
             .map(
                 p ->
-                    new SignedPrepare(
+                    new PrepareMessage(
                         new UnsignedPrepare(
                             p.getPayload().getRoundIdentifier().getSequenceNumber(),
                             p.getPayload().getRoundIdentifier().getRoundNumber(),

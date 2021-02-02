@@ -37,6 +37,14 @@ public class PrepareMessage implements RlpTestInput {
     this.signature = signature;
   }
 
+  public UnsignedPrepare getUnsignedPrepare() {
+    return unsignedPrepare;
+  }
+
+  public String getSignature() {
+    return signature;
+  }
+
   @Override
   public RlpTestInput fromRlp(final Bytes rlp) {
     final Prepare prepare = Prepare.decode(rlp);
@@ -84,28 +92,6 @@ public class PrepareMessage implements RlpTestInput {
 
     public String getDigest() {
       return digest;
-    }
-  }
-
-  // TODO dupe here, this is the same as PrepareMessage
-  public static class SignedPrepare {
-    private final UnsignedPrepare unsignedPrepare;
-    private final String signature;
-
-    @JsonCreator
-    public SignedPrepare(
-        @JsonProperty("unsignedPrepare") final UnsignedPrepare unsignedPrepare,
-        @JsonProperty("signature") final String signature) {
-      this.unsignedPrepare = unsignedPrepare;
-      this.signature = signature;
-    }
-
-    public UnsignedPrepare getUnsignedPrepare() {
-      return unsignedPrepare;
-    }
-
-    public String getSignature() {
-      return signature;
     }
   }
 }

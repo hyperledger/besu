@@ -21,7 +21,6 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbt.support.PrepareMessage.SignedPrepare;
 import org.hyperledger.besu.consensus.qbt.support.PrepareMessage.UnsignedPrepare;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -39,12 +38,12 @@ import org.apache.tuweni.bytes.Bytes;
 public class RoundChangeMessage implements RlpTestInput {
   private final SignedRoundChange signedRoundChange;
   private final Optional<String> block;
-  private final List<SignedPrepare> prepares;
+  private final List<PrepareMessage> prepares;
 
   public RoundChangeMessage(
       @JsonProperty("signedRoundChange") final SignedRoundChange signedRoundChange,
       @JsonProperty("block") final Optional<String> block,
-      @JsonProperty("prepares") final List<SignedPrepare> prepares) {
+      @JsonProperty("prepares") final List<PrepareMessage> prepares) {
     this.signedRoundChange = signedRoundChange;
     this.block = block;
     this.prepares = prepares;
@@ -61,11 +60,11 @@ public class RoundChangeMessage implements RlpTestInput {
                 .getPreparedRoundMetadata()
                 .map(rm -> rm.getPreparedBlockHash().toHexString()),
             roundChange.getPreparedRoundMetadata().map(PreparedRoundMetadata::getPreparedRound));
-    final List<SignedPrepare> prepares =
+    final List<PrepareMessage> prepares =
         roundChange.getPrepares().stream()
             .map(
                 p ->
-                    new SignedPrepare(
+                    new PrepareMessage(
                         new UnsignedPrepare(
                             p.getPayload().getRoundIdentifier().getSequenceNumber(),
                             p.getPayload().getRoundIdentifier().getRoundNumber(),
