@@ -19,14 +19,8 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Collection;
 
-/**
- * Allows for the IBFT 2.0 specific aspects of the block chain to be queried.
- *
- * @deprecated This interface has been replaced by {@link
- *     org.hyperledger.besu.plugin.services.query.BftQueryService}
- */
-@Deprecated
-public interface IbftQueryService extends PoaQueryService {
+/** Allows for the BFT specific aspects of the block chain to be queried. */
+public interface BftQueryService extends PoaQueryService {
 
   /**
    * Extracts the round number from the supplied header and returns it to the caller.
@@ -44,4 +38,12 @@ public interface IbftQueryService extends PoaQueryService {
    * @return The addresses of
    */
   Collection<Address> getSignersFrom(final BlockHeader header);
+
+  /**
+   * Returns the literal name of the BFT consensus mechanism is use (eg ibft or qbft), which forms
+   * the prefix for all BFT metrics.
+   *
+   * @return The name of the consensus mechanism being used by Besu
+   */
+  String getConsensusMechanismName();
 }
