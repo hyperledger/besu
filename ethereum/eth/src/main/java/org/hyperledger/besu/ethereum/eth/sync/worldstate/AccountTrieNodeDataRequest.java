@@ -62,14 +62,13 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
     // Add code, if appropriate
 
-    Optional<Hash> accountHash = Optional.empty();
+    final Optional<Hash> accountHash =
+        Optional.of(
+            Hash.wrap(
+                Bytes32.wrap(
+                    CompactEncoding.pathToBytes(
+                        Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path)))));
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      accountHash =
-          Optional.of(
-              Hash.wrap(
-                  Bytes32.wrap(
-                      CompactEncoding.pathToBytes(
-                          Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path)))));
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putAccountInfoState(accountHash.get(), value)
           .commit();
