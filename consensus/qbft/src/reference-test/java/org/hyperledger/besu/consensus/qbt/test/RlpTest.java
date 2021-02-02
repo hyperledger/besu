@@ -15,56 +15,45 @@
 package org.hyperledger.besu.consensus.qbt.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.consensus.qbt.support.RlpTestCaseSpec;
 import org.hyperledger.besu.consensus.qbt.support.RlpTestInput;
+import org.hyperledger.besu.testutil.JsonTestParameters;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
+import java.util.Collection;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
+@RunWith(Parameterized.class)
 public class RlpTest {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final String TEST_CONFIG_PATH = "rlp";
+  private final RlpTestCaseSpec spec;
+
+  @Parameters(name = "Name: {0}")
+  public static Collection<Object[]> getTestParametersForConfig() {
+    return JsonTestParameters.create(RlpTestCaseSpec.class).generate(TEST_CONFIG_PATH);
+  }
 
   @Test
-  public void messagesCanBeRLPEncodedAndDecoded() throws IOException, URISyntaxException {
-    final ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new Jdk8Module());
+  public void encode() {
+    assertThat(Bytes.fromHexString(spec.getOutput())).isEqualTo(spec.getInput().toRlp());
+  }
 
-    final Path rlpPath = Path.of(RlpTest.class.getResource("/rlp").toURI());
-    try (DirectoryStream<Path> rlpFiles = Files.newDirectoryStream(rlpPath)) {
-      rlpFiles.forEach(
-          rlpTestFile -> {
-            try {
-              List<RlpTestCaseSpec> testCases =
-                  mapper.readValue(rlpTestFile.toFile(), new TypeReference<>() {});
-              for (RlpTestCaseSpec testCase : testCases) {
-                // message -> RLP
-                assertThat(Bytes.fromHexStringLenient(testCase.getOutput()))
-                    .isEqualTo(testCase.getInput().toRlp());
+  @Test
+  public void decode() {
+    final RlpTestInput rlpTestInput =
+        spec.getInput().fromRlp(Bytes.fromHexString(spec.getOutput()));
+    assertThat(spec.getInput()).usingRecursiveComparison().isEqualTo(rlpTestInput);
+  }
 
-                // RLP -> message
-                final RlpTestInput rlpTestInput =
-                    testCase.getInput().fromRlp(Bytes.fromHexString(testCase.getOutput()));
-                assertThat(testCase.getInput()).usingRecursiveComparison().isEqualTo(rlpTestInput);
-              }
-            } catch (IOException e) {
-              LOG.error("Unable to read rlp test file", e);
-              throw new IllegalStateException(e);
-            }
-          });
-    }
+  public RlpTest(final String name, final RlpTestCaseSpec spec, final boolean runTest) {
+    this.spec = spec;
+    assumeTrue("Test was blacklisted", runTest);
   }
 }

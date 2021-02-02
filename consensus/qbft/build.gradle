@@ -107,6 +107,7 @@ dependencies {
   referenceTestImplementation project(':ethereum:core')
   referenceTestImplementation project(':ethereum:rlp')
   referenceTestImplementation project(':config')
+  referenceTestImplementation project(':testutil')
 
   testSupportImplementation 'org.mockito:mockito-core'
 }
