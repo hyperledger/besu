@@ -19,12 +19,9 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
-import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbt.support.PrepareMessage.UnsignedPrepare;
 import org.hyperledger.besu.consensus.qbt.support.RoundChangeMessage.SignedRoundChange;
-import org.hyperledger.besu.consensus.qbt.support.RoundChangeMessage.UnsignedRoundChange;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -65,30 +62,11 @@ public class ProposalMessage implements RlpTestInput {
             proposal.getSignedPayload().getSignature().encodedBytes().toHexString());
     final List<SignedRoundChange> signedRoundChanges =
         proposal.getRoundChanges().stream()
-            .map(
-                r ->
-                    new SignedRoundChange(
-                        new UnsignedRoundChange(
-                            r.getPayload().getRoundIdentifier().getSequenceNumber(),
-                            r.getPayload().getRoundIdentifier().getRoundNumber(),
-                            r.getPayload()
-                                .getPreparedRoundMetadata()
-                                .map(rm -> rm.getPreparedBlockHash().toHexString()),
-                            r.getPayload()
-                                .getPreparedRoundMetadata()
-                                .map(PreparedRoundMetadata::getPreparedRound)),
-                        r.getSignature().encodedBytes().toHexString()))
+            .map(SignedRoundChange::fromSignedRoundChangePayload)
             .collect(Collectors.toList());
     final List<PrepareMessage> signedPrepares =
         proposal.getPrepares().stream()
-            .map(
-                p ->
-                    new PrepareMessage(
-                        new UnsignedPrepare(
-                            p.getPayload().getRoundIdentifier().getSequenceNumber(),
-                            p.getPayload().getRoundIdentifier().getRoundNumber(),
-                            p.getPayload().getDigest().toHexString()),
-                        p.getSignature().encodedBytes().toHexString()))
+            .map(PrepareMessage::fromSignedPreparePayload)
             .collect(Collectors.toList());
     return new ProposalMessage(signedProposal, signedRoundChanges, signedPrepares);
   }
@@ -99,10 +77,8 @@ public class ProposalMessage implements RlpTestInput {
         roundChanges.stream()
             .map(SignedRoundChange::toSignedRoundChangePayload)
             .collect(Collectors.toList());
-
     final List<SignedData<PreparePayload>> signedPrepares =
-        prepares.stream().map(PrepareMessage::toPreparePayload).collect(Collectors.toList());
-
+        prepares.stream().map(PrepareMessage::toSignedPreparePayload).collect(Collectors.toList());
     final Block block =
         Block.readFrom(
             RLP.input(Bytes.fromHexString(signedProposal.unsignedProposal.block)),
@@ -112,7 +88,6 @@ public class ProposalMessage implements RlpTestInput {
             new ConsensusRoundIdentifier(
                 signedProposal.unsignedProposal.sequence, signedProposal.unsignedProposal.round),
             block);
-
     final SignedData<ProposalPayload> signedProposalPayload =
         SignedData.create(
             proposalPayload, Signature.decode(Bytes.fromHexString(signedProposal.signature)));
