@@ -1,3 +1,4 @@
+// Copyright ConsenSys AG.
 // SPDX-License-Identifier: Apache-2.0
 const TestPermissioning = artifacts.require('SimpleAccountPermissioning.sol');
 var proxy;
