@@ -27,20 +27,21 @@ import org.hyperledger.besu.consensus.qbt.support.RoundChangeMessage.SignedRound
 import org.hyperledger.besu.consensus.qbt.support.RoundChangeMessage.UnsignedRoundChange;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.tuweni.bytes.Bytes;
 
 public class ProposalMessage implements RlpTestInput {
   private final SignedProposal signedProposal;
   private final List<SignedRoundChange> roundChanges;
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = PrepareMessage.class)
   private final List<PrepareMessage> prepares;
 
   public ProposalMessage(
@@ -96,36 +97,11 @@ public class ProposalMessage implements RlpTestInput {
   public Bytes toRlp() {
     final List<SignedData<RoundChangePayload>> signedRoundChanges =
         roundChanges.stream()
-            .map(
-                r ->
-                    SignedData.create(
-                        new RoundChangePayload(
-                            new ConsensusRoundIdentifier(
-                                r.getUnsignedRoundChange().getSequence(),
-                                r.getUnsignedRoundChange().getRound()),
-                            r.getUnsignedRoundChange().getPreparedRound().isPresent()
-                                    && r.getUnsignedRoundChange().getPreparedValue().isPresent()
-                                ? Optional.of(
-                                    new PreparedRoundMetadata(
-                                        Hash.fromHexString(
-                                            r.getUnsignedRoundChange().getPreparedValue().get()),
-                                        r.getUnsignedRoundChange().getPreparedRound().get()))
-                                : Optional.empty()),
-                        Signature.decode(Bytes.fromHexString(r.getSignature()))))
+            .map(SignedRoundChange::toSignedRoundChangePayload)
             .collect(Collectors.toList());
 
     final List<SignedData<PreparePayload>> signedPrepares =
-        prepares.stream()
-            .map(
-                p ->
-                    SignedData.create(
-                        new PreparePayload(
-                            new ConsensusRoundIdentifier(
-                                p.getUnsignedPrepare().getSequence(),
-                                p.getUnsignedPrepare().getRound()),
-                            Hash.fromHexString(p.getUnsignedPrepare().getDigest())),
-                        Signature.decode(Bytes.fromHexString(p.getSignature()))))
-            .collect(Collectors.toList());
+        prepares.stream().map(PrepareMessage::toPreparePayload).collect(Collectors.toList());
 
     final Block block =
         Block.readFrom(

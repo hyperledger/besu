@@ -67,6 +67,14 @@ public class PrepareMessage implements RlpTestInput {
     return new Prepare(signedPreparePayload).encode();
   }
 
+  public SignedData<PreparePayload> toPreparePayload() {
+    return SignedData.create(
+        new PreparePayload(
+            new ConsensusRoundIdentifier(unsignedPrepare.sequence, unsignedPrepare.round),
+            Hash.fromHexString(unsignedPrepare.digest)),
+        Signature.decode(Bytes.fromHexString(signature)));
+  }
+
   public static class UnsignedPrepare {
     private final long sequence;
     private final int round;

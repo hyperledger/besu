@@ -33,11 +33,14 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChangeMessage implements RlpTestInput {
   private final SignedRoundChange signedRoundChange;
   private final Optional<String> block;
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = PrepareMessage.class)
   private final List<PrepareMessage> prepares;
 
   public RoundChangeMessage(
@@ -81,22 +84,6 @@ public class RoundChangeMessage implements RlpTestInput {
 
   @Override
   public Bytes toRlp() {
-    final UnsignedRoundChange unsignedRoundChange = signedRoundChange.unsignedRoundChange;
-    final Optional<PreparedRoundMetadata> preparedRoundMetadata =
-        unsignedRoundChange.preparedRound.isPresent()
-                && unsignedRoundChange.preparedValue.isPresent()
-            ? Optional.of(
-                new PreparedRoundMetadata(
-                    Hash.fromHexString(unsignedRoundChange.preparedValue.get()),
-                    unsignedRoundChange.preparedRound.get()))
-            : Optional.empty();
-    final RoundChangePayload roundChangePayload =
-        new RoundChangePayload(
-            new ConsensusRoundIdentifier(unsignedRoundChange.sequence, unsignedRoundChange.round),
-            preparedRoundMetadata);
-    final SignedData<RoundChangePayload> signedRoundChangePayload =
-        SignedData.create(
-            roundChangePayload, Signature.decode(Bytes.fromHexString(signedRoundChange.signature)));
     final Optional<Block> block =
         this.block.map(
             b ->
@@ -114,7 +101,8 @@ public class RoundChangeMessage implements RlpTestInput {
                             Hash.fromHexString(p.getUnsignedPrepare().getDigest())),
                         Signature.decode(Bytes.fromHexString(p.getSignature()))))
             .collect(Collectors.toList());
-    return new RoundChange(signedRoundChangePayload, block, signedPrepares).encode();
+    return new RoundChange(signedRoundChange.toSignedRoundChangePayload(), block, signedPrepares)
+        .encode();
   }
 
   public static class UnsignedRoundChange {
@@ -134,22 +122,6 @@ public class RoundChangeMessage implements RlpTestInput {
       this.preparedValue = preparedValue;
       this.preparedRound = preparedRound;
     }
-
-    public long getSequence() {
-      return sequence;
-    }
-
-    public int getRound() {
-      return round;
-    }
-
-    public Optional<String> getPreparedValue() {
-      return preparedValue;
-    }
-
-    public Optional<Integer> getPreparedRound() {
-      return preparedRound;
-    }
   }
 
   public static class SignedRoundChange {
@@ -163,12 +135,22 @@ public class RoundChangeMessage implements RlpTestInput {
       this.signature = signature;
     }
 
-    public UnsignedRoundChange getUnsignedRoundChange() {
-      return unsignedRoundChange;
-    }
-
-    public String getSignature() {
-      return signature;
+    public SignedData<RoundChangePayload> toSignedRoundChangePayload() {
+      final Optional<PreparedRoundMetadata> preparedRoundMetadata =
+          unsignedRoundChange.preparedRound.isPresent()
+                  && unsignedRoundChange.preparedValue.isPresent()
+              ? Optional.of(
+                  new PreparedRoundMetadata(
+                      Hash.fromHexString(unsignedRoundChange.preparedValue.get()),
+                      unsignedRoundChange.preparedRound.get()))
+              : Optional.empty();
+      final RoundChangePayload roundChangePayload =
+          new RoundChangePayload(
+              new ConsensusRoundIdentifier(unsignedRoundChange.sequence, unsignedRoundChange.round),
+              preparedRoundMetadata);
+      final SignedData<RoundChangePayload> signedRoundChangePayload =
+          SignedData.create(roundChangePayload, Signature.decode(Bytes.fromHexString(signature)));
+      return signedRoundChangePayload;
     }
   }
 }
