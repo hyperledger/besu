@@ -42,6 +42,8 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Responsible for extracting transactions from PendingTransactions and determining if the
@@ -64,6 +66,7 @@ import com.google.common.collect.Lists;
  * not cleared between executions of buildTransactionListForBlock().
  */
 public class BlockTransactionSelector {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
@@ -207,6 +210,16 @@ public class BlockTransactionSelector {
     final Wei actualMinTransactionGasPriceInBlock =
         transactionPriceCalculator.price(transaction, processableBlockHeader.getBaseFee());
     if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
+      return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+    }
+
+    if (processableBlockHeader.getBaseFee().isPresent()
+        && Wei.of(processableBlockHeader.getBaseFee().get())
+                .compareTo(actualMinTransactionGasPriceInBlock)
+            > 0) {
+      LOG.error(
+          "transaction price must be greater than base fee, dropping transaction {} from the pool",
+          transaction.getHash().toHexString());
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }
 
