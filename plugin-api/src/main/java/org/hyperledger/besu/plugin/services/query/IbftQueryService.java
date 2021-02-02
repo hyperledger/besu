@@ -22,11 +22,9 @@ import java.util.Collection;
 /**
  * Allows for the IBFT 2.0 specific aspects of the block chain to be queried.
  *
- * <p>* @deprecated This interface has been replaced by {@link *
- * org.hyperledger.besu.plugin.services.query.PoaQueryService}
+ * @deprecated This interface has been replaced by {@link
+ *     org.hyperledger.besu.plugin.services.query.BftQueryService}
  */
-
-/** This class has been superseded by BftQueryService, which supports both QBFT and IBFT * */
 @Deprecated
 public interface IbftQueryService extends PoaQueryService {
 
