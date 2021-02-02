@@ -186,7 +186,10 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
         children.add(NULL_NODE);
       } else if (nodeRLPs.nextIsList()) {
         final Node<V> child =
-            decode(Bytes.concatenate(location, Bytes.of((byte) i)), nodeRLPs, errMessage);
+            decode(
+                location == null ? null : Bytes.concatenate(location, Bytes.of((byte) i)),
+                nodeRLPs,
+                errMessage);
         children.add(child);
       } else {
         final Bytes32 childHash = nodeRLPs.readBytes32();

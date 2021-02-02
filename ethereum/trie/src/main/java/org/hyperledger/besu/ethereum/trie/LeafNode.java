@@ -45,7 +45,7 @@ class LeafNode<V> implements Node<V> {
       final V value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
-    this.location = Optional.of(location);
+    this.location = Optional.ofNullable(location);
     this.path = path;
     this.value = value;
     this.nodeFactory = nodeFactory;
