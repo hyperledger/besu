@@ -28,6 +28,7 @@ import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -79,7 +80,8 @@ public class MainnetTransactionValidatorTest {
             .gasLimit(10)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
     assertThat(validator.validate(transaction, Optional.empty()))
         .isEqualTo(
@@ -290,7 +292,8 @@ public class MainnetTransactionValidatorTest {
     assertThat(frontierValidator.validate(transaction, Optional.empty()))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
 
-    when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(0));
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(0)));
 
     assertThat(eip1559Validator.validate(transaction, Optional.of(1L)))
         .isEqualTo(ValidationResult.valid());
@@ -341,7 +344,8 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
-    when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
     assertThat(validator.validate(transaction, basefee)).isEqualTo(ValidationResult.valid());
     ExperimentalEIPs.eip1559Enabled = false;
@@ -372,7 +376,8 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
 
-    when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
     assertThat(validator.validate(transaction, Optional.empty()).isValid()).isTrue();
   }

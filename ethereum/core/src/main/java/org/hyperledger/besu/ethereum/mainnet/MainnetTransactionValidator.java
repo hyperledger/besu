@@ -55,11 +55,25 @@ public class MainnetTransactionValidator {
       final boolean goQuorumCompatibilityMode) {
     this(
         gasCalculator,
-        Optional.empty(),
         checkSignatureMalleability,
         chainId,
         Set.of(TransactionType.FRONTIER),
         goQuorumCompatibilityMode);
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final Set<TransactionType> acceptedTransactionTypes,
+      final boolean quorumCompatibilityMode) {
+    this(
+        gasCalculator,
+        Optional.empty(),
+        checkSignatureMalleability,
+        chainId,
+        acceptedTransactionTypes,
+        quorumCompatibilityMode);
   }
 
   public MainnetTransactionValidator(
@@ -118,7 +132,8 @@ public class MainnetTransactionValidator {
       }
     }
 
-    final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);
+    final Gas intrinsicGasCost =
+        gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction).getGas();
     if (intrinsicGasCost.compareTo(Gas.of(transaction.getGasLimit())) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,

@@ -59,6 +59,10 @@ public class LogsBloomFilter extends DelegatingBytes {
         data.size());
   }
 
+  public LogsBloomFilter(final String logsBloomHexString) {
+    this(Bytes.fromHexString(logsBloomHexString));
+  }
+
   public static LogsBloomFilter fromHexString(final String hexString) {
     return new LogsBloomFilter(Bytes.fromHexString(hexString));
   }
