@@ -59,8 +59,12 @@ public class Proposal extends BftMessage<ProposalPayload> {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
+
+    rlpOut.startList();
     rlpOut.writeList(roundChanges, SignedData::writeTo);
     rlpOut.writeList(prepares, SignedData::writeTo);
+    rlpOut.endList();
+
     rlpOut.endList();
     return rlpOut.encoded();
   }
@@ -69,10 +73,13 @@ public class Proposal extends BftMessage<ProposalPayload> {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload = readPayload(rlpIn, ProposalPayload::readFrom);
+
+    rlpIn.enterList();
     final List<SignedData<RoundChangePayload>> roundChanges =
         rlpIn.readList(r -> readPayload(r, RoundChangePayload::readFrom));
     final List<SignedData<PreparePayload>> prepares =
         rlpIn.readList(r -> readPayload(r, PreparePayload::readFrom));
+    rlpIn.leaveList();
 
     rlpIn.leaveList();
     return new Proposal(payload, roundChanges, prepares);
