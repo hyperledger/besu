@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: repolinter
-        uses: shemnon/github-action-repolinter@master
+        uses: shemnon/github-action-repolinter@options
         with:
          custom-repolint-url: https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/41cc74446fc5d4c125ae4df8fc7a5fc94d5aabda/repo_structure/repolint.json -f markdown
+         report-format: json
