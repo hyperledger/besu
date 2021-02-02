@@ -60,7 +60,7 @@ public class QbftGetValidatorsByBlockNumberTest {
 
   @Test
   public void nameShouldBeCorrect() {
-    assertThat(method.getName()).isEqualTo("ibft_getValidatorsByBlockNumber");
+    assertThat(method.getName()).isEqualTo("qbft_getValidatorsByBlockNumber");
   }
 
   @Test
