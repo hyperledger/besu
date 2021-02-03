@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
-public class PrepareMessage implements RlpTestInput {
+public class PrepareMessage implements RlpTestCaseMessage {
   private final UnsignedPrepare unsignedPrepare;
   private final String signature;
 

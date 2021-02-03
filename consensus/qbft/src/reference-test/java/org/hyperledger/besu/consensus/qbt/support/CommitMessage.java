@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
-public class CommitMessage implements RlpTestInput {
+public class CommitMessage implements RlpTestCaseMessage {
   private final UnsignedCommit unsignedCommit;
   private final String signature;
 

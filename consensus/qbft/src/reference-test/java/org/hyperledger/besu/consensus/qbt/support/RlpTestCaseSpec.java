@@ -18,17 +18,18 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RlpTestCaseSpec {
-  private final RlpTestInput message;
+  private final RlpTestCaseMessage message;
   private final String rlp;
 
   @JsonCreator
   public RlpTestCaseSpec(
-      @JsonProperty("message") final RlpTestInput message, @JsonProperty("rlp") final String rlp) {
+      @JsonProperty("message") final RlpTestCaseMessage message,
+      @JsonProperty("rlp") final String rlp) {
     this.message = message;
     this.rlp = rlp;
   }
 
-  public RlpTestInput getMessage() {
+  public RlpTestCaseMessage getMessage() {
     return message;
   }
 

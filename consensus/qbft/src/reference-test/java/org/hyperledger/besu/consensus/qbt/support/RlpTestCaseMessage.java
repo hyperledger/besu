@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
   @JsonSubTypes.Type(value = RoundChangeMessage.class, name = "roundChange"),
   @JsonSubTypes.Type(value = ProposalMessage.class, name = "proposal"),
 })
-public interface RlpTestInput {
+public interface RlpTestCaseMessage {
 
   BftMessage<?> fromRlp(Bytes rlp);
 

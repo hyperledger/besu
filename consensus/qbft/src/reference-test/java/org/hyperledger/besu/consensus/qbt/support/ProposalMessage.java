@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.tuweni.bytes.Bytes;
 
-public class ProposalMessage implements RlpTestInput {
+public class ProposalMessage implements RlpTestCaseMessage {
   private final SignedProposal signedProposal;
   private final List<SignedRoundChange> roundChanges;
 
