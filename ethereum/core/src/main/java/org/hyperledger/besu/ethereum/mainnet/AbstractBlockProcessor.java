@@ -32,6 +32,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 import io.opentelemetry.api.OpenTelemetry;
@@ -67,10 +68,18 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     private final boolean successful;
 
     private final List<TransactionReceipt> receipts;
+    private final Optional<List<TransactionReceipt>> privateReceipts;
 
     public static AbstractBlockProcessor.Result successful(
         final List<TransactionReceipt> receipts) {
       return new AbstractBlockProcessor.Result(true, ImmutableList.copyOf(receipts));
+    }
+
+    public static Result successful(
+        final List<TransactionReceipt> publicTxReceipts,
+        final List<TransactionReceipt> privateTxReceipts) {
+      return new AbstractBlockProcessor.Result(
+          true, ImmutableList.copyOf(publicTxReceipts), Optional.of(privateTxReceipts));
     }
 
     public static AbstractBlockProcessor.Result failed() {
@@ -80,11 +89,26 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     Result(final boolean successful, final List<TransactionReceipt> receipts) {
       this.successful = successful;
       this.receipts = receipts;
+      this.privateReceipts = Optional.empty();
+    }
+
+    public Result(
+        final boolean successful,
+        final ImmutableList<TransactionReceipt> publicReceipts,
+        final Optional<List<TransactionReceipt>> privateReceipts) {
+      this.successful = successful;
+      this.receipts = publicReceipts;
+      this.privateReceipts = privateReceipts;
     }
 
     @Override
     public List<TransactionReceipt> getReceipts() {
       return receipts;
+    }
+
+    @Override
+    public Optional<List<TransactionReceipt>> getPrivateReceipts() {
+      return privateReceipts;
     }
 
     @Override

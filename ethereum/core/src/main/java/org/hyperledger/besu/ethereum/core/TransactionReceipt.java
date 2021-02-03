@@ -155,7 +155,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     this.status = status;
     this.logs = logs;
     this.bloomFilter = bloomFilter;
-    transactionReceiptType =
+    this.transactionReceiptType =
         stateRoot == null ? TransactionReceiptType.STATUS : TransactionReceiptType.ROOT;
     this.revertReason = revertReason;
   }

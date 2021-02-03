@@ -100,7 +100,8 @@ public class MainnetTransactionProcessor {
         OperationTracer.NO_TRACING,
         blockHashLookup,
         isPersistingPrivateState,
-        transactionValidationParams);
+        transactionValidationParams,
+        null);
   }
 
   /**
@@ -139,7 +140,8 @@ public class MainnetTransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        transactionValidationParams);
+        transactionValidationParams,
+        null);
   }
 
   /**
@@ -173,7 +175,8 @@ public class MainnetTransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        ImmutableTransactionValidationParams.builder().build());
+        ImmutableTransactionValidationParams.builder().build(),
+        null);
   }
 
   /**
@@ -261,6 +264,7 @@ public class MainnetTransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
+
       final EvmAccount sender = worldState.getOrCreate(senderAddress);
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);

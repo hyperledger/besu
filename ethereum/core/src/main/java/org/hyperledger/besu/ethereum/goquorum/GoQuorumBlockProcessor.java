@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.goquorum;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
@@ -85,6 +87,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
     final List<BlockHeader> ommers = block.getBody().getOmmers();
 
     final List<TransactionReceipt> publicTxReceipts = new ArrayList<>();
+    final List<TransactionReceipt> privateTxReceipts = new ArrayList<>();
     long currentGasUsed = 0;
 
     final GoQuorumPrivateStorage.Updater privateStorageUpdater = goQuorumPrivateStorage.updater();
@@ -99,71 +102,92 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
-      final WorldUpdater effectiveWorldUpdater;
-      final Transaction effectiveTransaction;
-      if (transaction.isGoQuorumPrivateTransaction()) {
-        effectiveWorldUpdater =
-            new DefaultMutablePrivateWorldStateUpdater(
-                publicWorldStateUpdater, privateWorldState.updater());
+      WorldUpdater effectiveWorldUpdater = null;
+      Transaction effectiveTransaction;
 
-        effectiveTransaction = retrievePrivateTransactionFromEnclave(transaction);
-      } else {
+      final boolean isGoQuorumPrivateTransaction = transaction.isGoQuorumPrivateTransaction();
+
+      if (isGoQuorumPrivateTransaction) { // private transaction
+        try {
+          effectiveTransaction = retrievePrivateTransactionFromEnclave(transaction);
+
+          effectiveWorldUpdater =
+              new DefaultMutablePrivateWorldStateUpdater(
+                  publicWorldStateUpdater, privateWorldState.updater());
+
+        } catch (final EnclaveClientException e) { // private transaction but not party to it
+          effectiveTransaction = null;
+          // TODO: we should probably still check the signature and the nonce
+        }
+      } else { // public Transaction
         effectiveWorldUpdater = publicWorldState.updater();
+
         effectiveTransaction = transaction;
       }
 
-      final TransactionProcessingResult result =
-          transactionProcessor.processTransaction(
-              blockchain,
-              effectiveWorldUpdater,
-              blockHeader,
-              effectiveTransaction,
-              miningBeneficiary,
-              OperationTracer.NO_TRACING,
-              blockHashLookup,
-              true,
-              TransactionValidationParams.processingBlock());
+      if (effectiveTransaction
+          != null) { // public transaction, or private transaction that we are party to
+        final TransactionProcessingResult result =
+            transactionProcessor.processTransaction(
+                blockchain,
+                effectiveWorldUpdater,
+                blockHeader,
+                effectiveTransaction,
+                miningBeneficiary,
+                OperationTracer.NO_TRACING,
+                blockHashLookup,
+                true,
+                TransactionValidationParams.processingBlock(),
+                null);
 
-      if (result.isInvalid()) {
-        LOG.info(
-            "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
-            result.getValidationResult().getInvalidReason(),
-            blockHeader.getHash().toHexString(),
-            transaction.getHash().toHexString());
-        return AbstractBlockProcessor.Result.failed();
-      } else {
-        publicWorldStateUpdater.getAccount(transaction.getSender()).getMutable().incrementNonce();
+        if (result.isInvalid()) {
+          LOG.info(
+              "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
+              result.getValidationResult().getInvalidReason(),
+              blockHeader.getHash().toHexString(),
+              transaction.getHash().toHexString());
+          return AbstractBlockProcessor.Result.failed();
+        }
+
+        if (isGoQuorumPrivateTransaction) { // private transaction we are party to
+          publicTxReceipts.add(
+              transactionReceiptFactory.create(
+                  transaction.getType(),
+                  publicResultForWhenWeHaveAPrivateTransaction(transaction),
+                  publicWorldState,
+                  currentGasUsed));
+          privateTxReceipts.add(
+              transactionReceiptFactory.create(
+                  transaction.getType(), result, privateWorldState, 0));
+          publicWorldStateUpdater
+              .getOrCreate(effectiveTransaction.getSender())
+              .getMutable()
+              .incrementNonce();
+        } else { // public transaction
+          final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
+          currentGasUsed += gasUsed;
+
+          publicTxReceipts.add(
+              transactionReceiptFactory.create(
+                  transaction.getType(), result, publicWorldState, currentGasUsed));
+          privateTxReceipts.add(null);
+        }
+      } else { // private transaction we are not party to
+        publicTxReceipts.add(
+            transactionReceiptFactory.create(
+                transaction.getType(),
+                publicResultForWhenWeHaveAPrivateTransaction(transaction),
+                publicWorldState,
+                currentGasUsed));
+        privateTxReceipts.add(null);
+        publicWorldStateUpdater
+            .getOrCreate(effectiveTransaction.getSender())
+            .getMutable()
+            .incrementNonce();
       }
 
       effectiveWorldUpdater.commit();
       publicWorldStateUpdater.commit();
-
-      currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
-
-      if (transaction.isGoQuorumPrivateTransaction()) {
-        // Only the logs are used for the Public transaction receipt
-        final TransactionProcessingResult publicResult =
-            TransactionProcessingResult.successful(
-                Collections.emptyList(),
-                0,
-                result.getGasRemaining(),
-                Bytes.EMPTY,
-                result.getValidationResult());
-
-        publicTxReceipts.add(
-            transactionReceiptFactory.create(
-                transaction.getType(), publicResult, publicWorldState, 0));
-
-        final TransactionReceipt privateTransactionReceipt =
-            transactionReceiptFactory.create(
-                transaction.getType(), result, privateWorldState, currentGasUsed);
-        privateStorageUpdater.putTransactionReceipt(
-            blockHeader.getHash(), transaction.getHash(), privateTransactionReceipt);
-      } else {
-        publicTxReceipts.add(
-            transactionReceiptFactory.create(
-                transaction.getType(), result, publicWorldState, currentGasUsed));
-      }
     }
 
     if (!rewardCoinbase(publicWorldState, blockHeader, ommers, skipZeroBlockRewards)) {
@@ -178,7 +202,17 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         publicWorldState.rootHash(), privateWorldState.rootHash());
     privateStorageUpdater.commit();
 
-    return Result.successful(publicTxReceipts);
+    return Result.successful(publicTxReceipts, privateTxReceipts);
+  }
+
+  private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(
+      final Transaction transaction) {
+    return TransactionProcessingResult.successful(
+        Collections.emptyList(),
+        0,
+        transaction.getGasLimit(),
+        Bytes.EMPTY,
+        ValidationResult.valid());
   }
 
   private Transaction retrievePrivateTransactionFromEnclave(final Transaction transaction) {
