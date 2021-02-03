@@ -103,8 +103,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     }
   }
 
-  public Optional<byte[]> getStateTrieNode(final Hash blockHash) {
-    return trieBranchStorage.get(blockHash.toArrayUnsafe());
+  public Optional<byte[]> getTrieLog(final Hash blockHash) {
+    return trieLogStorage.get(blockHash.toArrayUnsafe());
   }
 
   public Optional<Bytes> getStateTrieNode(final Bytes location) {
@@ -137,7 +137,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
             .map(Bytes32::wrap)
             .filter(hash -> hash.equals(rootHash))
             .isPresent()
-        || trieBranchStorage.containsKey(blockHash.toArrayUnsafe());
+        || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
   }
 
   @Override

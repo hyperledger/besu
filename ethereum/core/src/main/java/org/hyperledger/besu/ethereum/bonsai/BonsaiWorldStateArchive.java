@@ -77,7 +77,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     if (layeredWorldStates.containsKey(blockHash)) {
       return Optional.of(layeredWorldStates.get(blockHash).getTrieLog());
     } else {
-      return worldStateStorage.getStateTrieNode(blockHash).map(TrieLogLayer::fromBytes);
+      return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
   }
 
