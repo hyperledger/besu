@@ -45,13 +45,7 @@ public class PrepareMessage implements RlpTestCaseMessage {
 
   @Override
   public BftMessage<PreparePayload> toBftMessage() {
-    final PreparePayload preparePayload =
-        new PreparePayload(
-            new ConsensusRoundIdentifier(unsignedPrepare.sequence, unsignedPrepare.round),
-            Hash.fromHexStringLenient(unsignedPrepare.digest));
-    final SignedData<PreparePayload> signedPreparePayload =
-        SignedData.create(preparePayload, Signature.decode(Bytes.fromHexString(signature)));
-    return new Prepare(signedPreparePayload);
+    return new Prepare(toSignedPreparePayload(this));
   }
 
   public static SignedData<PreparePayload> toSignedPreparePayload(

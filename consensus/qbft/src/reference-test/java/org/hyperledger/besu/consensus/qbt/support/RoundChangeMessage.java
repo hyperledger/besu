@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbt.support;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions.forCommittedSeal;
+
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
 import java.util.Optional;
@@ -59,11 +61,8 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
 
   @Override
   public BftMessage<RoundChangePayload> toBftMessage() {
-    final Optional<Block> block =
-        this.block.map(
-            b ->
-                Block.readFrom(
-                    RLP.input(Bytes.fromHexString(b)), BftBlockHeaderFunctions.forCommittedSeal()));
+    final Optional<RLPInput> blockRlp = this.block.map(s -> RLP.input(Bytes.fromHexString(s)));
+    final Optional<Block> block = blockRlp.map(r -> Block.readFrom(r, forCommittedSeal()));
     final List<SignedData<PreparePayload>> signedPrepares =
         prepares.stream().map(PrepareMessage::toSignedPreparePayload).collect(Collectors.toList());
     return new RoundChange(
