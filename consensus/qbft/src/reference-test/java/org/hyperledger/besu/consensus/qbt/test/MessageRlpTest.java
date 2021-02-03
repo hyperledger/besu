@@ -30,7 +30,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class RlpTest {
+public class MessageRlpTest {
 
   private static final String TEST_CONFIG_PATH = "rlp";
   private final RlpTestCaseSpec spec;
@@ -57,7 +57,7 @@ public class RlpTest {
         .isEqualTo(expectedBftMessage);
   }
 
-  public RlpTest(final String name, final RlpTestCaseSpec spec, final boolean runTest) {
+  public MessageRlpTest(final String name, final RlpTestCaseSpec spec, final boolean runTest) {
     this.spec = spec;
     assumeTrue("Test was blacklisted", runTest);
   }
