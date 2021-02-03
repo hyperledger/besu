@@ -49,8 +49,6 @@ public interface DefaultCommandValues {
 
   Double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
   Bytes DEFAULT_EXTRA_DATA = Bytes.EMPTY;
-  long DEFAULT_MAX_REFRESH_DELAY = 3600000;
-  long DEFAULT_MIN_REFRESH_DELAY = 1;
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";

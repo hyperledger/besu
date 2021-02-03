@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -292,7 +293,9 @@ public class MainnetTransactionProcessor {
           previousBalance,
           sender.getBalance());
 
-      final Gas intrinsicGas = gasCalculator.transactionIntrinsicGasCost(transaction);
+      final GasAndAccessedState gasAndAccessedState =
+          gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction);
+      final Gas intrinsicGas = gasAndAccessedState.getGas();
       final Gas gasAvailable = Gas.of(transaction.getGasLimit()).minus(intrinsicGas);
       LOG.trace(
           "Gas available for execution {} = {} - {} (limit - intrinsic)",
@@ -322,6 +325,8 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .isPersistingPrivateState(isPersistingPrivateState)
               .transactionHash(transaction.getHash())
+              .accessListWarmAddresses(gasAndAccessedState.getAccessListAddressSet())
+              .accessListWarmStorage(gasAndAccessedState.getAccessListStorageByAddress())
               .privateMetadataUpdater(privateMetadataUpdater);
 
       final MessageFrame initialFrame;
@@ -384,8 +389,7 @@ public class MainnetTransactionProcessor {
 
       final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
       final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-      if (blockHeader.getBaseFee().isPresent()
-          && transaction.getType().equals(TransactionType.EIP1559)) {
+      if (blockHeader.getBaseFee().isPresent()) {
         final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
         if (transactionGasPrice.compareTo(baseFee) < 0) {
           return TransactionProcessingResult.failed(
