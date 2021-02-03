@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.qbt.support;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
@@ -38,19 +39,12 @@ public class CommitMessage implements RlpTestInput {
   }
 
   @Override
-  public RlpTestInput fromRlp(final Bytes rlp) {
-    final Commit commit = Commit.decode(rlp);
-    return new CommitMessage(
-        new UnsignedCommit(
-            commit.getRoundIdentifier().getSequenceNumber(),
-            commit.getRoundIdentifier().getRoundNumber(),
-            commit.getCommitSeal().encodedBytes().toHexString(),
-            commit.getDigest().toHexString()),
-        commit.getSignedPayload().getSignature().encodedBytes().toHexString());
+  public BftMessage<CommitPayload> fromRlp(final Bytes rlp) {
+    return Commit.decode(rlp);
   }
 
   @Override
-  public Bytes toRlp() {
+  public BftMessage<CommitPayload> toBftMessage() {
     final CommitPayload commitPayload =
         new CommitPayload(
             new ConsensusRoundIdentifier(unsignedCommit.sequence, unsignedCommit.round),
@@ -58,7 +52,7 @@ public class CommitMessage implements RlpTestInput {
             Signature.decode(Bytes.fromHexString(unsignedCommit.commitSeal)));
     final SignedData<CommitPayload> signedCommitPayload =
         SignedData.create(commitPayload, Signature.decode(Bytes.fromHexString(signature)));
-    return signedCommitPayload.encode();
+    return new Commit(signedCommitPayload);
   }
 
   public static class UnsignedCommit {

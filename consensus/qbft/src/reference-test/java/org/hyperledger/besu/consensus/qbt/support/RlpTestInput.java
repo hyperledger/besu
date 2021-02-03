@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbt.support;
 
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.tuweni.bytes.Bytes;
@@ -27,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 })
 public interface RlpTestInput {
 
-  RlpTestInput fromRlp(Bytes rlp);
+  BftMessage<?> fromRlp(Bytes rlp);
 
-  Bytes toRlp();
+  BftMessage<?> toBftMessage();
 }

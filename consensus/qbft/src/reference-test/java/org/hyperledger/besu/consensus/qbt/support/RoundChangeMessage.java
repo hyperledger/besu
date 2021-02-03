@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbt.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
@@ -52,40 +53,21 @@ public class RoundChangeMessage implements RlpTestInput {
   }
 
   @Override
-  public RlpTestInput fromRlp(final Bytes rlp) {
-    final RoundChange roundChange = RoundChange.decode(rlp);
-    final UnsignedRoundChange unsignedRoundChange =
-        new UnsignedRoundChange(
-            roundChange.getRoundIdentifier().getSequenceNumber(),
-            roundChange.getRoundIdentifier().getRoundNumber(),
-            roundChange
-                .getPreparedRoundMetadata()
-                .map(rm -> rm.getPreparedBlockHash().toHexString()),
-            roundChange.getPreparedRoundMetadata().map(PreparedRoundMetadata::getPreparedRound));
-    final List<PrepareMessage> prepares =
-        roundChange.getPrepares().stream()
-            .map(PrepareMessage::fromSignedPreparePayload)
-            .collect(Collectors.toList());
-    return new RoundChangeMessage(
-        new SignedRoundChange(
-            unsignedRoundChange,
-            roundChange.getSignedPayload().getSignature().encodedBytes().toHexString()),
-        roundChange.getProposedBlock().map(b -> b.toRlp().toHexString()),
-        prepares);
+  public BftMessage<RoundChangePayload> fromRlp(final Bytes rlp) {
+    return RoundChange.decode(rlp);
   }
 
   @Override
-  public Bytes toRlp() {
+  public BftMessage<RoundChangePayload> toBftMessage() {
     final Optional<Block> block =
         this.block.map(
             b ->
                 Block.readFrom(
-                    RLP.input(Bytes.fromHexString(b)), BftBlockHeaderFunctions.forOnChainBlock()));
+                    RLP.input(Bytes.fromHexString(b)), BftBlockHeaderFunctions.forCommittedSeal()));
     final List<SignedData<PreparePayload>> signedPrepares =
         prepares.stream().map(PrepareMessage::toSignedPreparePayload).collect(Collectors.toList());
     return new RoundChange(
-            SignedRoundChange.toSignedRoundChangePayload(signedRoundChange), block, signedPrepares)
-        .encode();
+        SignedRoundChange.toSignedRoundChangePayload(signedRoundChange), block, signedPrepares);
   }
 
   public static class UnsignedRoundChange {

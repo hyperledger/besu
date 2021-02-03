@@ -160,6 +160,8 @@ public class GossipTest {
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(block, peers.sign(block.getHash()));
 
+    System.out.println("signedCurrentHeightBlock.toRlp() = " + signedCurrentHeightBlock.toRlp());
+
     ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
     Prepare futurePrepare = sender.injectPrepare(futureRoundId, block.getHash());
     peers.verifyNoMessagesReceivedNonProposing();

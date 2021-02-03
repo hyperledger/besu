@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.qbt.test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.qbt.support.RlpTestCaseSpec;
-import org.hyperledger.besu.consensus.qbt.support.RlpTestInput;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Collection;
@@ -42,14 +42,19 @@ public class RlpTest {
 
   @Test
   public void encode() {
-    assertThat(Bytes.fromHexString(spec.getOutput())).isEqualTo(spec.getInput().toRlp());
+    final Bytes expectedRlp = Bytes.fromHexString(spec.getRlp());
+    assertThat(spec.getMessage().toBftMessage().encode()).isEqualTo(expectedRlp);
   }
 
   @Test
   public void decode() {
-    final RlpTestInput rlpTestInput =
-        spec.getInput().fromRlp(Bytes.fromHexString(spec.getOutput()));
-    assertThat(spec.getInput()).usingRecursiveComparison().isEqualTo(rlpTestInput);
+    final BftMessage<?> expectedBftMessage = spec.getMessage().toBftMessage();
+    final BftMessage<?> decodedBftMessage =
+        spec.getMessage().fromRlp(Bytes.fromHexString(spec.getRlp()));
+    assertThat(decodedBftMessage)
+        .usingRecursiveComparison()
+        .usingOverriddenEquals()
+        .isEqualTo(expectedBftMessage);
   }
 
   public RlpTest(final String name, final RlpTestCaseSpec spec, final boolean runTest) {

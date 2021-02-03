@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.qbt.support;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
@@ -46,25 +47,19 @@ public class PrepareMessage implements RlpTestInput {
   }
 
   @Override
-  public RlpTestInput fromRlp(final Bytes rlp) {
-    final Prepare prepare = Prepare.decode(rlp);
-    return new PrepareMessage(
-        new UnsignedPrepare(
-            prepare.getRoundIdentifier().getSequenceNumber(),
-            prepare.getRoundIdentifier().getRoundNumber(),
-            prepare.getDigest().toHexString()),
-        prepare.getSignedPayload().getSignature().encodedBytes().toHexString());
+  public BftMessage<PreparePayload> fromRlp(final Bytes rlp) {
+    return Prepare.decode(rlp);
   }
 
   @Override
-  public Bytes toRlp() {
+  public BftMessage<PreparePayload> toBftMessage() {
     final PreparePayload preparePayload =
         new PreparePayload(
             new ConsensusRoundIdentifier(unsignedPrepare.sequence, unsignedPrepare.round),
             Hash.fromHexStringLenient(unsignedPrepare.digest));
     final SignedData<PreparePayload> signedPreparePayload =
         SignedData.create(preparePayload, Signature.decode(Bytes.fromHexString(signature)));
-    return new Prepare(signedPreparePayload).encode();
+    return new Prepare(signedPreparePayload);
   }
 
   public static SignedData<PreparePayload> toSignedPreparePayload(
