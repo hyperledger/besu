@@ -123,6 +123,12 @@ public class PendingTransactions {
             "Count of transactions removed from the transaction pool",
             "source",
             "operation");
+
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.TRANSACTION_POOL,
+        "transactions",
+        "Current size of the transaction pool",
+        pendingTransactions::size);
   }
 
   public void evictOldTransactions() {
