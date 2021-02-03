@@ -38,14 +38,6 @@ public class PrepareMessage implements RlpTestInput {
     this.signature = signature;
   }
 
-  public UnsignedPrepare getUnsignedPrepare() {
-    return unsignedPrepare;
-  }
-
-  public String getSignature() {
-    return signature;
-  }
-
   @Override
   public BftMessage<PreparePayload> fromRlp(final Bytes rlp) {
     return Prepare.decode(rlp);
@@ -72,16 +64,6 @@ public class PrepareMessage implements RlpTestInput {
         Signature.decode(Bytes.fromHexString(prepareMessage.signature)));
   }
 
-  public static PrepareMessage fromSignedPreparePayload(
-      final SignedData<PreparePayload> signedPreparePayload) {
-    return new PrepareMessage(
-        new UnsignedPrepare(
-            signedPreparePayload.getPayload().getRoundIdentifier().getSequenceNumber(),
-            signedPreparePayload.getPayload().getRoundIdentifier().getRoundNumber(),
-            signedPreparePayload.getPayload().getDigest().toHexString()),
-        signedPreparePayload.getSignature().encodedBytes().toHexString());
-  }
-
   public static class UnsignedPrepare {
     private final long sequence;
     private final int round;
@@ -95,18 +77,6 @@ public class PrepareMessage implements RlpTestInput {
       this.sequence = sequence;
       this.round = round;
       this.digest = digest;
-    }
-
-    public long getSequence() {
-      return sequence;
-    }
-
-    public int getRound() {
-      return round;
-    }
-
-    public String getDigest() {
-      return digest;
     }
   }
 }

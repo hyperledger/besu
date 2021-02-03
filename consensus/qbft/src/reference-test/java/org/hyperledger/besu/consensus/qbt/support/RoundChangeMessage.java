@@ -118,22 +118,5 @@ public class RoundChangeMessage implements RlpTestInput {
       return SignedData.create(
           roundChangePayload, Signature.decode(Bytes.fromHexString(signedRoundChange.signature)));
     }
-
-    public static SignedRoundChange fromSignedRoundChangePayload(
-        final SignedData<RoundChangePayload> signedRoundChangePayload) {
-      return new SignedRoundChange(
-          new UnsignedRoundChange(
-              signedRoundChangePayload.getPayload().getRoundIdentifier().getSequenceNumber(),
-              signedRoundChangePayload.getPayload().getRoundIdentifier().getRoundNumber(),
-              signedRoundChangePayload
-                  .getPayload()
-                  .getPreparedRoundMetadata()
-                  .map(rm -> rm.getPreparedBlockHash().toHexString()),
-              signedRoundChangePayload
-                  .getPayload()
-                  .getPreparedRoundMetadata()
-                  .map(PreparedRoundMetadata::getPreparedRound)),
-          signedRoundChangePayload.getSignature().encodedBytes().toHexString());
-    }
   }
 }
