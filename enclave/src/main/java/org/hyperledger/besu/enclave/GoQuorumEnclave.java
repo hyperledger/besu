@@ -77,7 +77,7 @@ public class GoQuorumEnclave {
         JSON,
         request,
         "/storeraw",
-        (statusCode, body) -> handleJsonResponse(statusCode, body, StoreRawResponse.class, 201));
+        (statusCode, body) -> handleJsonResponse(statusCode, body, StoreRawResponse.class, 200));
   }
 
   public GoQuorumReceiveResponse receive(final String payloadKey) {
