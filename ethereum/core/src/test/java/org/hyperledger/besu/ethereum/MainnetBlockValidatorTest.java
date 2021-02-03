@@ -153,6 +153,11 @@ public class MainnetBlockValidatorTest {
               }
 
               @Override
+              public Optional<List<TransactionReceipt>> getPrivateReceipts() {
+                return Optional.empty();
+              }
+
+              @Override
               public boolean isSuccessful() {
                 return false;
               }
@@ -188,6 +193,11 @@ public class MainnetBlockValidatorTest {
               }
 
               @Override
+              public Optional<List<TransactionReceipt>> getPrivateReceipts() {
+                return Optional.empty();
+              }
+
+              @Override
               public boolean isSuccessful() {
                 return true;
               }
@@ -220,6 +230,11 @@ public class MainnetBlockValidatorTest {
               @Override
               public List<TransactionReceipt> getReceipts() {
                 return Collections.EMPTY_LIST;
+              }
+
+              @Override
+              public Optional<List<TransactionReceipt>> getPrivateReceipts() {
+                return Optional.empty();
               }
 
               @Override
