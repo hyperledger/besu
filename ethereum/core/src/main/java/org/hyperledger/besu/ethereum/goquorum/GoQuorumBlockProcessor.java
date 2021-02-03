@@ -117,7 +117,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
         } catch (final EnclaveClientException e) { // private transaction but not party to it
           effectiveTransaction = null;
-          // TODO: we should probably still check the signature and the nonce
+          // TODO-goquorum: we should probably still check the signature and the nonce
         }
       } else { // public Transaction
         effectiveWorldUpdater = publicWorldState.updater();
