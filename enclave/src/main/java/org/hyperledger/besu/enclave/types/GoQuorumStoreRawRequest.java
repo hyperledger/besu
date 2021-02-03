@@ -17,13 +17,13 @@ package org.hyperledger.besu.enclave.types;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class GoQuorumStoreRawRequest {
-  private final byte[] payload;
+  private final String payload;
 
-  public GoQuorumStoreRawRequest(@JsonProperty(value = "payload") final byte[] payload) {
+  public GoQuorumStoreRawRequest(@JsonProperty(value = "payload") final String payload) {
     this.payload = payload;
   }
 
-  public byte[] getPayload() {
+  public String getPayload() {
     return payload;
   }
 }
