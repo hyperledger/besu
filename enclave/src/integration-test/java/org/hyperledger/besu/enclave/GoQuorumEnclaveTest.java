@@ -101,8 +101,6 @@ public class GoQuorumEnclaveTest {
     when(vertxTransmitter.post(any(), any(), ArgumentMatchers.contains("/storeraw"), any()))
         .thenReturn(new StoreRawResponse(KEY));
 
-    final List<String> publicKeys = Arrays.asList("/+UuD63zItL1EbjxkKUljMgG8Z1w0AJ8pNOR4iq2yQc=");
-
     final StoreRawResponse sr = enclave.storeRaw(PAYLOAD);
     assertThat(sr.getKey()).isEqualTo(KEY);
   }
