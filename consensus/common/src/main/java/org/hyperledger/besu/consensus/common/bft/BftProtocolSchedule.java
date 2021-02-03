@@ -14,13 +14,12 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator;
-
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
+import java.util.function.Function;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
 public class BftProtocolSchedule {
@@ -38,12 +38,15 @@ public class BftProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset) {
 
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyBftChanges(config.getBftConfigOptions(), builder, config.isQuorum()),
+            builder ->
+                applyBftChanges(
+                    config.getBftConfigOptions(), builder, config.isQuorum(), blockHeaderRuleset),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -51,18 +54,23 @@ public class BftProtocolSchedule {
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset) {
+    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, blockHeaderRuleset);
   }
 
-  public static ProtocolSchedule create(final GenesisConfigOptions config) {
-    return create(config, PrivacyParameters.DEFAULT, false);
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config,
+      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset) {
+    return create(config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset);
   }
 
   private static ProtocolSpecBuilder applyBftChanges(
       final BftConfigOptions configOptions,
       final ProtocolSpecBuilder builder,
-      final boolean goQuorumMode) {
+      final boolean goQuorumMode,
+      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset) {
 
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
@@ -73,8 +81,10 @@ public class BftProtocolSchedule {
     }
 
     builder
-        .blockHeaderValidatorBuilder(bftBlockHeaderValidator(configOptions.getBlockPeriodSeconds()))
-        .ommerHeaderValidatorBuilder(bftBlockHeaderValidator(configOptions.getBlockPeriodSeconds()))
+        .blockHeaderValidatorBuilder(
+            blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
+        .ommerHeaderValidatorBuilder(
+            blockHeaderRuleset.apply(configOptions.getBlockPeriodSeconds()))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)

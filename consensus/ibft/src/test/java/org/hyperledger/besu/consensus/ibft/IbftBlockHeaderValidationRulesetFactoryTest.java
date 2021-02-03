@@ -12,13 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft;
+package org.hyperledger.besu.consensus.ibft;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
+import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -38,7 +41,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class BftBlockHeaderValidationRulesetFactoryTest {
+public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private final ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(null, null, setupContextWithValidators(validators));
@@ -57,7 +60,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -78,7 +81,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, emptyList(), parentHeader).buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -104,7 +107,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -125,7 +128,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).nonce(3).buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -148,7 +151,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -171,7 +174,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -194,7 +197,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -217,7 +220,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -238,7 +241,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, null).buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -262,7 +265,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
@@ -285,7 +288,7 @@ public class BftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(5).build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
             validator.validateHeader(
