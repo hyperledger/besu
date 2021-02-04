@@ -43,6 +43,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -207,7 +208,7 @@ public abstract class PeerDiscoveryAgent {
               new EnrField(EnrField.IP_V4, addressBytes),
               new EnrField(EnrField.TCP, tcpPort),
               new EnrField(EnrField.UDP, udpPort),
-              new EnrField("eth", forkIdSupplier.get()));
+              new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
       nodeRecord.setSignature(
           nodeKey
               .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))

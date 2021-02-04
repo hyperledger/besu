@@ -205,7 +205,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .besuPluginContext(new BesuPluginContextImpl())
             .autoLogBloomCaching(false)
             .storageProvider(storageProvider)
-            .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdRLP())
+            .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
             .build();
 
     runner.start();

@@ -360,10 +360,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     blockBroadcaster.propagate(block, totalDifficulty);
   }
 
-  public List<Bytes> getForkIdRLP() {
-    ForkId forkId = forkIdManager.computeForkId();
-    forkId.createForkIdRLP();
-
-    return Collections.singletonList(forkId.forkIdRLP);
+  public List<Bytes> getForkIdAsBytesList() {
+    return forkIdManager.computeForkId().getForkIdAsBytesList();
   }
 }
