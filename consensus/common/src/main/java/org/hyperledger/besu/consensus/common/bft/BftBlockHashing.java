@@ -72,6 +72,7 @@ public class BftBlockHashing {
       final BlockHeader header, final BftExtraData bftExtraData) {
     final Hash committerHash =
         BftBlockHashing.calculateDataHashForCommittedSeal(header, bftExtraData);
+
     return bftExtraData.getSeals().stream()
         .map(p -> Util.signatureToAddress(p, committerHash))
         .collect(Collectors.toList());
