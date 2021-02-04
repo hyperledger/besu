@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -189,7 +188,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void bftValidateHeaderIgnoresOmmersValue() {
+  public void bftValidateHeaderIgnores336OmmersValue() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -319,7 +318,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
       final NodeKey proposerNodeKey,
       final List<Address> validators,
       final BlockHeader parent,
-      final Function<BlockHeaderTestFixture, BlockHeaderTestFixture> modifier) {
+      final HeaderModifier modifier) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
 
     if (parent != null) {
@@ -333,7 +332,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     builder.blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal());
 
     if (modifier != null) {
-      modifier.apply(builder);
+      modifier.update(builder);
     }
 
     final BftExtraData bftExtraData =
@@ -347,5 +346,10 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
 
     builder.extraData(bftExtraData.encode());
     return builder;
+  }
+
+  @FunctionalInterface
+  public interface HeaderModifier {
+    void update(BlockHeaderTestFixture blockHeaderTestFixture);
   }
 }
