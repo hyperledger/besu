@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -108,7 +108,7 @@ public class JsonRpcHttpServiceHostWhitelistTest {
                         new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(EthHashMiningCoordinator.class),
+                    mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),

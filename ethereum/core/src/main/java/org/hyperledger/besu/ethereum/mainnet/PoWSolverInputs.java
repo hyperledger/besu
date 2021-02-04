@@ -18,13 +18,12 @@ import java.util.Arrays;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class EthHashSolverInputs {
+public class PoWSolverInputs {
   private final UInt256 target;
   private final byte[] prePowHash;
   private final long blockNumber;
 
-  public EthHashSolverInputs(
-      final UInt256 target, final byte[] prePowHash, final long blockNumber) {
+  public PoWSolverInputs(final UInt256 target, final byte[] prePowHash, final long blockNumber) {
     this.target = target;
     this.prePowHash = prePowHash;
     this.blockNumber = blockNumber;
@@ -44,7 +43,7 @@ public class EthHashSolverInputs {
 
   @Override
   public String toString() {
-    return "EthHashSolverInputs{"
+    return "MiningSolverInputs{"
         + "target="
         + target
         + ", prePowHash="

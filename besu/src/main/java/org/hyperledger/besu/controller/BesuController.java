@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
@@ -191,7 +192,7 @@ public class BesuController implements java.io.Closeable {
           genesisConfig.getConfigOptions(genesisConfigOverrides);
       final BesuControllerBuilder builder;
 
-      if (configOptions.isEthHash()) {
+      if (configOptions.getPowAlgorithm() != PowAlgorithm.NONE) {
         builder = new MainnetBesuControllerBuilder();
       } else if (configOptions.isIbft2()) {
         builder = new IbftBesuControllerBuilder();

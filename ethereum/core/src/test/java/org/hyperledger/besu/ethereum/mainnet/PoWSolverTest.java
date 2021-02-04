@@ -34,15 +34,15 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
-public class EthHashSolverTest {
+public class PoWSolverTest {
 
   @Test
   public void emptyHashRateAndWorkDefinitionIsReportedPriorToSolverStarting() {
     final List<Long> noncesToTry = Arrays.asList(1L, 1L, 1L, 1L, 1L, 1L, 0L);
-    final EthHashSolver solver =
-        new EthHashSolver(
+    final PoWSolver solver =
+        new PoWSolver(
             noncesToTry,
-            new EthHasher.Light(),
+            PoWHasher.LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -55,7 +55,7 @@ public class EthHashSolverTest {
   public void hashRateIsProducedSuccessfully() throws InterruptedException, ExecutionException {
     final List<Long> noncesToTry = Arrays.asList(1L, 1L, 1L, 1L, 1L, 1L, 0L);
 
-    final EthHasher hasher = mock(EthHasher.class);
+    final PoWHasher hasher = mock(PoWHasher.class);
     doAnswer(
             invocation -> {
               final Object[] args = invocation.getArguments();
@@ -67,8 +67,8 @@ public class EthHashSolverTest {
         .when(hasher)
         .hash(any(), anyLong(), anyLong(), any(), any());
 
-    final EthHashSolver solver =
-        new EthHashSolver(
+    final PoWSolver solver =
+        new PoWSolver(
             noncesToTry,
             hasher,
             false,
@@ -76,8 +76,8 @@ public class EthHashSolverTest {
             new EpochCalculator.DefaultEpochCalculator());
 
     final Stopwatch operationTimer = Stopwatch.createStarted();
-    final EthHashSolverInputs inputs = new EthHashSolverInputs(UInt256.ONE, new byte[0], 5);
-    solver.solveFor(EthHashSolver.EthHashSolverJob.createFromInputs(inputs));
+    final PoWSolverInputs inputs = new PoWSolverInputs(UInt256.ONE, new byte[0], 5);
+    solver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(inputs));
     final double runtimeSeconds = operationTimer.elapsed(TimeUnit.NANOSECONDS) / 1e9;
     final long worstCaseHashesPerSecond = (long) (noncesToTry.size() / runtimeSeconds);
 
@@ -93,8 +93,8 @@ public class EthHashSolverTest {
   public void ifInvokedTwiceProducesCorrectAnswerForSecondInvocation()
       throws InterruptedException, ExecutionException {
 
-    final EthHashSolverInputs firstInputs =
-        new EthHashSolverInputs(
+    final PoWSolverInputs firstInputs =
+        new PoWSolverInputs(
             UInt256.fromHexString(
                 "0x0083126e978d4fdf3b645a1cac083126e978d4fdf3b645a1cac083126e978d4f"),
             new byte[] {
@@ -103,15 +103,15 @@ public class EthHashSolverTest {
             },
             468);
 
-    final EthHashSolution expectedFirstOutput =
-        new EthHashSolution(
+    final PoWSolution expectedFirstOutput =
+        new PoWSolution(
             -6506032554016940193L,
             Hash.fromHexString(
                 "0xc5e3c33c86d64d0641dd3c86e8ce4628fe0aac0ef7b4c087c5fcaa45d5046d90"),
             firstInputs.getPrePowHash());
 
-    final EthHashSolverInputs secondInputs =
-        new EthHashSolverInputs(
+    final PoWSolverInputs secondInputs =
+        new PoWSolverInputs(
             UInt256.fromHexString(
                 "0x0083126e978d4fdf3b645a1cac083126e978d4fdf3b645a1cac083126e978d4f"),
             new byte[] {
@@ -120,27 +120,26 @@ public class EthHashSolverTest {
             },
             1);
 
-    final EthHashSolution expectedSecondOutput =
-        new EthHashSolution(
+    final PoWSolution expectedSecondOutput =
+        new PoWSolution(
             8855952212886464488L,
             Hash.fromHexString(
                 "0x2adb0f375dd2d528689cb9e00473c3c9692737109d547130feafbefb2c6c5244"),
             firstInputs.getPrePowHash());
 
     // Nonces need to have a 0L inserted, as it is a "wasted" nonce in the solver.
-    final EthHashSolver solver =
-        new EthHashSolver(
+    final PoWSolver solver =
+        new PoWSolver(
             Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
-            new EthHasher.Light(),
+            PoWHasher.LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
 
-    EthHashSolution soln =
-        solver.solveFor(EthHashSolver.EthHashSolverJob.createFromInputs(firstInputs));
+    PoWSolution soln = solver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(firstInputs));
     assertThat(soln.getMixHash()).isEqualTo(expectedFirstOutput.getMixHash());
 
-    soln = solver.solveFor(EthHashSolver.EthHashSolverJob.createFromInputs(secondInputs));
+    soln = solver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(secondInputs));
     assertThat(soln.getMixHash()).isEqualTo(expectedSecondOutput.getMixHash());
   }
 }

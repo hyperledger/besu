@@ -83,7 +83,8 @@ public class ReferenceTestProtocolSchedules {
             Function.identity(),
             PrivacyParameters.DEFAULT,
             false,
-            options.isQuorum())
+            options.isQuorum(),
+            options.getPowAlgorithm())
         .createProtocolSchedule();
   }
 

@@ -17,6 +17,7 @@ package org.hyperledger.besu.chainimport;
 import org.hyperledger.besu.chainimport.internal.BlockData;
 import org.hyperledger.besu.chainimport.internal.ChainData;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -119,7 +120,7 @@ public class JsonBlockImporter {
       final BlockData blockData,
       final GenesisConfigOptions genesisConfig) {
     // Some fields can only be configured for ethash
-    if (genesisConfig.isEthHash()) {
+    if (genesisConfig.getPowAlgorithm() != PowAlgorithm.NONE) {
       // For simplicity only set these for ethash.  Other consensus algorithms use these fields for
       // special purposes or ignore them
       miner.setCoinbase(blockData.getCoinbase().orElse(Address.ZERO));

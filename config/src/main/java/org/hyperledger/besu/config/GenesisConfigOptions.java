@@ -209,4 +209,11 @@ public interface GenesisConfigOptions {
    * @return block number to activate Quorum Permissioning
    */
   OptionalLong getQip714BlockNumber();
+
+  /**
+   * The PoW algorithm associated with the genesis file.
+   *
+   * @return the PoW algorithm in use.
+   */
+  PowAlgorithm getPowAlgorithm();
 }

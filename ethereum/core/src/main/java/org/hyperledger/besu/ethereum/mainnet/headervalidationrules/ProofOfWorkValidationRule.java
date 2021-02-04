@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHasher;
+import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
@@ -36,19 +36,16 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   private static final BigInteger ETHASH_TARGET_UPPER_BOUND = BigInteger.valueOf(2).pow(256);
 
-  static final EthHasher HASHER = new EthHasher.Light();
+  private final PoWHasher hasher;
 
   private final EpochCalculator epochCalculator;
   private final boolean includeBaseFee;
 
-  public ProofOfWorkValidationRule(final EpochCalculator epochCalculator) {
-    this(epochCalculator, false);
-  }
-
   public ProofOfWorkValidationRule(
-      final EpochCalculator epochCalculator, final boolean includeBaseFee) {
+      final EpochCalculator epochCalculator, final boolean includeBaseFee, final PoWHasher hasher) {
     this.epochCalculator = epochCalculator;
     this.includeBaseFee = includeBaseFee;
+    this.hasher = hasher;
   }
 
   @Override
@@ -65,7 +62,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = hashHeader(header);
-    HASHER.hash(
+    hasher.hash(
         hashBuffer, header.getNonce(), header.getNumber(), epochCalculator, headerHash.toArray());
 
     if (header.getDifficulty().isZero()) {

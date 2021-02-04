@@ -15,29 +15,28 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
+import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
-import org.hyperledger.besu.ethereum.mainnet.EthHasher;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.function.Function;
 
-public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMiner> {
+public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
 
   protected volatile Optional<Address> coinbase;
   protected boolean stratumMiningEnabled;
   protected final Iterable<Long> nonceGenerator;
   protected final EpochCalculator epochCalculator;
 
-  public EthHashMinerExecutor(
+  public PoWMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final PendingTransactions pendingTransactions,
@@ -58,9 +57,9 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
   }
 
   @Override
-  public Optional<EthHashBlockMiner> startAsyncMining(
+  public Optional<PoWBlockMiner> startAsyncMining(
       final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<EthHashObserver> ethHashObservers,
+      final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader) {
     if (coinbase.isEmpty()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
@@ -69,20 +68,20 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
   }
 
   @Override
-  public EthHashBlockMiner createMiner(
+  public PoWBlockMiner createMiner(
       final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<EthHashObserver> ethHashObservers,
+      final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader) {
-    final EthHashSolver solver =
-        new EthHashSolver(
+    final PoWSolver solver =
+        new PoWSolver(
             nonceGenerator,
-            new EthHasher.Light(),
+            protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1).getPoWHasher(),
             stratumMiningEnabled,
             ethHashObservers,
             epochCalculator);
-    final Function<BlockHeader, EthHashBlockCreator> blockCreator =
+    final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
-            new EthHashBlockCreator(
+            new PoWBlockCreator(
                 coinbase.get(),
                 parent -> extraData,
                 pendingTransactions,
@@ -94,7 +93,7 @@ public class EthHashMinerExecutor extends AbstractMinerExecutor<EthHashBlockMine
                 minBlockOccupancyRatio,
                 parentHeader);
 
-    return new EthHashBlockMiner(
+    return new PoWBlockMiner(
         blockCreator, protocolSchedule, protocolContext, observers, blockScheduler, parentHeader);
   }
 

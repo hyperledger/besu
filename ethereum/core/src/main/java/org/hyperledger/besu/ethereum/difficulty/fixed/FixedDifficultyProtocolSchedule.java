@@ -31,7 +31,8 @@ public class FixedDifficultyProtocolSchedule {
             builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            config.getPowAlgorithm())
         .createProtocolSchedule();
   }
 

@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 
 import java.util.Optional;
 
@@ -32,12 +32,12 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
-public class EthHashMiningCoordinatorTest {
+public class PoWMiningCoordinatorTest {
 
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
   private final SyncState syncState = mock(SyncState.class);
-  private final EthHashMinerExecutor executor = mock(EthHashMinerExecutor.class);
-  private final EthHashBlockMiner miner = mock(EthHashBlockMiner.class);
+  private final PoWMinerExecutor executor = mock(PoWMinerExecutor.class);
+  private final PoWBlockMiner miner = mock(PoWBlockMiner.class);
 
   @Before
   public void setUp() {
@@ -46,14 +46,14 @@ public class EthHashMiningCoordinatorTest {
 
   @Test
   public void miningCoordinatorIsCreatedDisabledWithNoReportableMiningStatistics() {
-    final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(
+    final PoWMiningCoordinator miningCoordinator =
+        new PoWMiningCoordinator(
             executionContext.getBlockchain(),
             executor,
             syncState,
             DEFAULT_REMOTE_SEALERS_LIMIT,
             DEFAULT_REMOTE_SEALERS_TTL);
-    final EthHashSolution solution = new EthHashSolution(1L, Hash.EMPTY, new byte[Bytes32.SIZE]);
+    final PoWSolution solution = new PoWSolution(1L, Hash.EMPTY, new byte[Bytes32.SIZE]);
 
     assertThat(miningCoordinator.isMining()).isFalse();
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(Optional.empty());
@@ -72,8 +72,8 @@ public class EthHashMiningCoordinatorTest {
 
     when(executor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(miner));
 
-    final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(
+    final PoWMiningCoordinator miningCoordinator =
+        new PoWMiningCoordinator(
             executionContext.getBlockchain(),
             executor,
             syncState,

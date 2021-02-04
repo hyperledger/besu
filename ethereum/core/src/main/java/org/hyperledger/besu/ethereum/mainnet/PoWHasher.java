@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-public interface EthHasher {
+public interface PoWHasher {
+
+  PoWHasher LIGHT = new Light();
+  PoWHasher NOOP = new NoOp();
 
   /**
    * Hash of a particular block and nonce.
@@ -27,9 +30,12 @@ public interface EthHasher {
    */
   void hash(byte[] buffer, long nonce, long number, EpochCalculator epochCalc, byte[] headerHash);
 
-  final class Light implements EthHasher {
+  /** Implementation of Ethash Hashimoto Light Implementation. */
+  final class Light implements PoWHasher {
 
     private static final EthHashCacheFactory cacheFactory = new EthHashCacheFactory();
+
+    private Light() {}
 
     @Override
     public void hash(
@@ -43,6 +49,22 @@ public interface EthHasher {
       final byte[] hash =
           EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
       System.arraycopy(hash, 0, buffer, 0, hash.length);
+    }
+  }
+
+  /** Implementation of an inoperative hasher. */
+  final class NoOp implements PoWHasher {
+
+    private NoOp() {}
+
+    @Override
+    public void hash(
+        final byte[] buffer,
+        final long nonce,
+        final long number,
+        final EpochCalculator epochCalc,
+        final byte[] headerHash) {
+      throw new UnsupportedOperationException("Hashing is unsupported");
     }
   }
 }

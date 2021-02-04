@@ -49,7 +49,8 @@ public class BftProtocolSchedule {
                     config.getBftConfigOptions(), builder, config.isQuorum(), blockHeaderRuleset),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            config.getPowAlgorithm())
         .createProtocolSchedule();
   }
 

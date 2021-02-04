@@ -282,6 +282,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public PowAlgorithm getPowAlgorithm() {
+    return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.NONE;
+  }
+
+  @Override
   public List<Long> getForks() {
     return Collections.emptyList();
   }

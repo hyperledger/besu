@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
-import org.hyperledger.besu.ethereum.mainnet.EthHasher;
+import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -49,7 +49,7 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class EthHashBlockCreatorTest {
+public class PoWBlockCreatorTest {
 
   private final Address BLOCK_1_COINBASE =
       Address.fromHexString("0x05a56e2d52c817161883f50c441c3228cfe54d9f");
@@ -74,14 +74,15 @@ public class EthHashBlockCreatorTest {
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum())
+                        genesisConfigOptions.isQuorum(),
+                        genesisConfigOptions.getPowAlgorithm())
                     .createProtocolSchedule())
             .build();
 
-    final EthHashSolver solver =
-        new EthHashSolver(
+    final PoWSolver solver =
+        new PoWSolver(
             Lists.newArrayList(BLOCK_1_NONCE),
-            new EthHasher.Light(),
+            PoWHasher.LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -96,8 +97,8 @@ public class EthHashBlockCreatorTest {
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
-    final EthHashBlockCreator blockCreator =
-        new EthHashBlockCreator(
+    final PoWBlockCreator blockCreator =
+        new PoWBlockCreator(
             BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
@@ -133,14 +134,15 @@ public class EthHashBlockCreatorTest {
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum())
+                        genesisConfigOptions.isQuorum(),
+                        genesisConfigOptions.getPowAlgorithm())
                     .createProtocolSchedule())
             .build();
 
-    final EthHashSolver solver =
-        new EthHashSolver(
+    final PoWSolver solver =
+        new PoWSolver(
             Lists.newArrayList(BLOCK_1_NONCE),
-            new EthHasher.Light(),
+            PoWHasher.LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -155,8 +157,8 @@ public class EthHashBlockCreatorTest {
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
-    final EthHashBlockCreator blockCreator =
-        new EthHashBlockCreator(
+    final PoWBlockCreator blockCreator =
+        new PoWBlockCreator(
             BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
@@ -187,14 +189,15 @@ public class EthHashBlockCreatorTest {
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum())
+                        genesisConfigOptions.isQuorum(),
+                        genesisConfigOptions.getPowAlgorithm())
                     .createProtocolSchedule())
             .build();
 
-    final EthHashSolver solver =
-        new EthHashSolver(
+    final PoWSolver solver =
+        new PoWSolver(
             Lists.newArrayList(BLOCK_1_NONCE),
-            new EthHasher.Light(),
+            PoWHasher.LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -209,8 +212,8 @@ public class EthHashBlockCreatorTest {
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
-    final EthHashBlockCreator blockCreator =
-        new EthHashBlockCreator(
+    final PoWBlockCreator blockCreator =
+        new PoWBlockCreator(
             BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
@@ -257,14 +260,15 @@ public class EthHashBlockCreatorTest {
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum())
+                        genesisConfigOptions.isQuorum(),
+                        genesisConfigOptions.getPowAlgorithm())
                     .createProtocolSchedule())
             .build();
 
-    final EthHashSolver solver =
-        new EthHashSolver(
+    final PoWSolver solver =
+        new PoWSolver(
             Lists.newArrayList(BLOCK_1_NONCE),
-            new EthHasher.Light(),
+            PoWHasher.LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -279,8 +283,8 @@ public class EthHashBlockCreatorTest {
             executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
-    final EthHashBlockCreator blockCreator =
-        new EthHashBlockCreator(
+    final PoWBlockCreator blockCreator =
+        new PoWBlockCreator(
             BLOCK_1_COINBASE,
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,

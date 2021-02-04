@@ -25,10 +25,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.Optional;
 
@@ -49,7 +49,7 @@ public class EthSubmitWorkTest {
   private final String hexValue =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
-  @Mock private EthHashMiningCoordinator miningCoordinator;
+  @Mock private PoWMiningCoordinator miningCoordinator;
 
   @Before
   public void setUp() {
@@ -73,8 +73,8 @@ public class EthSubmitWorkTest {
   @Test
   public void shouldFailIfMissingArguments() {
     final JsonRpcRequestContext request = requestWithParams();
-    final EthHashSolverInputs values =
-        new EthHashSolverInputs(
+    final PoWSolverInputs values =
+        new PoWSolverInputs(
             UInt256.fromHexString(hexValue), BaseEncoding.base16().lowerCase().decode(hexValue), 0);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
     assertThatThrownBy(
@@ -84,8 +84,8 @@ public class EthSubmitWorkTest {
 
   @Test
   public void shouldReturnTrueIfGivenCorrectResult() {
-    final EthHashSolverInputs firstInputs =
-        new EthHashSolverInputs(
+    final PoWSolverInputs firstInputs =
+        new PoWSolverInputs(
             UInt256.fromHexString(
                 "0x0083126e978d4fdf3b645a1cac083126e978d4fdf3b645a1cac083126e978d4f"),
             new byte[] {
@@ -94,8 +94,8 @@ public class EthSubmitWorkTest {
             },
             468);
 
-    final EthHashSolution expectedFirstOutput =
-        new EthHashSolution(
+    final PoWSolution expectedFirstOutput =
+        new PoWSolution(
             -6506032554016940193L,
             Hash.fromHexString(
                 "0xc5e3c33c86d64d0641dd3c86e8ce4628fe0aac0ef7b4c087c5fcaa45d5046d90"),

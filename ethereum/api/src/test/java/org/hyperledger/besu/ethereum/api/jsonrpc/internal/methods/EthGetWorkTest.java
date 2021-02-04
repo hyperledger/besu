@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.Optional;
 
@@ -46,7 +46,7 @@ public class EthGetWorkTest {
   private final String hexValue =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
-  @Mock private EthHashMiningCoordinator miningCoordinator;
+  @Mock private PoWMiningCoordinator miningCoordinator;
 
   @Before
   public void setUp() {
@@ -63,8 +63,8 @@ public class EthGetWorkTest {
   @Test
   public void shouldReturnCorrectResultOnGenesisDAG() {
     final JsonRpcRequestContext request = requestWithParams();
-    final EthHashSolverInputs values =
-        new EthHashSolverInputs(
+    final PoWSolverInputs values =
+        new PoWSolverInputs(
             UInt256.fromHexString(hexValue), BaseEncoding.base16().lowerCase().decode(hexValue), 0);
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -83,8 +83,8 @@ public class EthGetWorkTest {
   @Test
   public void shouldReturnCorrectResultOnHighBlockSeed() {
     final JsonRpcRequestContext request = requestWithParams();
-    final EthHashSolverInputs values =
-        new EthHashSolverInputs(
+    final PoWSolverInputs values =
+        new PoWSolverInputs(
             UInt256.fromHexString(hexValue),
             BaseEncoding.base16().lowerCase().decode(hexValue),
             30000);
@@ -113,8 +113,8 @@ public class EthGetWorkTest {
         .thenReturn(new EpochCalculator.Ecip1099EpochCalculator());
     method = new EthGetWork(miningCoordinator);
     final JsonRpcRequestContext request = requestWithParams();
-    final EthHashSolverInputs values =
-        new EthHashSolverInputs(
+    final PoWSolverInputs values =
+        new PoWSolverInputs(
             UInt256.fromHexString(hexValue),
             BaseEncoding.base16().lowerCase().decode(hexValue),
             60000);

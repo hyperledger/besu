@@ -320,6 +320,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public PowAlgorithm getPowAlgorithm() {
+    return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.NONE;
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));

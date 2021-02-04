@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
+import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -32,26 +32,25 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class EthHashSolver {
+public class PoWSolver {
 
   private static final Logger LOG = getLogger();
 
-  public static class EthHashSolverJob {
+  public static class PoWSolverJob {
 
-    private final EthHashSolverInputs inputs;
-    private final CompletableFuture<EthHashSolution> nonceFuture;
+    private final PoWSolverInputs inputs;
+    private final CompletableFuture<PoWSolution> nonceFuture;
 
-    EthHashSolverJob(
-        final EthHashSolverInputs inputs, final CompletableFuture<EthHashSolution> nonceFuture) {
+    PoWSolverJob(final PoWSolverInputs inputs, final CompletableFuture<PoWSolution> nonceFuture) {
       this.inputs = inputs;
       this.nonceFuture = nonceFuture;
     }
 
-    public static EthHashSolverJob createFromInputs(final EthHashSolverInputs inputs) {
-      return new EthHashSolverJob(inputs, new CompletableFuture<>());
+    public static PoWSolverJob createFromInputs(final PoWSolverInputs inputs) {
+      return new PoWSolverJob(inputs, new CompletableFuture<>());
     }
 
-    EthHashSolverInputs getInputs() {
+    PoWSolverInputs getInputs() {
       return inputs;
     }
 
@@ -59,7 +58,7 @@ public class EthHashSolver {
       return nonceFuture.isDone();
     }
 
-    void solvedWith(final EthHashSolution solution) {
+    void solvedWith(final PoWSolution solution) {
       nonceFuture.complete(solution);
     }
 
@@ -71,7 +70,7 @@ public class EthHashSolver {
       nonceFuture.completeExceptionally(ex);
     }
 
-    EthHashSolution getSolution() throws InterruptedException, ExecutionException {
+    PoWSolution getSolution() throws InterruptedException, ExecutionException {
       return nonceFuture.get();
     }
   }
@@ -79,28 +78,28 @@ public class EthHashSolver {
   private final long NO_MINING_CONDUCTED = -1;
 
   private final Iterable<Long> nonceGenerator;
-  private final EthHasher ethHasher;
+  private final PoWHasher poWHasher;
   private volatile long hashesPerSecond = NO_MINING_CONDUCTED;
   private final Boolean stratumMiningEnabled;
-  private final Subscribers<EthHashObserver> ethHashObservers;
+  private final Subscribers<PoWObserver> ethHashObservers;
   private final EpochCalculator epochCalculator;
-  private volatile Optional<EthHashSolverJob> currentJob = Optional.empty();
+  private volatile Optional<PoWSolverJob> currentJob = Optional.empty();
 
-  public EthHashSolver(
+  public PoWSolver(
       final Iterable<Long> nonceGenerator,
-      final EthHasher ethHasher,
+      final PoWHasher poWHasher,
       final Boolean stratumMiningEnabled,
-      final Subscribers<EthHashObserver> ethHashObservers,
+      final Subscribers<PoWObserver> ethHashObservers,
       final EpochCalculator epochCalculator) {
     this.nonceGenerator = nonceGenerator;
-    this.ethHasher = ethHasher;
+    this.poWHasher = poWHasher;
     this.stratumMiningEnabled = stratumMiningEnabled;
     this.ethHashObservers = ethHashObservers;
     ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
     this.epochCalculator = epochCalculator;
   }
 
-  public EthHashSolution solveFor(final EthHashSolverJob job)
+  public PoWSolution solveFor(final PoWSolverJob job)
       throws InterruptedException, ExecutionException {
     currentJob = Optional.of(job);
     if (stratumMiningEnabled) {
@@ -113,7 +112,7 @@ public class EthHashSolver {
 
   private void findValidNonce() {
     final Stopwatch operationTimer = Stopwatch.createStarted();
-    final EthHashSolverJob job = currentJob.get();
+    final PoWSolverJob job = currentJob.get();
     long hashesExecuted = 0;
     final byte[] hashBuffer = new byte[64];
     for (final Long n : nonceGenerator) {
@@ -122,7 +121,7 @@ public class EthHashSolver {
         return;
       }
 
-      final Optional<EthHashSolution> solution = testNonce(job.getInputs(), n, hashBuffer);
+      final Optional<PoWSolution> solution = testNonce(job.getInputs(), n, hashBuffer);
       solution.ifPresent(job::solvedWith);
 
       hashesExecuted++;
@@ -132,24 +131,24 @@ public class EthHashSolver {
     job.failed(new IllegalStateException("No valid nonce found."));
   }
 
-  private Optional<EthHashSolution> testNonce(
-      final EthHashSolverInputs inputs, final long nonce, final byte[] hashBuffer) {
-    ethHasher.hash(
+  private Optional<PoWSolution> testNonce(
+      final PoWSolverInputs inputs, final long nonce, final byte[] hashBuffer) {
+    poWHasher.hash(
         hashBuffer, nonce, inputs.getBlockNumber(), epochCalculator, inputs.getPrePowHash());
     final UInt256 x = UInt256.fromBytes(Bytes32.wrap(hashBuffer, 32));
     if (x.compareTo(inputs.getTarget()) <= 0) {
       final Hash mixedHash =
           Hash.wrap(Bytes32.leftPad(Bytes.wrap(hashBuffer).slice(0, Bytes32.SIZE)));
-      return Optional.of(new EthHashSolution(nonce, mixedHash, inputs.getPrePowHash()));
+      return Optional.of(new PoWSolution(nonce, mixedHash, inputs.getPrePowHash()));
     }
     return Optional.empty();
   }
 
   public void cancel() {
-    currentJob.ifPresent(EthHashSolverJob::cancel);
+    currentJob.ifPresent(PoWSolverJob::cancel);
   }
 
-  public Optional<EthHashSolverInputs> getWorkDefinition() {
+  public Optional<PoWSolverInputs> getWorkDefinition() {
     return currentJob.flatMap(job -> Optional.of(job.getInputs()));
   }
 
@@ -160,21 +159,21 @@ public class EthHashSolver {
     return Optional.of(hashesPerSecond);
   }
 
-  public boolean submitSolution(final EthHashSolution solution) {
-    final Optional<EthHashSolverJob> jobSnapshot = currentJob;
+  public boolean submitSolution(final PoWSolution solution) {
+    final Optional<PoWSolverJob> jobSnapshot = currentJob;
     if (jobSnapshot.isEmpty()) {
       LOG.debug("No current job, rejecting miner work");
       return false;
     }
 
-    final EthHashSolverJob job = jobSnapshot.get();
-    final EthHashSolverInputs inputs = job.getInputs();
+    final PoWSolverJob job = jobSnapshot.get();
+    final PoWSolverInputs inputs = job.getInputs();
     if (!Arrays.equals(inputs.getPrePowHash(), solution.getPowHash())) {
       LOG.debug("Miner's solution does not match current job");
       return false;
     }
     final byte[] hashBuffer = new byte[64];
-    final Optional<EthHashSolution> calculatedSolution =
+    final Optional<PoWSolution> calculatedSolution =
         testNonce(inputs, solution.getNonce(), hashBuffer);
 
     if (calculatedSolution.isPresent()) {

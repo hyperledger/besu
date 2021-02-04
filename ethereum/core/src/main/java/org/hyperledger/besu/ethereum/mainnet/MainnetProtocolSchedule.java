@@ -50,7 +50,8 @@ public class MainnetProtocolSchedule {
             Function.identity(),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            config.getPowAlgorithm())
         .createProtocolSchedule();
   }
 

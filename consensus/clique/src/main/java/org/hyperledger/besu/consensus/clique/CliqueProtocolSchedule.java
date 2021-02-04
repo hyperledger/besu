@@ -74,7 +74,8 @@ public class CliqueProtocolSchedule {
                     privacyParameters.getGoQuorumPrivacyParameters().isPresent()),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            config.getPowAlgorithm())
         .createProtocolSchedule();
   }
 

@@ -23,11 +23,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.Optional;
 
@@ -42,8 +42,8 @@ public class EthGetWork implements JsonRpcMethod {
 
   public EthGetWork(final MiningCoordinator miner) {
     this.miner = miner;
-    if (miner instanceof EthHashMiningCoordinator) {
-      this.epochCalculator = ((EthHashMiningCoordinator) miner).getEpochCalculator();
+    if (miner instanceof PoWMiningCoordinator) {
+      this.epochCalculator = ((PoWMiningCoordinator) miner).getEpochCalculator();
     } else {
       this.epochCalculator = new EpochCalculator.DefaultEpochCalculator();
     }
@@ -56,9 +56,9 @@ public class EthGetWork implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
+    final Optional<PoWSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
-      final EthHashSolverInputs rawResult = solver.get();
+      final PoWSolverInputs rawResult = solver.get();
       final byte[] dagSeed =
           DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber(), epochCalculator);
       final String[] result = {

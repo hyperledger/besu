@@ -19,12 +19,12 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class EthHashSolution {
+public class PoWSolution {
   private final long nonce;
   private final Hash mixHash;
   private final byte[] powHash;
 
-  public EthHashSolution(final long nonce, final Hash mixHash, final byte[] powHash) {
+  public PoWSolution(final long nonce, final Hash mixHash, final byte[] powHash) {
     this.nonce = nonce;
     this.mixHash = mixHash;
     this.powHash = powHash;
@@ -46,7 +46,7 @@ public class EthHashSolution {
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    EthHashSolution that = (EthHashSolution) o;
+    PoWSolution that = (PoWSolution) o;
     return nonce == that.nonce
         && Objects.equals(mixHash, that.mixHash)
         && Arrays.equals(powHash, that.powHash);
