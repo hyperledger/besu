@@ -28,7 +28,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_DISCOVERY_URL;
@@ -1718,7 +1717,23 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcApisPropertyMustBeUsed() {
+  public void rpcApisPrivApiWithPrivacyDisabledIsRemoved() {
+    parseCommand("--rpc-http-api", "ETH,NET,PRIV", "--rpc-http-enabled");
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger)
+        .warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
+        .containsExactlyInAnyOrder(ETH, NET);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void rpcApisPermApiWithPermissioningDisabledIsRemoved() {
     parseCommand("--rpc-http-api", "ETH,NET,PERM", "--rpc-http-enabled");
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
@@ -1727,7 +1742,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         .warn("Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getRpcApis())
-        .containsExactlyInAnyOrder(ETH, NET, PERM);
+        .containsExactlyInAnyOrder(ETH, NET);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

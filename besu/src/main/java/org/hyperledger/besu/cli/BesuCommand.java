@@ -1069,8 +1069,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.Option(
       names = {"--static-nodes-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "Specifies the static node file containing the static nodes for this node to connect to")
+      description = "Specifies the file containing the static nodes to which this node can connect")
   private final Path staticNodesFile = null;
 
   private EthNetworkConfig ethNetworkConfig;
@@ -1523,6 +1522,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (isGoQuorumCompatibilityMode) {
       checkGoQuorumCompatibilityConfig(ethNetworkConfig);
     }
+    permissioningConfiguration = permissioningConfiguration();
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
@@ -1537,7 +1537,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       hostsAllowlist.addAll(hostsWhitelist);
     }
 
-    permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
 
     logger.info("Connecting to {} static nodes.", staticNodes.size());
@@ -1718,6 +1717,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           commandLine,
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
+
+    removeRpcApisForDisabledFeatures();
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
@@ -1907,10 +1908,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
     if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
-      if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
-        logger.warn(
-            "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
-      }
       return Optional.empty();
     }
 
@@ -2103,15 +2100,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           Optional.of(configureGoQuorumPrivacy(storageProvider)));
     }
 
-    if (!isPrivacyEnabled && anyPrivacyApiEnabled()) {
-      logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
-    }
-
-    if (!isGoQuorumCompatibilityMode
-        && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
-      logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
-    }
-
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
     if (isPrivacyEnabled) {
@@ -2120,6 +2108,32 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     return privacyParameters;
+  }
+
+  private void removeRpcApisForDisabledFeatures() {
+    if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
+      if (rpcHttpApis.contains(RpcApis.PERM) || rpcWsApis.contains(RpcApis.PERM)) {
+        logger.warn(
+            "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
+        rpcHttpApis.remove(RpcApis.PERM);
+        rpcWsApis.remove(RpcApis.PERM);
+      }
+    }
+
+    if (!isPrivacyEnabled && anyPrivacyApiEnabled()) {
+      logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
+      rpcHttpApis.remove(RpcApis.EEA);
+      rpcHttpApis.remove(RpcApis.PRIV);
+      rpcWsApis.remove(RpcApis.EEA);
+      rpcWsApis.remove(RpcApis.PRIV);
+    }
+
+    if (!isGoQuorumCompatibilityMode
+        && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
+      logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
+      rpcHttpApis.remove(RpcApis.GOQUORUM);
+      rpcWsApis.remove(RpcApis.GOQUORUM);
+    }
   }
 
   public WorldStateArchive createPrivateWorldStateArchive(final StorageProvider storageProvider) {
