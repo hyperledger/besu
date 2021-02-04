@@ -19,20 +19,12 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -42,6 +34,13 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class QbftBlockHeaderValidationRulesetFactoryTest {
@@ -66,8 +65,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isTrue();
   }
 
@@ -87,8 +86,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -113,8 +112,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -134,8 +133,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isTrue();
   }
 
@@ -157,8 +156,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -172,16 +171,20 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader parentHeader =
         getPresetHeaderBuilder(1, proposerNodeKey, validators, null).buildHeader();
     final BlockHeader blockHeader =
-        getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader,
-            builder -> builder.mixHash(Hash.EMPTY_TRIE_HASH))
+        getPresetHeaderBuilder(
+                2,
+                proposerNodeKey,
+                validators,
+                parentHeader,
+                builder -> builder.mixHash(Hash.EMPTY_TRIE_HASH))
             .buildHeader();
 
     final BlockHeaderValidator validator =
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isTrue();
   }
 
@@ -195,16 +198,20 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader parentHeader =
         getPresetHeaderBuilder(1, proposerNodeKey, validators, null).buildHeader();
     final BlockHeader blockHeader =
-        getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader,
-            builder -> builder.ommersHash(Hash.EMPTY_TRIE_HASH))
+        getPresetHeaderBuilder(
+                2,
+                proposerNodeKey,
+                validators,
+                parentHeader,
+                builder -> builder.ommersHash(Hash.EMPTY_TRIE_HASH))
             .buildHeader();
 
     final BlockHeaderValidator validator =
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isTrue();
   }
 
@@ -226,8 +233,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -247,8 +254,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -271,8 +278,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -294,8 +301,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
         QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-        validator.validateHeader(
-            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+            validator.validateHeader(
+                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
