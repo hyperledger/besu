@@ -30,10 +30,10 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.logging.log4j.Logger;
 
 public class MainnetBlockValidator implements BlockValidator {
@@ -132,7 +132,7 @@ public class MainnetBlockValidator implements BlockValidator {
           resultingList.add(receipts.get(i));
         }
       }
-      receipts = ImmutableList.copyOf(resultingList);
+      receipts = Collections.unmodifiableList(resultingList);
     }
 
     return Optional.of(new BlockProcessingOutputs(worldState, receipts));

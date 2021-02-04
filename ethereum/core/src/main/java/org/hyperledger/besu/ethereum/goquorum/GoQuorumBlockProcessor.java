@@ -229,7 +229,11 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         transaction.getValue(),
         transaction.getSignature(),
         privatePayload,
-        transaction.getSender(),
+        transaction
+            .getSender(), // at this point we are checking the signature of the public transaction
+        // and we are setting the sender for the private transaction, so the
+        // signature of the private transaction will not (and should not) be
+        // checked again.
         transaction.getChainId(),
         Optional.of(transaction.getV()));
   }
