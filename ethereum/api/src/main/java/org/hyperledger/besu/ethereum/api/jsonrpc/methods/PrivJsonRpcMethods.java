@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Enclav
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterChanges;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterLogs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivUninstallFilter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.GoQuorumDistributeRawPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDebugGetStateRoot;
@@ -73,7 +72,10 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
             new PrivDebugGetStateRoot(
                 getBlockchainQueries(), enclavePublicKeyProvider, privacyController),
-            distributeRawTransactionMethod(privacyController, enclavePublicKeyProvider),
+            new PrivDistributeRawTransaction(
+                privacyController,
+                enclavePublicKeyProvider,
+                getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
             new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
             new PrivGetLogs(
                 getBlockchainQueries(),
@@ -103,19 +105,5 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
               RPC_METHODS.merge(key, jsonRpcMethod, (oldVal, newVal) -> newVal));
     }
     return RPC_METHODS;
-  }
-
-  private JsonRpcMethod distributeRawTransactionMethod(
-      final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    if (getPrivacyParameters().getGoQuorumPrivacyParameters().isPresent()) {
-      return new GoQuorumDistributeRawPrivateTransaction(
-          getPrivacyParameters().getGoQuorumPrivacyParameters().get().enclave());
-    } else {
-      return new PrivDistributeRawTransaction(
-          privacyController,
-          enclavePublicKeyProvider,
-          getPrivacyParameters().isOnchainPrivacyGroupsEnabled());
-    }
   }
 }
