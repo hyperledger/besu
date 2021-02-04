@@ -106,7 +106,8 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   }
 
   private JsonRpcMethod distributeRawTransactionMethod(
-      PrivacyController privacyController, EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyController privacyController,
+      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
     if (getPrivacyParameters().getGoQuorumPrivacyParameters().isPresent()) {
       return new GoQuorumDistributeRawPrivateTransaction(
           getPrivacyParameters().getGoQuorumPrivacyParameters().get().enclave());
