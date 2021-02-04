@@ -30,18 +30,18 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import org.apache.logging.log4j.Logger;
 
-public class GoQuorumStoreRawPrivateTransaction implements JsonRpcMethod {
+public class GoQuorumDistributeRawPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = getLogger();
   private final GoQuorumEnclave enclave;
 
-  public GoQuorumStoreRawPrivateTransaction(final GoQuorumEnclave enclave) {
+  public GoQuorumDistributeRawPrivateTransaction(final GoQuorumEnclave enclave) {
     this.enclave = enclave;
   }
 
   @Override
   public String getName() {
-    return RpcMethod.GO_QUORUM_STORE_RAW_PRIVATE_TRANSACTION.getMethodName();
+    return RpcMethod.PRIV_DISTRIBUTE_RAW_TRANSACTION.getMethodName();
   }
 
   @Override
