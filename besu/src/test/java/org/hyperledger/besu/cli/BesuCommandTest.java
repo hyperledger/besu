@@ -3428,6 +3428,23 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
   }
 
+  @Test
+  public void privacyWithGoQuorumModeMustError() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--privacy-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
+
+    assertThat(commandErrorOutput.toString())
+        .contains("GoQuorum mode cannot be enabled with privacy.");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
 
   @Test

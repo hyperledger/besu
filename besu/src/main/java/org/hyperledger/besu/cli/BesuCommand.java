@@ -2038,6 +2038,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (isPruningEnabled()) {
         throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
       }
+      if (isGoQuorumCompatibilityMode) {
+        throw new ParameterException(
+            commandLine, String.format("%s %s", "GoQuorum mode", errorSuffix));
+      }
 
       if (isPrivacyMultiTenancyEnabled
           && !jsonRpcConfiguration.isAuthenticationEnabled()
