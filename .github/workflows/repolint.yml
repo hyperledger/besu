@@ -10,10 +10,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: hyperledger-tools.jfrog.io/repolinter:0.10.0
     steps:
-      - uses: actions/checkout@v2
-      - name: repolinter
-        uses: shemnon/github-action-repolinter@options
-        with:
-         custom-repolint-url: https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/41cc74446fc5d4c125ae4df8fc7a5fc94d5aabda/repo_structure/repolint.json
-         report-format: markdown
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Lint Repo
+        run: bundle exec /app/bin/repolinter.js --rulesetUrl https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/master/repo_structure/repolint.json --format markdown
+        working-directory: fabric
