@@ -16,9 +16,7 @@ package org.hyperledger.besu.enclave.types;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"key"})
 public class StoreRawResponse {
   private final String key;
 
