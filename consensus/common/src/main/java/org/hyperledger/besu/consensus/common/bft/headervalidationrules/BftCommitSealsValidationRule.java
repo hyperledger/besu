@@ -32,6 +32,8 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 /**
  * Ensures the commit seals in the block header were created by known validators (as determined by
@@ -46,6 +48,9 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
+
+    System.out.println("In Test");
+    System.out.println(header.toString());
     final ValidatorProvider validatorProvider =
         protocolContext
             .getConsensusState(BftContext.class)
@@ -53,8 +58,11 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
             .getVoteTallyAfterBlock(parent);
     final BftExtraData bftExtraData = BftExtraData.decode(header);
 
+    System.out.println("Validators = " + validatorProvider.getValidators());
+
     final List<Address> committers =
         BftBlockHashing.recoverCommitterAddresses(header, bftExtraData);
+
     final List<Address> committersWithoutDuplicates = new ArrayList<>(new HashSet<>(committers));
 
     if (committers.size() != committersWithoutDuplicates.size()) {

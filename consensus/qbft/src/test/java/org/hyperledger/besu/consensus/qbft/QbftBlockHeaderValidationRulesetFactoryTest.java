@@ -12,18 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibft;
+package org.hyperledger.besu.consensus.qbft;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,15 +42,9 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class IbftBlockHeaderValidationRulesetFactoryTest {
+public class QbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(null, null, setupContextWithValidators(validators));
@@ -60,11 +63,11 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isTrue();
   }
 
@@ -81,11 +84,11 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, emptyList(), parentHeader).buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -107,16 +110,16 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
   @Test
-  public void bftValidateHeaderFailsOnNonce() {
+  public void bftValidateHeaderIgnoresNonceValue() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -128,12 +131,12 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader).nonce(3).buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
-        .isFalse();
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        .isTrue();
   }
 
   @Test
@@ -151,16 +154,16 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
   @Test
-  public void bftValidateHeaderFailsOnMixHash() {
+  public void bftValidateHeaderIgnoresMixHashValue() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -169,21 +172,21 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader parentHeader =
         getPresetHeaderBuilder(1, proposerNodeKey, validators, null).buildHeader();
     final BlockHeader blockHeader =
-        getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
-            .mixHash(Hash.EMPTY_TRIE_HASH)
+        getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader,
+            builder -> builder.mixHash(Hash.EMPTY_TRIE_HASH))
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
-        .isFalse();
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        .isTrue();
   }
 
   @Test
-  public void bftValidateHeaderFailsOnOmmers() {
+  public void bftValidateHeaderIgnoresOmmersValue() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -192,17 +195,17 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final BlockHeader parentHeader =
         getPresetHeaderBuilder(1, proposerNodeKey, validators, null).buildHeader();
     final BlockHeader blockHeader =
-        getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
-            .ommersHash(Hash.EMPTY_TRIE_HASH)
+        getPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader,
+            builder -> builder.ommersHash(Hash.EMPTY_TRIE_HASH))
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
-        .isFalse();
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        .isTrue();
   }
 
   @Test
@@ -220,11 +223,11 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -241,11 +244,11 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         getPresetHeaderBuilder(2, proposerNodeKey, validators, null).buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -265,11 +268,11 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -288,11 +291,11 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             .buildHeader();
 
     final BlockHeaderValidator validator =
-        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
+        QbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(5).build();
 
     assertThat(
-            validator.validateHeader(
-                blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
+        validator.validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
         .isFalse();
   }
 
@@ -301,6 +304,15 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
       final NodeKey proposerNodeKey,
       final List<Address> validators,
       final BlockHeader parent) {
+    return getPresetHeaderBuilder(number, proposerNodeKey, validators, parent, null);
+  }
+
+  private BlockHeaderTestFixture getPresetHeaderBuilder(
+      final long number,
+      final NodeKey proposerNodeKey,
+      final List<Address> validators,
+      final BlockHeader parent,
+      final Function<BlockHeaderTestFixture, BlockHeaderTestFixture> modifier) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
 
     if (parent != null) {
@@ -309,12 +321,13 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     builder.number(number);
     builder.gasLimit(5000);
     builder.timestamp(6000 * number);
-    builder.mixHash(
-        Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
-    builder.ommersHash(Hash.EMPTY_LIST_HASH);
-    builder.nonce(0);
     builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal());
+
+    if (modifier != null) {
+      modifier.apply(builder);
+    }
 
     final BftExtraData bftExtraData =
         BftExtraDataFixture.createExtraData(
