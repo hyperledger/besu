@@ -219,7 +219,7 @@ public final class RunnerTest {
             .dataDir(dbAhead)
             .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
-            .forkIdSupplier(() -> controllerAhead.getProtocolManager().getEthRLP())
+            .forkIdSupplier(() -> controllerAhead.getProtocolManager().getForkIdRLP())
             .build();
     try {
 
@@ -272,7 +272,7 @@ public final class RunnerTest {
               .metricsConfiguration(behindMetricsConfiguration)
               .dataDir(temp.newFolder().toPath())
               .metricsSystem(noOpMetricsSystem)
-              .forkIdSupplier(() -> controllerBehind.getProtocolManager().getEthRLP())
+              .forkIdSupplier(() -> controllerBehind.getProtocolManager().getForkIdRLP())
               .build();
 
       runnerBehind.start();
