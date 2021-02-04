@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.ibft2;
 
+import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
 
@@ -22,7 +23,7 @@ import java.util.List;
 import org.junit.Ignore;
 
 @Ignore("Must be ignored to prevent it being executed by JUnit")
-public class BftAcceptanceTestParameterization {
+public class BftAcceptanceTestParameterization extends AcceptanceTestBase {
 
   public static List<BftAcceptanceTestParameterization> FACTORIES =
       List.of(

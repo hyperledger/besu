@@ -18,11 +18,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 
 import java.util.Collection;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class ParameterizedBftTest extends AcceptanceTestBase {
+@Ignore("This is not a test class, it offers BFT parameterization only.")
+public class ParameterizedBftTestBase extends AcceptanceTestBase {
 
   protected final BftAcceptanceTestParameterization nodeFactory;
 
@@ -31,7 +33,7 @@ public class ParameterizedBftTest extends AcceptanceTestBase {
     return BftAcceptanceTestParameterization.FACTORIES;
   }
 
-  public ParameterizedBftTest(final BftAcceptanceTestParameterization nodeFactory) {
+  public ParameterizedBftTestBase(final BftAcceptanceTestParameterization nodeFactory) {
     this.nodeFactory = nodeFactory;
   }
 }
