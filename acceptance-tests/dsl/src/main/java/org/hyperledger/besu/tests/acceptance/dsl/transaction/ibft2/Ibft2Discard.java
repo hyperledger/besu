@@ -31,7 +31,7 @@ public class Ibft2Discard implements Transaction<Boolean> {
   @Override
   public Boolean execute(final NodeRequests node) {
     try {
-      final Ibft2RequestFactory.DiscardResponse result = node.ibft().discard(address).send();
+      final BftRequestFactory.DiscardResponse result = node.ibft().discard(address).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

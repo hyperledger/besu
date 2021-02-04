@@ -33,7 +33,7 @@ public class Ibft2GetValidators implements Transaction<List<Address>> {
   @Override
   public List<Address> execute(final NodeRequests node) {
     try {
-      final Ibft2RequestFactory.SignersBlockResponse result =
+      final BftRequestFactory.SignersBlockResponse result =
           node.ibft().validatorsAtBlock(blockNumber).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();

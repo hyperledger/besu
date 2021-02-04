@@ -33,7 +33,7 @@ public class Ibft2Propose implements Transaction<Boolean> {
   @Override
   public Boolean execute(final NodeRequests node) {
     try {
-      final Ibft2RequestFactory.ProposeResponse result = node.ibft().propose(address, auth).send();
+      final BftRequestFactory.ProposeResponse result = node.ibft().propose(address, auth).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

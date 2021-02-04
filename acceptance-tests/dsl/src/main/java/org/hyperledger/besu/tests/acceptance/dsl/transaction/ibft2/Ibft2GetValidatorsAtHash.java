@@ -35,8 +35,7 @@ public class Ibft2GetValidatorsAtHash implements Transaction<List<Address>> {
   @Override
   public List<Address> execute(final NodeRequests node) {
     try {
-      final Ibft2RequestFactory.SignersBlockResponse result =
-          node.ibft().signersAtHash(hash).send();
+      final BftRequestFactory.SignersBlockResponse result = node.ibft().signersAtHash(hash).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

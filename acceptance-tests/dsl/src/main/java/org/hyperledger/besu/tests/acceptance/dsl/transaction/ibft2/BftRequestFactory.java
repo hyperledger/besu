@@ -28,7 +28,7 @@ import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
-public class Ibft2RequestFactory {
+public class BftRequestFactory {
 
   public static class ProposeResponse extends Response<Boolean> {}
 
@@ -40,13 +40,20 @@ public class Ibft2RequestFactory {
 
   private final Web3jService web3jService;
 
-  public Ibft2RequestFactory(final Web3jService web3jService) {
+  private final String consensusMechanismName;
+
+  public BftRequestFactory(final Web3jService web3jService) {
+    this(web3jService, "ibft");
+  }
+
+  public BftRequestFactory(final Web3jService web3jService, final String consensusMechanismName) {
     this.web3jService = web3jService;
+    this.consensusMechanismName = consensusMechanismName;
   }
 
   Request<?, ProposeResponse> propose(final String address, final Boolean auth) {
     return new Request<>(
-        "ibft_proposeValidatorVote",
+        consensusMechanismName + "_proposeValidatorVote",
         Arrays.asList(address, auth.toString()),
         web3jService,
         ProposeResponse.class);
@@ -54,17 +61,23 @@ public class Ibft2RequestFactory {
 
   Request<?, DiscardResponse> discard(final String address) {
     return new Request<>(
-        "ibft_discardValidatorVote", singletonList(address), web3jService, DiscardResponse.class);
+        consensusMechanismName + "_discardValidatorVote",
+        singletonList(address),
+        web3jService,
+        DiscardResponse.class);
   }
 
   Request<?, ProposalsResponse> proposals() {
     return new Request<>(
-        "ibft_getPendingVotes", emptyList(), web3jService, ProposalsResponse.class);
+        consensusMechanismName + "_getPendingVotes",
+        emptyList(),
+        web3jService,
+        ProposalsResponse.class);
   }
 
   Request<?, SignersBlockResponse> validatorsAtBlock(final String blockNumber) {
     return new Request<>(
-        "ibft_getValidatorsByBlockNumber",
+        consensusMechanismName + "_getValidatorsByBlockNumber",
         singletonList(blockNumber),
         web3jService,
         SignersBlockResponse.class);
@@ -72,7 +85,7 @@ public class Ibft2RequestFactory {
 
   Request<?, SignersBlockResponse> signersAtHash(final Hash hash) {
     return new Request<>(
-        "ibft_getValidatorsByBlockHash",
+        consensusMechanismName + "_getValidatorsByBlockHash",
         singletonList(hash.toString()),
         web3jService,
         SignersBlockResponse.class);

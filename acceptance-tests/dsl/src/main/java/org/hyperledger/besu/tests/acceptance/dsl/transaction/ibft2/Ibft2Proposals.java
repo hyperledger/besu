@@ -28,7 +28,7 @@ public class Ibft2Proposals implements Transaction<Map<Address, Boolean>> {
   @Override
   public Map<Address, Boolean> execute(final NodeRequests node) {
     try {
-      final Ibft2RequestFactory.ProposalsResponse result = node.ibft().proposals().send();
+      final BftRequestFactory.ProposalsResponse result = node.ibft().proposals().send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();
