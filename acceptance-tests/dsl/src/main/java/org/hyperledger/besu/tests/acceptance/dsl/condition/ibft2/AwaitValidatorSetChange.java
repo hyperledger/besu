@@ -21,16 +21,16 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 
 import java.util.List;
 
 public class AwaitValidatorSetChange implements Condition {
 
-  private final Ibft2Transactions ibft;
+  private final BftTransactions ibft;
   private final List<Address> initialSigners;
 
-  public AwaitValidatorSetChange(final List<Address> initialSigners, final Ibft2Transactions ibft) {
+  public AwaitValidatorSetChange(final List<Address> initialSigners, final BftTransactions ibft) {
     this.initialSigners = initialSigners;
     this.ibft = ibft;
   }

@@ -40,7 +40,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminTransact
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
@@ -82,7 +82,7 @@ public class AcceptanceTestBase {
   protected final ContractTransactions contractTransactions;
   protected final EthConditions eth;
   protected final EthTransactions ethTransactions;
-  protected final Ibft2Transactions ibftTwoTransactions;
+  protected final BftTransactions ibftTwoTransactions;
   protected final Ibft2Conditions ibftTwo;
   protected final LoginConditions login;
   protected final NetConditions net;
@@ -105,7 +105,7 @@ public class AcceptanceTestBase {
     accounts = new Accounts(ethTransactions);
     adminTransactions = new AdminTransactions();
     cliqueTransactions = new CliqueTransactions();
-    ibftTwoTransactions = new Ibft2Transactions();
+    ibftTwoTransactions = new BftTransactions();
     accountTransactions = new AccountTransactions(accounts);
     permissioningTransactions = new PermissioningTransactions();
     privacyTransactions = new PrivacyTransactions();

@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -33,9 +33,9 @@ import com.google.common.collect.ImmutableMap;
 
 public class Ibft2Conditions {
 
-  private final Ibft2Transactions ibftTwo;
+  private final BftTransactions ibftTwo;
 
-  public Ibft2Conditions(final Ibft2Transactions ibftTwo) {
+  public Ibft2Conditions(final BftTransactions ibftTwo) {
     this.ibftTwo = ibftTwo;
   }
 
@@ -68,9 +68,9 @@ public class Ibft2Conditions {
 
   public static class PendingVotesConfig {
     private final Map<BesuNode, Boolean> proposals = new HashMap<>();
-    private final Ibft2Transactions ibft;
+    private final BftTransactions ibft;
 
-    private PendingVotesConfig(final Ibft2Transactions ibft) {
+    private PendingVotesConfig(final BftTransactions ibft) {
       this.ibft = ibft;
     }
 

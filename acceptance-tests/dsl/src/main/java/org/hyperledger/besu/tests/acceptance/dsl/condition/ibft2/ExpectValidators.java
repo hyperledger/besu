@@ -15,19 +15,19 @@
 package org.hyperledger.besu.tests.acceptance.dsl.condition.ibft2;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions.LATEST;
+import static org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions.LATEST;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 
 public class ExpectValidators implements Condition {
-  private final Ibft2Transactions ibft;
+  private final BftTransactions ibft;
   private final Address[] validators;
 
-  public ExpectValidators(final Ibft2Transactions ibft, final Address... validators) {
+  public ExpectValidators(final BftTransactions ibft, final Address... validators) {
     this.ibft = ibft;
     this.validators = validators;
   }

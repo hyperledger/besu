@@ -14,16 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.ibft2;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
 
 import java.util.List;
 
-import org.junit.Ignore;
-
-@Ignore("Must be ignored to prevent it being executed by JUnit")
-public class BftAcceptanceTestParameterization extends AcceptanceTestBase {
+public class BftAcceptanceTestParameterization {
 
   public static List<BftAcceptanceTestParameterization> FACTORIES =
       List.of(
@@ -33,23 +29,23 @@ public class BftAcceptanceTestParameterization extends AcceptanceTestBase {
               BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators));
 
   @FunctionalInterface
-  public interface NodeCreatorBiFunction {
+  public interface NodeCreator {
 
     BesuNode create(BesuNodeFactory factory, String name) throws Exception;
   }
 
   @FunctionalInterface
-  public interface NodeCreatorWithValidatorsFunction {
+  public interface NodeWithValidatorsCreator {
 
     BesuNode create(BesuNodeFactory factory, String name, String[] validators) throws Exception;
   }
 
-  private final NodeCreatorBiFunction creatorFn;
-  private final NodeCreatorWithValidatorsFunction createorWithValidatorFn;
+  private final NodeCreator creatorFn;
+  private final NodeWithValidatorsCreator createorWithValidatorFn;
 
   public BftAcceptanceTestParameterization(
-      final NodeCreatorBiFunction creatorFn,
-      final NodeCreatorWithValidatorsFunction createorWithValidatorFn) {
+      final NodeCreator creatorFn,
+      final NodeWithValidatorsCreator createorWithValidatorFn) {
     this.creatorFn = creatorFn;
     this.createorWithValidatorFn = createorWithValidatorFn;
   }

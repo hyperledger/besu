@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 @Ignore("This is not a test class, it offers BFT parameterization only.")
-public class ParameterizedBftTestBase extends AcceptanceTestBase {
+public abstract class ParameterizedBftTestBase extends AcceptanceTestBase {
 
   protected final BftAcceptanceTestParameterization nodeFactory;
 
@@ -33,7 +33,7 @@ public class ParameterizedBftTestBase extends AcceptanceTestBase {
     return BftAcceptanceTestParameterization.FACTORIES;
   }
 
-  public ParameterizedBftTestBase(final BftAcceptanceTestParameterization nodeFactory) {
+  protected ParameterizedBftTestBase(final BftAcceptanceTestParameterization nodeFactory) {
     this.nodeFactory = nodeFactory;
   }
 }

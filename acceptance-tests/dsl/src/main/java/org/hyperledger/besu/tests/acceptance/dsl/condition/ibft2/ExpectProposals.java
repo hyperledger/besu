@@ -20,15 +20,15 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 
 import java.util.Map;
 
 public class ExpectProposals implements Condition {
-  private final Ibft2Transactions ibftTwo;
+  private final BftTransactions ibftTwo;
   private final Map<Address, Boolean> proposers;
 
-  public ExpectProposals(final Ibft2Transactions ibftTwo, final Map<Address, Boolean> proposers) {
+  public ExpectProposals(final BftTransactions ibftTwo, final Map<Address, Boolean> proposers) {
     this.ibftTwo = ibftTwo;
     this.proposers = proposers;
   }

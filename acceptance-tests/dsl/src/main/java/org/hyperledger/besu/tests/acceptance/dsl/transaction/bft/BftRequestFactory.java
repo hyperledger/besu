@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.bft;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -40,20 +40,20 @@ public class BftRequestFactory {
 
   private final Web3jService web3jService;
 
-  private final String consensusMechanismName;
+  private final ConsensusType bftType;
 
   public BftRequestFactory(final Web3jService web3jService) {
-    this(web3jService, "ibft");
+    this(web3jService, ConsensusType.IBFT2);
   }
 
-  public BftRequestFactory(final Web3jService web3jService, final String consensusMechanismName) {
+  public BftRequestFactory(final Web3jService web3jService, final ConsensusType bftType) {
     this.web3jService = web3jService;
-    this.consensusMechanismName = consensusMechanismName;
+    this.bftType = bftType;
   }
 
   Request<?, ProposeResponse> propose(final String address, final Boolean auth) {
     return new Request<>(
-        consensusMechanismName + "_proposeValidatorVote",
+        bftType.getName() + "_proposeValidatorVote",
         Arrays.asList(address, auth.toString()),
         web3jService,
         ProposeResponse.class);
@@ -61,7 +61,7 @@ public class BftRequestFactory {
 
   Request<?, DiscardResponse> discard(final String address) {
     return new Request<>(
-        consensusMechanismName + "_discardValidatorVote",
+        bftType.getName() + "_discardValidatorVote",
         singletonList(address),
         web3jService,
         DiscardResponse.class);
@@ -69,7 +69,7 @@ public class BftRequestFactory {
 
   Request<?, ProposalsResponse> proposals() {
     return new Request<>(
-        consensusMechanismName + "_getPendingVotes",
+        bftType.getName() + "_getPendingVotes",
         emptyList(),
         web3jService,
         ProposalsResponse.class);
@@ -77,7 +77,7 @@ public class BftRequestFactory {
 
   Request<?, SignersBlockResponse> validatorsAtBlock(final String blockNumber) {
     return new Request<>(
-        consensusMechanismName + "_getValidatorsByBlockNumber",
+        bftType.getName() + "_getValidatorsByBlockNumber",
         singletonList(blockNumber),
         web3jService,
         SignersBlockResponse.class);
@@ -85,7 +85,7 @@ public class BftRequestFactory {
 
   Request<?, SignersBlockResponse> signersAtHash(final Hash hash) {
     return new Request<>(
-        consensusMechanismName + "_getValidatorsByBlockHash",
+        bftType.getName() + "_getValidatorsByBlockHash",
         singletonList(hash.toString()),
         web3jService,
         SignersBlockResponse.class);
