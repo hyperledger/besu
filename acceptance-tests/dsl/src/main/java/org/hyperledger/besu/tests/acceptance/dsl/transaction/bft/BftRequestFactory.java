@@ -69,10 +69,7 @@ public class BftRequestFactory {
 
   Request<?, ProposalsResponse> proposals() {
     return new Request<>(
-        bftType.getName() + "_getPendingVotes",
-        emptyList(),
-        web3jService,
-        ProposalsResponse.class);
+        bftType.getName() + "_getPendingVotes", emptyList(), web3jService, ProposalsResponse.class);
   }
 
   Request<?, SignersBlockResponse> validatorsAtBlock(final String blockNumber) {

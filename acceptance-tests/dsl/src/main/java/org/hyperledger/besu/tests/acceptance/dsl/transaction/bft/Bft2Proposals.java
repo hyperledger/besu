@@ -19,10 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory.ProposalsResponse;
 
 import java.io.IOException;
 import java.util.Map;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory.ProposalsResponse;
 
 public class Bft2Proposals implements Transaction<Map<Address, Boolean>> {
 

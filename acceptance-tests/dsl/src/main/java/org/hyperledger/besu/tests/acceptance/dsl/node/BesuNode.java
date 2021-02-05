@@ -35,9 +35,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.ConsensusType;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
@@ -342,7 +342,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
       final ConsensusType bftType =
           getGenesisConfig()
-              .map(gc -> gc.toLowerCase().contains("ibft") ? ConsensusType.IBFT2 : ConsensusType.QBFT)
+              .map(
+                  gc ->
+                      gc.toLowerCase().contains("ibft") ? ConsensusType.IBFT2 : ConsensusType.QBFT)
               .orElse(ConsensusType.IBFT2);
 
       nodeRequests =

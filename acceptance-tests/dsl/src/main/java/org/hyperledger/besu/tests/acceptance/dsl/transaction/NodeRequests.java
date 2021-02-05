@@ -15,8 +15,8 @@
 package org.hyperledger.besu.tests.acceptance.dsl.transaction;
 
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminRequestFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;

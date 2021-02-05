@@ -44,8 +44,7 @@ public class BftAcceptanceTestParameterization {
   private final NodeWithValidatorsCreator createorWithValidatorFn;
 
   public BftAcceptanceTestParameterization(
-      final NodeCreator creatorFn,
-      final NodeWithValidatorsCreator createorWithValidatorFn) {
+      final NodeCreator creatorFn, final NodeWithValidatorsCreator createorWithValidatorFn) {
     this.creatorFn = creatorFn;
     this.createorWithValidatorFn = createorWithValidatorFn;
   }
