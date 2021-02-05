@@ -89,6 +89,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
     cluster.stopNode(minerNode3);
     cluster.verifyOnActiveNodes(net.awaitPeerCount(1));
 
+
     cluster.verifyOnActiveNodes(blockchain.reachesHeight(minerNode1, 2));
     cluster.verifyOnActiveNodes(clique.blockIsCreatedByProposer(minerNode1));
     cluster.verifyOnActiveNodes(clique.blockIsCreatedByProposer(minerNode2));
