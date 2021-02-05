@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 import io.opentelemetry.api.OpenTelemetry;
@@ -68,7 +68,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     private final boolean successful;
 
     private final List<TransactionReceipt> receipts;
-    private final Optional<List<TransactionReceipt>> privateReceipts;
+    private final List<TransactionReceipt> privateReceipts;
 
     public static AbstractBlockProcessor.Result successful(
         final List<TransactionReceipt> receipts) {
@@ -79,7 +79,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final List<TransactionReceipt> publicTxReceipts,
         final List<TransactionReceipt> privateTxReceipts) {
       return new AbstractBlockProcessor.Result(
-          true, ImmutableList.copyOf(publicTxReceipts), Optional.of(privateTxReceipts));
+          true,
+          ImmutableList.copyOf(publicTxReceipts),
+          Collections.unmodifiableList(privateTxReceipts));
     }
 
     public static AbstractBlockProcessor.Result failed() {
@@ -89,13 +91,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     Result(final boolean successful, final List<TransactionReceipt> receipts) {
       this.successful = successful;
       this.receipts = receipts;
-      this.privateReceipts = Optional.empty();
+      this.privateReceipts = Collections.emptyList();
     }
 
     public Result(
         final boolean successful,
         final ImmutableList<TransactionReceipt> publicReceipts,
-        final Optional<List<TransactionReceipt>> privateReceipts) {
+        final List<TransactionReceipt> privateReceipts) {
       this.successful = successful;
       this.receipts = publicReceipts;
       this.privateReceipts = privateReceipts;
@@ -107,7 +109,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     @Override
-    public Optional<List<TransactionReceipt>> getPrivateReceipts() {
+    public List<TransactionReceipt> getPrivateReceipts() {
       return privateReceipts;
     }
 

@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
 import java.util.List;
-import java.util.Optional;
 
 /** Processes a block. */
 public interface BlockProcessor {
@@ -49,7 +48,7 @@ public interface BlockProcessor {
      *
      * @return the receipts generated for the private transactions in a block
      */
-    Optional<List<TransactionReceipt>> getPrivateReceipts();
+    List<TransactionReceipt> getPrivateReceipts();
 
     /**
      * Returns whether the block was successfully processed.

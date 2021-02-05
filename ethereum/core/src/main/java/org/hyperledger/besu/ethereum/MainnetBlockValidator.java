@@ -120,10 +120,10 @@ public class MainnetBlockValidator implements BlockValidator {
       return Optional.empty();
     }
 
-    if (result.getPrivateReceipts().isPresent()) {
+    if (!result.getPrivateReceipts().isEmpty()) {
       // replace the public receipts for marker transactions with the private receipts if we are in
-      // goQuorumCompatibilityMode
-      final List<TransactionReceipt> privateTransactionReceipts = result.getPrivateReceipts().get();
+      // goQuorumCompatibilityMode. That can be done now because we have validated the block.
+      final List<TransactionReceipt> privateTransactionReceipts = result.getPrivateReceipts();
       final ArrayList<TransactionReceipt> resultingList = new ArrayList<>();
       for (int i = 0; i < receipts.size(); i++) {
         if (privateTransactionReceipts.get(i) != null) {

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -31,10 +32,12 @@ import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
@@ -116,8 +119,13 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
                   publicWorldStateUpdater, privateWorldState.updater());
 
         } catch (final EnclaveClientException e) { // private transaction but not party to it
+          // We do not have to execute anything, but we still need to validate the transaction
           effectiveTransaction = null;
-          // TODO-goquorum: we should probably still check the signature and the nonce
+          final ValidationResult<TransactionInvalidReason> validationResult =
+              validateTransaction(blockHeader, transaction, publicWorldStateUpdater);
+          if (!validationResult.isValid()) {
+            return AbstractBlockProcessor.Result.failed();
+          }
         }
       } else { // public Transaction
         effectiveWorldUpdater = publicWorldState.updater();
@@ -125,8 +133,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         effectiveTransaction = transaction;
       }
 
-      if (effectiveTransaction
-          != null) { // public transaction, or private transaction that we are party to
+      if (effectiveTransaction != null) { // public tx, or private tx that we are party to
         final TransactionProcessingResult result =
             transactionProcessor.processTransaction(
                 blockchain,
@@ -158,7 +165,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
                   currentGasUsed));
           privateTxReceipts.add(
               transactionReceiptFactory.create(
-                  transaction.getType(), result, privateWorldState, 0));
+                  transaction.getType(), result, privateWorldState, currentGasUsed));
           publicWorldStateUpdater
               .getOrCreate(effectiveTransaction.getSender())
               .getMutable()
@@ -203,6 +210,40 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
     privateStorageUpdater.commit();
 
     return Result.successful(publicTxReceipts, privateTxReceipts);
+  }
+
+  private ValidationResult<TransactionInvalidReason> validateTransaction(
+      final BlockHeader blockHeader,
+      final Transaction transaction,
+      final WorldUpdater publicWorldStateUpdater) {
+    final MainnetTransactionValidator transactionValidator =
+        transactionProcessor.getTransactionValidator();
+    ValidationResult<TransactionInvalidReason> validationResult =
+        transactionValidator.validate(transaction, blockHeader.getBaseFee());
+    if (!validationResult.isValid()) {
+      LOG.warn(
+          "Invalid transaction: {}. Block {} Transaction {}",
+          validationResult.getErrorMessage(),
+          blockHeader.getHash().toHexString(),
+          transaction.getHash().toHexString());
+      return validationResult;
+    }
+
+    final Address senderAddress = transaction.getSender();
+
+    final EvmAccount sender = publicWorldStateUpdater.getOrCreate(senderAddress);
+    validationResult =
+        transactionValidator.validateForSender(
+            transaction, sender, TransactionValidationParams.processingBlock());
+    if (!validationResult.isValid()) {
+      LOG.warn(
+          "Invalid transaction: {}. Block {} Transaction {}",
+          validationResult.getErrorMessage(),
+          blockHeader.getHash().toHexString(),
+          transaction.getHash().toHexString());
+      return validationResult;
+    }
+    return ValidationResult.valid();
   }
 
   private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(

@@ -153,8 +153,8 @@ public class MainnetBlockValidatorTest {
               }
 
               @Override
-              public Optional<List<TransactionReceipt>> getPrivateReceipts() {
-                return Optional.empty();
+              public List<TransactionReceipt> getPrivateReceipts() {
+                return Collections.EMPTY_LIST;
               }
 
               @Override
@@ -193,8 +193,8 @@ public class MainnetBlockValidatorTest {
               }
 
               @Override
-              public Optional<List<TransactionReceipt>> getPrivateReceipts() {
-                return Optional.empty();
+              public List<TransactionReceipt> getPrivateReceipts() {
+                return Collections.EMPTY_LIST;
               }
 
               @Override
@@ -233,8 +233,8 @@ public class MainnetBlockValidatorTest {
               }
 
               @Override
-              public Optional<List<TransactionReceipt>> getPrivateReceipts() {
-                return Optional.empty();
+              public List<TransactionReceipt> getPrivateReceipts() {
+                return Collections.EMPTY_LIST;
               }
 
               @Override

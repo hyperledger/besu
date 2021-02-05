@@ -62,6 +62,8 @@ public class MainnetTransactionProcessor {
 
   protected final int maxStackSize;
 
+  protected final boolean clearEmptyAccounts;
+
   protected final int createContractAccountVersion;
 
   protected final TransactionPriceCalculator transactionPriceCalculator;
@@ -216,8 +218,6 @@ public class MainnetTransactionProcessor {
         transactionValidationParams,
         null);
   }
-
-  protected final boolean clearEmptyAccounts;
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -437,6 +437,10 @@ public class MainnetTransactionProcessor {
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re.toString()));
     }
+  }
+
+  public MainnetTransactionValidator getTransactionValidator() {
+    return transactionValidator;
   }
 
   protected static void clearEmptyAccounts(final WorldUpdater worldState) {
