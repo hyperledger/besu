@@ -41,7 +41,7 @@ public class GoQuorumStoreRawPrivateTransaction implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.GOQUORUM_STORE_RAW_TRANSACTION.getMethodName();
+    return RpcMethod.GOQUORUM_STORE_RAW.getMethodName();
   }
 
   @Override
