@@ -20,9 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Blockchain;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.admin.AdminConditions;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.bft.BftConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.clique.CliqueConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.ibft2.Ibft2Conditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.login.LoginConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.PermissioningConditions;
@@ -83,7 +83,7 @@ public class AcceptanceTestBase {
   protected final EthConditions eth;
   protected final EthTransactions ethTransactions;
   protected final BftTransactions ibftTwoTransactions;
-  protected final Ibft2Conditions ibftTwo;
+  protected final BftConditions ibftTwo;
   protected final LoginConditions login;
   protected final NetConditions net;
   protected final BesuNodeFactory besu;
@@ -115,7 +115,7 @@ public class AcceptanceTestBase {
     blockchain = new Blockchain(ethTransactions);
     clique = new CliqueConditions(ethTransactions, cliqueTransactions);
     eth = new EthConditions(ethTransactions);
-    ibftTwo = new Ibft2Conditions(ibftTwoTransactions);
+    ibftTwo = new BftConditions(ibftTwoTransactions);
     login = new LoginConditions();
     net = new NetConditions(new NetTransactions());
     cluster = new Cluster(net);

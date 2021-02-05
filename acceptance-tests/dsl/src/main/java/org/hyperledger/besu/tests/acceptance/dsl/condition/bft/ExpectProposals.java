@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.condition.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.condition.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,17 +25,16 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions
 import java.util.Map;
 
 public class ExpectProposals implements Condition {
-  private final BftTransactions ibftTwo;
+  private final BftTransactions bft;
   private final Map<Address, Boolean> proposers;
 
-  public ExpectProposals(final BftTransactions ibftTwo, final Map<Address, Boolean> proposers) {
-    this.ibftTwo = ibftTwo;
+  public ExpectProposals(final BftTransactions bft, final Map<Address, Boolean> proposers) {
+    this.bft = bft;
     this.proposers = proposers;
   }
 
   @Override
   public void verify(final Node node) {
-    WaitUtils.waitFor(
-        () -> assertThat(node.execute(ibftTwo.createProposals())).isEqualTo(proposers));
+    WaitUtils.waitFor(() -> assertThat(node.execute(bft.createProposals())).isEqualTo(proposers));
   }
 }
