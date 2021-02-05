@@ -34,11 +34,6 @@ public interface GoQuorumPrivateStorage {
     Updater putPrivateStateRootHashMapping(
         final Hash publicStateRootHash, final Hash privateStateRootHash);
 
-    Updater putTransactionReceipt(
-        final Hash blockHash,
-        final Hash transactionHash,
-        final TransactionReceipt transactionReceipt);
-
     void commit();
 
     void rollback();
