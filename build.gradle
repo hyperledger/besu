@@ -283,7 +283,7 @@ task checkMavenCoordinateCollisions {
   doLast {
     def coordinates = [:]
     getAllprojects().forEach {
-      if (it.properties.containsKey('publishing')) {
+      if (it.properties.containsKey('publishing') && it.jar?.enabled) {
         def coordinate = it.publishing?.publications[0].coordinates
         if (coordinates.containsKey(coordinate)) {
           throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
@@ -578,7 +578,7 @@ publishing {
     distArtifactory(MavenPublication) {
       groupId (version.contains('SNAPSHOT') ? 'SNAPSHOT' : '.')
       version = project.version
-      artifactId = "besu"
+      artifactId = 'besu-distribution'
       artifact("$buildDir/distributions/besu-${project.version}.zip")
       artifact("$buildDir/distributions/besu-${project.version}.tar.gz") {
         extension = 'tar.gz'
