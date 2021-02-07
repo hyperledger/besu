@@ -72,7 +72,7 @@ public class ProtocolSpecBuilder {
   private TransactionGasBudgetCalculator gasBudgetCalculator =
       TransactionGasBudgetCalculator.frontier();
   private BadBlockManager badBlockManager;
-  private PoWHasher powHasher;
+  private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;

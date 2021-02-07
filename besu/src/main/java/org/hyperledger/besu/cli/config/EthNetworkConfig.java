@@ -47,6 +47,7 @@ public class EthNetworkConfig {
   public static final BigInteger RINKEBY_NETWORK_ID = BigInteger.valueOf(4);
   public static final BigInteger GOERLI_NETWORK_ID = BigInteger.valueOf(5);
   public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(2018);
+  public static final BigInteger ECIP1049_DEV_NETWORK_ID = BigInteger.valueOf(2021);
   public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
   public static final BigInteger KOTTI_NETWORK_ID = BigInteger.valueOf(6);
   public static final BigInteger MORDOR_NETWORK_ID = BigInteger.valueOf(7);
@@ -56,6 +57,7 @@ public class EthNetworkConfig {
   private static final String RINKEBY_GENESIS = "/rinkeby.json";
   private static final String GOERLI_GENESIS = "/goerli.json";
   private static final String DEV_GENESIS = "/dev.json";
+  private static final String ECIP1049_DEV_GENESIS = "/ecip1049_dev.json";
   private static final String CLASSIC_GENESIS = "/classic.json";
   private static final String KOTTI_GENESIS = "/kotti.json";
   private static final String MORDOR_GENESIS = "/mordor.json";
@@ -154,6 +156,9 @@ public class EthNetworkConfig {
       case CLASSIC:
         return new EthNetworkConfig(
             jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, CLASSIC_BOOTSTRAP_NODES, null);
+      case ECIP1049_DEV:
+        return new EthNetworkConfig(
+            jsonConfig(ECIP1049_DEV_GENESIS), ECIP1049_DEV_NETWORK_ID, new ArrayList<>(), null);
       case KOTTI:
         return new EthNetworkConfig(
             jsonConfig(KOTTI_GENESIS), KOTTI_NETWORK_ID, KOTTI_BOOTSTRAP_NODES, null);
@@ -194,6 +199,8 @@ public class EthNetworkConfig {
         return jsonConfig(GOERLI_GENESIS);
       case DEV:
         return jsonConfig(DEV_GENESIS);
+      case ECIP1049_DEV:
+        return jsonConfig(ECIP1049_DEV_GENESIS);
       case CLASSIC:
         return jsonConfig(CLASSIC_GENESIS);
       case KOTTI:

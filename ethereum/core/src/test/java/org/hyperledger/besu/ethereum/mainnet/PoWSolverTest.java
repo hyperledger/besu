@@ -42,7 +42,7 @@ public class PoWSolverTest {
     final PoWSolver solver =
         new PoWSolver(
             noncesToTry,
-            PoWHasher.LIGHT,
+            PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -131,7 +131,7 @@ public class PoWSolverTest {
     final PoWSolver solver =
         new PoWSolver(
             Lists.newArrayList(expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
-            PoWHasher.LIGHT,
+            PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());

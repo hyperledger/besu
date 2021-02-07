@@ -74,15 +74,14 @@ public class PoWBlockCreatorTest {
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum(),
-                        genesisConfigOptions.getPowAlgorithm())
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
     final PoWSolver solver =
         new PoWSolver(
             Lists.newArrayList(BLOCK_1_NONCE),
-            PoWHasher.LIGHT,
+            PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -134,15 +133,14 @@ public class PoWBlockCreatorTest {
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum(),
-                        genesisConfigOptions.getPowAlgorithm())
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
     final PoWSolver solver =
         new PoWSolver(
             Lists.newArrayList(BLOCK_1_NONCE),
-            PoWHasher.LIGHT,
+            PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -189,15 +187,14 @@ public class PoWBlockCreatorTest {
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum(),
-                        genesisConfigOptions.getPowAlgorithm())
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
     final PoWSolver solver =
         new PoWSolver(
             Lists.newArrayList(BLOCK_1_NONCE),
-            PoWHasher.LIGHT,
+            PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());
@@ -260,15 +257,14 @@ public class PoWBlockCreatorTest {
                         Function.identity(),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum(),
-                        genesisConfigOptions.getPowAlgorithm())
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
     final PoWSolver solver =
         new PoWSolver(
             Lists.newArrayList(BLOCK_1_NONCE),
-            PoWHasher.LIGHT,
+            PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator());

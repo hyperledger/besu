@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -99,8 +98,7 @@ public class VMReferenceTest extends AbstractRetryingTest {
     final EnvironmentInformation execEnv = spec.getExec();
 
     final ProtocolSpec protocolSpec =
-        MainnetProtocolSpecs.frontierDefinition(
-                OptionalInt.empty(), OptionalInt.empty(), false, PowAlgorithm.ETHASH)
+        MainnetProtocolSpecs.frontierDefinition(OptionalInt.empty(), OptionalInt.empty(), false)
             .privacyParameters(PrivacyParameters.DEFAULT)
             .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(CHAIN_ID))
             .badBlocksManager(new BadBlockManager())

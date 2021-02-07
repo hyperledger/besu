@@ -87,8 +87,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder frontierDefinition(
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean goQuorumMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean goQuorumMode) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
@@ -139,9 +138,8 @@ public abstract class MainnetProtocolSpecs {
                     Account.DEFAULT_VERSION,
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.create(powHasher(powAlgorithm)))
-        .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createOmmerValidator(powHasher(powAlgorithm)))
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.create())
+        .ommerHeaderValidatorBuilder(MainnetBlockHeaderValidator.createOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
@@ -151,20 +149,21 @@ public abstract class MainnetProtocolSpecs {
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
-        .powHasher(powHasher(powAlgorithm))
         .name("Frontier");
   }
 
   public static PoWHasher powHasher(final PowAlgorithm powAlgorithm) {
     if (powAlgorithm == null) {
-      return PoWHasher.NOOP;
+      return PoWHasher.UNSUPPORTED;
     }
     switch (powAlgorithm) {
       case ETHASH:
-        return PoWHasher.LIGHT;
-      case NONE:
+        return PoWHasher.ETHASH_LIGHT;
+      case KECCAK256:
+        return KeccakHasher.KECCAK256;
+      case UNSUPPORTED:
       default:
-        return PoWHasher.NOOP;
+        return PoWHasher.UNSUPPORTED;
     }
   }
 
@@ -187,11 +186,10 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder homesteadDefinition(
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     return frontierDefinition(
-            configContractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
+            configContractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::homestead)
         .contractCreationProcessorBuilder(
@@ -213,12 +211,9 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder daoRecoveryInitDefinition(
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
-    return homesteadDefinition(
-            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
-        .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createDaoValidator(powHasher(powAlgorithm)))
+      final boolean quorumCompatibilityMode) {
+    return homesteadDefinition(contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
                 transactionReceiptFactory,
@@ -242,10 +237,9 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder daoRecoveryTransitionDefinition(
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return daoRecoveryInitDefinition(
-            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
+            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
@@ -253,10 +247,8 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
-    return homesteadDefinition(
-            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
+      final boolean quorumCompatibilityMode) {
+    return homesteadDefinition(contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
@@ -265,14 +257,13 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     return tangerineWhistleDefinition(
-            OptionalInt.empty(), configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
+            OptionalInt.empty(), configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
@@ -317,11 +308,10 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return spuriousDragonDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
+            chainId, contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -355,15 +345,13 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return byzantiumDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
@@ -376,15 +364,13 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return constantinopleDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .gasCalculator(PetersburgGasCalculator::new)
         .name("Petersburg");
   }
@@ -394,8 +380,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return petersburgDefinition(
@@ -403,8 +388,7 @@ public abstract class MainnetProtocolSpecs {
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
@@ -427,15 +411,13 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return istanbulDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
   }
@@ -445,15 +427,13 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             gasCalculator ->
@@ -482,8 +462,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
@@ -492,8 +471,7 @@ public abstract class MainnetProtocolSpecs {
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
@@ -522,12 +500,9 @@ public abstract class MainnetProtocolSpecs {
         .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
         .eip1559(Optional.of(eip1559))
         .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
-        .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createEip1559Validator(eip1559, powHasher(powAlgorithm)))
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createEip1559OmmerValidator(
-                eip1559, powHasher(powAlgorithm)))
-        .powHasher(powHasher(powAlgorithm));
+            MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

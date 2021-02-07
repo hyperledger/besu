@@ -192,7 +192,7 @@ public class BesuController implements java.io.Closeable {
           genesisConfig.getConfigOptions(genesisConfigOverrides);
       final BesuControllerBuilder builder;
 
-      if (configOptions.getPowAlgorithm() != PowAlgorithm.NONE) {
+      if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
         builder = new MainnetBesuControllerBuilder();
       } else if (configOptions.isIbft2()) {
         builder = new IbftBesuControllerBuilder();

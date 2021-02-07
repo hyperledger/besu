@@ -49,6 +49,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private final OptionalLong aghartaBlockNumber = OptionalLong.empty();
   private final OptionalLong phoenixBlockNumber = OptionalLong.empty();
   private final OptionalLong thanosBlockNumber = OptionalLong.empty();
+  private final OptionalLong ecip1049BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -62,6 +63,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isEthHash() {
     return true;
+  }
+
+  @Override
+  public boolean isKeccak256() {
+    return false;
   }
 
   @Override
@@ -102,6 +108,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
+  }
+
+  @Override
+  public Keccak256ConfigOptions getKeccak256ConfigOptions() {
+    return Keccak256ConfigOptions.DEFAULT;
   }
 
   @Override
@@ -206,6 +217,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1049BlockNumber() {
+    return ecip1049BlockNumber;
+  }
+
+  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -257,6 +273,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
     }
+    if (isKeccak256()) {
+      builder.put("keccak256", getKeccak256ConfigOptions().asMap());
+    }
     if (isIbftLegacy()) {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
@@ -283,7 +302,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public PowAlgorithm getPowAlgorithm() {
-    return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.NONE;
+    return isEthHash()
+        ? PowAlgorithm.ETHASH
+        : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
   }
 
   @Override

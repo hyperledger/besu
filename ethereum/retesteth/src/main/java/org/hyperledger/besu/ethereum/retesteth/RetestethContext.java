@@ -171,7 +171,7 @@ public class RetestethContext {
                 new EpochCalculator.DefaultEpochCalculator())
             : new PoWSolver(
                 nonceGenerator,
-                PoWHasher.LIGHT,
+                PoWHasher.ETHASH_LIGHT,
                 false,
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator());

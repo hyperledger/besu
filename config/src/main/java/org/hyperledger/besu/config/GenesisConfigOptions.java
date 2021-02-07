@@ -25,6 +25,8 @@ public interface GenesisConfigOptions {
 
   boolean isEthHash();
 
+  boolean isKeccak256();
+
   boolean isIbftLegacy();
 
   boolean isIbft2();
@@ -42,6 +44,8 @@ public interface GenesisConfigOptions {
   BftConfigOptions getBftConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
+
+  Keccak256ConfigOptions getKeccak256ConfigOptions();
 
   OptionalLong getHomesteadBlockNumber();
 
@@ -172,6 +176,16 @@ public interface GenesisConfigOptions {
    *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
    */
   OptionalLong getThanosBlockNumber();
+
+  /**
+   * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to
+   * keccak-256.
+   *
+   * @return block number of ECIP-1049 fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1049">https://ecips.ethereumclassic.org/ECIPs/ecip-1049</a>
+   */
+  OptionalLong getEcip1049BlockNumber();
 
   Optional<BigInteger> getChainId();
 

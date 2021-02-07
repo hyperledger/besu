@@ -49,8 +49,7 @@ public class IbftProtocolSchedule {
                     blockPeriod, builder, config.isQuorum(), ibftConfig.getCeil2Nby3Block()),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
-            config.getPowAlgorithm())
+            config.isQuorum())
         .createProtocolSchedule();
   }
 

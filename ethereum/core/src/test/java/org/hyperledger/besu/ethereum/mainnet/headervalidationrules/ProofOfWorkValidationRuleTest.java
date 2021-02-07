@@ -54,7 +54,7 @@ public class ProofOfWorkValidationRuleTest {
     parentHeader = ValidationTestUtils.readHeader(blockNum);
     validationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.ETHASH_LIGHT);
   }
 
   @Parameters(name = "block {1}")
@@ -95,7 +95,7 @@ public class ProofOfWorkValidationRuleTest {
     final byte[] hashBuffer = new byte[64];
     final Hash headerHash = validationRule.hashHeader(preHeader);
 
-    PoWHasher.LIGHT.hash(
+    PoWHasher.ETHASH_LIGHT.hash(
         hashBuffer,
         preHeader.getNonce(),
         preHeader.getNumber(),

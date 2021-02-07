@@ -40,12 +40,10 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder classicRecoveryInitDefinition(
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
-        .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createClassicValidator(powHasher(powAlgorithm)))
+            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
   }
 
@@ -53,10 +51,9 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
+            contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
             gasCalculator ->
@@ -69,14 +66,9 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return tangerineWhistleDefinition(
-            chainId,
-            OptionalInt.empty(),
-            configStackSizeLimit,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            chainId, OptionalInt.empty(), configStackSizeLimit, quorumCompatibilityMode)
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
         .name("DieHard");
@@ -87,10 +79,9 @@ public class ClassicProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final OptionalLong ecip1017EraRounds,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return dieHardDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode, powAlgorithm)
+            chainId, contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
         .blockProcessorBuilder(
@@ -116,15 +107,13 @@ public class ClassicProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final OptionalLong ecip1017EraRounds,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return gothamDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             ecip1017EraRounds,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
             gasCalculator ->
@@ -139,8 +128,7 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(MainnetProtocolSpecs.SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
@@ -149,8 +137,7 @@ public class ClassicProtocolSpecs {
             configContractSizeLimit,
             configStackSizeLimit,
             ecip1017EraRounds,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
@@ -195,16 +182,14 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return atlantisDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .evmBuilder(MainnetEvmRegistries::constantinople)
         .gasCalculator(PetersburgGasCalculator::new)
         .evmBuilder(gasCalculator -> MainnetEvmRegistries.constantinople(gasCalculator))
@@ -218,16 +203,14 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return aghartaDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
@@ -242,22 +225,20 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final boolean quorumCompatibilityMode,
-      final PowAlgorithm powAlgorithm) {
+      final boolean quorumCompatibilityMode) {
     return phoenixDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            quorumCompatibilityMode,
-            powAlgorithm)
+            quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createBlockHeaderValidator(
-                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(powAlgorithm)))
+                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createOmmerValidator(
-                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(powAlgorithm)))
+                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .name("Thanos");
   }
 
@@ -279,5 +260,29 @@ public class ClassicProtocolSpecs {
       final long gasUsed) {
     return new TransactionReceipt(
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
+  }
+
+  public static ProtocolSpecBuilder ecip1049Definition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds,
+      final boolean quorumCompatibilityMode) {
+    return thanosDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds,
+            quorumCompatibilityMode)
+        .blockHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createBlockHeaderValidator(
+                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
+        .ommerHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createOmmerValidator(
+                new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
+        .powHasher(powHasher(PowAlgorithm.KECCAK256))
+        .name("ecip1049");
   }
 }

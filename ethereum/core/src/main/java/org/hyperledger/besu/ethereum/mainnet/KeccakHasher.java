@@ -12,20 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config;
+package org.hyperledger.besu.ethereum.mainnet;
 
-/** An enumeration of supported Proof-of-work algorithms. */
-public enum PowAlgorithm {
-  ETHASH,
-  UNSUPPORTED,
-  KECCAK256;
+public class KeccakHasher implements PoWHasher {
 
-  public static PowAlgorithm fromString(final String str) {
-    for (final PowAlgorithm powAlgorithm : PowAlgorithm.values()) {
-      if (powAlgorithm.name().equalsIgnoreCase(str)) {
-        return powAlgorithm;
-      }
-    }
-    return null;
+  public static final KeccakHasher KECCAK256 = new KeccakHasher();
+
+  private KeccakHasher() {}
+
+  @Override
+  public void hash(
+      final byte[] buffer,
+      final long nonce,
+      final long number,
+      final EpochCalculator epochCalc,
+      final byte[] headerHash) {
+    throw new UnsupportedOperationException("TODO"); // TODO
   }
 }
