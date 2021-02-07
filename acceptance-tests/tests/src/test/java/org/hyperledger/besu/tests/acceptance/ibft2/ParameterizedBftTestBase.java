@@ -34,8 +34,8 @@ public abstract class ParameterizedBftTestBase extends AcceptanceTestBase {
     return BftAcceptanceTestParameterization.FACTORIES;
   }
 
-  protected ParameterizedBftTestBase(final String testname,
-      final BftAcceptanceTestParameterization input) {
+  protected ParameterizedBftTestBase(
+      final String testname, final BftAcceptanceTestParameterization input) {
     this.nodeFactory = input;
   }
 }

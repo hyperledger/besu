@@ -26,7 +26,8 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class Ibft2MiningAcceptanceTest extends ParameterizedBftTestBase {
 
-  public Ibft2MiningAcceptanceTest(final String testName, final BftAcceptanceTestParameterization nodeFactory) {
+  public Ibft2MiningAcceptanceTest(
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) {
     super(testName, nodeFactory);
   }
 
