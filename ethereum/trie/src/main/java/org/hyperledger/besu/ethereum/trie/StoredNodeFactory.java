@@ -165,14 +165,15 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
       final Supplier<String> errMessage) {
     final RLPInput childRlp = valueRlp.readAsRlp();
     if (childRlp.nextIsList()) {
-      final Node<V> childNode = decode(location, childRlp, errMessage);
-      return new ExtensionNode<>(path, childNode, this);
+      final Node<V> childNode =
+          decode(location == null ? null : Bytes.concatenate(location, path), childRlp, errMessage);
+      return new ExtensionNode<>(location, path, childNode, this);
     } else {
       final Bytes32 childHash = childRlp.readBytes32();
       final StoredNode<V> childNode =
           new StoredNode<>(
               this, location == null ? null : Bytes.concatenate(location, path), childHash);
-      return new ExtensionNode<>(path, childNode, this);
+      return new ExtensionNode<>(location, path, childNode, this);
     }
   }
 
