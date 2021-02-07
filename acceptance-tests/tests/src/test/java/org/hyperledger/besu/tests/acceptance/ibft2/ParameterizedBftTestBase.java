@@ -21,6 +21,7 @@ import java.util.Collection;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 @Ignore("This is not a test class, it offers BFT parameterization only.")
@@ -28,12 +29,13 @@ public abstract class ParameterizedBftTestBase extends AcceptanceTestBase {
 
   protected final BftAcceptanceTestParameterization nodeFactory;
 
-  @Parameterized.Parameters
-  public static Collection<BftAcceptanceTestParameterization> factoryFunctions() {
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> factoryFunctions() {
     return BftAcceptanceTestParameterization.FACTORIES;
   }
 
-  protected ParameterizedBftTestBase(final BftAcceptanceTestParameterization nodeFactory) {
-    this.nodeFactory = nodeFactory;
+  protected ParameterizedBftTestBase(final String testname,
+      final BftAcceptanceTestParameterization input) {
+    this.nodeFactory = input;
   }
 }

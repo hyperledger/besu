@@ -21,12 +21,18 @@ import java.util.List;
 
 public class BftAcceptanceTestParameterization {
 
-  public static List<BftAcceptanceTestParameterization> FACTORIES =
+  public static List<Object[]> FACTORIES =
       List.of(
-          new BftAcceptanceTestParameterization(
-              BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators),
-          new BftAcceptanceTestParameterization(
-              BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators));
+          new Object[] {
+            "ibft",
+            new BftAcceptanceTestParameterization(
+                BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)
+          },
+          new Object[] {
+            "qbft",
+            new BftAcceptanceTestParameterization(
+                BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators)
+          });
 
   @FunctionalInterface
   public interface NodeCreator {
