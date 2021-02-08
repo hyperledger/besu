@@ -578,7 +578,7 @@ publishing {
     distArtifactory(MavenPublication) {
       groupId (version.contains('SNAPSHOT') ? 'SNAPSHOT' : '.')
       version = project.version
-      artifactId = 'besu-distribution'
+      artifactId = 'besu'
       artifact("$buildDir/distributions/besu-${project.version}.zip")
       artifact("$buildDir/distributions/besu-${project.version}.tar.gz") {
         extension = 'tar.gz'
