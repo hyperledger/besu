@@ -70,7 +70,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void bftValidateHeaderFailsOnExtraData() {
+  public void bftValidateHeaderFailsWhenExtraDataDoesntContainValidatorList() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -190,7 +190,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void bftValidateHeaderIgnores336OmmersValue() {
+  public void bftValidateHeaderIgnoresOmmersValue() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
