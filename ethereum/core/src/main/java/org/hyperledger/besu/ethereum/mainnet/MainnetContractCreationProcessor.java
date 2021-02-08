@@ -129,7 +129,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
         contract.clearStorage();
         frame.setState(MessageFrame.State.CODE_EXECUTING);
       }
-    } catch (ModificationNotAllowedException ex) {
+    } catch (final ModificationNotAllowedException ex) {
       LOG.trace("Contract creation error: illegal modification not allowed from private state");
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     }
