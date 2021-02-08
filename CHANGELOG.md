@@ -1,8 +1,23 @@
 # Changelog
 
-## 21.2.0-RC1
+## 21.1.1
 
-### 21.2.0 Breaking Changes
+### Additions and Improvements
+* Added `besu_transaction_pool_transactions` to the reported metrics, counting the mempool size [\#1869](https://github.com/hyperledger/besu/pull/1869)
+* Distributions and maven artifacts have been moved off of bintray [\#1886](https://github.com/hyperledger/besu/pull/1886)
+
+### Bug Fixes
+
+### Early Access Features
+
+#### Previously identified known issues
+
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+## 21.1.0-RC1
+
+### 21.1.0 Breaking Changes
 * `--skip-pow-validation-enabled` is now an error with `block import --format JSON`. This is because the JSON format doesn't include the nonce so the proof of work must be calculated.
 * `eth_call` will not return a JSON-RPC result if the call fails, but will return an error instead. If it was for a revert the revert reason will be included.
 * `eth_call` will not fail for account balance issues by default. An parameter `"strict": true` can be added to the call parameters (with `to` and `from`) to enforce balance checks.
@@ -24,6 +39,11 @@
 
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+
+### Download link
+https://dl.bintray.com/hyperledger-org/besu-repo/besu-21.1.0-RC1.zip
+sha256: `b0fe3942052b8fd43fc3025a298a6c701f9edae2e100f0c563a1c5a4ceef71f1`
 
 ## 20.10.4
 
