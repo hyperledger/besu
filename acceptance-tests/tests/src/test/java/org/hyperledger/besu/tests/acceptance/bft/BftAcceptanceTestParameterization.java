@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.ibft2;
+package org.hyperledger.besu.tests.acceptance.bft;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
