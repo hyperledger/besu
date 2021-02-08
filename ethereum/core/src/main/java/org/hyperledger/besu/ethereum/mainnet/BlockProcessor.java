@@ -36,9 +36,19 @@ public interface BlockProcessor {
      *
      * <p>This is only valid when {@code BlockProcessor#isSuccessful} returns {@code true}.
      *
-     * @return the receipts generated for the transactions the a block
+     * @return the receipts generated for the transactions in a block
      */
     List<TransactionReceipt> getReceipts();
+
+    /**
+     * The private receipts generated for the private transactions in a block when in
+     * goQuorumCompatibilityMode
+     *
+     * <p>This is only valid when {@code BlockProcessor#isSuccessful} returns {@code true}.
+     *
+     * @return the receipts generated for the private transactions in a block
+     */
+    List<TransactionReceipt> getPrivateReceipts();
 
     /**
      * Returns whether the block was successfully processed.

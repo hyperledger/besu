@@ -62,6 +62,8 @@ public class MainnetTransactionProcessor {
 
   protected final int maxStackSize;
 
+  protected final boolean clearEmptyAccounts;
+
   protected final int createContractAccountVersion;
 
   protected final TransactionPriceCalculator transactionPriceCalculator;
@@ -101,7 +103,8 @@ public class MainnetTransactionProcessor {
         OperationTracer.NO_TRACING,
         blockHashLookup,
         isPersistingPrivateState,
-        transactionValidationParams);
+        transactionValidationParams,
+        null);
   }
 
   /**
@@ -140,7 +143,8 @@ public class MainnetTransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        transactionValidationParams);
+        transactionValidationParams,
+        null);
   }
 
   /**
@@ -174,7 +178,8 @@ public class MainnetTransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        ImmutableTransactionValidationParams.builder().build());
+        ImmutableTransactionValidationParams.builder().build(),
+        null);
   }
 
   /**
@@ -213,8 +218,6 @@ public class MainnetTransactionProcessor {
         transactionValidationParams,
         null);
   }
-
-  protected final boolean clearEmptyAccounts;
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -262,6 +265,7 @@ public class MainnetTransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
+
       final EvmAccount sender = worldState.getOrCreate(senderAddress);
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -433,6 +437,10 @@ public class MainnetTransactionProcessor {
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re.toString()));
     }
+  }
+
+  public MainnetTransactionValidator getTransactionValidator() {
+    return transactionValidator;
   }
 
   protected static void clearEmptyAccounts(final WorldUpdater worldState) {
