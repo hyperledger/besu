@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.hyperledger.besu.enclave.types.StoreRawResponse;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -92,6 +93,17 @@ public class GoQuorumEnclaveTest {
     final List<String> publicKeys = Arrays.asList("/+UuD63zItL1EbjxkKUljMgG8Z1w0AJ8pNOR4iq2yQc=");
 
     final SendResponse sr = enclave.sendSignedTransaction(PAYLOAD, publicKeys);
+    assertThat(sr.getKey()).isEqualTo(KEY);
+  }
+
+  @Test
+  public void storeRawTransaction() {
+    when(vertxTransmitter.post(any(), any(), ArgumentMatchers.contains("/storeraw"), any()))
+        .thenReturn(new StoreRawResponse(KEY));
+
+    final StoreRawResponse sr =
+        enclave.storeRaw(
+            "tQEmN0d/xXJZs5OMgl8QVBIyYxu1XubAKehsSYbcOjbxai+QJQpEOs6ghrYAZizLtnM4EJdMyVeVrxO3cA9JJA==");
     assertThat(sr.getKey()).isEqualTo(KEY);
   }
 
