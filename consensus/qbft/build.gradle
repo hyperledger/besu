@@ -38,7 +38,7 @@ sourceSets {
   }
 }
 
-task referenceTest(type: Test, dependsOn: ["compileTestJava"]) {
+task referenceTests(type: Test, dependsOn: ["compileTestJava"]) {
   group = "verification"
   description = "Runs the Besu QBFT reference tests"
 
