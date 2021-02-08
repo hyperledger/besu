@@ -94,12 +94,13 @@ public class PeerDiscoveryAgentTest {
     assertThat(nodeRecord.getSignature()).isNotNull();
     assertThat(nodeRecord.getSeq()).isNotNull();
     assertThat(nodeRecord.get("eth")).isNotNull();
-    assertThat(nodeRecord.get("eth")).isEqualTo(Collections.singletonList(Bytes.EMPTY));
+    assertThat(nodeRecord.get("eth"))
+        .isEqualTo(Collections.singletonList(Collections.singletonList(Bytes.EMPTY)));
     assertThat(nodeRecord.asEnr())
         .isEqualTo(
-            "enr:-I64QA3J_tQm6ZxTSrH_xeBrIKB1HPNqCy6k9t6zKoEXUlS0fhK2tUl2udbhjnEKfPDHw77sd8IJv5hbGl"
-                + "aDwEkzdcMBg2V0aICCaWSCdjSCaXCEfwAAAYlzZWNwMjU2azGhA8pjTK4NSay0Adikxrb-jFW3DRFb9A"
-                + "B2nMFADzJYzTE4g3RjcAKDdWRwgnZf");
+            "enr:-JC4QOfroMOa1sB6ajxcBKdWn3s9S4Ojl33pbRm72S5FnCwyZfskmjkJvZznQaWNTrOHrnKxw1R9xMm9rl"
+                + "EGOcsOyscBg2V0aMLBgIJpZIJ2NIJpcIR_AAABiXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEV"
+                + "v0AHacwUAPMljNMTiDdGNwAoN1ZHCCdl8");
   }
 
   @Test
