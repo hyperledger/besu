@@ -82,8 +82,8 @@ public class AcceptanceTestBase {
   protected final ContractTransactions contractTransactions;
   protected final EthConditions eth;
   protected final EthTransactions ethTransactions;
-  protected final BftTransactions ibftTwoTransactions;
-  protected final BftConditions ibftTwo;
+  protected final BftTransactions bftTransactions;
+  protected final BftConditions bft;
   protected final LoginConditions login;
   protected final NetConditions net;
   protected final BesuNodeFactory besu;
@@ -105,7 +105,7 @@ public class AcceptanceTestBase {
     accounts = new Accounts(ethTransactions);
     adminTransactions = new AdminTransactions();
     cliqueTransactions = new CliqueTransactions();
-    ibftTwoTransactions = new BftTransactions();
+    bftTransactions = new BftTransactions();
     accountTransactions = new AccountTransactions(accounts);
     permissioningTransactions = new PermissioningTransactions();
     privacyTransactions = new PrivacyTransactions();
@@ -115,7 +115,7 @@ public class AcceptanceTestBase {
     blockchain = new Blockchain(ethTransactions);
     clique = new CliqueConditions(ethTransactions, cliqueTransactions);
     eth = new EthConditions(ethTransactions);
-    ibftTwo = new BftConditions(ibftTwoTransactions);
+    bft = new BftConditions(bftTransactions);
     login = new LoginConditions();
     net = new NetConditions(new NetTransactions());
     cluster = new Cluster(net);

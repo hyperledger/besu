@@ -31,14 +31,14 @@ public class Ibft2ProposalRpcAcceptanceTest extends AcceptanceTestBase {
     final BesuNode validator3 = besu.createIbft2NodeWithValidators("validator3", validators);
     cluster.start(validator1, validator2, validator3);
 
-    cluster.verify(ibftTwo.noProposals());
-    validator1.execute(ibftTwoTransactions.createAddProposal(validator3));
-    validator1.execute(ibftTwoTransactions.createRemoveProposal(validator2));
-    validator2.execute(ibftTwoTransactions.createRemoveProposal(validator3));
+    cluster.verify(bft.noProposals());
+    validator1.execute(bftTransactions.createAddProposal(validator3));
+    validator1.execute(bftTransactions.createRemoveProposal(validator2));
+    validator2.execute(bftTransactions.createRemoveProposal(validator3));
 
     validator1.verify(
-        ibftTwo.pendingVotesEqual().addProposal(validator3).removeProposal(validator2).build());
-    validator2.verify(ibftTwo.pendingVotesEqual().removeProposal(validator3).build());
-    validator3.verify(ibftTwo.noProposals());
+        bft.pendingVotesEqual().addProposal(validator3).removeProposal(validator2).build());
+    validator2.verify(bft.pendingVotesEqual().removeProposal(validator3).build());
+    validator3.verify(bft.noProposals());
   }
 }

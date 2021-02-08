@@ -113,7 +113,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     final BesuNode minerNode3 = nodeFactory.createNode(besu, "miner3");
     final BesuNode minerNode4 = nodeFactory.createNode(besu, "miner4");
     final List<BesuNode> validators =
-        ibftTwo.validators(new BesuNode[] {minerNode1, minerNode2, minerNode3, minerNode4});
+        bft.validators(new BesuNode[] {minerNode1, minerNode2, minerNode3, minerNode4});
     final BesuNode nonProposerNode = validators.get(validators.size() - 1);
     cluster.start(validators);
 
