@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -111,11 +113,26 @@ public class MainnetBlockValidator implements BlockValidator {
       return Optional.empty();
     }
 
-    final List<TransactionReceipt> receipts = result.getReceipts();
+    List<TransactionReceipt> receipts = result.getReceipts();
     if (!blockBodyValidator.validateBody(
         context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
       badBlockManager.addBadBlock(block);
       return Optional.empty();
+    }
+
+    if (!result.getPrivateReceipts().isEmpty()) {
+      // replace the public receipts for marker transactions with the private receipts if we are in
+      // goQuorumCompatibilityMode. That can be done now because we have validated the block.
+      final List<TransactionReceipt> privateTransactionReceipts = result.getPrivateReceipts();
+      final ArrayList<TransactionReceipt> resultingList = new ArrayList<>();
+      for (int i = 0; i < receipts.size(); i++) {
+        if (privateTransactionReceipts.get(i) != null) {
+          resultingList.add(privateTransactionReceipts.get(i));
+        } else {
+          resultingList.add(receipts.get(i));
+        }
+      }
+      receipts = Collections.unmodifiableList(resultingList);
     }
 
     return Optional.of(new BlockProcessingOutputs(worldState, receipts));
