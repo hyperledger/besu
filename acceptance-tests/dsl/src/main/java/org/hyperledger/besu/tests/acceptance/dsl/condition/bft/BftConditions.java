@@ -68,10 +68,10 @@ public class BftConditions {
 
   public static class PendingVotesConfig {
     private final Map<BesuNode, Boolean> proposals = new HashMap<>();
-    private final BftTransactions ibft;
+    private final BftTransactions bft;
 
-    private PendingVotesConfig(final BftTransactions ibft) {
-      this.ibft = ibft;
+    private PendingVotesConfig(final BftTransactions bft) {
+      this.bft = bft;
     }
 
     public PendingVotesConfig addProposal(final BesuNode node) {
@@ -88,7 +88,7 @@ public class BftConditions {
       final Map<Address, Boolean> proposalsAsAddress =
           this.proposals.entrySet().stream()
               .collect(Collectors.toMap(p -> p.getKey().getAddress(), Map.Entry::getValue));
-      return new ExpectProposals(ibft, proposalsAsAddress);
+      return new ExpectProposals(bft, proposalsAsAddress);
     }
   }
 }

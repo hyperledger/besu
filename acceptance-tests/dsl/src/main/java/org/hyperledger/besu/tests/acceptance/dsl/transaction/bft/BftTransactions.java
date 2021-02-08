@@ -28,8 +28,8 @@ public class BftTransactions {
     return propose(node.getAddress().toString(), true);
   }
 
-  public Bft2Proposals createProposals() {
-    return new Bft2Proposals();
+  public BftProposals createProposals() {
+    return new BftProposals();
   }
 
   public BftGetValidators createGetValidators(final String blockNumber) {

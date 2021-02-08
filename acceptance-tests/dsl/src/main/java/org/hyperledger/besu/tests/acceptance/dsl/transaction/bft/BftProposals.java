@@ -24,7 +24,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFacto
 import java.io.IOException;
 import java.util.Map;
 
-public class Bft2Proposals implements Transaction<Map<Address, Boolean>> {
+public class BftProposals implements Transaction<Map<Address, Boolean>> {
 
   @Override
   public Map<Address, Boolean> execute(final NodeRequests node) {
