@@ -25,6 +25,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -37,6 +38,10 @@ public class BftProtocolScheduleTest {
 
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
 
+  private static BlockHeaderValidator.Builder arbitraryRulesetBuilder(final Integer blockSeconds) {
+    return new BlockHeaderValidator.Builder();
+  }
+
   @Test
   public void ensureBlockRewardAndMiningBeneficiaryInProtocolSpecMatchConfig() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
@@ -48,7 +53,8 @@ public class BftProtocolScheduleTest {
 
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
-    final ProtocolSchedule schedule = BftProtocolSchedule.create(genesisConfig);
+    final ProtocolSchedule schedule =
+        BftProtocolSchedule.create(genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     spec.getBlockReward();
@@ -67,7 +73,10 @@ public class BftProtocolScheduleTest {
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
 
-    assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
+    assertThatThrownBy(
+            () ->
+                BftProtocolSchedule.create(
+                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Mining beneficiary in config is not a valid ethereum address");
   }
@@ -81,7 +90,8 @@ public class BftProtocolScheduleTest {
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
-    final ProtocolSchedule schedule = BftProtocolSchedule.create(genesisConfig);
+    final ProtocolSchedule schedule =
+        BftProtocolSchedule.create(genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     final Address headerCoinbase = Address.fromHexString("0x123");
@@ -102,7 +112,10 @@ public class BftProtocolScheduleTest {
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
-    assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
+    assertThatThrownBy(
+            () ->
+                BftProtocolSchedule.create(
+                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Bft Block reward in config cannot be negative");
   }
@@ -116,7 +129,10 @@ public class BftProtocolScheduleTest {
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
-    assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
+    assertThatThrownBy(
+            () ->
+                BftProtocolSchedule.create(
+                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -130,7 +146,10 @@ public class BftProtocolScheduleTest {
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
-    assertThatThrownBy(() -> BftProtocolSchedule.create(genesisConfig))
+    assertThatThrownBy(
+            () ->
+                BftProtocolSchedule.create(
+                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }

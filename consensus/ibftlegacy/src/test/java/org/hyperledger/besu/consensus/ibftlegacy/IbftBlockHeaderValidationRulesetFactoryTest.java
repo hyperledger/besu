@@ -43,7 +43,7 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class BftBlockHeaderValidationRulesetFactoryTest {
+public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext setupContextWithValidators(final Collection<Address> validators) {
     final BftContext bftContext = mock(BftContext.class);
