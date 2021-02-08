@@ -32,7 +32,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class MessageRlpTest {
 
-  private static final String TEST_CONFIG_PATH = "rlp";
+  private static final String TEST_CONFIG_PATH = "MessageRLPTests/";
   private final RlpTestCaseSpec spec;
 
   @Parameters(name = "Name: {0}")
