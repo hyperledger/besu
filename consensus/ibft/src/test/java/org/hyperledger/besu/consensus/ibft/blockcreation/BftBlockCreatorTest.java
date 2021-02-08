@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.blockcreation;
+package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
@@ -23,9 +23,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
+import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -75,7 +76,8 @@ public class BftBlockCreatorTest {
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
-                .getConfigOptions());
+                .getConfigOptions(),
+            IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
@@ -116,8 +118,7 @@ public class BftBlockCreatorTest {
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
 
     final BlockHeaderValidator rules =
-        BftBlockHeaderValidationRulesetFactory.bftBlockHeaderValidator(secondsBetweenBlocks)
-            .build();
+        IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(secondsBetweenBlocks).build();
 
     // NOTE: The header will not contain commit seals, so can only do light validation on header.
     final boolean validationResult =

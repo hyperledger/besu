@@ -12,13 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft;
+package org.hyperledger.besu.consensus.qbft;
 
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValidatorsValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
@@ -29,7 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BftBlockHeaderValidationRulesetFactory {
+public class QbftBlockHeaderValidationRulesetFactory {
 
   /**
    * Produces a BlockHeaderValidator configured for assessing bft block headers which are to form
@@ -38,8 +37,7 @@ public class BftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
-  public static BlockHeaderValidator.Builder bftBlockHeaderValidator(
-      final long secondsBetweenBlocks) {
+  public static BlockHeaderValidator.Builder blockHeaderValidator(final long secondsBetweenBlocks) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
@@ -48,14 +46,7 @@ public class BftBlockHeaderValidationRulesetFactory {
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(
             new ConstantFieldValidationRule<>(
-                "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
-        .addRule(
-            new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-        .addRule(new ConstantFieldValidationRule<>("Nonce", BlockHeader::getNonce, 0L))
         .addRule(new BftValidatorsValidationRule())
         .addRule(new BftCoinbaseValidationRule())
         .addRule(new BftCommitSealsValidationRule());
