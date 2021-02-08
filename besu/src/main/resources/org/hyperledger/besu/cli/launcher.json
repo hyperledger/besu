@@ -7,7 +7,7 @@
       "config-key": "network",
       "available-options": "org.hyperledger.besu.cli.config.NetworkName",
       "additional-flag": {
-        "yolo_v2": "Xberlin-enabled"
+        "yolo_v3": "Xberlin-enabled"
       }
     },
     {
