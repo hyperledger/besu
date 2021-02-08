@@ -340,7 +340,8 @@ public class JsonRpcHttpService {
         new HttpServerOptions()
             .setHost(config.getHost())
             .setPort(config.getPort())
-            .setHandle100ContinueAutomatically(true);
+            .setHandle100ContinueAutomatically(true)
+            .setCompressionSupported(true);
 
     applyTlsConfig(httpServerOptions);
     return httpServerOptions;

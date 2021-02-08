@@ -152,6 +152,12 @@ public class MainnetBlockValidatorTest {
                 return Collections.EMPTY_LIST;
               }
 
+              @SuppressWarnings("unchecked")
+              @Override
+              public List<TransactionReceipt> getPrivateReceipts() {
+                return Collections.EMPTY_LIST;
+              }
+
               @Override
               public boolean isSuccessful() {
                 return false;
@@ -187,6 +193,12 @@ public class MainnetBlockValidatorTest {
                 return Collections.EMPTY_LIST;
               }
 
+              @SuppressWarnings("unchecked")
+              @Override
+              public List<TransactionReceipt> getPrivateReceipts() {
+                return Collections.EMPTY_LIST;
+              }
+
               @Override
               public boolean isSuccessful() {
                 return true;
@@ -219,6 +231,12 @@ public class MainnetBlockValidatorTest {
               @SuppressWarnings("unchecked")
               @Override
               public List<TransactionReceipt> getReceipts() {
+                return Collections.EMPTY_LIST;
+              }
+
+              @SuppressWarnings("unchecked")
+              @Override
+              public List<TransactionReceipt> getPrivateReceipts() {
                 return Collections.EMPTY_LIST;
               }
 

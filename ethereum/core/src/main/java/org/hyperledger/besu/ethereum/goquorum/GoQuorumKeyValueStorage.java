@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -77,16 +76,6 @@ public class GoQuorumKeyValueStorage implements GoQuorumPrivateStorage {
     public GoQuorumPrivateStorage.Updater putPrivateStateRootHashMapping(
         final Hash publicStateRootHash, final Hash privateStateRootHash) {
       set(publicStateRootHash, PRIVATE_STATEROOT_SUFFIX, privateStateRootHash);
-      return this;
-    }
-
-    @Override
-    public GoQuorumPrivateStorage.Updater putTransactionReceipt(
-        final Hash blockHash,
-        final Hash transactionHash,
-        final TransactionReceipt transactionReceipt) {
-      final Bytes key = keyForTransactionReceipt(blockHash, transactionHash);
-      set(key, TX_RECEIPT_SUFFIX, RLP.encode(transactionReceipt::writeTo));
       return this;
     }
 

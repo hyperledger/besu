@@ -1,8 +1,9 @@
 # Changelog
 
-## 21.1.0-RC2
+## 21.1.1
 
 ### Additions and Improvements
+* Added `besu_transaction_pool_transactions` to the reported metrics, counting the mempool size [\#1869](https://github.com/hyperledger/besu/pull/1869)
 
 ### Bug Fixes
 
