@@ -49,6 +49,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LogManager.getLogger();
@@ -357,5 +358,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
                     new IllegalStateException(
                         "Unable to get total difficulty from blockchain for mined block."));
     blockBroadcaster.propagate(block, totalDifficulty);
+  }
+
+  public List<Bytes> getForkIdAsBytesList() {
+    return forkIdManager.computeForkId().getForkIdAsBytesList();
   }
 }
