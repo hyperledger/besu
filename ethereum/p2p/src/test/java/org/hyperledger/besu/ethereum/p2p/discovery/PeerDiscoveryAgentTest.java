@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.junit.Test;
@@ -92,11 +93,14 @@ public class PeerDiscoveryAgentTest {
     assertThat(nodeRecord.getIdentityScheme()).isNotNull();
     assertThat(nodeRecord.getSignature()).isNotNull();
     assertThat(nodeRecord.getSeq()).isNotNull();
+    assertThat(nodeRecord.get("eth")).isNotNull();
+    assertThat(nodeRecord.get("eth"))
+        .isEqualTo(Collections.singletonList(Collections.singletonList(Bytes.EMPTY)));
     assertThat(nodeRecord.asEnr())
         .isEqualTo(
-            "enr:-Im4QIEcZbEzW8DSEX-0BPB36s1UwTT54D_I-mvrSHqsZpVzGg7wlXyHb6vRq3GTGNBNQyoUkKkJGryrTo"
-                + "DTersRuNYBgmlkgnY0gmlwhH8AAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA"
-                + "8yWM0xOIN0Y3ACg3VkcIJ2Xw");
+            "enr:-JC4QOfroMOa1sB6ajxcBKdWn3s9S4Ojl33pbRm72S5FnCwyZfskmjkJvZznQaWNTrOHrnKxw1R9xMm9rl"
+                + "EGOcsOyscBg2V0aMLBgIJpZIJ2NIJpcIR_AAABiXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEV"
+                + "v0AHacwUAPMljNMTiDdGNwAoN1ZHCCdl8");
   }
 
   @Test

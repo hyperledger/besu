@@ -30,8 +30,10 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Test;
@@ -160,6 +162,7 @@ public class NetworkingServiceLifecycleTest {
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
-        .storageProvider(new InMemoryStorageProvider());
+        .storageProvider(new InMemoryStorageProvider())
+        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
   }
 }
