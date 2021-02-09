@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -68,7 +69,9 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
       final ValidationResult<TransactionInvalidReason> validationResult =
           transactionPool
               .get()
-              .addLocalTransaction(DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction));
+              .addLocalTransaction(
+                  DomainObjectDecodeUtils.decodeRawTransaction(
+                      Bytes.fromHexString(rawTransaction)));
       return validationResult.either(
           () -> new ExecutionStatus(index),
           errorReason -> new ExecutionStatus(index, false, errorReason.name()));

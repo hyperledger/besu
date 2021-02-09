@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -58,7 +59,7 @@ public class TransactionRLPDecoder {
               TransactionType.EIP1559,
               TransactionRLPDecoder::decodeEIP1559);
 
-  public static Transaction decode(final RLPInput rlpInput) {
+  public static Transaction decodeForWire(final RLPInput rlpInput) {
     if (rlpInput.nextIsList()) {
       return decodeFrontier(rlpInput);
     } else {
@@ -72,6 +73,21 @@ public class TransactionRLPDecoder {
               transactionType);
       return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
     }
+  }
+
+  public static Transaction decodeOpaqueBytes(final Bytes input) {
+    final TransactionType transactionType;
+    try {
+      transactionType = TransactionType.of(input.get(0));
+    } catch (final IllegalArgumentException __) {
+      return decodeFrontier(new BytesValueRLPInput(input, false));
+    }
+    final Decoder decoder =
+        checkNotNull(
+            TYPED_TRANSACTION_DECODERS.get(transactionType),
+            "Developer Error. A supported transaction type %s has no associated decoding logic",
+            transactionType);
+    return decoder.decode(new BytesValueRLPInput(input.slice(1), false));
   }
 
   static Transaction decodeFrontier(final RLPInput input) {

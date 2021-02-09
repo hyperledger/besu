@@ -96,7 +96,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionRLPDecoder.decode(rlpInput);
+    return TransactionRLPDecoder.decodeForWire(rlpInput);
   }
 
   /**
@@ -444,7 +444,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionRLPEncoder.encode(this, out);
+    TransactionRLPEncoder.encodeForWire(this, out);
   }
 
   @Override
@@ -479,7 +479,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      hash = Hash.hash(TransactionRLPEncoder.opaqueBytes(this));
+      hash = Hash.hash(TransactionRLPEncoder.encodeOpaqueBytes(this));
     }
     return hash;
   }

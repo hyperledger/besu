@@ -58,7 +58,7 @@ public final class BodyValidation {
 
     IntStream.range(0, transactions.size())
         .forEach(
-            i -> trie.put(indexKey(i), TransactionRLPEncoder.opaqueBytes(transactions.get(i))));
+            i -> trie.put(indexKey(i), TransactionRLPEncoder.encodeOpaqueBytes(transactions.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }

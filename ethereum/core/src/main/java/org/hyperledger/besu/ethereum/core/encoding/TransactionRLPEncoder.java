@@ -45,18 +45,18 @@ public class TransactionRLPEncoder {
           TransactionType.EIP1559,
           TransactionRLPEncoder::encodeEIP1559);
 
-  public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
+  public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
       encodeFrontier(transaction, rlpOutput);
     } else {
-      rlpOutput.writeBytes(opaqueBytes(transaction));
+      rlpOutput.writeBytes(encodeOpaqueBytes(transaction));
     }
   }
 
-  public static Bytes opaqueBytes(final Transaction transaction) {
+  public static Bytes encodeOpaqueBytes(final Transaction transaction) {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);

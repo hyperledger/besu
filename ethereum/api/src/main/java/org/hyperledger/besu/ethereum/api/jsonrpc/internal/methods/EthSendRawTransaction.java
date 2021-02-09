@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -60,7 +61,8 @@ public class EthSendRawTransaction implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final String rawTransaction = requestContext.getRequiredParameter(0, String.class);
+    final Bytes rawTransaction =
+        Bytes.fromHexString(requestContext.getRequiredParameter(0, String.class));
 
     final Transaction transaction;
     try {

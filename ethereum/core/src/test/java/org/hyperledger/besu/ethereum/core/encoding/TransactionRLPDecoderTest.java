@@ -41,7 +41,7 @@ public class TransactionRLPDecoderTest {
     GoQuorumOptions.goQuorumCompatibilityMode = true;
     RLPInput input = RLP.input(Bytes.fromHexString(GOQUORUM_PRIVATE_TX_RLP));
 
-    final Transaction transaction = TransactionRLPDecoder.decode(input);
+    final Transaction transaction = TransactionRLPDecoder.decodeForWire(input);
     assertThat(transaction).isNotNull();
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.getSender())
@@ -53,7 +53,7 @@ public class TransactionRLPDecoderTest {
   @Test
   public void decodeFrontierNominalCase() {
     final Transaction transaction =
-        TransactionRLPDecoder.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        TransactionRLPDecoder.decodeForWire(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPrice()).isEqualByComparingTo(Wei.of(50L));
     assertThat(transaction.getGasPremium()).isEmpty();
@@ -63,7 +63,7 @@ public class TransactionRLPDecoderTest {
   @Test
   public void decodeEIP1559NominalCase() {
     final Transaction transaction =
-        TransactionRLPDecoder.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        TransactionRLPDecoder.decodeForWire(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPremium()).hasValue(Wei.of(527L));
     assertThat(transaction.getFeeCap()).hasValue(Wei.of(369L));
