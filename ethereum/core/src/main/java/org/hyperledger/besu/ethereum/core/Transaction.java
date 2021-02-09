@@ -479,8 +479,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      final Bytes rlp = RLP.encode(this::writeTo);
-      hash = Hash.hash(rlp);
+      hash = Hash.hash(TransactionRLPEncoder.opaqueBytes(this));
     }
     return hash;
   }
@@ -644,15 +643,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Bytes payload,
       final AccessList accessList,
       final Optional<BigInteger> chainId) {
-    return Bytes.concatenate(
-        Bytes.of((byte) TransactionType.ACCESS_LIST.getSerializedType()),
+    final Bytes encode =
         RLP.encode(
             rlpOutput -> {
               rlpOutput.startList();
               TransactionRLPEncoder.encodeAccessListInner(
                   chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
               rlpOutput.endList();
-            }));
+            });
+    return Bytes.concatenate(
+        Bytes.of((byte) TransactionType.ACCESS_LIST.getSerializedType()), encode);
   }
 
   @Override

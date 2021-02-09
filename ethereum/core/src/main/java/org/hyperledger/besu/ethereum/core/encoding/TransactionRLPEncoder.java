@@ -52,27 +52,46 @@ public class TransactionRLPEncoder {
     if (TransactionType.FRONTIER.equals(transactionType)) {
       encodeFrontier(transaction, rlpOutput);
     } else {
-      rlpOutput.writeBytes(RLP.encode(output -> encodeForTransactionTrie(transaction, output)));
+      rlpOutput.writeBytes(opaqueBytes(transaction));
     }
   }
 
-  public static void encodeForTransactionTrie(
-      final Transaction transaction, final RLPOutput rlpOutput) {
+  public static Bytes opaqueBytes(final Transaction transaction) {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      encodeFrontier(transaction, rlpOutput);
+      return RLP.encode(rlpOutput -> encodeFrontier(transaction, rlpOutput));
     } else {
       final Encoder encoder =
           checkNotNull(
               TYPED_TRANSACTION_ENCODERS.get(transactionType),
               "Developer Error. A supported transaction type %s has no associated encoding logic",
               transactionType);
-      rlpOutput.writeIntScalar(transactionType.getSerializedType());
-      encoder.encode(transaction, rlpOutput);
+      return Bytes.concatenate(
+          Bytes.of(transactionType.getSerializedType()),
+          RLP.encode(rlpOutput -> encoder.encode(transaction, rlpOutput)));
     }
   }
+
+  //  public static void encodeForTransactionTrie(
+  //      final Transaction transaction, final RLPOutput rlpOutput) {
+  //    final TransactionType transactionType =
+  //        checkNotNull(
+  //            transaction.getType(), "Transaction type for %s was not specified.", transaction);
+  //    if (TransactionType.FRONTIER.equals(transactionType)) {
+  //      encodeFrontier(transaction, rlpOutput);
+  //    } else {
+  //      final Encoder encoder =
+  //          checkNotNull(
+  //              TYPED_TRANSACTION_ENCODERS.get(transactionType),
+  //              "Developer Error. A supported transaction type %s has no associated encoding
+  // logic",
+  //              transactionType);
+  //      rlpOutput.writeIntScalar(transactionType.getSerializedType());
+  //      encoder.encode(transaction, rlpOutput);
+  //    }
+  //  }
 
   static void encodeFrontier(final Transaction transaction, final RLPOutput out) {
     out.startList();

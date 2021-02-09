@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -73,9 +74,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
     this.publicKey = transaction.getPublicKey().orElse(null);
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    this.raw = out.encoded().toString();
+    this.raw = TransactionRLPEncoder.opaqueBytes(transaction).toHexString();
     this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
     this.value = Quantity.create(transaction.getValue());
