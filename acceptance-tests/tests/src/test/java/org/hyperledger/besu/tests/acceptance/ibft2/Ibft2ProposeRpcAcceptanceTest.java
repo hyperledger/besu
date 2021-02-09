@@ -36,19 +36,19 @@ public class Ibft2ProposeRpcAcceptanceTest extends AcceptanceTestBase {
         besu.createIbft2NodeWithValidators("non-validator", validators);
     cluster.start(validator1, validator2, validator3, nonValidatorNode);
 
-    cluster.verify(ibftTwo.validatorsEqual(validator1, validator2, validator3));
-    final Condition addedCondition = ibftTwo.awaitValidatorSetChange(validator1);
-    validator1.execute(ibftTwoTransactions.createAddProposal(nonValidatorNode));
-    validator2.execute(ibftTwoTransactions.createAddProposal(nonValidatorNode));
+    cluster.verify(bft.validatorsEqual(validator1, validator2, validator3));
+    final Condition addedCondition = bft.awaitValidatorSetChange(validator1);
+    validator1.execute(bftTransactions.createAddProposal(nonValidatorNode));
+    validator2.execute(bftTransactions.createAddProposal(nonValidatorNode));
 
     cluster.verify(addedCondition);
-    cluster.verify(ibftTwo.validatorsEqual(validator1, validator2, validator3, nonValidatorNode));
+    cluster.verify(bft.validatorsEqual(validator1, validator2, validator3, nonValidatorNode));
 
-    final Condition removedCondition = ibftTwo.awaitValidatorSetChange(validator1);
-    validator2.execute(ibftTwoTransactions.createRemoveProposal(nonValidatorNode));
-    validator3.execute(ibftTwoTransactions.createRemoveProposal(nonValidatorNode));
-    nonValidatorNode.execute(ibftTwoTransactions.createRemoveProposal(nonValidatorNode));
+    final Condition removedCondition = bft.awaitValidatorSetChange(validator1);
+    validator2.execute(bftTransactions.createRemoveProposal(nonValidatorNode));
+    validator3.execute(bftTransactions.createRemoveProposal(nonValidatorNode));
+    nonValidatorNode.execute(bftTransactions.createRemoveProposal(nonValidatorNode));
     cluster.verify(removedCondition);
-    cluster.verify(ibftTwo.validatorsEqual(validator1, validator2, validator3));
+    cluster.verify(bft.validatorsEqual(validator1, validator2, validator3));
   }
 }

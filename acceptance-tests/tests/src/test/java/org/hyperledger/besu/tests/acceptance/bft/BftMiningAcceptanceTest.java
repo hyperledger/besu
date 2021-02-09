@@ -12,22 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.qbft;
+package org.hyperledger.besu.tests.acceptance.bft;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-public class QbftMiningAcceptanceTest extends AcceptanceTestBase {
+@RunWith(Parameterized.class)
+public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
+
+  public BftMiningAcceptanceTest(
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) {
+    super(testName, nodeFactory);
+  }
 
   @Test
-  public void shouldMineOnSingleNode() throws IOException {
-    final BesuNode minerNode = besu.createQbftNode("miner1");
+  public void shouldMineOnSingleNode() throws Exception {
+    final BesuNode minerNode = nodeFactory.createNode(besu, "miner1");
     cluster.start(minerNode);
 
     cluster.verify(blockchain.reachesHeight(minerNode, 1));
@@ -46,11 +52,11 @@ public class QbftMiningAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldMineOnMultipleNodes() throws IOException {
-    final BesuNode minerNode1 = besu.createQbftNode("miner1");
-    final BesuNode minerNode2 = besu.createQbftNode("miner2");
-    final BesuNode minerNode3 = besu.createQbftNode("miner3");
-    final BesuNode minerNode4 = besu.createQbftNode("miner4");
+  public void shouldMineOnMultipleNodes() throws Exception {
+    final BesuNode minerNode1 = nodeFactory.createNode(besu, "miner1");
+    final BesuNode minerNode2 = nodeFactory.createNode(besu, "miner2");
+    final BesuNode minerNode3 = nodeFactory.createNode(besu, "miner3");
+    final BesuNode minerNode4 = nodeFactory.createNode(besu, "miner4");
     cluster.start(minerNode1, minerNode2, minerNode3, minerNode4);
 
     cluster.verify(blockchain.reachesHeight(minerNode1, 1, 85));
@@ -72,13 +78,16 @@ public class QbftMiningAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator() throws IOException {
+  public void shouldMineOnMultipleNodesEvenWhenClusterContainsNonValidator() throws Exception {
     final String[] validators = {"validator1", "validator2", "validator3"};
-    final BesuNode validator1 = besu.createQbftNodeWithValidators("validator1", validators);
-    final BesuNode validator2 = besu.createQbftNodeWithValidators("validator2", validators);
-    final BesuNode validator3 = besu.createQbftNodeWithValidators("validator3", validators);
+    final BesuNode validator1 =
+        nodeFactory.createNodeWithValidators(besu, "validator1", validators);
+    final BesuNode validator2 =
+        nodeFactory.createNodeWithValidators(besu, "validator2", validators);
+    final BesuNode validator3 =
+        nodeFactory.createNodeWithValidators(besu, "validator3", validators);
     final BesuNode nonValidatorNode =
-        besu.createQbftNodeWithValidators("non-validator", validators);
+        nodeFactory.createNodeWithValidators(besu, "non-validator", validators);
     cluster.start(validator1, validator2, validator3, nonValidatorNode);
 
     cluster.verify(blockchain.reachesHeight(validator1, 1, 85));
@@ -98,13 +107,13 @@ public class QbftMiningAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldStillMineWhenANonProposerNodeFailsAndHasSufficientValidators()
-      throws IOException {
-    final BesuNode minerNode1 = besu.createQbftNode("miner1");
-    final BesuNode minerNode2 = besu.createQbftNode("miner2");
-    final BesuNode minerNode3 = besu.createQbftNode("miner3");
-    final BesuNode minerNode4 = besu.createQbftNode("miner4");
+      throws Exception {
+    final BesuNode minerNode1 = nodeFactory.createNode(besu, "miner1");
+    final BesuNode minerNode2 = nodeFactory.createNode(besu, "miner2");
+    final BesuNode minerNode3 = nodeFactory.createNode(besu, "miner3");
+    final BesuNode minerNode4 = nodeFactory.createNode(besu, "miner4");
     final List<BesuNode> validators =
-        ibftTwo.validators(new BesuNode[] {minerNode1, minerNode2, minerNode3, minerNode4});
+        bft.validators(new BesuNode[] {minerNode1, minerNode2, minerNode3, minerNode4});
     final BesuNode nonProposerNode = validators.get(validators.size() - 1);
     cluster.start(validators);
 

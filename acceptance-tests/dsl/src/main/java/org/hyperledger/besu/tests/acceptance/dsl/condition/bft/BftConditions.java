@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.condition.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.condition.bft;
 
 import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -31,12 +31,12 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
 
-public class Ibft2Conditions {
+public class BftConditions {
 
-  private final Ibft2Transactions ibftTwo;
+  private final BftTransactions bft;
 
-  public Ibft2Conditions(final Ibft2Transactions ibftTwo) {
-    this.ibftTwo = ibftTwo;
+  public BftConditions(final BftTransactions bft) {
+    this.bft = bft;
   }
 
   public List<BesuNode> validators(final BesuNode[] nodes) {
@@ -47,7 +47,7 @@ public class Ibft2Conditions {
   }
 
   public ExpectValidators validatorsEqual(final BesuNode... validators) {
-    return new ExpectValidators(ibftTwo, validatorAddresses(validators));
+    return new ExpectValidators(bft, validatorAddresses(validators));
   }
 
   private Address[] validatorAddresses(final BesuNode[] validators) {
@@ -55,23 +55,23 @@ public class Ibft2Conditions {
   }
 
   public Condition awaitValidatorSetChange(final Node node) {
-    return new AwaitValidatorSetChange(node.execute(ibftTwo.createGetValidators(LATEST)), ibftTwo);
+    return new AwaitValidatorSetChange(node.execute(bft.createGetValidators(LATEST)), bft);
   }
 
   public Condition noProposals() {
-    return new ExpectProposals(ibftTwo, ImmutableMap.of());
+    return new ExpectProposals(bft, ImmutableMap.of());
   }
 
   public PendingVotesConfig pendingVotesEqual() {
-    return new PendingVotesConfig(ibftTwo);
+    return new PendingVotesConfig(bft);
   }
 
   public static class PendingVotesConfig {
     private final Map<BesuNode, Boolean> proposals = new HashMap<>();
-    private final Ibft2Transactions ibft;
+    private final BftTransactions bft;
 
-    private PendingVotesConfig(final Ibft2Transactions ibft) {
-      this.ibft = ibft;
+    private PendingVotesConfig(final BftTransactions bft) {
+      this.bft = bft;
     }
 
     public PendingVotesConfig addProposal(final BesuNode node) {
@@ -88,7 +88,7 @@ public class Ibft2Conditions {
       final Map<Address, Boolean> proposalsAsAddress =
           this.proposals.entrySet().stream()
               .collect(Collectors.toMap(p -> p.getKey().getAddress(), Map.Entry::getValue));
-      return new ExpectProposals(ibft, proposalsAsAddress);
+      return new ExpectProposals(bft, proposalsAsAddress);
     }
   }
 }

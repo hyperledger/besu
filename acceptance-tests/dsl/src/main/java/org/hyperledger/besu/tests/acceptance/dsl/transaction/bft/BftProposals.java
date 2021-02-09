@@ -12,23 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory.ProposalsResponse;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class Ibft2Proposals implements Transaction<Map<Address, Boolean>> {
+public class BftProposals implements Transaction<Map<Address, Boolean>> {
 
   @Override
   public Map<Address, Boolean> execute(final NodeRequests node) {
     try {
-      final Ibft2RequestFactory.ProposalsResponse result = node.ibft().proposals().send();
+      final ProposalsResponse result = node.bft().proposals().send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();
