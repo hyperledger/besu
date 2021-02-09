@@ -14,16 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 @JsonPropertyOrder({
+  "accessList",
   "blockHash",
   "blockNumber",
   "chainId",
@@ -37,13 +40,16 @@ import org.apache.tuweni.bytes.Bytes;
   "raw",
   "to",
   "transactionIndex",
+  "type",
   "value",
   "v",
   "r",
   "s"
 })
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TransactionCompleteResult implements TransactionResult {
 
+  private final AccessList accessList;
   private final String blockHash;
   private final String blockNumber;
   private final String chainId;
@@ -57,6 +63,7 @@ public class TransactionCompleteResult implements TransactionResult {
   private final String raw;
   private final String to;
   private final String transactionIndex;
+  private final String type;
   private final String value;
   private final String v;
   private final String r;
@@ -64,6 +71,9 @@ public class TransactionCompleteResult implements TransactionResult {
 
   public TransactionCompleteResult(final TransactionWithMetadata tx) {
     final Transaction transaction = tx.getTransaction();
+    final TransactionType transactionType = transaction.getType();
+    this.accessList =
+        transactionType.equals(TransactionType.ACCESS_LIST) ? transaction.getAccessList() : null;
     this.blockHash = tx.getBlockHash().get().toString();
     this.blockNumber = Quantity.create(tx.getBlockNumber().get());
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
@@ -74,13 +84,22 @@ public class TransactionCompleteResult implements TransactionResult {
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
     this.publicKey = transaction.getPublicKey().orElse(null);
-    this.raw = TransactionRLPEncoder.opaqueBytes(transaction).toHexString();
+    this.raw = TransactionRLPEncoder.encodeOpaqueBytes(transaction).toHexString();
     this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
+    this.type =
+        transactionType.equals(TransactionType.FRONTIER)
+            ? null
+            : Quantity.create(transactionType.getSerializedType());
     this.value = Quantity.create(transaction.getValue());
     this.v = Quantity.create(transaction.getV());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
+  }
+
+  @JsonGetter(value = "accessList")
+  public AccessList getAccessList() {
+    return accessList;
   }
 
   @JsonGetter(value = "blockHash")
@@ -146,6 +165,11 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return transactionIndex;
+  }
+
+  @JsonGetter(value = "type")
+  public String getType() {
+    return type;
   }
 
   @JsonGetter(value = "value")
