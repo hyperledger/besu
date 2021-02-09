@@ -1,10 +1,10 @@
 # Changelog
 
-## 21.1.1
+## 21.1.0-RC2
 
 ### Additions and Improvements
-* Added `besu_transaction_pool_transactions` to the reported metrics, counting the mempool size [\#1869](https://github.com/hyperledger/besu/pull/1869)
 * Distributions and maven artifacts have been moved off of bintray [\#1886](https://github.com/hyperledger/besu/pull/1886)
+* Support "eth" field in ENR records [\#1893](https://github.com/hyperledger/besu/pull/1893)
 
 ### Bug Fixes
 
