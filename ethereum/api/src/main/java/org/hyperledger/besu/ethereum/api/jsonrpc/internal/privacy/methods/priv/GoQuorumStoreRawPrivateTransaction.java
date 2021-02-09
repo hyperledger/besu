@@ -28,7 +28,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
+import java.util.Base64;
+
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class GoQuorumStoreRawPrivateTransaction implements JsonRpcMethod {
 
@@ -52,14 +55,18 @@ public class GoQuorumStoreRawPrivateTransaction implements JsonRpcMethod {
     try {
       LOG.debug("sending payload " + payload);
       final StoreRawResponse storeRawResponse = enclave.storeRaw(payload);
-      String enclaveLookupId = storeRawResponse.getKey();
-      LOG.debug("got key from GoQuorum enclave " + enclaveLookupId);
-      return new JsonRpcSuccessResponse(id, enclaveLookupId);
+      final String enclaveLookupId = storeRawResponse.getKey();
+      LOG.debug("retrieved lookupId from GoQuorum enclave " + enclaveLookupId);
+      return new JsonRpcSuccessResponse(id, hexEncodeEnclaveKey(enclaveLookupId));
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.error(e);
       return new JsonRpcErrorResponse(id, DECODE_ERROR);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(id, convertEnclaveInvalidReason(e.getMessage()));
     }
+  }
+
+  private String hexEncodeEnclaveKey(final String enclaveKey) {
+    return Bytes.wrap(Base64.getDecoder().decode(enclaveKey)).toHexString();
   }
 }
