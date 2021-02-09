@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,17 +21,17 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 
-public class Ibft2Discard implements Transaction<Boolean> {
+public class BftDiscard implements Transaction<Boolean> {
   private final String address;
 
-  public Ibft2Discard(final String address) {
+  public BftDiscard(final String address) {
     this.address = address;
   }
 
   @Override
   public Boolean execute(final NodeRequests node) {
     try {
-      final Ibft2RequestFactory.DiscardResponse result = node.ibft().discard(address).send();
+      final BftRequestFactory.DiscardResponse result = node.bft().discard(address).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

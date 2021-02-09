@@ -12,39 +12,39 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.bft;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-public class Ibft2Transactions {
+public class BftTransactions {
   public static final String LATEST = "latest";
 
-  public Ibft2Propose createRemoveProposal(final BesuNode node) {
+  public BftPropose createRemoveProposal(final BesuNode node) {
     return propose(node.getAddress().toString(), false);
   }
 
-  public Ibft2Propose createAddProposal(final BesuNode node) {
+  public BftPropose createAddProposal(final BesuNode node) {
     return propose(node.getAddress().toString(), true);
   }
 
-  public Ibft2Proposals createProposals() {
-    return new Ibft2Proposals();
+  public BftProposals createProposals() {
+    return new BftProposals();
   }
 
-  public Ibft2GetValidators createGetValidators(final String blockNumber) {
-    return new Ibft2GetValidators(blockNumber);
+  public BftGetValidators createGetValidators(final String blockNumber) {
+    return new BftGetValidators(blockNumber);
   }
 
-  public Ibft2GetValidatorsAtHash createGetValidatorsAtHash(final Hash blockHash) {
-    return new Ibft2GetValidatorsAtHash(blockHash);
+  public BftGetValidatorsAtHash createGetValidatorsAtHash(final Hash blockHash) {
+    return new BftGetValidatorsAtHash(blockHash);
   }
 
-  public Ibft2Discard createDiscardProposal(final BesuNode node) {
-    return new Ibft2Discard(node.getAddress().toString());
+  public BftDiscard createDiscardProposal(final BesuNode node) {
+    return new BftDiscard(node.getAddress().toString());
   }
 
-  private Ibft2Propose propose(final String address, final boolean auth) {
-    return new Ibft2Propose(address, auth);
+  private BftPropose propose(final String address, final boolean auth) {
+    return new BftPropose(address, auth);
   }
 }

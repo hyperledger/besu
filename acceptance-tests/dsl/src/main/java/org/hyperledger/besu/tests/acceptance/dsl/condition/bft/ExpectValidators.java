@@ -12,35 +12,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.condition.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.condition.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
+import static org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions.LATEST;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 
-import java.util.List;
+public class ExpectValidators implements Condition {
+  private final BftTransactions bft;
+  private final Address[] validators;
 
-public class AwaitValidatorSetChange implements Condition {
-
-  private final Ibft2Transactions ibft;
-  private final List<Address> initialSigners;
-
-  public AwaitValidatorSetChange(final List<Address> initialSigners, final Ibft2Transactions ibft) {
-    this.initialSigners = initialSigners;
-    this.ibft = ibft;
+  public ExpectValidators(final BftTransactions bft, final Address... validators) {
+    this.bft = bft;
+    this.validators = validators;
   }
 
   @Override
   public void verify(final Node node) {
     WaitUtils.waitFor(
-        60,
         () ->
-            assertThat(node.execute(ibft.createGetValidators(LATEST)))
-                .isNotEqualTo(initialSigners));
+            assertThat(node.execute(bft.createGetValidators(LATEST))).containsExactly(validators));
   }
 }
