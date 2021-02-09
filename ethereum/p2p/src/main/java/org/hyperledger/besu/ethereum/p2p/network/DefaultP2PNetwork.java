@@ -64,6 +64,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -447,6 +448,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
+    private Supplier<List<Bytes>> forkIdSupplier;
 
     public P2PNetwork build() {
       validate();
@@ -487,6 +489,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(metricsSystem != null, "MetricsSystem must be set.");
       checkState(storageProvider != null, "StorageProvider must be set.");
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
+      checkState(forkIdSupplier != null, "ForkIdSupplier must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
@@ -498,7 +501,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
           peerPermissions,
           natService,
           metricsSystem,
-          storageProvider);
+          storageProvider,
+          forkIdSupplier);
     }
 
     private RlpxAgent createRlpxAgent(
@@ -587,6 +591,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder storageProvider(final StorageProvider storageProvider) {
       checkNotNull(storageProvider);
       this.storageProvider = storageProvider;
+      return this;
+    }
+
+    public Builder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
+      checkNotNull(forkIdSupplier);
+      this.forkIdSupplier = forkIdSupplier;
       return this;
     }
   }
