@@ -43,10 +43,12 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -97,6 +99,7 @@ public abstract class PeerDiscoveryAgent {
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
 
   private final StorageProvider storageProvider;
+  private final Supplier<List<Bytes>> forkIdSupplier;
 
   protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
@@ -104,7 +107,8 @@ public abstract class PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem,
-      final StorageProvider storageProvider) {
+      final StorageProvider storageProvider,
+      final Supplier<List<Bytes>> forkIdSupplier) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -122,6 +126,7 @@ public abstract class PeerDiscoveryAgent {
     id = nodeKey.getPublicKey().getEncodedBytes();
 
     this.storageProvider = storageProvider;
+    this.forkIdSupplier = forkIdSupplier;
   }
 
   protected abstract TimerUtil createTimer();
@@ -202,7 +207,8 @@ public abstract class PeerDiscoveryAgent {
               new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(nodeId)),
               new EnrField(EnrField.IP_V4, addressBytes),
               new EnrField(EnrField.TCP, tcpPort),
-              new EnrField(EnrField.UDP, udpPort));
+              new EnrField(EnrField.UDP, udpPort),
+              new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
       nodeRecord.setSignature(
           nodeKey
               .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
