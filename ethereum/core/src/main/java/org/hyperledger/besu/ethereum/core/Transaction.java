@@ -19,8 +19,8 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -96,7 +96,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionRLPDecoder.decode(rlpInput);
+    return TransactionDecoder.decodeForWire(rlpInput);
   }
 
   /**
@@ -444,7 +444,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionRLPEncoder.encode(this, out);
+    TransactionEncoder.encodeForWire(this, out);
   }
 
   @Override
@@ -479,8 +479,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      final Bytes rlp = RLP.encode(this::writeTo);
-      hash = Hash.hash(rlp);
+      hash = Hash.hash(TransactionEncoder.encodeOpaqueBytes(this));
     }
     return hash;
   }
@@ -570,16 +569,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         break;
       case ACCESS_LIST:
         preimage =
-            accessListPreimage(
-                transactionType,
-                nonce,
-                gasPrice,
-                gasLimit,
-                to,
-                value,
-                payload,
-                accessList,
-                chainId);
+            accessListPreimage(nonce, gasPrice, gasLimit, to, value, payload, accessList, chainId);
         break;
       default:
         throw new IllegalStateException(
@@ -645,7 +635,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   private static Bytes accessListPreimage(
-      final TransactionType transactionType,
       final long nonce,
       final Wei gasPrice,
       final long gasLimit,
@@ -654,14 +643,15 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Bytes payload,
       final AccessList accessList,
       final Optional<BigInteger> chainId) {
-    return RLP.encode(
-        rlpOutput -> {
-          rlpOutput.startList();
-          rlpOutput.writeIntScalar(transactionType.getSerializedType());
-          TransactionRLPEncoder.encodeAccessListInner(
-              chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
-          rlpOutput.endList();
-        });
+    final Bytes encode =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              TransactionEncoder.encodeAccessListInner(
+                  chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
+              rlpOutput.endList();
+            });
+    return Bytes.concatenate(Bytes.of(TransactionType.ACCESS_LIST.getSerializedType()), encode);
   }
 
   @Override
