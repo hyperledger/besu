@@ -12,30 +12,34 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.condition.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.condition.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions.LATEST;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 
-import java.util.Map;
+import java.util.List;
 
-public class ExpectProposals implements Condition {
-  private final Ibft2Transactions ibftTwo;
-  private final Map<Address, Boolean> proposers;
+public class AwaitValidatorSetChange implements Condition {
 
-  public ExpectProposals(final Ibft2Transactions ibftTwo, final Map<Address, Boolean> proposers) {
-    this.ibftTwo = ibftTwo;
-    this.proposers = proposers;
+  private final BftTransactions bft;
+  private final List<Address> initialSigners;
+
+  public AwaitValidatorSetChange(final List<Address> initialSigners, final BftTransactions bft) {
+    this.initialSigners = initialSigners;
+    this.bft = bft;
   }
 
   @Override
   public void verify(final Node node) {
     WaitUtils.waitFor(
-        () -> assertThat(node.execute(ibftTwo.createProposals())).isEqualTo(proposers));
+        60,
+        () ->
+            assertThat(node.execute(bft.createGetValidators(LATEST))).isNotEqualTo(initialSigners));
   }
 }

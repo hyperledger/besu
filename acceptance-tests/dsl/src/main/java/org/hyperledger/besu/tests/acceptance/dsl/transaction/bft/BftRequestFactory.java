@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.bft;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -28,7 +28,7 @@ import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
-public class Ibft2RequestFactory {
+public class BftRequestFactory {
 
   public static class ProposeResponse extends Response<Boolean> {}
 
@@ -40,13 +40,20 @@ public class Ibft2RequestFactory {
 
   private final Web3jService web3jService;
 
-  public Ibft2RequestFactory(final Web3jService web3jService) {
+  private final ConsensusType bftType;
+
+  public BftRequestFactory(final Web3jService web3jService) {
+    this(web3jService, ConsensusType.IBFT2);
+  }
+
+  public BftRequestFactory(final Web3jService web3jService, final ConsensusType bftType) {
     this.web3jService = web3jService;
+    this.bftType = bftType;
   }
 
   Request<?, ProposeResponse> propose(final String address, final Boolean auth) {
     return new Request<>(
-        "ibft_proposeValidatorVote",
+        bftType.getName() + "_proposeValidatorVote",
         Arrays.asList(address, auth.toString()),
         web3jService,
         ProposeResponse.class);
@@ -54,17 +61,20 @@ public class Ibft2RequestFactory {
 
   Request<?, DiscardResponse> discard(final String address) {
     return new Request<>(
-        "ibft_discardValidatorVote", singletonList(address), web3jService, DiscardResponse.class);
+        bftType.getName() + "_discardValidatorVote",
+        singletonList(address),
+        web3jService,
+        DiscardResponse.class);
   }
 
   Request<?, ProposalsResponse> proposals() {
     return new Request<>(
-        "ibft_getPendingVotes", emptyList(), web3jService, ProposalsResponse.class);
+        bftType.getName() + "_getPendingVotes", emptyList(), web3jService, ProposalsResponse.class);
   }
 
   Request<?, SignersBlockResponse> validatorsAtBlock(final String blockNumber) {
     return new Request<>(
-        "ibft_getValidatorsByBlockNumber",
+        bftType.getName() + "_getValidatorsByBlockNumber",
         singletonList(blockNumber),
         web3jService,
         SignersBlockResponse.class);
@@ -72,7 +82,7 @@ public class Ibft2RequestFactory {
 
   Request<?, SignersBlockResponse> signersAtHash(final Hash hash) {
     return new Request<>(
-        "ibft_getValidatorsByBlockHash",
+        bftType.getName() + "_getValidatorsByBlockHash",
         singletonList(hash.toString()),
         web3jService,
         SignersBlockResponse.class);

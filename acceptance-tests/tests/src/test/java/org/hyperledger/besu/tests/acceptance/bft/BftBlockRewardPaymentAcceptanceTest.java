@@ -12,29 +12,33 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.ibft2;
+package org.hyperledger.besu.tests.acceptance.bft;
 
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
 import org.junit.Test;
 
-public class Ibft2BlockRewardPaymentAcceptanceTest extends AcceptanceTestBase {
+public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBase {
+
+  public BftBlockRewardPaymentAcceptanceTest(
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) {
+    super(testName, nodeFactory);
+  }
 
   @Test
-  public void validatorsArePaidBlockReward() throws IOException {
+  public void validatorsArePaidBlockReward() throws Exception {
     final String[] validators = {"validator"};
-    final BesuNode validator = besu.createIbft2NodeWithValidators("validator", validators);
-    final BesuNode nonValidator = besu.createIbft2NodeWithValidators("nonValidator", validators);
+    final BesuNode validator = nodeFactory.createNodeWithValidators(besu, "validator", validators);
+    final BesuNode nonValidator =
+        nodeFactory.createNodeWithValidators(besu, "nonValidator", validators);
     cluster.start(validator, nonValidator);
     final Account validator1Account = Account.create(ethTransactions, validator.getAddress());
 
@@ -48,9 +52,10 @@ public class Ibft2BlockRewardPaymentAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void payBlockRewardToConfiguredNode() throws IOException {
+  public void payBlockRewardToConfiguredNode() throws Exception {
     final String[] validators = {"validator1"};
-    final BesuNode validator1 = besu.createIbft2NodeWithValidators("validator1", validators);
+    final BesuNode validator1 =
+        nodeFactory.createNodeWithValidators(besu, "validator1", validators);
     final Optional<String> initialConfig =
         validator1.getGenesisConfigProvider().create(singletonList(validator1));
     if (initialConfig.isEmpty()) {
