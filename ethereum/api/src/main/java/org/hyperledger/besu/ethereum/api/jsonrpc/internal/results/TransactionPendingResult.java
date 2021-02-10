@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 @JsonPropertyOrder({
   "blockHash",

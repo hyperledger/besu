@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -35,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 public class DebugBatchSendRawTransaction implements JsonRpcMethod {
   private final Supplier<TransactionPool> transactionPool;

@@ -14,16 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 @JsonPropertyOrder({
   "accessList",
