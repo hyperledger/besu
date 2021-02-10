@@ -43,35 +43,47 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class TransactionRLPDecoder {
+public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
     Transaction decode(RLPInput input);
   }
 
-  private static final ImmutableMap<TransactionType, TransactionRLPDecoder.Decoder>
+  private static final ImmutableMap<TransactionType, TransactionDecoder.Decoder>
       TYPED_TRANSACTION_DECODERS =
           ImmutableMap.of(
               TransactionType.ACCESS_LIST,
-              TransactionRLPDecoder::decodeAccessList,
+              TransactionDecoder::decodeAccessList,
               TransactionType.EIP1559,
-              TransactionRLPDecoder::decodeEIP1559);
+              TransactionDecoder::decodeEIP1559);
 
-  public static Transaction decode(final RLPInput rlpInput) {
+  public static Transaction decodeForWire(final RLPInput rlpInput) {
     if (rlpInput.nextIsList()) {
       return decodeFrontier(rlpInput);
     } else {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
-      final Decoder decoder =
-          checkNotNull(
-              TYPED_TRANSACTION_DECODERS.get(transactionType),
-              "Developer Error. A supported transaction type %s has no associated decoding logic",
-              transactionType);
-      return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
+      return getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
     }
+  }
+
+  public static Transaction decodeOpaqueBytes(final Bytes input) {
+    final TransactionType transactionType;
+    try {
+      transactionType = TransactionType.of(input.get(0));
+    } catch (final IllegalArgumentException __) {
+      return decodeFrontier(RLP.input(input));
+    }
+    return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
+  }
+
+  private static Decoder getDecoder(final TransactionType transactionType) {
+    return checkNotNull(
+        TYPED_TRANSACTION_DECODERS.get(transactionType),
+        "Developer Error. A supported transaction type %s has no associated decoding logic",
+        transactionType);
   }
 
   static Transaction decodeFrontier(final RLPInput input) {
