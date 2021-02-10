@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionRLPEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -84,7 +84,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
     this.publicKey = transaction.getPublicKey().orElse(null);
-    this.raw = TransactionRLPEncoder.encodeOpaqueBytes(transaction).toHexString();
+    this.raw = TransactionEncoder.encodeOpaqueBytes(transaction).toHexString();
     this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
     this.type =

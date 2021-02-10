@@ -31,7 +31,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-public class TransactionRLPEncoder {
+public class TransactionEncoder {
 
   @FunctionalInterface
   interface Encoder {
@@ -41,9 +41,9 @@ public class TransactionRLPEncoder {
   private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
       ImmutableMap.of(
           TransactionType.ACCESS_LIST,
-          TransactionRLPEncoder::encodeAccessList,
+          TransactionEncoder::encodeAccessList,
           TransactionType.EIP1559,
-          TransactionRLPEncoder::encodeEIP1559);
+          TransactionEncoder::encodeEIP1559);
 
   public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType =

@@ -44,20 +44,20 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class TransactionRLPDecoder {
+public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
     Transaction decode(RLPInput input);
   }
 
-  private static final ImmutableMap<TransactionType, TransactionRLPDecoder.Decoder>
+  private static final ImmutableMap<TransactionType, TransactionDecoder.Decoder>
       TYPED_TRANSACTION_DECODERS =
           ImmutableMap.of(
               TransactionType.ACCESS_LIST,
-              TransactionRLPDecoder::decodeAccessList,
+              TransactionDecoder::decodeAccessList,
               TransactionType.EIP1559,
-              TransactionRLPDecoder::decodeEIP1559);
+              TransactionDecoder::decodeEIP1559);
 
   public static Transaction decodeForWire(final RLPInput rlpInput) {
     if (rlpInput.nextIsList()) {
