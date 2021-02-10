@@ -27,8 +27,8 @@ public enum TransactionType {
     this.typeValue = typeValue;
   }
 
-  public int getSerializedType() {
-    return this.typeValue;
+  public byte getSerializedType() {
+    return (byte) this.typeValue;
   }
 
   public static TransactionType of(final int serializedTypeValue) {
