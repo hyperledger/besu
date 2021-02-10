@@ -34,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
 
 public class DebugBatchSendRawTransaction implements JsonRpcMethod {
   private final Supplier<TransactionPool> transactionPool;
@@ -69,9 +68,7 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
       final ValidationResult<TransactionInvalidReason> validationResult =
           transactionPool
               .get()
-              .addLocalTransaction(
-                  DomainObjectDecodeUtils.decodeRawTransaction(
-                      rawTransaction));
+              .addLocalTransaction(DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction));
       return validationResult.either(
           () -> new ExecutionStatus(index),
           errorReason -> new ExecutionStatus(index, false, errorReason.name()));

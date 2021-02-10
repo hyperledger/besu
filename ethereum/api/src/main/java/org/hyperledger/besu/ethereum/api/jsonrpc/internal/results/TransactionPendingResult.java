@@ -40,10 +40,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "r",
   "s"
 })
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TransactionPendingResult implements TransactionResult {
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final AccessList accessList;
+
   private final String chainId;
   private final String from;
   private final String gas;
@@ -54,7 +55,10 @@ public class TransactionPendingResult implements TransactionResult {
   private final String publicKey;
   private final String raw;
   private final String to;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String type;
+
   private final String value;
   private final String v;
   private final String r;
