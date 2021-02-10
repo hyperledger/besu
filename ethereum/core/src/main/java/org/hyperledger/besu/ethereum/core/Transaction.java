@@ -651,8 +651,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                   chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
               rlpOutput.endList();
             });
-    return Bytes.concatenate(
-        Bytes.of((byte) TransactionType.ACCESS_LIST.getSerializedType()), encode);
+    return Bytes.concatenate(Bytes.of(TransactionType.ACCESS_LIST.getSerializedType()), encode);
   }
 
   @Override
