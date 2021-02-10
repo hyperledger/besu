@@ -61,8 +61,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final Bytes rawTransaction =
-        Bytes.fromHexString(requestContext.getRequiredParameter(0, String.class));
+    final String rawTransaction = requestContext.getRequiredParameter(0, String.class);
 
     final Transaction transaction;
     try {

@@ -71,7 +71,7 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
               .get()
               .addLocalTransaction(
                   DomainObjectDecodeUtils.decodeRawTransaction(
-                      Bytes.fromHexString(rawTransaction)));
+                      rawTransaction));
       return validationResult.either(
           () -> new ExecutionStatus(index),
           errorReason -> new ExecutionStatus(index, false, errorReason.name()));

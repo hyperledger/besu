@@ -26,10 +26,10 @@ import org.apache.tuweni.bytes.Bytes;
 public class DomainObjectDecodeUtils {
   private static final Logger LOG = LogManager.getLogger();
 
-  public static Transaction decodeRawTransaction(final Bytes rawTransaction)
+  public static Transaction decodeRawTransaction(final String rawTransaction)
       throws InvalidJsonRpcRequestException {
     try {
-      return TransactionDecoder.decodeOpaqueBytes(rawTransaction);
+      return TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(rawTransaction));
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);
