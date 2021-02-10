@@ -32,8 +32,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.STATE
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TOTAL_DIFFICULTY;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TRANSACTION_ROOT;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +52,7 @@ import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -65,7 +63,6 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 public class JsonRpcResponseUtils {
 
@@ -190,13 +187,6 @@ public class JsonRpcResponseUtils {
                     .toUnsignedBigInteger()
                     .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
                     .byteValueExact()));
-    doAnswer(
-            answer -> {
-              answer.getArgument(0, RLPOutput.class).writeRLPBytes(Bytes.fromHexString(raw));
-              return null;
-            })
-        .when(transaction)
-        .writeTo(any());
 
     return new TransactionCompleteResult(
         new TransactionWithMetadata(
