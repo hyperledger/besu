@@ -66,12 +66,7 @@ public class TransactionDecoder {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
-      final Decoder decoder =
-          checkNotNull(
-              TYPED_TRANSACTION_DECODERS.get(transactionType),
-              "Developer Error. A supported transaction type %s has no associated decoding logic",
-              transactionType);
-      return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
+      return getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
     }
   }
 
@@ -80,14 +75,16 @@ public class TransactionDecoder {
     try {
       transactionType = TransactionType.of(input.get(0));
     } catch (final IllegalArgumentException __) {
-      return decodeFrontier(new BytesValueRLPInput(input, false));
+      return decodeFrontier(RLP.input(input));
     }
-    final Decoder decoder =
-        checkNotNull(
-            TYPED_TRANSACTION_DECODERS.get(transactionType),
-            "Developer Error. A supported transaction type %s has no associated decoding logic",
-            transactionType);
-    return decoder.decode(new BytesValueRLPInput(input.slice(1), false));
+    return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
+  }
+
+  private static Decoder getDecoder(final TransactionType transactionType) {
+    return checkNotNull(
+        TYPED_TRANSACTION_DECODERS.get(transactionType),
+        "Developer Error. A supported transaction type %s has no associated decoding logic",
+        transactionType);
   }
 
   static Transaction decodeFrontier(final RLPInput input) {
