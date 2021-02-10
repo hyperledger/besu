@@ -2257,6 +2257,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethstatsUrl(unstableEthstatsOptions.getEthstatsUrl())
             .ethstatsContact(unstableEthstatsOptions.getEthstatsContact())
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
+            .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
             .build();
 
     addShutdownHook(runner);

@@ -283,7 +283,13 @@ public class PeerDiscoveryTestHelper {
       config.setActive(active);
 
       MockPeerDiscoveryAgent mockPeerDiscoveryAgent =
-          new MockPeerDiscoveryAgent(nodeKey, config, peerPermissions, agents, natService);
+          new MockPeerDiscoveryAgent(
+              nodeKey,
+              config,
+              peerPermissions,
+              agents,
+              natService,
+              () -> Collections.singletonList(Bytes.EMPTY));
       mockPeerDiscoveryAgent.getAdvertisedPeer().ifPresent(peer -> peer.setNodeRecord(nodeRecord));
 
       return mockPeerDiscoveryAgent;

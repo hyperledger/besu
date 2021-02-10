@@ -12,23 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.ibft2;
+package org.hyperledger.besu.tests.acceptance.bft;
 
-import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-
-import java.io.IOException;
 
 import org.junit.Test;
 
-public class Ibft2DiscardRpcAcceptanceTest extends AcceptanceTestBase {
+public class BftDiscardRpcAcceptanceTest extends ParameterizedBftTestBase {
+
+  public BftDiscardRpcAcceptanceTest(
+      final String testName, final BftAcceptanceTestParameterization nodeFactory) {
+    super(testName, nodeFactory);
+  }
 
   @Test
-  public void shouldDiscardVotes() throws IOException {
+  public void shouldDiscardVotes() throws Exception {
     final String[] validators = {"validator1", "validator3"};
-    final BesuNode validator1 = besu.createIbft2NodeWithValidators("validator1", validators);
-    final BesuNode validator2 = besu.createIbft2NodeWithValidators("validator2", validators);
-    final BesuNode validator3 = besu.createIbft2NodeWithValidators("validator3", validators);
+    final BesuNode validator1 =
+        nodeFactory.createNodeWithValidators(besu, "validator1", validators);
+    final BesuNode validator2 =
+        nodeFactory.createNodeWithValidators(besu, "validator2", validators);
+    final BesuNode validator3 =
+        nodeFactory.createNodeWithValidators(besu, "validator3", validators);
     cluster.start(validator1, validator2, validator3);
 
     validator1.execute(bftTransactions.createAddProposal(validator2));
