@@ -31,7 +31,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-public class TransactionRLPEncoder {
+public class TransactionEncoder {
 
   @FunctionalInterface
   interface Encoder {
@@ -41,36 +41,36 @@ public class TransactionRLPEncoder {
   private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
       ImmutableMap.of(
           TransactionType.ACCESS_LIST,
-          TransactionRLPEncoder::encodeAccessList,
+          TransactionEncoder::encodeAccessList,
           TransactionType.EIP1559,
-          TransactionRLPEncoder::encodeEIP1559);
+          TransactionEncoder::encodeEIP1559);
 
-  public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
+  public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
       encodeFrontier(transaction, rlpOutput);
     } else {
-      rlpOutput.writeBytes(RLP.encode(output -> encodeForTransactionTrie(transaction, output)));
+      rlpOutput.writeBytes(encodeOpaqueBytes(transaction));
     }
   }
 
-  public static void encodeForTransactionTrie(
-      final Transaction transaction, final RLPOutput rlpOutput) {
+  public static Bytes encodeOpaqueBytes(final Transaction transaction) {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      encodeFrontier(transaction, rlpOutput);
+      return RLP.encode(rlpOutput -> encodeFrontier(transaction, rlpOutput));
     } else {
       final Encoder encoder =
           checkNotNull(
               TYPED_TRANSACTION_ENCODERS.get(transactionType),
               "Developer Error. A supported transaction type %s has no associated encoding logic",
               transactionType);
-      rlpOutput.writeIntScalar(transactionType.getSerializedType());
-      encoder.encode(transaction, rlpOutput);
+      return Bytes.concatenate(
+          Bytes.of(transactionType.getSerializedType()),
+          RLP.encode(rlpOutput -> encoder.encode(transaction, rlpOutput)));
     }
   }
 
