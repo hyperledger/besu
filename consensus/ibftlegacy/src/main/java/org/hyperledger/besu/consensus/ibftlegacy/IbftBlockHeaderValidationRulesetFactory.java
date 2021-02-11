@@ -38,8 +38,8 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
   public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
-      final long secondsBetweenBlocks) {
-    return createValidator(secondsBetweenBlocks, true);
+      final long secondsBetweenBlocks, final long ceil2nBy3Block) {
+    return createValidator(secondsBetweenBlocks, true, ceil2nBy3Block);
   }
 
   /**
@@ -51,11 +51,14 @@ public class IbftBlockHeaderValidationRulesetFactory {
    */
   public static BlockHeaderValidator.Builder ibftProposedBlockValidator(
       final long secondsBetweenBlocks) {
-    return createValidator(secondsBetweenBlocks, false);
+    return createValidator(
+        secondsBetweenBlocks, false, 0); // TODO(tmm): this is wrong, but not important
   }
 
   private static BlockHeaderValidator.Builder createValidator(
-      final long secondsBetweenBlocks, final boolean validateCommitSeals) {
+      final long secondsBetweenBlocks,
+      final boolean validateCommitSeals,
+      final long ceil2nBy3Block) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
@@ -72,6 +75,6 @@ public class IbftBlockHeaderValidationRulesetFactory {
             new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
         .addRule(new VoteValidationRule())
-        .addRule(new IbftExtraDataValidationRule(validateCommitSeals));
+        .addRule(new IbftExtraDataValidationRule(validateCommitSeals, ceil2nBy3Block));
   }
 }

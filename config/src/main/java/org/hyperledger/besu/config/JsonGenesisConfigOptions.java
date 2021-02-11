@@ -133,10 +133,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public BftConfigOptions getIbftLegacyConfigOptions() {
+  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
-        .map(BftConfigOptions::new)
-        .orElse(BftConfigOptions.DEFAULT);
+        .map(IbftLegacyConfigOptions::new)
+        .orElse(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Override
