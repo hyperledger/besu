@@ -224,7 +224,6 @@ public class GoQuorumSendRawPrivateTransactionTest {
   }
 
   private static String invalidGQPrivateTransactionRlp() {
-    // creating a
     final PrivateTransaction.Builder privateTransactionBuilder =
         PrivateTransaction.builder()
             .nonce(0)
