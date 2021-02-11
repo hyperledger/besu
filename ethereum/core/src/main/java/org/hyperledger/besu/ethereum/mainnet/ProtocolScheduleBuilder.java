@@ -188,17 +188,15 @@ public class ProtocolScheduleBuilder {
             isRevertReasonEnabled,
             quorumCompatibilityMode));
 
-    if (ExperimentalEIPs.berlinEnabled) {
-      addProtocolSpec(
-          protocolSchedule,
-          config.getBerlinBlockNumber(),
-          MainnetProtocolSpecs.berlinDefinition(
-              chainId,
-              config.getContractSizeLimit(),
-              config.getEvmStackSize(),
-              isRevertReasonEnabled,
-              quorumCompatibilityMode));
-    }
+    addProtocolSpec(
+        protocolSchedule,
+        config.getBerlinBlockNumber(),
+        MainnetProtocolSpecs.berlinDefinition(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled,
+            quorumCompatibilityMode));
 
     if (ExperimentalEIPs.eip1559Enabled) {
       final Optional<TransactionPriceCalculator> transactionPriceCalculator =
@@ -366,9 +364,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
-    if (ExperimentalEIPs.berlinEnabled) {
-      lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
-    }
+    lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 

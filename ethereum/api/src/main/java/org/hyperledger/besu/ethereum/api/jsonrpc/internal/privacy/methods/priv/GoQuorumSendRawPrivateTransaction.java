@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea.JsonRpcErrorResponseException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -34,6 +35,8 @@ import org.hyperledger.besu.ethereum.privacy.GoQuorumSendRawTxArgs;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+
+import java.math.BigInteger;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -116,6 +119,12 @@ public class GoQuorumSendRawPrivateTransaction implements JsonRpcMethod {
         throw new JsonRpcErrorResponseException(
             JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
       }
+    }
+
+    if (!transaction.getV().equals(BigInteger.valueOf(37))
+        && !transaction.getV().equals(BigInteger.valueOf(38))) {
+      LOG.error(JsonRpcError.GOQUORUM_V_VALUE.getMessage());
+      throw new JsonRpcErrorResponseException(JsonRpcError.GOQUORUM_V_VALUE);
     }
 
     final Bytes txId = transaction.getPayload();
