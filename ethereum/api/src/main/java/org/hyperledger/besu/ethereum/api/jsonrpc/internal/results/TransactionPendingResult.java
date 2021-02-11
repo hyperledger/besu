@@ -14,11 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({
@@ -39,6 +42,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 })
 public class TransactionPendingResult implements TransactionResult {
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final AccessList accessList;
+
   private final String chainId;
   private final String from;
   private final String gas;
@@ -49,12 +55,19 @@ public class TransactionPendingResult implements TransactionResult {
   private final String publicKey;
   private final String raw;
   private final String to;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String type;
+
   private final String value;
   private final String v;
   private final String r;
   private final String s;
 
   public TransactionPendingResult(final Transaction transaction) {
+    final TransactionType transactionType = transaction.getType();
+    this.accessList =
+        transactionType.equals(TransactionType.ACCESS_LIST) ? transaction.getAccessList() : null;
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
@@ -67,10 +80,19 @@ public class TransactionPendingResult implements TransactionResult {
     transaction.writeTo(out);
     this.raw = out.encoded().toString();
     this.to = transaction.getTo().map(Address::toHexString).orElse(null);
+    this.type =
+        transactionType.equals(TransactionType.FRONTIER)
+            ? null
+            : Quantity.create(transactionType.getSerializedType());
     this.value = Quantity.create(transaction.getValue());
     this.v = Quantity.create(transaction.getV());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
+  }
+
+  @JsonGetter(value = "accessList")
+  public AccessList getAccessList() {
+    return accessList;
   }
 
   @JsonGetter(value = "chainId")
@@ -121,6 +143,11 @@ public class TransactionPendingResult implements TransactionResult {
   @JsonGetter(value = "to")
   public String getTo() {
     return to;
+  }
+
+  @JsonGetter(value = "type")
+  public String getType() {
+    return type;
   }
 
   @JsonGetter(value = "value")
