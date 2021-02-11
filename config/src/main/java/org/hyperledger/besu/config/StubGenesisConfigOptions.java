@@ -151,7 +151,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getBerlinBlockNumber() {
-    return ExperimentalEIPs.berlinEnabled ? berlinBlockNumber : OptionalLong.empty();
+    return berlinBlockNumber;
   }
 
   @Override
