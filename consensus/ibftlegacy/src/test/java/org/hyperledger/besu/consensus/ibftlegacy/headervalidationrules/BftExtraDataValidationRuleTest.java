@@ -105,7 +105,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -131,7 +131,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     final BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -158,7 +158,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -187,7 +187,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -214,7 +214,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     // Add another validator to the list reported in the IbftExtraData (note, as the
     final List<Address> extraDataValidators =
@@ -253,7 +253,7 @@ public class BftExtraDataValidationRuleTest {
     final ProtocolContext context =
         new ProtocolContext(null, null, setupContextWithValidators(validators));
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     assertThat(extraDataValidationRule.validate(header, null, context)).isFalse();
   }
@@ -318,7 +318,7 @@ public class BftExtraDataValidationRuleTest {
     final ProtocolContext context =
         new ProtocolContext(null, null, setupContextWithValidators(validators));
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     return extraDataValidationRule.validate(header, null, context);
   }
