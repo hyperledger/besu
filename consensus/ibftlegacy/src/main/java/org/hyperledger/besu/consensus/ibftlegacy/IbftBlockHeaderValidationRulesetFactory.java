@@ -35,6 +35,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
    * part of the BlockChain (i.e. not proposed blocks, which do not contain commit seals)
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
+   * @param ceil2nBy3Block the block after which 2/3n commit seals must exist, rather than 2F+1
    * @return BlockHeaderValidator configured for assessing ibft block headers
    */
   public static BlockHeaderValidator.Builder ibftBlockHeaderValidator(
@@ -52,7 +53,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
   public static BlockHeaderValidator.Builder ibftProposedBlockValidator(
       final long secondsBetweenBlocks) {
     return createValidator(
-        secondsBetweenBlocks, false, 0); // TODO(tmm): this is wrong, but not important
+        secondsBetweenBlocks, false, 0);
   }
 
   private static BlockHeaderValidator.Builder createValidator(
