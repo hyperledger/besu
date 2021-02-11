@@ -60,27 +60,6 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
   static final String INVALID_TRANSACTION_RLP = invalidGQPrivateTransactionRlp();
 
-  static final Transaction VALID_TRANSACTION =
-      new Transaction(
-          0L,
-          Wei.of(1),
-          21000L,
-          Optional.of(
-              Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
-          Wei.ZERO,
-          SECP256K1.Signature.create(
-              new BigInteger(
-                  "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
-              new BigInteger(
-                  "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
-              Byte.parseByte("0")),
-          Bytes.fromHexString("0x01"), // this is the enclave key for the private payload
-          Address.wrap(
-              Bytes.fromHexString(
-                  "0x8411b12666f68ef74cace3615c9d5a377729d03f")), // sender public address
-          Optional.empty(),
-          Optional.of(BigInteger.valueOf(37)));
-
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
   final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
@@ -88,17 +67,10 @@ public class GoQuorumSendRawPrivateTransactionTest {
   @Mock TransactionPool transactionPool;
   @Mock GoQuorumEnclave enclave;
   private static final String RAW_TRANSACTION_STRING = "someString";
-  private static String RAW_TRANSACTION;
+  private static final String RAW_TRANSACTION = createValidTransactionRLP();
   private static final GoQuorumSendRawTxArgs GO_QUORUM_SEND_RAW_TX_ARGS =
       new GoQuorumSendRawTxArgs(
           ENCLAVE_PUBLIC_KEY, Collections.singletonList(ENCLAVE_PUBLIC_KEY), 0);
-
-  {
-    final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
-    final Transaction publicTransaction = VALID_TRANSACTION;
-    publicTransaction.writeTo(bvrlp);
-    RAW_TRANSACTION = bvrlp.encoded().toHexString();
-  }
 
   @Before
   public void before() {
@@ -145,23 +117,6 @@ public class GoQuorumSendRawPrivateTransactionTest {
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessage("Missing required json rpc parameter at index 0");
-  }
-
-  @Test
-  public void invalidTransactionRlpDecoding() {
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0",
-                "\"eth_sendRawPrivateTransaction\"",
-                new Object[] {RAW_TRANSACTION, GO_QUORUM_SEND_RAW_TX_ARGS}));
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.DECODE_ERROR);
-
-    final JsonRpcResponse actualResponse = method.response(request);
-
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
   }
 
   @Test
@@ -245,7 +200,7 @@ public class GoQuorumSendRawPrivateTransactionTest {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, JsonRpcError.TX_SENDER_NOT_AUTHORIZED);
   }
-  //
+
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
 
@@ -267,7 +222,7 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
     verify(transactionPool).addLocalTransaction(any(Transaction.class));
   }
-
+  
   private static String invalidGQPrivateTransactionRlp() {
     // creating a
     final PrivateTransaction.Builder privateTransactionBuilder =
@@ -299,6 +254,31 @@ public class GoQuorumSendRawPrivateTransactionTest {
     final PrivateTransaction privateTransaction = privateTransactionBuilder.signAndBuild(keyPair);
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlp);
+    return bvrlp.encoded().toHexString();
+  }
+
+  private static final String createValidTransactionRLP() {
+    final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
+    final Transaction publicTransaction = new Transaction(
+            0L,
+            Wei.of(1),
+            21000L,
+            Optional.of(
+                    Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
+            Wei.ZERO,
+            SECP256K1.Signature.create(
+                    new BigInteger(
+                            "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
+                    new BigInteger(
+                            "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
+                    Byte.parseByte("0")),
+            Bytes.fromHexString("0x01"), // this is the enclave key for the private payload
+            Address.wrap(
+                    Bytes.fromHexString(
+                            "0x8411b12666f68ef74cace3615c9d5a377729d03f")), // sender public address
+            Optional.empty(),
+            Optional.of(BigInteger.valueOf(37)));
+    publicTransaction.writeTo(bvrlp);
     return bvrlp.encoded().toHexString();
   }
 }
