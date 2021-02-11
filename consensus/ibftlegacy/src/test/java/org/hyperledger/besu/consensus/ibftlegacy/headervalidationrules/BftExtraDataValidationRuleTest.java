@@ -289,7 +289,8 @@ public class BftExtraDataValidationRuleTest {
 
   }
 
-  private boolean subExecution(final int validatorCount, final int committerCount, final boolean useTwoThirds) {
+  private boolean subExecution(
+      final int validatorCount, final int committerCount, final boolean useTwoThirds) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
     final KeyPair proposerKeyPair = KeyPair.generate();
