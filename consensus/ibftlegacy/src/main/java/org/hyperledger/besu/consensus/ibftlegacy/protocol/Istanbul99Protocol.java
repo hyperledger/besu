@@ -24,19 +24,19 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Represents the istanbul/64 protocol as used by Quorum (effectively an extension of eth/63, which
+ * Represents the istanbul/64 protocol as used by Quorum (effectively an extension of eth/65, which
  * adds a single message type (0x11) to encapsulate all communications required for IBFT block
  * mining.
  */
-public class Istanbul64Protocol implements SubProtocol {
+public class Istanbul99Protocol implements SubProtocol {
 
   private static final String NAME = "istanbul";
-  private static final int VERSION = 64;
+  private static final int VERSION = 99;
 
-  static final Capability ISTANBUL64 = Capability.create(NAME, 64);
+  static final Capability ISTANBUL64 = Capability.create(NAME, 99);
   static final int INSTANBUL_MSG = 0x11;
 
-  private static final Istanbul64Protocol INSTANCE = new Istanbul64Protocol();
+  private static final Istanbul99Protocol INSTANCE = new Istanbul99Protocol();
 
   private static final List<Integer> istanbul64Messages =
       Arrays.asList(
@@ -115,7 +115,7 @@ public class Istanbul64Protocol implements SubProtocol {
     }
   }
 
-  public static Istanbul64Protocol get() {
+  public static Istanbul99Protocol get() {
     return INSTANCE;
   }
 }

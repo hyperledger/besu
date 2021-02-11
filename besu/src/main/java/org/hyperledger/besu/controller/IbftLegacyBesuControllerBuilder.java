@@ -23,8 +23,8 @@ import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
-import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul64Protocol;
 import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul64ProtocolManager;
+import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99Protocol;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
@@ -58,7 +58,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration()
-        .withSubProtocol(Istanbul64Protocol.get(), ethProtocolManager);
+        .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager);
   }
 
   @Override
@@ -113,7 +113,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected String getSupportedProtocol() {
-    return Istanbul64Protocol.get().getName();
+    return Istanbul99Protocol.get().getName();
   }
 
   @Override

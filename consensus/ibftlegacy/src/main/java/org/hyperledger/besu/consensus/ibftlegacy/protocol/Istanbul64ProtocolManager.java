@@ -62,11 +62,11 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
 
   @Override
   public List<Capability> getSupportedCapabilities() {
-    return singletonList(Istanbul64Protocol.ISTANBUL64);
+    return singletonList(Istanbul99Protocol.ISTANBUL64);
   }
 
   @Override
   public String getSupportedProtocol() {
-    return Istanbul64Protocol.get().getName();
+    return Istanbul99Protocol.get().getName();
   }
 }
