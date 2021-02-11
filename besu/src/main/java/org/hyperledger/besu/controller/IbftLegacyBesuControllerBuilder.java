@@ -23,8 +23,8 @@ import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
-import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul64ProtocolManager;
 import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99Protocol;
+import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99ProtocolManager;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
@@ -128,7 +128,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators) {
     LOG.info("Operating on IBFT-1.0 network.");
-    return new Istanbul64ProtocolManager(
+    return new Istanbul99ProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
         protocolContext.getWorldStateArchive(),

@@ -32,9 +32,9 @@ import java.math.BigInteger;
 import java.util.List;
 
 /** This allows for interoperability with Quorum, but shouldn't be used otherwise. */
-public class Istanbul64ProtocolManager extends EthProtocolManager {
+public class Istanbul99ProtocolManager extends EthProtocolManager {
 
-  public Istanbul64ProtocolManager(
+  public Istanbul99ProtocolManager(
       final Blockchain blockchain,
       final BigInteger networkId,
       final WorldStateArchive worldStateArchive,
@@ -62,7 +62,7 @@ public class Istanbul64ProtocolManager extends EthProtocolManager {
 
   @Override
   public List<Capability> getSupportedCapabilities() {
-    return singletonList(Istanbul99Protocol.ISTANBUL64);
+    return singletonList(Istanbul99Protocol.ISTANBUL99);
   }
 
   @Override

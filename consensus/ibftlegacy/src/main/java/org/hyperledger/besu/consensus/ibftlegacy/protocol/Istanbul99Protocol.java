@@ -33,7 +33,7 @@ public class Istanbul99Protocol implements SubProtocol {
   private static final String NAME = "istanbul";
   private static final int VERSION = 99;
 
-  static final Capability ISTANBUL64 = Capability.create(NAME, 99);
+  static final Capability ISTANBUL99 = Capability.create(NAME, 99);
   static final int INSTANBUL_MSG = 0x11;
 
   private static final Istanbul99Protocol INSTANCE = new Istanbul99Protocol();
