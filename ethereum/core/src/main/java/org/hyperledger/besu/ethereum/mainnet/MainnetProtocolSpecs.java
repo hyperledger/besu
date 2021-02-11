@@ -390,9 +390,6 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode) {
-    if (!ExperimentalEIPs.berlinEnabled) {
-      throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
-    }
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
