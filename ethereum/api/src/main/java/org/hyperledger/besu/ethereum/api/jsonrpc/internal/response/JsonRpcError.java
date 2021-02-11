@@ -133,6 +133,7 @@ public enum JsonRpcError {
       "Invalid private transaction mode defined in rawTxArgs for GoQuorum raw private transaction."),
   GOQUORUM_LOOKUP_ID_NOT_AVAILABLE(
       -50100, "No lookup id specified in GoQuorum raw private transaction."),
+  GOQUORUM_V_VALUE(-50100, "Signature v value not 37 or 38 for GoQuorum private transaction."),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
   OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Offchain Privacy group does not exist."),
   ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Onchain Privacy group does not exist."),
