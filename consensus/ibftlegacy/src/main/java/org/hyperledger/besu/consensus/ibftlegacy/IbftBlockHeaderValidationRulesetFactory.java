@@ -52,8 +52,7 @@ public class IbftBlockHeaderValidationRulesetFactory {
    */
   public static BlockHeaderValidator.Builder ibftProposedBlockValidator(
       final long secondsBetweenBlocks) {
-    return createValidator(
-        secondsBetweenBlocks, false, 0);
+    return createValidator(secondsBetweenBlocks, false, 0);
   }
 
   private static BlockHeaderValidator.Builder createValidator(
