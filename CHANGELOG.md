@@ -5,6 +5,7 @@
 ### Additions and Improvements
 * Distributions and maven artifacts have been moved off of bintray [\#1886](https://github.com/hyperledger/besu/pull/1886)
 * Support "eth" field in ENR records [\#1893](https://github.com/hyperledger/besu/pull/1893)
+* Support for the Berlin Network Upgrade, although the block number must be set manually with `--override-genesis-config=berlinBlock=<blocknumber>`. This is because the block numbers haven't been determined yet. The next release will include the number in the genesis file so it will support Berlin with no intervention. [\#1898](https://github.com/hyperledger/besu/pull/1898)
 
 ### Bug Fixes
 
@@ -15,9 +16,12 @@
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
-## 21.1.0-RC2
-### Additions and Improvements
-* Support for the Berlin Network Upgrade, although the block number must be set manually with `--override-genesis-config=berlinBlock=<blocknumber>`. This is because the block numbers haven't been determined yet. The next release will include the number in the genesis file so it will support Berlin with no intervention. [\#1898](https://github.com/hyperledger/besu/pull/1898)
+### Download link
+
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.0-RC2/besu-21.1.0-RC2.zip 
+
+sha256sum
+58365386d686a4c5d112a82954c32131e81b1ffb9d1aabcac3682dfa5855daf4
 
 ## 21.1.0-RC1
 
