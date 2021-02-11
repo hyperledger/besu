@@ -12,29 +12,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.bft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.io.IOException;
 import java.util.List;
 
-public class Ibft2GetValidators implements Transaction<List<Address>> {
-  private final String blockNumber;
+public class BftGetValidatorsAtHash implements Transaction<List<Address>> {
 
-  public Ibft2GetValidators(final String blockNumber) {
-    this.blockNumber = blockNumber;
+  private final Hash hash;
+
+  public BftGetValidatorsAtHash(final Hash hash) {
+    this.hash = hash;
   }
 
   @Override
   public List<Address> execute(final NodeRequests node) {
     try {
-      final Ibft2RequestFactory.SignersBlockResponse result =
-          node.ibft().validatorsAtBlock(blockNumber).send();
+      final BftRequestFactory.SignersBlockResponse result = node.bft().signersAtHash(hash).send();
       assertThat(result).isNotNull();
       assertThat(result.hasError()).isFalse();
       return result.getResult();

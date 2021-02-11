@@ -12,16 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.config;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction.bft;
 
-public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  YOLO_V3
+public enum ConsensusType {
+  QBFT("qbft"),
+  IBFT2("ibft");
+
+  private final String name;
+
+  ConsensusType(final String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
 }
