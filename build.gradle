@@ -23,10 +23,12 @@ plugins {
   id 'com.diffplug.spotless' version '5.9.0'
   id 'com.github.ben-manes.versions' version '0.36.0'
   id 'com.github.hierynomus.license' version '0.15.0'
+  id 'com.jfrog.artifactory' version '4.20.0'
   id 'com.jfrog.bintray' version '1.8.5'
   id 'io.spring.dependency-management' version '1.0.10.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.5.0' apply false
   id 'net.ltgt.errorprone' version '1.3.0'
+  id 'maven-publish'
 }
 
 if (!JavaVersion.current().java11Compatible) {
@@ -122,7 +124,7 @@ allprojects {
   repositories {
     jcenter()
     mavenCentral()
-    mavenLocal()
+    maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
     maven { url "https://hyperledger-org.bintray.com/besu-repo" }
     maven { url "https://consensys.bintray.com/pegasys-repo" }
     maven { url "https://consensys.bintray.com/consensys" }
@@ -281,7 +283,7 @@ task checkMavenCoordinateCollisions {
   doLast {
     def coordinates = [:]
     getAllprojects().forEach {
-      if (it.properties.containsKey('publishing')) {
+      if (it.properties.containsKey('publishing') && it.jar?.enabled) {
         def coordinate = it.publishing?.publications[0].coordinates
         if (coordinates.containsKey(coordinate)) {
           throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
@@ -365,6 +367,7 @@ subprojects {
   }
 
   if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
+    apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'com.jfrog.bintray'
     apply plugin: 'maven-publish'
 
@@ -415,6 +418,27 @@ subprojects {
       publish = true
 
       pkg = bintrayPackage
+    }
+
+    def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
+    def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
+    def artifactoryRepo = System.getenv('ARTIFACTORY_REPO') ?: 'besu-maven'
+    def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
+
+    artifactory {
+      contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
+      publish {
+        repository {
+          repoKey = "${artifactoryRepo}"
+          username = artifactoryUser
+          password = artifactoryKey
+        }
+        defaults {
+          publications('mavenJava')
+          publishArtifacts = true
+          publishPom = true
+        }
+      }
     }
   }
 
@@ -547,6 +571,45 @@ distZip {
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
+}
+
+publishing {
+  publications {
+    distArtifactory(MavenPublication) {
+      groupId = '.'
+      version = project.version
+      artifactId = 'besu'
+      artifact("$buildDir/distributions/besu-${project.version}.zip")
+      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") {
+        extension = 'tar.gz'
+      }
+    }
+  }
+}
+
+def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
+def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
+def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
+
+artifactory {
+  contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
+  publish {
+    repository {
+      repoKey = "besu-binaries"
+      username = artifactoryUser
+      password = artifactoryKey
+    }
+    defaults {
+      publications('distArtifactory')
+      publishArtifacts = true
+      publishPom = false
+    }
+  }
+}
+
+artifactoryPublish {
+  dependsOn distTar
+  dependsOn distZip
 }
 
 def dockerVariants = [
