@@ -65,20 +65,19 @@ public class KeccakHasherTest {
   @Test
   public void testHasher() {
 
-    byte[] result = new byte[64];
+    PoWSolution solution =
+        KeccakHasher.KECCAK256.hash(
+            12345678L,
+            42L,
+            new EpochCalculator.DefaultEpochCalculator(),
+            Bytes.fromHexString(
+                    "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+                .toArrayUnsafe());
 
-    KeccakHasher.KECCAK256.hash(
-        result,
-        12345678L,
-        42L,
-        new EpochCalculator.DefaultEpochCalculator(),
-        Bytes.fromHexString("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
-            .toArrayUnsafe());
-
-    assertThat(Bytes.wrap(result))
+    assertThat(solution.getMixHash())
         .isEqualTo(
             Bytes.fromHexString(
-                "0xeffd292d6666dba4d6a4c221dd6d4b34b4ec3972a4cb0d944a8a8936cceca713effd292d6666dba4d6a4c221dd6d4b34b4ec3972a4cb0d944a8a8936cceca713"));
+                "0xeffd292d6666dba4d6a4c221dd6d4b34b4ec3972a4cb0d944a8a8936cceca713"));
   }
 
   @Test
@@ -107,18 +106,16 @@ public class KeccakHasherTest {
             Bytes.fromHexString("0xd88301080f846765746888676f312e31302e31856c696e7578"),
             null);
 
-    byte[] result = new byte[64];
+    PoWSolution result =
+        KeccakHasher.KECCAK256.hash(
+            Bytes.fromHexString("0xf245822d3412da7f").toLong(),
+            4156209L,
+            new EpochCalculator.DefaultEpochCalculator(),
+            EthHash.hashHeader(header));
 
-    KeccakHasher.KECCAK256.hash(
-        result,
-        Bytes.fromHexString("0xf245822d3412da7f").toLong(),
-        4156209L,
-        new EpochCalculator.DefaultEpochCalculator(),
-        EthHash.hashHeader(header));
-
-    assertThat(Bytes.wrap(result))
+    assertThat(result.getMixHash())
         .isEqualTo(
             Bytes.fromHexString(
-                "0xd033f82e170ff16640e902fad569243c39bce9e4da948ccc298c541b34cd263bd033f82e170ff16640e902fad569243c39bce9e4da948ccc298c541b34cd263b"));
+                "0xd033f82e170ff16640e902fad569243c39bce9e4da948ccc298c541b34cd263b"));
   }
 }

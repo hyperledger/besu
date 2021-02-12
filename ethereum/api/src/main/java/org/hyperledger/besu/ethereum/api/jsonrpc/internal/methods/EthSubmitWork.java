@@ -54,6 +54,7 @@ public class EthSubmitWork implements JsonRpcMethod {
           new PoWSolution(
               Bytes.fromHexString(requestContext.getRequiredParameter(0, String.class)).getLong(0),
               requestContext.getRequiredParameter(2, Hash.class),
+              null,
               Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class))
                   .toArrayUnsafe());
       final boolean result = miner.submitWork(solution);

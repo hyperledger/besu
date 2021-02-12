@@ -73,11 +73,8 @@ public class RetestethContext {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final PoWHasher NO_WORK_HASHER =
-      (final byte[] buffer,
-          final long nonce,
-          final long number,
-          EpochCalculator epochCalc,
-          final byte[] headerHash) -> {};
+      (final long nonce, final long number, EpochCalculator epochCalc, final byte[] headerHash) ->
+          null;
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;

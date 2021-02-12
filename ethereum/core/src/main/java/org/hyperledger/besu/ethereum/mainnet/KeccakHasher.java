@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.Hash;
+
 import java.security.MessageDigest;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 
 /** Hasher for Keccak-256 PoW. */
@@ -30,19 +33,19 @@ public class KeccakHasher implements PoWHasher {
       ThreadLocal.withInitial(Keccak.Digest256::new);
 
   @Override
-  public void hash(
-      final byte[] buffer,
+  public PoWSolution hash(
       final long nonce,
       final long number,
       final EpochCalculator epochCalc,
-      final byte[] headerHash) {
-    Bytes input = Bytes.wrap(Bytes.wrap(headerHash), Bytes.ofUnsignedLong(nonce));
+      final byte[] prePowHash) {
+    Bytes input = Bytes.wrap(Bytes.wrap(prePowHash), Bytes.ofUnsignedLong(nonce));
 
     MessageDigest digest = KECCAK_256.get();
     digest.update(input.toArrayUnsafe());
     byte[] result = digest.digest();
+    Bytes32 resultBytes = Bytes32.wrap(result);
 
-    System.arraycopy(result, 0, buffer, 0, 32);
-    System.arraycopy(result, 0, buffer, 32, 32);
+    PoWSolution solution = new PoWSolution(nonce, Hash.wrap(resultBytes), resultBytes, prePowHash);
+    return solution;
   }
 }

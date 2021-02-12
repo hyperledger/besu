@@ -99,6 +99,7 @@ public class EthSubmitWorkTest {
             -6506032554016940193L,
             Hash.fromHexString(
                 "0xc5e3c33c86d64d0641dd3c86e8ce4628fe0aac0ef7b4c087c5fcaa45d5046d90"),
+            null,
             firstInputs.getPrePowHash());
     final JsonRpcRequestContext request =
         requestWithParams(

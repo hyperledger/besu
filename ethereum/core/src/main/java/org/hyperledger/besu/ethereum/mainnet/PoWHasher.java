@@ -22,13 +22,13 @@ public interface PoWHasher {
   /**
    * Hash of a particular block and nonce.
    *
-   * @param buffer At least 64 bytes long buffer to store EthHash result in
    * @param nonce Block Nonce
    * @param number Block Number
    * @param epochCalc EpochCalculator for calculating epoch
-   * @param headerHash Block Header (without mix digest and nonce) Hash
+   * @param prePowHash Block Header (without mix digest and nonce) Hash
+   * @return the PoW solution computed by the hashing function
    */
-  void hash(byte[] buffer, long nonce, long number, EpochCalculator epochCalc, byte[] headerHash);
+  PoWSolution hash(long nonce, long number, EpochCalculator epochCalc, byte[] prePowHash);
 
   /** Implementation of Ethash Hashimoto Light Implementation. */
   final class EthashLight implements PoWHasher {
@@ -38,17 +38,16 @@ public interface PoWHasher {
     private EthashLight() {}
 
     @Override
-    public void hash(
-        final byte[] buffer,
+    public PoWSolution hash(
         final long nonce,
         final long number,
         final EpochCalculator epochCalc,
-        final byte[] headerHash) {
+        final byte[] prePowHash) {
       final EthHashCacheFactory.EthHashDescriptor cache =
           cacheFactory.ethHashCacheFor(number, epochCalc);
-      final byte[] hash =
-          EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
-      System.arraycopy(hash, 0, buffer, 0, hash.length);
+      final PoWSolution solution =
+          EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), prePowHash, nonce);
+      return solution;
     }
   }
 
@@ -58,12 +57,11 @@ public interface PoWHasher {
     private Unsupported() {}
 
     @Override
-    public void hash(
-        final byte[] buffer,
+    public PoWSolution hash(
         final long nonce,
         final long number,
         final EpochCalculator epochCalc,
-        final byte[] headerHash) {
+        final byte[] prePowHash) {
       throw new UnsupportedOperationException("Hashing is unsupported");
     }
   }

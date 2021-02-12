@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Arrays;
@@ -28,8 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class PoWSolver {
@@ -114,14 +111,13 @@ public class PoWSolver {
     final Stopwatch operationTimer = Stopwatch.createStarted();
     final PoWSolverJob job = currentJob.get();
     long hashesExecuted = 0;
-    final byte[] hashBuffer = new byte[64];
     for (final Long n : nonceGenerator) {
 
       if (job.isDone()) {
         return;
       }
 
-      final Optional<PoWSolution> solution = testNonce(job.getInputs(), n, hashBuffer);
+      final Optional<PoWSolution> solution = testNonce(job.getInputs(), n);
       solution.ifPresent(job::solvedWith);
 
       hashesExecuted++;
@@ -131,15 +127,12 @@ public class PoWSolver {
     job.failed(new IllegalStateException("No valid nonce found."));
   }
 
-  private Optional<PoWSolution> testNonce(
-      final PoWSolverInputs inputs, final long nonce, final byte[] hashBuffer) {
-    poWHasher.hash(
-        hashBuffer, nonce, inputs.getBlockNumber(), epochCalculator, inputs.getPrePowHash());
-    final UInt256 x = UInt256.fromBytes(Bytes32.wrap(hashBuffer, 32));
+  private Optional<PoWSolution> testNonce(final PoWSolverInputs inputs, final long nonce) {
+    PoWSolution solution =
+        poWHasher.hash(nonce, inputs.getBlockNumber(), epochCalculator, inputs.getPrePowHash());
+    final UInt256 x = UInt256.fromBytes(solution.getSolution());
     if (x.compareTo(inputs.getTarget()) <= 0) {
-      final Hash mixedHash =
-          Hash.wrap(Bytes32.leftPad(Bytes.wrap(hashBuffer).slice(0, Bytes32.SIZE)));
-      return Optional.of(new PoWSolution(nonce, mixedHash, inputs.getPrePowHash()));
+      return Optional.of(solution);
     }
     return Optional.empty();
   }
@@ -172,9 +165,7 @@ public class PoWSolver {
       LOG.debug("Miner's solution does not match current job");
       return false;
     }
-    final byte[] hashBuffer = new byte[64];
-    final Optional<PoWSolution> calculatedSolution =
-        testNonce(inputs, solution.getNonce(), hashBuffer);
+    final Optional<PoWSolution> calculatedSolution = testNonce(inputs, solution.getNonce());
 
     if (calculatedSolution.isPresent()) {
       LOG.debug("Accepting a solution from a miner");

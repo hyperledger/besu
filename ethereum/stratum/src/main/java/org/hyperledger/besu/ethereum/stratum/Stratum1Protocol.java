@@ -184,6 +184,7 @@ public class Stratum1Protocol implements StratumProtocol {
         new PoWSolution(
             Bytes.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0),
             Hash.fromHexString(message.getRequiredParameter(4, String.class)),
+            null,
             Bytes.fromHexString(message.getRequiredParameter(3, String.class)).toArrayUnsafe());
     if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
       result = submitCallback.apply(solution);

@@ -132,6 +132,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
         new PoWSolution(
             Bytes.fromHexString(req.getRequiredParameter(0, String.class)).getLong(0),
             req.getRequiredParameter(2, Hash.class),
+            null,
             Bytes.fromHexString(req.getRequiredParameter(1, String.class)).toArrayUnsafe());
     if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
       result = submitCallback.apply(solution);

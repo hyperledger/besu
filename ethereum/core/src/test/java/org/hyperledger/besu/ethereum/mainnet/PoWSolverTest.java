@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
@@ -59,13 +61,18 @@ public class PoWSolverTest {
     doAnswer(
             invocation -> {
               final Object[] args = invocation.getArguments();
-              final byte[] headerHash = ((byte[]) args[0]);
-              final long nonce = ((long) args[1]);
-              headerHash[32] = (byte) (nonce & 0xFF);
-              return null;
+              final long nonce = ((long) args[0]);
+              final byte[] prePow = ((byte[]) args[3]);
+              PoWSolution solution =
+                  new PoWSolution(
+                      nonce,
+                      Hash.wrap(Bytes32.leftPad(Bytes.EMPTY)),
+                      Bytes32.rightPad(Bytes.of((byte) (nonce & 0xFF))),
+                      prePow);
+              return solution;
             })
         .when(hasher)
-        .hash(any(), anyLong(), anyLong(), any(), any());
+        .hash(anyLong(), anyLong(), any(), any());
 
     final PoWSolver solver =
         new PoWSolver(
@@ -108,6 +115,7 @@ public class PoWSolverTest {
             -6506032554016940193L,
             Hash.fromHexString(
                 "0xc5e3c33c86d64d0641dd3c86e8ce4628fe0aac0ef7b4c087c5fcaa45d5046d90"),
+            null,
             firstInputs.getPrePowHash());
 
     final PoWSolverInputs secondInputs =
@@ -125,6 +133,7 @@ public class PoWSolverTest {
             8855952212886464488L,
             Hash.fromHexString(
                 "0x2adb0f375dd2d528689cb9e00473c3c9692737109d547130feafbefb2c6c5244"),
+            null,
             firstInputs.getPrePowHash());
 
     // Nonces need to have a 0L inserted, as it is a "wasted" nonce in the solver.
