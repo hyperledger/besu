@@ -38,14 +38,13 @@ public class KeccakHasher implements PoWHasher {
       final long number,
       final EpochCalculator epochCalc,
       final byte[] prePowHash) {
-    Bytes input = Bytes.wrap(Bytes.wrap(prePowHash), Bytes.ofUnsignedLong(nonce));
 
     MessageDigest digest = KECCAK_256.get();
-    digest.update(input.toArrayUnsafe());
-    byte[] result = digest.digest();
-    Bytes32 resultBytes = Bytes32.wrap(result);
+    digest.update(prePowHash);
+    digest.update(Bytes.ofUnsignedLong(nonce).toArrayUnsafe());
+    Bytes32 solution = Bytes32.wrap(digest.digest());
+    Hash mixHash = Hash.wrap(solution);
 
-    PoWSolution solution = new PoWSolution(nonce, Hash.wrap(resultBytes), resultBytes, prePowHash);
-    return solution;
+    return new PoWSolution(nonce, mixHash, solution, prePowHash);
   }
 }
