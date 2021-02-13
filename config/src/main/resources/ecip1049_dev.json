@@ -1,16 +1,6 @@
 {
   "config": {
     "chainId": 2021,
-    "homesteadBlock": 0,
-    "classicForkBlock": 0,
-    "ecip1015Block": 0,
-    "diehardBlock": 0,
-    "gothamBlock": 0,
-    "ecip1041Block": 0,
-    "atlantisBlock": 0,
-    "aghartaBlock": 0,
-    "phoenixBlock": 0,
-    "thanosBlock": 0,
     "ecip1049Block": 0,
     "keccak256": {
       "fixeddifficulty": 100
