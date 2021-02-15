@@ -54,6 +54,9 @@ public class AdminPeersTest {
 
   private AdminPeers adminPeers;
 
+  private final String VALID_NODE_ID =
+      "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
+
   @Mock private P2PNetwork p2pNetwork;
   @Mock private EthPeers ethPeers;
 
@@ -107,7 +110,8 @@ public class AdminPeersTest {
   }
 
   private Collection<EthPeer> peerList() {
-    final PeerInfo peerInfo = new PeerInfo(5, "0x0", Collections.emptyList(), 30303, Bytes.EMPTY);
+    final PeerInfo peerInfo =
+        new PeerInfo(5, "0x0", Collections.emptyList(), 30303, Bytes.fromHexString(VALID_NODE_ID));
     final PeerConnection p =
         MockPeerConnection.create(
             peerInfo,
