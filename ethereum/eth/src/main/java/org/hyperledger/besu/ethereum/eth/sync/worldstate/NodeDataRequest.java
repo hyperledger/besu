@@ -90,7 +90,7 @@ public abstract class NodeDataRequest {
           break;
         case CODE:
           accountHash =
-              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.hash(in.readBytes()) : null);
+              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.wrap(in.readBytes32()) : null);
           deserialized = createCodeRequest(hash, accountHash);
           break;
         default:
