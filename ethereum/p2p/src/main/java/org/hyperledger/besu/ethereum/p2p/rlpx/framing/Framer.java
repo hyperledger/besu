@@ -115,6 +115,14 @@ public class Framer {
     this.compressionEnabled = false;
   }
 
+  boolean isCompressionEnabled() {
+    return compressionEnabled;
+  }
+
+  boolean isCompressionSuccessful() {
+    return compressionSuccessful;
+  }
+
   /**
    * Deframes a full message from the byte buffer, if possible.
    *
@@ -270,14 +278,13 @@ public class Framer {
     // Write message data to ByteBuf, decompressing as necessary
     final Bytes data;
     if (compressionEnabled) {
+      final byte[] compressedMessageData = Arrays.copyOfRange(frameData, 1, frameData.length - pad);
+      final int uncompressedLength = compressor.uncompressedLength(compressedMessageData);
+      if (uncompressedLength >= LENGTH_MAX_MESSAGE_FRAME) {
+        throw error("Message size %s in excess of maximum length.", uncompressedLength);
+      }
       Bytes _data;
       try {
-        final byte[] compressedMessageData =
-            Arrays.copyOfRange(frameData, 1, frameData.length - pad);
-        final int uncompressedLength = compressor.uncompressedLength(compressedMessageData);
-        if (uncompressedLength >= LENGTH_MAX_MESSAGE_FRAME) {
-          throw error("Message size %s in excess of maximum length.", uncompressedLength);
-        }
         final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
         _data = Bytes.wrap(decompressedMessageData);
         compressionSuccessful = true;
