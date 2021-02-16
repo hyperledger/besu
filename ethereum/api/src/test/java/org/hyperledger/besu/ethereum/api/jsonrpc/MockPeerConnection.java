@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 
@@ -35,6 +36,14 @@ public class MockPeerConnection {
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     when(peerConnection.getLocalAddress()).thenReturn(localAddress);
     when(peerConnection.getRemoteAddress()).thenReturn(remoteAddress);
+    when(peerConnection.getRemoteEnode())
+        .thenReturn(
+            EnodeURL.builder()
+                .nodeId(peerInfo.getNodeId())
+                .ipAddress(remoteAddress.getAddress().getHostAddress())
+                .disableDiscovery()
+                .listeningPort(peerInfo.getPort())
+                .build());
 
     return peerConnection;
   }
