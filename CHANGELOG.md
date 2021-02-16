@@ -5,6 +5,7 @@
 ### Additions and Improvements
 * Added `besu_transaction_pool_transactions` to the reported metrics, counting the mempool size [\#1869](https://github.com/hyperledger/besu/pull/1869)
 * Distributions and maven artifacts have been moved off of bintray [\#1886](https://github.com/hyperledger/besu/pull/1886)
+* admin_peers json RPC response now includes the remote nodes enode URL
 
 ### Bug Fixes
 
