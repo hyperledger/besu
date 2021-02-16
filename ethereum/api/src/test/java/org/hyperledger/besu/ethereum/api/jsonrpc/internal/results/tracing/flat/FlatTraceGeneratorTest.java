@@ -14,19 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -42,15 +44,20 @@ public class FlatTraceGeneratorTest {
   public void testGenerateFromTransactionTraceWithRevertReason() {
     final Bytes revertReason = Bytes.random(32);
     Mockito.when(transaction.getSender()).thenReturn(Address.ZERO);
-    Mockito.when(transactionProcessingResult.getRevertReason()).thenReturn(Optional.of(revertReason));
+    Mockito.when(transactionProcessingResult.getRevertReason())
+        .thenReturn(Optional.of(revertReason));
 
-    final TransactionTrace transactionTrace = new TransactionTrace(transaction, transactionProcessingResult, Collections.emptyList());
-    final Stream<Trace> traceStream = FlatTraceGenerator.generateFromTransactionTrace(null, transactionTrace, null, new AtomicInteger());
+    final TransactionTrace transactionTrace =
+        new TransactionTrace(transaction, transactionProcessingResult, Collections.emptyList());
+    final Stream<Trace> traceStream =
+        FlatTraceGenerator.generateFromTransactionTrace(
+            null, transactionTrace, null, new AtomicInteger());
     final List<Trace> traces = traceStream.collect(Collectors.toList());
 
     Assertions.assertThat(traces.isEmpty()).isFalse();
     Assertions.assertThat(traces.get(0)).isNotNull();
     Assertions.assertThat(traces.get(0) instanceof FlatTrace).isTrue();
-    Assertions.assertThat(((FlatTrace) traces.get(0)).getResult().get().getOutput()).isEqualTo(revertReason.toHexString());
+    Assertions.assertThat(((FlatTrace) traces.get(0)).getResult().get().getOutput())
+        .isEqualTo(revertReason.toHexString());
   }
 }
