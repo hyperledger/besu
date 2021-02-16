@@ -29,8 +29,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.HelloMessage;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
 
 import java.io.IOException;
 import java.util.List;
