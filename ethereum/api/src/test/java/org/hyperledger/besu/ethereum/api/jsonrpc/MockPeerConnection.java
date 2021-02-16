@@ -40,7 +40,7 @@ public class MockPeerConnection {
         .thenReturn(
             EnodeURL.builder()
                 .nodeId(peerInfo.getNodeId())
-                .ipAddress(remoteAddress.getHostString())
+                .ipAddress(remoteAddress.getAddress().getHostAddress())
                 .disableDiscovery()
                 .listeningPort(peerInfo.getPort())
                 .build());
