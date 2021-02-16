@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.MockPeerConnection;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -56,8 +58,7 @@ public class AdminPeersTest {
 
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
-
-  @Mock private P2PNetwork p2pNetwork;
+  
   @Mock private EthPeers ethPeers;
 
   @Before
@@ -115,8 +116,8 @@ public class AdminPeersTest {
     final PeerConnection p =
         MockPeerConnection.create(
             peerInfo,
-            InetSocketAddress.createUnresolved("1.2.3.4", 9876),
-            InetSocketAddress.createUnresolved("4.3.2.1", 6789));
+            new InetSocketAddress("1.2.3.4", 9876),
+            new InetSocketAddress("4.3.2.1", 6789));
     final EthPeer ethPeer = new EthPeer(p, "eth", c -> {}, List.of(), TestClock.fixed());
     return Lists.newArrayList(ethPeer);
   }
