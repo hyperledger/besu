@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import java.net.InetSocketAddress;
 
 public class MockPeerConnection {
-
   PeerInfo peerInfo;
   InetSocketAddress localAddress;
   InetSocketAddress remoteAddress;
