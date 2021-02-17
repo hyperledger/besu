@@ -119,6 +119,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -170,6 +171,7 @@ public class RunnerBuilder {
   private boolean autoLogBloomCaching = true;
   private boolean randomPeerPriority;
   private StorageProvider storageProvider;
+  private Supplier<List<Bytes>> forkIdSupplier;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -341,6 +343,11 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
+    this.forkIdSupplier = forkIdSupplier;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
@@ -414,9 +421,9 @@ public class RunnerBuilder {
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
-    final NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
+    final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
-        (caps) ->
+        caps ->
             DefaultP2PNetwork.builder()
                 .vertx(vertx)
                 .nodeKey(nodeKey)
@@ -427,6 +434,7 @@ public class RunnerBuilder {
                 .natService(natService)
                 .randomPeerPriority(randomPeerPriority)
                 .storageProvider(storageProvider)
+                .forkIdSupplier(forkIdSupplier)
                 .build();
 
     final NetworkRunner networkRunner =

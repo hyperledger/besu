@@ -148,7 +148,7 @@ dependencyManagement {
 
     dependency 'org.yaml:snakeyaml:1.26'
 
-    dependency 'tech.pegasys.discovery:discovery:0.4.1'
+    dependency 'tech.pegasys.discovery:discovery:0.4.2'
 
     dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
