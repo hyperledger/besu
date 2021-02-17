@@ -170,6 +170,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
               .getOrCreate(effectiveTransaction.getSender())
               .getMutable()
               .incrementNonce();
+          effectiveWorldUpdater.commit();
         } else { // public transaction
           final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
           currentGasUsed += gasUsed;
@@ -178,6 +179,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
               transactionReceiptFactory.create(
                   transaction.getType(), result, publicWorldState, currentGasUsed));
           privateTxReceipts.add(null);
+          effectiveWorldUpdater.commit();
         }
       } else { // private transaction we are not party to
         publicTxReceipts.add(
@@ -190,7 +192,6 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         publicWorldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
       }
 
-      effectiveWorldUpdater.commit();
       publicWorldStateUpdater.commit();
     }
 
