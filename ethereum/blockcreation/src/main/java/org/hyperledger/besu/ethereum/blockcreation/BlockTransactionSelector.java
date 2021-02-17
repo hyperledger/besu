@@ -103,6 +103,7 @@ public class BlockTransactionSelector {
       return eip1559CumulativeGasUsed;
     }
 
+    // TODO gas used zero for goQuorum private tx
     public long getTotalCumulativeGasUsed() {
       return frontierCumulativeGasUsed + eip1559CumulativeGasUsed;
     }
@@ -247,7 +248,11 @@ public class BlockTransactionSelector {
    */
   private void updateTransactionResultTracking(
       final Transaction transaction, final TransactionProcessingResult result) {
-    final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
+    final long gasUsedByTransaction =
+        transaction.isGoQuorumPrivateTransaction()
+            ? 0
+            : transaction.getGasLimit() - result.getGasRemaining();
+
     final long cumulativeGasUsed;
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       cumulativeGasUsed =
