@@ -24,9 +24,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,21 +48,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final BonsaiPersistedWorldState persistedState;
   private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStates;
-  private final KeyValueStorage trieLogStorage;
+  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
     this.blockchain = blockchain;
-    trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    persistedState =
-        new BonsaiPersistedWorldState(
-            this,
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
-            provider.getStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
-            trieLogStorage);
+
+    worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
+    persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     layeredWorldStates = new HashMap<>();
   }
 
@@ -87,7 +77,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     if (layeredWorldStates.containsKey(blockHash)) {
       return Optional.of(layeredWorldStates.get(blockHash).getTrieLog());
     } else {
-      return trieLogStorage.get(blockHash.toArrayUnsafe()).map(TrieLogLayer::fromBytes);
+      return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
   }
 
@@ -95,7 +85,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return layeredWorldStates.containsKey(blockHash)
         || persistedState.blockHash().equals(blockHash)
-        || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+        || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override
@@ -162,6 +152,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   @Override
   public MutableWorldState getMutable() {
     return persistedState;
+  }
+
+  @Override
+  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
+    persistedState.setArchiveStateUnSafe(blockHeader);
   }
 
   @Override

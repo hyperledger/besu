@@ -96,7 +96,10 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, rootHash, b -> b, b -> b);
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
+        rootHash,
+        b -> b,
+        b -> b);
   }
 
   @Override
@@ -179,11 +182,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
     final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {
-      stateUpdater.putCode(code);
+      stateUpdater.putCode(null, code);
     }
     // Commit account storage tries
     for (final MerklePatriciaTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
-      updatedStorage.commit(stateUpdater::putAccountStorageTrieNode);
+      updatedStorage.commit(
+          (location, hash, value) ->
+              stateUpdater.putAccountStorageTrieNode(null, location, hash, value));
     }
     // Commit account updates
     accountStateTrie.commit(stateUpdater::putAccountStateTrieNode);
@@ -285,7 +290,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       if (codeHash.equals(Hash.EMPTY)) {
         return Bytes.EMPTY;
       }
-      return worldStateStorage.getCode(codeHash).orElse(Bytes.EMPTY);
+      return worldStateStorage.getCode(codeHash, null).orElse(Bytes.EMPTY);
     }
 
     @Override
