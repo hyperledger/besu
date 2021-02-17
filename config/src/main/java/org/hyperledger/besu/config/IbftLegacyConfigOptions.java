@@ -62,6 +62,10 @@ public class IbftLegacyConfigOptions {
     if (ibftConfigRoot.has("requesttimeoutseconds")) {
       builder.put("requestTimeoutSeconds", getRequestTimeoutSeconds());
     }
+    if(ibftConfigRoot.has("ceil2nby3block")) {
+      builder.put("ceil2nby3block", getCeil2Nby3Block());
+    }
+
     return builder.build();
   }
 }
