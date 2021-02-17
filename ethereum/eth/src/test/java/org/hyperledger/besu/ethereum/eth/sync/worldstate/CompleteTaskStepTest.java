@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -48,7 +49,8 @@ public class CompleteTaskStepTest {
 
   @Test
   public void shouldMarkTaskAsFailedIfItDoesNotHaveData() {
-    final StubTask task = new StubTask(NodeDataRequest.createAccountDataRequest(ROOT_HASH));
+    final StubTask task =
+        new StubTask(NodeDataRequest.createAccountDataRequest(ROOT_HASH, Optional.empty()));
 
     completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, task);
 
@@ -70,7 +72,8 @@ public class CompleteTaskStepTest {
     verify(downloadState).enqueueRequests(streamCaptor.capture());
     assertThat(streamCaptor.getValue())
         .usingRecursiveFieldByFieldElementComparator()
-        .containsExactlyInAnyOrderElementsOf(() -> task.getData().getChildRequests().iterator());
+        .containsExactlyInAnyOrderElementsOf(
+            () -> task.getData().getChildRequests(worldStateStorage).iterator());
 
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
   }
@@ -88,7 +91,8 @@ public class CompleteTaskStepTest {
     final Bytes data =
         Bytes.fromHexString(
             "0xf85180808080a05ac6993e3fbca0bfbd30173396dd5c2412657fae0bad92e401d17b2aa9a3698f80808080a012f96a0812be538c302416dc6e8df19ce18f1cc7b06a3c7a16831d766c87a9b580808080808080");
-    final StubTask task = new StubTask(NodeDataRequest.createAccountDataRequest(hash));
+    final StubTask task =
+        new StubTask(NodeDataRequest.createAccountDataRequest(hash, Optional.empty()));
     task.getData().setData(data);
     return task;
   }

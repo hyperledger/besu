@@ -67,7 +67,8 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenWorldStateAvailable() {
-    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
+    final Hash addressHash = Hash.hash(address);
+    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(addressHash);
     final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
 
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
@@ -77,10 +78,11 @@ public class WorldStateProofProviderTest {
     writeStorageValue(storageTrie, UInt256.valueOf(2L), UInt256.valueOf(4L));
     writeStorageValue(storageTrie, UInt256.valueOf(3L), UInt256.valueOf(6L));
     // Save to Storage
-    storageTrie.commit(updater::putAccountStorageTrieNode);
+    storageTrie.commit(
+        (location, hash, value) ->
+            updater.putAccountStorageTrieNode(addressHash, location, hash, value));
 
     // Define account value
-    final Hash addressHash = Hash.hash(address);
     final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
     final StateTrieAccountValue accountValue =
         new StateTrieAccountValue(
@@ -120,7 +122,7 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenStateTrieAccountUnavailable() {
-    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
+    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(null);
 
     final Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(
@@ -149,8 +151,11 @@ public class WorldStateProofProviderTest {
         worldStateStorage::getAccountStateTrieNode, b -> b, b -> b);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> emptyWorldStateTrie() {
+  private MerklePatriciaTrie<Bytes32, Bytes> emptyWorldStateTrie(final Hash accountHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, b -> b, b -> b);
+        (location, hash) ->
+            worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+        b -> b,
+        b -> b);
   }
 }

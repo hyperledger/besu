@@ -58,11 +58,8 @@ public class RollingImport {
     final BonsaiPersistedWorldState bonsaiState =
         new BonsaiPersistedWorldState(
             archive,
-            accountStorage,
-            codeStorage,
-            storageStorage,
-            trieBranchStorage,
-            trieLogStorage);
+            new BonsaiWorldStateKeyValueStorage(
+                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
 
     int count = 0;
     while (!reader.isDone()) {

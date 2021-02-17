@@ -30,6 +30,10 @@ public interface Node<V> {
 
   Bytes getPath();
 
+  default Optional<Bytes> getLocation() {
+    return Optional.empty();
+  }
+
   Optional<V> getValue();
 
   List<Node<V>> getChildren();

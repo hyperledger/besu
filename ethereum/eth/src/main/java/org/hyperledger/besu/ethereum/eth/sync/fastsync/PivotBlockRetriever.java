@@ -53,6 +53,7 @@ public class PivotBlockRetriever {
   private final int maxPivotBlockResets;
   // How far to push back the pivot block when we retry on pivot disagreement
   private final long pivotBlockNumberResetDelta;
+
   // The current pivot block number, gets pushed back if peers disagree on the pivot block
   AtomicLong pivotBlockNumber;
 
@@ -72,7 +73,6 @@ public class PivotBlockRetriever {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-
     this.pivotBlockNumber = new AtomicLong(pivotBlockNumber);
     this.peersToQuery = peersToQuery;
     this.pivotBlockNumberResetDelta = pivotBlockNumberResetDelta;

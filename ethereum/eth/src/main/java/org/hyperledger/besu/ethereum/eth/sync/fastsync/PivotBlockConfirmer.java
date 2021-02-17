@@ -79,7 +79,6 @@ class PivotBlockConfirmer {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-
     this.pivotBlockNumber = pivotBlockNumber;
     this.numberOfPeersToQuery = numberOfPeersToQuery;
     this.numberOfRetriesPerPeer = numberOfRetriesPerPeer;
