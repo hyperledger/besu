@@ -38,6 +38,7 @@ class BranchNode<V> implements Node<V> {
   @SuppressWarnings("rawtypes")
   private static final Node NULL_NODE = NullNode.instance();
 
+  private final Optional<Bytes> location;
   private final ArrayList<Node<V>> children;
   private final Optional<V> value;
   private final NodeFactory<V> nodeFactory;
@@ -47,11 +48,26 @@ class BranchNode<V> implements Node<V> {
   private boolean dirty = false;
 
   BranchNode(
+      final Bytes location,
       final ArrayList<Node<V>> children,
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
     assert (children.size() == RADIX);
+    this.location = Optional.ofNullable(location);
+    this.children = children;
+    this.value = value;
+    this.nodeFactory = nodeFactory;
+    this.valueSerializer = valueSerializer;
+  }
+
+  BranchNode(
+      final ArrayList<Node<V>> children,
+      final Optional<V> value,
+      final NodeFactory<V> nodeFactory,
+      final Function<V, Bytes> valueSerializer) {
+    assert (children.size() == RADIX);
+    this.location = Optional.empty();
     this.children = children;
     this.value = value;
     this.nodeFactory = nodeFactory;
@@ -71,6 +87,11 @@ class BranchNode<V> implements Node<V> {
   @Override
   public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
     visitor.visit(location, this);
+  }
+
+  @Override
+  public Optional<Bytes> getLocation() {
+    return location;
   }
 
   @Override

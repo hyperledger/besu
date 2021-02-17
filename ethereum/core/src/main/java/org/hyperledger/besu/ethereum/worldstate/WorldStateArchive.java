@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -37,6 +38,8 @@ public interface WorldStateArchive {
   Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);
 
   MutableWorldState getMutable();
+
+  void setArchiveStateUnSafe(BlockHeader blockHeader);
 
   Optional<Bytes> getNodeData(Hash hash);
 
