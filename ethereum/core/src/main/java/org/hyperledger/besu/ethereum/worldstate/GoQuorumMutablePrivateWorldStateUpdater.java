@@ -32,6 +32,6 @@ public class GoQuorumMutablePrivateWorldStateUpdater
 
   @Override
   public EvmAccount getOrCreateSenderAccount(final Address address) {
-    return new UpdateTrackingAccount(publicWorldUpdater.getOrCreate(address));
+    return new UpdateTrackingAccount<EvmAccount>(publicWorldUpdater.getOrCreate(address));
   }
 }
