@@ -83,7 +83,7 @@ public class FlatTraceGenerator {
 
     // set code field in result node
     smartContractCode.ifPresent(firstFlatTraceBuilder.getResultBuilder()::code);
-    revertReason.ifPresent(r -> firstFlatTraceBuilder.getResultBuilder().output(r.toHexString()));
+    revertReason.ifPresent(r -> firstFlatTraceBuilder.revertReason(r.toHexString()));
 
     // set init field if transaction is a smart contract deployment
     tx.getInit().map(Bytes::toHexString).ifPresent(firstFlatTraceBuilder.getActionBuilder()::init);

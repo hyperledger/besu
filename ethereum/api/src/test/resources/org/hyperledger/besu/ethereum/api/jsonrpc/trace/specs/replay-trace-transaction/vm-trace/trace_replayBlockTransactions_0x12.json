@@ -134,7 +134,8 @@
         }
       },
       {
-        "output": "0x7d88c1856cc95352",
+        "output": "0x",
+        "revertReason": "0x7d88c1856cc95352",
         "stateDiff": null,
         "trace": [],
         "transactionHash": "0xc388baa0e55e6b73e850b22dc7e9853700f6b995fd55d95dd6ccd5a13d63c566",

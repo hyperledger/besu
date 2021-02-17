@@ -57,7 +57,7 @@ public class FlatTraceGeneratorTest {
     Assertions.assertThat(traces.isEmpty()).isFalse();
     Assertions.assertThat(traces.get(0)).isNotNull();
     Assertions.assertThat(traces.get(0) instanceof FlatTrace).isTrue();
-    Assertions.assertThat(((FlatTrace) traces.get(0)).getResult().get().getOutput())
+    Assertions.assertThat(((FlatTrace) traces.get(0)).getRevertReason())
         .isEqualTo(revertReason.toHexString());
   }
 }
