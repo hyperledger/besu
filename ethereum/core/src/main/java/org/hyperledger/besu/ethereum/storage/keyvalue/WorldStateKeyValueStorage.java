@@ -44,7 +44,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getCode(final Bytes32 codeHash) {
+  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -53,12 +53,18 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public Optional<Bytes> getAccountTrieNodeData(final Bytes location, final Bytes32 hash) {
+    return getAccountStateTrieNode(null, hash);
+  }
+
+  @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
   @Override
-  public Optional<Bytes> getAccountStorageTrieNode(final Bytes location, final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStorageTrieNode(
+      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
@@ -82,7 +88,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public boolean isWorldStateAvailable(final Bytes32 rootHash) {
+  public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return getAccountStateTrieNode(Bytes.EMPTY, rootHash).isPresent();
   }
 
@@ -138,13 +144,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public Updater removeAccountStateTrieNode(final Bytes32 nodeHash) {
-      transaction.remove(nodeHash.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public Updater putCode(final Bytes32 codeHash, final Bytes code) {
+    public WorldStateStorage.Updater putCode(
+        final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
       if (code.size() == 0) {
         // Don't save empty values
         return this;
@@ -153,6 +154,12 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
       addedNodes.add(codeHash);
       transaction.put(codeHash.toArrayUnsafe(), code.toArrayUnsafe());
       return this;
+    }
+
+    @Override
+    public WorldStateStorage.Updater saveWorldState(
+        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
+      return putAccountStateTrieNode(null, nodeHash, node);
     }
 
     @Override
@@ -168,8 +175,15 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
+    public WorldStateStorage.Updater removeAccountStateTrieNode(
+        final Bytes location, final Bytes32 nodeHash) {
+      transaction.remove(nodeHash.toArrayUnsafe());
+      return this;
+    }
+
+    @Override
     public Updater putAccountStorageTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;

@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.services.tasks.Task;
 
+import java.util.Optional;
+
 public class StubTask implements Task<NodeDataRequest> {
 
   private final NodeDataRequest data;
@@ -28,7 +30,7 @@ public class StubTask implements Task<NodeDataRequest> {
   }
 
   public static StubTask forHash(final Hash hash) {
-    return new StubTask(NodeDataRequest.createCodeRequest(hash));
+    return new StubTask(NodeDataRequest.createCodeRequest(hash, Optional.empty()));
   }
 
   @Override
