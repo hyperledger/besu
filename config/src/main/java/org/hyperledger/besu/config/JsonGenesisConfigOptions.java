@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableMap;
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
-  private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
+  private static final String IBFT_LEGACY_CONFIG_KEY = "istanbul";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String QBFT_CONFIG_KEY = "qbft";
   private static final String CLIQUE_CONFIG_KEY = "clique";
