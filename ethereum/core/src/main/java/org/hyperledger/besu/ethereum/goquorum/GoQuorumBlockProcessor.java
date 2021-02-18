@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -247,8 +248,12 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
   private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(
       final Transaction transaction) {
-    return TransactionProcessingResult.failed(
-        0, transaction.getGasLimit(), ValidationResult.valid(), Optional.empty());
+    return TransactionProcessingResult.successful(
+        Collections.emptyList(),
+        0,
+        transaction.getGasLimit(),
+        Bytes.EMPTY,
+        ValidationResult.valid());
   }
 
   private Transaction retrievePrivateTransactionFromEnclave(final Transaction transaction) {
