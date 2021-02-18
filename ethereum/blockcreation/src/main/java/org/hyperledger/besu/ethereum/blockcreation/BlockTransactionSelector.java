@@ -103,7 +103,6 @@ public class BlockTransactionSelector {
       return eip1559CumulativeGasUsed;
     }
 
-    // TODO gas used zero for goQuorum private tx
     public long getTotalCumulativeGasUsed() {
       return frontierCumulativeGasUsed + eip1559CumulativeGasUsed;
     }
@@ -290,7 +289,7 @@ public class BlockTransactionSelector {
         default:
           throw new IllegalStateException(
               String.format(
-                  "Developer error. Supported transaction type %s deoesn't have a block gas budget calculator",
+                  "Developer error. Supported transaction type %s doesn't have a block gas budget calculator",
                   transaction.getType()));
       }
     } else {
