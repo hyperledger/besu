@@ -184,7 +184,7 @@ public class BftConfigOptionsTest {
     final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
     final ObjectNode configNode = JsonUtil.createEmptyObjectNode();
     final ObjectNode options = JsonUtil.objectNodeFromMap(ibftConfigOptions);
-    configNode.set("ibft", options);
+    configNode.set("istanbul", options);
     rootNode.set("config", configNode);
     return GenesisConfigFile.fromConfig(rootNode).getConfigOptions().getIbftLegacyConfigOptions();
   }
