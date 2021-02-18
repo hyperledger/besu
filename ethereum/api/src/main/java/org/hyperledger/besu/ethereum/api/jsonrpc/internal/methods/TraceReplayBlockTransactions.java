@@ -136,7 +136,8 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
     final ObjectNode resultNode = mapper.createObjectNode();
 
     TransactionProcessingResult result = transactionTrace.getResult();
-    resultNode.put("output", result.getRevertReason().orElse(result.getOutput()).toString());
+    resultNode.put("output", result.getOutput().toString());
+    result.getRevertReason().ifPresent(r -> resultNode.put("revertReason", r.toHexString()));
 
     if (traceTypes.contains(TraceType.STATE_DIFF)) {
       generateTracesFromTransactionTrace(
