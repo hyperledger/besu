@@ -50,7 +50,7 @@ public class EthNetworkConfig {
   public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
   public static final BigInteger KOTTI_NETWORK_ID = BigInteger.valueOf(6);
   public static final BigInteger MORDOR_NETWORK_ID = BigInteger.valueOf(7);
-  private static final BigInteger YOLO_V3_NETWORK_ID = BigInteger.valueOf(133519467574835L);
+  private static final BigInteger YOLO_V3_NETWORK_ID = BigInteger.valueOf(34180983699157880L);
   private static final String MAINNET_GENESIS = "/mainnet.json";
   private static final String ROPSTEN_GENESIS = "/ropsten.json";
   private static final String RINKEBY_GENESIS = "/rinkeby.json";

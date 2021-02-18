@@ -251,7 +251,7 @@ public class StateBackupService {
     final StateTrieAccountValue account =
         StateTrieAccountValue.readFrom(new BytesValueRLPInput(nodeValue, false));
 
-    final Bytes code = worldStateStorage.getCode(account.getCodeHash()).orElse(Bytes.EMPTY);
+    final Bytes code = worldStateStorage.getCode(account.getCodeHash(), null).orElse(Bytes.EMPTY);
     backupStatus.codeSize.addAndGet(code.size());
 
     final BytesValueRLPOutput accountOutput = new BytesValueRLPOutput();

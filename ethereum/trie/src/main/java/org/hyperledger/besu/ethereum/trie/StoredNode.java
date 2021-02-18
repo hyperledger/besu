@@ -71,6 +71,11 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
+  public Optional<Bytes> getLocation() {
+    return Optional.ofNullable(location);
+  }
+
+  @Override
   public Optional<V> getValue() {
     return load().getValue();
   }
