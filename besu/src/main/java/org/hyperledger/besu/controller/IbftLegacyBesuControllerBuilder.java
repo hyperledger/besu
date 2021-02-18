@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -58,7 +59,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration()
-        .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager);
+        .withSubProtocol(EthProtocol.get(), ethProtocolManager);
   }
 
   @Override
