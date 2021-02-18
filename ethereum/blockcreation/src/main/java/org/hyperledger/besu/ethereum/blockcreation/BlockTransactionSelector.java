@@ -247,7 +247,11 @@ public class BlockTransactionSelector {
    */
   private void updateTransactionResultTracking(
       final Transaction transaction, final TransactionProcessingResult result) {
-    final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
+    final long gasUsedByTransaction =
+        transaction.isGoQuorumPrivateTransaction()
+            ? 0
+            : transaction.getGasLimit() - result.getGasRemaining();
+
     final long cumulativeGasUsed;
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       cumulativeGasUsed =
@@ -285,7 +289,7 @@ public class BlockTransactionSelector {
         default:
           throw new IllegalStateException(
               String.format(
-                  "Developer error. Supported transaction type %s deoesn't have a block gas budget calculator",
+                  "Developer error. Supported transaction type %s doesn't have a block gas budget calculator",
                   transaction.getType()));
       }
     } else {
