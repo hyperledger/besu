@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.PrimitiveIterator.OfLong;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -73,6 +74,13 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
         .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
         .map(spec -> spec.getSpec().getName() + ": " + spec.getBlock())
         .collect(Collectors.joining(", ", "[", "]"));
+  }
+
+  public OfLong enumerateMilestoneBlocks() {
+    return protocolSpecs.stream()
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
+        .mapToLong(ScheduledProtocolSpec::getBlock)
+        .iterator();
   }
 
   @Override
