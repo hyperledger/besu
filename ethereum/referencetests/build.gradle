@@ -38,9 +38,8 @@ dependencies {
 }
 
 task ('validateReferenceTestSubmodule') {
-  description = "Checks that the reference tests submodule is not accidentially changed"
+  description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
-    def expectedHash = 'b8abaebf5949877ead03e8f74ac03c0ede41d5f7'
     def result = new ByteArrayOutputStream()
     try {
       exec {
@@ -53,22 +52,33 @@ task ('validateReferenceTestSubmodule') {
       // The CI servers have git and that is the only critical place for this failure
       expectedHash = ''
     }
-    if (!result.toString().contains(expectedHash)) {
-      throw new GradleException("""For the Ethereum Reference Tests the git commit did not match what was expected.
-
+    def submoduleHashes = [
+      [
+        '2fe00d76d97e35aa2df6449b5f567c41cf6f58fc',
+        'ethereum/referencetests/src/test/resources'
+      ],
+      [
+        '1508126ea04cd61495b60db2f036ac823de274b1',
+        'ethereum/referencetests/src/test/resources']
+    ]
+    for (def expectedHash : submoduleHashes) {
+      if (!result.toString().contains(expectedHash[0])) {
+        throw new GradleException("""For the Ethereum Reference Tests the git commit did not match what was expected.
+  
 If this is a deliberate change where you are updating the reference tests 
 then update "expectedHash" in `ethereum/referencetests/build.gradle` as the 
 commit hash for this task.
-Expected hash   :  ${expectedHash}
+Expected hash   :  ${expectedHash[0]}
 Full git output : ${result}
 
 If this is accidental you can correct the reference test versions with the 
 following commands:
-    pushd ethereum/referencetests/src/test/resources
-    git checkout ${expectedHash}
+    pushd ${expectedHash[1]}
+    git checkout ${expectedHash[0]}
     cd ..
     git add resources
     popd""")
+      }
     }
   }
 }
