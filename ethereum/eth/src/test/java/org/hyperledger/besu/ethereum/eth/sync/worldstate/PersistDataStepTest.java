@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -36,7 +37,7 @@ import org.junit.Test;
 public class PersistDataStepTest {
 
   private final WorldStateStorage worldStateStorage =
-      new InMemoryStorageProvider().createWorldStateStorage();
+      new InMemoryStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
   private final WorldDownloadState downloadState = mock(WorldDownloadState.class);
 
   private final Bytes rootNodeData = Bytes.of(1, 1, 1, 1);
@@ -103,7 +104,8 @@ public class PersistDataStepTest {
 
   private StubTask createTaskWithoutData(final Bytes data) {
     final Hash hash = Hash.hash(data);
-    final AccountTrieNodeDataRequest request = NodeDataRequest.createAccountDataRequest(hash);
+    final AccountTrieNodeDataRequest request =
+        NodeDataRequest.createAccountDataRequest(hash, Optional.empty());
     return new StubTask(request);
   }
 

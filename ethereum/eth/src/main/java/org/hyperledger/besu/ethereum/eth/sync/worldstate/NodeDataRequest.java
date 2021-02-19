@@ -32,22 +32,34 @@ public abstract class NodeDataRequest {
   private final Hash hash;
   private Bytes data;
   private boolean requiresPersisting = true;
+  private final Optional<Bytes> location;
+
+  protected NodeDataRequest(
+      final RequestType requestType, final Hash hash, final Optional<Bytes> location) {
+    this.requestType = requestType;
+    this.hash = hash;
+    this.location = location;
+  }
 
   protected NodeDataRequest(final RequestType requestType, final Hash hash) {
     this.requestType = requestType;
     this.hash = hash;
+    this.location = Optional.empty();
   }
 
-  public static AccountTrieNodeDataRequest createAccountDataRequest(final Hash hash) {
-    return new AccountTrieNodeDataRequest(hash);
+  public static AccountTrieNodeDataRequest createAccountDataRequest(
+      final Hash hash, final Optional<Bytes> location) {
+    return new AccountTrieNodeDataRequest(hash, location);
   }
 
-  public static StorageTrieNodeDataRequest createStorageDataRequest(final Hash hash) {
-    return new StorageTrieNodeDataRequest(hash);
+  public static StorageTrieNodeDataRequest createStorageDataRequest(
+      final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
+    return new StorageTrieNodeDataRequest(hash, accountHash, location);
   }
 
-  public static CodeNodeDataRequest createCodeRequest(final Hash hash) {
-    return new CodeNodeDataRequest(hash);
+  public static CodeNodeDataRequest createCodeRequest(
+      final Hash hash, final Optional<Hash> accountHash) {
+    return new CodeNodeDataRequest(hash, accountHash);
   }
 
   public static Bytes serialize(final NodeDataRequest request) {
@@ -59,33 +71,38 @@ public abstract class NodeDataRequest {
     in.enterList();
     final RequestType requestType = RequestType.fromValue(in.readByte());
     final Hash hash = Hash.wrap(in.readBytes32());
-    in.leaveList();
 
-    final NodeDataRequest deserialized;
-    switch (requestType) {
-      case ACCOUNT_TRIE_NODE:
-        deserialized = createAccountDataRequest(hash);
-        break;
-      case STORAGE_TRIE_NODE:
-        deserialized = createStorageDataRequest(hash);
-        break;
-      case CODE:
-        deserialized = createCodeRequest(hash);
-        break;
-      default:
-        throw new IllegalArgumentException(
-            "Unable to deserialize provided data into a valid "
-                + NodeDataRequest.class.getSimpleName());
+    final Optional<Hash> accountHash;
+    final Optional<Bytes> location;
+
+    try {
+      final NodeDataRequest deserialized;
+      switch (requestType) {
+        case ACCOUNT_TRIE_NODE:
+          location = Optional.of((!in.isEndOfCurrentList()) ? in.readBytes() : Bytes.EMPTY);
+          deserialized = createAccountDataRequest(hash, location);
+          break;
+        case STORAGE_TRIE_NODE:
+          accountHash =
+              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.wrap(in.readBytes32()) : null);
+          location = Optional.ofNullable((!in.isEndOfCurrentList()) ? in.readBytes() : Bytes.EMPTY);
+          deserialized = createStorageDataRequest(hash, accountHash, location);
+          break;
+        case CODE:
+          accountHash =
+              Optional.ofNullable((!in.isEndOfCurrentList()) ? Hash.wrap(in.readBytes32()) : null);
+          deserialized = createCodeRequest(hash, accountHash);
+          break;
+        default:
+          throw new IllegalArgumentException(
+              "Unable to deserialize provided data into a valid "
+                  + NodeDataRequest.class.getSimpleName());
+      }
+
+      return deserialized;
+    } finally {
+      in.leaveList();
     }
-
-    return deserialized;
-  }
-
-  private void writeTo(final RLPOutput out) {
-    out.startList();
-    out.writeByte(requestType.getValue());
-    out.writeBytes(hash);
-    out.endList();
   }
 
   public RequestType getRequestType() {
@@ -105,6 +122,10 @@ public abstract class NodeDataRequest {
     return this;
   }
 
+  public Optional<Bytes> getLocation() {
+    return location;
+  }
+
   public NodeDataRequest setRequiresPersisting(final boolean requiresPersisting) {
     this.requiresPersisting = requiresPersisting;
     return this;
@@ -117,9 +138,11 @@ public abstract class NodeDataRequest {
     }
   }
 
+  protected abstract void writeTo(final RLPOutput out);
+
   protected abstract void doPersist(final WorldStateStorage.Updater updater);
 
-  public abstract Stream<NodeDataRequest> getChildRequests();
+  public abstract Stream<NodeDataRequest> getChildRequests(WorldStateStorage worldStateStorage);
 
   public abstract Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage);
 }

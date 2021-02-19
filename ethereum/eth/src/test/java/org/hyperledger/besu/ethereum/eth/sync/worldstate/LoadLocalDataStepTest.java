@@ -39,7 +39,8 @@ public class LoadLocalDataStepTest {
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
   private final WorldStateStorage.Updater updater = mock(WorldStateStorage.Updater.class);
 
-  private final CodeNodeDataRequest request = NodeDataRequest.createCodeRequest(HASH);
+  private final CodeNodeDataRequest request =
+      NodeDataRequest.createCodeRequest(HASH, Optional.empty());
   private final Task<NodeDataRequest> task = new StubTask(request);
 
   private final Pipe<Task<NodeDataRequest>> completedTasks =
@@ -58,7 +59,7 @@ public class LoadLocalDataStepTest {
 
   @Test
   public void shouldReturnEmptyStreamAndSendTaskToCompletedPipeWhenDataIsPresent() {
-    when(worldStateStorage.getCode(HASH)).thenReturn(Optional.of(DATA));
+    when(worldStateStorage.getCode(HASH, Hash.EMPTY)).thenReturn(Optional.of(DATA));
 
     final Stream<Task<NodeDataRequest>> output =
         loadLocalDataStep.loadLocalData(task, completedTasks);
