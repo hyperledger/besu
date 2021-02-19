@@ -3,6 +3,7 @@
     "chainId":5,
     "petersburgBlock":0,
     "istanbulBlock":1561651,
+    "berlinBlock":4460644,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000
