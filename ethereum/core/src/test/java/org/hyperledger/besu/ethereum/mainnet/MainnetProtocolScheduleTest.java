@@ -44,8 +44,8 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(7_280_000L).getName()).isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockNumber(9_069_000L).getName()).isEqualTo("Istanbul");
     Assertions.assertThat(sched.getByBlockNumber(9_200_000L).getName()).isEqualTo("MuirGlacier");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
-        .isEqualTo("MuirGlacier");
+    Assertions.assertThat(sched.getByBlockNumber(12_244_000L).getName()).isEqualTo("Berlin");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Berlin");
   }
 
   @Test
@@ -103,8 +103,8 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(4_939_394L).getName()).isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockNumber(6_485_846L).getName()).isEqualTo("Istanbul");
     Assertions.assertThat(sched.getByBlockNumber(7_117_117L).getName()).isEqualTo("MuirGlacier");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName())
-        .isEqualTo("MuirGlacier");
+    Assertions.assertThat(sched.getByBlockNumber(9_812_189L).getName()).isEqualTo("Berlin");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Berlin");
   }
 
   @Test
@@ -117,7 +117,8 @@ public class MainnetProtocolScheduleTest {
                 .getConfigOptions());
     Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockNumber(1_561_651L).getName()).isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
+    Assertions.assertThat(sched.getByBlockNumber(4_460_644L).getName()).isEqualTo("Berlin");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Berlin");
   }
 
   @Test
@@ -136,6 +137,7 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(3_660_663L).getName()).isEqualTo("Constantinople");
     Assertions.assertThat(sched.getByBlockNumber(4_321_234L).getName()).isEqualTo("Petersburg");
     Assertions.assertThat(sched.getByBlockNumber(5_435_345L).getName()).isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Istanbul");
+    Assertions.assertThat(sched.getByBlockNumber(8_290_928L).getName()).isEqualTo("Berlin");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Berlin");
   }
 }
