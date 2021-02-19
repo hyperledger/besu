@@ -1,42 +1,28 @@
 package org.hyperledger.besu.consensus.qbt.support.extradata;
 
-import java.util.Map;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 public class BftExtraDataTestCaseSpec {
-  final Map<String, Object> bftExtraData;
-  final String rlpAll;
-  final String rlpExcludeCommitSeals;
-  final String rlpExcludeCommitSealsAndRoundNumber;
+  final BftExtraData bftExtraData;
+  final Bytes rlp;
 
   @JsonCreator
   public BftExtraDataTestCaseSpec(
-      @JsonProperty("qbft_extra_data") final Map<String, Object> bftExtraData,
-      @JsonProperty("rlp_all") final String rlpAll,
-      @JsonProperty("rlp_exclude_commit_seals") final String rlpExcludeCommitSeals,
-      @JsonProperty("rlp_exclude_commit_seals_and_round_number")
-          final String rlpExcludeCommitSealsAndRoundNumber) {
+      @JsonProperty("qbft_extra_data") final BftExtraData bftExtraData,
+      @JsonProperty("rlp") final Bytes rlp) {
     this.bftExtraData = bftExtraData;
-    this.rlpAll = rlpAll;
-    this.rlpExcludeCommitSeals = rlpExcludeCommitSeals;
-    this.rlpExcludeCommitSealsAndRoundNumber = rlpExcludeCommitSealsAndRoundNumber;
+    this.rlp = rlp;
   }
 
-  public Map<String, Object> getBftExtraData() {
+  public BftExtraData getBftExtraData() {
     return bftExtraData;
   }
 
-  public String getRlpAll() {
-    return rlpAll;
-  }
-
-  public String getRlpExcludeCommitSeals() {
-    return rlpExcludeCommitSeals;
-  }
-
-  public String getRlpExcludeCommitSealsAndRoundNumber() {
-    return rlpExcludeCommitSealsAndRoundNumber;
+  public Bytes getRlp() {
+    return rlp;
   }
 }
