@@ -36,7 +36,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  * the underlying trie node will have to be updated, and so knowing if the nonce and balance where
  * updated or not doesn't matter, we just need their new value).
  */
-public class UpdateTrackingAccount<A extends Account> implements MutableAccount {
+public class UpdateTrackingAccount<A extends Account> implements MutableAccount, EvmAccount {
   private final Address address;
   private final Hash addressHash;
 
@@ -272,5 +272,10 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     return String.format(
         "%s -> {nonce: %s, balance:%s, code:%s, storage:%s }",
         address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage);
+  }
+
+  @Override
+  public MutableAccount getMutable() throws ModificationNotAllowedException {
+    return this;
   }
 }
