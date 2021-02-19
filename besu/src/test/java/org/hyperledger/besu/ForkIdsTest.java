@@ -59,7 +59,6 @@ public class ForkIdsTest {
           NetworkName.ROPSTEN,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0x30c7ddbcL), 10L),
-              new ForkId(Bytes.ofUnsignedInt(0x30c7ddbcL), 10L),
               new ForkId(Bytes.ofUnsignedInt(0x63760190L), 1700000L),
               new ForkId(Bytes.ofUnsignedInt(0x3ea159c7L), 4230000L),
               new ForkId(Bytes.ofUnsignedInt(0x97b544f3L), 4939394L),
@@ -72,7 +71,6 @@ public class ForkIdsTest {
         new Object[] {
           NetworkName.RINKEBY,
           List.of(
-              new ForkId(Bytes.ofUnsignedInt(0x3b8e0691L), 1L),
               new ForkId(Bytes.ofUnsignedInt(0x3b8e0691L), 1L),
               new ForkId(Bytes.ofUnsignedInt(0x60949295L), 2L),
               new ForkId(Bytes.ofUnsignedInt(0x8bde40ddL), 3L),
@@ -88,7 +86,6 @@ public class ForkIdsTest {
           NetworkName.GOERLI,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
-              new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
               new ForkId(Bytes.ofUnsignedInt(0xc25efa5cL), 4460644L),
               new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 0L),
               new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 0L))
@@ -96,7 +93,6 @@ public class ForkIdsTest {
         new Object[] {
           NetworkName.MAINNET,
           List.of(
-              new ForkId(Bytes.ofUnsignedInt(0xfc64ec04L), 1150000L),
               new ForkId(Bytes.ofUnsignedInt(0xfc64ec04L), 1150000L),
               new ForkId(Bytes.ofUnsignedInt(0x97c2c34cL), 1920000L),
               new ForkId(Bytes.ofUnsignedInt(0x91d1f948L), 2463000L),
@@ -115,7 +111,6 @@ public class ForkIdsTest {
           NetworkName.MORDOR,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0x175782aaL), 301243L),
-              new ForkId(Bytes.ofUnsignedInt(0x175782aaL), 301243L),
               new ForkId(Bytes.ofUnsignedInt(0x604f6ee1L), 999983L),
               new ForkId(Bytes.ofUnsignedInt(0xf42f5539L), 2520000L),
               new ForkId(Bytes.ofUnsignedInt(0x66b5c286L), 0L),
@@ -125,7 +120,6 @@ public class ForkIdsTest {
           NetworkName.KOTTI,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0x550152eL), 716617L),
-              new ForkId(Bytes.ofUnsignedInt(0x550152eL), 716617L),
               new ForkId(Bytes.ofUnsignedInt(0xa3270822L), 1705549L),
               new ForkId(Bytes.ofUnsignedInt(0x8f3698e0L), 2200013L),
               new ForkId(Bytes.ofUnsignedInt(0x6f402821L), 0L),
@@ -134,7 +128,6 @@ public class ForkIdsTest {
         new Object[] {
           NetworkName.CLASSIC,
           List.of(
-              new ForkId(Bytes.ofUnsignedInt(0xfc64ec04L), 1150000L),
               new ForkId(Bytes.ofUnsignedInt(0xfc64ec04L), 1150000L),
               new ForkId(Bytes.ofUnsignedInt(0x97c2c34cL), 2500000L),
               new ForkId(Bytes.ofUnsignedInt(0x97c2c34cL), 2500000L),
@@ -170,7 +163,6 @@ public class ForkIdsTest {
 
     final var actualForkIds =
         Streams.concat(
-                Stream.of(0L),
                 ((MutableProtocolSchedule) schedule).streamMilestoneBlocks(),
                 Stream.of(Long.MAX_VALUE))
             .map(
