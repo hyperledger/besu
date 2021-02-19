@@ -53,8 +53,13 @@ task ('validateReferenceTestSubmodule') {
       expectedHash = ''
     }
     def submoduleHashes = [
-      ['2fe00d76d97e35aa2df6449b5f567c41cf6f58fc', 'ethereum/referencetests/src/test/resources'],
-      ['1508126ea04cd61495b60db2f036ac823de274b1', 'ethereum/referencetests/src/test/resources']
+      [
+        '2fe00d76d97e35aa2df6449b5f567c41cf6f58fc',
+        'ethereum/referencetests/src/test/resources'
+      ],
+      [
+        '1508126ea04cd61495b60db2f036ac823de274b1',
+        'ethereum/referencetests/src/test/resources']
     ]
     for (def expectedHash : submoduleHashes) {
       if (!result.toString().contains(expectedHash[0])) {
@@ -72,7 +77,8 @@ following commands:
     git checkout ${expectedHash[0]}
     cd ..
     git add resources
-    popd""")}
+    popd""")
+      }
     }
   }
 }
