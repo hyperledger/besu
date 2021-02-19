@@ -88,8 +88,7 @@ public class JsonTestParameters<S, T> {
     void generate(String name, S mappedType, Collector<T> collector);
   }
 
-  private static final ObjectMapper objectMapper =
-      new ObjectMapper().registerModule(new Jdk8Module());
+  private final ObjectMapper objectMapper;
 
   // The type to which the json file is directly mapped
   private final Class<S> jsonFileMappedType;
@@ -107,8 +106,16 @@ public class JsonTestParameters<S, T> {
   private final List<Predicate<String>> testIgnores = new ArrayList<>();
 
   private JsonTestParameters(final Class<S> jsonFileMappedType, final Class<T> testCaseSpec) {
+    this(jsonFileMappedType, testCaseSpec, new ObjectMapper().registerModule(new Jdk8Module()));
+  }
+
+  private JsonTestParameters(
+      final Class<S> jsonFileMappedType,
+      final Class<T> testCaseSpec,
+      final ObjectMapper objectMapper) {
     this.jsonFileMappedType = jsonFileMappedType;
     this.testCaseSpec = testCaseSpec;
+    this.objectMapper = objectMapper;
 
     if (TEST_PATTERN_STR != null) {
       includeTests(TEST_PATTERN_STR);
@@ -120,9 +127,22 @@ public class JsonTestParameters<S, T> {
         .generator((name, testCase, collector) -> collector.add(name, testCase, true));
   }
 
+  public static <T> JsonTestParameters<T, T> create(
+      final Class<T> testCaseSpec, final ObjectMapper objectMapper) {
+    return new JsonTestParameters<>(testCaseSpec, testCaseSpec, objectMapper)
+        .generator((name, testCase, collector) -> collector.add(name, testCase, true));
+  }
+
   public static <S, T> JsonTestParameters<S, T> create(
       final Class<S> jsonFileMappedType, final Class<T> testCaseSpec) {
     return new JsonTestParameters<>(jsonFileMappedType, testCaseSpec);
+  }
+
+  public static <S, T> JsonTestParameters<S, T> create(
+      final Class<S> jsonFileMappedType,
+      final Class<T> testCaseSpec,
+      final ObjectMapper objectMapper) {
+    return new JsonTestParameters<>(jsonFileMappedType, testCaseSpec, objectMapper);
   }
 
   @SuppressWarnings("unused")
