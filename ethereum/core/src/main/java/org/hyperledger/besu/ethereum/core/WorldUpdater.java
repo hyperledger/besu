@@ -75,7 +75,7 @@ public interface WorldUpdater extends MutableWorldView {
    * doesn't.
    *
    * @param address the address of the account.
-   * @return the account {@code address}, or {@code null} if the account does not exist.
+   * @return the account of the sender for {@code address}
    */
   default EvmAccount getOrCreateSenderAccount(final Address address) {
     return getOrCreate(address);
