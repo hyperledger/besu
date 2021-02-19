@@ -115,7 +115,7 @@ dependencies {
 task ('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentially changed"
   doLast {
-    def expectedHash = '2fe00d76d97e35aa2df6449b5f567c41cf6f58fc'
+    def expectedHash = '0975a39bb1c2e95975dbae75b2df1cf71ed2e03f'
     def result = new ByteArrayOutputStream()
     try {
       exec {
