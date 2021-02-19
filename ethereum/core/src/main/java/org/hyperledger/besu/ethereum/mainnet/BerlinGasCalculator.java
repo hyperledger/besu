@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.Address.BLS12_MAP_FP2_TO_G2;
+import static org.hyperledger.besu.ethereum.core.Address.BLAKE2B_F_COMPRESSION;
 
 import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -69,7 +69,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   public BerlinGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
+    this(BLAKE2B_F_COMPRESSION.toArrayUnsafe()[19]);
   }
 
   @Override
