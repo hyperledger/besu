@@ -29,7 +29,7 @@ import java.util.Optional;
 // the public world state, but cannot write to it.
 public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
-  private final WorldUpdater publicWorldUpdater;
+  protected final WorldUpdater publicWorldUpdater;
   private final WorldUpdater privateWorldUpdater;
 
   public DefaultMutablePrivateWorldStateUpdater(

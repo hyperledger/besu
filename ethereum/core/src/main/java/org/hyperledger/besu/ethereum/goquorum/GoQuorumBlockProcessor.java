@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
+import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,7 +115,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
           effectiveTransaction = retrievePrivateTransactionFromEnclave(transaction);
 
           effectiveWorldUpdater =
-              new DefaultMutablePrivateWorldStateUpdater(
+              new GoQuorumMutablePrivateWorldStateUpdater(
                   publicWorldStateUpdater, privateWorldState.updater());
 
         } catch (final EnclaveClientException e) { // private transaction but not party to it
@@ -170,6 +170,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
               .getOrCreate(effectiveTransaction.getSender())
               .getMutable()
               .incrementNonce();
+          effectiveWorldUpdater.commit();
         } else { // public transaction
           final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
           currentGasUsed += gasUsed;
@@ -178,6 +179,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
               transactionReceiptFactory.create(
                   transaction.getType(), result, publicWorldState, currentGasUsed));
           privateTxReceipts.add(null);
+          effectiveWorldUpdater.commit();
         }
       } else { // private transaction we are not party to
         publicTxReceipts.add(
@@ -187,13 +189,9 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
                 publicWorldState,
                 currentGasUsed));
         privateTxReceipts.add(null);
-        publicWorldStateUpdater
-            .getOrCreate(effectiveTransaction.getSender())
-            .getMutable()
-            .incrementNonce();
+        publicWorldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
       }
 
-      effectiveWorldUpdater.commit();
       publicWorldStateUpdater.commit();
     }
 
