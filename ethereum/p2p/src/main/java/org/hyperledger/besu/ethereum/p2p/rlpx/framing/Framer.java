@@ -30,6 +30,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.FormatMethod;
 import io.netty.buffer.ByteBuf;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.bouncycastle.crypto.BlockCipher;
@@ -53,6 +55,8 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
  * @see <a href="https://github.com/ethereum/devp2p/blob/master/rlpx.md#framing">RLPx framing</a>
  */
 public class Framer {
+  private static final Logger LOG = LogManager.getLogger();
+
   private static final int LENGTH_HEADER_DATA = 16;
   private static final int LENGTH_MAC = 16;
   private static final int LENGTH_FULL_HEADER = LENGTH_HEADER_DATA + LENGTH_MAC;
@@ -79,6 +83,8 @@ public class Framer {
   private boolean headerProcessed;
   private int frameSize;
   private boolean compressionEnabled = false;
+  // have we ever successfully uncompressed a packet?
+  private boolean compressionSuccessful = false;
 
   /**
    * Creates a new framer out of the handshake secrets derived during the cryptographic handshake.
@@ -107,6 +113,14 @@ public class Framer {
 
   public void disableCompression() {
     this.compressionEnabled = false;
+  }
+
+  boolean isCompressionEnabled() {
+    return compressionEnabled;
+  }
+
+  boolean isCompressionSuccessful() {
+    return compressionSuccessful;
   }
 
   /**
@@ -269,8 +283,24 @@ public class Framer {
       if (uncompressedLength >= LENGTH_MAX_MESSAGE_FRAME) {
         throw error("Message size %s in excess of maximum length.", uncompressedLength);
       }
-      final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
-      data = Bytes.wrap(decompressedMessageData);
+      Bytes _data;
+      try {
+        final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
+        _data = Bytes.wrap(decompressedMessageData);
+        compressionSuccessful = true;
+      } catch (final FramingException fe) {
+        if (compressionSuccessful) {
+          throw fe;
+        } else {
+          // OpenEthereum/Parity does not implement EIP-706
+          // If failing on the first packet downgrade to uncompressed
+          compressionEnabled = false;
+          LOG.debug("Snappy decompression failed: downgrading to uncompressed");
+          final int messageLength = frameSize - LENGTH_MESSAGE_ID;
+          _data = Bytes.wrap(frameData, 1, messageLength);
+        }
+      }
+      data = _data;
     } else {
       // Move data to a ByteBuf
       final int messageLength = frameSize - LENGTH_MESSAGE_ID;

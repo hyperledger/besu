@@ -182,7 +182,8 @@
         }
       },
       {
-        "output": "0x7d88c1856cc95352",
+        "output": "0x",
+        "revertReason": "0x7d88c1856cc95352",
         "stateDiff": {
           "0x0000000000000000000000000000000000000000": {
             "balance": {
@@ -223,6 +224,7 @@
               "value": "0x0"
             },
             "error": "Reverted",
+            "revertReason": "0x7d88c1856cc95352",
             "subtraces": 0,
             "traceAddress": [],
             "type": "call"
