@@ -26,7 +26,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.ForkId;
 import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -35,13 +34,15 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.function.LongConsumer;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mockito.stubbing.OngoingStubbing;
 
 @RunWith(Parameterized.class)
 public class ForkIdsTest {
@@ -49,7 +50,7 @@ public class ForkIdsTest {
   @Parameterized.Parameter public NetworkName chainName;
 
   @Parameterized.Parameter(1)
-  public List<ForkId> milestones;
+  public List<ForkId> expectedForkIds;
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> parameters() {
@@ -159,28 +160,26 @@ public class ForkIdsTest {
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);
 
-    final Block block = genesisState.getBlock();
-    when(mockBlockchain.getGenesisBlock()).thenReturn(block);
-    final OngoingStubbing<Long> blockAnswer =
-        when(mockBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
+    when(mockBlockchain.getGenesisBlock()).thenReturn(genesisState.getBlock());
 
-    ((MutableProtocolSchedule) schedule)
-        .enumerateMilestoneBlocks()
-        .forEachRemaining((LongConsumer) blockAnswer::thenReturn);
-    blockAnswer.thenReturn(Long.MAX_VALUE);
-    blockAnswer.thenReturn(-1L);
+    final AtomicLong blockNumber = new AtomicLong();
+    when(mockBlockchain.getChainHeadBlockNumber()).thenAnswer(o -> blockNumber.get());
 
     final ForkIdManager forkIdManager =
         new ForkIdManager(mockBlockchain, genesisConfigFile.getForks(), false);
 
-    int milestoneCount = 0;
-    for (final ForkId forkId : milestones) {
-      assertThat(forkIdManager.computeForkId())
-          .withFailMessage("Failed %s at milestone %d", chainName, milestoneCount++)
-          .isEqualTo(forkId);
-    }
-    assertThat(mockBlockchain.getChainHeadBlockNumber())
-        .withFailMessage("Not all milestones of %s have enumerated forkIds", chainName)
-        .isEqualTo(-1);
+    final var actualForkIds =
+        Streams.concat(
+                Stream.of(0L),
+                ((MutableProtocolSchedule) schedule).streamMilestoneBlocks(),
+                Stream.of(Long.MAX_VALUE))
+            .map(
+                block -> {
+                  blockNumber.set(block);
+                  return forkIdManager.computeForkId();
+                })
+            .collect(Collectors.toList());
+
+    assertThat(actualForkIds).containsExactlyElementsOf(expectedForkIds);
   }
 }

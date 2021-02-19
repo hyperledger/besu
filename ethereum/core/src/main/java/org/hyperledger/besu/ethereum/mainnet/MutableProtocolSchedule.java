@@ -23,9 +23,9 @@ import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.NavigableSet;
 import java.util.Optional;
-import java.util.PrimitiveIterator.OfLong;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MutableProtocolSchedule implements ProtocolSchedule {
 
@@ -76,11 +76,10 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
-  public OfLong enumerateMilestoneBlocks() {
+  public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream()
         .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
-        .mapToLong(ScheduledProtocolSpec::getBlock)
-        .iterator();
+        .map(ScheduledProtocolSpec::getBlock);
   }
 
   @Override
