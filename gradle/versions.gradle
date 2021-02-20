@@ -65,6 +65,12 @@ dependencyManagement {
     dependency 'io.opentelemetry:opentelemetry-sdk-trace:0.13.1'
     dependency 'io.opentelemetry:opentelemetry-sdk:0.13.1'
 
+    dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
+    dependency 'io.opentracing:opentracing-api:0.33.0'
+    dependency 'io.opentracing:opentracing-util:0.33.0'
+    dependency 'io.jaegertracing:jaeger-client:1.5.0'
+
+
     dependency 'io.pkts:pkts-core:3.0.7'
 
     dependency 'io.prometheus:simpleclient:0.9.0'

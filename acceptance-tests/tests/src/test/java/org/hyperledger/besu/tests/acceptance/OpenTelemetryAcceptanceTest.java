@@ -25,13 +25,19 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.io.Closer;
+import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.Status;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
+import io.jaegertracing.Configuration;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest;
 import io.opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceResponse;
 import io.opentelemetry.proto.collector.metrics.v1.MetricsServiceGrpc;
@@ -40,6 +46,16 @@ import io.opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse;
 import io.opentelemetry.proto.collector.trace.v1.TraceServiceGrpc;
 import io.opentelemetry.proto.metrics.v1.ResourceMetrics;
 import io.opentelemetry.proto.trace.v1.ResourceSpans;
+import io.opentelemetry.proto.trace.v1.Span;
+import io.opentracing.Tracer;
+import io.opentracing.contrib.okhttp3.TracingCallFactory;
+import okhttp3.Call;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -166,6 +182,53 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
           net.netVersion().verify(metricsNode);
           List<ResourceSpans> spans = fakeTracesCollector.getReceivedSpans();
           assertThat(spans.isEmpty()).isFalse();
+          Span internalSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(0);
+          assertThat(internalSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_INTERNAL);
+          ByteString parent = internalSpan.getParentSpanId();
+          assertThat(parent.isEmpty()).isFalse();
+          Span serverSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(1);
+          assertThat(serverSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_SERVER);
+          ByteString rootSpanId = serverSpan.getParentSpanId();
+          assertThat(rootSpanId.isEmpty()).isTrue();
+        });
+  }
+
+  @Test
+  public void traceReportingWithTraceId() {
+
+    WaitUtils.waitFor(
+        30,
+        () -> {
+          // call the json RPC endpoint to generate a trace - with trace metadata of our own
+          OkHttpClient okClient = new OkHttpClient();
+          Configuration config =
+              new Configuration("okhttp")
+                  .withSampler(
+                      Configuration.SamplerConfiguration.fromEnv().withType("const").withParam(1));
+
+          Tracer tracer = config.getTracer();
+          Call.Factory client = new TracingCallFactory(okClient, tracer);
+          Request request =
+              new Request.Builder()
+                  .url("http://localhost:" + metricsNode.getJsonRpcSocketPort().get())
+                  .post(
+                      RequestBody.create(
+                          "{\"jsonrpc\":\"2.0\",\"method\":\"net_version\",\"params\":[],\"id\":255}",
+                          MediaType.get("application/json")))
+                  .build();
+          Response response = client.newCall(request).execute();
+          assertThat(response.code()).isEqualTo(200);
+          List<ResourceSpans> spans = new ArrayList<>(fakeTracesCollector.getReceivedSpans());
+          fakeTracesCollector.getReceivedSpans().clear();
+          assertThat(spans.isEmpty()).isFalse();
+          Span internalSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(0);
+          assertThat(internalSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_INTERNAL);
+          ByteString parent = internalSpan.getParentSpanId();
+          assertThat(parent.isEmpty()).isFalse();
+          Span serverSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(1);
+          assertThat(serverSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_SERVER);
+          ByteString rootSpanId = serverSpan.getParentSpanId();
+          assertThat(rootSpanId.isEmpty()).isFalse();
         });
   }
 }

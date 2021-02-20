@@ -1,5 +1,6 @@
 
 FROM openjdk:11.0.7-jre-slim-buster
+ARG VERSION="latest"
 
 RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
     chown besu:besu /opt/besu
@@ -22,7 +23,7 @@ ENV BESU_RPC_WS_HOST 0.0.0.0
 ENV BESU_GRAPHQL_HTTP_HOST 0.0.0.0
 ENV BESU_PID_PATH "/tmp/pid"
 
-ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu-$VERSION"
+ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 
 ENV PATH="/opt/besu/bin:${PATH}"
 ENTRYPOINT ["besu"]
