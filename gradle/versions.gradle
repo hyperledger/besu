@@ -70,7 +70,6 @@ dependencyManagement {
     dependency 'io.opentracing:opentracing-util:0.33.0'
     dependency 'io.jaegertracing:jaeger-client:1.5.0'
 
-
     dependency 'io.pkts:pkts-core:3.0.7'
 
     dependency 'io.prometheus:simpleclient:0.9.0'
