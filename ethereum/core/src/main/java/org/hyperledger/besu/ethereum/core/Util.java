@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.Signature;
 
 import org.apache.tuweni.bytes.Bytes;
 

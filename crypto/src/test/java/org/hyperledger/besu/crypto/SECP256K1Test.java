@@ -89,11 +89,11 @@ public class SECP256K1Test {
 
   @Test
   public void publicKeyEquals() {
-    final SECP256K1.PublicKey publicKey1 =
+    final  PublicKey publicKey1 =
         SECP256K1.PublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
-    final SECP256K1.PublicKey publicKey2 =
+    final  PublicKey publicKey2 =
         SECP256K1.PublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
@@ -103,7 +103,7 @@ public class SECP256K1Test {
 
   @Test
   public void publicHashCode() {
-    final SECP256K1.PublicKey publicKey =
+    final  PublicKey publicKey =
         SECP256K1.PublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
@@ -133,11 +133,11 @@ public class SECP256K1Test {
   public void keyPairEquals() {
     final SECP256K1.PrivateKey privateKey1 = SECP256K1.PrivateKey.create(BigInteger.TEN);
     final SECP256K1.PrivateKey privateKey2 = SECP256K1.PrivateKey.create(BigInteger.TEN);
-    final SECP256K1.PublicKey publicKey1 =
+    final  PublicKey publicKey1 =
         SECP256K1.PublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
-    final SECP256K1.PublicKey publicKey2 =
+    final  PublicKey publicKey2 =
         SECP256K1.PublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
@@ -164,12 +164,12 @@ public class SECP256K1Test {
   @Test
   public void publicKeyRecovery() {
     final SECP256K1.PrivateKey privateKey = SECP256K1.PrivateKey.create(BigInteger.TEN);
-    final SECP256K1.PublicKey expectedPublicKey =
+    final  PublicKey expectedPublicKey =
         SECP256K1.PublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"));
 
-    final SECP256K1.PublicKey publicKey = SECP256K1.PublicKey.create(privateKey);
+    final  PublicKey publicKey = SECP256K1.PublicKey.create(privateKey);
     assertThat(publicKey).isEqualTo(expectedPublicKey);
   }
 
@@ -203,7 +203,7 @@ public class SECP256K1Test {
     final Bytes32 dataHash = keccak256(data);
     final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
 
-    final SECP256K1.PublicKey recoveredPublicKey =
+    final  PublicKey recoveredPublicKey =
         SECP256K1.PublicKey.recoverFromSignature(dataHash, signature).get();
     assertThat(recoveredPublicKey.toString()).isEqualTo(keyPair.getPublicKey().toString());
   }

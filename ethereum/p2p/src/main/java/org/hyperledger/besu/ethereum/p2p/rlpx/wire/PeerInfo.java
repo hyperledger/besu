@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
 import static org.apache.tuweni.bytes.Bytes.wrap;
 
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
+import org.hyperledger.besu.crypto.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;

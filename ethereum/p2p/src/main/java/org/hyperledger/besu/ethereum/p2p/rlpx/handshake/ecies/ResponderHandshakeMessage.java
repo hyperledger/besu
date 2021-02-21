@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.PublicKey;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public interface ResponderHandshakeMessage {
 
-  SECP256K1.PublicKey getEphPublicKey();
+  PublicKey getEphPublicKey();
 
   Bytes32 getNonce();
 

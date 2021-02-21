@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.PublicKey;
 
 /**
  * The responder's handshake message.
@@ -49,19 +49,19 @@ public final class ResponderHandshakeMessageV1 implements ResponderHandshakeMess
           + ECIESHandshaker.NONCE_LENGTH
           + ECIESHandshaker.TOKEN_FLAG_LENGTH;
 
-  private final SECP256K1.PublicKey ephPublicKey; // 64 bytes - uncompressed and no type byte
+  private final PublicKey ephPublicKey; // 64 bytes - uncompressed and no type byte
   private final Bytes32 nonce; // 32 bytes
   private final boolean token; // 1 byte - 0x00 or 0x01
 
   private ResponderHandshakeMessageV1(
-      final SECP256K1.PublicKey ephPublicKey, final Bytes32 nonce, final boolean token) {
+      final  PublicKey ephPublicKey, final Bytes32 nonce, final boolean token) {
     this.ephPublicKey = ephPublicKey;
     this.nonce = nonce;
     this.token = token;
   }
 
   public static ResponderHandshakeMessageV1 create(
-      final SECP256K1.PublicKey ephPublicKey, final Bytes32 nonce, final boolean token) {
+      final  PublicKey ephPublicKey, final Bytes32 nonce, final boolean token) {
     return new ResponderHandshakeMessageV1(ephPublicKey, nonce, token);
   }
 
@@ -69,7 +69,7 @@ public final class ResponderHandshakeMessageV1 implements ResponderHandshakeMess
     checkArgument(bytes.size() == MESSAGE_LENGTH);
 
     final Bytes pubk = bytes.slice(0, ECIESHandshaker.PUBKEY_LENGTH);
-    final SECP256K1.PublicKey ephPubKey = SECP256K1.PublicKey.create(pubk);
+    final PublicKey ephPubKey = EllipticCurveSignatureFactory.getInstance().createPublicKey(pubk);
     final Bytes32 nonce =
         Bytes32.wrap(bytes.slice(ECIESHandshaker.PUBKEY_LENGTH, ECIESHandshaker.NONCE_LENGTH), 0);
     final boolean token =
@@ -88,7 +88,7 @@ public final class ResponderHandshakeMessageV1 implements ResponderHandshakeMess
   }
 
   @Override
-  public SECP256K1.PublicKey getEphPublicKey() {
+  public PublicKey getEphPublicKey() {
     return ephPublicKey;
   }
 

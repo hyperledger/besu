@@ -35,7 +35,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TRANS
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -180,7 +180,7 @@ public class JsonRpcResponseUtils {
     when(transaction.getPublicKey()).thenReturn(Optional.ofNullable(publicKey));
     when(transaction.getSignature())
         .thenReturn(
-            SECP256K1.Signature.create(
+                EllipticCurveSignatureFactory.getInstance().createSignature(
                 Bytes.fromHexString(r).toUnsignedBigInteger(),
                 Bytes.fromHexString(s).toUnsignedBigInteger(),
                 Bytes.fromHexString(v)

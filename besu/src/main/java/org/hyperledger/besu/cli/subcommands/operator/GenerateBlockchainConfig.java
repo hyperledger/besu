@@ -156,7 +156,7 @@ class GenerateBlockchainConfig implements Runnable {
     final String publicKeyText = publicKeyJson.asText();
 
     try {
-      final SECP256K1.PublicKey publicKey =
+      final  PublicKey publicKey =
           SECP256K1.PublicKey.create(Bytes.fromHexString(publicKeyText));
       writeKeypair(publicKey, null);
       LOG.info("Public key imported from configuration.({})", publicKey.toString());
@@ -197,7 +197,7 @@ class GenerateBlockchainConfig implements Runnable {
    * @throws IOException If the file cannot be written or accessed.
    */
   private void writeKeypair(
-      final SECP256K1.PublicKey publicKey, final SECP256K1.PrivateKey privateKey)
+      final  PublicKey publicKey, final SECP256K1.PrivateKey privateKey)
       throws IOException {
     final Address nodeAddress = Util.publicKeyToAddress(publicKey);
     addressesForGenesisExtraData.add(nodeAddress);

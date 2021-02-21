@@ -21,7 +21,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -48,8 +50,9 @@ public class PendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_TRANSACTION_HASHES = 5;
-  private static final KeyPair KEYS1 = KeyPair.generate();
-  private static final KeyPair KEYS2 = KeyPair.generate();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final KeyPair KEYS1 = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
+  private static final KeyPair KEYS2 = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
   private static final String ADDED_COUNTER = "transactions_added_total";
   private static final String REMOVED_COUNTER = "transactions_removed_total";
   private static final String REMOTE = "remote";

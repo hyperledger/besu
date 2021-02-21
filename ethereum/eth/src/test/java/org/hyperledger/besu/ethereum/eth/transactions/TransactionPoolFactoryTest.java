@@ -22,7 +22,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -216,7 +217,7 @@ public class TransactionPoolFactoryTest {
             .nonce(1)
             .gasLimit(0)
             .gasPrice(Wei.of(1))
-            .createTransaction(KeyPair.generate());
+            .createTransaction(EllipticCurveSignatureFactory.getInstance().generateKeyPair());
     pool.addLocalTransaction(transaction);
   }
 }

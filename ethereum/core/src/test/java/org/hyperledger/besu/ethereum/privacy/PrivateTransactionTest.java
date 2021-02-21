@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -88,6 +90,8 @@ public class PrivateTransactionTest {
           + "b5bfc23e5ac43a56f57f25f75486ae1a02a8d9b56a0fe9cd94d60be4413bcb7"
           + "21d3a7be27ed8e28b3a6346df874ee141b8a72657374726963746564";
 
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+
   private static final PrivateTransaction VALID_PRIVATE_TRANSACTION =
       new PrivateTransaction(
           0L,
@@ -98,7 +102,7 @@ public class PrivateTransactionTest {
           Wei.of(
               new BigInteger(
                   "115792089237316195423570985008687907853269984665640564039457584007913129639935")),
-          SECP256K1.Signature.create(
+              ELLIPTIC_CURVE_SIGNATURE.createSignature(
               new BigInteger(
                   "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
               new BigInteger(

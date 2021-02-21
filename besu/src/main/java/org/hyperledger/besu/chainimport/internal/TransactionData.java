@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.chainimport.internal;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.PrivateKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -39,6 +41,8 @@ public class TransactionData {
   private final Optional<Address> to;
   private final PrivateKey privateKey;
 
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+
   @JsonCreator
   public TransactionData(
       @JsonProperty("gasLimit") final String gasLimit,
@@ -52,11 +56,11 @@ public class TransactionData {
     this.data = data.map(Bytes::fromHexString).orElse(Bytes.EMPTY);
     this.value = value.map(Wei::fromHexString).orElse(Wei.ZERO);
     this.to = to.map(Address::fromHexString);
-    this.privateKey = PrivateKey.create(Bytes32.fromHexString(secretKey));
+    this.privateKey = ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString(secretKey));
   }
 
   public Transaction getSignedTransaction(final NonceProvider nonceProvider) {
-    final KeyPair keyPair = KeyPair.create(privateKey);
+    final KeyPair keyPair = ELLIPTIC_CURVE_SIGNATURE.createKeyPair(privateKey);
 
     final Address fromAddress = Address.extract(keyPair.getPublicKey());
     final long nonce = nonceProvider.get(fromAddress);

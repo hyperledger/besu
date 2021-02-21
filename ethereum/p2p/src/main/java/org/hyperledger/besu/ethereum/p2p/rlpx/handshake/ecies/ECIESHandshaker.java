@@ -18,10 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
-import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.crypto.*;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
@@ -60,7 +57,7 @@ public class ECIESHandshaker implements Handshaker {
 
   // Keypairs under our control.
   private NodeKey nodeKey;
-  private SECP256K1.KeyPair ephKeyPair;
+  private KeyPair ephKeyPair;
 
   // Party's material, only public keys.
   private PublicKey partyPubKey;
@@ -86,6 +83,8 @@ public class ECIESHandshaker implements Handshaker {
 
   private boolean version4 = true;
 
+  private final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+
   @Override
   public void prepareInitiator(final NodeKey nodeKey, final PublicKey theirPubKey) {
     checkState(
@@ -95,7 +94,7 @@ public class ECIESHandshaker implements Handshaker {
 
     this.initiator = true;
     this.nodeKey = nodeKey;
-    this.ephKeyPair = SECP256K1.KeyPair.generate();
+    this.ephKeyPair = ellipticCurveSignature.generateKeyPair();
     this.partyPubKey = theirPubKey;
     this.initiatorNonce = Bytes32.wrap(random(32), 0);
     LOG.trace(
@@ -112,7 +111,7 @@ public class ECIESHandshaker implements Handshaker {
 
     this.initiator = false;
     this.nodeKey = nodeKey;
-    this.ephKeyPair = SECP256K1.KeyPair.generate();
+    this.ephKeyPair = ellipticCurveSignature.generateKeyPair();
     this.responderNonce = Bytes32.wrap(random(32), 0);
     LOG.trace("Prepared ECIES handshake under RESPONDER role");
   }
@@ -355,7 +354,7 @@ public class ECIESHandshaker implements Handshaker {
   /** Computes the secrets from the two exchanged messages. */
   void computeSecrets() {
     final Bytes agreedSecret =
-        SECP256K1.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), partyEphPubKey);
+      ellipticCurveSignature.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), partyEphPubKey);
 
     final Bytes sharedSecret =
         keccak256(
@@ -398,12 +397,12 @@ public class ECIESHandshaker implements Handshaker {
   }
 
   @VisibleForTesting
-  SECP256K1.KeyPair getEphKeyPair() {
+  KeyPair getEphKeyPair() {
     return ephKeyPair;
   }
 
   @VisibleForTesting
-  void setEphKeyPair(final SECP256K1.KeyPair ephKeyPair) {
+  void setEphKeyPair(final KeyPair ephKeyPair) {
     this.ephKeyPair = ephKeyPair;
   }
 

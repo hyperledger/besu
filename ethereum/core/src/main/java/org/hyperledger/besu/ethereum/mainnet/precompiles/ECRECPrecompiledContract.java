@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
@@ -59,10 +61,11 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     final int recId = d.get(63) - V_BASE;
     final BigInteger r = d.slice(64, 32).toUnsignedBigInteger();
     final BigInteger s = d.slice(96, 32).toUnsignedBigInteger();
+    final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
 
     final Signature signature;
     try {
-      signature = Signature.create(r, s, (byte) recId);
+      signature = ellipticCurveSignature.createSignature(r, s, (byte) recId);
     } catch (final IllegalArgumentException e) {
       return Bytes.EMPTY;
     }
@@ -72,7 +75,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     // check the arguments ahead of time to determine if the fail will happen and
     // the library needs to be updated.
     try {
-      final Optional<PublicKey> recovered = PublicKey.recoverFromSignature(h, signature);
+      final Optional<PublicKey> recovered = ellipticCurveSignature.recoverPublicKeyFromSignature(h, signature);
       if (!recovered.isPresent()) {
         return Bytes.EMPTY;
       }

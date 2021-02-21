@@ -26,7 +26,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -68,6 +70,7 @@ public class EeaSendRawTransactionTest {
   static final String VALID_LEGACY_PRIVATE_TRANSACTION_RLP = validPrivateTransactionRlp();
   static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP =
       validPrivateTransactionRlpPrivacyGroup();
+  static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
 
   // RLP encode fails creating a transaction without privateFrom so must be manually encoded
   private static final String PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM =
@@ -86,7 +89,7 @@ public class EeaSendRawTransactionTest {
           Optional.of(
               Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
           Wei.ZERO,
-          SECP256K1.Signature.create(
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(
               new BigInteger(
                   "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
               new BigInteger(
@@ -449,9 +452,9 @@ public class EeaSendRawTransactionTest {
 
   private static String rlpEncodeTransaction(
       final PrivateTransaction.Builder privateTransactionBuilder) {
-    final SECP256K1.KeyPair keyPair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
+    final KeyPair keyPair =
+          ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
+            ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(
                 new BigInteger(
                     "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
 

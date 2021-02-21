@@ -32,6 +32,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class KeyPairUtil {
   private static final Logger LOG = LogManager.getLogger();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
 
   public static String loadResourceFile(final String resourcePath) {
     try {
@@ -42,29 +43,29 @@ public class KeyPairUtil {
     }
   }
 
-  public static SECP256K1.KeyPair loadKeyPairFromResource(final String resourcePath) {
-    final SECP256K1.KeyPair keyPair;
+  public static KeyPair loadKeyPairFromResource(final String resourcePath) {
+    final KeyPair keyPair;
     String keyData = loadResourceFile(resourcePath);
     if (keyData == null || keyData.isEmpty()) {
       throw new IllegalArgumentException("Unable to load resource: " + resourcePath);
     }
-    SECP256K1.PrivateKey privateKey = SECP256K1.PrivateKey.create(Bytes32.fromHexString((keyData)));
-    keyPair = SECP256K1.KeyPair.create(privateKey);
+    PrivateKey privateKey = ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString((keyData)));
+    keyPair = ELLIPTIC_CURVE_SIGNATURE.createKeyPair(privateKey);
 
     LOG.info("Loaded keyPair {} from {}", keyPair.getPublicKey().toString(), resourcePath);
     return keyPair;
   }
 
-  public static SECP256K1.KeyPair loadKeyPair(final File keyFile) {
+  public static KeyPair loadKeyPair(final File keyFile) {
 
-    final SECP256K1.KeyPair key;
+    final KeyPair key;
     if (keyFile.exists()) {
 
       key = load(keyFile);
       LOG.info(
           "Loaded public key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
     } else {
-      key = SECP256K1.KeyPair.generate();
+      key = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
       try {
         storeKeyPair(key, keyFile);
       } catch (IOException e) {
@@ -78,7 +79,7 @@ public class KeyPairUtil {
     return key;
   }
 
-  public static SECP256K1.KeyPair loadKeyPair(final Path homeDirectory) {
+  public static KeyPair loadKeyPair(final Path homeDirectory) {
     return loadKeyPair(getDefaultKeyFile(homeDirectory));
   }
 
@@ -86,23 +87,23 @@ public class KeyPairUtil {
     return homeDirectory.resolve("key").toFile();
   }
 
-  public static SECP256K1.KeyPair load(final File file) {
-    return SECP256K1.KeyPair.create(loadPrivateKey(file));
+  public static KeyPair load(final File file) {
+    return ELLIPTIC_CURVE_SIGNATURE.createKeyPair(loadPrivateKey(file));
   }
 
-  static SECP256K1.PrivateKey loadPrivateKey(final File file) {
+  static PrivateKey loadPrivateKey(final File file) {
     try {
       final List<String> info = Files.readAllLines(file.toPath());
       if (info.size() != 1) {
         throw new IllegalArgumentException("Supplied file does not contain valid keyPair pair.");
       }
-      return SECP256K1.PrivateKey.create(Bytes32.fromHexString((info.get(0))));
+      return ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString((info.get(0))));
     } catch (IOException ex) {
       throw new IllegalArgumentException("Supplied file does not contain valid keyPair pair.");
     }
   }
 
-  static void storeKeyPair(final SECP256K1.KeyPair keyKair, final File file) throws IOException {
+  static void storeKeyPair(final KeyPair keyKair, final File file) throws IOException {
     final File privateKeyDir = file.getParentFile();
     privateKeyDir.mkdirs();
     final Path tempPath = Files.createTempFile(privateKeyDir.toPath(), ".tmp", "");

@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.crypto.*;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
@@ -30,6 +28,7 @@ final class EncryptedMessage {
   private static final int IV_SIZE = 16;
 
   private static final SecureRandom RANDOM = SecureRandomProvider.createSecureRandom();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
 
   private EncryptedMessage() {
     // Utility Class
@@ -48,7 +47,7 @@ final class EncryptedMessage {
 
     // Extract the ephemeral public key, stripping off the first byte (0x04), which designates it's
     // an uncompressed key.
-    final SECP256K1.PublicKey ephPubKey = SECP256K1.PublicKey.create(msgBytes.slice(1, 64));
+    final PublicKey ephPubKey = ELLIPTIC_CURVE_SIGNATURE.createPublicKey(msgBytes.slice(1, 64));
 
     // Strip off the IV to use.
     final Bytes iv = msgBytes.slice(65, IV_SIZE);
@@ -72,7 +71,7 @@ final class EncryptedMessage {
    */
   public static Bytes decryptMsgEIP8(final Bytes msgBytes, final NodeKey nodeKey)
       throws InvalidCipherTextException {
-    final SECP256K1.PublicKey ephPubKey = SECP256K1.PublicKey.create(msgBytes.slice(3, 64));
+    final PublicKey ephPubKey = ELLIPTIC_CURVE_SIGNATURE.createPublicKey(msgBytes.slice(3, 64));
 
     // Strip off the IV to use.
     final Bytes iv = msgBytes.slice(3 + 64, IV_SIZE);
@@ -94,7 +93,7 @@ final class EncryptedMessage {
    * @return The ciphertext.
    * @throws InvalidCipherTextException Thrown if encryption failed.
    */
-  public static Bytes encryptMsg(final Bytes bytes, final SECP256K1.PublicKey remoteKey)
+  public static Bytes encryptMsg(final Bytes bytes, final  PublicKey remoteKey)
       throws InvalidCipherTextException {
     // TODO: check size.
     final ECIESEncryptionEngine engine = ECIESEncryptionEngine.forEncryption(remoteKey);
@@ -102,7 +101,7 @@ final class EncryptedMessage {
     // Do the encryption.
     final Bytes encrypted = engine.encrypt(bytes);
     final Bytes iv = engine.getIv();
-    final SECP256K1.PublicKey ephPubKey = engine.getEphPubKey();
+    final  PublicKey ephPubKey = engine.getEphPubKey();
 
     // Create the output message by concatenating the ephemeral public key (prefixed with
     // 0x04 to designate uncompressed), IV, and encrypted bytes.
@@ -126,7 +125,7 @@ final class EncryptedMessage {
    * @return The ciphertext.
    * @throws InvalidCipherTextException Thrown if encryption failed.
    */
-  public static Bytes encryptMsgEip8(final Bytes message, final SECP256K1.PublicKey remoteKey)
+  public static Bytes encryptMsgEip8(final Bytes message, final  PublicKey remoteKey)
       throws InvalidCipherTextException {
     final ECIESEncryptionEngine engine = ECIESEncryptionEngine.forEncryption(remoteKey);
 
@@ -136,7 +135,7 @@ final class EncryptedMessage {
     final byte[] sizePrefix = {(byte) (size >>> 8), (byte) size};
     final Bytes encrypted = engine.encrypt(bytes, sizePrefix);
     final Bytes iv = engine.getIv();
-    final SECP256K1.PublicKey ephPubKey = engine.getEphPubKey();
+    final  PublicKey ephPubKey = engine.getEphPubKey();
 
     // Create the output message by concatenating the ephemeral public key (prefixed with
     // 0x04 to designate uncompressed), IV, and encrypted bytes.

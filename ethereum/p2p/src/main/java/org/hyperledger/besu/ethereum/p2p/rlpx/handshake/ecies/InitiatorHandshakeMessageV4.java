@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
-import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.*;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -27,21 +25,22 @@ import org.apache.tuweni.bytes.Bytes32;
 public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMessage {
 
   public static final int VERSION = 4;
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
 
-  private final SECP256K1.PublicKey pubKey;
-  private final SECP256K1.Signature signature;
-  private final SECP256K1.PublicKey ephPubKey;
+  private final PublicKey pubKey;
+  private final Signature signature;
+  private final PublicKey ephPubKey;
   private final Bytes32 ephPubKeyHash;
   private final Bytes32 nonce;
 
   public static InitiatorHandshakeMessageV4 create(
-      final SECP256K1.PublicKey ourPubKey,
-      final SECP256K1.KeyPair ephKeyPair,
+      final PublicKey ourPubKey,
+      final KeyPair ephKeyPair,
       final Bytes32 staticSharedSecret,
       final Bytes32 nonce) {
     return new InitiatorHandshakeMessageV4(
         ourPubKey,
-        SECP256K1.sign(staticSharedSecret.xor(nonce), ephKeyPair),
+        ELLIPTIC_CURVE_SIGNATURE.sign(staticSharedSecret.xor(nonce), ephKeyPair),
         ephKeyPair.getPublicKey(),
         nonce);
   }
@@ -56,21 +55,21 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
   public static InitiatorHandshakeMessageV4 decode(final Bytes bytes, final NodeKey nodeKey) {
     final RLPInput input = new BytesValueRLPInput(bytes, true);
     input.enterList();
-    final SECP256K1.Signature signature = SECP256K1.Signature.decode(input.readBytes());
-    final SECP256K1.PublicKey pubKey = SECP256K1.PublicKey.create(input.readBytes());
+    final Signature signature = ELLIPTIC_CURVE_SIGNATURE.decodeSignature(input.readBytes());
+    final  PublicKey pubKey = ELLIPTIC_CURVE_SIGNATURE.createPublicKey(input.readBytes());
     final Bytes32 nonce = input.readBytes32();
     final Bytes32 staticSharedSecret = nodeKey.calculateECDHKeyAgreement(pubKey);
-    final SECP256K1.PublicKey ephPubKey =
-        SECP256K1.PublicKey.recoverFromSignature(staticSharedSecret.xor(nonce), signature)
+    final  PublicKey ephPubKey =
+      ELLIPTIC_CURVE_SIGNATURE.recoverPublicKeyFromSignature(staticSharedSecret.xor(nonce), signature)
             .orElseThrow(() -> new RuntimeException("Could not recover public key from signature"));
 
     return new InitiatorHandshakeMessageV4(pubKey, signature, ephPubKey, nonce);
   }
 
   private InitiatorHandshakeMessageV4(
-      final SECP256K1.PublicKey pubKey,
-      final SECP256K1.Signature signature,
-      final SECP256K1.PublicKey ephPubKey,
+      final PublicKey pubKey,
+      final Signature signature,
+      final PublicKey ephPubKey,
       final Bytes32 nonce) {
     this.pubKey = pubKey;
     this.signature = signature;
@@ -97,12 +96,12 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
   }
 
   @Override
-  public SECP256K1.PublicKey getPubKey() {
+  public  PublicKey getPubKey() {
     return pubKey;
   }
 
   @Override
-  public SECP256K1.PublicKey getEphPubKey() {
+  public  PublicKey getEphPubKey() {
     return ephPubKey;
   }
 

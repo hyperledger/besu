@@ -18,9 +18,9 @@ package org.hyperledger.besu.evmtool;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -29,7 +29,7 @@ import javax.inject.Named;
 class CliqueGenesisFileModule extends GenesisFileModule {
 
   private final NodeKey nodeKey =
-      new NodeKey(new KeyPairSecurityModule(SECP256K1.KeyPair.generate()));
+      new NodeKey(new KeyPairSecurityModule(EllipticCurveSignatureFactory.getInstance().generateKeyPair()));
 
   CliqueGenesisFileModule(final String genesisConfig) {
     super(genesisConfig);

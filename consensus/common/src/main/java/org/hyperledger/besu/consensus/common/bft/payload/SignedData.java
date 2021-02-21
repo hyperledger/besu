@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.common.bft.payload;
 
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;

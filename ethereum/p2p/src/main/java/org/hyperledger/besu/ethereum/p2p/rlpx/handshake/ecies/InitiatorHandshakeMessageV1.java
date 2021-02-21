@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.*;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
+
+import java.security.spec.EllipticCurve;
 
 /**
  * The initiator's handshake message.
@@ -55,17 +55,19 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
           + ECIESHandshaker.NONCE_LENGTH
           + ECIESHandshaker.TOKEN_FLAG_LENGTH;
 
-  private final SECP256K1.PublicKey pubKey;
-  private final SECP256K1.Signature signature;
-  private final SECP256K1.PublicKey ephPubKey;
+  private final PublicKey pubKey;
+  private final Signature signature;
+  private final PublicKey ephPubKey;
   private final Bytes32 ephPubKeyHash;
   private final Bytes32 nonce;
   private final boolean token;
 
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+
   InitiatorHandshakeMessageV1(
-      final SECP256K1.PublicKey pubKey,
-      final SECP256K1.Signature signature,
-      final SECP256K1.PublicKey ephPubKey,
+      final PublicKey pubKey,
+      final Signature signature,
+      final PublicKey ephPubKey,
       final Bytes32 ephPubKeyHash,
       final Bytes32 nonce,
       final boolean token) {
@@ -78,15 +80,15 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
   }
 
   public static InitiatorHandshakeMessageV1 create(
-      final SECP256K1.PublicKey ourPubKey,
-      final SECP256K1.KeyPair ephKeyPair,
+      final PublicKey ourPubKey,
+      final KeyPair ephKeyPair,
       final Bytes32 staticSharedSecret,
       final Bytes32 nonce,
       final boolean token) {
     final Bytes32 ephPubKeyHash = Hash.keccak256(ephKeyPair.getPublicKey().getEncodedBytes());
 
     // XOR of the static shared secret and the generated nonce.
-    final SECP256K1.Signature signature = SECP256K1.sign(staticSharedSecret.xor(nonce), ephKeyPair);
+    final Signature signature = ELLIPTIC_CURVE_SIGNATURE.sign(staticSharedSecret.xor(nonce), ephKeyPair);
     return new InitiatorHandshakeMessageV1(
         ourPubKey, signature, ephKeyPair.getPublicKey(), ephPubKeyHash, nonce, token);
   }
@@ -102,15 +104,15 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
     checkState(bytes.size() == MESSAGE_LENGTH);
 
     int offset = 0;
-    final SECP256K1.Signature signature =
-        SECP256K1.Signature.decode(bytes.slice(offset, ECIESHandshaker.SIGNATURE_LENGTH));
+    final Signature signature =
+            ELLIPTIC_CURVE_SIGNATURE.decodeSignature(bytes.slice(offset, ECIESHandshaker.SIGNATURE_LENGTH));
     final Bytes32 ephPubKeyHash =
         Bytes32.wrap(
             bytes.slice(
                 offset += ECIESHandshaker.SIGNATURE_LENGTH, ECIESHandshaker.HASH_EPH_PUBKEY_LENGTH),
             0);
-    final SECP256K1.PublicKey pubKey =
-        SECP256K1.PublicKey.create(
+    final  PublicKey pubKey =
+            ELLIPTIC_CURVE_SIGNATURE.createPublicKey(
             bytes.slice(
                 offset += ECIESHandshaker.HASH_EPH_PUBKEY_LENGTH, ECIESHandshaker.PUBKEY_LENGTH));
     final Bytes32 nonce =
@@ -119,8 +121,8 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
     final boolean token = bytes.get(offset) == 0x01;
 
     final Bytes32 staticSharedSecret = nodeKey.calculateECDHKeyAgreement(pubKey);
-    final SECP256K1.PublicKey ephPubKey =
-        SECP256K1.PublicKey.recoverFromSignature(staticSharedSecret.xor(nonce), signature)
+    final  PublicKey ephPubKey =
+            ELLIPTIC_CURVE_SIGNATURE.recoverPublicKeyFromSignature(staticSharedSecret.xor(nonce), signature)
             .orElseThrow(() -> new RuntimeException("Could not recover public key from signature"));
 
     return new InitiatorHandshakeMessageV1(
@@ -145,7 +147,7 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
   }
 
   @Override
-  public SECP256K1.PublicKey getPubKey() {
+  public PublicKey getPubKey() {
     return pubKey;
   }
 
@@ -160,7 +162,7 @@ public final class InitiatorHandshakeMessageV1 implements InitiatorHandshakeMess
   }
 
   @Override
-  public SECP256K1.PublicKey getEphPubKey() {
+  public PublicKey getEphPubKey() {
     return ephPubKey;
   }
 

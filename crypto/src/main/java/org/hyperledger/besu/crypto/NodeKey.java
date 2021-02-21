@@ -22,25 +22,26 @@ import org.apache.tuweni.bytes.Bytes32;
 public class NodeKey {
 
   private final SecurityModule securityModule;
+  private final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
 
   public NodeKey(final SecurityModule securityModule) {
     this.securityModule = securityModule;
   }
 
-  public SECP256K1.Signature sign(final Bytes32 dataHash) {
+  public org.hyperledger.besu.crypto.Signature sign(final Bytes32 dataHash) {
     final Signature signature = securityModule.sign(dataHash);
 
-    return SECP256K1.normaliseSignature(
+    return ellipticCurveSignature.normaliseSignature(
         signature.getR(), signature.getS(), getPublicKey(), dataHash);
   }
 
-  public SECP256K1.PublicKey getPublicKey() {
-    return SECP256K1.PublicKey.create(
+  public PublicKey getPublicKey() {
+    return ellipticCurveSignature.createPublicKey(
         ECPointUtil.getEncodedBytes(securityModule.getPublicKey().getW()));
   }
 
-  public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
+  public Bytes32 calculateECDHKeyAgreement(final PublicKey partyKey) {
     return securityModule.calculateECDHKeyAgreement(
-        () -> ECPointUtil.fromBouncyCastleECPoint(partyKey.asEcPoint()));
+        () -> ECPointUtil.fromBouncyCastleECPoint(ellipticCurveSignature.publicKeyAsEcPoint(partyKey)));
   }
 }

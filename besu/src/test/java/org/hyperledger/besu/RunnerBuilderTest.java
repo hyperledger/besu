@@ -72,7 +72,7 @@ public final class RunnerBuilderTest {
     final EthContext ethContext = mock(EthContext.class);
     final ProtocolContext protocolContext = mock(ProtocolContext.class);
     final NodeKey nodeKey = mock(NodeKey.class);
-    final SECP256K1.PublicKey publicKey = mock(SECP256K1.PublicKey.class);
+    final  PublicKey publicKey = mock(SECP256K1.PublicKey.class);
 
     when(subProtocolConfiguration.getProtocolManagers())
         .thenReturn(

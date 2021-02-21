@@ -16,8 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.*;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.crypto.BufferedBlockCipher;
@@ -71,11 +70,11 @@ public class ECIESEncryptionEngine {
   private final BufferedBlockCipher cipher =
       new BufferedBlockCipher(new SICBlockCipher(new AESEngine()));
 
-  private final SECP256K1.PublicKey ephPubKey;
+  private final PublicKey ephPubKey;
   private final byte[] iv;
 
   private ECIESEncryptionEngine(
-      final Bytes agreedSecret, final SECP256K1.PublicKey ephPubKey, final byte[] iv) {
+      final Bytes agreedSecret, final  PublicKey ephPubKey, final byte[] iv) {
     this.ephPubKey = ephPubKey;
     this.iv = iv;
 
@@ -92,7 +91,7 @@ public class ECIESEncryptionEngine {
    * @return An engine prepared for decryption.
    */
   public static ECIESEncryptionEngine forDecryption(
-      final NodeKey nodeKey, final SECP256K1.PublicKey ephPubKey, final Bytes iv) {
+      final NodeKey nodeKey, final PublicKey ephPubKey, final Bytes iv) {
     final byte[] ivb = iv.toArray();
 
     // Create parameters.
@@ -110,15 +109,17 @@ public class ECIESEncryptionEngine {
    * @param pubKey The public key of the receiver.
    * @return An engine prepared for encryption.
    */
-  public static ECIESEncryptionEngine forEncryption(final SECP256K1.PublicKey pubKey) {
+  public static ECIESEncryptionEngine forEncryption(final  PublicKey pubKey) {
+    final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+
     // Create an ephemeral key pair for IES whose public key we can later append in the message.
-    final SECP256K1.KeyPair ephKeyPair = SECP256K1.KeyPair.generate();
+    final KeyPair ephKeyPair = ellipticCurveSignature.generateKeyPair();
 
     // Create random iv.
     final byte[] ivb = ECIESHandshaker.random(CIPHER_BLOCK_SIZE).toArray();
 
     return new ECIESEncryptionEngine(
-        SECP256K1.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), pubKey),
+        ellipticCurveSignature.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), pubKey),
         ephKeyPair.getPublicKey(),
         ivb);
   }
@@ -296,7 +297,7 @@ public class ECIESEncryptionEngine {
    *
    * @return The ephemeral public key.
    */
-  public SECP256K1.PublicKey getEphPubKey() {
+  public  PublicKey getEphPubKey() {
     return ephPubKey;
   }
 

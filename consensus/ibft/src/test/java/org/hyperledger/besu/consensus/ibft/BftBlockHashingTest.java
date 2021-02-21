@@ -21,11 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.*;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -99,11 +95,13 @@ public class BftBlockHashingTest {
   }
 
   private static List<NodeKey> committersNodeKeys() {
+    final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+
     return IntStream.rangeClosed(1, 4)
         .mapToObj(
             i ->
                 NodeKeyUtils.createFrom(
-                    (KeyPair.create(PrivateKey.create(UInt256.valueOf(i).toBytes())))))
+                    (ellipticCurveSignature.createKeyPair(ellipticCurveSignature.createPrivateKey(UInt256.valueOf(i).toBytes())))))
         .collect(Collectors.toList());
   }
 
