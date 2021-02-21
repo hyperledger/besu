@@ -45,7 +45,6 @@ dependencies {
   testImplementation 'io.opentracing:opentracing-api'
   testImplementation 'io.opentracing:opentracing-util'
   testImplementation 'io.jaegertracing:jaeger-client'
-  testImplementation 'io.opentelemetry:opentelemetry-extension-trace-propagators'
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.commons:commons-compress'
