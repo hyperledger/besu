@@ -20,10 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import java.util.List;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-@RunWith(Parameterized.class)
 public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
 
   public BftMiningAcceptanceTest(

@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PeerResult;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
@@ -54,7 +53,9 @@ public class AdminPeersTest {
 
   private AdminPeers adminPeers;
 
-  @Mock private P2PNetwork p2pNetwork;
+  private final String VALID_NODE_ID =
+      "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
+
   @Mock private EthPeers ethPeers;
 
   @Before
@@ -107,12 +108,13 @@ public class AdminPeersTest {
   }
 
   private Collection<EthPeer> peerList() {
-    final PeerInfo peerInfo = new PeerInfo(5, "0x0", Collections.emptyList(), 30303, Bytes.EMPTY);
+    final PeerInfo peerInfo =
+        new PeerInfo(5, "0x0", Collections.emptyList(), 30303, Bytes.fromHexString(VALID_NODE_ID));
     final PeerConnection p =
         MockPeerConnection.create(
             peerInfo,
-            InetSocketAddress.createUnresolved("1.2.3.4", 9876),
-            InetSocketAddress.createUnresolved("4.3.2.1", 6789));
+            new InetSocketAddress("1.2.3.4", 9876),
+            new InetSocketAddress("4.3.2.1", 6789));
     final EthPeer ethPeer = new EthPeer(p, "eth", c -> {}, List.of(), TestClock.fixed());
     return Lists.newArrayList(ethPeer);
   }

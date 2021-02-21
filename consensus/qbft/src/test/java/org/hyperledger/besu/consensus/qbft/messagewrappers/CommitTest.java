@@ -35,7 +35,7 @@ import org.junit.Test;
 public class CommitTest {
 
   @Test
-  public void canRoundTripAPrepareMessage() {
+  public void canRoundTripACommitMessage() {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final Address addr = Util.publicKeyToAddress(nodeKey.getPublicKey());
 

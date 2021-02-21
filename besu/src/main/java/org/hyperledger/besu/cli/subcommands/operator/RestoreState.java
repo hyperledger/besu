@@ -260,7 +260,7 @@ public class RestoreState implements Runnable {
 
   private void updateCode(final Bytes code) {
     maybeCommitUpdater();
-    updater.putCode(code);
+    updater.putCode(null, code);
   }
 
   private void updateAccountState(final Bytes32 key, final Bytes value) {
@@ -273,7 +273,7 @@ public class RestoreState implements Runnable {
   private void updateAccountStorage(final Bytes32 key, final Bytes value) {
     maybeCommitUpdater();
     // restore by path not supported
-    updater.putAccountStorageTrieNode(null, key, value);
+    updater.putAccountStorageTrieNode(null, null, key, value);
     trieNodeCount++;
   }
 

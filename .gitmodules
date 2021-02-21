@@ -2,3 +2,7 @@
 	path = ethereum/referencetests/src/test/resources
 	url = https://github.com/ethereum/tests.git
 	ignore = all
+[submodule "qbft-ref-tests"]
+	path = consensus/qbft/src/reference-test/resources
+	url = https://github.com/ConsenSys/qbft-tests.git
+	ignore = all
