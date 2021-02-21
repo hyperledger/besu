@@ -330,35 +330,6 @@ public class JsonRpcHttpServiceTest {
   }
 
   @Test
-  public void traceIdPassed() throws Exception {
-    final String id = "123";
-    final RequestBody body =
-        RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":"
-                + Json.encode(id)
-                + ",\"method\":\"web3_clientVersion\"}");
-
-    try (final Response resp =
-        client
-            .newCall(
-                new Request.Builder()
-                    .post(body)
-                    .url(baseUrl)
-                    .header("uber-trace-id", "8bb49e619d9dd6b5:cf8dcafd47f93847:8bb49e619d9dd6b5:1")
-                    .build())
-            .execute()) {
-      assertThat(resp.code()).isEqualTo(200);
-      // Check general format of result
-      final JsonObject json = new JsonObject(resp.body().string());
-      testHelper.assertValidJsonRpcResult(json, id);
-      // Check result
-      final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_VERSION);
-    }
-  }
-
-  @Test
   public void netVersionSuccessful() throws Exception {
     final String id = "123";
     final RequestBody body =
