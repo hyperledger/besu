@@ -32,7 +32,6 @@ public class VoteTypeDeserializer extends JsonDeserializer<VoteType> {
   public VoteType deserialize(final JsonParser p, final DeserializationContext ctxt)
       throws IOException, JsonProcessingException {
     final Bytes bytes = Bytes.fromHexString(p.getValueAsString());
-    final VoteType voteType;
     if (bytes.equals(Bytes.of(Vote.ADD_BYTE_VALUE))) {
       return VoteType.ADD;
     } else if (bytes.equals(Bytes.of(Vote.DROP_BYTE_VALUE))) {
