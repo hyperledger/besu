@@ -58,8 +58,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
-    return new SubProtocolConfiguration()
-        .withSubProtocol(EthProtocol.get(), ethProtocolManager);
+    return new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
   }
 
   @Override
