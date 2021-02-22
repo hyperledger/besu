@@ -149,7 +149,7 @@ public class BftConfigOptionsTest {
   }
 
   @Test
-  public void shouldFallbackToDefaultFutureMessagesLimit() {Unknown consensus mechanism defined
+  public void shouldFallbackToDefaultFutureMessagesLimit() {
     final BftConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getFutureMessagesLimit()).isEqualTo(EXPECTED_DEFAULT_FUTURE_MESSAGES_LIMIT);
   }
