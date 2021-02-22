@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.core.Address.BLAKE2B_F_COMPRESSION;
 
 import org.hyperledger.besu.ethereum.core.AccessList;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -82,11 +83,11 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
     final Set<Address> accessedAddresses = new HashSet<>();
     final Multimap<Address, Bytes32> accessedStorage = HashMultimap.create();
 
-    for (final Map.Entry<Address, List<Bytes32>> accessListEntry : accessList) {
-      final Address address = accessListEntry.getKey();
+    for (final AccessListEntry accessListEntry : accessList) {
+      final Address address = accessListEntry.getAddress();
 
       accessedAddresses.add(address);
-      for (final Bytes32 storageKeyBytes : accessListEntry.getValue()) {
+      for (final Bytes32 storageKeyBytes : accessListEntry.getStorageKeys()) {
         accessedStorage.put(address, storageKeyBytes);
         ++accessedStorageCount;
       }

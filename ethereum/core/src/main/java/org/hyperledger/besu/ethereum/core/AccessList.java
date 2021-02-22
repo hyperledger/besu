@@ -23,12 +23,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class AccessList extends ArrayList<Map.Entry<Address, List<Bytes32>>> {
+public class AccessList extends ArrayList<AccessListEntry> {
 
-  public AccessList(final List<Map.Entry<Address, List<Bytes32>>> accessList) {
-    super(accessList);
+  public AccessList(final List<AccessListEntry> accessListEntries) {
+    super(accessListEntries);
   }
 
   public static final AccessList EMPTY = new AccessList(emptyList());

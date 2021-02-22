@@ -380,10 +380,10 @@ public class BlockDataGenerator {
   private AccessList accessList() {
     final List<Address> accessedAddresses =
         Stream.generate(this::address).limit(1 + random.nextInt(3)).collect(toUnmodifiableList());
-    final List<Map.Entry<Address, List<Bytes32>>> accessedStorage = new ArrayList<>();
+    final List<AccessListEntry> accessedStorage = new ArrayList<>();
     for (int i = 0; i < accessedAddresses.size(); ++i) {
       accessedStorage.add(
-          new AbstractMap.SimpleEntry<>(
+          new AccessListEntry(
               accessedAddresses.get(i),
               Stream.generate(this::bytes32).limit(2L * i).collect(toUnmodifiableList())));
     }

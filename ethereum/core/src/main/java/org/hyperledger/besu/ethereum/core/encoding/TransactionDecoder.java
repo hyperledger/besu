@@ -26,6 +26,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.AccessList;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -142,8 +143,8 @@ public class TransactionDecoder {
                     rlpInput.readList(
                         accessListEntryRLPInput -> {
                           accessListEntryRLPInput.enterList();
-                          final Map.Entry<Address, List<Bytes32>> accessListEntry =
-                              new AbstractMap.SimpleEntry<>(
+                          final AccessListEntry accessListEntry =
+                              new AccessListEntry(
                                   Address.wrap(accessListEntryRLPInput.readBytes()),
                                   accessListEntryRLPInput.readList(RLPInput::readBytes32));
                           accessListEntryRLPInput.leaveList();

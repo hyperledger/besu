@@ -36,7 +36,9 @@ public class TransactionBuilderTest {
     final Transaction.Builder eip1559Builder = Transaction.builder().feeCap(Wei.of(5));
     final Transaction.Builder accessListBuilder =
         Transaction.builder()
-            .accessList(new AccessList(List.of(Map.entry(gen.address(), List.of(gen.bytes32())))));
+            .accessList(
+                new AccessList(
+                    List.of(new AccessListEntry(gen.address(), List.of(gen.bytes32())))));
 
     final Set<TransactionType> guessedTypes =
         Stream.of(frontierBuilder, eip1559Builder, accessListBuilder)
