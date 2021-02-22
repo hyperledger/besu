@@ -72,20 +72,20 @@ public class FixedProtocolScheduleTest {
                 .getByBlockNumber(0)
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
+        .isEqualTo(10000);
 
     assertThat(
             schedule
                 .getByBlockNumber(500)
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
+        .isEqualTo(10000);
 
     assertThat(
             schedule
                 .getByBlockNumber(500_000)
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
+        .isEqualTo(10000);
   }
 }
