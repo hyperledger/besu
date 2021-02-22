@@ -375,7 +375,7 @@ public class BlockDataGenerator {
         .signAndBuild(generateKeyPair());
   }
 
-  private AccessList accessList() {
+  private List<AccessListEntry> accessList() {
     final List<Address> accessedAddresses =
         Stream.generate(this::address).limit(1 + random.nextInt(3)).collect(toUnmodifiableList());
     final List<AccessListEntry> accessedStorage = new ArrayList<>();
@@ -385,7 +385,7 @@ public class BlockDataGenerator {
               accessedAddresses.get(i),
               Stream.generate(this::bytes32).limit(2L * i).collect(toUnmodifiableList())));
     }
-    return new AccessList(accessedStorage);
+    return accessedStorage;
   }
 
   private Transaction eip1559Transaction(final Bytes payload, final Address to) {

@@ -25,7 +25,6 @@ import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -135,17 +134,16 @@ public class TransactionDecoder {
             .value(Wei.of(rlpInput.readUInt256Scalar()))
             .payload(rlpInput.readBytes())
             .accessList(
-                new AccessList(
-                    rlpInput.readList(
-                        accessListEntryRLPInput -> {
-                          accessListEntryRLPInput.enterList();
-                          final AccessListEntry accessListEntry =
-                              new AccessListEntry(
-                                  Address.wrap(accessListEntryRLPInput.readBytes()),
-                                  accessListEntryRLPInput.readList(RLPInput::readBytes32));
-                          accessListEntryRLPInput.leaveList();
-                          return accessListEntry;
-                        })));
+                rlpInput.readList(
+                    accessListEntryRLPInput -> {
+                      accessListEntryRLPInput.enterList();
+                      final AccessListEntry accessListEntry =
+                          new AccessListEntry(
+                              Address.wrap(accessListEntryRLPInput.readBytes()),
+                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
+                      accessListEntryRLPInput.leaveList();
+                      return accessListEntry;
+                    }));
     final byte recId = (byte) rlpInput.readIntScalar();
     final Transaction transaction =
         preSignatureTransactionBuilder

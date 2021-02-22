@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.core.Address.BLAKE2B_F_COMPRESSION;
 
-import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.math.BigInteger;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
@@ -75,7 +75,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   public GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(
       final Transaction transaction) {
     // As per https://eips.ethereum.org/EIPS/eip-2930
-    final AccessList accessList = transaction.getAccessList();
+    final List<AccessListEntry> accessList = transaction.getAccessList();
 
     long accessedStorageCount = 0;
     final Set<Address> accessedAddresses = new HashSet<>();
