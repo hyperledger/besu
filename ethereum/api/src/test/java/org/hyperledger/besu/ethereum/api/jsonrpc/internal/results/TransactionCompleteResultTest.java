@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -32,7 +31,6 @@ public class TransactionCompleteResultTest {
   public void accessListTransactionFields() throws JsonProcessingException {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Transaction transaction = gen.transaction(TransactionType.ACCESS_LIST);
-    mock(Transaction.class);
     final TransactionCompleteResult transactionCompleteResult =
         new TransactionCompleteResult(
             new TransactionWithMetadata(
