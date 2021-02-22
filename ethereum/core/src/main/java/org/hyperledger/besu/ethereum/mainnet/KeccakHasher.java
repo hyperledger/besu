@@ -22,13 +22,14 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 
-/** Hasher for Keccak-256 PoW.
- * <p>
- * Block is valid if keccak256(keccak256(rlp(unsealed header)), nonce) <= 2^256 / difficulty
- * mixhash = keccak256(rlp(unsealed header)) which is stored in the block. Currently this process is ethash(rlp(unsealed header))
- * So to validate a block we check keccak256(mixhash, nonce) <= 2^256 / difficulty
+/**
+ * Hasher for Keccak-256 PoW.
  *
- * */
+ * <p>Block is valid if keccak256(keccak256(rlp(unsealed header)), nonce) <= 2^256 / difficulty
+ * mixhash = keccak256(rlp(unsealed header)) which is stored in the block. Currently this process is
+ * ethash(rlp(unsealed header)) So to validate a block we check keccak256(mixhash, nonce) <= 2^256 /
+ * difficulty
+ */
 public class KeccakHasher implements PoWHasher {
 
   public static final KeccakHasher KECCAK256 = new KeccakHasher();
