@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
+import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayDeque;
@@ -266,7 +267,8 @@ public class MainnetTransactionProcessor {
 
       final Address senderAddress = transaction.getSender();
 
-      final EvmAccount sender = worldState.getOrCreate(senderAddress);
+      final EvmAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
+
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
       if (!validationResult.isValid()) {
@@ -332,7 +334,7 @@ public class MainnetTransactionProcessor {
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
         final Address contractAddress =
-            Address.contractAddress(senderAddress, sender.getNonce() - 1L);
+            Address.contractAddress(senderAddress, senderMutableAccount.getNonce() - 1L);
 
         initialFrame =
             commonMessageFrameBuilder
@@ -387,28 +389,31 @@ public class MainnetTransactionProcessor {
       final Gas gasUsedByTransaction =
           Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas());
 
-      final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
-      final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-      if (blockHeader.getBaseFee().isPresent()) {
-        final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
-        if (transactionGasPrice.compareTo(baseFee) < 0) {
-          return TransactionProcessingResult.failed(
-              gasUsedByTransaction.toLong(),
-              refunded.toLong(),
-              ValidationResult.invalid(
-                  TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
-                  "transaction price must be greater than base fee"),
-              Optional.empty());
+      if (!worldState.getClass().equals(GoQuorumMutablePrivateWorldStateUpdater.class)) {
+        // if this is not a private GoQuorum transaction we have to update the coinbase
+        final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
+        final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
+        if (blockHeader.getBaseFee().isPresent()) {
+          final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
+          if (transactionGasPrice.compareTo(baseFee) < 0) {
+            return TransactionProcessingResult.failed(
+                gasUsedByTransaction.toLong(),
+                refunded.toLong(),
+                ValidationResult.invalid(
+                    TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                    "transaction price must be greater than base fee"),
+                Optional.empty());
+          }
         }
-      }
-      final CoinbaseFeePriceCalculator coinbaseCreditService =
-          transaction.getType().equals(TransactionType.FRONTIER)
-              ? CoinbaseFeePriceCalculator.frontier()
-              : coinbaseFeePriceCalculator;
-      final Wei coinbaseWeiDelta =
-          coinbaseCreditService.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+        final CoinbaseFeePriceCalculator coinbaseCreditService =
+            transaction.getType().equals(TransactionType.FRONTIER)
+                ? CoinbaseFeePriceCalculator.frontier()
+                : coinbaseFeePriceCalculator;
+        final Wei coinbaseWeiDelta =
+            coinbaseCreditService.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
 
-      coinbase.incrementBalance(coinbaseWeiDelta);
+        coinbase.incrementBalance(coinbaseWeiDelta);
+      }
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 

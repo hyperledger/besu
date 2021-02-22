@@ -429,6 +429,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getPetersburgBlockNumber(),
             getIstanbulBlockNumber(),
             getMuirGlacierBlockNumber(),
+            getBerlinBlockNumber(),
             getEIP1559BlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
