@@ -15,10 +15,12 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.AccessList;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.plugin.data.TransactionType;
+
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -49,7 +51,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class TransactionCompleteResult implements TransactionResult {
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final AccessList accessList;
+  private final List<AccessListEntry> accessList;
 
   private final String blockHash;
   private final String blockNumber;
@@ -102,7 +104,7 @@ public class TransactionCompleteResult implements TransactionResult {
   }
 
   @JsonGetter(value = "accessList")
-  public AccessList getAccessList() {
+  public List<AccessListEntry> getAccessList() {
     return accessList;
   }
 
