@@ -33,14 +33,12 @@ import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Random;
@@ -377,17 +375,17 @@ public class BlockDataGenerator {
         .signAndBuild(generateKeyPair());
   }
 
-  private AccessList accessList() {
+  private List<AccessListEntry> accessList() {
     final List<Address> accessedAddresses =
         Stream.generate(this::address).limit(1 + random.nextInt(3)).collect(toUnmodifiableList());
-    final List<Map.Entry<Address, List<Bytes32>>> accessedStorage = new ArrayList<>();
+    final List<AccessListEntry> accessedStorage = new ArrayList<>();
     for (int i = 0; i < accessedAddresses.size(); ++i) {
       accessedStorage.add(
-          new AbstractMap.SimpleEntry<>(
+          new AccessListEntry(
               accessedAddresses.get(i),
               Stream.generate(this::bytes32).limit(2L * i).collect(toUnmodifiableList())));
     }
-    return new AccessList(accessedStorage);
+    return accessedStorage;
   }
 
   private Transaction eip1559Transaction(final Bytes payload, final Address to) {
