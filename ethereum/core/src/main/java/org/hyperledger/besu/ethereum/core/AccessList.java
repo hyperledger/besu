@@ -21,10 +21,6 @@ import static java.util.Collections.emptyList;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class AccessList extends ArrayList<AccessListEntry> {
 

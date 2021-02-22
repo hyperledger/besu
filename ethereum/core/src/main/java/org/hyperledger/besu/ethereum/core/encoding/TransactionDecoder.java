@@ -35,14 +35,10 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class TransactionDecoder {
 

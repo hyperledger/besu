@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.apache.tuweni.bytes.Bytes32;
-
-import java.io.IOException;
-import java.util.List;
 
 @JsonSerialize(using = AccessListEntry.Serializer.class)
 public class AccessListEntry {

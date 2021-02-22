@@ -29,8 +29,6 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.math.BigInteger;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.HashMultimap;
