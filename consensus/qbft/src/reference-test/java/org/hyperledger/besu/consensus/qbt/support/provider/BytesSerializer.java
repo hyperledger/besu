@@ -23,7 +23,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BytesSerializer extends JsonSerializer<Bytes> {
   @Override
-  public void serialize(Bytes value, JsonGenerator gen, SerializerProvider provider)
+  public void serialize(
+      final Bytes value, final JsonGenerator gen, final SerializerProvider provider)
       throws IOException {
     gen.writeString(value.toHexString().toLowerCase());
   }

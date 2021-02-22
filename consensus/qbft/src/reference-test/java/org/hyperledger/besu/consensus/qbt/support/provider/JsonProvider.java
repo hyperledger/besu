@@ -34,7 +34,7 @@ public class JsonProvider {
   }
 
   private void addQbftRefTestMappers() {
-    SimpleModule module =
+    final SimpleModule module =
         new SimpleModule("BesuQbftRefTestJson", new Version(1, 0, 0, null, null, null));
     module.addDeserializer(Bytes.class, new BytesDeserializer());
     module.addSerializer(Bytes.class, new BytesSerializer());
