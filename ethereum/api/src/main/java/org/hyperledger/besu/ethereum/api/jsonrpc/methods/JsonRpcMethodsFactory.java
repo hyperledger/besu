@@ -102,7 +102,8 @@ public class JsonRpcMethodsFactory {
                   filterManager,
                   transactionPool,
                   miningCoordinator,
-                  supportedCapabilities),
+                  supportedCapabilities,
+                  privacyParameters),
               new NetJsonRpcMethods(
                   p2pNetwork,
                   networkId,

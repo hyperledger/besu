@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -59,6 +60,7 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
+  private final Optional<PrivacyParameters> maybePrivacyParameters;
 
   public TransactionSimulator(
       final Blockchain blockchain,
@@ -67,6 +69,18 @@ public class TransactionSimulator {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
+    this.maybePrivacyParameters = Optional.empty();
+  }
+
+  public TransactionSimulator(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule,
+      final PrivacyParameters privacyParameters) {
+    this.blockchain = blockchain;
+    this.worldStateArchive = worldStateArchive;
+    this.protocolSchedule = protocolSchedule;
+    this.maybePrivacyParameters = Optional.of(privacyParameters);
   }
 
   public Optional<TransactionSimulatorResult> process(
@@ -113,8 +127,7 @@ public class TransactionSimulator {
     if (header == null) {
       return Optional.empty();
     }
-    final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
+    final MutableWorldState worldState = getPrivateStateIfAddressExists(callParams.getTo(), header);
     if (worldState == null) {
       return Optional.empty();
     }
@@ -170,17 +183,40 @@ public class TransactionSimulator {
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
 
-  public Optional<Boolean> doesAddressExistAtHead(final Address address) {
-    return doesAddressExist(address, blockchain.getChainHeadHeader());
+  // return the private world state if the address exists there, otherwise the public state
+  private MutableWorldState getPrivateStateIfAddressExists(
+      final Address contractAddress, final BlockHeader header) {
+    if (maybePrivacyParameters.isPresent()
+        && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
+      final MutableWorldState privateWorldState =
+          maybePrivacyParameters
+              .get()
+              .getGoQuorumPrivacyParameters()
+              .get()
+              .worldStateArchive()
+              .getMutable();
+      final boolean doesAddressExistInPrivateState =
+          doesAddressExist(privateWorldState, contractAddress, header).orElse(false);
+      if (doesAddressExistInPrivateState) {
+        return privateWorldState;
+      }
+    }
+    return worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
   }
 
-  public Optional<Boolean> doesAddressExist(final Address address, final BlockHeader header) {
+  public Optional<Boolean> doesAddressExistAtHead(final Address address) {
+    final BlockHeader header = blockchain.getChainHeadHeader();
+    final MutableWorldState worldState =
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
+
+    return doesAddressExist(worldState, address, header);
+  }
+
+  public Optional<Boolean> doesAddressExist(
+      final MutableWorldState worldState, final Address address, final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
     }
-
-    final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
     if (worldState == null) {
       return Optional.empty();
     }
