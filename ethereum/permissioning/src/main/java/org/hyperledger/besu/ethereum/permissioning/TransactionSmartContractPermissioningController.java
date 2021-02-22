@@ -117,7 +117,7 @@ public class TransactionSmartContractPermissioningController
         new CallParameter(null, contractAddress, -1, null, null, payload);
 
     final Optional<Boolean> contractExists =
-        transactionSimulator.doesAddressExistAtHead(contractAddress);
+        transactionSimulator.doesAddressExistInPublicStateAtHead(contractAddress);
 
     if (contractExists.isPresent() && !contractExists.get()) {
       this.checkCounterPermitted.inc();

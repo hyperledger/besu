@@ -204,7 +204,7 @@ public class TransactionSimulator {
     return worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
   }
 
-  public Optional<Boolean> doesAddressExistAtHead(final Address address) {
+  public Optional<Boolean> doesAddressExistInPublicStateAtHead(final Address address) {
     final BlockHeader header = blockchain.getChainHeadHeader();
     final MutableWorldState worldState =
         worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);

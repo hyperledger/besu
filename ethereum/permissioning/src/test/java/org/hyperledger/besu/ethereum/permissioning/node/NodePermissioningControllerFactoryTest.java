@@ -60,7 +60,8 @@ public class NodePermissioningControllerFactoryTest {
 
   @Before
   public void before() {
-    when(transactionSimulator.doesAddressExistAtHead(any())).thenReturn(Optional.of(true));
+    when(transactionSimulator.doesAddressExistInPublicStateAtHead(any()))
+        .thenReturn(Optional.of(true));
   }
 
   @Test
