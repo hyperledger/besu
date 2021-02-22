@@ -1,6 +1,6 @@
 
 FROM openjdk:11.0.7-jre-slim-buster
-ARG VERSION="latest"
+ARG VERSION="dev"
 
 RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
     chown besu:besu /opt/besu
@@ -32,7 +32,6 @@ HEALTHCHECK --start-period=5s --interval=5s --timeout=1s --retries=10 CMD bash -
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
-ARG VERSION
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="Besu" \
       org.label-schema.description="Enterprise Ethereum client" \

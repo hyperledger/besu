@@ -1,6 +1,6 @@
 
 FROM ghcr.io/graalvm/graalvm-ce:ol7-java11-21.0.0
-ARG VERSION="latest"
+ARG VERSION="dev"
 
 RUN adduser --home /opt/besu besu && \
     chown besu:besu /opt/besu
@@ -32,7 +32,6 @@ HEALTHCHECK --start-period=5s --interval=5s --timeout=1s --retries=10 CMD bash -
 # Build-time metadata as defined at http://label-schema.org
 ARG BUILD_DATE
 ARG VCS_REF
-ARG VERSION
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="Besu" \
       org.label-schema.description="Enterprise Ethereum client" \
