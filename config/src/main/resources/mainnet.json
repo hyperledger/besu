@@ -9,6 +9,7 @@
     "petersburgBlock": 7280000,
     "istanbulBlock": 9069000,
     "muirGlacierBlock": 9200000,
+    "berlinBlock": 12244000,
     "ethash": {
     }
   },
