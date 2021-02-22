@@ -41,44 +41,36 @@ task ('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
+    def submoduleHash = '1508126ea04cd61495b60db2f036ac823de274b1'
+    def submodulePath = 'ethereum/referencetests/src/test/resources'
     try {
       exec {
-        commandLine 'git', 'submodule'
+        commandLine 'git', 'submodule', 'status', submodulePath
         standardOutput = result
         errorOutput = result
       }
     } catch (Exception ignore) {
       // Ignore it.  We want to fail in a friendly fashion if they don't have git installed.
       // The CI servers have git and that is the only critical place for this failure
-      expectedHash = ''
+      submoduleHash = ''
     }
-    def submoduleHashes = [
-      [
-        '2fe00d76d97e35aa2df6449b5f567c41cf6f58fc',
-        'consensus/qbft/src/reference-test/resources'
-      ],
-      [
-        '1508126ea04cd61495b60db2f036ac823de274b1',
-        'ethereum/referencetests/src/test/resources']
-    ]
-    for (def expectedHash : submoduleHashes) {
-      if (!result.toString().contains(expectedHash[0])) {
-        throw new GradleException("""For the Ethereum Reference Tests the git commit did not match what was expected.
+
+    if (!result.toString().contains(submoduleHash)) {
+      throw new GradleException("""For the Ethereum Reference Tests the git commit did not match what was expected.
   
 If this is a deliberate change where you are updating the reference tests 
 then update "expectedHash" in `ethereum/referencetests/build.gradle` as the 
 commit hash for this task.
-Expected hash   :  ${expectedHash[0]}
+Expected hash   :  ${submoduleHash}
 Full git output : ${result}
 
 If this is accidental you can correct the reference test versions with the 
 following commands:
-    pushd ${expectedHash[1]}
-    git checkout ${expectedHash[0]}
+    pushd ${submodulePath}
+    git checkout ${submoduleHash}
     cd ..
     git add resources
     popd""")
-      }
     }
   }
 }
