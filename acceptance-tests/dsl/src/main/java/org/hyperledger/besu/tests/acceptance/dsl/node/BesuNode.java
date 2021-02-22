@@ -297,7 +297,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   }
 
   public Optional<Integer> getJsonRpcSocketPort() {
-    if (isWebSocketsRpcEnabled()) {
+    if (isJsonRpcEnabled()) {
       return Optional.of(Integer.valueOf(portsProperties.getProperty("json-rpc")));
     } else {
       return Optional.empty();
