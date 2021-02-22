@@ -44,11 +44,11 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldUseIbftLegacyWhenIbftInConfig() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft", emptyMap()));
+  public void shouldUseIbftLegacyWhenIstanbulInConfig() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("istanbul", emptyMap()));
     assertThat(config.isIbftLegacy()).isTrue();
     assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(BftConfigOptions.DEFAULT);
-    assertThat(config.getConsensusEngine()).isEqualTo("ibft");
+    assertThat(config.getConsensusEngine()).isEqualTo("istanbul");
   }
 
   @Test
