@@ -31,17 +31,20 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.Transa
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Responsible for extracting transactions from PendingTransactions and determining if the
@@ -261,11 +264,26 @@ public class BlockTransactionSelector {
           transactionSelectionResult.getFrontierCumulativeGasUsed() + gasUsedByTransaction;
     }
 
+    // if it is a GoQuorum private tx, we need to hand craft the receipt
+    final TransactionProcessingResult effectiveResult =
+        transaction.isGoQuorumPrivateTransaction()
+            ? publicResultForWhenWeHaveAPrivateTransaction(transaction)
+            : result;
     transactionSelectionResult.update(
         transaction,
         transactionReceiptFactory.create(
-            transaction.getType(), result, worldState, cumulativeGasUsed),
+            transaction.getType(), effectiveResult, worldState, cumulativeGasUsed),
         gasUsedByTransaction);
+  }
+
+  private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(
+      final Transaction transaction) {
+    return TransactionProcessingResult.successful(
+        Collections.emptyList(),
+        0,
+        transaction.getGasLimit(),
+        Bytes.EMPTY,
+        ValidationResult.valid());
   }
 
   private boolean transactionTooLargeForBlock(
