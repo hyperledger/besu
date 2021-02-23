@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -44,6 +46,8 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -67,6 +71,7 @@ import org.apache.tuweni.bytes.Bytes;
  * not cleared between executions of buildTransactionListForBlock().
  */
 public class BlockTransactionSelector {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
@@ -216,23 +221,37 @@ public class BlockTransactionSelector {
     final WorldUpdater worldStateUpdater = worldState.updater();
     final BlockHashLookup blockHashLookup = new BlockHashLookup(processableBlockHeader, blockchain);
 
-    final TransactionProcessingResult result =
-        transactionProcessor.processTransaction(
-            blockchain,
-            worldStateUpdater,
-            processableBlockHeader,
-            transaction,
-            miningBeneficiary,
-            blockHashLookup,
-            false,
-            TransactionValidationParams.mining());
+    TransactionProcessingResult effectiveResult;
+    if (transaction.isGoQuorumPrivateTransaction()) {
 
-    if (!result.isInvalid()) {
+      final ValidationResult<TransactionInvalidReason> validationResult =
+          validateTransaction(processableBlockHeader, transaction, worldStateUpdater);
+      if (!validationResult.isValid()) {
+        return TransactionSelectionResult.CONTINUE;
+      }
+
+      // if it is a GoQuorum private tx, we need to hand craft the receipt and increment the nonce
+      effectiveResult = publicResultForWhenWeHaveAPrivateTransaction(transaction);
+      worldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
+    } else {
+      effectiveResult =
+          transactionProcessor.processTransaction(
+              blockchain,
+              worldStateUpdater,
+              processableBlockHeader,
+              transaction,
+              miningBeneficiary,
+              blockHashLookup,
+              false,
+              TransactionValidationParams.mining());
+    }
+
+    if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
-      updateTransactionResultTracking(transaction, result);
+      updateTransactionResultTracking(transaction, effectiveResult);
     } else {
       // If the transaction has an incorrect nonce, leave it in the pool and continue
-      if (result
+      if (effectiveResult
           .getValidationResult()
           .getInvalidReason()
           .equals(TransactionInvalidReason.INCORRECT_NONCE)) {
@@ -242,6 +261,40 @@ public class BlockTransactionSelector {
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }
     return TransactionSelectionResult.CONTINUE;
+  }
+
+  private ValidationResult<TransactionInvalidReason> validateTransaction(
+      final ProcessableBlockHeader blockHeader,
+      final Transaction transaction,
+      final WorldUpdater publicWorldStateUpdater) {
+    final MainnetTransactionValidator transactionValidator =
+        transactionProcessor.getTransactionValidator();
+    ValidationResult<TransactionInvalidReason> validationResult =
+        transactionValidator.validate(transaction, blockHeader.getBaseFee());
+    if (!validationResult.isValid()) {
+      LOG.warn(
+          "Invalid transaction: {}. Block {} Transaction {}",
+          validationResult.getErrorMessage(),
+          blockHeader.getParentHash().toHexString(),
+          transaction.getHash().toHexString());
+      return validationResult;
+    }
+
+    final Address senderAddress = transaction.getSender();
+
+    final EvmAccount sender = publicWorldStateUpdater.getOrCreate(senderAddress);
+    validationResult =
+        transactionValidator.validateForSender(
+            transaction, sender, TransactionValidationParams.processingBlock());
+    if (!validationResult.isValid()) {
+      LOG.warn(
+          "Invalid transaction: {}. Block {} Transaction {}",
+          validationResult.getErrorMessage(),
+          blockHeader.getParentHash().toHexString(),
+          transaction.getHash().toHexString());
+      return validationResult;
+    }
+    return ValidationResult.valid();
   }
 
   /*
@@ -264,15 +317,10 @@ public class BlockTransactionSelector {
           transactionSelectionResult.getFrontierCumulativeGasUsed() + gasUsedByTransaction;
     }
 
-    // if it is a GoQuorum private tx, we need to hand craft the receipt
-    final TransactionProcessingResult effectiveResult =
-        transaction.isGoQuorumPrivateTransaction()
-            ? publicResultForWhenWeHaveAPrivateTransaction(transaction)
-            : result;
     transactionSelectionResult.update(
         transaction,
         transactionReceiptFactory.create(
-            transaction.getType(), effectiveResult, worldState, cumulativeGasUsed),
+            transaction.getType(), result, worldState, cumulativeGasUsed),
         gasUsedByTransaction);
   }
 
