@@ -5,7 +5,7 @@
         "eip150Block": 0,
         "eip158Block": 0,
 
-        "ibft": {
+        "istanbul": {
             "epochLength": 30000,
             "blockPeriodSeconds" : 1,
             "requestTimeoutSeconds": 10
