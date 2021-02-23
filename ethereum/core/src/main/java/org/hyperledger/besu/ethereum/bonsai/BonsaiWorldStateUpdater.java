@@ -271,7 +271,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     if (localCode == null) {
       return wrappedWorldView().getCode(address);
     } else {
-      return Optional.of(localCode.getUpdated());
+      return Optional.ofNullable(localCode.getUpdated());
     }
   }
 
@@ -294,7 +294,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         storageToUpdate.computeIfAbsent(address, key -> new HashMap<>());
     final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
     if (value != null) {
-      return Optional.of(value.getUpdated());
+      return Optional.ofNullable(value.getUpdated());
     } else {
       final Optional<UInt256> valueUInt =
           wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
