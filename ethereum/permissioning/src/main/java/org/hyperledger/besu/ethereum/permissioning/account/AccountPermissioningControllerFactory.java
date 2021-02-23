@@ -141,11 +141,14 @@ public class AccountPermissioningControllerFactory {
     try {
       LOG.debug("Validating onchain account permissioning smart contract configuration");
 
-      final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+      final EllipticCurveSignature ellipticCurveSignature =
+          EllipticCurveSignatureFactory.getInstance();
 
       final Signature FAKE_SIGNATURE =
-              ellipticCurveSignature.createSignature(
-                      ellipticCurveSignature.getHalfCurveOrder(), ellipticCurveSignature.getHalfCurveOrder(), (byte) 0);
+          ellipticCurveSignature.createSignature(
+              ellipticCurveSignature.getHalfCurveOrder(),
+              ellipticCurveSignature.getHalfCurveOrder(),
+              (byte) 0);
 
       final Transaction transaction =
           Transaction.builder()

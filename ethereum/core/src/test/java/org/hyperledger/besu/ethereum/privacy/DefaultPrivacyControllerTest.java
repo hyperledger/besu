@@ -31,7 +31,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveServerException;
@@ -73,9 +74,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class DefaultPrivacyControllerTest {
 
   private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
   private static final KeyPair KEY_PAIR =
-      KeyPair.create(
-          SECP256K1.PrivateKey.create(
+      ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
+          ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
   private static final byte[] PAYLOAD = new byte[0];

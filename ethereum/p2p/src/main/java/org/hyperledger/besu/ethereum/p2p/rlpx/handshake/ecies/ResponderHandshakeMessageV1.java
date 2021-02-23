@@ -16,11 +16,12 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.PublicKey;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.PublicKey;
 
 /**
  * The responder's handshake message.
@@ -54,14 +55,14 @@ public final class ResponderHandshakeMessageV1 implements ResponderHandshakeMess
   private final boolean token; // 1 byte - 0x00 or 0x01
 
   private ResponderHandshakeMessageV1(
-      final  PublicKey ephPublicKey, final Bytes32 nonce, final boolean token) {
+      final PublicKey ephPublicKey, final Bytes32 nonce, final boolean token) {
     this.ephPublicKey = ephPublicKey;
     this.nonce = nonce;
     this.token = token;
   }
 
   public static ResponderHandshakeMessageV1 create(
-      final  PublicKey ephPublicKey, final Bytes32 nonce, final boolean token) {
+      final PublicKey ephPublicKey, final Bytes32 nonce, final boolean token) {
     return new ResponderHandshakeMessageV1(ephPublicKey, nonce, token);
   }
 

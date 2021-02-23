@@ -18,8 +18,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.PublicKey;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
@@ -41,6 +42,8 @@ public class Packet {
   private static final int PACKET_TYPE_INDEX = 97;
   private static final int PACKET_DATA_INDEX = 98;
   private static final int SIGNATURE_INDEX = 32;
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   private final PacketType type;
   private final PacketData data;
@@ -80,7 +83,8 @@ public class Packet {
     this.hash = hash;
     this.signature = decodeSignature(encodedSignature);
     this.publicKey =
-        PublicKey.recoverFromSignature(keccak256(signedPayload), this.signature)
+        ELLIPTIC_CURVE_SIGNATURE
+            .recoverPublicKeyFromSignature(keccak256(signedPayload), this.signature)
             .orElseThrow(
                 () ->
                     new PeerDiscoveryPacketDecodingException(
@@ -182,7 +186,7 @@ public class Packet {
         + '}';
   }
 
-  private static Bytes encodeSignature(final SECP256K1.Signature signature) {
+  private static Bytes encodeSignature(final Signature signature) {
     final MutableBytes encoded = MutableBytes.create(65);
     UInt256.valueOf(signature.getR()).toBytes().copyTo(encoded, 0);
     UInt256.valueOf(signature.getS()).toBytes().copyTo(encoded, 32);
@@ -191,12 +195,12 @@ public class Packet {
     return encoded;
   }
 
-  private static SECP256K1.Signature decodeSignature(final Bytes encodedSignature) {
+  private static Signature decodeSignature(final Bytes encodedSignature) {
     checkArgument(
         encodedSignature != null && encodedSignature.size() == 65, "encodedSignature is 65 bytes");
     final BigInteger r = encodedSignature.slice(0, 32).toUnsignedBigInteger();
     final BigInteger s = encodedSignature.slice(32, 32).toUnsignedBigInteger();
     final int recId = encodedSignature.get(64);
-    return SECP256K1.Signature.create(r, s, (byte) recId);
+    return ELLIPTIC_CURVE_SIGNATURE.createSignature(r, s, (byte) recId);
   }
 }

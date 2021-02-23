@@ -50,9 +50,9 @@ import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -315,7 +315,8 @@ public class IbftBlockHeightManagerTest {
             .createCommit(
                 futureRoundIdentifier,
                 Hash.fromHexStringLenient("0"),
-                Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1));
+                EllipticCurveSignatureFactory.getInstance()
+                    .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
 
     manager.handlePreparePayload(prepare);
     manager.handleCommitPayload(commit);

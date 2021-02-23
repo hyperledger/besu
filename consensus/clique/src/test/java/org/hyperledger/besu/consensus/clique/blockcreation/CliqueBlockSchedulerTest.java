@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler.BlockCreationTimeResult;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -38,7 +39,8 @@ import org.junit.Test;
 
 public class CliqueBlockSchedulerTest {
 
-  private final KeyPair proposerKeyPair = KeyPair.generate();
+  private final KeyPair proposerKeyPair =
+      EllipticCurveSignatureFactory.getInstance().generateKeyPair();
   private Address localAddr;
 
   private final List<Address> validatorList = Lists.newArrayList();

@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
@@ -33,6 +34,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PeerTableTest {
+
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
@@ -82,7 +86,8 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentIp() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId =
+        ELLIPTIC_CURVE_SIGNATURE.generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 
@@ -101,7 +106,8 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentUdpPort() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId =
+        ELLIPTIC_CURVE_SIGNATURE.generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 
@@ -120,7 +126,8 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentIdAndUdpPort() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId =
+        ELLIPTIC_CURVE_SIGNATURE.generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 

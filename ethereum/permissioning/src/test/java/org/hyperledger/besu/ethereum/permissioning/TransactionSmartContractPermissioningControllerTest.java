@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -104,7 +104,9 @@ public class TransactionSmartContractPermissioningControllerTest {
         .gasLimit(0)
         .payload(Bytes.fromHexString("0x1234"))
         .nonce(1)
-        .signature(Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1))
+        .signature(
+            EllipticCurveSignatureFactory.getInstance()
+                .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1))
         .build();
   }
 

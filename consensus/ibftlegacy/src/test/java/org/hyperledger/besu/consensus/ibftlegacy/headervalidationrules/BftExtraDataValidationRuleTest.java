@@ -44,7 +44,8 @@ import org.junit.Test;
 
 public class BftExtraDataValidationRuleTest {
 
-  private final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+  private final EllipticCurveSignature ellipticCurveSignature =
+      EllipticCurveSignatureFactory.getInstance();
 
   private BlockHeader createProposedBlockHeader(
       final KeyPair proposerKeyPair, final List<Address> validators) {
@@ -61,7 +62,8 @@ public class BftExtraDataValidationRuleTest {
     // Hash the header (ignoring committer and proposer seals), and create signature
     final Hash proposerSealHash =
         IbftBlockHashing.calculateDataHashForProposerSeal(header, initialIbftExtraData);
-    final Signature proposerSignature = ellipticCurveSignature.sign(proposerSealHash, proposerKeyPair);
+    final Signature proposerSignature =
+        ellipticCurveSignature.sign(proposerSealHash, proposerKeyPair);
 
     // Construct a new extraData block, containing the constructed proposer signature
     final IbftExtraData proposedData =

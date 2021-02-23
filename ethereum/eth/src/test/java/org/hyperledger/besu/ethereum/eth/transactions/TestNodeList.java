@@ -21,7 +21,7 @@ import static org.apache.logging.log4j.util.Strings.join;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TestNode.shortId;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -53,7 +53,7 @@ public class TestNodeList implements Closeable {
   public TestNode create(
       final Vertx vertx,
       final Integer port,
-      final SECP256K1.KeyPair kp,
+      final KeyPair kp,
       final DiscoveryConfiguration discoveryCfg)
       throws IOException {
     final TestNode node = new TestNode(vertx, port, kp, discoveryCfg);

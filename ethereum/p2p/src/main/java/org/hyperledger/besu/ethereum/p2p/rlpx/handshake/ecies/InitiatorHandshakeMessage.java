@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
+import org.hyperledger.besu.crypto.PublicKey;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.crypto.PublicKey;
 
 public interface InitiatorHandshakeMessage {
 

@@ -30,7 +30,7 @@ public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
   private final Bytes32 nonce;
 
   public static ResponderHandshakeMessageV4 create(
-      final  PublicKey ephPublicKey, final Bytes32 nonce) {
+      final PublicKey ephPublicKey, final Bytes32 nonce) {
     return new ResponderHandshakeMessageV4(ephPublicKey, nonce);
   }
 
@@ -38,16 +38,17 @@ public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
     final RLPInput input = new BytesValueRLPInput(raw, true);
     input.enterList();
     return new ResponderHandshakeMessageV4(
-        EllipticCurveSignatureFactory.getInstance().createPublicKey(input.readBytes()), input.readBytes32());
+        EllipticCurveSignatureFactory.getInstance().createPublicKey(input.readBytes()),
+        input.readBytes32());
   }
 
-  private ResponderHandshakeMessageV4(final  PublicKey ephPublicKey, final Bytes32 nonce) {
+  private ResponderHandshakeMessageV4(final PublicKey ephPublicKey, final Bytes32 nonce) {
     this.ephPublicKey = ephPublicKey;
     this.nonce = nonce;
   }
 
   @Override
-  public  PublicKey getEphPublicKey() {
+  public PublicKey getEphPublicKey() {
     return ephPublicKey;
   }
 

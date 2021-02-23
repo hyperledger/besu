@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -34,7 +35,9 @@ public class CommitPayloadTest {
 
   @Test
   public void roundTripRlp() {
-    final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+    final Signature signature =
+        EllipticCurveSignatureFactory.getInstance()
+            .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     final Hash hash = Hash.fromHexStringLenient("0x8523ba6e7c5f59ae87");
 
     final CommitPayload expectedCommitPayload =

@@ -33,12 +33,13 @@ public class KeyPairSecurityModuleTest {
     final File keyDirectory = temp.newFolder();
     final File keyFile = new File(keyDirectory, "key");
 
-    final SECP256K1.KeyPair keyPair = KeyPairUtil.loadKeyPair(keyFile);
+    final KeyPair keyPair = KeyPairUtil.loadKeyPair(keyFile);
 
     final KeyPairSecurityModule keyPairSecurityModule = new KeyPairSecurityModule(keyPair);
     final ECPoint ecPoint = keyPairSecurityModule.getPublicKey().getW();
     final Bytes encodedBytes = ECPointUtil.getEncodedBytes(ecPoint);
-    final  PublicKey publicKey = SECP256K1.PublicKey.create(encodedBytes);
+    final PublicKey publicKey =
+        EllipticCurveSignatureFactory.getInstance().createPublicKey(encodedBytes);
 
     Assertions.assertThat(keyPair.getPublicKey().getEncodedBytes())
         .isEqualByComparingTo(publicKey.getEncodedBytes());

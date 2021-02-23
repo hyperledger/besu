@@ -22,7 +22,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class NodeKey {
 
   private final SecurityModule securityModule;
-  private final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+  private final EllipticCurveSignature ellipticCurveSignature =
+      EllipticCurveSignatureFactory.getInstance();
 
   public NodeKey(final SecurityModule securityModule) {
     this.securityModule = securityModule;
@@ -42,6 +43,8 @@ public class NodeKey {
 
   public Bytes32 calculateECDHKeyAgreement(final PublicKey partyKey) {
     return securityModule.calculateECDHKeyAgreement(
-        () -> ECPointUtil.fromBouncyCastleECPoint(ellipticCurveSignature.publicKeyAsEcPoint(partyKey)));
+        () ->
+            ECPointUtil.fromBouncyCastleECPoint(
+                ellipticCurveSignature.publicKeyAsEcPoint(partyKey)));
   }
 }

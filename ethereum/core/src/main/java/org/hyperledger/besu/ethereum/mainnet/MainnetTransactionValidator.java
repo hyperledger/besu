@@ -211,9 +211,9 @@ public class MainnetTransactionValidator {
     }
 
     final Signature signature = transaction.getSignature();
-    final BigInteger halfCurveOrder = EllipticCurveSignatureFactory.getInstance().getHalfCurveOrder();
-    if (disallowSignatureMalleability
-        && signature.getS().compareTo(halfCurveOrder) > 0) {
+    final BigInteger halfCurveOrder =
+        EllipticCurveSignatureFactory.getInstance().getHalfCurveOrder();
+    if (disallowSignatureMalleability && signature.getS().compareTo(halfCurveOrder) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_SIGNATURE,
           String.format(

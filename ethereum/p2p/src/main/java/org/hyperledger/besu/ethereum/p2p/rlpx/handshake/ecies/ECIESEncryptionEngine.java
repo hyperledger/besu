@@ -16,7 +16,11 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.*;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.PublicKey;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.crypto.BufferedBlockCipher;
@@ -74,7 +78,7 @@ public class ECIESEncryptionEngine {
   private final byte[] iv;
 
   private ECIESEncryptionEngine(
-      final Bytes agreedSecret, final  PublicKey ephPubKey, final byte[] iv) {
+      final Bytes agreedSecret, final PublicKey ephPubKey, final byte[] iv) {
     this.ephPubKey = ephPubKey;
     this.iv = iv;
 
@@ -109,8 +113,9 @@ public class ECIESEncryptionEngine {
    * @param pubKey The public key of the receiver.
    * @return An engine prepared for encryption.
    */
-  public static ECIESEncryptionEngine forEncryption(final  PublicKey pubKey) {
-    final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+  public static ECIESEncryptionEngine forEncryption(final PublicKey pubKey) {
+    final EllipticCurveSignature ellipticCurveSignature =
+        EllipticCurveSignatureFactory.getInstance();
 
     // Create an ephemeral key pair for IES whose public key we can later append in the message.
     final KeyPair ephKeyPair = ellipticCurveSignature.generateKeyPair();
@@ -297,7 +302,7 @@ public class ECIESEncryptionEngine {
    *
    * @return The ephemeral public key.
    */
-  public  PublicKey getEphPubKey() {
+  public PublicKey getEphPubKey() {
     return ephPubKey;
   }
 

@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.consensus.common.VoteType;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -37,6 +39,9 @@ import org.junit.Test;
 
 public class BftExtraDataTest {
 
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+
   private final String RAW_HEX_ENCODING_STRING =
       "f8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea9400000000000000000000000000000000000"
           + "00001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff8400fedc"
@@ -54,8 +59,8 @@ public class BftExtraDataTest {
     final int round = 0x00FEDCBA;
     final List<Signature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -245,8 +250,8 @@ public class BftExtraDataTest {
     final int round = 0x00FEDCBA;
     final List<Signature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create randomised vanity data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -288,8 +293,8 @@ public class BftExtraDataTest {
     final int round = 0x00FEDCBA;
     final List<Signature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -329,8 +334,8 @@ public class BftExtraDataTest {
     final int round = 0x00FEDCBA;
     final List<Signature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -364,8 +369,8 @@ public class BftExtraDataTest {
     final int round = 0x00FEDCBA;
     final List<Signature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -429,8 +434,8 @@ public class BftExtraDataTest {
     final int round = 0x00FEDCBA;
     final List<Signature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];

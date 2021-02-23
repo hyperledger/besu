@@ -22,8 +22,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -83,9 +85,12 @@ import org.junit.rules.TemporaryFolder;
 public class PrivacyReorgTest {
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
-  private static final SECP256K1.KeyPair KEY_PAIR =
-      SECP256K1.KeyPair.create(
-          SECP256K1.PrivateKey.create(
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+
+  private static final KeyPair KEY_PAIR =
+      ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
+          ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
   private static final Bytes ENCLAVE_PUBLIC_KEY =

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
 import static org.apache.tuweni.bytes.Bytes.wrap;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -95,7 +96,8 @@ public class PeerInfo {
   }
 
   public Address getAddress() {
-    final PublicKey remotePublicKey = PublicKey.create(nodeId);
+    final PublicKey remotePublicKey =
+        EllipticCurveSignatureFactory.getInstance().createPublicKey(nodeId);
     return Util.publicKeyToAddress(remotePublicKey);
   }
 

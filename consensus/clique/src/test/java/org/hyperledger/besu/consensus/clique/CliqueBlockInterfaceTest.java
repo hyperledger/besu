@@ -20,6 +20,7 @@ import static org.hyperledger.besu.consensus.common.VoteType.ADD;
 import static org.hyperledger.besu.consensus.common.VoteType.DROP;
 
 import org.hyperledger.besu.consensus.common.ValidatorVote;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -36,7 +37,8 @@ import org.junit.Test;
 
 public class CliqueBlockInterfaceTest {
 
-  private static final KeyPair proposerKeys = KeyPair.generate();
+  private static final KeyPair proposerKeys =
+      EllipticCurveSignatureFactory.getInstance().generateKeyPair();
   private static final Address proposerAddress =
       Util.publicKeyToAddress(proposerKeys.getPublicKey());
   private static final List<Address> validatorList = singletonList(proposerAddress);

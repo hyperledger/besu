@@ -180,13 +180,14 @@ public class JsonRpcResponseUtils {
     when(transaction.getPublicKey()).thenReturn(Optional.ofNullable(publicKey));
     when(transaction.getSignature())
         .thenReturn(
-                EllipticCurveSignatureFactory.getInstance().createSignature(
-                Bytes.fromHexString(r).toUnsignedBigInteger(),
-                Bytes.fromHexString(s).toUnsignedBigInteger(),
-                Bytes.fromHexString(v)
-                    .toUnsignedBigInteger()
-                    .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
-                    .byteValueExact()));
+            EllipticCurveSignatureFactory.getInstance()
+                .createSignature(
+                    Bytes.fromHexString(r).toUnsignedBigInteger(),
+                    Bytes.fromHexString(s).toUnsignedBigInteger(),
+                    Bytes.fromHexString(v)
+                        .toUnsignedBigInteger()
+                        .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
+                        .byteValueExact()));
 
     return new TransactionCompleteResult(
         new TransactionWithMetadata(

@@ -77,11 +77,12 @@ public class PrivGetPrivateTransactionIntegrationTest {
   private final Address sender =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
 
-  private final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+  private final EllipticCurveSignature ellipticCurveSignature =
+      EllipticCurveSignatureFactory.getInstance();
 
   private final KeyPair KEY_PAIR =
-          ellipticCurveSignature.createKeyPair(
-                  ellipticCurveSignature.createPrivateKey(
+      ellipticCurveSignature.createKeyPair(
+          ellipticCurveSignature.createPrivateKey(
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
 

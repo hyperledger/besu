@@ -54,7 +54,8 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
         connectionFuture,
         connectionEventDispatcher,
         metricsSystem);
-    handshaker.prepareInitiator(nodeKey, EllipticCurveSignatureFactory.getInstance().createPublicKey(peer.getId()));
+    handshaker.prepareInitiator(
+        nodeKey, EllipticCurveSignatureFactory.getInstance().createPublicKey(peer.getId()));
     this.first = handshaker.firstMessage();
   }
 

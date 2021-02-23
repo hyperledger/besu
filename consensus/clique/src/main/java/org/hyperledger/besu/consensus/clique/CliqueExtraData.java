@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.clique;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -106,7 +107,9 @@ public class CliqueExtraData implements ParsedExtraData {
   }
 
   private static Signature parseProposerSeal(final Bytes proposerSealRaw) {
-    return proposerSealRaw.isZero() ? null : Signature.decode(proposerSealRaw);
+    return proposerSealRaw.isZero()
+        ? null
+        : EllipticCurveSignatureFactory.getInstance().decodeSignature(proposerSealRaw);
   }
 
   private static List<Address> extractValidators(final Bytes validatorsRaw) {

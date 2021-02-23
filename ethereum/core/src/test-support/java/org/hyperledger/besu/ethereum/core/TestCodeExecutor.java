@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.ethereum.mainnet.MainnetMessageCallProcessor;
 import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -58,7 +58,9 @@ public class TestCodeExecutor {
         Transaction.builder()
             .value(Wei.ZERO)
             .sender(SENDER_ADDRESS)
-            .signature(Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1))
+            .signature(
+                EllipticCurveSignatureFactory.getInstance()
+                    .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1))
             .gasLimit(gasLimit)
             .to(SENDER_ADDRESS)
             .payload(Bytes.EMPTY)

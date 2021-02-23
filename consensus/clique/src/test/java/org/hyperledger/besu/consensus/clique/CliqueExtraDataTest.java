@@ -17,6 +17,8 @@ package org.hyperledger.besu.consensus.clique;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -37,9 +39,13 @@ import org.junit.Test;
 
 public class CliqueExtraDataTest {
 
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+
   @Test
   public void encodeAndDecodingDoNotAlterData() {
-    final Signature proposerSeal = Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final Signature proposerSeal =
+        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     final List<Address> validators =
         Arrays.asList(
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
@@ -109,7 +115,7 @@ public class CliqueExtraDataTest {
   public void addressToExtraDataString() {
     final List<KeyPair> nodeKeys = Lists.newArrayList();
     for (int i = 0; i < 4; i++) {
-      nodeKeys.add(KeyPair.generate());
+      nodeKeys.add(ELLIPTIC_CURVE_SIGNATURE.generateKeyPair());
     }
 
     final List<Address> addresses =

@@ -1,74 +1,87 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.crypto;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-import java.math.BigInteger;
-import java.util.Objects;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class PrivateKey implements java.security.PrivateKey {
 
-    private final Bytes32 encoded;
-    private final String algorithm;
+  private final Bytes32 encoded;
+  private final String algorithm;
 
-    private PrivateKey(final Bytes32 encoded, final String algorithm) {
-        checkNotNull(encoded);
-        checkNotNull(algorithm);
-        this.encoded = encoded;
-        this.algorithm = algorithm;
+  private PrivateKey(final Bytes32 encoded, final String algorithm) {
+    checkNotNull(encoded);
+    checkNotNull(algorithm);
+    this.encoded = encoded;
+    this.algorithm = algorithm;
+  }
+
+  public static PrivateKey create(final BigInteger key, final String algorithm) {
+    checkNotNull(key);
+    return create(UInt256.valueOf(key).toBytes(), algorithm);
+  }
+
+  public static PrivateKey create(final Bytes32 key, final String algorithm) {
+    return new PrivateKey(key, algorithm);
+  }
+
+  @Override
+  public boolean equals(final Object other) {
+    if (!(other instanceof PrivateKey)) {
+      return false;
     }
 
-    public static PrivateKey create(final BigInteger key, final String algorithm) {
-        checkNotNull(key);
-        return create(UInt256.valueOf(key).toBytes(), algorithm);
-    }
+    final PrivateKey that = (PrivateKey) other;
+    return this.encoded.equals(that.encoded) && this.algorithm.equals(that.algorithm);
+  }
 
-    public static PrivateKey create(final Bytes32 key, final String algorithm) {
-        return new PrivateKey(key, algorithm);
-    }
+  @Override
+  public byte[] getEncoded() {
+    return encoded.toArrayUnsafe();
+  }
 
-    @Override
-    public boolean equals(final Object other) {
-        if (!(other instanceof PrivateKey)) {
-            return false;
-        }
+  public Bytes32 getEncodedBytes() {
+    return encoded;
+  }
 
-        final PrivateKey that = (PrivateKey) other;
-        return this.encoded.equals(that.encoded) && this.algorithm.equals(that.algorithm);
-    }
+  public BigInteger getD() {
+    return encoded.toUnsignedBigInteger();
+  }
 
-    @Override
-    public byte[] getEncoded() {
-        return encoded.toArrayUnsafe();
-    }
+  @Override
+  public String getAlgorithm() {
+    return algorithm;
+  }
 
-    public Bytes32 getEncodedBytes() {
-        return encoded;
-    }
+  @Override
+  public String getFormat() {
+    return null;
+  }
 
-    public BigInteger getD() {
-        return encoded.toUnsignedBigInteger();
-    }
+  @Override
+  public int hashCode() {
+    return encoded.hashCode();
+  }
 
-    @Override
-    public String getAlgorithm() {
-        return algorithm;
-    }
-
-    @Override
-    public String getFormat() {
-        return null;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(encoded, algorithm);
-    }
-
-    @Override
-    public String toString() {
-        return "PrivateKey{encoded=" + encoded + ", algorithm=" + algorithm + "}";
-    }
+  @Override
+  public String toString() {
+    return encoded.toString();
+  }
 }

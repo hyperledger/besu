@@ -30,6 +30,8 @@ import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -56,8 +58,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CliqueMiningCoordinatorTest {
 
-  private final KeyPair proposerKeys = KeyPair.generate();
-  private final KeyPair validatorKeys = KeyPair.generate();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+
+  private final KeyPair proposerKeys = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
+  private final KeyPair validatorKeys = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerKeys.getPublicKey());
   private final Address validatorAddress = Util.publicKeyToAddress(validatorKeys.getPublicKey());
 

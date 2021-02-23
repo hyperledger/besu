@@ -60,7 +60,8 @@ public class TransactionDecoder {
               TransactionType.EIP1559,
               TransactionDecoder::decodeEIP1559);
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   public static Transaction decodeForWire(final RLPInput rlpInput) {
     if (rlpInput.nextIsList()) {
@@ -157,7 +158,7 @@ public class TransactionDecoder {
     final Transaction transaction =
         preSignatureTransactionBuilder
             .signature(
-                    ELLIPTIC_CURVE_SIGNATURE.createSignature(
+                ELLIPTIC_CURVE_SIGNATURE.createSignature(
                     rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
                     rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
                     recId))

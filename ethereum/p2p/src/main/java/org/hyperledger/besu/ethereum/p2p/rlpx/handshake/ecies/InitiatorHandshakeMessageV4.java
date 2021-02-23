@@ -14,7 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
-import org.hyperledger.besu.crypto.*;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.Hash;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -25,7 +31,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMessage {
 
   public static final int VERSION = 4;
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   private final PublicKey pubKey;
   private final Signature signature;
@@ -56,11 +63,12 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
     final RLPInput input = new BytesValueRLPInput(bytes, true);
     input.enterList();
     final Signature signature = ELLIPTIC_CURVE_SIGNATURE.decodeSignature(input.readBytes());
-    final  PublicKey pubKey = ELLIPTIC_CURVE_SIGNATURE.createPublicKey(input.readBytes());
+    final PublicKey pubKey = ELLIPTIC_CURVE_SIGNATURE.createPublicKey(input.readBytes());
     final Bytes32 nonce = input.readBytes32();
     final Bytes32 staticSharedSecret = nodeKey.calculateECDHKeyAgreement(pubKey);
-    final  PublicKey ephPubKey =
-      ELLIPTIC_CURVE_SIGNATURE.recoverPublicKeyFromSignature(staticSharedSecret.xor(nonce), signature)
+    final PublicKey ephPubKey =
+        ELLIPTIC_CURVE_SIGNATURE
+            .recoverPublicKeyFromSignature(staticSharedSecret.xor(nonce), signature)
             .orElseThrow(() -> new RuntimeException("Could not recover public key from signature"));
 
     return new InitiatorHandshakeMessageV4(pubKey, signature, ephPubKey, nonce);
@@ -96,12 +104,12 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
   }
 
   @Override
-  public  PublicKey getPubKey() {
+  public PublicKey getPubKey() {
     return pubKey;
   }
 
   @Override
-  public  PublicKey getEphPubKey() {
+  public PublicKey getEphPubKey() {
     return ephPubKey;
   }
 

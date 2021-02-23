@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.payload.Authored;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.RoundSpecific;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -76,7 +77,8 @@ public class BftMessage<P extends Payload> implements Authored, RoundSpecific {
       final RLPInput rlpInput, final Function<RLPInput, T> decoder) {
     rlpInput.enterList();
     final T unsignedMessageData = decoder.apply(rlpInput);
-    final Signature signature = rlpInput.readBytes((Signature::decode));
+    final Signature signature =
+        rlpInput.readBytes((EllipticCurveSignatureFactory.getInstance()::decodeSignature));
     rlpInput.leaveList();
 
     return SignedData.create(unsignedMessageData, signature);

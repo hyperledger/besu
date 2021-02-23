@@ -22,10 +22,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.PrivateKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -53,6 +54,8 @@ import org.junit.Test;
 public class PeerDiscoveryAgentTest {
 
   private static final int BROADCAST_TCP_PORT = 30303;
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
@@ -75,8 +78,8 @@ public class PeerDiscoveryAgentTest {
   @Test
   public void testNodeRecordCreated() {
     KeyPair keyPair =
-        KeyPair.create(
-            PrivateKey.create(
+        ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
+            ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(
                 Bytes32.fromHexString(
                     "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
     final MockPeerDiscoveryAgent agent =

@@ -18,7 +18,11 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
 
-import org.hyperledger.besu.crypto.*;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -92,7 +96,8 @@ public class PrivateTransaction {
   @Deprecated(since = "1.4.3")
   protected volatile Hash hash;
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   public static Builder builder() {
     return new Builder();
@@ -363,7 +368,8 @@ public class PrivateTransaction {
   public Address getSender() {
     if (sender == null) {
       final PublicKey publicKey =
-              ELLIPTIC_CURVE_SIGNATURE.recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
+          ELLIPTIC_CURVE_SIGNATURE
+              .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
               .orElseThrow(
                   () ->
                       new IllegalStateException(

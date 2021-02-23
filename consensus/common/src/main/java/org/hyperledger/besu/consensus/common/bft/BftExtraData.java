@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -101,7 +102,9 @@ public class BftExtraData implements ParsedExtraData {
       vote = Optional.of(Vote.readFrom(rlpInput));
     }
     final int round = rlpInput.readInt();
-    final List<Signature> seals = rlpInput.readList(rlp -> Signature.decode(rlp.readBytes()));
+    final List<Signature> seals =
+        rlpInput.readList(
+            rlp -> EllipticCurveSignatureFactory.getInstance().decodeSignature(rlp.readBytes()));
     rlpInput.leaveList();
 
     return new BftExtraData(vanityData, seals, vote, round, validators);

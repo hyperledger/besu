@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -56,7 +57,8 @@ public class ValidatorPeersTest {
   @Before
   public void setup() {
     for (int i = 0; i < 4; i++) {
-      final PublicKey pubKey = PublicKey.create(BigInteger.valueOf(i));
+      final PublicKey pubKey =
+          EllipticCurveSignatureFactory.getInstance().createPublicKey(BigInteger.valueOf(i));
       publicKeys.add(pubKey);
       final Address address = Util.publicKeyToAddress(pubKey);
 

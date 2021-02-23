@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.account;
 
-import org.hyperledger.besu.crypto.*;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.PrivateKey;
+import org.hyperledger.besu.crypto.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -41,7 +45,8 @@ public class Account {
   private final Address address;
   private long nonce = 0;
 
-  private static  final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   private Account(
       final EthTransactions eth,
@@ -74,7 +79,10 @@ public class Account {
   static Account fromPrivateKey(
       final EthTransactions eth, final String name, final String privateKey) {
     return new Account(
-        eth, name, ELLIPTIC_CURVE_SIGNATURE.createKeyPair(ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString(privateKey))));
+        eth,
+        name,
+        ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
+            ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString(privateKey))));
   }
 
   public Optional<Credentials> web3jCredentials() {

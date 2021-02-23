@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
@@ -46,9 +48,11 @@ public class PrivateTransactionDataFixture {
       Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(2018);
 
-  public static final SECP256K1.KeyPair KEY_PAIR =
-      SECP256K1.KeyPair.create(
-          SECP256K1.PrivateKey.create(
+  public static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+  public static final KeyPair KEY_PAIR =
+      ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
+          ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
 

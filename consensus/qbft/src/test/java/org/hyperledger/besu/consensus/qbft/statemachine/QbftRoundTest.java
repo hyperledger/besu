@@ -40,6 +40,7 @@ import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.Signature;
@@ -94,7 +95,8 @@ public class QbftRoundTest {
   private BftExtraData proposedExtraData;
 
   private final Signature remoteCommitSeal =
-      Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1);
+      EllipticCurveSignatureFactory.getInstance()
+          .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
 
   @Before
   public void setup() {

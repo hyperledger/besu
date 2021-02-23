@@ -24,7 +24,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -45,6 +46,9 @@ import org.junit.Test;
 
 public class IbftBlockHeaderValidationRulesetFactoryTest {
 
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+
   private ProtocolContext setupContextWithValidators(final Collection<Address> validators) {
     final BftContext bftContext = mock(BftContext.class);
     final VoteTallyCache mockCache = mock(VoteTallyCache.class);
@@ -58,7 +62,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderPasses() {
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
@@ -81,7 +85,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   @Test
   public void ibftValidateHeaderFails() {
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
@@ -126,7 +130,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
         new IbftExtraData(
             Bytes.wrap(new byte[IbftExtraData.EXTRA_VANITY_LENGTH]),
             emptyList(),
-            Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0),
             validators);
 
     builder.extraData(initialIbftExtraData.encode());
@@ -134,7 +138,8 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final Hash proposerSealHash =
         IbftBlockHashing.calculateDataHashForProposerSeal(parentHeader, initialIbftExtraData);
 
-    final Signature proposerSignature = SECP256K1.sign(proposerSealHash, proposerKeyPair);
+    final Signature proposerSignature =
+        ELLIPTIC_CURVE_SIGNATURE.sign(proposerSealHash, proposerKeyPair);
 
     final IbftExtraData proposedData =
         new IbftExtraData(
@@ -146,7 +151,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     final Hash headerHashForCommitters =
         IbftBlockHashing.calculateDataHashForCommittedSeal(parentHeader, proposedData);
     final Signature proposerAsCommitterSignature =
-        SECP256K1.sign(headerHashForCommitters, proposerKeyPair);
+        ELLIPTIC_CURVE_SIGNATURE.sign(headerHashForCommitters, proposerKeyPair);
 
     final IbftExtraData sealedData =
         new IbftExtraData(

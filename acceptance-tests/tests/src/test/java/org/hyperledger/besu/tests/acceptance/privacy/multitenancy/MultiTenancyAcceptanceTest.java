@@ -23,7 +23,9 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.ethereum.core.Address.DEFAULT_PRIVACY;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -57,9 +59,11 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private final ObjectMapper mapper = new ObjectMapper();
   private Cluster multiTenancyCluster;
 
-  private static final SECP256K1.KeyPair TEST_KEY =
-      SECP256K1.KeyPair.create(
-          SECP256K1.PrivateKey.create(
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+  private static final KeyPair TEST_KEY =
+      ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
+          ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(
               new BigInteger(
                   "853d7f0010fd86d0d7811c1f9d968ea89a24484a8127b4a483ddf5d2cfec766d", 16)));
   private static final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";

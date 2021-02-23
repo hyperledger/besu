@@ -17,7 +17,11 @@ package org.hyperledger.besu.ethereum.core;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import org.hyperledger.besu.crypto.*;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -90,7 +94,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   protected volatile Hash hash;
   private final TransactionType transactionType;
 
-  private final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+  private final EllipticCurveSignature ellipticCurveSignature =
+      EllipticCurveSignatureFactory.getInstance();
 
   public static Builder builder() {
     return new Builder();
@@ -399,8 +404,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public Address getSender() {
     if (sender == null) {
-      final  PublicKey publicKey =
-              ellipticCurveSignature.recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
+      final PublicKey publicKey =
+          ellipticCurveSignature
+              .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
               .orElseThrow(
                   () ->
                       new IllegalStateException(
@@ -416,7 +422,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the public key
    */
   public Optional<String> getPublicKey() {
-    return ellipticCurveSignature.recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
+    return ellipticCurveSignature
+        .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
         .map(PublicKey::toString);
   }
 
@@ -849,20 +856,21 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     Signature computeSignature(final KeyPair keys) {
-      return EllipticCurveSignatureFactory.getInstance().sign(
-          computeSenderRecoveryHash(
-              transactionType,
-              nonce,
-              gasPrice,
-              gasPremium,
-              feeCap,
-              gasLimit,
-              to,
-              value,
-              payload,
-              accessList,
-              chainId),
-          keys);
+      return EllipticCurveSignatureFactory.getInstance()
+          .sign(
+              computeSenderRecoveryHash(
+                  transactionType,
+                  nonce,
+                  gasPrice,
+                  gasPremium,
+                  feeCap,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  accessList,
+                  chainId),
+              keys);
     }
   }
 }

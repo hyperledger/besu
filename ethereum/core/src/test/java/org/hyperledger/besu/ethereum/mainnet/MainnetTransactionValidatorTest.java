@@ -24,6 +24,8 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -52,7 +54,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainnetTransactionValidatorTest {
 
-  private static final KeyPair senderKeys = KeyPair.generate();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+  private static final KeyPair senderKeys = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
 
   @Mock private GasCalculator gasCalculator;
 
@@ -176,7 +180,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator, false, Optional.of(BigInteger.ONE), defaultGoQuorumCompatibilityMode);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
-    final KeyPair senderKeyPair = KeyPair.generate();
+    final KeyPair senderKeyPair = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
     final Address arbitrarySender = Address.fromHexString("1");
     builder.gasPrice(Wei.ZERO).nonce(0).sender(arbitrarySender).value(Wei.ZERO);
 

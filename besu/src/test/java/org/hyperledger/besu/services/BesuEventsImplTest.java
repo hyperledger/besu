@@ -80,7 +80,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BesuEventsImplTest {
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
   private static final KeyPair KEY_PAIR1 = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
   private static final org.hyperledger.besu.ethereum.core.Transaction TX1 = createTransaction(1);
   private static final org.hyperledger.besu.ethereum.core.Transaction TX2 = createTransaction(2);

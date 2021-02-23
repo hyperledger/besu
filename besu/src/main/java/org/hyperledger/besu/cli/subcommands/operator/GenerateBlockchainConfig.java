@@ -21,7 +21,11 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.PrivateKey;
+import org.hyperledger.besu.crypto.PublicKey;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 
@@ -53,6 +57,9 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true)
 class GenerateBlockchainConfig implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
+
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   @Option(
       required = true,
@@ -156,8 +163,8 @@ class GenerateBlockchainConfig implements Runnable {
     final String publicKeyText = publicKeyJson.asText();
 
     try {
-      final  PublicKey publicKey =
-          SECP256K1.PublicKey.create(Bytes.fromHexString(publicKeyText));
+      final PublicKey publicKey =
+          ELLIPTIC_CURVE_SIGNATURE.createPublicKey(Bytes.fromHexString(publicKeyText));
       writeKeypair(publicKey, null);
       LOG.info("Public key imported from configuration.({})", publicKey.toString());
     } catch (final IOException e) {
@@ -180,7 +187,7 @@ class GenerateBlockchainConfig implements Runnable {
   private void generateNodeKeypair(final int node) {
     try {
       LOG.info("Generating keypair for node {}.", node);
-      final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
+      final KeyPair keyPair = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
       writeKeypair(keyPair.getPublicKey(), keyPair.getPrivateKey());
 
     } catch (final IOException e) {
@@ -196,8 +203,7 @@ class GenerateBlockchainConfig implements Runnable {
    * @param privateKey The private key. No file is created if privateKey is NULL.
    * @throws IOException If the file cannot be written or accessed.
    */
-  private void writeKeypair(
-      final  PublicKey publicKey, final SECP256K1.PrivateKey privateKey)
+  private void writeKeypair(final PublicKey publicKey, final PrivateKey privateKey)
       throws IOException {
     final Address nodeAddress = Util.publicKeyToAddress(publicKey);
     addressesForGenesisExtraData.add(nodeAddress);

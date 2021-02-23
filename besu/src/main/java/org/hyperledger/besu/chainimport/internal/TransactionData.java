@@ -41,7 +41,8 @@ public class TransactionData {
   private final Optional<Address> to;
   private final PrivateKey privateKey;
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   @JsonCreator
   public TransactionData(

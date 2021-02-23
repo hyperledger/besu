@@ -23,7 +23,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -44,6 +46,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Stat
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -58,8 +61,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class TransactionSimulatorTest {
 
-  private static final SECP256K1.Signature FAKE_SIGNATURE =
-      SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+  private static final BigInteger HALF_CURVE_ORDER = ELLIPTIC_CURVE_SIGNATURE.getHalfCurveOrder();
+  private static final Signature FAKE_SIGNATURE =
+      ELLIPTIC_CURVE_SIGNATURE.createSignature(HALF_CURVE_ORDER, HALF_CURVE_ORDER, (byte) 0);
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");

@@ -16,6 +16,8 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -33,9 +35,13 @@ import org.junit.Test;
 
 public class BftExtraDataTest {
 
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
+
   @Test
   public void emptyListsConstituteValidContent() {
-    final Signature proposerSeal = Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final Signature proposerSeal =
+        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     final List<Address> validators = Lists.newArrayList();
     final List<Signature> committerSeals = Lists.newArrayList();
 
@@ -62,11 +68,12 @@ public class BftExtraDataTest {
   @Test
   public void fullyPopulatedDataProducesCorrectlyFormedExtraDataObject() {
     final List<Address> validators = Arrays.asList(Address.ECREC, Address.SHA256);
-    final Signature proposerSeal = Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final Signature proposerSeal =
+        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     final List<Signature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList(); // This is required to create a "root node" for all RLP'd data
@@ -91,7 +98,8 @@ public class BftExtraDataTest {
 
   @Test(expected = RLPException.class)
   public void incorrectlyStructuredRlpThrowsException() {
-    final Signature proposerSeal = Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final Signature proposerSeal =
+        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     final List<Address> validators = Lists.newArrayList();
     final List<Signature> committerSeals = Lists.newArrayList();
 
@@ -111,11 +119,12 @@ public class BftExtraDataTest {
   @Test(expected = RLPException.class)
   public void incorrectlySizedVanityDataThrowsException() {
     final List<Address> validators = Arrays.asList(Address.ECREC, Address.SHA256);
-    final Signature proposerSeal = Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final Signature proposerSeal =
+        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     final List<Signature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();

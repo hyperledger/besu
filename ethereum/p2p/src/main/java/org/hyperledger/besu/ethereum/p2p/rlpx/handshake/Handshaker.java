@@ -159,5 +159,5 @@ public interface Handshaker {
    * @throws IllegalStateException Thrown if this handshake has not completed and hence it cannot
    *     return the other party's public key yet.
    */
-   PublicKey partyPubKey();
+  PublicKey partyPubKey();
 }

@@ -50,7 +50,8 @@ public class PendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_TRANSACTION_HASHES = 5;
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
   private static final KeyPair KEYS1 = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
   private static final KeyPair KEYS2 = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
   private static final String ADDED_COUNTER = "transactions_added_total";

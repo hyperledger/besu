@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibftlegacy;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -42,7 +42,8 @@ public class TestHelpers {
         IbftBlockHashing.calculateDataHashForProposerSeal(
             blockHeaderBuilder.buildHeader(), unsignedExtraData);
 
-    final Signature proposerSignature = SECP256K1.sign(signingHash, signer);
+    final Signature proposerSignature =
+        EllipticCurveSignatureFactory.getInstance().sign(signingHash, signer);
 
     final IbftExtraData signedExtraData =
         new IbftExtraData(

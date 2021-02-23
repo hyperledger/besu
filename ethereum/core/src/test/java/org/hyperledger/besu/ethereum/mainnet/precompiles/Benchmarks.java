@@ -20,7 +20,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.crypto.*;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.Hash;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.PrivateKey;
+import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -81,10 +86,11 @@ public class Benchmarks {
           .build();
 
   public static void benchSecp256k1Recover() {
-    final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+    final EllipticCurveSignature ellipticCurveSignature =
+        EllipticCurveSignatureFactory.getInstance();
 
     final PrivateKey privateKey =
-      ellipticCurveSignature.createPrivateKey(
+        ellipticCurveSignature.createPrivateKey(
             new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
     final KeyPair keyPair = ellipticCurveSignature.createKeyPair(privateKey);
 

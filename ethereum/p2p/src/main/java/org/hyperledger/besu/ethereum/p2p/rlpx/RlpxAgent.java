@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
 
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.PublicKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -72,7 +72,7 @@ public class RlpxAgent {
   private final int maxRemotelyInitiatedConnections;
   // xor'ing with this mask will allow us to randomly let new peers connect
   // without allowing the counterparty to play nodeId farming games
-  private final Bytes nodeIdMask = Bytes.random(SECP256K1.PublicKey.BYTE_LENGTH);
+  private final Bytes nodeIdMask = Bytes.random(PublicKey.BYTE_LENGTH);
 
   @VisibleForTesting final Map<Bytes, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
 

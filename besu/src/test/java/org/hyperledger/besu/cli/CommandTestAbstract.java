@@ -243,11 +243,14 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.forkIdSupplier(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
-    final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+    final EllipticCurveSignature ellipticCurveSignature =
+        EllipticCurveSignatureFactory.getInstance();
 
     final Bytes32 keyPairPrvKey =
         Bytes32.fromHexString("0xf7a58d5e755d51fa2f6206e91dd574597c73248aaf946ec1964b8c6268d6207b");
-    keyPair = ellipticCurveSignature.createKeyPair(ellipticCurveSignature.createPrivateKey(keyPairPrvKey));
+    keyPair =
+        ellipticCurveSignature.createKeyPair(
+            ellipticCurveSignature.createPrivateKey(keyPairPrvKey));
 
     lenient().when(nodeKey.getPublicKey()).thenReturn(keyPair.getPublicKey());
 

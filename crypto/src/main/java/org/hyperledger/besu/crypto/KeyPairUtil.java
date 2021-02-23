@@ -32,7 +32,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class KeyPairUtil {
   private static final Logger LOG = LogManager.getLogger();
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   public static String loadResourceFile(final String resourcePath) {
     try {
@@ -49,7 +50,8 @@ public class KeyPairUtil {
     if (keyData == null || keyData.isEmpty()) {
       throw new IllegalArgumentException("Unable to load resource: " + resourcePath);
     }
-    PrivateKey privateKey = ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString((keyData)));
+    PrivateKey privateKey =
+        ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString((keyData)));
     keyPair = ELLIPTIC_CURVE_SIGNATURE.createKeyPair(privateKey);
 
     LOG.info("Loaded keyPair {} from {}", keyPair.getPublicKey().toString(), resourcePath);

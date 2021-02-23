@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -67,7 +68,8 @@ import org.junit.Test;
 
 public class BlockTransactionSelectorTest {
 
-  private static final KeyPair keyPair = KeyPair.generate();
+  private static final KeyPair keyPair =
+      EllipticCurveSignatureFactory.getInstance().generateKeyPair();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final Blockchain blockchain = new ReferenceTestBlockchain();

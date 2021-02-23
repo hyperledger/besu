@@ -18,7 +18,12 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
-import org.hyperledger.besu.crypto.*;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
@@ -83,7 +88,8 @@ public class ECIESHandshaker implements Handshaker {
 
   private boolean version4 = true;
 
-  private final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+  private final EllipticCurveSignature ellipticCurveSignature =
+      EllipticCurveSignatureFactory.getInstance();
 
   @Override
   public void prepareInitiator(final NodeKey nodeKey, final PublicKey theirPubKey) {
@@ -354,7 +360,8 @@ public class ECIESHandshaker implements Handshaker {
   /** Computes the secrets from the two exchanged messages. */
   void computeSecrets() {
     final Bytes agreedSecret =
-      ellipticCurveSignature.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), partyEphPubKey);
+        ellipticCurveSignature.calculateECDHKeyAgreement(
+            ephKeyPair.getPrivateKey(), partyEphPubKey);
 
     final Bytes sharedSecret =
         keccak256(

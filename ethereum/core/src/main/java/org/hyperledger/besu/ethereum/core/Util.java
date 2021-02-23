@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.PublicKey;
 import org.hyperledger.besu.crypto.Signature;
 
@@ -30,7 +31,8 @@ public class Util {
    * @return The Address of the Ethereum node which signed the data defined by the supplied dataHash
    */
   public static Address signatureToAddress(final Signature seal, final Hash dataHash) {
-    return PublicKey.recoverFromSignature(dataHash, seal)
+    return EllipticCurveSignatureFactory.getInstance()
+        .recoverPublicKeyFromSignature(dataHash, seal)
         .map(Util::publicKeyToAddress)
         .orElse(null);
   }

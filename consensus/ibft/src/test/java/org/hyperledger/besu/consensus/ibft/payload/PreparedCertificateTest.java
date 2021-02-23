@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -39,6 +41,9 @@ public class PreparedCertificateTest {
 
   private static final ConsensusRoundIdentifier ROUND_IDENTIFIER =
       new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
+
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   @Test
   public void roundTripRlpWithNoPreparePayloads() {
@@ -63,7 +68,8 @@ public class PreparedCertificateTest {
     final SignedData<ProposalPayload> signedProposalPayload = signedProposal();
     final PreparePayload preparePayload =
         new PreparePayload(ROUND_IDENTIFIER, Hash.fromHexStringLenient("0x8523ba6e7c5f59ae87"));
-    final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+    final Signature signature =
+        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     final SignedData<PreparePayload> signedPrepare =
         PayloadDeserializers.from(preparePayload, signature);
 
@@ -85,7 +91,8 @@ public class PreparedCertificateTest {
         ProposedBlockHelpers.createProposalBlock(
             singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
-    final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+    final Signature signature =
+        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     return PayloadDeserializers.from(proposalPayload, signature);
   }
 }

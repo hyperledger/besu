@@ -29,7 +29,8 @@ import javax.inject.Named;
 class CliqueGenesisFileModule extends GenesisFileModule {
 
   private final NodeKey nodeKey =
-      new NodeKey(new KeyPairSecurityModule(EllipticCurveSignatureFactory.getInstance().generateKeyPair()));
+      new NodeKey(
+          new KeyPairSecurityModule(EllipticCurveSignatureFactory.getInstance().generateKeyPair()));
 
   CliqueGenesisFileModule(final String genesisConfig) {
     super(genesisConfig);

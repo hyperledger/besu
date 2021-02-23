@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -137,7 +138,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
   public BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata(
       final BlockHeader header) {
-    final KeyPair keyPair = KeyPair.generate();
+    final KeyPair keyPair = EllipticCurveSignatureFactory.getInstance().generateKeyPair();
     final List<TransactionWithMetadata> transactions = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
       final Transaction transaction = transactionTestFixture.createTransaction(keyPair);

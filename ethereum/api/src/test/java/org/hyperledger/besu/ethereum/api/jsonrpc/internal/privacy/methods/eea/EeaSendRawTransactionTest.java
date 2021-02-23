@@ -67,10 +67,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EeaSendRawTransactionTest {
 
+  static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
   static final String VALID_LEGACY_PRIVATE_TRANSACTION_RLP = validPrivateTransactionRlp();
   static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP =
       validPrivateTransactionRlpPrivacyGroup();
-  static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
 
   // RLP encode fails creating a transaction without privateFrom so must be manually encoded
   private static final String PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP_NO_PRIVATE_FROM =
@@ -89,7 +90,7 @@ public class EeaSendRawTransactionTest {
           Optional.of(
               Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
           Wei.ZERO,
-            ELLIPTIC_CURVE_SIGNATURE.createSignature(
+          ELLIPTIC_CURVE_SIGNATURE.createSignature(
               new BigInteger(
                   "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
               new BigInteger(
@@ -453,7 +454,7 @@ public class EeaSendRawTransactionTest {
   private static String rlpEncodeTransaction(
       final PrivateTransaction.Builder privateTransactionBuilder) {
     final KeyPair keyPair =
-          ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
+        ELLIPTIC_CURVE_SIGNATURE.createKeyPair(
             ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(
                 new BigInteger(
                     "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));

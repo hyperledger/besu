@@ -61,7 +61,8 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     final int recId = d.get(63) - V_BASE;
     final BigInteger r = d.slice(64, 32).toUnsignedBigInteger();
     final BigInteger s = d.slice(96, 32).toUnsignedBigInteger();
-    final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+    final EllipticCurveSignature ellipticCurveSignature =
+        EllipticCurveSignatureFactory.getInstance();
 
     final Signature signature;
     try {
@@ -75,7 +76,8 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     // check the arguments ahead of time to determine if the fail will happen and
     // the library needs to be updated.
     try {
-      final Optional<PublicKey> recovered = ellipticCurveSignature.recoverPublicKeyFromSignature(h, signature);
+      final Optional<PublicKey> recovered =
+          ellipticCurveSignature.recoverPublicKeyFromSignature(h, signature);
       if (!recovered.isPresent()) {
         return Bytes.EMPTY;
       }

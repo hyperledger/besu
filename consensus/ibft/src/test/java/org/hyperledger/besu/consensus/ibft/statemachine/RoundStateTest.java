@@ -26,9 +26,10 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
+import org.hyperledger.besu.crypto.EllipticCurveSignature;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.Signature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -132,7 +133,8 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 block.getHash(),
-                Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1));
+                EllipticCurveSignatureFactory.getInstance()
+                    .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
 
     roundState.addCommitMessage(commit);
     assertThat(roundState.isPrepared()).isTrue();
@@ -233,6 +235,8 @@ public class RoundStateTest {
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
+    final EllipticCurveSignature ellipticCurveSignature =
+        EllipticCurveSignatureFactory.getInstance();
 
     final Commit firstCommit =
         validatorMessageFactories
@@ -240,7 +244,7 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 block.getHash(),
-                Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1));
+                ellipticCurveSignature.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1));
 
     final Commit secondCommit =
         validatorMessageFactories
@@ -248,7 +252,7 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 block.getHash(),
-                Signature.create(BigInteger.TEN, BigInteger.TEN, (byte) 1));
+                ellipticCurveSignature.createSignature(BigInteger.TEN, BigInteger.TEN, (byte) 1));
 
     final Proposal proposal =
         validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());

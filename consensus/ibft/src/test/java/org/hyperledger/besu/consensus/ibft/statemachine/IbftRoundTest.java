@@ -37,6 +37,7 @@ import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
+import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.Signature;
@@ -90,7 +91,8 @@ public class IbftRoundTest {
   private BftExtraData proposedExtraData;
 
   private final Signature remoteCommitSeal =
-      Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1);
+      EllipticCurveSignatureFactory.getInstance()
+          .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
 
   @Before
   public void setup() {

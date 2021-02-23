@@ -66,14 +66,15 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE = EllipticCurveSignatureFactory.getInstance();
+  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
+      EllipticCurveSignatureFactory.getInstance();
 
   // Dummy signature for transactions to not fail being processed.
   private static final Signature FAKE_SIGNATURE =
-    ELLIPTIC_CURVE_SIGNATURE.createSignature(
-            ELLIPTIC_CURVE_SIGNATURE.getHalfCurveOrder(),
-            ELLIPTIC_CURVE_SIGNATURE.getHalfCurveOrder(),
-            (byte) 0);
+      ELLIPTIC_CURVE_SIGNATURE.createSignature(
+          ELLIPTIC_CURVE_SIGNATURE.getHalfCurveOrder(),
+          ELLIPTIC_CURVE_SIGNATURE.getHalfCurveOrder(),
+          (byte) 0);
 
   private final Subscribers<PrivateTransactionObserver> privateTransactionEventObservers =
       Subscribers.create();

@@ -34,7 +34,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class KeyPairSecurityModule implements SecurityModule {
   private final KeyPair keyPair;
   private final PublicKey publicKey;
-  private final EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+  private final EllipticCurveSignature ellipticCurveSignature =
+      EllipticCurveSignatureFactory.getInstance();
 
   public KeyPairSecurityModule(final KeyPair keyPair) {
     this.keyPair = keyPair;
@@ -43,7 +44,8 @@ public class KeyPairSecurityModule implements SecurityModule {
 
   private PublicKey convertPublicKey(final org.hyperledger.besu.crypto.PublicKey publicKey) {
     try {
-      return new PublicKeyImpl(fromBouncyCastleECPoint(ellipticCurveSignature.publicKeyAsEcPoint(publicKey)));
+      return new PublicKeyImpl(
+          fromBouncyCastleECPoint(ellipticCurveSignature.publicKeyAsEcPoint(publicKey)));
     } catch (final Exception e) {
       throw new SecurityModuleException(
           "Unexpected error while converting ECPoint: " + e.getMessage(), e);
@@ -53,7 +55,8 @@ public class KeyPairSecurityModule implements SecurityModule {
   @Override
   public Signature sign(final Bytes32 dataHash) throws SecurityModuleException {
     try {
-      final org.hyperledger.besu.crypto.Signature signature = ellipticCurveSignature.sign(dataHash, keyPair);
+      final org.hyperledger.besu.crypto.Signature signature =
+          ellipticCurveSignature.sign(dataHash, keyPair);
       return new SignatureImpl(signature);
     } catch (final Exception e) {
       throw new SecurityModuleException("Unexpected error while signing: " + e.getMessage(), e);
@@ -70,8 +73,10 @@ public class KeyPairSecurityModule implements SecurityModule {
       throws SecurityModuleException {
     try {
       final Bytes encodedECPoint = ECPointUtil.getEncodedBytes(partyKey.getW());
-      final org.hyperledger.besu.crypto.PublicKey secp256KPartyKey = ellipticCurveSignature.createPublicKey(encodedECPoint);
-      return ellipticCurveSignature.calculateECDHKeyAgreement(keyPair.getPrivateKey(), secp256KPartyKey);
+      final org.hyperledger.besu.crypto.PublicKey secp256KPartyKey =
+          ellipticCurveSignature.createPublicKey(encodedECPoint);
+      return ellipticCurveSignature.calculateECDHKeyAgreement(
+          keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
       throw new SecurityModuleException(
           "Unexpected error while calculating ECDH Key Agreement: " + e.getMessage(), e);
