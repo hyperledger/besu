@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,6 +31,7 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -83,7 +85,9 @@ public class StateTestVersionedTransaction {
       @JsonProperty("to") final String to,
       @JsonProperty("value") final String[] value,
       @JsonProperty("secretKey") final String secretKey,
-      @JsonProperty("data") final String[] data) {
+      @JsonProperty("data") final String[] data,
+      @JsonDeserialize(using = StateTestAccessListDeserializer.class) @JsonProperty("accessLists")
+          final List<List<AccessListEntry>> accessLists) {
 
     this.nonce = Long.decode(nonce);
     this.gasPrice = Wei.fromHexString(gasPrice);
