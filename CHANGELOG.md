@@ -17,6 +17,7 @@ Features added between 20.10.0 to 21.1.0 include:
 
 ### Early Access Features
 * Bonsai Tries: A new database format which reduces storage requirements and improves performance for access to recent state. _Note: only full sync is currently supported._
+* QBFT: A new consensus algorithm to support interoperability with other Enterprise Ethereum Alliance compatible clients.
 
 
 ### Additions and Improvements
