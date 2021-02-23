@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -349,12 +351,41 @@ public class BlockDataGenerator {
         return frontierTransaction(payload, to);
       case EIP1559:
         return eip1559Transaction(payload, to);
+      case ACCESS_LIST:
+        return accessListTransaction(payload, to);
       default:
         throw new RuntimeException(
             String.format(
                 "Developer Error. No random transaction generator defined for %s",
                 transactionType));
     }
+  }
+
+  private Transaction accessListTransaction(final Bytes payload, final Address to) {
+    return Transaction.builder()
+        .type(TransactionType.ACCESS_LIST)
+        .nonce(positiveLong())
+        .gasPrice(Wei.wrap(bytes32()))
+        .gasLimit(positiveLong())
+        .to(to)
+        .value(Wei.wrap(bytes32()))
+        .payload(payload)
+        .accessList(accessList())
+        .chainId(BigInteger.ONE)
+        .signAndBuild(generateKeyPair());
+  }
+
+  private List<AccessListEntry> accessList() {
+    final List<Address> accessedAddresses =
+        Stream.generate(this::address).limit(1 + random.nextInt(3)).collect(toUnmodifiableList());
+    final List<AccessListEntry> accessedStorage = new ArrayList<>();
+    for (int i = 0; i < accessedAddresses.size(); ++i) {
+      accessedStorage.add(
+          new AccessListEntry(
+              accessedAddresses.get(i),
+              Stream.generate(this::bytes32).limit(2L * i).collect(toUnmodifiableList())));
+    }
+    return accessedStorage;
   }
 
   private Transaction eip1559Transaction(final Bytes payload, final Address to) {
@@ -394,6 +425,23 @@ public class BlockDataGenerator {
 
   public Set<Transaction> transactions(final int n) {
     return transactions(n, TransactionType.values());
+  }
+
+  public Set<Transaction> transactionsWithAllTypes() {
+    return transactionsWithAllTypes(0);
+  }
+
+  public Set<Transaction> transactionsWithAllTypes(final int atLeast) {
+    checkArgument(atLeast >= 0);
+    final HashSet<TransactionType> remainingTransactionTypes =
+        new HashSet<>(Set.of(TransactionType.values()));
+    final HashSet<Transaction> transactions = new HashSet<>();
+    while (transactions.size() < atLeast || !remainingTransactionTypes.isEmpty()) {
+      final Transaction newTransaction = transaction();
+      transactions.add(newTransaction);
+      remainingTransactionTypes.remove(newTransaction.getType());
+    }
+    return transactions;
   }
 
   public TransactionReceipt receipt(final long cumulativeGasUsed) {
@@ -457,7 +505,7 @@ public class BlockDataGenerator {
     return LogTopic.wrap(bytesValue(Bytes32.SIZE));
   }
 
-  private Bytes32 bytes32() {
+  public Bytes32 bytes32() {
     return Bytes32.wrap(bytes(Bytes32.SIZE));
   }
 

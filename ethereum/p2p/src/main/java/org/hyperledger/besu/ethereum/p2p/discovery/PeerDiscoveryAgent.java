@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
+import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -42,10 +43,12 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,9 +60,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.ethereum.beacon.discovery.schema.EnrField;
 import org.ethereum.beacon.discovery.schema.IdentitySchema;
-import org.ethereum.beacon.discovery.schema.IdentitySchemaInterpreter;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
+import org.ethereum.beacon.discovery.util.Functions;
 
 /**
  * The peer discovery agent is the network component that sends and receives peer discovery messages
@@ -96,6 +99,7 @@ public abstract class PeerDiscoveryAgent {
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
 
   private final StorageProvider storageProvider;
+  private final Supplier<List<Bytes>> forkIdSupplier;
 
   protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
@@ -103,7 +107,8 @@ public abstract class PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MetricsSystem metricsSystem,
-      final StorageProvider storageProvider) {
+      final StorageProvider storageProvider,
+      final Supplier<List<Bytes>> forkIdSupplier) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -121,6 +126,7 @@ public abstract class PeerDiscoveryAgent {
     id = nodeKey.getPublicKey().getEncodedBytes();
 
     this.storageProvider = storageProvider;
+    this.forkIdSupplier = forkIdSupplier;
   }
 
   protected abstract TimerUtil createTimer();
@@ -179,16 +185,16 @@ public abstract class PeerDiscoveryAgent {
       final Integer udpPort) {
     final KeyValueStorage keyValueStorage =
         storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
-    final NodeRecordFactory nodeRecordFactory = new NodeRecordFactory(IdentitySchemaInterpreter.V4);
+    final NodeRecordFactory nodeRecordFactory = NodeRecordFactory.DEFAULT;
     final Optional<NodeRecord> existingNodeRecord =
         keyValueStorage
             .get(Bytes.of(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray())
             .map(Bytes::of)
             .flatMap(b -> Optional.of(nodeRecordFactory.fromBytes(b)));
 
-    final Bytes addressBytes = Bytes.of(advertisedAddress.getBytes(UTF_8));
+    final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
     if (existingNodeRecord.isEmpty()
-        || !existingNodeRecord.get().getNodeId().equals(nodeId)
+        || !existingNodeRecord.get().get(EnrField.PKEY_SECP256K1).equals(nodeId)
         || !addressBytes.equals(existingNodeRecord.get().get(EnrField.IP_V4))
         || !tcpPort.equals(existingNodeRecord.get().get(EnrField.TCP))
         || !udpPort.equals(existingNodeRecord.get().get(EnrField.UDP))) {
@@ -198,10 +204,16 @@ public abstract class PeerDiscoveryAgent {
           nodeRecordFactory.createFromValues(
               sequenceNumber,
               new EnrField(EnrField.ID, IdentitySchema.V4),
-              new EnrField(EnrField.PKEY_SECP256K1, nodeId),
+              new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(nodeId)),
               new EnrField(EnrField.IP_V4, addressBytes),
               new EnrField(EnrField.TCP, tcpPort),
-              new EnrField(EnrField.UDP, udpPort));
+              new EnrField(EnrField.UDP, udpPort),
+              new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
+      nodeRecord.setSignature(
+          nodeKey
+              .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
+              .encodedBytes()
+              .slice(0, 64));
 
       final KeyValueStorageTransaction keyValueStorageTransaction =
           keyValueStorage.startTransaction();

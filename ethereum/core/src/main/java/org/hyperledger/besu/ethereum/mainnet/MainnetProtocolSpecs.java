@@ -390,9 +390,6 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode) {
-    if (!ExperimentalEIPs.berlinEnabled) {
-      throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
-    }
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
@@ -400,6 +397,14 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    true,
+                    chainId,
+                    Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
+                    quorumCompatibilityMode))
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))

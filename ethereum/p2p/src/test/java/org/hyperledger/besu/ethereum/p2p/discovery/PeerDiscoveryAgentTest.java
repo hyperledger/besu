@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -43,6 +45,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.junit.Test;
 
 public class PeerDiscoveryAgentTest {
@@ -69,14 +74,33 @@ public class PeerDiscoveryAgentTest {
 
   @Test
   public void testNodeRecordCreated() {
-    final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
+    KeyPair keyPair =
+        KeyPair.create(
+            PrivateKey.create(
+                Bytes32.fromHexString(
+                    "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
+    final MockPeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(
+            helper
+                .agentBuilder()
+                .nodeKey(NodeKeyUtils.createFrom(keyPair))
+                .advertisedHost("127.0.0.1")
+                .bindPort(30303));
     assertThat(agent.getAdvertisedPeer().isPresent()).isTrue();
     assertThat(agent.getAdvertisedPeer().get().getNodeRecord().isPresent()).isTrue();
-    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getNodeId()).isNotNull();
-    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getIdentityScheme())
-        .isNotNull();
-    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getSignature()).isNotNull();
-    assertThat(agent.getAdvertisedPeer().get().getNodeRecord().get().getSeq()).isNotNull();
+    final NodeRecord nodeRecord = agent.getAdvertisedPeer().get().getNodeRecord().get();
+    assertThat(nodeRecord.getNodeId()).isNotNull();
+    assertThat(nodeRecord.getIdentityScheme()).isNotNull();
+    assertThat(nodeRecord.getSignature()).isNotNull();
+    assertThat(nodeRecord.getSeq()).isNotNull();
+    assertThat(nodeRecord.get("eth")).isNotNull();
+    assertThat(nodeRecord.get("eth"))
+        .isEqualTo(Collections.singletonList(Collections.singletonList(Bytes.EMPTY)));
+    assertThat(nodeRecord.asEnr())
+        .isEqualTo(
+            "enr:-JC4QOfroMOa1sB6ajxcBKdWn3s9S4Ojl33pbRm72S5FnCwyZfskmjkJvZznQaWNTrOHrnKxw1R9xMm9rl"
+                + "EGOcsOyscBg2V0aMLBgIJpZIJ2NIJpcIR_AAABiXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEV"
+                + "v0AHacwUAPMljNMTiDdGNwAoN1ZHCCdl8");
   }
 
   @Test

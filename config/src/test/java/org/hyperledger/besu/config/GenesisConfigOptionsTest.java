@@ -163,24 +163,14 @@ public class GenesisConfigOptionsTest {
 
   @Test
   public void shouldGetBerlinBlockNumber() {
-    try {
-      ExperimentalEIPs.berlinEnabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("berlinBlock", 1000));
-      assertThat(config.getBerlinBlockNumber()).hasValue(1000);
-    } finally {
-      ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
-    }
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("berlinBlock", 1000));
+    assertThat(config.getBerlinBlockNumber()).hasValue(1000);
   }
 
   @Test
-  public void shouldGetYoloV2BlockNumber() {
-    try {
-      ExperimentalEIPs.berlinEnabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV2Block", 1000));
-      assertThat(config.getBerlinBlockNumber()).hasValue(1000);
-    } finally {
-      ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
-    }
+  public void shouldGetYoloV3BlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV3Block", 1000));
+    assertThat(config.getBerlinBlockNumber()).hasValue(1000);
   }
 
   @Test

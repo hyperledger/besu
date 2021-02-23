@@ -226,19 +226,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getBerlinBlockNumber() {
-    if (ExperimentalEIPs.berlinEnabled) {
-      final OptionalLong berlinBlock = getOptionalLong("berlinblock");
-      final OptionalLong yolov2Block = getOptionalLong("yolov2block");
-      if (yolov2Block.isPresent()) {
-        if (berlinBlock.isPresent()) {
-          throw new RuntimeException(
-              "Genesis files cannot specify both berlinblock and yoloV2Block.");
-        }
-        return yolov2Block;
+    final OptionalLong berlinBlock = getOptionalLong("berlinblock");
+    final OptionalLong yolov3Block = getOptionalLong("yolov3block");
+    if (yolov3Block.isPresent()) {
+      if (berlinBlock.isPresent()) {
+        throw new RuntimeException(
+            "Genesis files cannot specify both berlinblock and yoloV2Block.");
       }
-      return berlinBlock;
+      return yolov3Block;
     }
-    return OptionalLong.empty();
+    return berlinBlock;
   }
 
   @Override
@@ -432,6 +429,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getPetersburgBlockNumber(),
             getIstanbulBlockNumber(),
             getMuirGlacierBlockNumber(),
+            getBerlinBlockNumber(),
             getEIP1559BlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),

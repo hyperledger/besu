@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX;
 import static org.hyperledger.besu.ethereum.core.Transaction.GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
@@ -24,6 +25,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -37,34 +39,47 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
-public class TransactionRLPDecoder {
+public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
     Transaction decode(RLPInput input);
   }
 
-  private static final ImmutableMap<TransactionType, TransactionRLPDecoder.Decoder>
+  private static final ImmutableMap<TransactionType, TransactionDecoder.Decoder>
       TYPED_TRANSACTION_DECODERS =
-          ImmutableMap.of(TransactionType.EIP1559, TransactionRLPDecoder::decodeEIP1559);
+          ImmutableMap.of(
+              TransactionType.ACCESS_LIST,
+              TransactionDecoder::decodeAccessList,
+              TransactionType.EIP1559,
+              TransactionDecoder::decodeEIP1559);
 
-  public static Transaction decode(final RLPInput rlpInput) {
+  public static Transaction decodeForWire(final RLPInput rlpInput) {
     if (rlpInput.nextIsList()) {
       return decodeFrontier(rlpInput);
     } else {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
-      final Decoder decoder =
-          Optional.ofNullable(TYPED_TRANSACTION_DECODERS.get(transactionType))
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          String.format(
-                              "Developer Error. A supported transaction type %s has no associated decoding logic",
-                              transactionType)));
-      return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
+      return getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
     }
+  }
+
+  public static Transaction decodeOpaqueBytes(final Bytes input) {
+    final TransactionType transactionType;
+    try {
+      transactionType = TransactionType.of(input.get(0));
+    } catch (final IllegalArgumentException __) {
+      return decodeFrontier(RLP.input(input));
+    }
+    return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
+  }
+
+  private static Decoder getDecoder(final TransactionType transactionType) {
+    return checkNotNull(
+        TYPED_TRANSACTION_DECODERS.get(transactionType),
+        "Developer Error. A supported transaction type %s has no associated decoding logic",
+        transactionType);
   }
 
   static Transaction decodeFrontier(final RLPInput input) {
@@ -102,6 +117,44 @@ public class TransactionRLPDecoder {
 
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();
+  }
+
+  private static Transaction decodeAccessList(final RLPInput rlpInput) {
+    rlpInput.enterList();
+    final Transaction.Builder preSignatureTransactionBuilder =
+        Transaction.builder()
+            .type(TransactionType.ACCESS_LIST)
+            .chainId(BigInteger.valueOf(rlpInput.readLongScalar()))
+            .nonce(rlpInput.readLongScalar())
+            .gasPrice(Wei.of(rlpInput.readUInt256Scalar()))
+            .gasLimit(rlpInput.readLongScalar())
+            .to(
+                rlpInput.readBytes(
+                    addressBytes -> addressBytes.size() == 0 ? null : Address.wrap(addressBytes)))
+            .value(Wei.of(rlpInput.readUInt256Scalar()))
+            .payload(rlpInput.readBytes())
+            .accessList(
+                rlpInput.readList(
+                    accessListEntryRLPInput -> {
+                      accessListEntryRLPInput.enterList();
+                      final AccessListEntry accessListEntry =
+                          new AccessListEntry(
+                              Address.wrap(accessListEntryRLPInput.readBytes()),
+                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
+                      accessListEntryRLPInput.leaveList();
+                      return accessListEntry;
+                    }));
+    final byte recId = (byte) rlpInput.readIntScalar();
+    final Transaction transaction =
+        preSignatureTransactionBuilder
+            .signature(
+                SECP256K1.Signature.create(
+                    rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                    rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                    recId))
+            .build();
+    rlpInput.leaveList();
+    return transaction;
   }
 
   static Transaction decodeEIP1559(final RLPInput input) {

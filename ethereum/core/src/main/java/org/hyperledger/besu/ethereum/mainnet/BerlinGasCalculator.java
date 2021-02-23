@@ -14,18 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.Address.BLS12_MAP_FP2_TO_G2;
+import static org.hyperledger.besu.ethereum.core.Address.BLAKE2B_F_COMPRESSION;
 
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BerlinGasCalculator extends IstanbulGasCalculator {
@@ -34,6 +43,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   private static final Gas COLD_SLOAD_COST = Gas.of(2100);
   private static final Gas COLD_ACCOUNT_ACCESS_COST = Gas.of(2600);
   private static final Gas WARM_STORAGE_READ_COST = Gas.of(100);
+  private static final Gas ACCESS_LIST_ADDRESS_COST = Gas.of(2400);
+  private static final Gas ACCESS_LIST_STORAGE_COST = Gas.of(1900);
 
   // redefinitions for EIP-2929
   private static final Gas SLOAD_GAS = WARM_STORAGE_READ_COST;
@@ -57,7 +68,36 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   public BerlinGasCalculator() {
-    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
+    this(BLAKE2B_F_COMPRESSION.toArrayUnsafe()[19]);
+  }
+
+  @Override
+  public GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(
+      final Transaction transaction) {
+    // As per https://eips.ethereum.org/EIPS/eip-2930
+    final List<AccessListEntry> accessList = transaction.getAccessList();
+
+    long accessedStorageCount = 0;
+    final Set<Address> accessedAddresses = new HashSet<>();
+    final Multimap<Address, Bytes32> accessedStorage = HashMultimap.create();
+
+    for (final AccessListEntry accessListEntry : accessList) {
+      final Address address = accessListEntry.getAddress();
+
+      accessedAddresses.add(address);
+      for (final Bytes32 storageKeyBytes : accessListEntry.getStorageKeys()) {
+        accessedStorage.put(address, storageKeyBytes);
+        ++accessedStorageCount;
+      }
+    }
+
+    return new GasAndAccessedState(
+        super.transactionIntrinsicGasCostAndAccessedState(transaction)
+            .getGas()
+            .plus(ACCESS_LIST_ADDRESS_COST.times(accessList.size()))
+            .plus(ACCESS_LIST_STORAGE_COST.times(accessedStorageCount)),
+        accessedAddresses,
+        accessedStorage);
   }
 
   @Override
