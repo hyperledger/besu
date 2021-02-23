@@ -81,6 +81,9 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     if (node.isDevMode()) {
       params.add("--network");
       params.add("DEV");
+    } else if (node.getNetwork() != null) {
+      params.add("--network");
+      params.add(node.getNetwork().name());
     }
 
     params.add("--sync-mode");

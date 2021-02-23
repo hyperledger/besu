@@ -18,6 +18,7 @@ import static java.util.Collections.unmodifiableList;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.apache.tuweni.io.file.Files.copyResource;
 
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -97,6 +98,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean devMode;
+  private final NetworkName network;
   private final boolean discoveryEnabled;
   private final List<URI> bootnodes = new ArrayList<>();
   private final boolean bootnodeEligible;
@@ -123,6 +125,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Optional<String> keyfilePath,
       final boolean devMode,
+      final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final NetworkingConfiguration networkingConfiguration,
@@ -156,6 +159,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.permissioningConfiguration = permissioningConfiguration;
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
+    this.network = network;
     this.p2pEnabled = p2pEnabled;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
@@ -577,6 +581,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public boolean isDevMode() {
     return devMode;
+  }
+
+  public NetworkName getNetwork() {
+    return network;
   }
 
   public boolean isSecp256k1Native() {
