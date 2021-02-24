@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.BigIntegerModularExpone
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
