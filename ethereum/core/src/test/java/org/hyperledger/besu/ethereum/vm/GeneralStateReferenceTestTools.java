@@ -101,8 +101,6 @@ public class GeneralStateReferenceTestTools {
 
     // Don't do time consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
-
-    params.ignore(".*[_-]Berlin");
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
