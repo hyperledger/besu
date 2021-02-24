@@ -23,7 +23,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -116,7 +116,8 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
               preparedRoundMetadata);
       return SignedData.create(
           roundChangePayload,
-          SECPSignature.decode(Bytes.fromHexString(signedRoundChange.signature)));
+          SignatureAlgorithmFactory.getInstance()
+              .decodeSignature(Bytes.fromHexString(signedRoundChange.signature)));
     }
   }
 }

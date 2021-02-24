@@ -19,14 +19,19 @@ import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
-import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 public class CommitMessage implements RlpTestCaseMessage {
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private final UnsignedCommit unsignedCommit;
   private final String signature;
 
@@ -49,9 +54,13 @@ public class CommitMessage implements RlpTestCaseMessage {
         new CommitPayload(
             new ConsensusRoundIdentifier(unsignedCommit.sequence, unsignedCommit.round),
             Hash.fromHexStringLenient(unsignedCommit.digest),
-            SECPSignature.decode(Bytes.fromHexString(unsignedCommit.commitSeal)));
+            SIGNATURE_ALGORITHM
+                .get()
+                .decodeSignature(Bytes.fromHexString(unsignedCommit.commitSeal)));
     final SignedData<CommitPayload> signedCommitPayload =
-        SignedData.create(commitPayload, SECPSignature.decode(Bytes.fromHexString(signature)));
+        SignedData.create(
+            commitPayload,
+            SIGNATURE_ALGORITHM.get().decodeSignature(Bytes.fromHexString(signature)));
     return new Commit(signedCommitPayload);
   }
 

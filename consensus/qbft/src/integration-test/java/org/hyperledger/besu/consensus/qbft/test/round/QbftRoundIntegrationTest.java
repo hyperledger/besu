@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -81,7 +82,8 @@ public class QbftRoundIntegrationTest {
   private Block proposedBlock;
 
   private final SECPSignature remoteCommitSeal =
-      SECPSignature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1);
+      SignatureAlgorithmFactory.getInstance()
+          .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
 
   @Before
   public void setup() {

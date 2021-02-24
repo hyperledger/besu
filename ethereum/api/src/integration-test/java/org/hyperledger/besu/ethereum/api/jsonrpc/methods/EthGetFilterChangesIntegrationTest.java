@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -85,7 +86,7 @@ public class EthGetFilterChangesIntegrationTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_HASHES = 5;
-  private static final KeyPair keyPair = KeyPair.generate();
+  private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final Transaction transaction = createTransaction(1);
   private FilterManager filterManager;
   private EthGetFilterChanges method;
