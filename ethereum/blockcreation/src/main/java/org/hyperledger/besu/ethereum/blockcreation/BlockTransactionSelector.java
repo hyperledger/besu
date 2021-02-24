@@ -222,8 +222,8 @@ public class BlockTransactionSelector {
     final BlockHashLookup blockHashLookup = new BlockHashLookup(processableBlockHeader, blockchain);
 
     TransactionProcessingResult effectiveResult;
-    if (transaction.isGoQuorumPrivateTransaction()) {
 
+    if (transaction.isGoQuorumPrivateTransaction()) {
       final ValidationResult<TransactionInvalidReason> validationResult =
           validateTransaction(processableBlockHeader, transaction, worldStateUpdater);
       if (!validationResult.isValid()) {
@@ -232,12 +232,12 @@ public class BlockTransactionSelector {
             validationResult.getErrorMessage(),
             processableBlockHeader.getParentHash().toHexString(),
             transaction.getHash().toHexString());
-        return TransactionSelectionResult.CONTINUE;
+        return transactionSelectionResultForInvalidResult(validationResult);
+      } else {
+        // valid GoQuorum private tx, we need to hand craft the receipt and increment the nonce
+        effectiveResult = publicResultForWhenWeHaveAPrivateTransaction(transaction);
+        worldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
       }
-
-      // if it is a GoQuorum private tx, we need to hand craft the receipt and increment the nonce
-      effectiveResult = publicResultForWhenWeHaveAPrivateTransaction(transaction);
-      worldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
     } else {
       effectiveResult =
           transactionProcessor.processTransaction(
@@ -255,17 +255,21 @@ public class BlockTransactionSelector {
       worldStateUpdater.commit();
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
-      // If the transaction has an incorrect nonce, leave it in the pool and continue
-      if (effectiveResult
-          .getValidationResult()
-          .getInvalidReason()
-          .equals(TransactionInvalidReason.INCORRECT_NONCE)) {
-        return TransactionSelectionResult.CONTINUE;
-      }
-      // If the transaction was invalid for any other reason, delete it, and continue.
-      return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+      return transactionSelectionResultForInvalidResult(effectiveResult.getValidationResult());
     }
     return TransactionSelectionResult.CONTINUE;
+  }
+
+  private TransactionSelectionResult transactionSelectionResultForInvalidResult(
+      final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
+    // If the transaction has an incorrect nonce, leave it in the pool and continue
+    if (invalidReasonValidationResult
+        .getInvalidReason()
+        .equals(TransactionInvalidReason.INCORRECT_NONCE)) {
+      return TransactionSelectionResult.CONTINUE;
+    }
+    // If the transaction was invalid for any other reason, delete it, and continue.
+    return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransaction(
