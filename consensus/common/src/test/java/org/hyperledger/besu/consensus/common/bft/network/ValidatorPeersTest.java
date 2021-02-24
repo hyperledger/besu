@@ -24,8 +24,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -49,7 +49,7 @@ public class ValidatorPeersTest {
 
   public static final String PROTOCOL_NAME = "BFT";
   private final List<Address> validators = newArrayList();
-  private final List<PublicKey> publicKeys = newArrayList();
+  private final List<SECPPublicKey> publicKeys = newArrayList();
 
   private final List<PeerConnection> peerConnections = newArrayList();
   @Mock private VoteTallyCache voteTallyCache;
@@ -57,8 +57,8 @@ public class ValidatorPeersTest {
   @Before
   public void setup() {
     for (int i = 0; i < 4; i++) {
-      final PublicKey pubKey =
-          EllipticCurveSignatureFactory.getInstance().createPublicKey(BigInteger.valueOf(i));
+      final SECPPublicKey pubKey =
+          SignatureAlgorithmFactory.getInstance().createPublicKey(BigInteger.valueOf(i));
       publicKeys.add(pubKey);
       final Address address = Util.publicKeyToAddress(pubKey);
 

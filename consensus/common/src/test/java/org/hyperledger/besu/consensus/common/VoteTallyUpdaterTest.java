@@ -23,8 +23,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -40,8 +40,7 @@ public class VoteTallyUpdaterTest {
   private static final long EPOCH_LENGTH = 30_000;
   private final VoteTally voteTally = mock(VoteTally.class);
   private final MutableBlockchain blockchain = mock(MutableBlockchain.class);
-  private final KeyPair proposerKeyPair =
-      EllipticCurveSignatureFactory.getInstance().generateKeyPair();
+  private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final Address proposerAddress =
       Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
   private final Address subject = Address.fromHexString("007f4a23ca00cd043d25c2888c1aa5688f81a344");

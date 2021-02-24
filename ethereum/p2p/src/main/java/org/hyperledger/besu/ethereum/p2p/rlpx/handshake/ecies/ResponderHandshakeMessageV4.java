@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -25,12 +25,12 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
 
-  private final PublicKey ephPublicKey;
+  private final SECPPublicKey ephPublicKey;
 
   private final Bytes32 nonce;
 
   public static ResponderHandshakeMessageV4 create(
-      final PublicKey ephPublicKey, final Bytes32 nonce) {
+      final SECPPublicKey ephPublicKey, final Bytes32 nonce) {
     return new ResponderHandshakeMessageV4(ephPublicKey, nonce);
   }
 
@@ -38,17 +38,17 @@ public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
     final RLPInput input = new BytesValueRLPInput(raw, true);
     input.enterList();
     return new ResponderHandshakeMessageV4(
-        EllipticCurveSignatureFactory.getInstance().createPublicKey(input.readBytes()),
+        SignatureAlgorithmFactory.getInstance().createPublicKey(input.readBytes()),
         input.readBytes32());
   }
 
-  private ResponderHandshakeMessageV4(final PublicKey ephPublicKey, final Bytes32 nonce) {
+  private ResponderHandshakeMessageV4(final SECPPublicKey ephPublicKey, final Bytes32 nonce) {
     this.ephPublicKey = ephPublicKey;
     this.nonce = nonce;
   }
 
   @Override
-  public PublicKey getEphPublicKey() {
+  public SECPPublicKey getEphPublicKey() {
     return ephPublicKey;
   }
 

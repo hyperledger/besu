@@ -21,11 +21,11 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -85,7 +85,7 @@ public class BftBlockHashingTest {
 
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
-    List<Signature> commitSeals =
+    List<SECPSignature> commitSeals =
         COMMITTERS_NODE_KEYS.stream()
             .map(nodeKey -> nodeKey.sign(dataHahsForCommittedSeal))
             .collect(Collectors.toList());
@@ -99,15 +99,14 @@ public class BftBlockHashingTest {
   }
 
   private static List<NodeKey> committersNodeKeys() {
-    final EllipticCurveSignature ellipticCurveSignature =
-        EllipticCurveSignatureFactory.getInstance();
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     return IntStream.rangeClosed(1, 4)
         .mapToObj(
             i ->
                 NodeKeyUtils.createFrom(
-                    (ellipticCurveSignature.createKeyPair(
-                        ellipticCurveSignature.createPrivateKey(UInt256.valueOf(i).toBytes())))))
+                    (signatureAlgorithm.createKeyPair(
+                        signatureAlgorithm.createPrivateKey(UInt256.valueOf(i).toBytes())))))
         .collect(Collectors.toList());
   }
 
@@ -163,7 +162,7 @@ public class BftBlockHashingTest {
     BytesValueRLPOutput rlpForHeaderFroCommittersSigning = new BytesValueRLPOutput();
     builder.buildBlockHeader().writeTo(rlpForHeaderFroCommittersSigning);
 
-    List<Signature> commitSeals =
+    List<SECPSignature> commitSeals =
         COMMITTERS_NODE_KEYS.stream()
             .map(nodeKey -> nodeKey.sign(Hash.hash(rlpForHeaderFroCommittersSigning.encoded())))
             .collect(Collectors.toList());

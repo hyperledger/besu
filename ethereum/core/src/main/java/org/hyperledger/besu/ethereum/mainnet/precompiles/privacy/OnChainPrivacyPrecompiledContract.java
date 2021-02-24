@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
@@ -58,6 +58,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -66,15 +68,17 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
-      EllipticCurveSignatureFactory.getInstance();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   // Dummy signature for transactions to not fail being processed.
-  private static final Signature FAKE_SIGNATURE =
-      ELLIPTIC_CURVE_SIGNATURE.createSignature(
-          ELLIPTIC_CURVE_SIGNATURE.getHalfCurveOrder(),
-          ELLIPTIC_CURVE_SIGNATURE.getHalfCurveOrder(),
-          (byte) 0);
+  private static final SECPSignature FAKE_SIGNATURE =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createSignature(
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              (byte) 0);
 
   private final Subscribers<PrivateTransactionObserver> privateTransactionEventObservers =
       Subscribers.create();

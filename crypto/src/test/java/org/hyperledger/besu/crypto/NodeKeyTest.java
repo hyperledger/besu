@@ -29,11 +29,9 @@ public class NodeKeyTest {
     final Bytes32 keyPairPrvKey =
         Bytes32.fromHexString("0xf7a58d5e755d51fa2f6206e91dd574597c73248aaf946ec1964b8c6268d6207b");
 
-    final EllipticCurveSignature ellipticCurveSignature =
-        EllipticCurveSignatureFactory.getInstance();
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
     final KeyPair keyPair =
-        ellipticCurveSignature.createKeyPair(
-            ellipticCurveSignature.createPrivateKey(keyPairPrvKey));
+        signatureAlgorithm.createKeyPair(signatureAlgorithm.createPrivateKey(keyPairPrvKey));
     final KeyPairSecurityModule keyPairSecurityModule = new KeyPairSecurityModule(keyPair);
     final NodeKey nodeKey = new NodeKey(keyPairSecurityModule);
 

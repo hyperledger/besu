@@ -18,11 +18,11 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.PublicKey;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -68,7 +70,7 @@ public class PrivateTransaction {
 
   private final Wei value;
 
-  private final Signature signature;
+  private final SECPSignature signature;
 
   private final Bytes payload;
 
@@ -96,8 +98,8 @@ public class PrivateTransaction {
   @Deprecated(since = "1.4.3")
   protected volatile Hash hash;
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
-      EllipticCurveSignatureFactory.getInstance();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static Builder builder() {
     return new Builder();
@@ -130,7 +132,7 @@ public class PrivateTransaction {
     }
     final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
     final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final Signature signature = ELLIPTIC_CURVE_SIGNATURE.createSignature(r, s, recId);
+    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
 
     final Bytes privateFrom = input.readBytes();
     final Object privateForOrPrivacyGroupId = resolvePrivateForOrPrivacyGroupId(input.readAsRlp());
@@ -206,7 +208,7 @@ public class PrivateTransaction {
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
-      final Signature signature,
+      final SECPSignature signature,
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
@@ -299,7 +301,7 @@ public class PrivateTransaction {
    *
    * @return the signature used to sign the transaction
    */
-  public Signature getSignature() {
+  public SECPSignature getSignature() {
     return signature;
   }
 
@@ -367,8 +369,9 @@ public class PrivateTransaction {
    */
   public Address getSender() {
     if (sender == null) {
-      final PublicKey publicKey =
-          ELLIPTIC_CURVE_SIGNATURE
+      final SECPPublicKey publicKey =
+          SIGNATURE_ALGORITHM
+              .get()
               .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
               .orElseThrow(
                   () ->
@@ -621,7 +624,7 @@ public class PrivateTransaction {
 
     protected Wei value;
 
-    protected Signature signature;
+    protected SECPSignature signature;
 
     protected Bytes payload;
 
@@ -677,7 +680,7 @@ public class PrivateTransaction {
       return this;
     }
 
-    public Builder signature(final Signature signature) {
+    public Builder signature(final SECPSignature signature) {
       this.signature = signature;
       return this;
     }
@@ -731,7 +734,7 @@ public class PrivateTransaction {
       return build();
     }
 
-    protected Signature computeSignature(final KeyPair keys) {
+    protected SECPSignature computeSignature(final KeyPair keys) {
       final Bytes32 hash =
           computeSenderRecoveryHash(
               nonce,
@@ -745,7 +748,7 @@ public class PrivateTransaction {
               privateFor,
               privacyGroupId,
               restriction.getBytes());
-      return ELLIPTIC_CURVE_SIGNATURE.sign(hash, keys);
+      return SIGNATURE_ALGORITHM.get().sign(hash, keys);
     }
   }
 }

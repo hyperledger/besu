@@ -25,6 +25,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,8 +34,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class KeyPairUtil {
   private static final Logger LOG = LogManager.getLogger();
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
-      EllipticCurveSignatureFactory.getInstance();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static String loadResourceFile(final String resourcePath) {
     try {
@@ -50,9 +52,9 @@ public class KeyPairUtil {
     if (keyData == null || keyData.isEmpty()) {
       throw new IllegalArgumentException("Unable to load resource: " + resourcePath);
     }
-    PrivateKey privateKey =
-        ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString((keyData)));
-    keyPair = ELLIPTIC_CURVE_SIGNATURE.createKeyPair(privateKey);
+    SECPPrivateKey privateKey =
+        SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes32.fromHexString((keyData)));
+    keyPair = SIGNATURE_ALGORITHM.get().createKeyPair(privateKey);
 
     LOG.info("Loaded keyPair {} from {}", keyPair.getPublicKey().toString(), resourcePath);
     return keyPair;
@@ -67,7 +69,7 @@ public class KeyPairUtil {
       LOG.info(
           "Loaded public key {} from {}", key.getPublicKey().toString(), keyFile.getAbsolutePath());
     } else {
-      key = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
+      key = SIGNATURE_ALGORITHM.get().generateKeyPair();
       try {
         storeKeyPair(key, keyFile);
       } catch (IOException e) {
@@ -90,16 +92,16 @@ public class KeyPairUtil {
   }
 
   public static KeyPair load(final File file) {
-    return ELLIPTIC_CURVE_SIGNATURE.createKeyPair(loadPrivateKey(file));
+    return SIGNATURE_ALGORITHM.get().createKeyPair(loadPrivateKey(file));
   }
 
-  static PrivateKey loadPrivateKey(final File file) {
+  static SECPPrivateKey loadPrivateKey(final File file) {
     try {
       final List<String> info = Files.readAllLines(file.toPath());
       if (info.size() != 1) {
         throw new IllegalArgumentException("Supplied file does not contain valid keyPair pair.");
       }
-      return ELLIPTIC_CURVE_SIGNATURE.createPrivateKey(Bytes32.fromHexString((info.get(0))));
+      return SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes32.fromHexString((info.get(0))));
     } catch (IOException ex) {
       throw new IllegalArgumentException("Supplied file does not contain valid keyPair pair.");
     }

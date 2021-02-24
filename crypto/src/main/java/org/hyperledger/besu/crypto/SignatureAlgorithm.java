@@ -22,29 +22,29 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.math.ec.ECPoint;
 
-public interface EllipticCurveSignature {
+public interface SignatureAlgorithm {
   // needs to be known at compile time otherwise triggers InsecureCryptoUsage error
   String ALGORITHM = "ECDSA";
 
   void enableNative();
 
-  Signature sign(final Bytes32 dataHash, final KeyPair keyPair);
+  SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair);
 
-  boolean verify(final Bytes data, final Signature signature, final PublicKey pub);
+  boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub);
 
   boolean verify(
       final Bytes data,
-      final Signature signature,
-      final PublicKey pub,
+      final SECPSignature signature,
+      final SECPPublicKey pub,
       final UnaryOperator<Bytes> preprocessor);
 
-  Signature normaliseSignature(
+  SECPSignature normaliseSignature(
       final BigInteger nativeR,
       final BigInteger nativeS,
-      final PublicKey publicKey,
+      final SECPPublicKey publicKey,
       final Bytes32 dataHash);
 
-  Bytes32 calculateECDHKeyAgreement(final PrivateKey privKey, final PublicKey theirPubKey);
+  Bytes32 calculateECDHKeyAgreement(final SECPPrivateKey privKey, final SECPPublicKey theirPubKey);
 
   BigInteger getHalfCurveOrder();
 
@@ -52,26 +52,26 @@ public interface EllipticCurveSignature {
 
   String getCurveName();
 
-  PrivateKey createPrivateKey(final BigInteger key);
+  SECPPrivateKey createPrivateKey(final BigInteger key);
 
-  PrivateKey createPrivateKey(final Bytes32 key);
+  SECPPrivateKey createPrivateKey(final Bytes32 key);
 
-  PublicKey createPublicKey(final PrivateKey privateKey);
+  SECPPublicKey createPublicKey(final SECPPrivateKey privateKey);
 
-  PublicKey createPublicKey(final BigInteger key);
+  SECPPublicKey createPublicKey(final BigInteger key);
 
-  PublicKey createPublicKey(final Bytes encoded);
+  SECPPublicKey createPublicKey(final Bytes encoded);
 
-  Optional<PublicKey> recoverPublicKeyFromSignature(
-      final Bytes32 dataHash, final Signature signature);
+  Optional<SECPPublicKey> recoverPublicKeyFromSignature(
+      final Bytes32 dataHash, final SECPSignature signature);
 
-  ECPoint publicKeyAsEcPoint(final PublicKey publicKey);
+  ECPoint publicKeyAsEcPoint(final SECPPublicKey publicKey);
 
-  KeyPair createKeyPair(final PrivateKey privateKey);
+  KeyPair createKeyPair(final SECPPrivateKey privateKey);
 
   KeyPair generateKeyPair();
 
-  Signature createSignature(final BigInteger r, final BigInteger s, final byte recId);
+  SECPSignature createSignature(final BigInteger r, final BigInteger s, final byte recId);
 
-  Signature decodeSignature(final Bytes bytes);
+  SECPSignature decodeSignature(final Bytes bytes);
 }

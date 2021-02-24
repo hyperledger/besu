@@ -80,11 +80,11 @@ import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
@@ -1371,7 +1371,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       AbstractAltBnPrecompiledContract.enableNative();
     }
     if (unstableNativeLibraryOptions.getNativeSecp256k1()) {
-      EllipticCurveSignatureFactory.getInstance().enableNative();
+      SignatureAlgorithmFactory.getInstance().enableNative();
     }
   }
 

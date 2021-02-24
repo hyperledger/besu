@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.crypto.BufferedBlockCipher;
@@ -74,11 +74,11 @@ public class ECIESEncryptionEngine {
   private final BufferedBlockCipher cipher =
       new BufferedBlockCipher(new SICBlockCipher(new AESEngine()));
 
-  private final PublicKey ephPubKey;
+  private final SECPPublicKey ephPubKey;
   private final byte[] iv;
 
   private ECIESEncryptionEngine(
-      final Bytes agreedSecret, final PublicKey ephPubKey, final byte[] iv) {
+      final Bytes agreedSecret, final SECPPublicKey ephPubKey, final byte[] iv) {
     this.ephPubKey = ephPubKey;
     this.iv = iv;
 
@@ -95,7 +95,7 @@ public class ECIESEncryptionEngine {
    * @return An engine prepared for decryption.
    */
   public static ECIESEncryptionEngine forDecryption(
-      final NodeKey nodeKey, final PublicKey ephPubKey, final Bytes iv) {
+      final NodeKey nodeKey, final SECPPublicKey ephPubKey, final Bytes iv) {
     final byte[] ivb = iv.toArray();
 
     // Create parameters.
@@ -113,18 +113,17 @@ public class ECIESEncryptionEngine {
    * @param pubKey The public key of the receiver.
    * @return An engine prepared for encryption.
    */
-  public static ECIESEncryptionEngine forEncryption(final PublicKey pubKey) {
-    final EllipticCurveSignature ellipticCurveSignature =
-        EllipticCurveSignatureFactory.getInstance();
+  public static ECIESEncryptionEngine forEncryption(final SECPPublicKey pubKey) {
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     // Create an ephemeral key pair for IES whose public key we can later append in the message.
-    final KeyPair ephKeyPair = ellipticCurveSignature.generateKeyPair();
+    final KeyPair ephKeyPair = signatureAlgorithm.generateKeyPair();
 
     // Create random iv.
     final byte[] ivb = ECIESHandshaker.random(CIPHER_BLOCK_SIZE).toArray();
 
     return new ECIESEncryptionEngine(
-        ellipticCurveSignature.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), pubKey),
+        signatureAlgorithm.calculateECDHKeyAgreement(ephKeyPair.getPrivateKey(), pubKey),
         ephKeyPair.getPublicKey(),
         ivb);
   }
@@ -302,7 +301,7 @@ public class ECIESEncryptionEngine {
    *
    * @return The ephemeral public key.
    */
-  public PublicKey getEphPubKey() {
+  public SECPPublicKey getEphPubKey() {
     return ephPubKey;
   }
 

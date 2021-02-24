@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.ibftlegacy.blockcreation;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftHelpers;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
@@ -110,7 +110,7 @@ public class IbftBlockCreator extends AbstractBlockCreator {
     return new IbftExtraData(
         extraData.getVanityData(),
         extraData.getSeals(),
-        EllipticCurveSignatureFactory.getInstance().sign(hashToSign, nodeKeys),
+        SignatureAlgorithmFactory.getInstance().sign(hashToSign, nodeKeys),
         extraData.getValidators());
   }
 }

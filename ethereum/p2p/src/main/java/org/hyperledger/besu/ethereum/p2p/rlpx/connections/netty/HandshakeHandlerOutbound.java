@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -55,7 +55,7 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
         connectionEventDispatcher,
         metricsSystem);
     handshaker.prepareInitiator(
-        nodeKey, EllipticCurveSignatureFactory.getInstance().createPublicKey(peer.getId()));
+        nodeKey, SignatureAlgorithmFactory.getInstance().createPublicKey(peer.getId()));
     this.first = handshaker.firstMessage();
   }
 

@@ -25,7 +25,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
@@ -59,7 +59,7 @@ public class MessageFactory {
   public Commit createCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
-      final Signature commitSeal) {
+      final SECPSignature commitSeal) {
 
     final CommitPayload payload = new CommitPayload(roundIdentifier, digest, commitSeal);
 
@@ -79,7 +79,7 @@ public class MessageFactory {
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
-    final Signature signature = nodeKey.sign(hashForSignature(payload));
+    final SECPSignature signature = nodeKey.sign(hashForSignature(payload));
     return SignedData.create(payload, signature);
   }
 }

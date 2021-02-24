@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.encoders.Hex;
@@ -35,15 +37,15 @@ import org.junit.Test;
 
 public class BftExtraDataTest {
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
-      EllipticCurveSignatureFactory.getInstance();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @Test
   public void emptyListsConstituteValidContent() {
-    final Signature proposerSeal =
-        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final SECPSignature proposerSeal =
+        SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     final List<Address> validators = Lists.newArrayList();
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
@@ -68,12 +70,12 @@ public class BftExtraDataTest {
   @Test
   public void fullyPopulatedDataProducesCorrectlyFormedExtraDataObject() {
     final List<Address> validators = Arrays.asList(Address.ECREC, Address.SHA256);
-    final Signature proposerSeal =
-        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
-    final List<Signature> committerSeals =
+    final SECPSignature proposerSeal =
+        SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final List<SECPSignature> committerSeals =
         Arrays.asList(
-            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList(); // This is required to create a "root node" for all RLP'd data
@@ -98,10 +100,10 @@ public class BftExtraDataTest {
 
   @Test(expected = RLPException.class)
   public void incorrectlyStructuredRlpThrowsException() {
-    final Signature proposerSeal =
-        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final SECPSignature proposerSeal =
+        SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     final List<Address> validators = Lists.newArrayList();
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
@@ -119,12 +121,12 @@ public class BftExtraDataTest {
   @Test(expected = RLPException.class)
   public void incorrectlySizedVanityDataThrowsException() {
     final List<Address> validators = Arrays.asList(Address.ECREC, Address.SHA256);
-    final Signature proposerSeal =
-        ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
-    final List<Signature> committerSeals =
+    final SECPSignature proposerSeal =
+        SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final List<SECPSignature> committerSeals =
         Arrays.asList(
-            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            ELLIPTIC_CURVE_SIGNATURE.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();

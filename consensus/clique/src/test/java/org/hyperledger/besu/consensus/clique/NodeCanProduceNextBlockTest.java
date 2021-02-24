@@ -25,8 +25,8 @@ import org.hyperledger.besu.consensus.clique.headervalidationrules.SignerRateLim
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -46,11 +46,10 @@ import org.junit.Test;
 
 public class NodeCanProduceNextBlockTest {
 
-  private final KeyPair proposerKeyPair =
-      EllipticCurveSignatureFactory.getInstance().generateKeyPair();
+  private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private Address localAddress;
   private final KeyPair otherNodeKeyPair =
-      EllipticCurveSignatureFactory.getInstance().generateKeyPair();
+      SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final List<Address> validatorList = Lists.newArrayList();
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
   private ProtocolContext cliqueProtocolContext;

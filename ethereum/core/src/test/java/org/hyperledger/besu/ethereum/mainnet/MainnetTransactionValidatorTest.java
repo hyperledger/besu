@@ -24,9 +24,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -44,6 +44,8 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,9 +56,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainnetTransactionValidatorTest {
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
-      EllipticCurveSignatureFactory.getInstance();
-  private static final KeyPair senderKeys = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   @Mock private GasCalculator gasCalculator;
 
@@ -180,7 +182,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator, false, Optional.of(BigInteger.ONE), defaultGoQuorumCompatibilityMode);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
-    final KeyPair senderKeyPair = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
+    final KeyPair senderKeyPair = SIGNATURE_ALGORITHM.get().generateKeyPair();
     final Address arbitrarySender = Address.fromHexString("1");
     builder.gasPrice(Wei.ZERO).nonce(0).sender(arbitrarySender).value(Wei.ZERO);
 

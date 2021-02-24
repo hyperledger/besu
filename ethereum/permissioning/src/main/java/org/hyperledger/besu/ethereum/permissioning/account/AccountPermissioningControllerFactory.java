@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.account;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -141,13 +141,12 @@ public class AccountPermissioningControllerFactory {
     try {
       LOG.debug("Validating onchain account permissioning smart contract configuration");
 
-      final EllipticCurveSignature ellipticCurveSignature =
-          EllipticCurveSignatureFactory.getInstance();
+      final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
-      final Signature FAKE_SIGNATURE =
-          ellipticCurveSignature.createSignature(
-              ellipticCurveSignature.getHalfCurveOrder(),
-              ellipticCurveSignature.getHalfCurveOrder(),
+      final SECPSignature FAKE_SIGNATURE =
+          signatureAlgorithm.createSignature(
+              signatureAlgorithm.getHalfCurveOrder(),
+              signatureAlgorithm.getHalfCurveOrder(),
               (byte) 0);
 
       final Transaction transaction =

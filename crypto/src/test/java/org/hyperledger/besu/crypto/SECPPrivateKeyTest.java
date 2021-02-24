@@ -31,8 +31,8 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class PrivateKeyTest {
-  public static final String ALGORITHM = EllipticCurveSignature.ALGORITHM;
+public class SECPPrivateKeyTest {
+  public static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
   public static final String CURVE_NAME = "secp256k1";
 
   protected static String suiteStartTime = null;
@@ -56,20 +56,20 @@ public class PrivateKeyTest {
 
   @Test(expected = NullPointerException.class)
   public void createPrivateKey_NullEncoding() {
-    PrivateKey.create((Bytes32) null, ALGORITHM);
+    SECPPrivateKey.create((Bytes32) null, ALGORITHM);
   }
 
   @Test
   public void privateKeyEquals() {
-    final PrivateKey privateKey1 = PrivateKey.create(BigInteger.TEN, ALGORITHM);
-    final PrivateKey privateKey2 = PrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey1 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey2 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
 
     assertThat(privateKey2).isEqualTo(privateKey1);
   }
 
   @Test
   public void privateHashCode() {
-    final PrivateKey privateKey = PrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
 
     assertThat(privateKey.hashCode()).isNotZero();
   }
@@ -81,7 +81,7 @@ public class PrivateKeyTest {
             this.getClass()
                 .getResource("/org/hyperledger/besu/crypto/validPrivateKey.txt")
                 .toURI());
-    final PrivateKey privateKey = KeyPairUtil.loadPrivateKey(file);
+    final SECPPrivateKey privateKey = KeyPairUtil.loadPrivateKey(file);
     assertThat(privateKey.getEncodedBytes())
         .isEqualTo(
             Bytes.fromHexString(
@@ -90,7 +90,7 @@ public class PrivateKeyTest {
 
   @Test
   public void readWritePrivateKeyString() throws Exception {
-    final PrivateKey privateKey = PrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
     final KeyPair keyPair1 = KeyPair.create(privateKey, curve, ALGORITHM);
     final File tempFile = Files.createTempFile(suiteName, ".keypair").toFile();
     tempFile.deleteOnExit();

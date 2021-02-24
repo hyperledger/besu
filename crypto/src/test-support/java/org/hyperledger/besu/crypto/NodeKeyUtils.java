@@ -22,6 +22,6 @@ public class NodeKeyUtils {
 
   public static NodeKey generate() {
     return new NodeKey(
-        new KeyPairSecurityModule(EllipticCurveSignatureFactory.getInstance().generateKeyPair()));
+        new KeyPairSecurityModule(SignatureAlgorithmFactory.getInstance().generateKeyPair()));
   }
 }

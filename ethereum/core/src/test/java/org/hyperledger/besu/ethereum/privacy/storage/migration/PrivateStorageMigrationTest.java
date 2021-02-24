@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -323,6 +323,6 @@ public class PrivateStorageMigrationTest {
         .payload(Bytes.EMPTY)
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
         .chainId(BigInteger.valueOf(2018))
-        .signAndBuild(EllipticCurveSignatureFactory.getInstance().generateKeyPair());
+        .signAndBuild(SignatureAlgorithmFactory.getInstance().generateKeyPair());
   }
 }

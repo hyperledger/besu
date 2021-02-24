@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -30,7 +30,7 @@ public final class EncryptedMessageTest {
 
   @Test
   public void eip8RoundTrip() throws InvalidCipherTextException {
-    final KeyPair keyPair = EllipticCurveSignatureFactory.getInstance().generateKeyPair();
+    final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     final byte[] message = new byte[288];
     ThreadLocalRandom.current().nextBytes(message);
     final Bytes initial = Bytes.wrap(message);

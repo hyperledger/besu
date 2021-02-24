@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class Signature {
+public class SECPSignature {
 
   public static final int BYTES_REQUIRED = 65;
   /**
@@ -44,7 +44,7 @@ public class Signature {
 
   private final Supplier<Bytes> encoded = Suppliers.memoize(this::_encodedBytes);
 
-  Signature(final BigInteger r, final BigInteger s, final byte recId) {
+  SECPSignature(final BigInteger r, final BigInteger s, final byte recId) {
     this.r = r;
     this.s = s;
     this.recId = recId;
@@ -56,12 +56,12 @@ public class Signature {
    * @param r the 'r' part of the signature.
    * @param s the 's' part of the signature.
    * @param recId the recovery id part of the signature.
-   * @return the created {@link Signature} object.
+   * @return the created {@link SECPSignature} object.
    * @throws NullPointerException if {@code r} or {@code s} are {@code null}.
    * @throws IllegalArgumentException if any argument is invalid (for instance, {@code v} is neither
    *     27 or 28).
    */
-  public static Signature create(
+  public static SECPSignature create(
       final BigInteger r, final BigInteger s, final byte recId, final BigInteger curveOrder) {
     checkNotNull(r);
     checkNotNull(s);
@@ -71,7 +71,7 @@ public class Signature {
       throw new IllegalArgumentException(
           "Invalid 'recId' value, should be 0 or 1 but got " + recId);
     }
-    return new Signature(r, s, recId);
+    return new SECPSignature(r, s, recId);
   }
 
   private static void checkInBounds(
@@ -87,14 +87,14 @@ public class Signature {
     }
   }
 
-  public static Signature decode(final Bytes bytes, final BigInteger curveOrder) {
+  public static SECPSignature decode(final Bytes bytes, final BigInteger curveOrder) {
     checkArgument(
         bytes.size() == BYTES_REQUIRED, "encoded SECP256K1 signature must be 65 bytes long");
 
     final BigInteger r = bytes.slice(0, 32).toUnsignedBigInteger();
     final BigInteger s = bytes.slice(32, 32).toUnsignedBigInteger();
     final byte recId = bytes.get(64);
-    return Signature.create(r, s, recId, curveOrder);
+    return SECPSignature.create(r, s, recId, curveOrder);
   }
 
   public Bytes encodedBytes() {
@@ -111,11 +111,11 @@ public class Signature {
 
   @Override
   public boolean equals(final Object other) {
-    if (!(other instanceof Signature)) {
+    if (!(other instanceof SECPSignature)) {
       return false;
     }
 
-    final Signature that = (Signature) other;
+    final SECPSignature that = (SECPSignature) other;
     return this.r.equals(that.r) && this.s.equals(that.s) && this.recId == that.recId;
   }
 

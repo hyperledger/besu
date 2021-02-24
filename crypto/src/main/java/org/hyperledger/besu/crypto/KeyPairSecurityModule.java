@@ -34,18 +34,17 @@ import org.apache.tuweni.bytes.Bytes32;
 public class KeyPairSecurityModule implements SecurityModule {
   private final KeyPair keyPair;
   private final PublicKey publicKey;
-  private final EllipticCurveSignature ellipticCurveSignature =
-      EllipticCurveSignatureFactory.getInstance();
+  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
   public KeyPairSecurityModule(final KeyPair keyPair) {
     this.keyPair = keyPair;
     this.publicKey = convertPublicKey(keyPair.getPublicKey());
   }
 
-  private PublicKey convertPublicKey(final org.hyperledger.besu.crypto.PublicKey publicKey) {
+  private PublicKey convertPublicKey(final SECPPublicKey publicKey) {
     try {
       return new PublicKeyImpl(
-          fromBouncyCastleECPoint(ellipticCurveSignature.publicKeyAsEcPoint(publicKey)));
+          fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(publicKey)));
     } catch (final Exception e) {
       throw new SecurityModuleException(
           "Unexpected error while converting ECPoint: " + e.getMessage(), e);
@@ -55,8 +54,7 @@ public class KeyPairSecurityModule implements SecurityModule {
   @Override
   public Signature sign(final Bytes32 dataHash) throws SecurityModuleException {
     try {
-      final org.hyperledger.besu.crypto.Signature signature =
-          ellipticCurveSignature.sign(dataHash, keyPair);
+      final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
       return new SignatureImpl(signature);
     } catch (final Exception e) {
       throw new SecurityModuleException("Unexpected error while signing: " + e.getMessage(), e);
@@ -73,9 +71,8 @@ public class KeyPairSecurityModule implements SecurityModule {
       throws SecurityModuleException {
     try {
       final Bytes encodedECPoint = ECPointUtil.getEncodedBytes(partyKey.getW());
-      final org.hyperledger.besu.crypto.PublicKey secp256KPartyKey =
-          ellipticCurveSignature.createPublicKey(encodedECPoint);
-      return ellipticCurveSignature.calculateECDHKeyAgreement(
+      final SECPPublicKey secp256KPartyKey = signatureAlgorithm.createPublicKey(encodedECPoint);
+      return signatureAlgorithm.calculateECDHKeyAgreement(
           keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
       throw new SecurityModuleException(
@@ -85,9 +82,9 @@ public class KeyPairSecurityModule implements SecurityModule {
 
   private static class SignatureImpl implements Signature {
 
-    private final org.hyperledger.besu.crypto.Signature signature;
+    private final SECPSignature signature;
 
-    SignatureImpl(final org.hyperledger.besu.crypto.Signature signature) {
+    SignatureImpl(final SECPSignature signature) {
       this.signature = signature;
     }
 

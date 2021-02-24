@@ -33,7 +33,7 @@ import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -189,7 +189,7 @@ public class QbftRound {
     if (blockAccepted) {
       final Block block = roundState.getProposedBlock().get();
 
-      final Signature commitSeal;
+      final SECPSignature commitSeal;
       try {
         commitSeal = createCommitSeal(block);
       } catch (final SecurityModuleException e) {
@@ -275,7 +275,7 @@ public class QbftRound {
     }
   }
 
-  private Signature createCommitSeal(final Block block) {
+  private SECPSignature createCommitSeal(final Block block) {
     final BlockHeader proposedHeader = block.getHeader();
     final BftExtraData extraData = BftExtraData.decode(proposedHeader);
     final Hash commitHash =

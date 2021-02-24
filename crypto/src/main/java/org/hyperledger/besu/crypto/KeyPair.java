@@ -27,10 +27,10 @@ import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 
 public class KeyPair {
 
-  private final PrivateKey privateKey;
-  private final PublicKey publicKey;
+  private final SECPPrivateKey privateKey;
+  private final SECPPublicKey publicKey;
 
-  public KeyPair(final PrivateKey privateKey, final PublicKey publicKey) {
+  public KeyPair(final SECPPrivateKey privateKey, final SECPPublicKey publicKey) {
     checkNotNull(privateKey);
     checkNotNull(publicKey);
     this.privateKey = privateKey;
@@ -38,8 +38,8 @@ public class KeyPair {
   }
 
   public static KeyPair create(
-      final PrivateKey privateKey, final ECDomainParameters curve, final String algorithm) {
-    return new KeyPair(privateKey, PublicKey.create(privateKey, curve, algorithm));
+      final SECPPrivateKey privateKey, final ECDomainParameters curve, final String algorithm) {
+    return new KeyPair(privateKey, SECPPublicKey.create(privateKey, curve, algorithm));
   }
 
   public static KeyPair generate(final KeyPairGenerator keyPairGenerator, final String algorithm) {
@@ -57,7 +57,8 @@ public class KeyPair {
         new BigInteger(1, Arrays.copyOfRange(publicKeyBytes, 1, publicKeyBytes.length));
 
     return new KeyPair(
-        PrivateKey.create(privateKeyValue, algorithm), PublicKey.create(publicKeyValue, algorithm));
+        SECPPrivateKey.create(privateKeyValue, algorithm),
+        SECPPublicKey.create(publicKeyValue, algorithm));
   }
 
   @Override
@@ -75,11 +76,11 @@ public class KeyPair {
     return this.privateKey.equals(that.privateKey) && this.publicKey.equals(that.publicKey);
   }
 
-  public PrivateKey getPrivateKey() {
+  public SECPPrivateKey getPrivateKey() {
     return privateKey;
   }
 
-  public PublicKey getPublicKey() {
+  public SECPPublicKey getPublicKey() {
     return publicKey;
   }
 }

@@ -24,9 +24,9 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.AccessList;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -60,8 +62,8 @@ public class TransactionDecoder {
               TransactionType.EIP1559,
               TransactionDecoder::decodeEIP1559);
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
-      EllipticCurveSignatureFactory.getInstance();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static Transaction decodeForWire(final RLPInput rlpInput) {
     if (rlpInput.nextIsList()) {
@@ -120,7 +122,7 @@ public class TransactionDecoder {
     }
     final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
     final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final Signature signature = ELLIPTIC_CURVE_SIGNATURE.createSignature(r, s, recId);
+    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
 
     input.leaveList();
 
@@ -158,10 +160,12 @@ public class TransactionDecoder {
     final Transaction transaction =
         preSignatureTransactionBuilder
             .signature(
-                ELLIPTIC_CURVE_SIGNATURE.createSignature(
-                    rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
-                    rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
-                    recId))
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createSignature(
+                        rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        recId))
             .build();
     rlpInput.leaveList();
     return transaction;
@@ -196,7 +200,7 @@ public class TransactionDecoder {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final Signature signature = ELLIPTIC_CURVE_SIGNATURE.createSignature(r, s, recId);
+    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
     input.leaveList();
     chainId.ifPresent(builder::chainId);
     return builder.signature(signature).build();

@@ -15,9 +15,9 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -90,10 +90,10 @@ public class StateTestVersionedTransaction {
     this.gasPrice = Wei.fromHexString(gasPrice);
     this.to = to.isEmpty() ? null : Address.fromHexString(to);
 
-    EllipticCurveSignature ellipticCurveSignature = EllipticCurveSignatureFactory.getInstance();
+    SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
     this.keys =
-        ellipticCurveSignature.createKeyPair(
-            ellipticCurveSignature.createPrivateKey(Bytes32.fromHexString(secretKey)));
+        signatureAlgorithm.createKeyPair(
+            signatureAlgorithm.createPrivateKey(Bytes32.fromHexString(secretKey)));
 
     this.gasLimits = parseArray(gasLimit, Gas::fromHexString);
     this.values = parseArray(value, Wei::fromHexString);

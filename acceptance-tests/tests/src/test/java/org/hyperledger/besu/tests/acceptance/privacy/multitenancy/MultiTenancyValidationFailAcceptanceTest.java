@@ -24,8 +24,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -206,8 +206,7 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
   private static PrivateTransaction getValidSignedPrivateTransaction(
       final Address senderAddress, final String privateFrom) {
 
-    final EllipticCurveSignature ellipticCurveSignature =
-        EllipticCurveSignatureFactory.getInstance();
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     return PrivateTransaction.builder()
         .nonce(0)
@@ -222,8 +221,8 @@ public class MultiTenancyValidationFailAcceptanceTest extends AcceptanceTestBase
         .restriction(Restriction.RESTRICTED)
         .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
         .signAndBuild(
-            ellipticCurveSignature.createKeyPair(
-                ellipticCurveSignature.createPrivateKey(
+            signatureAlgorithm.createKeyPair(
+                signatureAlgorithm.createPrivateKey(
                     new BigInteger(
                         "853d7f0010fd86d0d7811c1f9d968ea89a24484a8127b4a483ddf5d2cfec766d", 16))));
   }

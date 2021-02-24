@@ -18,10 +18,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -66,8 +66,7 @@ public class BlockDataGenerator {
 
   private final Random random;
   private final KeyPairGenerator keyPairGenerator;
-  private final EllipticCurveSignature ellipticCurveSignature =
-      EllipticCurveSignatureFactory.getInstance();
+  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
   private Supplier<BlockOptions> blockOptionsSupplier = BlockOptions::create;
 
   public BlockDataGenerator(final int seed) {
@@ -88,12 +87,12 @@ public class BlockDataGenerator {
     try {
       keyPairGenerator =
           KeyPairGenerator.getInstance(
-              EllipticCurveSignature.ALGORITHM, ellipticCurveSignature.getProvider());
+              SignatureAlgorithm.ALGORITHM, signatureAlgorithm.getProvider());
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
     final ECGenParameterSpec ecGenParameterSpec =
-        new ECGenParameterSpec(ellipticCurveSignature.getCurveName());
+        new ECGenParameterSpec(signatureAlgorithm.getCurveName());
     try {
       final SecureRandom secureRandom = SecureRandomProvider.createSecureRandom();
       secureRandom.setSeed(seed);
@@ -600,8 +599,8 @@ public class BlockDataGenerator {
         new BigInteger(1, Arrays.copyOfRange(publicKeyBytes, 1, publicKeyBytes.length));
 
     return new KeyPair(
-        ellipticCurveSignature.createPrivateKey(privateKeyValue),
-        ellipticCurveSignature.createPublicKey(publicKeyValue));
+        signatureAlgorithm.createPrivateKey(privateKeyValue),
+        signatureAlgorithm.createPublicKey(publicKeyValue));
   }
 
   public static class BlockOptions {

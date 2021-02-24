@@ -62,7 +62,7 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
  * Adapted from the web3j (Apache 2 License) implementations:
  * https://github.com/web3j/web3j/crypto/src/main/java/org/web3j/crypto/*.java
  */
-public class SECP256K1 implements EllipticCurveSignature {
+public class SECP256K1 implements SignatureAlgorithm {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -104,7 +104,7 @@ public class SECP256K1 implements EllipticCurveSignature {
   }
 
   @Override
-  public Signature sign(final Bytes32 dataHash, final KeyPair keyPair) {
+  public SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair) {
     if (useNative) {
       return signNative(dataHash, keyPair);
     } else {
@@ -124,7 +124,7 @@ public class SECP256K1 implements EllipticCurveSignature {
    * @return True if the verification is successful.
    */
   @Override
-  public boolean verify(final Bytes data, final Signature signature, final PublicKey pub) {
+  public boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
     if (useNative) {
       return verifyNative(data, signature, pub);
     } else {
@@ -221,7 +221,7 @@ public class SECP256K1 implements EllipticCurveSignature {
     return new BigInteger(1, Arrays.copyOfRange(qBytes, 1, qBytes.length));
   }
 
-  private Signature signDefault(final Bytes32 dataHash, final KeyPair keyPair) {
+  private SECPSignature signDefault(final Bytes32 dataHash, final KeyPair keyPair) {
     final ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
 
     final ECPrivateKeyParameters privKey =
@@ -235,10 +235,10 @@ public class SECP256K1 implements EllipticCurveSignature {
   }
 
   @Override
-  public Signature normaliseSignature(
+  public SECPSignature normaliseSignature(
       final BigInteger nativeR,
       final BigInteger nativeS,
-      final PublicKey publicKey,
+      final SECPPublicKey publicKey,
       final Bytes32 dataHash) {
 
     BigInteger s = nativeS;
@@ -273,10 +273,11 @@ public class SECP256K1 implements EllipticCurveSignature {
           "Could not construct a recoverable key. This should never happen.");
     }
 
-    return new Signature(nativeR, s, (byte) recId);
+    return new SECPSignature(nativeR, s, (byte) recId);
   }
 
-  private boolean verifyDefault(final Bytes data, final Signature signature, final PublicKey pub) {
+  private boolean verifyDefault(
+      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
     final ECDSASigner signer = new ECDSASigner();
     final Bytes toDecode = Bytes.wrap(Bytes.of((byte) 4), pub.getEncodedBytes());
     final ECPublicKeyParameters params =
@@ -306,8 +307,8 @@ public class SECP256K1 implements EllipticCurveSignature {
   @Override
   public boolean verify(
       final Bytes data,
-      final Signature signature,
-      final PublicKey pub,
+      final SECPSignature signature,
+      final SECPPublicKey pub,
       final UnaryOperator<Bytes> preprocessor) {
     checkArgument(preprocessor != null, "preprocessor must not be null");
     return verify(preprocessor.apply(data), signature, pub);
@@ -321,7 +322,8 @@ public class SECP256K1 implements EllipticCurveSignature {
    * @return The agreed secret.
    */
   @Override
-  public Bytes32 calculateECDHKeyAgreement(final PrivateKey privKey, final PublicKey theirPubKey) {
+  public Bytes32 calculateECDHKeyAgreement(
+      final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
     checkArgument(privKey != null, "missing private key");
     checkArgument(theirPubKey != null, "missing remote public key");
 
@@ -337,49 +339,49 @@ public class SECP256K1 implements EllipticCurveSignature {
   }
 
   @Override
-  public PrivateKey createPrivateKey(final BigInteger key) {
-    return PrivateKey.create(key, ALGORITHM);
+  public SECPPrivateKey createPrivateKey(final BigInteger key) {
+    return SECPPrivateKey.create(key, ALGORITHM);
   }
 
   @Override
-  public PrivateKey createPrivateKey(final Bytes32 key) {
-    return PrivateKey.create(key, ALGORITHM);
+  public SECPPrivateKey createPrivateKey(final Bytes32 key) {
+    return SECPPrivateKey.create(key, ALGORITHM);
   }
 
   @Override
-  public PublicKey createPublicKey(final PrivateKey privateKey) {
-    return PublicKey.create(privateKey, curve, ALGORITHM);
+  public SECPPublicKey createPublicKey(final SECPPrivateKey privateKey) {
+    return SECPPublicKey.create(privateKey, curve, ALGORITHM);
   }
 
   @Override
-  public PublicKey createPublicKey(final BigInteger key) {
-    return PublicKey.create(key, ALGORITHM);
+  public SECPPublicKey createPublicKey(final BigInteger key) {
+    return SECPPublicKey.create(key, ALGORITHM);
   }
 
   @Override
-  public PublicKey createPublicKey(final Bytes encoded) {
-    return PublicKey.create(encoded, ALGORITHM);
+  public SECPPublicKey createPublicKey(final Bytes encoded) {
+    return SECPPublicKey.create(encoded, ALGORITHM);
   }
 
   @Override
-  public Optional<PublicKey> recoverPublicKeyFromSignature(
-      final Bytes32 dataHash, final Signature signature) {
+  public Optional<SECPPublicKey> recoverPublicKeyFromSignature(
+      final Bytes32 dataHash, final SECPSignature signature) {
     if (useNative) {
       return recoverFromSignatureNative(dataHash, signature);
     } else {
       final BigInteger publicKeyBI =
           recoverFromSignature(signature.getRecId(), signature.getR(), signature.getS(), dataHash);
-      return Optional.of(PublicKey.create(publicKeyBI, ALGORITHM));
+      return Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM));
     }
   }
 
   @Override
-  public ECPoint publicKeyAsEcPoint(final PublicKey publicKey) {
+  public ECPoint publicKeyAsEcPoint(final SECPPublicKey publicKey) {
     return publicKey.asEcPoint(curve);
   }
 
   @Override
-  public KeyPair createKeyPair(final PrivateKey privateKey) {
+  public KeyPair createKeyPair(final SECPPrivateKey privateKey) {
     return KeyPair.create(privateKey, curve, ALGORITHM);
   }
 
@@ -389,13 +391,13 @@ public class SECP256K1 implements EllipticCurveSignature {
   }
 
   @Override
-  public Signature createSignature(final BigInteger r, final BigInteger s, final byte recId) {
-    return Signature.create(r, s, recId, curveOrder);
+  public SECPSignature createSignature(final BigInteger r, final BigInteger s, final byte recId) {
+    return SECPSignature.create(r, s, recId, curveOrder);
   }
 
   @Override
-  public Signature decodeSignature(final Bytes bytes) {
-    return Signature.decode(bytes, curveOrder);
+  public SECPSignature decodeSignature(final Bytes bytes) {
+    return SECPSignature.decode(bytes, curveOrder);
   }
 
   @Override
@@ -413,7 +415,7 @@ public class SECP256K1 implements EllipticCurveSignature {
     return CURVE_NAME;
   }
 
-  private Signature signNative(final Bytes32 dataHash, final KeyPair keyPair) {
+  private SECPSignature signNative(final Bytes32 dataHash, final KeyPair keyPair) {
     final LibSecp256k1.secp256k1_ecdsa_recoverable_signature signature =
         new secp256k1_ecdsa_recoverable_signature();
     // sign in internal form
@@ -440,11 +442,12 @@ public class SECP256K1 implements EllipticCurveSignature {
     // wrap in signature object
     final Bytes32 r = Bytes32.wrap(sig, 0);
     final Bytes32 s = Bytes32.wrap(sig, 32);
-    return Signature.create(
+    return SECPSignature.create(
         r.toUnsignedBigInteger(), s.toUnsignedBigInteger(), (byte) recId.getValue(), curveOrder);
   }
 
-  private boolean verifyNative(final Bytes data, final Signature signature, final PublicKey pub) {
+  private boolean verifyNative(
+      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
 
     // translate signature
     final LibSecp256k1.secp256k1_ecdsa_signature _signature = new secp256k1_ecdsa_signature();
@@ -468,8 +471,8 @@ public class SECP256K1 implements EllipticCurveSignature {
         != 0;
   }
 
-  private Optional<PublicKey> recoverFromSignatureNative(
-      final Bytes32 dataHash, final Signature signature) {
+  private Optional<SECPPublicKey> recoverFromSignatureNative(
+      final Bytes32 dataHash, final SECPSignature signature) {
 
     // parse the sig
     final LibSecp256k1.secp256k1_ecdsa_recoverable_signature parsedSignature =
@@ -498,6 +501,7 @@ public class SECP256K1 implements EllipticCurveSignature {
     LibSecp256k1.secp256k1_ec_pubkey_serialize(
         LibSecp256k1.CONTEXT, recoveredKey, keySize, newPubKey, SECP256K1_EC_UNCOMPRESSED);
 
-    return Optional.of(PublicKey.create(Bytes.wrapByteBuffer(recoveredKey).slice(1), ALGORITHM));
+    return Optional.of(
+        SECPPublicKey.create(Bytes.wrapByteBuffer(recoveredKey).slice(1), ALGORITHM));
   }
 }

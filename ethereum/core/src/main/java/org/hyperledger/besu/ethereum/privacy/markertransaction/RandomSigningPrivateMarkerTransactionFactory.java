@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy.markertransaction;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -31,7 +31,7 @@ public class RandomSigningPrivateMarkerTransactionFactory extends PrivateMarkerT
       final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
       final Address precompileAddress) {
-    final KeyPair signingKey = EllipticCurveSignatureFactory.getInstance().generateKeyPair();
+    final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     return create(privateTransactionLookupId, privateTransaction, 0, signingKey, precompileAddress);
   }
 }

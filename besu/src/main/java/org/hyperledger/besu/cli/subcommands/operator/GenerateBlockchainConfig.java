@@ -21,11 +21,11 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.PrivateKey;
-import org.hyperledger.besu.crypto.PublicKey;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 
@@ -43,6 +43,8 @@ import java.util.stream.IntStream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,8 +60,8 @@ import picocli.CommandLine.ParentCommand;
 class GenerateBlockchainConfig implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
-      EllipticCurveSignatureFactory.getInstance();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @Option(
       required = true,
@@ -163,8 +165,8 @@ class GenerateBlockchainConfig implements Runnable {
     final String publicKeyText = publicKeyJson.asText();
 
     try {
-      final PublicKey publicKey =
-          ELLIPTIC_CURVE_SIGNATURE.createPublicKey(Bytes.fromHexString(publicKeyText));
+      final SECPPublicKey publicKey =
+          SIGNATURE_ALGORITHM.get().createPublicKey(Bytes.fromHexString(publicKeyText));
       writeKeypair(publicKey, null);
       LOG.info("Public key imported from configuration.({})", publicKey.toString());
     } catch (final IOException e) {
@@ -187,7 +189,7 @@ class GenerateBlockchainConfig implements Runnable {
   private void generateNodeKeypair(final int node) {
     try {
       LOG.info("Generating keypair for node {}.", node);
-      final KeyPair keyPair = ELLIPTIC_CURVE_SIGNATURE.generateKeyPair();
+      final KeyPair keyPair = SIGNATURE_ALGORITHM.get().generateKeyPair();
       writeKeypair(keyPair.getPublicKey(), keyPair.getPrivateKey());
 
     } catch (final IOException e) {
@@ -203,7 +205,7 @@ class GenerateBlockchainConfig implements Runnable {
    * @param privateKey The private key. No file is created if privateKey is NULL.
    * @throws IOException If the file cannot be written or accessed.
    */
-  private void writeKeypair(final PublicKey publicKey, final PrivateKey privateKey)
+  private void writeKeypair(final SECPPublicKey publicKey, final SECPPrivateKey privateKey)
       throws IOException {
     final Address nodeAddress = Util.publicKeyToAddress(publicKey);
     addressesForGenesisExtraData.add(nodeAddress);

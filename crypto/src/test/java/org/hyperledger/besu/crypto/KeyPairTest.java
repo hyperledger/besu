@@ -31,7 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class KeyPairTest {
-  public static final String ALGORITHM = EllipticCurveSignature.ALGORITHM;
+  public static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
   public static final String PROVIDER = "BC";
   public static final String CURVE_NAME = "secp256k1";
 
@@ -54,12 +54,12 @@ public class KeyPairTest {
 
   @Test(expected = NullPointerException.class)
   public void createKeyPair_PublicKeyNull() {
-    new KeyPair(null, PublicKey.create(Bytes.wrap(new byte[64]), ALGORITHM));
+    new KeyPair(null, SECPPublicKey.create(Bytes.wrap(new byte[64]), ALGORITHM));
   }
 
   @Test(expected = NullPointerException.class)
   public void createKeyPair_PrivateKeyNull() {
-    new KeyPair(PrivateKey.create(Bytes32.wrap(new byte[32]), ALGORITHM), null);
+    new KeyPair(SECPPrivateKey.create(Bytes32.wrap(new byte[32]), ALGORITHM), null);
   }
 
   @Test
@@ -72,15 +72,15 @@ public class KeyPairTest {
 
   @Test
   public void keyPairEquals() {
-    final PrivateKey privateKey1 = PrivateKey.create(BigInteger.TEN, ALGORITHM);
-    final PrivateKey privateKey2 = PrivateKey.create(BigInteger.TEN, ALGORITHM);
-    final PublicKey publicKey1 =
-        PublicKey.create(
+    final SECPPrivateKey privateKey1 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey2 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPublicKey publicKey1 =
+        SECPPublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
             ALGORITHM);
-    final PublicKey publicKey2 =
-        PublicKey.create(
+    final SECPPublicKey publicKey2 =
+        SECPPublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
             ALGORITHM);

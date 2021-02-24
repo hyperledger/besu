@@ -21,34 +21,34 @@ import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class PrivateKey implements java.security.PrivateKey {
+public class SECPPrivateKey implements java.security.PrivateKey {
 
   private final Bytes32 encoded;
   private final String algorithm;
 
-  private PrivateKey(final Bytes32 encoded, final String algorithm) {
+  private SECPPrivateKey(final Bytes32 encoded, final String algorithm) {
     checkNotNull(encoded);
     checkNotNull(algorithm);
     this.encoded = encoded;
     this.algorithm = algorithm;
   }
 
-  public static PrivateKey create(final BigInteger key, final String algorithm) {
+  public static SECPPrivateKey create(final BigInteger key, final String algorithm) {
     checkNotNull(key);
     return create(UInt256.valueOf(key).toBytes(), algorithm);
   }
 
-  public static PrivateKey create(final Bytes32 key, final String algorithm) {
-    return new PrivateKey(key, algorithm);
+  public static SECPPrivateKey create(final Bytes32 key, final String algorithm) {
+    return new SECPPrivateKey(key, algorithm);
   }
 
   @Override
   public boolean equals(final Object other) {
-    if (!(other instanceof PrivateKey)) {
+    if (!(other instanceof SECPPrivateKey)) {
       return false;
     }
 
-    final PrivateKey that = (PrivateKey) other;
+    final SECPPrivateKey that = (SECPPrivateKey) other;
     return this.encoded.equals(that.encoded) && this.algorithm.equals(that.algorithm);
   }
 

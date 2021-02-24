@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.common.bft.inttest;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -62,7 +62,7 @@ public abstract class DefaultValidatorPeer {
     return peerConnection;
   }
 
-  public Signature getBlockSignature(final Hash digest) {
+  public SECPSignature getBlockSignature(final Hash digest) {
     return nodeKey.sign(digest);
   }
 

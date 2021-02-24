@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.PublicKey;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -30,14 +30,14 @@ public class Util {
    * @param dataHash the hash of the data which was signed.
    * @return The Address of the Ethereum node which signed the data defined by the supplied dataHash
    */
-  public static Address signatureToAddress(final Signature seal, final Hash dataHash) {
-    return EllipticCurveSignatureFactory.getInstance()
+  public static Address signatureToAddress(final SECPSignature seal, final Hash dataHash) {
+    return SignatureAlgorithmFactory.getInstance()
         .recoverPublicKeyFromSignature(dataHash, seal)
         .map(Util::publicKeyToAddress)
         .orElse(null);
   }
 
-  public static Address publicKeyToAddress(final PublicKey publicKey) {
+  public static Address publicKeyToAddress(final SECPPublicKey publicKey) {
     return publicKeyToAddress(publicKey.getEncodedBytes());
   }
 

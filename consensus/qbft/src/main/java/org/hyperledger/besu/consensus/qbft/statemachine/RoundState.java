@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
@@ -119,7 +119,7 @@ public class RoundState {
     return committed;
   }
 
-  public Collection<Signature> getCommitSeals() {
+  public Collection<SECPSignature> getCommitSeals() {
     return commitMessages.stream()
         .map(cp -> cp.getSignedPayload().getPayload().getCommitSeal())
         .collect(Collectors.toList());

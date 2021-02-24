@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -210,9 +210,8 @@ public class MainnetTransactionValidator {
           "replay protected signatures is not supported");
     }
 
-    final Signature signature = transaction.getSignature();
-    final BigInteger halfCurveOrder =
-        EllipticCurveSignatureFactory.getInstance().getHalfCurveOrder();
+    final SECPSignature signature = transaction.getSignature();
+    final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
     if (disallowSignatureMalleability && signature.getS().compareTo(halfCurveOrder) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_SIGNATURE,

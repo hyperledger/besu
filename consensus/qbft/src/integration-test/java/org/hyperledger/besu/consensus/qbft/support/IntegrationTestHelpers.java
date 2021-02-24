@@ -22,7 +22,7 @@ import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 
 public class IntegrationTestHelpers {
@@ -32,7 +32,7 @@ public class IntegrationTestHelpers {
 
     final BftExtraData extraData = BftExtraData.decode(block.getHeader());
 
-    final Signature commitSeal =
+    final SECPSignature commitSeal =
         nodeKey.sign(
             BftBlockHashing.calculateDataHashForCommittedSeal(block.getHeader(), extraData));
 

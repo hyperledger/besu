@@ -24,7 +24,7 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class SignatureTest {
+public class SECPSignatureTest {
   public static final String CURVE_NAME = "secp256k1";
 
   public static BigInteger curveOrder;
@@ -39,8 +39,8 @@ public class SignatureTest {
 
   @Test
   public void createSignature() {
-    final Signature signature =
-        Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0, curveOrder);
+    final SECPSignature signature =
+        SECPSignature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0, curveOrder);
     assertThat(signature.getR()).isEqualTo(BigInteger.ONE);
     assertThat(signature.getS()).isEqualTo(BigInteger.TEN);
     assertThat(signature.getRecId()).isEqualTo((byte) 0);
@@ -48,11 +48,11 @@ public class SignatureTest {
 
   @Test(expected = NullPointerException.class)
   public void createSignature_NoR() {
-    Signature.create(null, BigInteger.ZERO, (byte) 27, curveOrder);
+    SECPSignature.create(null, BigInteger.ZERO, (byte) 27, curveOrder);
   }
 
   @Test(expected = NullPointerException.class)
   public void createSignature_NoS() {
-    Signature.create(BigInteger.ZERO, null, (byte) 27, curveOrder);
+    SECPSignature.create(BigInteger.ZERO, null, (byte) 27, curveOrder);
   }
 }

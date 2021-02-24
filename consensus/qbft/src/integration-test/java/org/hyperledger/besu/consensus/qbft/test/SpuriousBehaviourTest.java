@@ -29,7 +29,7 @@ import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.support.ValidatorPeer;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -146,7 +146,7 @@ public class SpuriousBehaviourTest {
 
     // nonProposer-2 will generate an invalid seal
     final ValidatorPeer badSealPeer = peers.getNonProposing(2);
-    final Signature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
+    final SECPSignature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
 
     badSealPeer.injectCommit(roundId, proposedBlock.getHash(), illegalSeal);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);

@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -55,7 +55,7 @@ public class PrepareMessage implements RlpTestCaseMessage {
         new PreparePayload(
             new ConsensusRoundIdentifier(unsignedPrepare.sequence, unsignedPrepare.round),
             Hash.fromHexString(unsignedPrepare.digest)),
-        Signature.decode(Bytes.fromHexString(prepareMessage.signature)));
+        SECPSignature.decode(Bytes.fromHexString(prepareMessage.signature)));
   }
 
   public static class UnsignedPrepare {

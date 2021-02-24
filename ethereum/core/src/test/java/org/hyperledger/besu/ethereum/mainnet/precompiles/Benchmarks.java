@@ -20,12 +20,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.PrivateKey;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -86,23 +86,22 @@ public class Benchmarks {
           .build();
 
   public static void benchSecp256k1Recover() {
-    final EllipticCurveSignature ellipticCurveSignature =
-        EllipticCurveSignatureFactory.getInstance();
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
-    final PrivateKey privateKey =
-        ellipticCurveSignature.createPrivateKey(
+    final SECPPrivateKey privateKey =
+        signatureAlgorithm.createPrivateKey(
             new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
-    final KeyPair keyPair = ellipticCurveSignature.createKeyPair(privateKey);
+    final KeyPair keyPair = signatureAlgorithm.createKeyPair(privateKey);
 
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
-    final Signature signature = ellipticCurveSignature.sign(dataHash, keyPair);
+    final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
     for (int i = 0; i < MATH_WARMUP; i++) {
-      ellipticCurveSignature.recoverPublicKeyFromSignature(dataHash, signature);
+      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
     }
     final Stopwatch timer = Stopwatch.createStarted();
     for (int i = 0; i < MATH_ITERATIONS; i++) {
-      ellipticCurveSignature.recoverPublicKeyFromSignature(dataHash, signature);
+      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
     }
     timer.stop();
 

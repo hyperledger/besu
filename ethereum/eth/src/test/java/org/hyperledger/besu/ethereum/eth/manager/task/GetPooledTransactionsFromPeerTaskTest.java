@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
@@ -42,7 +42,7 @@ public class GetPooledTransactionsFromPeerTaskTest extends PeerMessageTaskTest<L
   protected List<Transaction> generateDataToBeRequested() {
 
     final List<Transaction> requestedData = new ArrayList<>();
-    KeyPair keyPair = EllipticCurveSignatureFactory.getInstance().generateKeyPair();
+    KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     for (int i = 0; i < 3; i++) {
       Transaction tx =
           new TransactionTestFixture()

@@ -29,7 +29,7 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
@@ -62,13 +62,13 @@ public class ValidatorPeer extends DefaultValidatorPeer {
   }
 
   public Commit injectCommit(final ConsensusRoundIdentifier rId, final Hash digest) {
-    final Signature commitSeal = nodeKey.sign(digest);
+    final SECPSignature commitSeal = nodeKey.sign(digest);
 
     return injectCommit(rId, digest, commitSeal);
   }
 
   public Commit injectCommit(
-      final ConsensusRoundIdentifier rId, final Hash digest, final Signature commitSeal) {
+      final ConsensusRoundIdentifier rId, final Hash digest, final SECPSignature commitSeal) {
     final Commit payload = messageFactory.createCommit(rId, digest, commitSeal);
     injectMessage(CommitMessageData.create(payload));
     return payload;

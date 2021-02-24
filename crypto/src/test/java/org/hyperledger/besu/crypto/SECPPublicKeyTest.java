@@ -26,8 +26,8 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PublicKeyTest {
-  public static final String ALGORITHM = EllipticCurveSignature.ALGORITHM;
+public class SECPPublicKeyTest {
+  public static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
   public static final String CURVE_NAME = "secp256k1";
 
   public ECDomainParameters curve;
@@ -40,28 +40,28 @@ public class PublicKeyTest {
 
   @Test(expected = NullPointerException.class)
   public void createPublicKey_NullEncoding() {
-    PublicKey.create((Bytes) null, ALGORITHM);
+    SECPPublicKey.create((Bytes) null, ALGORITHM);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void createPublicKey_EncodingTooShort() {
-    PublicKey.create(Bytes.wrap(new byte[63]), ALGORITHM);
+    SECPPublicKey.create(Bytes.wrap(new byte[63]), ALGORITHM);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void createPublicKey_EncodingTooLong() {
-    PublicKey.create(Bytes.wrap(new byte[65]), ALGORITHM);
+    SECPPublicKey.create(Bytes.wrap(new byte[65]), ALGORITHM);
   }
 
   @Test
   public void publicKeyEquals() {
-    final PublicKey publicKey1 =
-        PublicKey.create(
+    final SECPPublicKey publicKey1 =
+        SECPPublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
             ALGORITHM);
-    final PublicKey publicKey2 =
-        PublicKey.create(
+    final SECPPublicKey publicKey2 =
+        SECPPublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
             ALGORITHM);
@@ -71,8 +71,8 @@ public class PublicKeyTest {
 
   @Test
   public void publicHashCode() {
-    final PublicKey publicKey =
-        PublicKey.create(
+    final SECPPublicKey publicKey =
+        SECPPublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
             ALGORITHM);
@@ -82,14 +82,14 @@ public class PublicKeyTest {
 
   @Test
   public void publicKeyRecovery() {
-    final PrivateKey privateKey = PrivateKey.create(BigInteger.TEN, ALGORITHM);
-    final PublicKey expectedPublicKey =
-        PublicKey.create(
+    final SECPPrivateKey privateKey = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPublicKey expectedPublicKey =
+        SECPPublicKey.create(
             fromHexString(
                 "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
             ALGORITHM);
 
-    final PublicKey publicKey = PublicKey.create(privateKey, curve, ALGORITHM);
+    final SECPPublicKey publicKey = SECPPublicKey.create(privateKey, curve, ALGORITHM);
     assertThat(publicKey).isEqualTo(expectedPublicKey);
   }
 }

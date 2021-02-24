@@ -34,7 +34,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -404,7 +404,8 @@ public class RoundChangeMessageValidatorTest {
         ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
 
     final RoundChangePayload payload = new RoundChangePayload(targetRound, Optional.empty());
-    final Signature signature = validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
+    final SECPSignature signature =
+        validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
 
     final RoundChange message =
         new RoundChange(SignedData.create(payload, signature), Optional.of(block), emptyList());
@@ -436,7 +437,8 @@ public class RoundChangeMessageValidatorTest {
             Optional.of(
                 new PreparedRoundMetadata(
                     Hash.fromHexStringLenient("0x1"), roundIdentifier.getRoundNumber())));
-    final Signature signature = validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
+    final SECPSignature signature =
+        validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
 
     final RoundChange message =
         new RoundChange(

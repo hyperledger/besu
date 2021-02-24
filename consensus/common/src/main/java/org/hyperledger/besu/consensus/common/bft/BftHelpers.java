@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -37,7 +37,7 @@ public class BftHelpers {
   }
 
   public static Block createSealedBlock(
-      final Block block, final Collection<Signature> commitSeals) {
+      final Block block, final Collection<SECPSignature> commitSeals) {
     final BlockHeader initialHeader = block.getHeader();
     final BftExtraData initialExtraData = BftExtraData.decode(initialHeader);
 

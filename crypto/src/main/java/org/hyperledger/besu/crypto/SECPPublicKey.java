@@ -26,24 +26,24 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 
-public class PublicKey implements java.security.PublicKey {
+public class SECPPublicKey implements java.security.PublicKey {
 
   public static final int BYTE_LENGTH = 64;
 
   private final Bytes encoded;
   private final String algorithm;
 
-  public static PublicKey create(final BigInteger key, final String algorithm) {
+  public static SECPPublicKey create(final BigInteger key, final String algorithm) {
     checkNotNull(key);
     return create(toBytes64(key.toByteArray()), algorithm);
   }
 
-  public static PublicKey create(final Bytes encoded, final String algorithm) {
-    return new PublicKey(encoded, algorithm);
+  public static SECPPublicKey create(final Bytes encoded, final String algorithm) {
+    return new SECPPublicKey(encoded, algorithm);
   }
 
-  public static PublicKey create(
-      final PrivateKey privateKey, final ECDomainParameters curve, final String algorithm) {
+  public static SECPPublicKey create(
+      final SECPPrivateKey privateKey, final ECDomainParameters curve, final String algorithm) {
     BigInteger privKey = privateKey.getEncodedBytes().toUnsignedBigInteger();
 
     /*
@@ -55,7 +55,7 @@ public class PublicKey implements java.security.PublicKey {
     }
 
     final ECPoint point = new FixedPointCombMultiplier().multiply(curve.getG(), privKey);
-    return PublicKey.create(
+    return SECPPublicKey.create(
         Bytes.wrap(Arrays.copyOfRange(point.getEncoded(false), 1, 65)), algorithm);
   }
 
@@ -71,7 +71,7 @@ public class PublicKey implements java.security.PublicKey {
     }
   }
 
-  private PublicKey(final Bytes encoded, final String algorithm) {
+  private SECPPublicKey(final Bytes encoded, final String algorithm) {
     checkNotNull(encoded);
     checkNotNull(algorithm);
     checkArgument(
@@ -97,11 +97,11 @@ public class PublicKey implements java.security.PublicKey {
 
   @Override
   public boolean equals(final Object other) {
-    if (!(other instanceof PublicKey)) {
+    if (!(other instanceof SECPPublicKey)) {
       return false;
     }
 
-    final PublicKey that = (PublicKey) other;
+    final SECPPublicKey that = (SECPPublicKey) other;
     return this.encoded.equals(that.encoded) && this.algorithm.equals(that.algorithm);
   }
 

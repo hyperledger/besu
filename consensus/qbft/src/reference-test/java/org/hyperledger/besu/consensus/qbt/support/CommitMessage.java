@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,9 +49,9 @@ public class CommitMessage implements RlpTestCaseMessage {
         new CommitPayload(
             new ConsensusRoundIdentifier(unsignedCommit.sequence, unsignedCommit.round),
             Hash.fromHexStringLenient(unsignedCommit.digest),
-            Signature.decode(Bytes.fromHexString(unsignedCommit.commitSeal)));
+            SECPSignature.decode(Bytes.fromHexString(unsignedCommit.commitSeal)));
     final SignedData<CommitPayload> signedCommitPayload =
-        SignedData.create(commitPayload, Signature.decode(Bytes.fromHexString(signature)));
+        SignedData.create(commitPayload, SECPSignature.decode(Bytes.fromHexString(signature)));
     return new Commit(signedCommitPayload);
   }
 

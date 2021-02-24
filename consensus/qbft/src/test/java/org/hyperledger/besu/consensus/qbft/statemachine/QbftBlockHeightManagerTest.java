@@ -49,9 +49,9 @@ import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -317,7 +317,7 @@ public class QbftBlockHeightManagerTest {
             .createCommit(
                 futureRoundIdentifier,
                 Hash.fromHexStringLenient("0"),
-                EllipticCurveSignatureFactory.getInstance()
+                SignatureAlgorithmFactory.getInstance()
                     .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
 
     manager.handlePreparePayload(prepare);

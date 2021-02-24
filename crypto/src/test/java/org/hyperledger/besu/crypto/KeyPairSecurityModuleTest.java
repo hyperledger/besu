@@ -38,8 +38,8 @@ public class KeyPairSecurityModuleTest {
     final KeyPairSecurityModule keyPairSecurityModule = new KeyPairSecurityModule(keyPair);
     final ECPoint ecPoint = keyPairSecurityModule.getPublicKey().getW();
     final Bytes encodedBytes = ECPointUtil.getEncodedBytes(ecPoint);
-    final PublicKey publicKey =
-        EllipticCurveSignatureFactory.getInstance().createPublicKey(encodedBytes);
+    final SECPPublicKey publicKey =
+        SignatureAlgorithmFactory.getInstance().createPublicKey(encodedBytes);
 
     Assertions.assertThat(keyPair.getPublicKey().getEncodedBytes())
         .isEqualByComparingTo(publicKey.getEncodedBytes());

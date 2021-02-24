@@ -14,40 +14,42 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
-import org.hyperledger.besu.crypto.EllipticCurveSignature;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.PublicKey;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMessage {
 
   public static final int VERSION = 4;
-  private static final EllipticCurveSignature ELLIPTIC_CURVE_SIGNATURE =
-      EllipticCurveSignatureFactory.getInstance();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  private final PublicKey pubKey;
-  private final Signature signature;
-  private final PublicKey ephPubKey;
+  private final SECPPublicKey pubKey;
+  private final SECPSignature signature;
+  private final SECPPublicKey ephPubKey;
   private final Bytes32 ephPubKeyHash;
   private final Bytes32 nonce;
 
   public static InitiatorHandshakeMessageV4 create(
-      final PublicKey ourPubKey,
+      final SECPPublicKey ourPubKey,
       final KeyPair ephKeyPair,
       final Bytes32 staticSharedSecret,
       final Bytes32 nonce) {
     return new InitiatorHandshakeMessageV4(
         ourPubKey,
-        ELLIPTIC_CURVE_SIGNATURE.sign(staticSharedSecret.xor(nonce), ephKeyPair),
+        SIGNATURE_ALGORITHM.get().sign(staticSharedSecret.xor(nonce), ephKeyPair),
         ephKeyPair.getPublicKey(),
         nonce);
   }
@@ -62,12 +64,13 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
   public static InitiatorHandshakeMessageV4 decode(final Bytes bytes, final NodeKey nodeKey) {
     final RLPInput input = new BytesValueRLPInput(bytes, true);
     input.enterList();
-    final Signature signature = ELLIPTIC_CURVE_SIGNATURE.decodeSignature(input.readBytes());
-    final PublicKey pubKey = ELLIPTIC_CURVE_SIGNATURE.createPublicKey(input.readBytes());
+    final SECPSignature signature = SIGNATURE_ALGORITHM.get().decodeSignature(input.readBytes());
+    final SECPPublicKey pubKey = SIGNATURE_ALGORITHM.get().createPublicKey(input.readBytes());
     final Bytes32 nonce = input.readBytes32();
     final Bytes32 staticSharedSecret = nodeKey.calculateECDHKeyAgreement(pubKey);
-    final PublicKey ephPubKey =
-        ELLIPTIC_CURVE_SIGNATURE
+    final SECPPublicKey ephPubKey =
+        SIGNATURE_ALGORITHM
+            .get()
             .recoverPublicKeyFromSignature(staticSharedSecret.xor(nonce), signature)
             .orElseThrow(() -> new RuntimeException("Could not recover public key from signature"));
 
@@ -75,9 +78,9 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
   }
 
   private InitiatorHandshakeMessageV4(
-      final PublicKey pubKey,
-      final Signature signature,
-      final PublicKey ephPubKey,
+      final SECPPublicKey pubKey,
+      final SECPSignature signature,
+      final SECPPublicKey ephPubKey,
       final Bytes32 nonce) {
     this.pubKey = pubKey;
     this.signature = signature;
@@ -104,12 +107,12 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
   }
 
   @Override
-  public PublicKey getPubKey() {
+  public SECPPublicKey getPubKey() {
     return pubKey;
   }
 
   @Override
-  public PublicKey getEphPubKey() {
+  public SECPPublicKey getEphPubKey() {
     return ephPubKey;
   }
 

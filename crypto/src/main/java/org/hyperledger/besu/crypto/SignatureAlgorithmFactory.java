@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.crypto;
 
-public class EllipticCurveSignatureFactory {
+public class SignatureAlgorithmFactory {
 
-  private static final EllipticCurveSignature instance = new SECP256K1();
+  private static final SignatureAlgorithm instance = new SECP256K1();
 
-  public static EllipticCurveSignature getInstance() {
+  public static SignatureAlgorithm getInstance() {
     return instance;
   }
 }

@@ -21,8 +21,8 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
-import org.hyperledger.besu.crypto.EllipticCurveSignatureFactory;
-import org.hyperledger.besu.crypto.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -61,8 +61,8 @@ public class RoundChangeCertificateTest {
         ProposedBlockHelpers.createProposalBlock(
             singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
-    final Signature signature =
-        EllipticCurveSignatureFactory.getInstance()
+    final SECPSignature signature =
+        SignatureAlgorithmFactory.getInstance()
             .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     SignedData<ProposalPayload> signedProposal =
         PayloadDeserializers.from(proposalPayload, signature);
