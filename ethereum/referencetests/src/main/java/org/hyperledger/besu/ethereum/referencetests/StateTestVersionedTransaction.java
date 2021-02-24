@@ -79,6 +79,7 @@ public class StateTestVersionedTransaction {
    * @param value Amount of ether transferred in the mock transaction.
    * @param secretKey Secret Key of the mock transaction.
    * @param data Call data of the mock transaction.
+   * @param maybeAccessLists List of access lists of the mock transaction. Can be null.
    */
   @JsonCreator
   public StateTestVersionedTransaction(
