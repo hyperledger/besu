@@ -227,6 +227,11 @@ public class BlockTransactionSelector {
       final ValidationResult<TransactionInvalidReason> validationResult =
           validateTransaction(processableBlockHeader, transaction, worldStateUpdater);
       if (!validationResult.isValid()) {
+        LOG.warn(
+            "Invalid transaction: {}. Block {} Transaction {}",
+            validationResult.getErrorMessage(),
+            processableBlockHeader.getParentHash().toHexString(),
+            transaction.getHash().toHexString());
         return TransactionSelectionResult.CONTINUE;
       }
 
@@ -272,11 +277,6 @@ public class BlockTransactionSelector {
     ValidationResult<TransactionInvalidReason> validationResult =
         transactionValidator.validate(transaction, blockHeader.getBaseFee());
     if (!validationResult.isValid()) {
-      LOG.warn(
-          "Invalid transaction: {}. Block {} Transaction {}",
-          validationResult.getErrorMessage(),
-          blockHeader.getParentHash().toHexString(),
-          transaction.getHash().toHexString());
       return validationResult;
     }
 
@@ -286,15 +286,8 @@ public class BlockTransactionSelector {
     validationResult =
         transactionValidator.validateForSender(
             transaction, sender, TransactionValidationParams.processingBlock());
-    if (!validationResult.isValid()) {
-      LOG.warn(
-          "Invalid transaction: {}. Block {} Transaction {}",
-          validationResult.getErrorMessage(),
-          blockHeader.getParentHash().toHexString(),
-          transaction.getHash().toHexString());
-      return validationResult;
-    }
-    return ValidationResult.valid();
+
+    return validationResult;
   }
 
   /*
