@@ -127,6 +127,9 @@ public class TransactionSimulatorTest {
     mockBlockchainForBlockHeader(Hash.ZERO, 1L);
     mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
+    final MutableAccount mutableAccount =
+        mockWorldUpdaterForAccount(Hash.ZERO, callParameter.getFrom());
+
     final Transaction expectedTransaction =
         Transaction.builder()
             .nonce(1L)
@@ -140,9 +143,6 @@ public class TransactionSimulatorTest {
             .build();
 
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
-
-    final MutableAccount mutableAccount =
-        mockWorldUpdaterForAccount(Hash.ZERO, callParameter.getFrom());
 
     transactionSimulator.process(
         callParameter,

@@ -14,17 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -32,11 +36,13 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -47,6 +53,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  * blockchain or to estimate the transaction gas cost.
  */
 public class TransactionSimulator {
+  private static final Logger LOG = getLogger();
 
   // Dummy signature for transactions to not fail being processed.
   private static final SECP256K1.Signature FAKE_SIGNATURE =
@@ -127,22 +134,24 @@ public class TransactionSimulator {
     if (header == null) {
       return Optional.empty();
     }
-    final MutableWorldState worldState = getPrivateStateIfAddressExists(callParams.getTo(), header);
-    if (worldState == null) {
+
+    final MutableWorldState publicWorldState =
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
+
+    if (publicWorldState == null) {
       return Optional.empty();
     }
+    final WorldUpdater updater = getEffectiveWorldStateUpdater(header, publicWorldState);
 
     final Address senderAddress =
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
-    final Account sender = worldState.get(senderAddress);
+    final Account sender = publicWorldState.get(senderAddress);
     final long nonce = sender != null ? sender.getNonce() : 0L;
     final long gasLimit =
         callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
     final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
-
-    final WorldUpdater updater = worldState.updater();
 
     if (transactionValidationParams.isAllowExceedingBalance()) {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
@@ -183,25 +192,53 @@ public class TransactionSimulator {
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
 
-  // return the private world state if the address exists there, otherwise the public state
-  private MutableWorldState getPrivateStateIfAddressExists(
-      final Address contractAddress, final BlockHeader header) {
+  // return combined private/public world state updater if GoQuorum mode, otherwise the public state
+  private WorldUpdater getEffectiveWorldStateUpdater(
+      final BlockHeader header, final MutableWorldState publicWorldState) {
+
     if (maybePrivacyParameters.isPresent()
         && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
+
       final MutableWorldState privateWorldState =
-          maybePrivacyParameters
-              .get()
-              .getGoQuorumPrivacyParameters()
-              .get()
-              .worldStateArchive()
-              .getMutable();
-      final boolean doesAddressExistInPrivateState =
-          doesAddressExist(privateWorldState, contractAddress, header).orElse(false);
-      if (doesAddressExistInPrivateState) {
-        return privateWorldState;
-      }
+          getPrivateWorldState(
+              maybePrivacyParameters.get().getGoQuorumPrivacyParameters(),
+              header.getStateRoot(),
+              header.getHash());
+      return new GoQuorumMutablePrivateAndPublicWorldStateUpdater(
+          publicWorldState.updater(), privateWorldState.updater());
     }
-    return worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
+    return publicWorldState.updater();
+  }
+
+  private MutableWorldState getPrivateWorldState(
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
+      final Hash worldStateRootHash,
+      final Hash publicBlockHash) {
+    final GoQuorumPrivateStorage goQuorumPrivateStorage;
+    final WorldStateArchive goQuorumWorldStateArchive;
+    goQuorumPrivateStorage = goQuorumPrivacyParameters.orElseThrow().privateStorage();
+    goQuorumWorldStateArchive = goQuorumPrivacyParameters.orElseThrow().worldStateArchive();
+    final Hash privateStateRootHash =
+        goQuorumPrivateStorage
+            .getPrivateStateRootHash(worldStateRootHash)
+            .orElse(Hash.EMPTY_TRIE_HASH);
+
+    final Optional<MutableWorldState> maybePrivateWorldState =
+        goQuorumWorldStateArchive.getMutable(privateStateRootHash, publicBlockHash);
+    if (maybePrivateWorldState.isEmpty()) {
+      LOG.debug(
+          "Private world state not available for public world state root hash {}, public block hash {}",
+          worldStateRootHash,
+          publicBlockHash);
+
+      /*
+       This should never happen because privateStateRootResolver will either return a matching
+       private world state root hash, or the hash for an empty world state (first private tx ever).
+      */
+      throw new IllegalStateException(
+          "Private world state not available for public world state root hash " + publicBlockHash);
+    }
+    return maybePrivateWorldState.get();
   }
 
   public Optional<Boolean> doesAddressExistInPublicStateAtHead(final Address address) {
