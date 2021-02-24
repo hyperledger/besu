@@ -126,6 +126,7 @@ allprojects {
     mavenCentral()
     maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
     maven { url "https://hyperledger-org.bintray.com/besu-repo" }
+    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://consensys.bintray.com/pegasys-repo" }
     maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
     maven { url "https://dl.bintray.com/open-telemetry/maven" }
