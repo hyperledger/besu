@@ -717,9 +717,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     if (v.isPresent()) sb.append("v=").append(v.get()).append(", ");
-    sb.append("payload=").append(getPayload()).append(", ");
+    sb.append("payload=").append(getPayload());
     if (transactionType.equals(TransactionType.ACCESS_LIST)) {
-      sb.append("accessList=").append(maybeAccessList);
+      sb.append(", ").append("accessList=").append(maybeAccessList);
     }
     return sb.append("}").toString();
   }
