@@ -115,7 +115,6 @@ public class StateTestVersionedTransaction {
   public Transaction get(final GeneralStateTestCaseSpec.Indexes indexes) {
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
-            .chainId(BigInteger.ONE /* mainnet */)
             .nonce(nonce)
             .gasPrice(gasPrice)
             .gasLimit(gasLimits.get(indexes.gas).asUInt256().toLong())
@@ -123,7 +122,8 @@ public class StateTestVersionedTransaction {
             .value(values.get(indexes.value))
             .payload(payloads.get(indexes.data));
     maybeAccessLists.ifPresent(
-        accessLists -> transactionBuilder.accessList(accessLists.get(indexes.data)));
+        accessLists ->
+            transactionBuilder.accessList(accessLists.get(indexes.data)).chainId(BigInteger.ONE));
     return transactionBuilder.guessType().signAndBuild(keys);
   }
 }
