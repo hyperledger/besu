@@ -27,7 +27,7 @@ import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.AccessList;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -36,16 +36,12 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class TransactionDecoder {
 
@@ -145,17 +141,16 @@ public class TransactionDecoder {
             .value(Wei.of(rlpInput.readUInt256Scalar()))
             .payload(rlpInput.readBytes())
             .accessList(
-                new AccessList(
-                    rlpInput.readList(
-                        accessListEntryRLPInput -> {
-                          accessListEntryRLPInput.enterList();
-                          final Map.Entry<Address, List<Bytes32>> accessListEntry =
-                              new AbstractMap.SimpleEntry<>(
-                                  Address.wrap(accessListEntryRLPInput.readBytes()),
-                                  accessListEntryRLPInput.readList(RLPInput::readBytes32));
-                          accessListEntryRLPInput.leaveList();
-                          return accessListEntry;
-                        })));
+                rlpInput.readList(
+                    accessListEntryRLPInput -> {
+                      accessListEntryRLPInput.enterList();
+                      final AccessListEntry accessListEntry =
+                          new AccessListEntry(
+                              Address.wrap(accessListEntryRLPInput.readBytes()),
+                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
+                      accessListEntryRLPInput.leaveList();
+                      return accessListEntry;
+                    }));
     final byte recId = (byte) rlpInput.readIntScalar();
     final Transaction transaction =
         preSignatureTransactionBuilder

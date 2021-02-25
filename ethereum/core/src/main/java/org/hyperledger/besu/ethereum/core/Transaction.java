@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptyList;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -75,7 +77,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final Bytes payload;
 
-  private final AccessList accessList;
+  private final List<AccessListEntry> accessList;
 
   private final Optional<BigInteger> chainId;
 
@@ -139,7 +141,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Wei value,
       final SECPSignature signature,
       final Bytes payload,
-      final AccessList accessList,
+      final List<AccessListEntry> accessList,
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v) {
@@ -187,7 +189,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         value,
         signature,
         payload,
-        AccessList.EMPTY,
+        emptyList(),
         sender,
         chainId,
         v);
@@ -378,7 +380,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
   }
 
-  public AccessList getAccessList() {
+  public List<AccessListEntry> getAccessList() {
     return accessList;
   }
 
@@ -562,7 +564,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Optional<Address> to,
       final Wei value,
       final Bytes payload,
-      final AccessList accessList,
+      final List<AccessListEntry> accessList,
       final Optional<BigInteger> chainId) {
     final Bytes preimage;
     switch (transactionType) {
@@ -648,7 +650,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Optional<Address> to,
       final Wei value,
       final Bytes payload,
-      final AccessList accessList,
+      final List<AccessListEntry> accessList,
       final Optional<BigInteger> chainId) {
     final Bytes encode =
         RLP.encode(
@@ -739,7 +741,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected Bytes payload;
 
-    protected AccessList accessList = AccessList.EMPTY;
+    protected List<AccessListEntry> accessList = emptyList();
 
     protected Address sender;
 
@@ -802,7 +804,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return this;
     }
 
-    public Builder accessList(final AccessList accessList) {
+    public Builder accessList(final List<AccessListEntry> accessList) {
       this.accessList = accessList;
       return this;
     }
