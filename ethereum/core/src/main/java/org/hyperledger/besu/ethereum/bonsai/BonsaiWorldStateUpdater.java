@@ -154,7 +154,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
           accountsToUpdate.computeIfAbsent(
               deletedAddress,
               __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
-      final BonsaiAccount originalValue = accountValue.getOriginal();
       storageToClear.add(deletedAddress);
       final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
@@ -182,6 +181,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         }
       }
 
+      final BonsaiAccount originalValue = accountValue.getOriginal();
       if (originalValue != null) {
         // Enumerate and delete addresses not updated
         wrappedWorldView()
