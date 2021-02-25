@@ -25,7 +25,9 @@ ENV BESU_PID_PATH "/tmp/pid"
 
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 
-ENV PATH="/opt/besu/bin:${PATH}"
+ENV OLDPATH="${PATH}"
+ENV PATH="/opt/besu/bin:${OLDPATH}"
+
 ENTRYPOINT ["besu"]
 HEALTHCHECK --start-period=5s --interval=5s --timeout=1s --retries=10 CMD bash -c "[ -f /tmp/pid ]"
 

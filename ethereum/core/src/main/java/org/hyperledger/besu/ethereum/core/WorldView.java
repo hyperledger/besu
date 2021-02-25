@@ -19,7 +19,7 @@ public interface WorldView {
   WorldView EMPTY = address -> null;
 
   /**
-   * Get an account provided it's address.
+   * Get an account provided its address.
    *
    * @param address the address of the account to retrieve.
    * @return the {@link Account} corresponding to {@code address} or {@code null} if there is no
