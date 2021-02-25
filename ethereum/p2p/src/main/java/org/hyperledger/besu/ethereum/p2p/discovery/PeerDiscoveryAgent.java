@@ -166,10 +166,8 @@ public abstract class PeerDiscoveryAgent {
                 this.localNode = Optional.of(ourNode);
                 isActive = true;
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
-                localNode.ifPresent(
-                    peer ->
-                        peer.setNodeRecord(
-                            addLocalNodeRecord(id, advertisedAddress, tcpPort, discoveryPort)));
+                ourNode.setNodeRecord(
+                    addLocalNodeRecord(id, advertisedAddress, tcpPort, discoveryPort));
                 startController(ourNode);
                 return discoveryPort;
               });
