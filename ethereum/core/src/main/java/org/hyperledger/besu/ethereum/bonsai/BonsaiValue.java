@@ -68,4 +68,12 @@ public class BonsaiValue<T> {
   boolean isUnchanged() {
     return Objects.equals(updated, original);
   }
+
+  @Override
+  public String toString() {
+    return "BonsaiValue{" +
+        "original=" + original +
+        ", updated=" + updated +
+        '}';
+  }
 }

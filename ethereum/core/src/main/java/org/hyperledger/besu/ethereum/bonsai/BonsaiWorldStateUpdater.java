@@ -154,9 +154,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
           accountsToUpdate.computeIfAbsent(
               deletedAddress,
               __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
-      if (accountValue.getOriginal() != null) {
-        storageToClear.add(deletedAddress);
-      }
+      final BonsaiAccount originalValue = accountValue.getOriginal();
+      storageToClear.add(deletedAddress);
       final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
         codeValue.setUpdated(null);
@@ -183,7 +182,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         }
       }
 
-      final BonsaiAccount originalValue = accountValue.getOriginal();
       if (originalValue != null) {
         // Enumerate and delete addresses not updated
         wrappedWorldView()
@@ -306,6 +304,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public UInt256 getOriginalStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
+    if (storageToClear.contains(address)) {
+      return UInt256.ZERO;
+    }
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage =
         storageToUpdate.computeIfAbsent(address, key -> new HashMap<>());
     final Hash slotHashBytes = Hash.hash(storageKey.toBytes());
