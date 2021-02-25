@@ -8,6 +8,7 @@
 * admin_peers json RPC response now includes the remote nodes enode URL
 
 ### Bug Fixes
+* Fixed incorrect `groupId` in published maven pom files.
 
 ### Early Access Features
 
