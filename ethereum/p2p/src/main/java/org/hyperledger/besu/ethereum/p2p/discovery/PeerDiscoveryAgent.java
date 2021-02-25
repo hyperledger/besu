@@ -166,9 +166,10 @@ public abstract class PeerDiscoveryAgent {
                 this.localNode = Optional.of(ourNode);
                 isActive = true;
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
-                addLocalNodeRecord(id, advertisedAddress, tcpPort, discoveryPort)
-                    .ifPresent(
-                        nodeRecord -> localNode.ifPresent(peer -> peer.setNodeRecord(nodeRecord)));
+                localNode.ifPresent(
+                    peer ->
+                        peer.setNodeRecord(
+                            addLocalNodeRecord(id, advertisedAddress, tcpPort, discoveryPort)));
                 startController(ourNode);
                 return discoveryPort;
               });
@@ -178,7 +179,7 @@ public abstract class PeerDiscoveryAgent {
     }
   }
 
-  private Optional<NodeRecord> addLocalNodeRecord(
+  private NodeRecord addLocalNodeRecord(
       final Bytes nodeId,
       final String advertisedAddress,
       final Integer tcpPort,
@@ -190,40 +191,43 @@ public abstract class PeerDiscoveryAgent {
         keyValueStorage
             .get(Bytes.of(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray())
             .map(Bytes::of)
-            .flatMap(b -> Optional.of(nodeRecordFactory.fromBytes(b)));
+            .map(nodeRecordFactory::fromBytes);
 
     final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
-    if (existingNodeRecord.isEmpty()
-        || !existingNodeRecord.get().get(EnrField.PKEY_SECP256K1).equals(nodeId)
-        || !addressBytes.equals(existingNodeRecord.get().get(EnrField.IP_V4))
-        || !tcpPort.equals(existingNodeRecord.get().get(EnrField.TCP))
-        || !udpPort.equals(existingNodeRecord.get().get(EnrField.UDP))) {
-      final UInt64 sequenceNumber =
-          existingNodeRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
-      final NodeRecord nodeRecord =
-          nodeRecordFactory.createFromValues(
-              sequenceNumber,
-              new EnrField(EnrField.ID, IdentitySchema.V4),
-              new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(nodeId)),
-              new EnrField(EnrField.IP_V4, addressBytes),
-              new EnrField(EnrField.TCP, tcpPort),
-              new EnrField(EnrField.UDP, udpPort),
-              new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
-      nodeRecord.setSignature(
-          nodeKey
-              .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
-              .encodedBytes()
-              .slice(0, 64));
+    return existingNodeRecord
+        .filter(
+            nodeRecord ->
+                nodeId.equals(nodeRecord.get(EnrField.PKEY_SECP256K1))
+                    && addressBytes.equals(nodeRecord.get(EnrField.IP_V4))
+                    && tcpPort.equals(nodeRecord.get(EnrField.TCP))
+                    && udpPort.equals(nodeRecord.get(EnrField.UDP)))
+        .orElseGet(
+            () -> {
+              final UInt64 sequenceNumber =
+                  existingNodeRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
+              final NodeRecord nodeRecord =
+                  nodeRecordFactory.createFromValues(
+                      sequenceNumber,
+                      new EnrField(EnrField.ID, IdentitySchema.V4),
+                      new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(nodeId)),
+                      new EnrField(EnrField.IP_V4, addressBytes),
+                      new EnrField(EnrField.TCP, tcpPort),
+                      new EnrField(EnrField.UDP, udpPort),
+                      new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
+              nodeRecord.setSignature(
+                  nodeKey
+                      .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
+                      .encodedBytes()
+                      .slice(0, 64));
 
-      final KeyValueStorageTransaction keyValueStorageTransaction =
-          keyValueStorage.startTransaction();
-      keyValueStorageTransaction.put(
-          Bytes.wrap(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray(), nodeRecord.serialize().toArray());
-      keyValueStorageTransaction.commit();
-      return Optional.of(nodeRecord);
-    }
-
-    return existingNodeRecord;
+              final KeyValueStorageTransaction keyValueStorageTransaction =
+                  keyValueStorage.startTransaction();
+              keyValueStorageTransaction.put(
+                  Bytes.wrap(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray(),
+                  nodeRecord.serialize().toArray());
+              keyValueStorageTransaction.commit();
+              return nodeRecord;
+            });
   }
 
   public void addPeerRequirement(final PeerRequirement peerRequirement) {
