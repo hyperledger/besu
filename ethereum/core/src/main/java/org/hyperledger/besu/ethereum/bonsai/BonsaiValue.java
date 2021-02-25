@@ -71,9 +71,6 @@ public class BonsaiValue<T> {
 
   @Override
   public String toString() {
-    return "BonsaiValue{" +
-        "original=" + original +
-        ", updated=" + updated +
-        '}';
+    return "BonsaiValue{" + "original=" + original + ", updated=" + updated + '}';
   }
 }
