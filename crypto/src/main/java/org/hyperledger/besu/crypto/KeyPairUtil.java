@@ -19,10 +19,13 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.KeyPairGenerator;
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.base.Supplier;
@@ -30,7 +33,9 @@ import com.google.common.base.Suppliers;
 import com.google.common.io.Resources;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 
 public class KeyPairUtil {
   private static final Logger LOG = LogManager.getLogger();
@@ -53,7 +58,7 @@ public class KeyPairUtil {
       throw new IllegalArgumentException("Unable to load resource: " + resourcePath);
     }
     SECPPrivateKey privateKey =
-        SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes32.fromHexString((keyData)));
+        SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes.fromHexString((keyData)));
     keyPair = SIGNATURE_ALGORITHM.get().createKeyPair(privateKey);
 
     LOG.info("Loaded keyPair {} from {}", keyPair.getPublicKey().toString(), resourcePath);
@@ -101,7 +106,7 @@ public class KeyPairUtil {
       if (info.size() != 1) {
         throw new IllegalArgumentException("Supplied file does not contain valid keyPair pair.");
       }
-      return SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes32.fromHexString((info.get(0))));
+      return SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes.fromHexString((info.get(0))));
     } catch (IOException ex) {
       throw new IllegalArgumentException("Supplied file does not contain valid keyPair pair.");
     }
@@ -115,5 +120,26 @@ public class KeyPairUtil {
         tempPath,
         keyKair.getPrivateKey().getEncodedBytes().toString().getBytes(StandardCharsets.UTF_8));
     Files.move(tempPath, file.toPath(), REPLACE_EXISTING, ATOMIC_MOVE);
+  }
+
+  public static KeyPair generate(final KeyPairGenerator keyPairGenerator, final String algorithm) {
+    final java.security.KeyPair rawKeyPair = keyPairGenerator.generateKeyPair();
+    final BCECPrivateKey privateKey = (BCECPrivateKey) rawKeyPair.getPrivate();
+    final BCECPublicKey publicKey = (BCECPublicKey) rawKeyPair.getPublic();
+
+    final BigInteger privateKeyValue = privateKey.getD();
+
+    // Ethereum does not use encoded public keys like bitcoin - see
+    // https://en.bitcoin.it/wiki/Elliptic_Curve_Digital_Signature_Algorithm for details
+    // Additionally, as the first bit is a constant prefix (0x04) we ignore this value
+    final byte[] publicKeyBytes = publicKey.getQ().getEncoded(false);
+    final BigInteger publicKeyValue =
+        new BigInteger(1, Arrays.copyOfRange(publicKeyBytes, 1, publicKeyBytes.length));
+
+    return new KeyPair(
+        SECPPrivateKey.create(
+            privateKeyValue, algorithm, SIGNATURE_ALGORITHM.get().getPrivateKeyByteLength()),
+        SECPPublicKey.create(
+            publicKeyValue, algorithm, SIGNATURE_ALGORITHM.get().getPublicKeyByteLength()));
   }
 }

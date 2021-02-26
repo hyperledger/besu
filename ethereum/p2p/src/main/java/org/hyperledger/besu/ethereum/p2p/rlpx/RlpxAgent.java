@@ -19,7 +19,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
 
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
@@ -53,12 +54,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RlpxAgent {
   private static final Logger LOG = LogManager.getLogger();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private final LocalNode localNode;
   private final PeerConnectionEvents connectionEvents;
@@ -72,7 +77,7 @@ public class RlpxAgent {
   private final int maxRemotelyInitiatedConnections;
   // xor'ing with this mask will allow us to randomly let new peers connect
   // without allowing the counterparty to play nodeId farming games
-  private final Bytes nodeIdMask = Bytes.random(SECPPublicKey.BYTE_LENGTH);
+  private final Bytes nodeIdMask;
 
   @VisibleForTesting final Map<Bytes, RlpxConnection> connectionsById = new ConcurrentHashMap<>();
 
@@ -91,6 +96,7 @@ public class RlpxAgent {
       final int maxRemotelyInitiatedConnections,
       final boolean randomPeerPriority,
       final MetricsSystem metricsSystem) {
+    this.nodeIdMask = Bytes.random(SIGNATURE_ALGORITHM.get().getPublicKeyByteLength());
     this.localNode = localNode;
     this.connectionEvents = connectionEvents;
     this.connectionInitializer = connectionInitializer;

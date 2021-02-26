@@ -65,6 +65,9 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 public class SECP256K1 implements SignatureAlgorithm {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final int PRIVATE_KEY_BYTE_LENGTH = 32;
+  private static final int PUBLIC_KEY_BYTE_LENGTH = 64;
+  private static final int SIGNATURE_BYTE_LENGTH = 65;
 
   private boolean useNative = true;
 
@@ -273,7 +276,7 @@ public class SECP256K1 implements SignatureAlgorithm {
           "Could not construct a recoverable key. This should never happen.");
     }
 
-    return new SECPSignature(nativeR, s, (byte) recId);
+    return new SECPSignature(nativeR, s, (byte) recId, PRIVATE_KEY_BYTE_LENGTH);
   }
 
   private boolean verifyDefault(
@@ -340,11 +343,11 @@ public class SECP256K1 implements SignatureAlgorithm {
 
   @Override
   public SECPPrivateKey createPrivateKey(final BigInteger key) {
-    return SECPPrivateKey.create(key, ALGORITHM);
+    return SECPPrivateKey.create(key, ALGORITHM, PRIVATE_KEY_BYTE_LENGTH);
   }
 
   @Override
-  public SECPPrivateKey createPrivateKey(final Bytes32 key) {
+  public SECPPrivateKey createPrivateKey(final Bytes key) {
     return SECPPrivateKey.create(key, ALGORITHM);
   }
 
@@ -355,7 +358,7 @@ public class SECP256K1 implements SignatureAlgorithm {
 
   @Override
   public SECPPublicKey createPublicKey(final BigInteger key) {
-    return SECPPublicKey.create(key, ALGORITHM);
+    return SECPPublicKey.create(key, ALGORITHM, PUBLIC_KEY_BYTE_LENGTH);
   }
 
   @Override
@@ -371,7 +374,7 @@ public class SECP256K1 implements SignatureAlgorithm {
     } else {
       final BigInteger publicKeyBI =
           recoverFromSignature(signature.getRecId(), signature.getR(), signature.getS(), dataHash);
-      return Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM));
+      return Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM, PUBLIC_KEY_BYTE_LENGTH));
     }
   }
 
@@ -387,17 +390,17 @@ public class SECP256K1 implements SignatureAlgorithm {
 
   @Override
   public KeyPair generateKeyPair() {
-    return KeyPair.generate(keyPairGenerator, ALGORITHM);
+    return KeyPairUtil.generate(keyPairGenerator, ALGORITHM);
   }
 
   @Override
   public SECPSignature createSignature(final BigInteger r, final BigInteger s, final byte recId) {
-    return SECPSignature.create(r, s, recId, curveOrder);
+    return SECPSignature.create(r, s, recId, curveOrder, PRIVATE_KEY_BYTE_LENGTH);
   }
 
   @Override
   public SECPSignature decodeSignature(final Bytes bytes) {
-    return SECPSignature.decode(bytes, curveOrder);
+    return SECPSignature.decode(bytes, curveOrder, PRIVATE_KEY_BYTE_LENGTH);
   }
 
   @Override
@@ -413,6 +416,21 @@ public class SECP256K1 implements SignatureAlgorithm {
   @Override
   public String getCurveName() {
     return CURVE_NAME;
+  }
+
+  @Override
+  public int getPrivateKeyByteLength() {
+    return PRIVATE_KEY_BYTE_LENGTH;
+  }
+
+  @Override
+  public int getPublicKeyByteLength() {
+    return PUBLIC_KEY_BYTE_LENGTH;
+  }
+
+  @Override
+  public int getSignatureByteLength() {
+    return SIGNATURE_BYTE_LENGTH;
   }
 
   private SECPSignature signNative(final Bytes32 dataHash, final KeyPair keyPair) {
@@ -443,7 +461,11 @@ public class SECP256K1 implements SignatureAlgorithm {
     final Bytes32 r = Bytes32.wrap(sig, 0);
     final Bytes32 s = Bytes32.wrap(sig, 32);
     return SECPSignature.create(
-        r.toUnsignedBigInteger(), s.toUnsignedBigInteger(), (byte) recId.getValue(), curveOrder);
+        r.toUnsignedBigInteger(),
+        s.toUnsignedBigInteger(),
+        (byte) recId.getValue(),
+        curveOrder,
+        PRIVATE_KEY_BYTE_LENGTH);
   }
 
   private boolean verifyNative(

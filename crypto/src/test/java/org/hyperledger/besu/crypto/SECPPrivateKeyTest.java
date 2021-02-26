@@ -18,36 +18,58 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.math.BigInteger;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.asn1.sec.SECNamedCurves;
-import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class SECPPrivateKeyTest {
   public static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
-  public static final String CURVE_NAME = "secp256k1";
+
+  @Parameterized.Parameters
+  public static Object[][] getKeyParameters() {
+    return new Object[][] {
+      {
+        32,
+        "validPrivateKey_256.txt",
+        "000000000000000000000000000000000000000000000000000000000000000A"
+      },
+      {
+        48,
+        "validPrivateKey_384.txt",
+        "db83a36948be2d37cfca81279d30f13912570e1a61e1d3d03d351e68c46327dc9505fe5d1a75edd0e04406b166a23f1b"
+      }
+    };
+  }
+
+  private final int keyLength;
+  private final String validPrivateKeyFile;
+  private final String expectedPrivateKeyFromFile;
+
+  public SECPPrivateKeyTest(
+      final int keyLength,
+      final String validPrivateKeyFile,
+      final String expectedPrivateKeyFromFile) {
+    this.keyLength = keyLength;
+    this.validPrivateKeyFile = validPrivateKeyFile;
+    this.expectedPrivateKeyFromFile = expectedPrivateKeyFromFile;
+  }
 
   protected static String suiteStartTime = null;
   protected static String suiteName = null;
-  public static ECDomainParameters curve;
 
   @BeforeClass
-  public static void setUp() {
+  public static void setUpSuite() {
     suiteStartTime =
         LocalDateTime.now(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-    suiteName(SECP256K1Test.class);
-
-    final X9ECParameters params = SECNamedCurves.getByName(CURVE_NAME);
-    curve = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
+    suiteName(SECPPrivateKeyTest.class);
   }
 
   public static void suiteName(final Class<?> clazz) {
@@ -56,20 +78,20 @@ public class SECPPrivateKeyTest {
 
   @Test(expected = NullPointerException.class)
   public void createPrivateKey_NullEncoding() {
-    SECPPrivateKey.create((Bytes32) null, ALGORITHM);
+    SECPPrivateKey.create(null, ALGORITHM);
   }
 
   @Test
   public void privateKeyEquals() {
-    final SECPPrivateKey privateKey1 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
-    final SECPPrivateKey privateKey2 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey1 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM, keyLength);
+    final SECPPrivateKey privateKey2 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM, keyLength);
 
     assertThat(privateKey2).isEqualTo(privateKey1);
   }
 
   @Test
   public void privateHashCode() {
-    final SECPPrivateKey privateKey = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM, keyLength);
 
     assertThat(privateKey.hashCode()).isNotZero();
   }
@@ -79,23 +101,10 @@ public class SECPPrivateKeyTest {
     final File file =
         new File(
             this.getClass()
-                .getResource("/org/hyperledger/besu/crypto/validPrivateKey.txt")
+                .getResource("/org/hyperledger/besu/crypto/" + validPrivateKeyFile)
                 .toURI());
     final SECPPrivateKey privateKey = KeyPairUtil.loadPrivateKey(file);
     assertThat(privateKey.getEncodedBytes())
-        .isEqualTo(
-            Bytes.fromHexString(
-                "000000000000000000000000000000000000000000000000000000000000000A"));
-  }
-
-  @Test
-  public void readWritePrivateKeyString() throws Exception {
-    final SECPPrivateKey privateKey = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
-    final KeyPair keyPair1 = KeyPair.create(privateKey, curve, ALGORITHM);
-    final File tempFile = Files.createTempFile(suiteName, ".keypair").toFile();
-    tempFile.deleteOnExit();
-    KeyPairUtil.storeKeyPair(keyPair1, tempFile);
-    final KeyPair keyPair2 = KeyPairUtil.load(tempFile);
-    assertThat(keyPair2).isEqualTo(keyPair1);
+        .isEqualTo(Bytes.fromHexString(expectedPrivateKeyFromFile));
   }
 }

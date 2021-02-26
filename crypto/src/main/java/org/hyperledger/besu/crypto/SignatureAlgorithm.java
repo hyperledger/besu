@@ -54,7 +54,7 @@ public interface SignatureAlgorithm {
 
   SECPPrivateKey createPrivateKey(final BigInteger key);
 
-  SECPPrivateKey createPrivateKey(final Bytes32 key);
+  SECPPrivateKey createPrivateKey(final Bytes key);
 
   SECPPublicKey createPublicKey(final SECPPrivateKey privateKey);
 
@@ -74,4 +74,10 @@ public interface SignatureAlgorithm {
   SECPSignature createSignature(final BigInteger r, final BigInteger s, final byte recId);
 
   SECPSignature decodeSignature(final Bytes bytes);
+
+  int getPrivateKeyByteLength();
+
+  int getPublicKeyByteLength();
+
+  int getSignatureByteLength();
 }

@@ -24,11 +24,9 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class SECPSignature {
 
-  public static final int BYTES_REQUIRED = 65;
   /**
    * The recovery id to reconstruct the public key used to create the signature.
    *
@@ -42,12 +40,18 @@ public class SECPSignature {
   private final BigInteger r;
   private final BigInteger s;
 
+  private final int privateKeyLength;
+  private final int signatureLength;
+
   private final Supplier<Bytes> encoded = Suppliers.memoize(this::_encodedBytes);
 
-  SECPSignature(final BigInteger r, final BigInteger s, final byte recId) {
+  SECPSignature(
+      final BigInteger r, final BigInteger s, final byte recId, final int privateKeyLength) {
     this.r = r;
     this.s = s;
     this.recId = recId;
+    this.privateKeyLength = privateKeyLength;
+    signatureLength = calculateSignatureLength(privateKeyLength);
   }
 
   /**
@@ -63,7 +67,11 @@ public class SECPSignature {
    *     27 or 28).
    */
   public static SECPSignature create(
-      final BigInteger r, final BigInteger s, final byte recId, final BigInteger curveOrder) {
+      final BigInteger r,
+      final BigInteger s,
+      final byte recId,
+      final BigInteger curveOrder,
+      final int privateKeyLength) {
     checkNotNull(r);
     checkNotNull(s);
     checkInBounds("r", r, curveOrder);
@@ -72,7 +80,7 @@ public class SECPSignature {
       throw new IllegalArgumentException(
           "Invalid 'recId' value, should be 0 or 1 but got " + recId);
     }
-    return new SECPSignature(r, s, recId);
+    return new SECPSignature(r, s, recId, privateKeyLength);
   }
 
   private static void checkInBounds(
@@ -88,14 +96,21 @@ public class SECPSignature {
     }
   }
 
-  public static SECPSignature decode(final Bytes bytes, final BigInteger curveOrder) {
+  public static SECPSignature decode(
+      final Bytes bytes, final BigInteger curveOrder, final int privateKeyLength) {
+    final int signatureLength = calculateSignatureLength(privateKeyLength);
     checkArgument(
-        bytes.size() == BYTES_REQUIRED, "encoded SECP256K1 signature must be 65 bytes long");
+        bytes.size() == signatureLength,
+        new StringBuilder()
+            .append("encoded signature must be")
+            .append(signatureLength)
+            .append("bytes long")
+            .toString());
 
-    final BigInteger r = bytes.slice(0, 32).toUnsignedBigInteger();
-    final BigInteger s = bytes.slice(32, 32).toUnsignedBigInteger();
-    final byte recId = bytes.get(64);
-    return SECPSignature.create(r, s, recId, curveOrder);
+    final BigInteger r = bytes.slice(0, privateKeyLength).toUnsignedBigInteger();
+    final BigInteger s = bytes.slice(privateKeyLength, privateKeyLength).toUnsignedBigInteger();
+    final byte recId = bytes.get(signatureLength - 1);
+    return SECPSignature.create(r, s, recId, curveOrder, privateKeyLength);
   }
 
   public Bytes encodedBytes() {
@@ -103,11 +118,17 @@ public class SECPSignature {
   }
 
   private Bytes _encodedBytes() {
-    final MutableBytes bytes = MutableBytes.create(BYTES_REQUIRED);
-    UInt256.valueOf(r).toBytes().copyTo(bytes, 0);
-    UInt256.valueOf(s).toBytes().copyTo(bytes, 32);
-    bytes.set(64, recId);
+    final MutableBytes bytes = MutableBytes.create(signatureLength);
+    SECPKeyUtil.toBytes(r, privateKeyLength).copyTo(bytes, 0);
+    SECPKeyUtil.toBytes(s, privateKeyLength).copyTo(bytes, privateKeyLength);
+    bytes.set(signatureLength - 1, recId);
     return bytes;
+  }
+
+  private static int calculateSignatureLength(final int privateKeyLength) {
+    // ECDSA signatures are twice as long as the private key and have an additional byte for the
+    // recId
+    return privateKeyLength * 2 + 1;
   }
 
   @Override

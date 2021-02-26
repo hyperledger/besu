@@ -91,7 +91,10 @@ public class CliqueExtraDataTest {
   public void insufficientDataResultsInAnIllegalArgumentException() {
     final Bytes illegalData =
         Bytes.wrap(
-            new byte[SECPSignature.BYTES_REQUIRED + CliqueExtraData.EXTRA_VANITY_LENGTH - 1]);
+            new byte
+                [SIGNATURE_ALGORITHM.get().getSignatureByteLength()
+                    + CliqueExtraData.EXTRA_VANITY_LENGTH
+                    - 1]);
 
     assertThatThrownBy(() -> CliqueExtraData.decodeRaw(createHeaderWithExtraData(illegalData)))
         .isInstanceOf(IllegalArgumentException.class)
@@ -104,7 +107,7 @@ public class CliqueExtraDataTest {
     final Bytes illegalData =
         Bytes.wrap(
             new byte
-                [SECPSignature.BYTES_REQUIRED
+                [SIGNATURE_ALGORITHM.get().getSignatureByteLength()
                     + CliqueExtraData.EXTRA_VANITY_LENGTH
                     + Address.SIZE
                     - 1]);

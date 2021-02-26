@@ -17,77 +17,79 @@ package org.hyperledger.besu.crypto;
 import static org.apache.tuweni.bytes.Bytes.fromHexString;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigInteger;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class SECPPublicKeyTest {
+  @Parameterized.Parameters
+  public static Object[][] getKeyLengths() {
+    return new Object[][] {
+      {
+        "secp256k1",
+        "fdfc794f74aa7457b75b5c3d627240996d202944964a76a27fd0a20fde3bb547",
+        "e5a4f9e4ee41b7589f4e999af44aa1321aadef2937652128085b550cdfca083b33658257eea2b4bb69833b244081e356819f60f777334a29626b591b340fb04d"
+      },
+      {
+        "secp256r1",
+        "5c6d4954bc41b41ce2cfa6d6a57203c7c04a803404a99c0a7d3ea5de076776a7",
+        "79813a332cab41780c8246d9bc0d415124aca9e2e646333664e5aa67b0547329672098afb481c5bc7fd5589cfb456366c7487f8023344e237969cd7b5fd214d7"
+      },
+      {
+        "secp384r1",
+        "5c2786ca351c6b0ddd5d29e92b6228a44624fafba7ef608b597abc062bf6d7c1eb3cc70533af5ecb047bb218cb0f4837",
+        "f0970d65669b130668c3ddc59d3dacc142ff2fd93e43f96e51326317ef5311d95259e879737d002d221ffdde99961313bbca8e1ed95d8b1860639f370d04346bde6c30d565047888cb80affce1f48d647b9f8a3585a76d4450b748ff93c657e3"
+      }
+    };
+  }
+
   public static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
-  public static final String CURVE_NAME = "secp256k1";
 
-  public ECDomainParameters curve;
+  private final ECDomainParameters curve;
+  private final String privateKeyString;
+  private final String publicKeyString;
 
-  @Before
-  public void setUp() {
-    final X9ECParameters params = SECNamedCurves.getByName(CURVE_NAME);
+  public SECPPublicKeyTest(
+      final String curveName, final String privateKeyString, final String publicKeyString) {
+    this.privateKeyString = privateKeyString;
+    this.publicKeyString = publicKeyString;
+
+    final X9ECParameters params = SECNamedCurves.getByName(curveName);
     curve = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
   }
 
   @Test(expected = NullPointerException.class)
   public void createPublicKey_NullEncoding() {
-    SECPPublicKey.create((Bytes) null, ALGORITHM);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void createPublicKey_EncodingTooShort() {
-    SECPPublicKey.create(Bytes.wrap(new byte[63]), ALGORITHM);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void createPublicKey_EncodingTooLong() {
-    SECPPublicKey.create(Bytes.wrap(new byte[65]), ALGORITHM);
+    SECPPublicKey.create(null, ALGORITHM);
   }
 
   @Test
   public void publicKeyEquals() {
     final SECPPublicKey publicKey1 =
-        SECPPublicKey.create(
-            fromHexString(
-                "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
-            ALGORITHM);
+        SECPPublicKey.create(fromHexString(publicKeyString), ALGORITHM);
     final SECPPublicKey publicKey2 =
-        SECPPublicKey.create(
-            fromHexString(
-                "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
-            ALGORITHM);
+        SECPPublicKey.create(fromHexString(publicKeyString), ALGORITHM);
 
     assertThat(publicKey2).isEqualTo(publicKey1);
   }
 
   @Test
   public void publicHashCode() {
-    final SECPPublicKey publicKey =
-        SECPPublicKey.create(
-            fromHexString(
-                "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
-            ALGORITHM);
+    final SECPPublicKey publicKey = SECPPublicKey.create(fromHexString(publicKeyString), ALGORITHM);
 
     assertThat(publicKey.hashCode()).isNotZero();
   }
 
   @Test
   public void publicKeyRecovery() {
-    final SECPPrivateKey privateKey = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey =
+        SECPPrivateKey.create(fromHexString(privateKeyString), ALGORITHM);
     final SECPPublicKey expectedPublicKey =
-        SECPPublicKey.create(
-            fromHexString(
-                "a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7"),
-            ALGORITHM);
+        SECPPublicKey.create(fromHexString(publicKeyString), ALGORITHM);
 
     final SECPPublicKey publicKey = SECPPublicKey.create(privateKey, curve, ALGORITHM);
     assertThat(publicKey).isEqualTo(expectedPublicKey);

@@ -21,17 +21,29 @@ import java.math.BigInteger;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class SECPSignatureTest {
-  public static final String CURVE_NAME = "secp256k1";
 
-  public static BigInteger curveOrder;
+  @Parameterized.Parameters
+  public static Object[][] getKeyParameters() {
+    return new Object[][] {
+      {32, "secp256k1"},
+      {32, "secp256r1"},
+      {48, "secp384r1"}
+    };
+  }
 
-  @BeforeClass
-  public static void setUp() {
-    final X9ECParameters params = SECNamedCurves.getByName(CURVE_NAME);
+  public int keyLength;
+  public BigInteger curveOrder;
+
+  public SECPSignatureTest(final int keyLength, final String curveName) {
+    this.keyLength = keyLength;
+
+    final X9ECParameters params = SECNamedCurves.getByName(curveName);
     final ECDomainParameters curve =
         new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
     curveOrder = curve.getN();
@@ -40,7 +52,7 @@ public class SECPSignatureTest {
   @Test
   public void createSignature() {
     final SECPSignature signature =
-        SECPSignature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0, curveOrder);
+        SECPSignature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0, curveOrder, keyLength);
     assertThat(signature.getR()).isEqualTo(BigInteger.ONE);
     assertThat(signature.getS()).isEqualTo(BigInteger.TEN);
     assertThat(signature.getRecId()).isEqualTo((byte) 0);
@@ -48,11 +60,11 @@ public class SECPSignatureTest {
 
   @Test(expected = NullPointerException.class)
   public void createSignature_NoR() {
-    SECPSignature.create(null, BigInteger.ZERO, (byte) 27, curveOrder);
+    SECPSignature.create(null, BigInteger.ZERO, (byte) 27, curveOrder, keyLength);
   }
 
   @Test(expected = NullPointerException.class)
   public void createSignature_NoS() {
-    SECPSignature.create(BigInteger.ZERO, null, (byte) 27, curveOrder);
+    SECPSignature.create(BigInteger.ZERO, null, (byte) 27, curveOrder, keyLength);
   }
 }

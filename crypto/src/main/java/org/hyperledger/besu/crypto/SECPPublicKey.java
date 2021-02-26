@@ -14,28 +14,23 @@
  */
 package org.hyperledger.besu.crypto;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.MutableBytes;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.math.ec.ECPoint;
-import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 
 public class SECPPublicKey implements java.security.PublicKey {
-
-  public static final int BYTE_LENGTH = 64;
 
   private final Bytes encoded;
   private final String algorithm;
 
-  public static SECPPublicKey create(final BigInteger key, final String algorithm) {
+  public static SECPPublicKey create(
+      final BigInteger key, final String algorithm, final int byteLength) {
     checkNotNull(key);
-    return create(toBytes64(key.toByteArray()), algorithm);
+    return create(SECPKeyUtil.toBytes(key, byteLength), algorithm);
   }
 
   public static SECPPublicKey create(final Bytes encoded, final String algorithm) {
@@ -44,41 +39,14 @@ public class SECPPublicKey implements java.security.PublicKey {
 
   public static SECPPublicKey create(
       final SECPPrivateKey privateKey, final ECDomainParameters curve, final String algorithm) {
-    BigInteger privKey = privateKey.getEncodedBytes().toUnsignedBigInteger();
 
-    /*
-     * TODO: FixedPointCombMultiplier currently doesn't support scalars longer than the group
-     * order, but that could change in future versions.
-     */
-    if (privKey.bitLength() > curve.getN().bitLength()) {
-      privKey = privKey.mod(curve.getN());
-    }
-
-    final ECPoint point = new FixedPointCombMultiplier().multiply(curve.getG(), privKey);
-    return SECPPublicKey.create(
-        Bytes.wrap(Arrays.copyOfRange(point.getEncoded(false), 1, 65)), algorithm);
-  }
-
-  private static Bytes toBytes64(final byte[] backing) {
-    if (backing.length == BYTE_LENGTH) {
-      return Bytes.wrap(backing);
-    } else if (backing.length > BYTE_LENGTH) {
-      return Bytes.wrap(backing, backing.length - BYTE_LENGTH, BYTE_LENGTH);
-    } else {
-      final MutableBytes res = MutableBytes.create(BYTE_LENGTH);
-      Bytes.wrap(backing).copyTo(res, BYTE_LENGTH - backing.length);
-      return res;
-    }
+    return SECPPublicKey.create(SECPKeyUtil.toPublicKey(privateKey, curve), algorithm);
   }
 
   private SECPPublicKey(final Bytes encoded, final String algorithm) {
     checkNotNull(encoded);
     checkNotNull(algorithm);
-    checkArgument(
-        encoded.size() == BYTE_LENGTH,
-        "Encoding must be %s bytes long, got %s",
-        BYTE_LENGTH,
-        encoded.size());
+
     this.encoded = encoded;
     this.algorithm = algorithm;
   }

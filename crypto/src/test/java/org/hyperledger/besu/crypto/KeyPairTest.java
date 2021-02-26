@@ -34,6 +34,7 @@ public class KeyPairTest {
   public static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;
   public static final String PROVIDER = "BC";
   public static final String CURVE_NAME = "secp256k1";
+  public static int PRIVATE_KEY_LENGTH = 32;
 
   public static KeyPairGenerator keyPairGenerator;
   public static ECDomainParameters curve;
@@ -63,17 +64,11 @@ public class KeyPairTest {
   }
 
   @Test
-  public void keyPairGeneration() {
-    final KeyPair keyPair = KeyPair.generate(keyPairGenerator, ALGORITHM);
-    assertThat(keyPair).isNotNull();
-    assertThat(keyPair.getPrivateKey()).isNotNull();
-    assertThat(keyPair.getPublicKey()).isNotNull();
-  }
-
-  @Test
   public void keyPairEquals() {
-    final SECPPrivateKey privateKey1 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
-    final SECPPrivateKey privateKey2 = SECPPrivateKey.create(BigInteger.TEN, ALGORITHM);
+    final SECPPrivateKey privateKey1 =
+        SECPPrivateKey.create(BigInteger.TEN, ALGORITHM, PRIVATE_KEY_LENGTH);
+    final SECPPrivateKey privateKey2 =
+        SECPPrivateKey.create(BigInteger.TEN, ALGORITHM, PRIVATE_KEY_LENGTH);
     final SECPPublicKey publicKey1 =
         SECPPublicKey.create(
             fromHexString(
@@ -93,7 +88,7 @@ public class KeyPairTest {
 
   @Test
   public void keyPairHashCode() {
-    final KeyPair keyPair = KeyPair.generate(keyPairGenerator, ALGORITHM);
+    final KeyPair keyPair = KeyPairUtil.generate(keyPairGenerator, ALGORITHM);
     assertThat(keyPair.hashCode()).isNotZero();
   }
 }
