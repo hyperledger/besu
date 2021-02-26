@@ -24,23 +24,23 @@ public class QbftSubProtocolTest {
   public void messageSpaceReportsCorrectly() {
     final QbftSubProtocol subProt = new QbftSubProtocol();
 
-    assertThat(subProt.messageSpace(1)).isEqualTo(4);
+    assertThat(subProt.messageSpace(1)).isEqualTo(0x16);
   }
 
   @Test
   public void allIbftMessageTypesAreRecognisedAsValidByTheSubProtocol() {
     final QbftSubProtocol subProt = new QbftSubProtocol();
 
-    assertThat(subProt.isValidMessageCode(1, 0)).isTrue();
-    assertThat(subProt.isValidMessageCode(1, 1)).isTrue();
-    assertThat(subProt.isValidMessageCode(1, 2)).isTrue();
-    assertThat(subProt.isValidMessageCode(1, 3)).isTrue();
+    assertThat(subProt.isValidMessageCode(1, 0x12)).isTrue();
+    assertThat(subProt.isValidMessageCode(1, 0x13)).isTrue();
+    assertThat(subProt.isValidMessageCode(1, 0x14)).isTrue();
+    assertThat(subProt.isValidMessageCode(1, 0x15)).isTrue();
   }
 
   @Test
   public void invalidMessageTypesAreNotAcceptedByTheSubprotocol() {
     final QbftSubProtocol subProt = new QbftSubProtocol();
 
-    assertThat(subProt.isValidMessageCode(1, 4)).isFalse();
+    assertThat(subProt.isValidMessageCode(1, 0x16)).isFalse();
   }
 }
