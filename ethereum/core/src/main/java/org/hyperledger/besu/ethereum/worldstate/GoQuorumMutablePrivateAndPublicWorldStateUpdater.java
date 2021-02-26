@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 
 // This class uses a public WorldUpdater and a private WorldUpdater to provide a
 // MutableWorldStateUpdater that can read and write from BOTH the private world state and the public
-// world state. This is used for eth_call
+// world state.
 public class GoQuorumMutablePrivateAndPublicWorldStateUpdater
     extends GoQuorumMutablePrivateWorldStateUpdater {
 

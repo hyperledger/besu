@@ -94,7 +94,7 @@ public abstract class AbstractNodeSmartContractPermissioningController
 
   private boolean isContractDeployed() {
     final Optional<Boolean> contractExists =
-        transactionSimulator.doesAddressExistInPublicStateAtHead(contractAddress);
+        transactionSimulator.doesAddressExistAtHead(contractAddress);
 
     return contractExists.isPresent() && contractExists.get();
   }

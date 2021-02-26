@@ -200,10 +200,7 @@ public class TransactionSimulator {
         && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
 
       final MutableWorldState privateWorldState =
-          getPrivateWorldState(
-              maybePrivacyParameters.get().getGoQuorumPrivacyParameters(),
-              header.getStateRoot(),
-              header.getHash());
+          getPrivateWorldState(maybePrivacyParameters.get().getGoQuorumPrivacyParameters(), header);
       return new GoQuorumMutablePrivateAndPublicWorldStateUpdater(
           publicWorldState.updater(), privateWorldState.updater());
     }
@@ -212,8 +209,9 @@ public class TransactionSimulator {
 
   private MutableWorldState getPrivateWorldState(
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
-      final Hash worldStateRootHash,
-      final Hash publicBlockHash) {
+      final BlockHeader header) {
+    final Hash worldStateRootHash = header.getStateRoot();
+    final Hash publicBlockHash = header.getHash();
     final GoQuorumPrivateStorage goQuorumPrivateStorage;
     final WorldStateArchive goQuorumWorldStateArchive;
     goQuorumPrivateStorage = goQuorumPrivacyParameters.orElseThrow().privateStorage();
@@ -241,7 +239,7 @@ public class TransactionSimulator {
     return maybePrivateWorldState.get();
   }
 
-  public Optional<Boolean> doesAddressExistInPublicStateAtHead(final Address address) {
+  public Optional<Boolean> doesAddressExistAtHead(final Address address) {
     final BlockHeader header = blockchain.getChainHeadHeader();
     final MutableWorldState worldState =
         worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
