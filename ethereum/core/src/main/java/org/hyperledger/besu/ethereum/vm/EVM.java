@@ -22,18 +22,25 @@ import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
+import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
 import org.hyperledger.besu.ethereum.vm.operations.VirtualOperation;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class EVM {
   private static final Logger LOG = getLogger();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   protected static final OperationResult OVERFLOW_RESPONSE =
       new OperationResult(
@@ -78,6 +85,7 @@ public class EVM {
         frame,
         () -> {
           OperationResult result;
+          var loggerPrep = logStatePre(frame);
           try {
             result = frame.getCurrentOperation().execute(frame, this);
           } catch (final OverflowException oe) {
@@ -86,7 +94,7 @@ public class EVM {
             result = UNDERFLOW_RESPONSE;
           }
           frame.setGasCost(result.getGasCost());
-          logState(frame, result.getGasCost().orElse(Gas.ZERO));
+          logStatePost(frame, result, loggerPrep);
           final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();
           if (haltReason.isPresent()) {
             LOG.trace("MessageFrame evaluation halted because of {}", haltReason.get());
@@ -110,21 +118,79 @@ public class EVM {
     }
   }
 
-  private static void logState(final MessageFrame frame, final Gas currentGasCost) {
-    if (LOG.isTraceEnabled()) {
-      final StringBuilder builder = new StringBuilder();
-      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
-      builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
-      builder.append("PC: ").append(frame.getPC()).append("\n");
-      builder.append("Gas cost: ").append(currentGasCost).append("\n");
-      builder.append("Gas Remaining: ").append(frame.getRemainingGas()).append("\n");
-      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
-      builder.append("Stack:");
-      for (int i = 0; i < frame.stackSize(); ++i) {
-        builder.append("\n\t").append(i).append(" ").append(frame.getStackItem(i));
+  private static ObjectNode logStatePre(final MessageFrame frame) {
+//    if (LOG.isTraceEnabled()) {
+      final ObjectNode traceLine = OBJECT_MAPPER.createObjectNode();
+
+      final Operation currentOp = frame.getCurrentOperation();
+      traceLine.put("pc", frame.getPC());
+      traceLine.put("op", Bytes.of(currentOp.getOpcode()).toInt());
+      traceLine.put("gas", StandardJsonTracer.shortNumber(frame.getRemainingGas().asUInt256()));
+      traceLine.putNull("gasCost");
+      traceLine.putNull("memory");
+      traceLine.putNull("memSize");
+      final ArrayNode stack = traceLine.putArray("stack");
+      for (int i = frame.stackSize() - 1; i >= 0; i--) {
+        stack.add(StandardJsonTracer.shortBytes(frame.getStackItem(i)));
       }
-      LOG.trace(builder.toString());
-    }
+      final ArrayNode returnStack = traceLine.putArray("returnStack");
+      final ReturnStack rs = frame.getReturnStack();
+      for (int i = rs.size() - 1; i >= 0; i--) {
+        returnStack.add("0x" + Integer.toHexString(rs.get(i) - 1));
+      }
+      Bytes returnData = frame.getReturnData();
+      traceLine.put("returnData", returnData.size() > 0 ? returnData.toHexString() : null);
+      traceLine.put("depth", frame.getMessageStackDepth() + 1);
+
+      return traceLine;
+//    } else {
+//      return null;
+//    }
+  }
+
+  private static void logStatePost(
+      final MessageFrame frame, final OperationResult executeResult, final ObjectNode traceLine) {
+//    if (LOG.isTraceEnabled()) {
+//      final StringBuilder builder = new StringBuilder();
+//      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
+//      builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
+//      builder.append("PC: ").append(frame.getPC()).append("\n");
+//      builder.append("Gas cost: ").append(currentGasCost).append("\n");
+//      builder.append("Gas Remaining: ").append(frame.getRemainingGas()).append("\n");
+//      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
+//      builder.append("Stack:");
+//      for (int i = 0; i < frame.stackSize(); ++i) {
+//        builder.append("\n\t").append(i).append(" ").append(frame.getStackItem(i));
+//      }
+//      LOG.trace(builder.toString());
+      traceLine.put("refund", frame.getGasRefund().toLong());
+      traceLine.put(
+          "gasCost", executeResult.getGasCost().map(gas -> StandardJsonTracer.shortNumber(gas.asUInt256())).orElse(""));
+//      if (showMemory) {
+//        traceLine.put(
+//            "memory",
+//            frame
+//                .readMemory(UInt256.ZERO, frame.memoryWordSize().multiply(32))
+//                .toHexString());
+//      } else {
+        traceLine.put("memory", "0x");
+//      }
+      traceLine.put("memSize", frame.memoryByteSize());
+
+      final String error =
+          executeResult
+              .getHaltReason()
+              .map(ExceptionalHaltReason::getDescription)
+              .orElse(
+                  frame
+                      .getRevertReason()
+                      .map(bytes -> new String(bytes.toArrayUnsafe(), StandardCharsets.UTF_8))
+                      .orElse(""));
+
+      traceLine.put("opName", frame.getCurrentOperation().getName());
+      traceLine.put("error", error);
+      LOG.info(traceLine.toString());
+//    }
   }
 
   @VisibleForTesting

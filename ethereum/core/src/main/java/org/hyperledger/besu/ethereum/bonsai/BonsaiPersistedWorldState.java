@@ -373,6 +373,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
+    if (address.toHexString().equals("0x0000000000007f150bd6f54c40a34d7c3d5e9f56")) {
+      new Exception("gettingStorage on problematic account").printStackTrace(System.out);
+    }
     return worldStateStorage
         .getStorageValueBySlotHash(Hash.hash(address), slotHash)
         .map(UInt256::fromBytes);

@@ -253,7 +253,7 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     try {
-      LOG.trace("Starting execution of {}", transaction);
+      LOG.info("Starting execution of {}", transaction.getHash());
 
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(transaction, blockHeader.getBaseFee());
@@ -376,6 +376,11 @@ public class MainnetTransactionProcessor {
             () -> Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas()),
             () -> gasAvailable.minus(initialFrame.getRemainingGas()));
       }
+
+      LOG.info(
+          "{\"output\":\"{}\",\"gasUsed\":\"{}\",\"time\":0)",
+          initialFrame.getOutputData().toShortHexString(),
+          Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas()));
 
       // Refund the sender by what we should and pay the miner fee (note that we're doing them one
       // after the other so that if it is the same account somehow, we end up with the right result)

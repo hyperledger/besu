@@ -150,11 +150,16 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public void commit() {
     for (final Address deletedAddress : getDeletedAccounts()) {
+      System.out.printf("Deleteing %s%n", deletedAddress.toHexString());
       final BonsaiValue<BonsaiAccount> accountValue =
           accountsToUpdate.computeIfAbsent(
               deletedAddress,
               __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
+      final BonsaiAccount originalValue = accountValue.getOriginal();
+
+      //      if (originalValue != null) {
       storageToClear.add(deletedAddress);
+      //      }
       final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
         codeValue.setUpdated(null);
@@ -174,14 +179,24 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       while (iter.hasNext()) {
         final Map.Entry<Hash, BonsaiValue<UInt256>> updateEntry = iter.next();
         final BonsaiValue<UInt256> updatedSlot = updateEntry.getValue();
-        if (updatedSlot.getOriginal() == null || updatedSlot.getOriginal().isZero()) {
+        if (updatedSlot != null) {
+          System.out.printf(
+              " original = %s updated = %s%n",
+              updatedSlot.getOriginal(), updatedSlot.getUpdated());
+        }
+        if (updatedSlot.getOriginal() == null
+            || updatedSlot.getOriginal().isZero()
+            || originalValue == null) {
+          // if we are deleting an empty value we don't need to record a diff.
+          // if the old value was null, zero, or the old account didn't exist
+          // we can just remove it.
+          System.out.println("Removed");
           iter.remove();
         } else {
           updatedSlot.setUpdated(null);
         }
       }
 
-      final BonsaiAccount originalValue = accountValue.getOriginal();
       if (originalValue != null) {
         // Enumerate and delete addresses not updated
         wrappedWorldView()
@@ -197,6 +212,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
       if (deletedStorageUpdates.isEmpty()) {
         storageToUpdate.remove(deletedAddress);
+      } else {
+        System.out.println(storageToUpdate.get(deletedAddress));
       }
       accountValue.setUpdated(null);
     }
@@ -288,10 +305,19 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
+    if (address.toHexString().equals("0x0000000000007f150bd6f54c40a34d7c3d5e9f56")) {
+      new Exception("gettingStorage on problematic account").printStackTrace(System.out);
+    }
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage =
         storageToUpdate.computeIfAbsent(address, key -> new HashMap<>());
     final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
     if (value != null) {
+      if (value.getUpdated() == null) {
+        System.out.printf(
+            "**** Address %s slotHash %s original %s updated %s ****%n",
+            address, slotHash, value.getOriginal(), value.getUpdated());
+        new Exception().printStackTrace(System.out);
+      }
       return Optional.ofNullable(value.getUpdated());
     } else {
       final Optional<UInt256> valueUInt =
@@ -314,14 +340,25 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     if (value != null) {
       final UInt256 updated = value.getUpdated();
       if (updated != null) {
+        if (updated.toShortHexString().equals("0xbaa70")) {
+          new Exception("original/updated is 0xbaa70").printStackTrace(System.out);
+        }
         return updated;
       }
       final UInt256 original = value.getOriginal();
       if (original != null) {
+        if (original.toShortHexString().equals("0xbaa70")) {
+          new Exception("original/original is 0xbaa70").printStackTrace(System.out);
+        }
         return original;
       }
     }
-    return getStorageValue(address, storageKey);
+    UInt256 storageValue = getStorageValue(address, storageKey);
+    if (storageValue.toShortHexString().equals("0xbaa70")) {
+      new Exception("original/below is 0xbaa70").printStackTrace(System.out);
+    }
+
+    return storageValue;
   }
 
   @Override
