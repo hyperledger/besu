@@ -16,10 +16,10 @@ package org.hyperledger.besu.consensus.qbft.messagedata;
 
 /** Message codes for QBFT v1 messages */
 public class QbftV1 {
-  public static final int PROPOSAL = 0;
-  public static final int PREPARE = 1;
-  public static final int COMMIT = 2;
-  public static final int ROUND_CHANGE = 3;
+  public static final int PROPOSAL = 0x12;
+  public static final int PREPARE = 0x13;
+  public static final int COMMIT = 0x14;
+  public static final int ROUND_CHANGE = 0x15;
 
-  public static final int MESSAGE_SPACE = 4;
+  public static final int MESSAGE_SPACE = 0x16;
 }
