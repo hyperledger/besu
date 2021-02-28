@@ -86,8 +86,8 @@ public class SECPPublicKey implements java.security.PublicKey {
   /**
    * Returns this public key as an {@link ECPoint} of Bouncy Castle, to facilitate cryptographic
    * operations.
-   * @param curve The elliptic curve (e.g. SECP256K1) represented as its domain parameters
    *
+   * @param curve The elliptic curve (e.g. SECP256K1) represented as its domain parameters
    * @return This public key represented as an Elliptic Curve point.
    */
   public ECPoint asEcPoint(final ECDomainParameters curve) {
