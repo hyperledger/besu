@@ -105,7 +105,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -131,7 +131,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     final BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -158,7 +158,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -187,7 +187,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
@@ -214,7 +214,7 @@ public class BftExtraDataValidationRuleTest {
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     // Add another validator to the list reported in the IbftExtraData (note, as the
     final List<Address> extraDataValidators =
@@ -253,35 +253,35 @@ public class BftExtraDataValidationRuleTest {
     final ProtocolContext context =
         new ProtocolContext(null, null, setupContextWithValidators(validators));
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, 0);
 
     assertThat(extraDataValidationRule.validate(header, null, context)).isFalse();
   }
 
   @Test
   public void ratioOfCommittersToValidatorsAffectValidation() {
-    assertThat(subExecution(4, 4)).isEqualTo(true);
-    assertThat(subExecution(4, 3)).isEqualTo(true);
-    assertThat(subExecution(4, 2)).isEqualTo(false);
+    assertThat(subExecution(4, 4, false)).isEqualTo(true);
+    assertThat(subExecution(4, 3, false)).isEqualTo(true);
+    assertThat(subExecution(4, 2, false)).isEqualTo(false);
 
-    assertThat(subExecution(5, 3)).isEqualTo(true);
-    assertThat(subExecution(5, 2)).isEqualTo(false);
+    assertThat(subExecution(5, 3, false)).isEqualTo(true);
+    assertThat(subExecution(5, 2, false)).isEqualTo(false);
 
-    assertThat(subExecution(6, 4)).isEqualTo(true);
-    assertThat(subExecution(6, 3)).isEqualTo(true);
-    assertThat(subExecution(6, 2)).isEqualTo(false);
+    assertThat(subExecution(6, 4, false)).isEqualTo(true);
+    assertThat(subExecution(6, 3, false)).isEqualTo(true);
+    assertThat(subExecution(6, 2, false)).isEqualTo(false);
 
-    assertThat(subExecution(7, 5)).isEqualTo(true);
-    assertThat(subExecution(7, 4)).isEqualTo(false);
+    assertThat(subExecution(7, 5, false)).isEqualTo(true);
+    assertThat(subExecution(7, 4, false)).isEqualTo(false);
 
-    assertThat(subExecution(9, 5)).isEqualTo(true);
-    assertThat(subExecution(9, 4)).isEqualTo(false);
+    assertThat(subExecution(9, 5, false)).isEqualTo(true);
+    assertThat(subExecution(9, 4, false)).isEqualTo(false);
 
-    assertThat(subExecution(10, 7)).isEqualTo(true);
-    assertThat(subExecution(10, 6)).isEqualTo(false);
+    assertThat(subExecution(10, 7, false)).isEqualTo(true);
+    assertThat(subExecution(10, 6, false)).isEqualTo(false);
 
-    assertThat(subExecution(12, 7)).isEqualTo(true);
-    assertThat(subExecution(12, 6)).isEqualTo(false);
+    assertThat(subExecution(12, 7, false)).isEqualTo(true);
+    assertThat(subExecution(12, 6, false)).isEqualTo(false);
 
     // The concern in the above is that when using 6 validators, only 1/2 the validators are
     // required to seal a block. All other combinations appear to be safe they always have >50%
@@ -289,7 +289,8 @@ public class BftExtraDataValidationRuleTest {
 
   }
 
-  private boolean subExecution(final int validatorCount, final int committerCount) {
+  private boolean subExecution(
+      final int validatorCount, final int committerCount, final boolean useTwoThirds) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
     final KeyPair proposerKeyPair = KeyPair.generate();
@@ -318,7 +319,7 @@ public class BftExtraDataValidationRuleTest {
     final ProtocolContext context =
         new ProtocolContext(null, null, setupContextWithValidators(validators));
     final IbftExtraDataValidationRule extraDataValidationRule =
-        new IbftExtraDataValidationRule(true);
+        new IbftExtraDataValidationRule(true, useTwoThirds ? 0 : 2);
 
     return extraDataValidationRule.validate(header, null, context);
   }
