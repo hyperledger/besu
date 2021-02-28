@@ -56,6 +56,7 @@ public class SECPSignature {
    * @param r the 'r' part of the signature.
    * @param s the 's' part of the signature.
    * @param recId the recovery id part of the signature.
+   * @param curveOrder The order (n) of the used curve
    * @return the created {@link SECPSignature} object.
    * @throws NullPointerException if {@code r} or {@code s} are {@code null}.
    * @throws IllegalArgumentException if any argument is invalid (for instance, {@code v} is neither
