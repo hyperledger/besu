@@ -337,7 +337,7 @@ public class PeerDiscoveryController {
         break;
       case ENR_REQUEST:
         if (PeerDiscoveryStatus.BONDED.equals(peer.getStatus())) {
-          LOG.trace("ENR_REQUEST recevied from bonded peer Id: {}", peer.getId());
+          LOG.trace("ENR_REQUEST received from bonded peer Id: {}", peer.getId());
           packet
               .getPacketData(ENRRequestPacketData.class)
               .ifPresent(p -> respondToENRRequest(p, packet.getHash(), peer));

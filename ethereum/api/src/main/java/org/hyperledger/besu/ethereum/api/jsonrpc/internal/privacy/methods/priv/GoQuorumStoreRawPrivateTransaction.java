@@ -53,8 +53,10 @@ public class GoQuorumStoreRawPrivateTransaction implements JsonRpcMethod {
     final String payload = requestContext.getRequiredParameter(0, String.class);
 
     try {
-      LOG.debug("sending payload " + payload);
-      final StoreRawResponse storeRawResponse = enclave.storeRaw(payload);
+      LOG.debug("sending payload to GoQuorum enclave" + payload);
+      final StoreRawResponse storeRawResponse =
+          enclave.storeRaw(
+              Base64.getEncoder().encodeToString(Bytes.fromHexString(payload).toArray()));
       final String enclaveLookupId = storeRawResponse.getKey();
       LOG.debug("retrieved lookupId from GoQuorum enclave " + enclaveLookupId);
       return new JsonRpcSuccessResponse(id, hexEncodeEnclaveKey(enclaveLookupId));
