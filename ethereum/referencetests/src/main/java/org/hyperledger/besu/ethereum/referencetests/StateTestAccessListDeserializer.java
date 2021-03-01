@@ -35,17 +35,10 @@ public class StateTestAccessListDeserializer extends JsonDeserializer<List<List<
     final ObjectMapper objectMapper = new ObjectMapper();
     final List<List<AccessListEntry>> accessLists = new ArrayList<>();
     while (!p.nextToken().equals(JsonToken.END_ARRAY)) {
-      switch (p.currentToken()) {
-        case START_OBJECT:
-          p.nextToken();
-          // fall through
-        case VALUE_NULL:
-          accessLists.add(null);
-          break;
-        default:
-          accessLists.add(Arrays.asList(objectMapper.readValue(p, AccessListEntry[].class)));
-          break;
-      }
+      accessLists.add(
+          p.currentToken().equals(JsonToken.VALUE_NULL)
+              ? null
+              : Arrays.asList(objectMapper.readValue(p, AccessListEntry[].class)));
     }
     return accessLists;
   }
