@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -95,9 +96,10 @@ public class TransactionPoolPropagationTest {
       final TestNode node2 = nodes.create(vertx, null, null, noDiscovery);
       final TestNode node3 = nodes.create(vertx, null, null, noDiscovery);
       final TestNode node4 = nodes.create(vertx, null, null, noDiscovery);
+      final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
       final KeyPair keyPair =
-          KeyPair.create(
-              PrivateKey.create(
+          signatureAlgorithm.createKeyPair(
+              signatureAlgorithm.createPrivateKey(
                   Bytes32.fromHexString(
                       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63")));
       final TransactionTestFixture transactionBuilder = new TransactionTestFixture();

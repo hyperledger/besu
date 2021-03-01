@@ -22,7 +22,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -39,7 +40,7 @@ import org.junit.Test;
 
 public class CliqueDifficultyCalculatorTest {
 
-  private final KeyPair proposerKeyPair = KeyPair.generate();
+  private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private Address localAddr;
 
   private final List<Address> validatorList = Lists.newArrayList();

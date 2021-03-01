@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -209,14 +210,14 @@ public class MainnetTransactionValidator {
           "replay protected signatures is not supported");
     }
 
-    final SECP256K1.Signature signature = transaction.getSignature();
-    if (disallowSignatureMalleability
-        && signature.getS().compareTo(SECP256K1.HALF_CURVE_ORDER) > 0) {
+    final SECPSignature signature = transaction.getSignature();
+    final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
+    if (disallowSignatureMalleability && signature.getS().compareTo(halfCurveOrder) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_SIGNATURE,
           String.format(
               "Signature s value should be less than %s, but got %s",
-              SECP256K1.HALF_CURVE_ORDER, signature.getS()));
+              halfCurveOrder, signature.getS()));
     }
 
     // org.bouncycastle.math.ec.ECCurve.AbstractFp.decompressPoint throws an
