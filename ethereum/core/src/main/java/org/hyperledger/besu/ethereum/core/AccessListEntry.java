@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static com.google.common.base.Preconditions.checkState;
+import org.hyperledger.besu.ethereum.core.json.AccessListEntryDeserializer;
+import org.hyperledger.besu.ethereum.core.json.AccessListEntrySerializer;
 
 import java.util.List;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.core.json.AccessListEntryDeserializer;
-import org.hyperledger.besu.ethereum.core.json.AccessListEntrySerializer;
 
 @JsonSerialize(using = AccessListEntrySerializer.class)
 @JsonDeserialize(using = AccessListEntryDeserializer.class)
@@ -43,5 +42,4 @@ public class AccessListEntry {
   public List<Bytes32> getStorageKeys() {
     return storageKeys;
   }
-
 }
