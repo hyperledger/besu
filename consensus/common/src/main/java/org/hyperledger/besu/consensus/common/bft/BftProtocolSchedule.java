@@ -45,9 +45,14 @@ public class BftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.createFrom(0, builder ->
-                applyBftChanges(
-                    config.getBftConfigOptions(), builder, config.isQuorum(), blockHeaderRuleset)),
+            ProtocolSpecAdapters.createFrom(
+                0,
+                builder ->
+                    applyBftChanges(
+                        config.getBftConfigOptions(),
+                        builder,
+                        config.isQuorum(),
+                        blockHeaderRuleset)),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())

@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 
 import static org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator;
 
-import java.util.function.Function;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -26,31 +25,15 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
 
-/**
- * Defines the protocol behaviours for a blockchain using IBFT.
- */
+/** Defines the protocol behaviours for a blockchain using IBFT. */
 public class IbftProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
-
-  public static class ProtocolSpecModifier {
-
-    private long startBlock;
-    private Function<ProtocolSpecBuilder, ProtocolScheduleBuilder> modifier;
-
-    public ProtocolSpecModifier(final long startBlock,
-        final Function<ProtocolSpecBuilder, ProtocolScheduleBuilder> modifier) {
-      this.startBlock = startBlock;
-      this.modifier = modifier;
-    }
-  }
-
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
@@ -60,13 +43,13 @@ public class IbftProtocolSchedule {
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
     return new ProtocolScheduleBuilder(
-        config,
-        DEFAULT_CHAIN_ID,
-        ProtocolSpecAdapters
-            .createFrom(0, builder -> applyIbftChanges(blockPeriod, builder, config.isQuorum())),
-        privacyParameters,
-        isRevertReasonEnabled,
-        config.isQuorum())
+            config,
+            DEFAULT_CHAIN_ID,
+            ProtocolSpecAdapters.createFrom(
+                0, builder -> applyIbftChanges(blockPeriod, builder, config.isQuorum())),
+            privacyParameters,
+            isRevertReasonEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 

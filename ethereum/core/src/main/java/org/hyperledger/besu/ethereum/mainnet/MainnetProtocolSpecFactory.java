@@ -26,8 +26,12 @@ public class MainnetProtocolSpecFactory {
   private final boolean isRevertReasonEnabled;
   private final boolean quorumCompatibilityMode;
 
-  public MainnetProtocolSpecFactory(Optional<BigInteger> chainId, OptionalInt contractSizeLimit,
-      OptionalInt evmStackSize, boolean isRevertReasonEnabled, boolean quorumCompatibilityMode) {
+  public MainnetProtocolSpecFactory(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt evmStackSize,
+      final boolean isRevertReasonEnabled,
+      final boolean quorumCompatibilityMode) {
     this.chainId = chainId;
     this.contractSizeLimit = contractSizeLimit;
     this.evmStackSize = evmStackSize;

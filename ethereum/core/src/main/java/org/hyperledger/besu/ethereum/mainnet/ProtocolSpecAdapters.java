@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -27,28 +26,30 @@ public class ProtocolSpecAdapters {
   final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> modifiers;
 
   public ProtocolSpecAdapters(
-      Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> modifiers) {
+      final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> modifiers) {
     this.modifiers = modifiers;
   }
 
-  public static ProtocolSpecAdapters createFrom(final long block, Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+  public static ProtocolSpecAdapters createFrom(
+      final long block, final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> entries = new HashMap<>();
     entries.put(block, modifier);
     return new ProtocolSpecAdapters(entries);
   }
 
-  public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifierForBlock(final long blockNumber) {
+  public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifierForBlock(
+      final long blockNumber) {
     final NavigableSet<Long> epochs = new TreeSet<>(modifiers.keySet());
     final Long modifier = epochs.floor(blockNumber);
 
-    if(modifier == null) {
+    if (modifier == null) {
       return Function.identity();
     }
 
     return modifiers.get(modifier);
   }
 
-  public Stream<Entry<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>>> stream() {
+  public Stream<Map.Entry<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>>> stream() {
     return modifiers.entrySet().stream();
   }
 }

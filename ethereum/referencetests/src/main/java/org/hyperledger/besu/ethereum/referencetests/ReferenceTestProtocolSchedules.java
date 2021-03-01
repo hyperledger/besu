@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 
 public class ReferenceTestProtocolSchedules {
 
@@ -79,12 +79,12 @@ public class ReferenceTestProtocolSchedules {
 
   private static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {
     return new ProtocolScheduleBuilder(
-        options,
-        CHAIN_ID,
-        ProtocolSpecAdapters.createFrom(0, Function.identity()),
-        PrivacyParameters.DEFAULT,
-        false,
-        options.isQuorum())
+            options,
+            CHAIN_ID,
+            ProtocolSpecAdapters.createFrom(0, Function.identity()),
+            PrivacyParameters.DEFAULT,
+            false,
+            options.isQuorum())
         .createProtocolSchedule();
   }
 

@@ -20,9 +20,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 
-/**
- * A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty.
- */
+/** A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty. */
 public class FixedDifficultyProtocolSchedule {
 
   public static ProtocolSchedule create(
@@ -30,12 +28,14 @@ public class FixedDifficultyProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
     return new ProtocolScheduleBuilder(
-        config,
-        ProtocolSpecAdapters.createFrom(0,
-            builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
-        privacyParameters,
-        isRevertReasonEnabled,
-        config.isQuorum())
+            config,
+            ProtocolSpecAdapters.createFrom(
+                0,
+                builder ->
+                    builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
+            privacyParameters,
+            isRevertReasonEnabled,
+            config.isQuorum())
         .createProtocolSchedule();
   }
 

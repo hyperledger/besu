@@ -115,12 +115,12 @@ public class ExecutionContextTestFixture {
       if (protocolSchedule == null) {
         protocolSchedule =
             new ProtocolScheduleBuilder(
-                new StubGenesisConfigOptions().petersburgBlock(0),
-                BigInteger.valueOf(42),
-                ProtocolSpecAdapters.createFrom(0, Function.identity()),
-                new PrivacyParameters(),
-                false,
-                genesisConfigFile.getConfigOptions().isQuorum())
+                    new StubGenesisConfigOptions().petersburgBlock(0),
+                    BigInteger.valueOf(42),
+                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                    new PrivacyParameters(),
+                    false,
+                    genesisConfigFile.getConfigOptions().isQuorum())
                 .createProtocolSchedule();
       }
       if (keyValueStorage == null) {

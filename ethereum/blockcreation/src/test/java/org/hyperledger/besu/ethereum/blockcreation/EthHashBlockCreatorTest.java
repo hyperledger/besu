@@ -70,12 +70,12 @@ public class EthHashBlockCreatorTest {
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                    genesisConfigOptions,
-                    BigInteger.valueOf(42),
-                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
-                    PrivacyParameters.DEFAULT,
-                    false,
-                    genesisConfigOptions.isQuorum())
+                        genesisConfigOptions,
+                        BigInteger.valueOf(42),
+                        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                        PrivacyParameters.DEFAULT,
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -129,12 +129,12 @@ public class EthHashBlockCreatorTest {
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                    genesisConfigOptions,
-                    BigInteger.valueOf(42),
-                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
-                    PrivacyParameters.DEFAULT,
-                    false,
-                    genesisConfigOptions.isQuorum())
+                        genesisConfigOptions,
+                        BigInteger.valueOf(42),
+                        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                        PrivacyParameters.DEFAULT,
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -183,12 +183,12 @@ public class EthHashBlockCreatorTest {
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                    genesisConfigOptions,
-                    BigInteger.valueOf(42),
-                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
-                    PrivacyParameters.DEFAULT,
-                    false,
-                    genesisConfigOptions.isQuorum())
+                        genesisConfigOptions,
+                        BigInteger.valueOf(42),
+                        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                        PrivacyParameters.DEFAULT,
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -253,12 +253,12 @@ public class EthHashBlockCreatorTest {
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                    genesisConfigOptions,
-                    BigInteger.valueOf(42),
-                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
-                    PrivacyParameters.DEFAULT,
-                    false,
-                    genesisConfigOptions.isQuorum())
+                        genesisConfigOptions,
+                        BigInteger.valueOf(42),
+                        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                        PrivacyParameters.DEFAULT,
+                        false,
+                        genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
