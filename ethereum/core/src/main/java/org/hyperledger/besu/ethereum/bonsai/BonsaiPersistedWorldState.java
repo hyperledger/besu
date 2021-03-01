@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -56,6 +58,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private Hash worldStateRootHash;
   private Hash worldStateBlockHash;
 
+  private final Map<Address, ArrayDeque<Hash>> contractCodeChangesHistory;
+
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
@@ -67,6 +71,12 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
     updater = new BonsaiWorldStateUpdater(this);
+    contractCodeChangesHistory =
+        worldStateStorage
+            .getTrieLog(worldStateBlockHash)
+            .map(TrieLogLayer::fromBytes)
+            .map(TrieLogLayer::getContractCodeChangesHistory)
+            .orElse(new HashMap<>());
   }
 
   public BonsaiWorldStateArchive getArchive() {
@@ -249,13 +259,15 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             .put(WORLD_BLOCK_HASH_KEY, worldStateBlockHash.toArrayUnsafe());
         if (originalBlockHash.equals(blockHeader.getParentHash())) {
           LOG.debug("Writing Trie Log for {}", worldStateBlockHash);
-          final TrieLogLayer trieLog = updater.generateTrieLog(worldStateBlockHash);
+          final TrieLogLayer trieLog =
+              updater.generateTrieLog(worldStateBlockHash, contractCodeChangesHistory);
           trieLog.freeze();
           archive.addLayeredWorldState(
               new BonsaiLayeredWorldState(
-                  this, blockHeader.getNumber(), worldStateRootHash, trieLog));
+                  getArchive(), this, blockHeader.getNumber(), worldStateRootHash, trieLog));
           final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
           trieLog.writeTo(rlpLog);
+
           stateUpdater
               .getTrieLogStorageTransaction()
               .put(worldStateBlockHash.toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
@@ -318,7 +330,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   @Override
   public Hash frontierRootHash() {
     return calculateRootHash(
-        new BonsaiWorldStateKeyValueStorage.Updater(noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
+        new BonsaiWorldStateKeyValueStorage.Updater(
+            noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
   }
 
   public Hash blockHash() {

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -332,8 +333,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return results;
   }
 
-  public TrieLogLayer generateTrieLog(final Hash blockHash) {
-    final TrieLogLayer layer = new TrieLogLayer();
+  public TrieLogLayer generateTrieLog(
+      final Hash blockHash, final Map<Address, ArrayDeque<Hash>> contractCodeChangesHistory) {
+    final TrieLogLayer layer = new TrieLogLayer(contractCodeChangesHistory);
     importIntoTrieLog(layer, blockHash);
     return layer;
   }
@@ -370,7 +372,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       layer.addCodeChange(
           updatedCode.getKey(),
           updatedCode.getValue().getOriginal(),
-          updatedCode.getValue().getUpdated());
+          updatedCode.getValue().getUpdated(),
+          blockHash);
     }
 
     for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> updatesStorage :

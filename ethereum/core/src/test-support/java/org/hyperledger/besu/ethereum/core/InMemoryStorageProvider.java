@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -59,6 +61,11 @@ public class InMemoryStorageProvider implements StorageProvider {
     return new DefaultWorldStateArchive(
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
+  }
+
+  public static BonsaiWorldStateArchive createInMemoryWorldStateArchive(
+      final Blockchain blockchain) {
+    return new BonsaiWorldStateArchive(new InMemoryStorageProvider(), blockchain);
   }
 
   public static MutableWorldState createInMemoryWorldState() {

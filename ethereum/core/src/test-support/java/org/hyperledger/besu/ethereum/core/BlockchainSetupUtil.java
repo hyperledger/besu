@@ -153,7 +153,7 @@ public class BlockchainSetupUtil {
 
       final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-      final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
+      final WorldStateArchive worldArchive = createInMemoryWorldStateArchive(blockchain);
       final TransactionPool transactionPool = mock(TransactionPool.class);
 
       genesisState.writeStateTo(worldArchive.getMutable());
