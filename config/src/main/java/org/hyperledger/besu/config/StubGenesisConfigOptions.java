@@ -85,8 +85,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public BftConfigOptions getIbftLegacyConfigOptions() {
-    return BftConfigOptions.DEFAULT;
+  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
+    return IbftLegacyConfigOptions.DEFAULT;
   }
 
   @Override
