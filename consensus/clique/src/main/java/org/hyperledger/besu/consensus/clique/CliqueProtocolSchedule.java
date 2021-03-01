@@ -30,12 +30,15 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
-/** Defines the protocol behaviours for a blockchain using Clique. */
+/**
+ * Defines the protocol behaviours for a blockchain using Clique.
+ */
 public class CliqueProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(4);
@@ -62,20 +65,20 @@ public class CliqueProtocolSchedule {
             : Optional.empty();
 
     return new ProtocolScheduleBuilder(
-            config,
-            DEFAULT_CHAIN_ID,
-            builder ->
+        config,
+        DEFAULT_CHAIN_ID,
+        ProtocolSpecAdapters.createFrom(0, builder ->
                 applyCliqueSpecificModifications(
                     epochManager,
                     cliqueConfig.getBlockPeriodSeconds(),
                     localNodeAddress,
                     builder,
                     eip1559,
-                    privacyParameters.getGoQuorumPrivacyParameters().isPresent()),
+                    privacyParameters.getGoQuorumPrivacyParameters().isPresent())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
-        .createProtocolSchedule();
+            .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(

@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
 import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -69,12 +70,12 @@ public class EthHashBlockCreatorTest {
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigOptions,
-                        BigInteger.valueOf(42),
-                        Function.identity(),
-                        PrivacyParameters.DEFAULT,
-                        false,
-                        genesisConfigOptions.isQuorum())
+                    genesisConfigOptions,
+                    BigInteger.valueOf(42),
+                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                    PrivacyParameters.DEFAULT,
+                    false,
+                    genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -128,12 +129,12 @@ public class EthHashBlockCreatorTest {
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigOptions,
-                        BigInteger.valueOf(42),
-                        Function.identity(),
-                        PrivacyParameters.DEFAULT,
-                        false,
-                        genesisConfigOptions.isQuorum())
+                    genesisConfigOptions,
+                    BigInteger.valueOf(42),
+                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                    PrivacyParameters.DEFAULT,
+                    false,
+                    genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -182,12 +183,12 @@ public class EthHashBlockCreatorTest {
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigOptions,
-                        BigInteger.valueOf(42),
-                        Function.identity(),
-                        PrivacyParameters.DEFAULT,
-                        false,
-                        genesisConfigOptions.isQuorum())
+                    genesisConfigOptions,
+                    BigInteger.valueOf(42),
+                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                    PrivacyParameters.DEFAULT,
+                    false,
+                    genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 
@@ -252,12 +253,12 @@ public class EthHashBlockCreatorTest {
         ExecutionContextTestFixture.builder()
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigOptions,
-                        BigInteger.valueOf(42),
-                        Function.identity(),
-                        PrivacyParameters.DEFAULT,
-                        false,
-                        genesisConfigOptions.isQuorum())
+                    genesisConfigOptions,
+                    BigInteger.valueOf(42),
+                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                    PrivacyParameters.DEFAULT,
+                    false,
+                    genesisConfigOptions.isQuorum())
                     .createProtocolSchedule())
             .build();
 

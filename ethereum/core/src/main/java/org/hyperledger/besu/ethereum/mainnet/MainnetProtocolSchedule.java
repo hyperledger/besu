@@ -22,7 +22,9 @@ import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSch
 import java.math.BigInteger;
 import java.util.function.Function;
 
-/** Provides {@link ProtocolSpec} lookups for mainnet hard forks. */
+/**
+ * Provides {@link ProtocolSpec} lookups for mainnet hard forks.
+ */
 public class MainnetProtocolSchedule {
 
   public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
@@ -31,7 +33,7 @@ public class MainnetProtocolSchedule {
    * Create a Mainnet protocol schedule from a config object
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
-   *     starting points
+   * starting points
    * @param privacyParameters the parameters set for private transactions
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @return A configured mainnet protocol schedule
@@ -45,12 +47,12 @@ public class MainnetProtocolSchedule {
           config, privacyParameters, isRevertReasonEnabled);
     }
     return new ProtocolScheduleBuilder(
-            config,
-            DEFAULT_CHAIN_ID,
-            Function.identity(),
-            privacyParameters,
-            isRevertReasonEnabled,
-            config.isQuorum())
+        config,
+        DEFAULT_CHAIN_ID,
+        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+        privacyParameters,
+        isRevertReasonEnabled,
+        config.isQuorum())
         .createProtocolSchedule();
   }
 
@@ -58,7 +60,7 @@ public class MainnetProtocolSchedule {
    * Create a Mainnet protocol schedule from a config object
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
-   *     starting points
+   * starting points
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @return A configured mainnet protocol schedule
    */
@@ -71,7 +73,7 @@ public class MainnetProtocolSchedule {
    * Create a Mainnet protocol schedule from a config object
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
-   *     starting points
+   * starting points
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(final GenesisConfigOptions config) {
