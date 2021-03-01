@@ -31,7 +31,7 @@ import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 
@@ -64,13 +64,13 @@ public class ValidatorPeer extends DefaultValidatorPeer {
   }
 
   public Commit injectCommit(final ConsensusRoundIdentifier rId, final Hash digest) {
-    final Signature commitSeal = nodeKey.sign(digest);
+    final SECPSignature commitSeal = nodeKey.sign(digest);
 
     return injectCommit(rId, digest, commitSeal);
   }
 
   public Commit injectCommit(
-      final ConsensusRoundIdentifier rId, final Hash digest, final Signature commitSeal) {
+      final ConsensusRoundIdentifier rId, final Hash digest, final SECPSignature commitSeal) {
     final Commit payload = messageFactory.createCommit(rId, digest, commitSeal);
     injectMessage(CommitMessageData.create(payload));
     return payload;

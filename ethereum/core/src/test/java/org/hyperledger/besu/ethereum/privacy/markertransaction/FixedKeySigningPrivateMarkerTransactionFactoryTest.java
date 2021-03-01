@@ -18,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -52,7 +53,7 @@ public class FixedKeySigningPrivateMarkerTransactionFactoryTest {
   @Test
   public void createsFullyPopulatedPrivateMarkerTransactionUsingProvidedNonce() {
 
-    final KeyPair signingKeys = KeyPair.generate();
+    final KeyPair signingKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     final Address precompiledAddress = Address.fromHexString("1");
 
     final FixedKeySigningPrivateMarkerTransactionFactory factory =

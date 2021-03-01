@@ -21,9 +21,10 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -43,6 +44,8 @@ import org.junit.Test;
 
 public class BftExtraDataValidationRuleTest {
 
+  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
   private BlockHeader createProposedBlockHeader(
       final KeyPair proposerKeyPair, final List<Address> validators) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
@@ -58,7 +61,8 @@ public class BftExtraDataValidationRuleTest {
     // Hash the header (ignoring committer and proposer seals), and create signature
     final Hash proposerSealHash =
         IbftBlockHashing.calculateDataHashForProposerSeal(header, initialIbftExtraData);
-    final Signature proposerSignature = SECP256K1.sign(proposerSealHash, proposerKeyPair);
+    final SECPSignature proposerSignature =
+        signatureAlgorithm.sign(proposerSealHash, proposerKeyPair);
 
     // Construct a new extraData block, containing the constructed proposer signature
     final IbftExtraData proposedData =
@@ -80,9 +84,9 @@ public class BftExtraDataValidationRuleTest {
     final Hash headerHashForCommitters =
         IbftBlockHashing.calculateDataHashForCommittedSeal(header, extraDataInHeader);
 
-    final List<Signature> commitSeals =
+    final List<SECPSignature> commitSeals =
         committerKeyPairs.stream()
-            .map(keys -> SECP256K1.sign(headerHashForCommitters, keys))
+            .map(keys -> signatureAlgorithm.sign(headerHashForCommitters, keys))
             .collect(Collectors.toList());
 
     return new IbftExtraData(
@@ -96,7 +100,7 @@ public class BftExtraDataValidationRuleTest {
   public void correctlyConstructedHeaderPassesValidation() {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = signatureAlgorithm.generateKeyPair();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
@@ -122,7 +126,7 @@ public class BftExtraDataValidationRuleTest {
   public void insufficientCommitSealsFailsValidation() {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = signatureAlgorithm.generateKeyPair();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
@@ -146,7 +150,7 @@ public class BftExtraDataValidationRuleTest {
   public void outOfOrderValidatorListFailsValidation() {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = signatureAlgorithm.generateKeyPair();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
@@ -175,7 +179,7 @@ public class BftExtraDataValidationRuleTest {
   public void proposerNotInValidatorListFailsValidation() {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = signatureAlgorithm.generateKeyPair();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
@@ -204,7 +208,7 @@ public class BftExtraDataValidationRuleTest {
   public void mismatchingReportedValidatorsVsLocallyStoredListFailsValidation() {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = signatureAlgorithm.generateKeyPair();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
@@ -235,7 +239,7 @@ public class BftExtraDataValidationRuleTest {
   public void committerNotInValidatorListFailsValidation() {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = signatureAlgorithm.generateKeyPair();
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
 
@@ -244,7 +248,7 @@ public class BftExtraDataValidationRuleTest {
     BlockHeader header = createProposedBlockHeader(proposerKeyPair, validators);
 
     // Insert an extraData block with committer seals.
-    final KeyPair nonValidatorKeyPair = KeyPair.generate();
+    final KeyPair nonValidatorKeyPair = signatureAlgorithm.generateKeyPair();
     final IbftExtraData commitedExtraData =
         createExtraDataWithCommitSeals(header, singletonList(nonValidatorKeyPair));
     builder.extraData(commitedExtraData.encode());
@@ -293,7 +297,7 @@ public class BftExtraDataValidationRuleTest {
       final int validatorCount, final int committerCount, final boolean useTwoThirds) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
-    final KeyPair proposerKeyPair = KeyPair.generate();
+    final KeyPair proposerKeyPair = signatureAlgorithm.generateKeyPair();
 
     final Address proposerAddress =
         Address.extract(Hash.hash(proposerKeyPair.getPublicKey().getEncodedBytes()));
@@ -303,7 +307,7 @@ public class BftExtraDataValidationRuleTest {
     validators.add(proposerAddress);
     committerKeys.add(proposerKeyPair);
     for (int i = 0; i < validatorCount - 1; i++) { // need -1 to account for proposer
-      final KeyPair committerKeyPair = KeyPair.generate();
+      final KeyPair committerKeyPair = signatureAlgorithm.generateKeyPair();
       committerKeys.add(committerKeyPair);
       validators.add(Address.extract(Hash.hash(committerKeyPair.getPublicKey().getEncodedBytes())));
     }

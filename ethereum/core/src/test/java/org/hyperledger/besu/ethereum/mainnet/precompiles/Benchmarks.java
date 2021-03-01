@@ -21,7 +21,11 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -82,20 +86,22 @@ public class Benchmarks {
           .build();
 
   public static void benchSecp256k1Recover() {
-    final SECP256K1.PrivateKey privateKey =
-        SECP256K1.PrivateKey.create(
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+    final SECPPrivateKey privateKey =
+        signatureAlgorithm.createPrivateKey(
             new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
-    final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.create(privateKey);
+    final KeyPair keyPair = signatureAlgorithm.createKeyPair(privateKey);
 
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
-    final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
+    final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
     for (int i = 0; i < MATH_WARMUP; i++) {
-      SECP256K1.PublicKey.recoverFromSignature(dataHash, signature);
+      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
     }
     final Stopwatch timer = Stopwatch.createStarted();
     for (int i = 0; i < MATH_ITERATIONS; i++) {
-      SECP256K1.PublicKey.recoverFromSignature(dataHash, signature);
+      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
     }
     timer.stop();
 

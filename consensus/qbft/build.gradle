@@ -96,6 +96,7 @@ dependencies {
   integrationTestImplementation 'org.mockito:mockito-core'
 
   referenceTestImplementation 'junit:junit'
+  referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'org.assertj:assertj-core'
   referenceTestImplementation 'org.mockito:mockito-core'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
