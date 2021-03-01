@@ -330,8 +330,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   @Override
   public Hash frontierRootHash() {
     return calculateRootHash(
-        new BonsaiWorldStateKeyValueStorage.Updater(
-            noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
+        new BonsaiWorldStateKeyValueStorage.Updater(noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
   }
 
   public Hash blockHash() {
