@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -24,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -128,7 +130,8 @@ public class GeneralStateTestCaseSpec {
     public PostSection(
         @JsonProperty("hash") final String hash,
         @JsonProperty("logs") final String logs,
-        @JsonProperty("indexes") final Indexes indexes) {
+        @JsonProperty("indexes") final Indexes indexes,
+        @JsonProperty("txbytes") final String txbytes) {
       this.rootHash = Hash.fromHexString(hash);
       this.logsHash = Hash.fromHexString(logs);
       this.indexes = indexes;
