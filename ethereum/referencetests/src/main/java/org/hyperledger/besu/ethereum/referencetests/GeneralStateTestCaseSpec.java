@@ -15,7 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -25,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
