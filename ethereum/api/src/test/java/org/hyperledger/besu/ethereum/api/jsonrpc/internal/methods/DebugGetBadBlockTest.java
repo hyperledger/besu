@@ -20,7 +20,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -63,7 +64,7 @@ public class DebugGetBadBlockTest {
   @Test
   public void shouldReturnCorrectResponse() {
 
-    final SECP256K1.KeyPair keyPair = SECP256K1.KeyPair.generate();
+    final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     final List<Transaction> transactions = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
       transactions.add(transactionTestFixture.createTransaction(keyPair));

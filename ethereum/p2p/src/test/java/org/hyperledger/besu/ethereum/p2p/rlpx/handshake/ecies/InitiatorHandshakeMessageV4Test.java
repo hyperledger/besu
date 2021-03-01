@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +33,7 @@ public final class InitiatorHandshakeMessageV4Test {
 
   private static final Bytes EXAMPLE_MESSAGE;
 
-  private static final SECP256K1.KeyPair EXAMPLE_KEYPAIR;
+  private static final KeyPair EXAMPLE_KEYPAIR;
 
   static {
     try {

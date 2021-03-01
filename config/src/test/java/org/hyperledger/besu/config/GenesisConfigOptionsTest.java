@@ -55,7 +55,7 @@ public class GenesisConfigOptionsTest {
   public void shouldNotUseIbftLegacyIfIbftNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isIbftLegacy()).isFalse();
-    assertThat(config.getIbftLegacyConfigOptions()).isSameAs(BftConfigOptions.DEFAULT);
+    assertThat(config.getIbftLegacyConfigOptions()).isSameAs(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Test

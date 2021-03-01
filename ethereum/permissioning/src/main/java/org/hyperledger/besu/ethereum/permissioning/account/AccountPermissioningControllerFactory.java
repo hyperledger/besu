@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.account;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -139,9 +141,13 @@ public class AccountPermissioningControllerFactory {
     try {
       LOG.debug("Validating onchain account permissioning smart contract configuration");
 
-      final SECP256K1.Signature FAKE_SIGNATURE =
-          SECP256K1.Signature.create(
-              SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
+      final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+      final SECPSignature FAKE_SIGNATURE =
+          signatureAlgorithm.createSignature(
+              signatureAlgorithm.getHalfCurveOrder(),
+              signatureAlgorithm.getHalfCurveOrder(),
+              (byte) 0);
 
       final Transaction transaction =
           Transaction.builder()
