@@ -15,8 +15,9 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -96,7 +97,11 @@ public class StateTestVersionedTransaction {
     this.nonce = Long.decode(nonce);
     this.gasPrice = Wei.fromHexString(gasPrice);
     this.to = to.isEmpty() ? null : Address.fromHexString(to);
-    this.keys = KeyPair.create(PrivateKey.create(Bytes32.fromHexString(secretKey)));
+
+    SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+    this.keys =
+        signatureAlgorithm.createKeyPair(
+            signatureAlgorithm.createPrivateKey(Bytes32.fromHexString(secretKey)));
 
     this.gasLimits = parseArray(gasLimit, Gas::fromHexString);
     this.values = parseArray(value, Wei::fromHexString);
