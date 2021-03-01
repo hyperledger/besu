@@ -16,7 +16,8 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
@@ -44,14 +45,14 @@ public class BftExtraData implements ParsedExtraData {
   public static final int EXTRA_VANITY_LENGTH = 32;
 
   private final Bytes vanityData;
-  private final Collection<Signature> seals;
+  private final Collection<SECPSignature> seals;
   private final Optional<Vote> vote;
   private final int round;
   private final Collection<Address> validators;
 
   public BftExtraData(
       final Bytes vanityData,
-      final Collection<Signature> seals,
+      final Collection<SECPSignature> seals,
       final Optional<Vote> vote,
       final int round,
       final Collection<Address> validators) {
@@ -101,7 +102,9 @@ public class BftExtraData implements ParsedExtraData {
       vote = Optional.of(Vote.readFrom(rlpInput));
     }
     final int round = rlpInput.readInt();
-    final List<Signature> seals = rlpInput.readList(rlp -> Signature.decode(rlp.readBytes()));
+    final List<SECPSignature> seals =
+        rlpInput.readList(
+            rlp -> SignatureAlgorithmFactory.getInstance().decodeSignature(rlp.readBytes()));
     rlpInput.leaveList();
 
     return new BftExtraData(vanityData, seals, vote, round, validators);
@@ -160,7 +163,7 @@ public class BftExtraData implements ParsedExtraData {
     return vanityData;
   }
 
-  public Collection<Signature> getSeals() {
+  public Collection<SECPSignature> getSeals() {
     return seals;
   }
 

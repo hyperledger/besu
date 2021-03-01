@@ -16,7 +16,8 @@ package org.hyperledger.besu.consensus.ibft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 public class PayloadDeserializers {
@@ -25,7 +26,7 @@ public class PayloadDeserializers {
 
     rlpInput.enterList();
     final ProposalPayload unsignedMessageData = ProposalPayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
+    final SECPSignature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
@@ -35,7 +36,7 @@ public class PayloadDeserializers {
 
     rlpInput.enterList();
     final PreparePayload unsignedMessageData = PreparePayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
+    final SECPSignature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
@@ -45,7 +46,7 @@ public class PayloadDeserializers {
 
     rlpInput.enterList();
     final CommitPayload unsignedMessageData = CommitPayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
+    final SECPSignature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
@@ -56,18 +57,18 @@ public class PayloadDeserializers {
 
     rlpInput.enterList();
     final RoundChangePayload unsignedMessageData = RoundChangePayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
+    final SECPSignature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
   protected static <M extends Payload> SignedData<M> from(
-      final M unsignedMessageData, final Signature signature) {
+      final M unsignedMessageData, final SECPSignature signature) {
     return SignedData.create(unsignedMessageData, signature);
   }
 
-  protected static Signature readSignature(final RLPInput signedMessage) {
-    return signedMessage.readBytes(Signature::decode);
+  protected static SECPSignature readSignature(final RLPInput signedMessage) {
+    return signedMessage.readBytes(SignatureAlgorithmFactory.getInstance()::decodeSignature);
   }
 }

@@ -97,7 +97,12 @@ public class TransactionEncoder {
         transaction.getTo(),
         transaction.getValue(),
         transaction.getPayload(),
-        transaction.getAccessList(),
+        transaction
+            .getAccessList()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Developer error: access list should be guaranteed to be present")),
         rlpOutput);
     rlpOutput.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, rlpOutput);

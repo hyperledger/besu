@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibftlegacy.headervalidationrules;
 
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHashing;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftHelpers;
@@ -44,9 +45,11 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
   private static final Logger LOG = LogManager.getLogger();
 
   private final boolean validateCommitSeals;
+  private final long ceil2nBy3Block;
 
-  public IbftExtraDataValidationRule(final boolean validateCommitSeals) {
+  public IbftExtraDataValidationRule(final boolean validateCommitSeals, final long ceil2nBy3Block) {
     this.validateCommitSeals = validateCommitSeals;
+    this.ceil2nBy3Block = ceil2nBy3Block;
   }
 
   @Override
@@ -72,7 +75,13 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
       if (validateCommitSeals) {
         final List<Address> committers =
             IbftBlockHashing.recoverCommitterAddresses(header, ibftExtraData);
-        if (!validateCommitters(committers, storedValidators)) {
+
+        final int minimumSealsRequired =
+            header.getNumber() < ceil2nBy3Block
+                ? IbftHelpers.calculateRequiredValidatorQuorum(storedValidators.size())
+                : BftHelpers.calculateRequiredValidatorQuorum(storedValidators.size());
+
+        if (!validateCommitters(committers, storedValidators, minimumSealsRequired)) {
           return false;
         }
       }
@@ -113,10 +122,9 @@ public class IbftExtraDataValidationRule implements AttachedBlockHeaderValidatio
   }
 
   private boolean validateCommitters(
-      final Collection<Address> committers, final Collection<Address> storedValidators) {
-
-    final int minimumSealsRequired =
-        IbftHelpers.calculateRequiredValidatorQuorum(storedValidators.size());
+      final Collection<Address> committers,
+      final Collection<Address> storedValidators,
+      final int minimumSealsRequired) {
     if (committers.size() < minimumSealsRequired) {
       LOG.info(
           "Invalid block header: Insufficient committers to seal block. (Required {}, received {})",
