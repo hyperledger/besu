@@ -39,14 +39,17 @@ public class IbftProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
-    final BftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
+    final IbftLegacyConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
             ProtocolSpecAdapters.createFrom(
-                0, builder -> applyIbftChanges(blockPeriod, builder, config.isQuorum(), ibftConfig.getCeil2Nby3Block())),
+                0,
+                builder ->
+                    applyIbftChanges(
+                        blockPeriod, builder, config.isQuorum(), ibftConfig.getCeil2Nby3Block())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
