@@ -17,7 +17,9 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
@@ -27,6 +29,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.Collection;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -39,16 +43,18 @@ public class IbftExtraData implements ParsedExtraData {
   private static final Logger LOG = LogManager.getLogger();
 
   public static final int EXTRA_VANITY_LENGTH = 32;
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private final Bytes vanityData;
-  private final Collection<Signature> seals;
-  private final Signature proposerSeal;
+  private final Collection<SECPSignature> seals;
+  private final SECPSignature proposerSeal;
   private final Collection<Address> validators;
 
   public IbftExtraData(
       final Bytes vanityData,
-      final Collection<Signature> seals,
-      final Signature proposerSeal,
+      final Collection<SECPSignature> seals,
+      final SECPSignature proposerSeal,
       final Collection<Address> validators) {
 
     checkNotNull(vanityData);
@@ -84,16 +90,17 @@ public class IbftExtraData implements ParsedExtraData {
 
     rlpInput.enterList(); // This accounts for the "root node" which contains IBFT data items.
     final Collection<Address> validators = rlpInput.readList(Address::readFrom);
-    final Signature proposerSeal = parseProposerSeal(rlpInput);
-    final Collection<Signature> seals = rlpInput.readList(rlp -> Signature.decode(rlp.readBytes()));
+    final SECPSignature proposerSeal = parseProposerSeal(rlpInput);
+    final Collection<SECPSignature> seals =
+        rlpInput.readList(rlp -> SIGNATURE_ALGORITHM.get().decodeSignature(rlp.readBytes()));
     rlpInput.leaveList();
 
     return new IbftExtraData(vanityData, seals, proposerSeal, validators);
   }
 
-  private static Signature parseProposerSeal(final RLPInput rlpInput) {
+  private static SECPSignature parseProposerSeal(final RLPInput rlpInput) {
     final Bytes data = rlpInput.readBytes();
-    return data.isZero() ? null : Signature.decode(data);
+    return data.isZero() ? null : SIGNATURE_ALGORITHM.get().decodeSignature(data);
   }
 
   public Bytes encode() {
@@ -116,11 +123,11 @@ public class IbftExtraData implements ParsedExtraData {
     return vanityData;
   }
 
-  public Collection<Signature> getSeals() {
+  public Collection<SECPSignature> getSeals() {
     return seals;
   }
 
-  public Signature getProposerSeal() {
+  public SECPSignature getProposerSeal() {
     return proposerSeal;
   }
 

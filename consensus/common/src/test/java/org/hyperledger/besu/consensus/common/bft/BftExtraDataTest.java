@@ -18,7 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.consensus.common.VoteType;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -31,11 +33,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class BftExtraDataTest {
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private final String RAW_HEX_ENCODING_STRING =
       "f8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea9400000000000000000000000000000000000"
@@ -52,10 +59,10 @@ public class BftExtraDataTest {
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals =
+    final List<SECPSignature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -70,7 +77,7 @@ public class BftExtraDataTest {
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
     final byte[] roundAsByteArray = new byte[] {(byte) 0x00, (byte) 0xFE, (byte) 0xDC, (byte) 0xBA};
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
@@ -108,7 +115,7 @@ public class BftExtraDataTest {
     final List<Address> validators = Lists.newArrayList();
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final byte[] roundAsByteArray = new byte[] {(byte) 0xFE, (byte) 0xDC, (byte) 0xBA};
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
@@ -138,7 +145,7 @@ public class BftExtraDataTest {
   public void nullVoteAndListConstituteValidContent() {
     final List<Address> validators = Lists.newArrayList();
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
@@ -172,7 +179,7 @@ public class BftExtraDataTest {
     final List<Address> validators = Lists.newArrayList();
     final Optional<Vote> vote = Optional.empty();
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
@@ -191,7 +198,7 @@ public class BftExtraDataTest {
     final List<Address> validators = Lists.newArrayList();
     final Optional<Vote> vote = Optional.of(Vote.dropVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
@@ -224,7 +231,7 @@ public class BftExtraDataTest {
     final List<Address> validators = Lists.newArrayList();
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
@@ -243,10 +250,10 @@ public class BftExtraDataTest {
     final List<Address> validators =
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals =
+    final List<SECPSignature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create randomised vanity data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -286,10 +293,10 @@ public class BftExtraDataTest {
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals =
+    final List<SECPSignature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -327,10 +334,10 @@ public class BftExtraDataTest {
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals =
+    final List<SECPSignature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -362,10 +369,10 @@ public class BftExtraDataTest {
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals =
+    final List<SECPSignature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -395,7 +402,7 @@ public class BftExtraDataTest {
     final List<Address> validators = Lists.newArrayList();
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals = Lists.newArrayList();
+    final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
@@ -427,10 +434,10 @@ public class BftExtraDataTest {
     final Address voteRecipient = Address.fromHexString("1");
     final byte voteType = (byte) 0xAA;
     final int round = 0x00FEDCBA;
-    final List<Signature> committerSeals =
+    final List<SECPSignature> committerSeals =
         Arrays.asList(
-            Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            Signature.create(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
