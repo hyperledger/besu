@@ -23,9 +23,9 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -85,7 +85,7 @@ public class BftBlockHashingTest {
 
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
-    List<Signature> commitSeals =
+    List<SECPSignature> commitSeals =
         COMMITTERS_NODE_KEYS.stream()
             .map(nodeKey -> nodeKey.sign(dataHahsForCommittedSeal))
             .collect(Collectors.toList());
@@ -99,11 +99,14 @@ public class BftBlockHashingTest {
   }
 
   private static List<NodeKey> committersNodeKeys() {
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
     return IntStream.rangeClosed(1, 4)
         .mapToObj(
             i ->
                 NodeKeyUtils.createFrom(
-                    (KeyPair.create(PrivateKey.create(UInt256.valueOf(i).toBytes())))))
+                    (signatureAlgorithm.createKeyPair(
+                        signatureAlgorithm.createPrivateKey(UInt256.valueOf(i).toBytes())))))
         .collect(Collectors.toList());
   }
 
@@ -159,7 +162,7 @@ public class BftBlockHashingTest {
     BytesValueRLPOutput rlpForHeaderFroCommittersSigning = new BytesValueRLPOutput();
     builder.buildBlockHeader().writeTo(rlpForHeaderFroCommittersSigning);
 
-    List<Signature> commitSeals =
+    List<SECPSignature> commitSeals =
         COMMITTERS_NODE_KEYS.stream()
             .map(nodeKey -> nodeKey.sign(Hash.hash(rlpForHeaderFroCommittersSigning.encoded())))
             .collect(Collectors.toList());

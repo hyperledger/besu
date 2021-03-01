@@ -32,17 +32,19 @@ import org.apache.tuweni.bytes.Bytes32;
  * operations via SECP256K1 class
  */
 public class KeyPairSecurityModule implements SecurityModule {
-  private final SECP256K1.KeyPair keyPair;
+  private final KeyPair keyPair;
   private final PublicKey publicKey;
+  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
-  public KeyPairSecurityModule(final SECP256K1.KeyPair keyPair) {
+  public KeyPairSecurityModule(final KeyPair keyPair) {
     this.keyPair = keyPair;
     this.publicKey = convertPublicKey(keyPair.getPublicKey());
   }
 
-  private PublicKey convertPublicKey(final SECP256K1.PublicKey publicKey) {
+  private PublicKey convertPublicKey(final SECPPublicKey publicKey) {
     try {
-      return new PublicKeyImpl(fromBouncyCastleECPoint(publicKey.asEcPoint()));
+      return new PublicKeyImpl(
+          fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(publicKey)));
     } catch (final Exception e) {
       throw new SecurityModuleException(
           "Unexpected error while converting ECPoint: " + e.getMessage(), e);
@@ -52,7 +54,7 @@ public class KeyPairSecurityModule implements SecurityModule {
   @Override
   public Signature sign(final Bytes32 dataHash) throws SecurityModuleException {
     try {
-      final SECP256K1.Signature signature = SECP256K1.sign(dataHash, keyPair);
+      final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
       return new SignatureImpl(signature);
     } catch (final Exception e) {
       throw new SecurityModuleException("Unexpected error while signing: " + e.getMessage(), e);
@@ -69,8 +71,9 @@ public class KeyPairSecurityModule implements SecurityModule {
       throws SecurityModuleException {
     try {
       final Bytes encodedECPoint = ECPointUtil.getEncodedBytes(partyKey.getW());
-      final SECP256K1.PublicKey secp256KPartyKey = SECP256K1.PublicKey.create(encodedECPoint);
-      return SECP256K1.calculateECDHKeyAgreement(keyPair.getPrivateKey(), secp256KPartyKey);
+      final SECPPublicKey secp256KPartyKey = signatureAlgorithm.createPublicKey(encodedECPoint);
+      return signatureAlgorithm.calculateECDHKeyAgreement(
+          keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
       throw new SecurityModuleException(
           "Unexpected error while calculating ECDH Key Agreement: " + e.getMessage(), e);
@@ -79,9 +82,9 @@ public class KeyPairSecurityModule implements SecurityModule {
 
   private static class SignatureImpl implements Signature {
 
-    private final SECP256K1.Signature signature;
+    private final SECPSignature signature;
 
-    SignatureImpl(final SECP256K1.Signature signature) {
+    SignatureImpl(final SECPSignature signature) {
       this.signature = signature;
     }
 

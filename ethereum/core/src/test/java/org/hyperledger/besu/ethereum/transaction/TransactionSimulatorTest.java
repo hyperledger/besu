@@ -23,7 +23,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -44,8 +46,11 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Stat
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -58,8 +63,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class TransactionSimulatorTest {
 
-  private static final SECP256K1.Signature FAKE_SIGNATURE =
-      SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final BigInteger HALF_CURVE_ORDER = SIGNATURE_ALGORITHM.get().getHalfCurveOrder();
+  private static final SECPSignature FAKE_SIGNATURE =
+      SIGNATURE_ALGORITHM.get().createSignature(HALF_CURVE_ORDER, HALF_CURVE_ORDER, (byte) 0);
 
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");

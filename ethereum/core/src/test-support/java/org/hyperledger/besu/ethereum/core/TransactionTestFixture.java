@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
