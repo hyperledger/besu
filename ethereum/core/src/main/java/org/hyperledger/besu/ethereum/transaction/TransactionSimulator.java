@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.transaction;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
+import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldState;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -23,14 +24,12 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -217,38 +216,6 @@ public class TransactionSimulator {
           publicWorldState.updater(), privateWorldState.updater());
     }
     return publicWorldState.updater();
-  }
-
-  private MutableWorldState getPrivateWorldState(
-      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
-      final BlockHeader header) {
-    final Hash worldStateRootHash = header.getStateRoot();
-    final Hash publicBlockHash = header.getHash();
-    final GoQuorumPrivateStorage goQuorumPrivateStorage;
-    final WorldStateArchive goQuorumWorldStateArchive;
-    goQuorumPrivateStorage = goQuorumPrivacyParameters.orElseThrow().privateStorage();
-    goQuorumWorldStateArchive = goQuorumPrivacyParameters.orElseThrow().worldStateArchive();
-    final Hash privateStateRootHash =
-        goQuorumPrivateStorage
-            .getPrivateStateRootHash(worldStateRootHash)
-            .orElse(Hash.EMPTY_TRIE_HASH);
-
-    final Optional<MutableWorldState> maybePrivateWorldState =
-        goQuorumWorldStateArchive.getMutable(privateStateRootHash, publicBlockHash);
-    if (maybePrivateWorldState.isEmpty()) {
-      LOG.debug(
-          "Private world state not available for public world state root hash {}, public block hash {}",
-          worldStateRootHash,
-          publicBlockHash);
-
-      /*
-       This should never happen because privateStateRootResolver will either return a matching
-       private world state root hash, or the hash for an empty world state (first private tx ever).
-      */
-      throw new IllegalStateException(
-          "Private world state not available for public world state root hash " + publicBlockHash);
-    }
-    return maybePrivateWorldState.get();
   }
 
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
