@@ -105,7 +105,7 @@ public class MainnetProtocolSpecFactory {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  // Classic Protocol Schedules
+  // Classic Protocol Specs
   public ProtocolSpecBuilder dieHardDefinition() {
     return ClassicProtocolSpecs.dieHardDefinition(
         chainId, contractSizeLimit, evmStackSize, quorumCompatibilityMode);
@@ -123,25 +123,41 @@ public class MainnetProtocolSpecFactory {
 
   public ProtocolSpecBuilder atlantisDefinition() {
     return ClassicProtocolSpecs.atlantisDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, ecip1017EraRounds,
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
         quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder aghartaDefinition() {
     return ClassicProtocolSpecs.aghartaDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, ecip1017EraRounds,
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
         quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder phoenixDefinition() {
     return ClassicProtocolSpecs.phoenixDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, ecip1017EraRounds,
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
         quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder thanosDefinition() {
     return ClassicProtocolSpecs.thanosDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, ecip1017EraRounds,
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
         quorumCompatibilityMode);
   }
 }

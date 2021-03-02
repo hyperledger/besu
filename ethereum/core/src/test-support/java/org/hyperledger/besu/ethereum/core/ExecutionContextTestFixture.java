@@ -117,7 +117,7 @@ public class ExecutionContextTestFixture {
             new ProtocolScheduleBuilder(
                     new StubGenesisConfigOptions().petersburgBlock(0),
                     BigInteger.valueOf(42),
-                    ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                    ProtocolSpecAdapters.create(0, Function.identity()),
                     new PrivacyParameters(),
                     false,
                     genesisConfigFile.getConfigOptions().isQuorum())

@@ -45,7 +45,7 @@ public class BftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.createFrom(
+            ProtocolSpecAdapters.create(
                 0,
                 builder ->
                     applyBftChanges(

@@ -157,11 +157,13 @@ public class ProtocolScheduleBuilder {
                   new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
             });
 
-    // Create the ProtocolSchedule, such that the Dao blocks can then be inserted
+    // Create the ProtocolSchedule, such that the Dao/fork milestones can be inserted
     builders
         .values()
         .forEach(e -> addProtocolSpec(protocolSchedule, e.getBlock(), e.getBuilder(), e.modifier));
 
+    // NOTE: It is assumed that Daofork blocks will not be used for private networks
+    // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
     config
         .getDaoForkBlock()
         .ifPresent(
@@ -207,26 +209,31 @@ public class ProtocolScheduleBuilder {
       final MainnetProtocolSpecFactory specFactory, final Optional<BigInteger> chainId) {
     final TreeMap<Long, BuilderMapEntry> builders =
         Lists.newArrayList(
-            create(OptionalLong.of(0), specFactory.frontierDefinition()),
-            create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
-            create(config.getTangerineWhistleBlockNumber(),
-                specFactory.tangerineWhistleDefinition()),
-            create(config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
-            create(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
-            create(config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
-            create(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
-            create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
-            create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
-            create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
-            create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
-            create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
-            create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
-            create(config.getDefuseDifficultyBombBlockNumber(),
-                specFactory.defuseDifficultyBombDefinition()),
-            create(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
-            create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
-            create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
-            create(config.getThanosBlockNumber(), specFactory.thanosDefinition()))
+                create(OptionalLong.of(0), specFactory.frontierDefinition()),
+                create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
+                create(
+                    config.getTangerineWhistleBlockNumber(),
+                    specFactory.tangerineWhistleDefinition()),
+                create(
+                    config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
+                create(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
+                create(
+                    config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
+                create(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
+                create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
+                create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
+                create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+                // Classic Milestones
+                create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
+                create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
+                create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
+                create(
+                    config.getDefuseDifficultyBombBlockNumber(),
+                    specFactory.defuseDifficultyBombDefinition()),
+                create(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
+                create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
+                create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
+                create(config.getThanosBlockNumber(), specFactory.thanosDefinition()))
             .stream()
             .filter(Optional::isPresent)
             .map(Optional::get)

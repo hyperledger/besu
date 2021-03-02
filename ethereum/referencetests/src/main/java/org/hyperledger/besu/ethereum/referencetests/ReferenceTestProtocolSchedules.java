@@ -81,7 +81,7 @@ public class ReferenceTestProtocolSchedules {
     return new ProtocolScheduleBuilder(
             options,
             CHAIN_ID,
-            ProtocolSpecAdapters.createFrom(0, Function.identity()),
+            ProtocolSpecAdapters.create(0, Function.identity()),
             PrivacyParameters.DEFAULT,
             false,
             options.isQuorum())

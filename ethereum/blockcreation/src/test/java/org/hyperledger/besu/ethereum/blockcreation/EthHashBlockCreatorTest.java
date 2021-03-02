@@ -72,7 +72,7 @@ public class EthHashBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                        ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum())
@@ -131,7 +131,7 @@ public class EthHashBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                        ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum())
@@ -185,7 +185,7 @@ public class EthHashBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                        ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum())
@@ -255,7 +255,7 @@ public class EthHashBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        ProtocolSpecAdapters.createFrom(0, Function.identity()),
+                        ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum())

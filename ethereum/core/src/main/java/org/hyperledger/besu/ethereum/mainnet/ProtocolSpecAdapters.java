@@ -30,7 +30,7 @@ public class ProtocolSpecAdapters {
     this.modifiers = modifiers;
   }
 
-  public static ProtocolSpecAdapters createFrom(
+  public static ProtocolSpecAdapters create(
       final long block, final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> entries = new HashMap<>();
     entries.put(block, modifier);

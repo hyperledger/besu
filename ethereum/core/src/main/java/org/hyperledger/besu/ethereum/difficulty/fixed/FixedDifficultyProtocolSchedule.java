@@ -29,7 +29,7 @@ public class FixedDifficultyProtocolSchedule {
       final boolean isRevertReasonEnabled) {
     return new ProtocolScheduleBuilder(
             config,
-            ProtocolSpecAdapters.createFrom(
+            ProtocolSpecAdapters.create(
                 0,
                 builder ->
                     builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
