@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -51,6 +52,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
+    when(genesisConfig.getTransitions()).thenReturn(mock(TransitionsConfigOptions.class));
 
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
@@ -74,7 +76,7 @@ public class BftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
-
+    when(genesisConfig.getTransitions()).thenReturn(mock(TransitionsConfigOptions.class));
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
@@ -93,6 +95,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getTransitions()).thenReturn(mock(TransitionsConfigOptions.class));
 
     final ProtocolSchedule schedule =
         BftProtocolSchedule.create(
@@ -116,6 +119,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getTransitions()).thenReturn(mock(TransitionsConfigOptions.class));
 
     assertThatThrownBy(
             () ->
@@ -135,6 +139,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getEpochLength()).thenReturn(0L);
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getTransitions()).thenReturn(mock(TransitionsConfigOptions.class));
 
     assertThatThrownBy(
             () ->
@@ -154,6 +159,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getEpochLength()).thenReturn(-3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getTransitions()).thenReturn(mock(TransitionsConfigOptions.class));
 
     assertThatThrownBy(
             () ->

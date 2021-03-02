@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
@@ -42,19 +44,40 @@ public class BftProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec) {
+    final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
+
+    specMap.put(
+        0L,
+        builder ->
+            applyBftChanges(
+                config.getBftConfigOptions(),
+                builder,
+                config.isQuorum(),
+                blockHeaderRuleset,
+                bftExtraDataCodec,
+                config.getBftConfigOptions().getBlockRewardWei()));
+
+    config.getTransitions().getIbftForks().stream()
+        .filter(fork -> fork.getBlockRewardWei().isPresent())
+        .forEach(
+            fork ->
+                specMap.put(
+                    fork.getForkBlock(),
+                    builder ->
+                        applyBftChanges(
+                            config.getBftConfigOptions(),
+                            builder,
+                            config.isQuorum(),
+                            blockHeaderRuleset,
+                            bftExtraDataCodec,
+                            fork.getBlockRewardWei().get())));
+
+    final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(
-                0,
-                builder ->
-                    applyBftChanges(
-                        config.getBftConfigOptions(),
-                        builder,
-                        config.isQuorum(),
-                        blockHeaderRuleset,
-                        bftExtraDataCodec)),
+            specAdapters,
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -86,13 +109,14 @@ public class BftProtocolSchedule {
       final ProtocolSpecBuilder builder,
       final boolean goQuorumMode,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final BigInteger blockReward) {
 
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
     }
 
-    if (configOptions.getBlockRewardWei().signum() < 0) {
+    if (blockReward.signum() < 0) {
       throw new IllegalArgumentException("Bft Block reward in config cannot be negative");
     }
 
@@ -105,7 +129,7 @@ public class BftProtocolSchedule {
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
-        .blockReward(Wei.of(configOptions.getBlockRewardWei()))
+        .blockReward(Wei.of(blockReward))
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
 
