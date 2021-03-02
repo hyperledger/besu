@@ -132,28 +132,101 @@ public class ProtocolScheduleBuilder {
         config.getChainId().map(Optional::of).orElse(defaultChainId);
     final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(chainId);
 
-    MainnetProtocolSpecFactory specFactory =
+    final MainnetProtocolSpecFactory specFactory =
         new MainnetProtocolSpecFactory(
             chainId,
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled,
-            quorumCompatibilityMode);
+            quorumCompatibilityMode,
+            config.getEcip1017EraRounds());
 
     validateForkOrdering();
 
+    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory, chainId);
+
+    // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
+    // inserted _AT_ the modifier block entry.
+    protocolSpecAdapters.stream()
+        .forEach(
+            entry -> {
+              final long modifierBlock = entry.getKey();
+              final BuilderMapEntry parent = builders.floorEntry(modifierBlock).getValue();
+              builders.put(
+                  modifierBlock,
+                  new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
+            });
+
+    // Create the ProtocolSchedule, such that the Dao blocks can then be inserted
+    builders
+        .values()
+        .forEach(e -> addProtocolSpec(protocolSchedule, e.getBlock(), e.getBuilder(), e.modifier));
+
+    config
+        .getDaoForkBlock()
+        .ifPresent(
+            daoBlockNumber -> {
+              final ProtocolSpec originalProtocolSpec =
+                  protocolSchedule.getByBlockNumber(daoBlockNumber);
+              addProtocolSpec(
+                  protocolSchedule,
+                  daoBlockNumber,
+                  specFactory.daoRecoveryInitDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
+              addProtocolSpec(
+                  protocolSchedule,
+                  daoBlockNumber + 1L,
+                  specFactory.daoRecoveryTransitionDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
+              // Return to the previous protocol spec after the dao fork has completed.
+              protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
+            });
+
+    // specs for classic network
+    config
+        .getClassicForkBlock()
+        .ifPresent(
+            classicBlockNumber -> {
+              final ProtocolSpec originalProtocolSpec =
+                  protocolSchedule.getByBlockNumber(classicBlockNumber);
+              addProtocolSpec(
+                  protocolSchedule,
+                  OptionalLong.of(classicBlockNumber),
+                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
+                      config.getContractSizeLimit(),
+                      config.getEvmStackSize(),
+                      quorumCompatibilityMode));
+              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
+            });
+
+    LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
+    return protocolSchedule;
+  }
+
+  private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
+      final MainnetProtocolSpecFactory specFactory, final Optional<BigInteger> chainId) {
     final TreeMap<Long, BuilderMapEntry> builders =
         Lists.newArrayList(
-                create(OptionalLong.of(0), specFactory.frontierSpec()),
-                create(config.getHomesteadBlockNumber(), specFactory.homeSteadSpec()),
-                create(config.getTangerineWhistleBlockNumber(), specFactory.tangerineWhistleSpec()),
-                create(config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonSpec()),
-                create(config.getByzantiumBlockNumber(), specFactory.byzantiumSpec()),
-                create(config.getConstantinopleBlockNumber(), specFactory.constantinopleSpec()),
-                create(config.getPetersburgBlockNumber(), specFactory.petersburgSpec()),
-                create(config.getIstanbulBlockNumber(), specFactory.istanbulSpec()),
-                create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierSpec()),
-                create(config.getBerlinBlockNumber(), specFactory.berlinSpec()))
+            create(OptionalLong.of(0), specFactory.frontierDefinition()),
+            create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
+            create(config.getTangerineWhistleBlockNumber(),
+                specFactory.tangerineWhistleDefinition()),
+            create(config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
+            create(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
+            create(config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
+            create(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
+            create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
+            create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
+            create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+            create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
+            create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
+            create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
+            create(config.getDefuseDifficultyBombBlockNumber(),
+                specFactory.defuseDifficultyBombDefinition()),
+            create(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
+            create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
+            create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
+            create(config.getThanosBlockNumber(), specFactory.thanosDefinition()))
             .stream()
             .filter(Optional::isPresent)
             .map(Optional::get)
@@ -183,137 +256,7 @@ public class ProtocolScheduleBuilder {
               protocolSpecAdapters.getModifierForBlock(eip1559Block)));
     }
 
-    // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
-    // inserted _AT_ the modifier block entry.
-    protocolSpecAdapters.stream()
-        .forEach(
-            entry -> {
-              final long modifierBlock = entry.getKey();
-              final BuilderMapEntry parent = builders.floorEntry(modifierBlock).getValue();
-              builders.put(
-                  modifierBlock,
-                  new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
-            });
-
-    // Create the ProtocolSchedule, such that the Dao blocks can then be inserted
-    builders
-        .values()
-        .forEach(e -> addProtocolSpec(protocolSchedule, e.getBlock(), e.getBuilder(), e.modifier));
-
-    config
-        .getDaoForkBlock()
-        .ifPresent(
-            daoBlockNumber -> {
-              final ProtocolSpec originalProtocolSpec =
-                  protocolSchedule.getByBlockNumber(daoBlockNumber);
-              addProtocolSpec(
-                  protocolSchedule,
-                  daoBlockNumber,
-                  specFactory.daoRecoveryInitSpec(),
-                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
-              addProtocolSpec(
-                  protocolSchedule,
-                  daoBlockNumber + 1L,
-                  specFactory.daoRecoveryTransitionSpec(),
-                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
-              // Return to the previous protocol spec after the dao fork has completed.
-              protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
-            });
-
-    // specs for classic network
-    config
-        .getClassicForkBlock()
-        .ifPresent(
-            classicBlockNumber -> {
-              final ProtocolSpec originalProtocolSpec =
-                  protocolSchedule.getByBlockNumber(classicBlockNumber);
-              addProtocolSpec(
-                  protocolSchedule,
-                  OptionalLong.of(classicBlockNumber),
-                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      quorumCompatibilityMode));
-              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
-            });
-
-    addProtocolSpec(
-        protocolSchedule,
-        config.getEcip1015BlockNumber(),
-        ClassicProtocolSpecs.tangerineWhistleDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getDieHardBlockNumber(),
-        ClassicProtocolSpecs.dieHardDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getGothamBlockNumber(),
-        ClassicProtocolSpecs.gothamDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getDefuseDifficultyBombBlockNumber(),
-        ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getAtlantisBlockNumber(),
-        ClassicProtocolSpecs.atlantisDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getAghartaBlockNumber(),
-        ClassicProtocolSpecs.aghartaDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getPhoenixBlockNumber(),
-        ClassicProtocolSpecs.phoenixDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getThanosBlockNumber(),
-        ClassicProtocolSpecs.thanosDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-
-    LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
-    return protocolSchedule;
+    return builders;
   }
 
   private void addProtocolSpec(
