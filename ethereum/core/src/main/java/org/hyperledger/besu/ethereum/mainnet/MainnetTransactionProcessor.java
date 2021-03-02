@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -406,7 +405,8 @@ public class MainnetTransactionProcessor {
           }
         }
         final Wei coinbaseWeiDelta =
-            coinbaseFeePriceCalculator.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+            coinbaseFeePriceCalculator.price(
+                coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
 
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
