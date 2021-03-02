@@ -35,7 +35,7 @@ public interface WorldStateArchive {
 
   boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
-  Optional<MutableWorldState> getLayeredMutable(Hash rootHash, Hash blockHash);
+  Optional<MutableWorldState> getWorldState(Hash rootHash, Hash blockHash);
 
   Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);
 

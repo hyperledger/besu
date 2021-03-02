@@ -89,7 +89,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<MutableWorldState> getLayeredMutable(final Hash rootHash, final Hash blockHash) {
+  public Optional<MutableWorldState> getWorldState(final Hash rootHash, final Hash blockHash) {
     if (layeredWorldStates.containsKey(blockHash)) {
       return Optional.of(layeredWorldStates.get(blockHash));
     } else {

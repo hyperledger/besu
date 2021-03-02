@@ -55,7 +55,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<MutableWorldState> getLayeredMutable(final Hash rootHash, final Hash blockHash) {
+  public Optional<MutableWorldState> getWorldState(final Hash rootHash, final Hash blockHash) {
     return getMutable(rootHash, blockHash);
   }
 
