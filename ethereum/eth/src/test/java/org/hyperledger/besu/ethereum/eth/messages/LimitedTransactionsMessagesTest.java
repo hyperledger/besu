@@ -21,7 +21,10 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -29,6 +32,7 @@ import org.junit.Test;
 public class LimitedTransactionsMessagesTest {
 
   private static final int TX_PAYLOAD_LIMIT = LimitedTransactionsMessages.LIMIT - 180;
+  private static final int MAX_ADDITIONAL_BYTES = 5;
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Set<Transaction> sampleTxs = generator.transactions(1);
   private final TransactionsMessage sampleTransactionMessages =
@@ -38,61 +42,71 @@ public class LimitedTransactionsMessagesTest {
 
   @Test
   public void createLimited() {
-    final Set<Transaction> txs = generator.transactions(6000);
-    final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertThat(firstMessage.getIncludedTransactions().size()).isBetween(4990, 5250);
+    final Set<Transaction> transactions = generator.transactions(6000);
+    final Set<Transaction> remainingTransactions = new HashSet<>(transactions);
 
-    txs.removeAll(firstMessage.getIncludedTransactions());
-    assertThat(txs.size()).isBetween(700, 800);
+    final LimitedTransactionsMessages firstMessage =
+        LimitedTransactionsMessages.createLimited(remainingTransactions);
+    remainingTransactions.removeAll(firstMessage.getIncludedTransactions());
+
     final LimitedTransactionsMessages secondMessage =
-        LimitedTransactionsMessages.createLimited(txs);
-    assertThat(secondMessage.getIncludedTransactions().size()).isBetween(700, 800);
-    txs.removeAll(secondMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(0);
-    assertThat(
-            firstMessage.getTransactionsMessage().getSize()
-                + secondMessage.getTransactionsMessage().getSize())
-        .isLessThan(2 * LimitedTransactionsMessages.LIMIT);
+        LimitedTransactionsMessages.createLimited(remainingTransactions);
+    remainingTransactions.removeAll(secondMessage.getIncludedTransactions());
+
+    assertThat(remainingTransactions.size()).isEqualTo(0);
+    List.of(firstMessage, secondMessage).stream()
+        .map(message -> message.getTransactionsMessage().getSize())
+        .forEach(
+            messageSize ->
+                assertThat(messageSize)
+                    .isLessThan(LimitedTransactionsMessages.LIMIT + MAX_ADDITIONAL_BYTES));
+
+    final Set<Transaction> includedTransactions = new HashSet<>();
+    includedTransactions.addAll(firstMessage.getIncludedTransactions());
+    includedTransactions.addAll(secondMessage.getIncludedTransactions());
+    assertThat(includedTransactions)
+        .containsExactlyInAnyOrder(transactions.toArray(new Transaction[] {}));
   }
 
   @Test
   public void createLimitedWithTransactionsJustUnderTheLimit() {
-    final Set<Transaction> txs = new HashSet<>();
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertThat(firstMessage.getIncludedTransactions().size()).isEqualTo(2);
-    txs.removeAll(firstMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(1);
-    final LimitedTransactionsMessages secondMessage =
-        LimitedTransactionsMessages.createLimited(txs);
-    assertThat(secondMessage.getIncludedTransactions().size()).isEqualTo(1);
-    txs.removeAll(secondMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(0);
+    final Set<Transaction> transactions =
+        Stream.generate(() -> generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])))
+            .limit(3)
+            .collect(Collectors.toUnmodifiableSet());
+    final Set<Transaction> remainingTransactions = new HashSet<>(transactions);
+    final Set<Transaction> includedTransactions = new HashSet<>();
+    while (!remainingTransactions.isEmpty()) {
+      final LimitedTransactionsMessages message =
+          LimitedTransactionsMessages.createLimited(remainingTransactions);
+      includedTransactions.addAll(message.getIncludedTransactions());
+      assertThat(message.getIncludedTransactions().size()).isEqualTo(1);
+      remainingTransactions.removeAll(message.getIncludedTransactions());
+    }
+    assertThat(includedTransactions)
+        .containsExactlyInAnyOrder(transactions.toArray(new Transaction[] {}));
   }
 
   @Test
   public void createLimitedWithTransactionsJustUnderAndJustOverTheLimit() {
-    final Set<Transaction> txs = new LinkedHashSet<>();
+    final Set<Transaction> transactions =
+        Set.of(
+            generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])),
+            // ensure the next transaction exceed the limit TX_PAYLOAD_LIMIT + 100
+            generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT + 100])),
+            generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
+    final Set<Transaction> remainingTransactions = new LinkedHashSet<>(transactions);
 
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    // ensure the next transaction exceed the limit TX_PAYLOAD_LIMIT + 100
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT + 100])));
-    txs.add(generator.transaction(Bytes.wrap(new byte[TX_PAYLOAD_LIMIT])));
-    final LimitedTransactionsMessages firstMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertThat(firstMessage.getIncludedTransactions().size()).isEqualTo(1);
-    txs.removeAll(firstMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(2);
-    final LimitedTransactionsMessages secondMessage =
-        LimitedTransactionsMessages.createLimited(txs);
-    assertThat(secondMessage.getIncludedTransactions().size()).isEqualTo(1);
-    txs.removeAll(secondMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(1);
-    final LimitedTransactionsMessages thirdMessage = LimitedTransactionsMessages.createLimited(txs);
-    assertThat(thirdMessage.getIncludedTransactions().size()).isEqualTo(1);
-    txs.removeAll(thirdMessage.getIncludedTransactions());
-    assertThat(txs.size()).isEqualTo(0);
+    final Set<Transaction> includedTransactions = new HashSet<>();
+    while (!remainingTransactions.isEmpty()) {
+      final LimitedTransactionsMessages message =
+          LimitedTransactionsMessages.createLimited(remainingTransactions);
+      includedTransactions.addAll(message.getIncludedTransactions());
+      assertThat(message.getIncludedTransactions().size()).isEqualTo(1);
+      remainingTransactions.removeAll(message.getIncludedTransactions());
+    }
+    assertThat(includedTransactions)
+        .containsExactlyInAnyOrder(transactions.toArray(new Transaction[] {}));
   }
 
   @Test

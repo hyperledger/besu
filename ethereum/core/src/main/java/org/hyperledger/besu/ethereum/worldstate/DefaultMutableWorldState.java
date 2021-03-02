@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
@@ -95,12 +96,20 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   private MerklePatriciaTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, rootHash, b -> b, b -> b);
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
+        rootHash,
+        b -> b,
+        b -> b);
   }
 
   @Override
   public Hash rootHash() {
     return Hash.wrap(accountStateTrie.getRootHash());
+  }
+
+  @Override
+  public Hash frontierRootHash() {
+    return rootHash();
   }
 
   @Override
@@ -169,15 +178,17 @@ public class DefaultMutableWorldState implements MutableWorldState {
   }
 
   @Override
-  public void persist() {
+  public void persist(final BlockHeader blockHeader) {
     final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {
-      stateUpdater.putCode(code);
+      stateUpdater.putCode(null, code);
     }
     // Commit account storage tries
     for (final MerklePatriciaTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
-      updatedStorage.commit(stateUpdater::putAccountStorageTrieNode);
+      updatedStorage.commit(
+          (location, hash, value) ->
+              stateUpdater.putAccountStorageTrieNode(null, location, hash, value));
     }
     // Commit account updates
     accountStateTrie.commit(stateUpdater::putAccountStateTrieNode);
@@ -200,6 +211,13 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
     return Optional.ofNullable(newStorageKeyPreimages.get(trieKey))
         .or(() -> preimageStorage.getStorageTrieKeyPreimage(trieKey));
+  }
+
+  private static UInt256 convertToUInt256(final Bytes value) {
+    // TODO: we could probably have an optimized method to decode a single scalar since it's used
+    // pretty often.
+    final RLPInput in = RLP.input(value);
+    return in.readUInt256Scalar();
   }
 
   private Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
@@ -272,7 +290,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       if (codeHash.equals(Hash.EMPTY)) {
         return Bytes.EMPTY;
       }
-      return worldStateStorage.getCode(codeHash).orElse(Bytes.EMPTY);
+      return worldStateStorage.getCode(codeHash, null).orElse(Bytes.EMPTY);
     }
 
     @Override
@@ -318,13 +336,6 @@ public class DefaultMutableWorldState implements MutableWorldState {
                 storageEntries.put(key, entry);
               });
       return storageEntries;
-    }
-
-    private UInt256 convertToUInt256(final Bytes value) {
-      // TODO: we could probably have an optimized method to decode a single scalar since it's used
-      // pretty often.
-      final RLPInput in = RLP.input(value);
-      return in.readUInt256Scalar();
     }
 
     @Override

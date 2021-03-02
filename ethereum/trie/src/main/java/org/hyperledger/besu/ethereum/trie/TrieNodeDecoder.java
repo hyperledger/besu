@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class TrieNodeDecoder {
   private static final StoredNodeFactory<Bytes> emptyNodeFactory =
-      new StoredNodeFactory<>((h) -> Optional.empty(), Function.identity(), Function.identity());
+      new StoredNodeFactory<>((l, h) -> Optional.empty(), Function.identity(), Function.identity());
 
   // Hide constructor for static utility class
   private TrieNodeDecoder() {}
@@ -39,26 +39,27 @@ public class TrieNodeDecoder {
   /**
    * Decode an rlp-encoded trie node
    *
+   * @param location The location in the trie.
    * @param rlp The rlp-encoded node
    * @return A {@code Node} representation of the rlp data
    */
-  public static Node<Bytes> decode(final Bytes rlp) {
-    return emptyNodeFactory.decode(rlp);
+  public static Node<Bytes> decode(final Bytes location, final Bytes rlp) {
+    return emptyNodeFactory.decode(location, rlp);
   }
 
   /**
    * Flattens this node and all of its inlined nodes and node references into a list.
    *
+   * @param location The location in the trie.
    * @param nodeRlp The bytes of the trie node to be decoded.
    * @return A list of nodes and node references embedded in the given rlp.
    */
-  public static List<Node<Bytes>> decodeNodes(final Bytes nodeRlp) {
-    Node<Bytes> node = decode(nodeRlp);
-    List<Node<Bytes>> nodes = new ArrayList<>();
+  public static List<Node<Bytes>> decodeNodes(final Bytes location, final Bytes nodeRlp) {
+    final Node<Bytes> node = decode(location, nodeRlp);
+    final List<Node<Bytes>> nodes = new ArrayList<>();
     nodes.add(node);
 
-    final List<Node<Bytes>> toProcess = new ArrayList<>();
-    toProcess.addAll(node.getChildren());
+    final List<Node<Bytes>> toProcess = new ArrayList<>(node.getChildren());
     while (!toProcess.isEmpty()) {
       final Node<Bytes> currentNode = toProcess.remove(0);
       if (Objects.equals(NullNode.instance(), currentNode)) {
@@ -119,7 +120,10 @@ public class TrieNodeDecoder {
       this.nodeFactory =
           new StoredNodeFactory<>(nodeLoader, Function.identity(), Function.identity());
 
-      nodeLoader.getNode(rootHash).map(TrieNodeDecoder::decode).ifPresent(currentNodes::add);
+      nodeLoader
+          .getNode(Bytes.EMPTY, rootHash)
+          .map(h -> TrieNodeDecoder.decode(Bytes.EMPTY, h))
+          .ifPresent(currentNodes::add);
     }
 
     public static BreadthFirstIterator create(
@@ -140,8 +144,7 @@ public class TrieNodeDecoder {
 
       final Node<Bytes> nextNode = currentNodes.remove(0);
 
-      final List<Node<Bytes>> children = new ArrayList<>();
-      children.addAll(nextNode.getChildren());
+      final List<Node<Bytes>> children = new ArrayList<>(nextNode.getChildren());
       while (!children.isEmpty()) {
         Node<Bytes> child = children.remove(0);
         if (Objects.equals(child, NullNode.instance())) {
@@ -150,8 +153,8 @@ public class TrieNodeDecoder {
         }
         if (child.isReferencedByHash()) {
           // Retrieve hash-referenced child
-          final Optional<Node<Bytes>> maybeChildNode = nodeFactory.retrieve(child.getHash());
-          if (!maybeChildNode.isPresent()) {
+          final Optional<Node<Bytes>> maybeChildNode = nodeFactory.retrieve(null, child.getHash());
+          if (maybeChildNode.isEmpty()) {
             continue;
           }
           child = maybeChildNode.get();

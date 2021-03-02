@@ -31,8 +31,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -51,6 +52,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.orion.testutil.OrionKeyUtils;
 
 import java.math.BigInteger;
@@ -60,6 +62,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.io.Base64;
@@ -72,11 +76,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class DefaultPrivacyControllerTest {
 
   private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEY_PAIR =
-      KeyPair.create(
-          SECP256K1.PrivateKey.create(
-              new BigInteger(
-                  "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+      SIGNATURE_ALGORITHM
+          .get()
+          .createKeyPair(
+              SIGNATURE_ALGORITHM
+                  .get()
+                  .createPrivateKey(
+                      new BigInteger(
+                          "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
   private static final byte[] PAYLOAD = new byte[0];
   private static final List<String> PRIVACY_GROUP_ADDRESSES = newArrayList("8f2a", "fb23");
   private static final String PRIVACY_GROUP_NAME = "pg_name";
@@ -106,6 +116,7 @@ public class DefaultPrivacyControllerTest {
 
   private static final Transaction PUBLIC_TRANSACTION =
       Transaction.builder()
+          .type(TransactionType.FRONTIER)
           .nonce(0)
           .gasPrice(Wei.of(1000))
           .gasLimit(3000000)
@@ -257,7 +268,8 @@ public class DefaultPrivacyControllerTest {
                     Optional.empty())));
 
     final List<PrivacyGroup> privacyGroups =
-        privacyController.findOnChainPrivacyGroup(privacyGroupAddresses, ENCLAVE_PUBLIC_KEY);
+        privacyController.findOnChainPrivacyGroupByMembers(
+            privacyGroupAddresses, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups.get(0)).isEqualToComparingFieldByField(privacyGroup);
     verify(privateStateStorage).getPrivacyGroupHeadBlockMap(any());
@@ -360,7 +372,8 @@ public class DefaultPrivacyControllerTest {
     when(enclave.findPrivacyGroup(any())).thenReturn(new PrivacyGroup[] {privacyGroup});
 
     final PrivacyGroup[] privacyGroups =
-        privacyController.findPrivacyGroup(PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
+        privacyController.findOffChainPrivacyGroupByMembers(
+            PRIVACY_GROUP_ADDRESSES, ENCLAVE_PUBLIC_KEY);
     assertThat(privacyGroups).hasSize(1);
     assertThat(privacyGroups[0]).isEqualToComparingFieldByField(privacyGroup);
     verify(enclave).findPrivacyGroup(PRIVACY_GROUP_ADDRESSES);

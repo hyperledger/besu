@@ -29,6 +29,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 class ExtensionNode<V> implements Node<V> {
+
+  private final Optional<Bytes> location;
   private final Bytes path;
   private final Node<V> child;
   private final NodeFactory<V> nodeFactory;
@@ -36,10 +38,25 @@ class ExtensionNode<V> implements Node<V> {
   private SoftReference<Bytes32> hash;
   private boolean dirty = false;
 
+  ExtensionNode(
+      final Bytes location,
+      final Bytes path,
+      final Node<V> child,
+      final NodeFactory<V> nodeFactory) {
+    assert (path.size() > 0);
+    assert (path.get(path.size() - 1) != CompactEncoding.LEAF_TERMINATOR)
+        : "Extension path ends in a leaf terminator";
+    this.location = Optional.ofNullable(location);
+    this.path = path;
+    this.child = child;
+    this.nodeFactory = nodeFactory;
+  }
+
   ExtensionNode(final Bytes path, final Node<V> child, final NodeFactory<V> nodeFactory) {
     assert (path.size() > 0);
     assert (path.get(path.size() - 1) != CompactEncoding.LEAF_TERMINATOR)
         : "Extension path ends in a leaf terminator";
+    this.location = Optional.empty();
     this.path = path;
     this.child = child;
     this.nodeFactory = nodeFactory;
@@ -53,6 +70,16 @@ class ExtensionNode<V> implements Node<V> {
   @Override
   public void accept(final NodeVisitor<V> visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
+    visitor.visit(location, this);
+  }
+
+  @Override
+  public Optional<Bytes> getLocation() {
+    return location;
   }
 
   @Override
@@ -131,11 +158,15 @@ class ExtensionNode<V> implements Node<V> {
   @Override
   public String print() {
     final StringBuilder builder = new StringBuilder();
-    builder.append("Extension:");
-    builder.append("\n\tRef: ").append(getRlpRef());
-    builder.append("\n\tPath: " + CompactEncoding.encode(path));
     final String childRep = getChild().print().replaceAll("\n\t", "\n\t\t");
-    builder.append("\n\t").append(childRep);
+    builder
+        .append("Extension:")
+        .append("\n\tRef: ")
+        .append(getRlpRef())
+        .append("\n\tPath: ")
+        .append(CompactEncoding.encode(path))
+        .append("\n\t")
+        .append(childRep);
     return builder.toString();
   }
 

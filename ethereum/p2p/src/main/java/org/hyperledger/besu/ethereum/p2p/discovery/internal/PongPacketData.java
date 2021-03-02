@@ -18,7 +18,10 @@ import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class PongPacketData implements PacketData {
 
@@ -31,14 +34,20 @@ public class PongPacketData implements PacketData {
   /* In seconds after epoch. */
   private final long expiration;
 
-  private PongPacketData(final Endpoint to, final Bytes pingHash, final long expiration) {
+  /* Current sequence number of the sending node’s record */
+  private final UInt64 enrSeq;
+
+  private PongPacketData(
+      final Endpoint to, final Bytes pingHash, final long expiration, final UInt64 enrSeq) {
     this.to = to;
     this.pingHash = pingHash;
     this.expiration = expiration;
+    this.enrSeq = enrSeq;
   }
 
-  public static PongPacketData create(final Endpoint to, final Bytes pingHash) {
-    return new PongPacketData(to, pingHash, PacketData.defaultExpiration());
+  public static PongPacketData create(
+      final Endpoint to, final Bytes pingHash, final UInt64 enrSeq) {
+    return new PongPacketData(to, pingHash, PacketData.defaultExpiration(), enrSeq);
   }
 
   public static PongPacketData readFrom(final RLPInput in) {
@@ -46,8 +55,12 @@ public class PongPacketData implements PacketData {
     final Endpoint to = Endpoint.decodeStandalone(in);
     final Bytes hash = in.readBytes();
     final long expiration = in.readLongScalar();
+    UInt64 enrSeq = null;
+    if (!in.isEndOfCurrentList()) {
+      enrSeq = UInt64.fromBytes(in.readBytes());
+    }
     in.leaveListLenient();
-    return new PongPacketData(to, hash, expiration);
+    return new PongPacketData(to, hash, expiration, enrSeq);
   }
 
   @Override
@@ -56,6 +69,13 @@ public class PongPacketData implements PacketData {
     to.encodeStandalone(out);
     out.writeBytes(pingHash);
     out.writeLongScalar(expiration);
+    out.writeBytes(
+        getEnrSeq()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Attempting to serialize invalid PONG packet. Missing 'enrSeq' field"))
+            .toBytes());
     out.endList();
   }
 
@@ -68,6 +88,8 @@ public class PongPacketData implements PacketData {
         + pingHash
         + ", expiration="
         + expiration
+        + ", enrSeq="
+        + enrSeq
         + '}';
   }
 
@@ -81,5 +103,9 @@ public class PongPacketData implements PacketData {
 
   public long getExpiration() {
     return expiration;
+  }
+
+  public Optional<UInt64> getEnrSeq() {
+    return Optional.ofNullable(enrSeq);
   }
 }

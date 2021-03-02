@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.consensus.ibft.support;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.EventMultiplexer;
-import org.hyperledger.besu.consensus.ibft.ibftevent.IbftEvents;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
+import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
@@ -30,56 +29,23 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
-
 // Each "inject" function returns the SignedPayload representation of the transmitted message.
-public class ValidatorPeer {
+public class ValidatorPeer extends DefaultValidatorPeer {
 
-  private final Address nodeAddress;
-  private final NodeKey nodeKey;
   private final MessageFactory messageFactory;
-  private final PeerConnection peerConnection;
-  private final List<MessageData> receivedMessages = Lists.newArrayList();
-
-  private final EventMultiplexer localEventMultiplexer;
-  private long estimatedChainHeight = 0;
 
   public ValidatorPeer(
       final NodeParams nodeParams,
       final MessageFactory messageFactory,
       final EventMultiplexer localEventMultiplexer) {
-    this.nodeKey = nodeParams.getNodeKey();
-    this.nodeAddress = nodeParams.getAddress();
+    super(nodeParams, localEventMultiplexer);
     this.messageFactory = messageFactory;
-    final Bytes nodeId = nodeKey.getPublicKey().getEncodedBytes();
-    this.peerConnection = StubbedPeerConnection.create(nodeId);
-    this.localEventMultiplexer = localEventMultiplexer;
-  }
-
-  public Address getNodeAddress() {
-    return nodeAddress;
-  }
-
-  public NodeKey getnodeKey() {
-    return nodeKey;
-  }
-
-  public PeerConnection getPeerConnection() {
-    return peerConnection;
   }
 
   public Proposal injectProposal(final ConsensusRoundIdentifier rId, final Block block) {
@@ -95,18 +61,14 @@ public class ValidatorPeer {
     return payload;
   }
 
-  public Signature getBlockSignature(final Hash digest) {
-    return nodeKey.sign(digest);
-  }
-
   public Commit injectCommit(final ConsensusRoundIdentifier rId, final Hash digest) {
-    final Signature commitSeal = nodeKey.sign(digest);
+    final SECPSignature commitSeal = nodeKey.sign(digest);
 
     return injectCommit(rId, digest, commitSeal);
   }
 
   public Commit injectCommit(
-      final ConsensusRoundIdentifier rId, final Hash digest, final Signature commitSeal) {
+      final ConsensusRoundIdentifier rId, final Hash digest, final SECPSignature commitSeal) {
     final Commit payload = messageFactory.createCommit(rId, digest, commitSeal);
     injectMessage(CommitMessageData.create(payload));
     return payload;
@@ -131,32 +93,7 @@ public class ValidatorPeer {
     return payload;
   }
 
-  public void handleReceivedMessage(final MessageData message) {
-    receivedMessages.add(message);
-  }
-
-  public List<MessageData> getReceivedMessages() {
-    return Collections.unmodifiableList(receivedMessages);
-  }
-
-  public void clearReceivedMessages() {
-    receivedMessages.clear();
-  }
-
-  public void injectMessage(final MessageData msgData) {
-    final DefaultMessage message = new DefaultMessage(peerConnection, msgData);
-    localEventMultiplexer.handleIbftEvent(IbftEvents.fromMessage(message));
-  }
-
   public MessageFactory getMessageFactory() {
     return messageFactory;
-  }
-
-  public void updateEstimatedChainHeight(final long estimatedChainHeight) {
-    this.estimatedChainHeight = estimatedChainHeight;
-  }
-
-  public void verifyEstimatedChainHeightEquals(final long expectedChainHeight) {
-    assertThat(estimatedChainHeight).isEqualTo(expectedChainHeight);
   }
 }

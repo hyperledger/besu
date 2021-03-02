@@ -21,7 +21,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -41,6 +43,8 @@ import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
@@ -48,8 +52,10 @@ public class PendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_TRANSACTION_HASHES = 5;
-  private static final KeyPair KEYS1 = KeyPair.generate();
-  private static final KeyPair KEYS2 = KeyPair.generate();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final KeyPair KEYS2 = SIGNATURE_ALGORITHM.get().generateKeyPair();
   private static final String ADDED_COUNTER = "transactions_added_total";
   private static final String REMOVED_COUNTER = "transactions_removed_total";
   private static final String REMOTE = "remote";
@@ -66,7 +72,6 @@ public class PendingTransactionsTest {
           TestClock.fixed(),
           metricsSystem,
           PendingTransactionsTest::mockBlockHeader,
-          Optional.empty(),
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
@@ -573,7 +578,7 @@ public class PendingTransactionsTest {
     assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty();
   }
 
-  private Transaction createTransaction(final int transactionNumber) {
+  private Transaction createTransaction(final long transactionNumber) {
     return new TransactionTestFixture()
         .value(Wei.of(transactionNumber))
         .nonce(transactionNumber)
@@ -591,7 +596,6 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     transactions.addRemoteTransaction(transaction1);
@@ -616,7 +620,6 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -637,7 +640,6 @@ public class PendingTransactionsTest {
             clock,
             metricsSystem,
             () -> null,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -693,8 +695,28 @@ public class PendingTransactionsTest {
         .hasValue(7);
   }
 
-  private void addLocalTransactions(final int... nonces) {
-    for (int nonce : nonces) {
+  @Test
+  public void assertThatCorrectNonceIsReturnedLargeGap() {
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
+    addLocalTransactions(1, 2, Long.MAX_VALUE);
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(3);
+    addLocalTransactions(3);
+  }
+
+  @Test
+  public void assertThatCorrectNonceIsReturnedWithRepeatedTXes() {
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
+    addLocalTransactions(1, 2, 4, 4, 4, 4, 4, 4, 4, 4);
+    assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(3);
+    addLocalTransactions(3);
+  }
+
+  private void addLocalTransactions(final long... nonces) {
+    for (final long nonce : nonces) {
       transactions.addLocalTransaction(createTransaction(nonce));
     }
   }

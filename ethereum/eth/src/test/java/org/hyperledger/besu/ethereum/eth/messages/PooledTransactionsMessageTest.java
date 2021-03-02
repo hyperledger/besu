@@ -17,10 +17,11 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,12 +36,13 @@ public class PooledTransactionsMessageTest {
     List<Transaction> tx =
         Arrays.asList(
             Transaction.builder()
+                .type(TransactionType.FRONTIER)
                 .nonce(42)
                 .gasLimit(654321)
                 .gasPrice(Wei.of(2))
                 .value(Wei.of(1337))
                 .payload(Bytes.EMPTY)
-                .signAndBuild(SECP256K1.KeyPair.generate()));
+                .signAndBuild(SignatureAlgorithmFactory.getInstance().generateKeyPair()));
     final PooledTransactionsMessage msg = PooledTransactionsMessage.create(tx);
     assertThat(msg.getCode()).isEqualTo(EthPV65.POOLED_TRANSACTIONS);
     assertThat(msg.transactions()).isEqualTo(tx);

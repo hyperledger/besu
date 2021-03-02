@@ -52,7 +52,7 @@ public class GeneralStateTestCaseSpec {
       final Map<String, List<PostSection>> postSections,
       final StateTestVersionedTransaction versionedTransaction) {
 
-    initialWorldState.persist();
+    initialWorldState.persist(null);
     final Map<String, List<GeneralStateTestCaseEipSpec>> res =
         new LinkedHashMap<>(postSections.size());
     for (final Map.Entry<String, List<PostSection>> entry : postSections.entrySet()) {
@@ -128,7 +128,8 @@ public class GeneralStateTestCaseSpec {
     public PostSection(
         @JsonProperty("hash") final String hash,
         @JsonProperty("logs") final String logs,
-        @JsonProperty("indexes") final Indexes indexes) {
+        @JsonProperty("indexes") final Indexes indexes,
+        @JsonProperty("txbytes") final String txbytes) {
       this.rootHash = Hash.fromHexString(hash);
       this.logsHash = Hash.fromHexString(logs);
       this.indexes = indexes;

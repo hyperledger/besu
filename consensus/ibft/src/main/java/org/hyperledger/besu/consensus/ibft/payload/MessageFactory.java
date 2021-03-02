@@ -14,21 +14,22 @@
  */
 package org.hyperledger.besu.consensus.ibft.payload;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
+
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class MessageFactory {
 
@@ -58,7 +59,7 @@ public class MessageFactory {
   public Commit createCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
-      final Signature commitSeal) {
+      final SECPSignature commitSeal) {
 
     final CommitPayload payload = new CommitPayload(roundIdentifier, digest, commitSeal);
 
@@ -78,13 +79,7 @@ public class MessageFactory {
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
-    final Signature signature = nodeKey.sign(hashForSignature(payload));
-    return new SignedData<>(payload, Util.publicKeyToAddress(nodeKey.getPublicKey()), signature);
-  }
-
-  public static Hash hashForSignature(final Payload unsignedMessageData) {
-    return Hash.hash(
-        Bytes.concatenate(
-            Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
+    final SECPSignature signature = nodeKey.sign(hashForSignature(payload));
+    return SignedData.create(payload, signature);
   }
 }

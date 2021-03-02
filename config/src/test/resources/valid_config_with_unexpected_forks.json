@@ -1,0 +1,33 @@
+{
+  "chainId": 61,
+  "homesteadBlock": 1,
+  "eip150Block": 2,
+  "eip158Block": 3,
+  "unexpectedFork1Block": 7,
+  "unexpectedFork2Block": 9,
+  "unexpectedFork3Block": 150000,
+  "classicForkBlock": 1920000,
+  "byzantiumBlock": 1035301,
+  "ibft2": {
+    "blockperiodseconds": 2,
+    "epochlength": 30000,
+    "requesttimeoutseconds": 10
+  },
+  "transitions": {
+    "ibft2": [
+      {
+        "block": 20,
+        "validators": [
+          "0x1234567890123456789012345678901234567890",
+          "0x9876543210987654321098765432109876543210"
+        ]
+      },
+      {
+        "block": 25,
+        "validators": [
+          "0x1234567890123456789012345678901234567890"
+        ]
+      }
+    ]
+  }
+}

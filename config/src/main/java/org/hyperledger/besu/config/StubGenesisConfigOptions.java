@@ -17,6 +17,8 @@ package org.hyperledger.besu.config;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -32,7 +34,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong spuriousDragonBlockNumber = OptionalLong.empty();
   private OptionalLong byzantiumBlockNumber = OptionalLong.empty();
   private OptionalLong constantinopleBlockNumber = OptionalLong.empty();
-  private OptionalLong constantinopleFixBlockNumber = OptionalLong.empty();
+  private OptionalLong petersburgBlockNumber = OptionalLong.empty();
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
@@ -78,8 +80,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public IbftConfigOptions getIbftLegacyConfigOptions() {
-    return IbftConfigOptions.DEFAULT;
+  public boolean isQbft() {
+    return false;
+  }
+
+  @Override
+  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
+    return IbftLegacyConfigOptions.DEFAULT;
   }
 
   @Override
@@ -88,8 +95,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public IbftConfigOptions getIbft2ConfigOptions() {
-    return IbftConfigOptions.DEFAULT;
+  public BftConfigOptions getBftConfigOptions() {
+    return BftConfigOptions.DEFAULT;
   }
 
   @Override
@@ -128,8 +135,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getConstantinopleFixBlockNumber() {
-    return constantinopleFixBlockNumber;
+  public OptionalLong getPetersburgBlockNumber() {
+    return petersburgBlockNumber;
   }
 
   @Override
@@ -144,7 +151,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getBerlinBlockNumber() {
-    return ExperimentalEIPs.berlinEnabled ? berlinBlockNumber : OptionalLong.empty();
+    return berlinBlockNumber;
   }
 
   @Override
@@ -229,18 +236,16 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
         .ifPresent(
             l -> {
               builder.put("daoForkBlock", l);
-              builder.put("daoForkSupport", Boolean.TRUE);
             });
     getTangerineWhistleBlockNumber().ifPresent(l -> builder.put("eip150Block", l));
     getSpuriousDragonBlockNumber()
         .ifPresent(
             l -> {
-              builder.put("eip155Block", l);
               builder.put("eip158Block", l);
             });
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
-    getConstantinopleFixBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
+    getPetersburgBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
@@ -270,7 +275,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
-      builder.put("ibft2", getIbft2ConfigOptions().asMap());
+      builder.put("ibft2", getBftConfigOptions().asMap());
     }
     return builder.build();
   }
@@ -288,6 +293,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getQip714BlockNumber() {
     return OptionalLong.empty();
+  }
+
+  @Override
+  public List<Long> getForks() {
+    return Collections.emptyList();
   }
 
   public StubGenesisConfigOptions homesteadBlock(final long blockNumber) {
@@ -320,8 +330,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions constantinopleFixBlock(final long blockNumber) {
-    constantinopleFixBlockNumber = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions petersburgBlock(final long blockNumber) {
+    petersburgBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

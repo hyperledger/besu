@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.handshake;
 
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.ecies.ECIESHandshaker;
 
 import java.util.Optional;
@@ -81,7 +81,7 @@ public interface Handshaker {
    * @param theirPubKey The public key of the node we're handshaking with.
    * @throws IllegalStateException Indicates that preparation had already occurred.
    */
-  void prepareInitiator(NodeKey nodeKey, SECP256K1.PublicKey theirPubKey);
+  void prepareInitiator(NodeKey nodeKey, SECPPublicKey theirPubKey);
 
   /**
    * This method must be called by the <em>responding side</em> of the handshake to prepare the
@@ -159,5 +159,5 @@ public interface Handshaker {
    * @throws IllegalStateException Thrown if this handshake has not completed and hence it cannot
    *     return the other party's public key yet.
    */
-  SECP256K1.PublicKey partyPubKey();
+  SECPPublicKey partyPubKey();
 }

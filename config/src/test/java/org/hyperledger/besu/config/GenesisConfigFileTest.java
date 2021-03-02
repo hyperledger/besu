@@ -292,7 +292,7 @@ public class GenesisConfigFileTest {
   public void testNoOverride() {
     final GenesisConfigFile config = GenesisConfigFile.development();
 
-    assertThat(config.getConfigOptions().getConstantinopleFixBlockNumber()).hasValue(0);
+    assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(2018));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
@@ -305,14 +305,14 @@ public class GenesisConfigFileTest {
     // petersburg node
     final GenesisConfigFile config = GenesisConfigFile.development();
 
-    assertThat(config.getConfigOptions().getConstantinopleFixBlockNumber()).hasValue(0);
+    assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
 
     // constantinopleFix node
     final Map<String, String> override = new HashMap<>();
     override.put("constantinopleFixBlock", "1000");
 
     assertThatExceptionOfType(RuntimeException.class)
-        .isThrownBy(() -> config.getConfigOptions(override).getConstantinopleFixBlockNumber())
+        .isThrownBy(() -> config.getConfigOptions(override).getPetersburgBlockNumber())
         .withMessage(
             "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
     ;
@@ -335,7 +335,7 @@ public class GenesisConfigFileTest {
 
     final GenesisConfigFile config = fromConfig(configNode);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 3L, 1035301L);
+    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
   }
 
@@ -355,8 +355,60 @@ public class GenesisConfigFileTest {
                         StandardCharsets.UTF_8)));
     final GenesisConfigFile config = fromConfig(configNode);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 3L, 1035301L);
+    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(61));
+  }
+
+  @Test
+  public void shouldLoadForksIgnoreUnexpectedValues() throws IOException {
+    final ObjectNode configNoUnexpectedForks =
+        new ObjectMapper()
+            .createObjectNode()
+            .set(
+                "config",
+                JsonUtil.objectNodeFromString(
+                    Resources.toString(
+                        Resources.getResource("valid_config.json"), StandardCharsets.UTF_8)));
+
+    final ObjectNode configClassicFork =
+        new ObjectMapper()
+            .createObjectNode()
+            .set(
+                "config",
+                JsonUtil.objectNodeFromString(
+                    Resources.toString(
+                        Resources.getResource(
+                            // If you inspect this config, you should see that classicForkBlock is
+                            // declared (which we want to ignore)
+                            "valid_config_with_etc_forks.json"),
+                        StandardCharsets.UTF_8)));
+
+    final ObjectNode configMultipleUnexpectedForks =
+        new ObjectMapper()
+            .createObjectNode()
+            .set(
+                "config",
+                JsonUtil.objectNodeFromString(
+                    Resources.toString(
+                        Resources.getResource(
+                            // If you inspect this config, you should see that
+                            // 'unexpectedFork1Block',
+                            // 'unexpectedFork2Block' and 'unexpectedFork3Block' are
+                            // declared (which we want to ignore)
+                            "valid_config_with_unexpected_forks.json"),
+                        StandardCharsets.UTF_8)));
+
+    final GenesisConfigFile configFileNoUnexpectedForks = fromConfig(configNoUnexpectedForks);
+    final GenesisConfigFile configFileClassicFork = fromConfig(configClassicFork);
+    final GenesisConfigFile configFileMultipleUnexpectedForks =
+        fromConfig(configMultipleUnexpectedForks);
+
+    assertThat(configFileNoUnexpectedForks.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
+    assertThat(configFileNoUnexpectedForks.getForks()).isEqualTo(configFileClassicFork.getForks());
+    assertThat(configFileNoUnexpectedForks.getForks())
+        .isEqualTo(configFileMultipleUnexpectedForks.getForks());
+    assertThat(configFileNoUnexpectedForks.getConfigOptions().getChainId())
+        .hasValue(BigInteger.valueOf(61));
   }
 
   private GenesisConfigFile configWithProperty(final String key, final String value) {

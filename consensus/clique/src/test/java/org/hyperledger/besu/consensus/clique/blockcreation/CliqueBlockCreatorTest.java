@@ -32,9 +32,10 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -54,7 +55,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -66,7 +66,7 @@ public class CliqueBlockCreatorTest {
 
   private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
-  private final KeyPair otherKeyPair = KeyPair.generate();
+  private final KeyPair otherKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final List<Address> validatorList = Lists.newArrayList();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
@@ -129,7 +129,6 @@ public class CliqueBlockCreatorTest {
                 TestClock.fixed(),
                 metricsSystem,
                 blockchain::getChainHeadHeader,
-                Optional.empty(),
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
@@ -165,7 +164,6 @@ public class CliqueBlockCreatorTest {
                 TestClock.fixed(),
                 metricsSystem,
                 blockchain::getChainHeadHeader,
-                Optional.empty(),
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
@@ -200,7 +198,6 @@ public class CliqueBlockCreatorTest {
                 TestClock.fixed(),
                 metricsSystem,
                 blockchain::getChainHeadHeader,
-                Optional.empty(),
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
@@ -238,7 +235,6 @@ public class CliqueBlockCreatorTest {
                 TestClock.fixed(),
                 metricsSystem,
                 blockchain::getChainHeadHeader,
-                Optional.empty(),
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,

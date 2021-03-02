@@ -24,10 +24,13 @@ import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
 import java.util.Collection;
 import java.util.Optional;
 
+// This class uses a public WorldUpdater and a private WorldUpdater to provide a
+// MutableWorldStateUpdater that can read and write from the private world state and can read from
+// the public world state, but cannot write to it.
 public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
-  private final WorldUpdater publicWorldUpdater;
-  private final WorldUpdater privateWorldUpdater;
+  protected final WorldUpdater publicWorldUpdater;
+  protected final WorldUpdater privateWorldUpdater;
 
   public DefaultMutablePrivateWorldStateUpdater(
       final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {

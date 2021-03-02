@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
@@ -98,7 +98,7 @@ public class RoundState {
   private void updateState() {
     // NOTE: The quorum for Prepare messages is 1 less than the quorum size as the proposer
     // does not supply a prepare message
-    final long prepareQuorum = IbftHelpers.prepareMessageCountForQuorum(quorum);
+    final long prepareQuorum = BftHelpers.prepareMessageCountForQuorum(quorum);
     prepared = (prepareMessages.size() >= prepareQuorum) && proposalMessage.isPresent();
     committed = (commitMessages.size() >= quorum) && proposalMessage.isPresent();
     LOG.trace(
@@ -123,7 +123,7 @@ public class RoundState {
     return committed;
   }
 
-  public Collection<Signature> getCommitSeals() {
+  public Collection<SECPSignature> getCommitSeals() {
     return commitMessages.stream()
         .map(cp -> cp.getSignedPayload().getPayload().getCommitSeal())
         .collect(Collectors.toList());

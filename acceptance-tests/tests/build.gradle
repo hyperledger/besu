@@ -24,6 +24,7 @@ dependencies {
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':ethereum:permissioning')
   testImplementation project(':ethereum:rlp')
+  testImplementation project(':metrics:core')
   testImplementation project(':plugin-api')
   testImplementation project(':privacy-contracts')
   testImplementation project(':testutil')
@@ -31,6 +32,19 @@ dependencies {
 
   testImplementation 'com.github.tomakehurst:wiremock-jre8-standalone'
   testImplementation 'commons-io:commons-io'
+  testImplementation 'io.grpc:grpc-core'
+  testImplementation 'io.grpc:grpc-netty'
+  testImplementation 'io.grpc:grpc-stub'
+  testImplementation 'io.netty:netty-all'
+  testImplementation 'io.opentelemetry:opentelemetry-api'
+  testImplementation 'io.opentelemetry:opentelemetry-proto'
+  testImplementation 'io.opentelemetry:opentelemetry-sdk'
+  testImplementation 'io.opentelemetry:opentelemetry-sdk-trace'
+  testImplementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+  testImplementation 'io.opentracing.contrib:opentracing-okhttp3'
+  testImplementation 'io.opentracing:opentracing-api'
+  testImplementation 'io.opentracing:opentracing-util'
+  testImplementation 'io.jaegertracing:jaeger-client'
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.commons:commons-compress'

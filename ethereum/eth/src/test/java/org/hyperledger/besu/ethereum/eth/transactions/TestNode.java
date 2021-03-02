@@ -23,13 +23,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
@@ -86,7 +87,7 @@ public class TestNode implements Closeable {
   public TestNode(
       final Vertx vertx,
       final Integer port,
-      final SECP256K1.KeyPair kp,
+      final KeyPair kp,
       final DiscoveryConfiguration discoveryCfg) {
     checkNotNull(vertx);
     checkNotNull(discoveryCfg);
@@ -166,6 +167,8 @@ public class TestNode implements Closeable {
                         .config(networkingConfiguration)
                         .metricsSystem(new NoOpMetricsSystem())
                         .supportedCapabilities(capabilities)
+                        .storageProvider(new InMemoryStorageProvider())
+                        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
                         .build())
             .metricsSystem(new NoOpMetricsSystem())
             .build();

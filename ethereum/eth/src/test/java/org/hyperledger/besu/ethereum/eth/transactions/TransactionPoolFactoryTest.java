@@ -22,7 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -166,7 +166,7 @@ public class TransactionPoolFactoryTest {
         .thenReturn(ValidationResult.valid());
     when(transactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(worldStateArchive.get(any())).thenReturn(Optional.of(worldState));
+    when(worldStateArchive.get(any(), any())).thenReturn(Optional.of(worldState));
 
     final TransactionPool pool =
         TransactionPoolFactory.createTransactionPool(
@@ -216,7 +216,7 @@ public class TransactionPoolFactoryTest {
             .nonce(1)
             .gasLimit(0)
             .gasPrice(Wei.of(1))
-            .createTransaction(KeyPair.generate());
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
     pool.addLocalTransaction(transaction);
   }
 }

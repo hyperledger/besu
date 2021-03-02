@@ -30,6 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 class LeafNode<V> implements Node<V> {
+  private final Optional<Bytes> location;
   private final Bytes path;
   private final V value;
   private final NodeFactory<V> nodeFactory;
@@ -39,10 +40,24 @@ class LeafNode<V> implements Node<V> {
   private boolean dirty = false;
 
   LeafNode(
+      final Bytes location,
       final Bytes path,
       final V value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {
+    this.location = Optional.ofNullable(location);
+    this.path = path;
+    this.value = value;
+    this.nodeFactory = nodeFactory;
+    this.valueSerializer = valueSerializer;
+  }
+
+  LeafNode(
+      final Bytes path,
+      final V value,
+      final NodeFactory<V> nodeFactory,
+      final Function<V, Bytes> valueSerializer) {
+    this.location = Optional.empty();
     this.path = path;
     this.value = value;
     this.nodeFactory = nodeFactory;
@@ -57,6 +72,16 @@ class LeafNode<V> implements Node<V> {
   @Override
   public void accept(final NodeVisitor<V> visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
+    visitor.visit(location, this);
+  }
+
+  @Override
+  public Optional<Bytes> getLocation() {
+    return location;
   }
 
   @Override

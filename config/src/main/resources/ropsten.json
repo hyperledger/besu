@@ -1,8 +1,6 @@
 {
   "config": {
     "chainId": 3,
-    "homesteadBlock": 0,
-    "daoForkBlock": 0,
     "eip150Block": 0,
     "eip158Block": 10,
     "byzantiumBlock": 1700000,
@@ -10,6 +8,7 @@
     "petersburgBlock": 4939394,
     "istanbulBlock": 6485846,
     "muirGlacierBlock": 7117117,
+    "berlinBlock": 9812189,
     "ethash": {
     }
   },

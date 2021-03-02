@@ -102,11 +102,13 @@ public final class GenesisState {
    * @param target WorldView to write genesis state to
    */
   public void writeStateTo(final MutableWorldState target) {
-    writeAccountsTo(target, genesisAccounts);
+    writeAccountsTo(target, genesisAccounts, block.getHeader());
   }
 
   private static void writeAccountsTo(
-      final MutableWorldState target, final List<GenesisAccount> genesisAccounts) {
+      final MutableWorldState target,
+      final List<GenesisAccount> genesisAccounts,
+      final BlockHeader rootHeader) {
     final WorldUpdater updater = target.updater();
     genesisAccounts.forEach(
         genesisAccount -> {
@@ -118,7 +120,7 @@ public final class GenesisState {
           genesisAccount.storage.forEach(account::setStorageValue);
         });
     updater.commit();
-    target.persist();
+    target.persist(rootHeader);
   }
 
   private static Hash calculateGenesisStateHash(final List<GenesisAccount> genesisAccounts) {
@@ -128,7 +130,7 @@ public final class GenesisState {
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
     final MutableWorldState worldState =
         new DefaultMutableWorldState(stateStorage, preimageStorage);
-    writeAccountsTo(worldState, genesisAccounts);
+    writeAccountsTo(worldState, genesisAccounts, null);
     return worldState.rootHash();
   }
 

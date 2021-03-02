@@ -24,11 +24,13 @@ import org.apache.tuweni.bytes.Bytes32;
 
 class StoredNode<V> implements Node<V> {
   private final StoredNodeFactory<V> nodeFactory;
+  private final Bytes location;
   private final Bytes32 hash;
   private Node<V> loaded;
 
-  StoredNode(final StoredNodeFactory<V> nodeFactory, final Bytes32 hash) {
+  StoredNode(final StoredNodeFactory<V> nodeFactory, final Bytes location, final Bytes32 hash) {
     this.nodeFactory = nodeFactory;
+    this.location = location;
     this.hash = hash;
   }
 
@@ -58,8 +60,19 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
+  public void accept(final Bytes location, final LocationNodeVisitor<V> visitor) {
+    final Node<V> node = load();
+    node.accept(location, visitor);
+  }
+
+  @Override
   public Bytes getPath() {
     return load().getPath();
+  }
+
+  @Override
+  public Optional<Bytes> getLocation() {
+    return Optional.ofNullable(location);
   }
 
   @Override
@@ -103,9 +116,14 @@ class StoredNode<V> implements Node<V> {
     if (loaded == null) {
       loaded =
           nodeFactory
-              .retrieve(hash)
+              .retrieve(location, hash)
               .orElseThrow(
-                  () -> new MerkleTrieException("Unable to load trie node value for hash " + hash));
+                  () ->
+                      new MerkleTrieException(
+                          "Unable to load trie node value for hash "
+                              + hash
+                              + " location "
+                              + location));
     }
 
     return loaded;

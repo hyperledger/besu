@@ -89,6 +89,7 @@ import org.hyperledger.besu.ethereum.permissioning.node.InsufficientPeersPermiss
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.PeerPermissionsAdapter;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -118,7 +119,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -167,6 +170,8 @@ public class RunnerBuilder {
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
   private boolean randomPeerPriority;
+  private StorageProvider storageProvider;
+  private Supplier<List<Bytes>> forkIdSupplier;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -333,6 +338,16 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder storageProvider(final StorageProvider storageProvider) {
+    this.storageProvider = storageProvider;
+    return this;
+  }
+
+  public RunnerBuilder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
+    this.forkIdSupplier = forkIdSupplier;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
@@ -406,9 +421,9 @@ public class RunnerBuilder {
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
-    final NetworkBuilder inactiveNetwork = (caps) -> new NoopP2PNetwork();
+    final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
-        (caps) ->
+        caps ->
             DefaultP2PNetwork.builder()
                 .vertx(vertx)
                 .nodeKey(nodeKey)
@@ -418,6 +433,8 @@ public class RunnerBuilder {
                 .supportedCapabilities(caps)
                 .natService(natService)
                 .randomPeerPriority(randomPeerPriority)
+                .storageProvider(storageProvider)
+                .forkIdSupplier(forkIdSupplier)
                 .build();
 
     final NetworkRunner networkRunner =
@@ -473,7 +490,7 @@ public class RunnerBuilder {
       miningCoordinator.addEthHashObserver(stratumServer.get());
     }
 
-    staticNodes.stream()
+    sanitizePeers(network, staticNodes)
         .map(DefaultPeer::fromEnodeURL)
         .forEach(peerNetwork::addMaintainConnectionPeer);
 
@@ -647,6 +664,16 @@ public class RunnerBuilder {
         pidPath,
         autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
         context.getBlockchain());
+  }
+
+  private Stream<EnodeURL> sanitizePeers(
+      final P2PNetwork network, final Collection<EnodeURL> enodeURLS) {
+    if (network.getLocalEnode().isEmpty()) {
+      return enodeURLS.stream();
+    }
+    final EnodeURL localEnodeURL = network.getLocalEnode().get();
+    return enodeURLS.stream()
+        .filter(enodeURL -> !enodeURL.getNodeId().equals(localEnodeURL.getNodeId()));
   }
 
   private Optional<NodePermissioningController> buildNodePermissioningController(

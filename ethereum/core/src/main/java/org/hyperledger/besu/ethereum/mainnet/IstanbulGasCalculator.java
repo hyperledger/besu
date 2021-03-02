@@ -16,12 +16,13 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
+public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   private static final Gas TX_DATA_ZERO_COST = Gas.of(4L);
   private static final Gas ISTANBUL_TX_DATA_NON_ZERO_COST = Gas.of(16L);
@@ -40,7 +41,8 @@ public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
   private static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE = Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
 
   @Override
-  public Gas transactionIntrinsicGasCost(final Transaction transaction) {
+  public GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(
+      final Transaction transaction) {
     final Bytes payload = transaction.getPayload();
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {
@@ -59,7 +61,7 @@ public class IstanbulGasCalculator extends ConstantinopleFixGasCalculator {
       cost = cost.plus(txCreateExtraGasCost());
     }
 
-    return cost;
+    return new GasAndAccessedState(cost);
   }
 
   @Override

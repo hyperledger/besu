@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.fees;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -31,14 +32,14 @@ public interface TransactionPriceCalculator {
 
   static TransactionPriceCalculator eip1559() {
     return (transaction, maybeBaseFee) -> {
-      if (transaction.isFrontierTransaction()) {
+      ExperimentalEIPs.eip1559MustBeEnabled();
+      final Wei baseFee = Wei.of(maybeBaseFee.orElseThrow());
+      if (transaction.getType().equals(TransactionType.FRONTIER)) {
         return transaction.getGasPrice();
       }
-      ExperimentalEIPs.eip1559MustBeEnabled();
       final Wei gasPremium =
           Wei.of((BigInteger) transaction.getGasPremium().orElseThrow().getValue());
       final Wei feeCap = Wei.of((BigInteger) transaction.getFeeCap().orElseThrow().getValue());
-      final Wei baseFee = Wei.of(maybeBaseFee.orElseThrow());
       Wei price = gasPremium.add(baseFee);
       if (price.compareTo(feeCap) > 0) {
         price = feeCap;

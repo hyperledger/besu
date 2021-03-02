@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -34,6 +36,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -45,9 +49,17 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class PrivateTransactionSimulator {
 
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
   // Dummy signature for transactions to not fail being processed.
-  private static final SECP256K1.Signature FAKE_SIGNATURE =
-      SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
+  private static final SECPSignature FAKE_SIGNATURE =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createSignature(
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              (byte) 0);
 
   private static final Address DEFAULT_FROM = Address.ZERO;
 
@@ -94,7 +106,7 @@ public class PrivateTransactionSimulator {
     }
 
     final MutableWorldState publicWorldState =
-        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
     if (publicWorldState == null) {
       return Optional.empty();
     }
@@ -105,7 +117,10 @@ public class PrivateTransactionSimulator {
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, header.getHash());
 
     final MutableWorldState disposablePrivateState =
-        privacyParameters.getPrivateWorldStateArchive().getMutable(lastRootHash).get();
+        privacyParameters
+            .getPrivateWorldStateArchive()
+            .getMutable(lastRootHash, header.getHash())
+            .get();
 
     final PrivateTransaction transaction =
         getPrivateTransaction(callParams, header, privacyGroupId, disposablePrivateState);

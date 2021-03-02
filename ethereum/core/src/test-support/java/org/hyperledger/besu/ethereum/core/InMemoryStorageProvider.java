@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumKeyValueStorage;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -26,6 +29,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -60,7 +64,8 @@ public class InMemoryStorageProvider implements StorageProvider {
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryStorageProvider provider = new InMemoryStorageProvider();
     return new DefaultMutableWorldState(
-        provider.createWorldStateStorage(), provider.createWorldStatePreimageStorage());
+        provider.createWorldStateStorage(DataStorageFormat.FOREST),
+        provider.createWorldStatePreimageStorage());
   }
 
   public static PrivateStateStorage createInMemoryPrivateStateStorage() {
@@ -74,13 +79,32 @@ public class InMemoryStorageProvider implements StorageProvider {
   }
 
   @Override
-  public WorldStateStorage createWorldStateStorage() {
-    return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
+    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
+      return new BonsaiWorldStateKeyValueStorage(this);
+    } else {
+      return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    }
   }
 
   @Override
   public WorldStatePreimageStorage createWorldStatePreimageStorage() {
     return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public WorldStateStorage createPrivateWorldStateStorage() {
+    return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public WorldStatePreimageStorage createPrivateWorldStatePreimageStorage() {
+    return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public GoQuorumPrivateStorage createGoQuorumPrivateStorage() {
+    return new GoQuorumKeyValueStorage(new InMemoryKeyValueStorage());
   }
 
   @Override

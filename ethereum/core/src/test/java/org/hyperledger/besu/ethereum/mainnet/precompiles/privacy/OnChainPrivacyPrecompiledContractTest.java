@@ -107,7 +107,7 @@ public class OnChainPrivacyPrecompiledContractTest {
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
-    when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
+    when(worldStateArchive.getMutable(any(), any())).thenReturn(Optional.of(mutableWorldState));
 
     final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))

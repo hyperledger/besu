@@ -21,7 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -54,6 +55,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -84,7 +86,7 @@ public class EthGetFilterChangesIntegrationTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_HASHES = 5;
-  private static final KeyPair keyPair = KeyPair.generate();
+  private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final Transaction transaction = createTransaction(1);
   private FilterManager filterManager;
   private EthGetFilterChanges method;
@@ -102,7 +104,6 @@ public class EthGetFilterChangesIntegrationTest {
             TestClock.fixed(),
             metricsSystem,
             blockchain::getChainHeadHeader,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     final ProtocolContext protocolContext = executionContext.getProtocolContext();
 
@@ -302,6 +303,7 @@ public class EthGetFilterChangesIntegrationTest {
 
   private Transaction createTransaction(final int transactionNumber) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .gasLimit(100)
         .gasPrice(Wei.ZERO)
         .nonce(1)

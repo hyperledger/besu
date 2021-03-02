@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.ethereum.privacy.VersionedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -32,6 +35,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -45,11 +50,17 @@ public class PrivateTransactionDataFixture {
       Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
   public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(2018);
 
-  public static final SECP256K1.KeyPair KEY_PAIR =
-      SECP256K1.KeyPair.create(
-          SECP256K1.PrivateKey.create(
-              new BigInteger(
-                  "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+  public static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  public static final KeyPair KEY_PAIR =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createKeyPair(
+              SIGNATURE_ALGORITHM
+                  .get()
+                  .createPrivateKey(
+                      new BigInteger(
+                          "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
 
   public static final Bytes32 VALID_BASE64_ENCLAVE_KEY =
       Bytes32.wrap(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="));
@@ -86,6 +97,7 @@ public class PrivateTransactionDataFixture {
   private static Transaction privacyMarkerTransaction(
       final Bytes transactionKey, final Address precompiledContractAddress) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .nonce(DEFAULT_NONCE)
         .gasPrice(DEFAULT_GAS_PRICE)
         .gasLimit(DEFAULT_GAS_LIMIT)

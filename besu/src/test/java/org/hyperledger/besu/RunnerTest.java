@@ -82,6 +82,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.junit.After;
@@ -132,7 +133,7 @@ public final class RunnerTest {
 
   @Test
   public void fullSyncFromGenesis() throws Exception {
-    syncFromGenesis(SyncMode.FULL, GenesisConfigFile.mainnet());
+    syncFromGenesis(SyncMode.FULL, getFastSyncGenesis());
   }
 
   @Test
@@ -202,7 +203,9 @@ public final class RunnerTest {
             .p2pListenPort(0)
             .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
-            .staticNodes(emptySet());
+            .staticNodes(emptySet())
+            .storageProvider(new InMemoryStorageProvider())
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
 
     Runner runnerBehind = null;
     final Runner runnerAhead =
@@ -216,6 +219,7 @@ public final class RunnerTest {
             .dataDir(dbAhead)
             .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
+            .forkIdSupplier(() -> controllerAhead.getProtocolManager().getForkIdAsBytesList())
             .build();
     try {
 
@@ -268,6 +272,7 @@ public final class RunnerTest {
               .metricsConfiguration(behindMetricsConfiguration)
               .dataDir(temp.newFolder().toPath())
               .metricsSystem(noOpMetricsSystem)
+              .forkIdSupplier(() -> controllerBehind.getProtocolManager().getForkIdAsBytesList())
               .build();
 
       runnerBehind.start();
@@ -314,13 +319,13 @@ public final class RunnerTest {
                       UInt256.fromHexString(
                               new JsonObject(resp.body().string()).getString("result"))
                           .intValue();
+                  final JsonObject responseJson = new JsonObject(syncingResp.body().string());
                   if (currentBlock < blockCount) {
                     // if not yet at blockCount, we should get a sync result from eth_syncing
+                    assertThat(responseJson.getValue("result")).isInstanceOf(JsonObject.class);
                     final int syncResultCurrentBlock =
                         UInt256.fromHexString(
-                                new JsonObject(syncingResp.body().string())
-                                    .getJsonObject("result")
-                                    .getString("currentBlock"))
+                                responseJson.getJsonObject("result").getString("currentBlock"))
                             .intValue();
                     assertThat(syncResultCurrentBlock).isLessThan(blockCount);
                   }
@@ -328,8 +333,7 @@ public final class RunnerTest {
                   resp.close();
 
                   // when we have synced to blockCount, eth_syncing should return false
-                  final boolean syncResult =
-                      new JsonObject(syncingResp.body().string()).getBoolean("result");
+                  final boolean syncResult = responseJson.getBoolean("result");
                   assertThat(syncResult).isFalse();
                   syncingResp.close();
                 }
@@ -376,7 +380,6 @@ public final class RunnerTest {
         (node) -> {
           // Clear DAO block so that inability to validate DAO block won't interfere with fast sync
           node.remove("daoForkBlock");
-          node.put("daoForkSupport", false);
         });
     return GenesisConfigFile.fromConfig(jsonNode);
   }

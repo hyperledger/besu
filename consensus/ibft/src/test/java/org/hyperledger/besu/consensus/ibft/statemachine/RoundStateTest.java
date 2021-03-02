@@ -20,7 +20,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
@@ -28,7 +28,8 @@ import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -132,7 +133,8 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 block.getHash(),
-                Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1));
+                SignatureAlgorithmFactory.getInstance()
+                    .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
 
     roundState.addCommitMessage(commit);
     assertThat(roundState.isPrepared()).isTrue();
@@ -233,6 +235,7 @@ public class RoundStateTest {
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     final Commit firstCommit =
         validatorMessageFactories
@@ -240,7 +243,7 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 block.getHash(),
-                Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1));
+                signatureAlgorithm.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1));
 
     final Commit secondCommit =
         validatorMessageFactories
@@ -248,7 +251,7 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 block.getHash(),
-                Signature.create(BigInteger.TEN, BigInteger.TEN, (byte) 1));
+                signatureAlgorithm.createSignature(BigInteger.TEN, BigInteger.TEN, (byte) 1));
 
     final Proposal proposal =
         validatorMessageFactories.get(0).createProposal(roundIdentifier, block, Optional.empty());

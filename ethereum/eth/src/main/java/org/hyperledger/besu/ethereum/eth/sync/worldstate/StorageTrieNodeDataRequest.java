@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -22,31 +25,72 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 
 class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  StorageTrieNodeDataRequest(final Hash hash) {
-    super(RequestType.STORAGE_TRIE_NODE, hash);
+  final Optional<Hash> accountHash;
+
+  StorageTrieNodeDataRequest(
+      final Hash hash, final Optional<Hash> accountHash, final Optional<Bytes> location) {
+    super(RequestType.STORAGE_TRIE_NODE, hash, location);
+    this.accountHash = accountHash;
   }
 
   @Override
   protected void doPersist(final Updater updater) {
-    updater.putAccountStorageTrieNode(getHash(), getData());
+    updater.putAccountStorageTrieNode(
+        accountHash.orElse(Hash.EMPTY), getLocation().orElse(Bytes.EMPTY), getHash(), getData());
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(getHash());
+    return worldStateStorage.getAccountStorageTrieNode(
+        getAccountHash().orElse(Hash.EMPTY), getLocation().orElse(Hash.EMPTY), getHash());
   }
 
   @Override
-  protected NodeDataRequest createChildNodeDataRequest(final Hash childHash) {
-    return NodeDataRequest.createStorageDataRequest(childHash);
+  protected NodeDataRequest createChildNodeDataRequest(
+      final Hash childHash, final Optional<Bytes> location) {
+    return NodeDataRequest.createStorageDataRequest(childHash, getAccountHash(), location);
   }
 
   @Override
-  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value) {
-    // Nothing to do for terminal storage node
+  protected Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
+      final WorldStateStorage worldStateStorage,
+      final Optional<Bytes> location,
+      final Bytes path,
+      final Bytes value) {
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
+          .putStorageValueBySlotHash(
+              accountHash.get(),
+              getSlotHash(location, path),
+              Bytes32.leftPad(RLP.decodeValue(value)))
+          .commit();
+    }
+
     return Stream.empty();
+  }
+
+  public Optional<Hash> getAccountHash() {
+    return accountHash;
+  }
+
+  @Override
+  protected void writeTo(final RLPOutput out) {
+    out.startList();
+    out.writeByte(getRequestType().getValue());
+    out.writeBytes(getHash());
+    getAccountHash().ifPresent(out::writeBytes);
+    getLocation().ifPresent(out::writeBytes);
+    out.endList();
+  }
+
+  private Hash getSlotHash(final Optional<Bytes> location, final Bytes path) {
+    return Hash.wrap(
+        Bytes32.wrap(
+            CompactEncoding.pathToBytes(Bytes.concatenate(location.orElse(Bytes.EMPTY), path))));
   }
 }

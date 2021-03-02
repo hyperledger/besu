@@ -15,6 +15,7 @@
 package org.hyperledger.besu.config;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -28,15 +29,17 @@ public interface GenesisConfigOptions {
 
   boolean isIbft2();
 
+  boolean isQbft();
+
   boolean isClique();
 
   String getConsensusEngine();
 
-  IbftConfigOptions getIbftLegacyConfigOptions();
+  IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
   CliqueConfigOptions getCliqueConfigOptions();
 
-  IbftConfigOptions getIbft2ConfigOptions();
+  BftConfigOptions getBftConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
 
@@ -52,7 +55,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getConstantinopleBlockNumber();
 
-  OptionalLong getConstantinopleFixBlockNumber();
+  OptionalLong getPetersburgBlockNumber();
 
   OptionalLong getIstanbulBlockNumber();
 
@@ -62,6 +65,8 @@ public interface GenesisConfigOptions {
 
   // TODO EIP-1559 change for the actual fork name when known
   OptionalLong getEIP1559BlockNumber();
+
+  List<Long> getForks();
 
   /**
    * Block number for the Dao Fork, this value is used to tell node to connect with peer that did

@@ -230,7 +230,7 @@ jobs:
       - run:
           name: Publish
           command: |
-            ./gradlew --no-daemon bintrayUpload
+            ./gradlew --no-daemon artifactoryPublish bintrayUpload
 
   publishDocker:
     executor: besu_executor_med

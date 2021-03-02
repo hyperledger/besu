@@ -48,7 +48,7 @@ public class GasUsageValidationRule implements DetachedBlockHeaderValidationRule
       slackCoefficient = eip1559.get().getFeeMarket().getSlackCoefficient();
     }
     if (header.getGasUsed() > (header.getGasLimit() * slackCoefficient)) {
-      LOG.trace(
+      LOG.info(
           "Invalid block header: gas used {} exceeds gas limit {}",
           header.getGasUsed(),
           header.getGasLimit());

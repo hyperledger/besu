@@ -158,7 +158,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
-        privateWorldStateArchive.getMutable(lastRootHash).get();
+        privateWorldStateArchive.getMutable(lastRootHash, null).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
@@ -180,7 +180,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     if (messageFrame.isPersistingPrivateState()) {
 
       privateWorldStateUpdater.commit();
-      disposablePrivateState.persist();
+      disposablePrivateState.persist(null);
 
       storePrivateMetadata(
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);

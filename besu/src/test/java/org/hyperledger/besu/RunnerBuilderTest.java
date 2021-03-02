@@ -19,13 +19,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.consensus.ibft.IbftEventQueue;
-import org.hyperledger.besu.consensus.ibft.network.PeerConnectionTracker;
-import org.hyperledger.besu.consensus.ibft.protocol.IbftProtocolManager;
+import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
+import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
+import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
@@ -71,13 +72,16 @@ public final class RunnerBuilderTest {
     final EthContext ethContext = mock(EthContext.class);
     final ProtocolContext protocolContext = mock(ProtocolContext.class);
     final NodeKey nodeKey = mock(NodeKey.class);
-    final SECP256K1.PublicKey publicKey = mock(SECP256K1.PublicKey.class);
+    final SECPPublicKey publicKey = mock(SECPPublicKey.class);
 
     when(subProtocolConfiguration.getProtocolManagers())
         .thenReturn(
             Collections.singletonList(
-                new IbftProtocolManager(
-                    mock(IbftEventQueue.class), mock(PeerConnectionTracker.class))));
+                new BftProtocolManager(
+                    mock(BftEventQueue.class),
+                    mock(PeerConnectionTracker.class),
+                    IbftSubProtocol.IBFV1,
+                    IbftSubProtocol.get().getName())));
     when(ethContext.getScheduler()).thenReturn(mock(EthScheduler.class));
     when(ethProtocolManager.ethContext()).thenReturn(ethContext);
     when(subProtocolConfiguration.getSubProtocols())
@@ -119,6 +123,8 @@ public final class RunnerBuilderTest {
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(vertx)
             .dataDir(dataDir.getRoot().toPath())
+            .storageProvider(mock(KeyValueStorageProvider.class))
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .build();
     runner.start();
 

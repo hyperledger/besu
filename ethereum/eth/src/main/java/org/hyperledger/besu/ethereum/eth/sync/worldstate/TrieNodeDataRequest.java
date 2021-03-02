@@ -17,35 +17,43 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 
 abstract class TrieNodeDataRequest extends NodeDataRequest {
 
-  TrieNodeDataRequest(final RequestType kind, final Hash hash) {
-    super(kind, hash);
+  protected TrieNodeDataRequest(
+      final RequestType requestType, final Hash hash, final Optional<Bytes> location) {
+    super(requestType, hash, location);
   }
 
   @Override
-  public Stream<NodeDataRequest> getChildRequests() {
+  public Stream<NodeDataRequest> getChildRequests(final WorldStateStorage worldStateStorage) {
     if (getData() == null) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
     }
 
-    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(getData());
+    final List<Node<Bytes>> nodes =
+        TrieNodeDecoder.decodeNodes(getLocation().orElse(Bytes.EMPTY), getData());
     return nodes.stream()
         .flatMap(
             node -> {
               if (nodeIsHashReferencedDescendant(node)) {
-                return Stream.of(createChildNodeDataRequest(Hash.wrap(node.getHash())));
+                return Stream.of(
+                    createChildNodeDataRequest(Hash.wrap(node.getHash()), node.getLocation()));
               } else {
                 return node.getValue()
-                    .map(this::getRequestsFromTrieNodeValue)
+                    .map(
+                        value ->
+                            getRequestsFromTrieNodeValue(
+                                worldStateStorage, node.getLocation(), node.getPath(), value))
                     .orElseGet(Stream::empty);
               }
             });
@@ -55,7 +63,12 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
     return !Objects.equals(node.getHash(), getHash()) && node.isReferencedByHash();
   }
 
-  protected abstract NodeDataRequest createChildNodeDataRequest(final Hash childHash);
+  protected abstract NodeDataRequest createChildNodeDataRequest(
+      final Hash childHash, final Optional<Bytes> location);
 
-  protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(final Bytes value);
+  protected abstract Stream<NodeDataRequest> getRequestsFromTrieNodeValue(
+      final WorldStateStorage worldStateStorage,
+      final Optional<Bytes> location,
+      final Bytes path,
+      final Bytes value);
 }

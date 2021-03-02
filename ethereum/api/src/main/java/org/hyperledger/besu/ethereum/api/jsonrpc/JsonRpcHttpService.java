@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
 
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
@@ -61,11 +60,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.opentelemetry.extension.trace.propagation.B3Propagator;
+import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
+import io.opentelemetry.extension.trace.propagation.TraceMultiPropagator;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -75,12 +85,14 @@ import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.PfxOptions;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -93,10 +105,34 @@ public class JsonRpcHttpService {
 
   private static final Logger LOG = LogManager.getLogger();
 
+  private static final String SPAN_CONTEXT = "span_context";
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
   private static final String EMPTY_RESPONSE = "";
+
+  private static final TextMapPropagator traceFormats =
+      TraceMultiPropagator.create(
+          JaegerPropagator.getInstance(),
+          B3Propagator.getInstance(),
+          W3CBaggagePropagator.getInstance());
+
+  private static final TextMapPropagator.Getter<HttpServerRequest> requestAttributesGetter =
+      new TextMapPropagator.Getter<>() {
+        @Override
+        public Iterable<String> keys(final HttpServerRequest carrier) {
+          return carrier.headers().names();
+        }
+
+        @Nullable
+        @Override
+        public String get(final @Nullable HttpServerRequest carrier, final String key) {
+          if (carrier == null) {
+            return null;
+          }
+          return carrier.headers().get(key);
+        }
+      };
 
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
@@ -104,6 +140,7 @@ public class JsonRpcHttpService {
   private final NatService natService;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
+  private final Tracer tracer;
 
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
@@ -169,6 +206,7 @@ public class JsonRpcHttpService {
     this.authenticationService = authenticationService;
     this.livenessService = livenessService;
     this.readinessService = readinessService;
+    this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -229,6 +267,7 @@ public class JsonRpcHttpService {
   private Router buildRouter() {
     // Handle json rpc requests
     final Router router = Router.router(vertx);
+    router.route().handler(this::createSpan);
 
     // Verify Host header to avoid rebind attack.
     router.route().handler(checkAllowlistHostHeader());
@@ -279,12 +318,37 @@ public class JsonRpcHttpService {
     return router;
   }
 
+  private void createSpan(final RoutingContext routingContext) {
+    final SocketAddress address = routingContext.request().connection().remoteAddress();
+
+    Context parent =
+        traceFormats.extract(Context.current(), routingContext.request(), requestAttributesGetter);
+    final Span serverSpan =
+        tracer
+            .spanBuilder(address.host() + ":" + address.port())
+            .setParent(parent)
+            .setSpanKind(Span.Kind.SERVER)
+            .startSpan();
+    routingContext.put(SPAN_CONTEXT, Context.current().with(serverSpan));
+
+    routingContext.addEndHandler(
+        event -> {
+          if (event.failed()) {
+            serverSpan.recordException(event.cause());
+            serverSpan.setStatus(StatusCode.ERROR);
+          }
+          serverSpan.end();
+        });
+    routingContext.next();
+  }
+
   private HttpServerOptions getHttpServerOptions() {
     final HttpServerOptions httpServerOptions =
         new HttpServerOptions()
             .setHost(config.getHost())
             .setPort(config.getPort())
-            .setHandle100ContinueAutomatically(true);
+            .setHandle100ContinueAutomatically(true)
+            .setCompressionSupported(true);
 
     applyTlsConfig(httpServerOptions);
     return httpServerOptions;
@@ -590,40 +654,55 @@ public class JsonRpcHttpService {
     } catch (final IllegalArgumentException exception) {
       return errorResponse(id, INVALID_REQUEST);
     }
-    // Handle notifications
-    if (requestBody.isNotification()) {
-      // Notifications aren't handled so create empty result for now.
-      return NO_RESPONSE;
-    }
-
-    final Optional<JsonRpcError> unavailableMethod = validateMethodAvailability(requestBody);
-    if (unavailableMethod.isPresent()) {
-      return errorResponse(id, unavailableMethod.get());
-    }
-
-    final JsonRpcMethod method = rpcMethods.get(requestBody.getMethod());
-
-    if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
-      // Generate response
-      try (final OperationTimer.TimingContext ignored =
-          requestTimer.labels(requestBody.getMethod()).startTimer()) {
-        if (user.isPresent()) {
-          return method.response(
-              new JsonRpcRequestContext(requestBody, user.get(), () -> !ctx.response().closed()));
-        }
-        return method.response(
-            new JsonRpcRequestContext(requestBody, () -> !ctx.response().closed()));
-      } catch (final InvalidJsonRpcParameters e) {
-        LOG.debug("Invalid Params", e);
-        return errorResponse(id, JsonRpcError.INVALID_PARAMS);
-      } catch (final MultiTenancyValidationException e) {
-        return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
-      } catch (final RuntimeException e) {
-        LOG.error("Error processing JSON-RPC requestBody", e);
-        return errorResponse(id, JsonRpcError.INTERNAL_ERROR);
+    Span span =
+        tracer
+            .spanBuilder(requestBody.getMethod())
+            .setSpanKind(Span.Kind.INTERNAL)
+            .setParent(ctx.get(SPAN_CONTEXT))
+            .startSpan();
+    try {
+      // Handle notifications
+      if (requestBody.isNotification()) {
+        // Notifications aren't handled so create empty result for now.
+        return NO_RESPONSE;
       }
-    } else {
-      return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
+
+      final Optional<JsonRpcError> unavailableMethod = validateMethodAvailability(requestBody);
+      if (unavailableMethod.isPresent()) {
+        span.setStatus(StatusCode.ERROR, "method unavailable");
+        return errorResponse(id, unavailableMethod.get());
+      }
+
+      final JsonRpcMethod method = rpcMethods.get(requestBody.getMethod());
+
+      if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
+        // Generate response
+        try (final OperationTimer.TimingContext ignored =
+            requestTimer.labels(requestBody.getMethod()).startTimer()) {
+          if (user.isPresent()) {
+            return method.response(
+                new JsonRpcRequestContext(requestBody, user.get(), () -> !ctx.response().closed()));
+          }
+          return method.response(
+              new JsonRpcRequestContext(requestBody, () -> !ctx.response().closed()));
+        } catch (final InvalidJsonRpcParameters e) {
+          LOG.debug("Invalid Params", e);
+          span.setStatus(StatusCode.ERROR, "Invalid Params");
+          return errorResponse(id, JsonRpcError.INVALID_PARAMS);
+        } catch (final MultiTenancyValidationException e) {
+          span.setStatus(StatusCode.ERROR, "Unauthorized");
+          return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
+        } catch (final RuntimeException e) {
+          LOG.error("Error processing JSON-RPC requestBody", e);
+          span.setStatus(StatusCode.ERROR, "Error processing JSON-RPC requestBody");
+          return errorResponse(id, JsonRpcError.INTERNAL_ERROR);
+        }
+      } else {
+        span.setStatus(StatusCode.ERROR, "Unauthorized");
+        return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
+      }
+    } finally {
+      span.end();
     }
   }
 

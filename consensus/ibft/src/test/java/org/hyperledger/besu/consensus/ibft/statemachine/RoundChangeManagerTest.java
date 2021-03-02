@@ -19,9 +19,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
@@ -99,8 +100,8 @@ public class RoundChangeManagerTest {
             new RoundChangePayloadValidator(
                 messageValidatorFactory,
                 validators,
-                IbftHelpers.calculateRequiredValidatorQuorum(
-                    IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
+                BftHelpers.calculateRequiredValidatorQuorum(
+                    BftHelpers.calculateRequiredValidatorQuorum(validators.size())),
                 2),
             proposalConsistencyValidator);
     manager = new RoundChangeManager(2, roundChangeMessageValidator);
@@ -122,8 +123,8 @@ public class RoundChangeManagerTest {
 
     final MessageFactory messageFactory = new MessageFactory(key);
 
-    final ConsensusRoundIdentifier proposalRound = TestHelpers.createFrom(round, 0, -1);
-    final Block block = TestHelpers.createProposalBlock(validators, proposalRound);
+    final ConsensusRoundIdentifier proposalRound = ConsensusRoundHelpers.createFrom(round, 0, -1);
+    final Block block = ProposedBlockHelpers.createProposalBlock(validators, proposalRound);
     // Proposal must come from an earlier round.
     final Proposal proposal = messageFactory.createProposal(proposalRound, block, Optional.empty());
 

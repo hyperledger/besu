@@ -17,10 +17,12 @@ package org.hyperledger.besu.consensus.ibft.payload;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -56,14 +58,19 @@ public class RoundChangeCertificateTest {
   @Test
   public void rlpRoundTripWithPreparedCertificate() {
     final Block block =
-        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
+        ProposedBlockHelpers.createProposalBlock(
+            singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
-    final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    SignedData<ProposalPayload> signedProposal = SignedData.from(proposalPayload, signature);
+    final SECPSignature signature =
+        SignatureAlgorithmFactory.getInstance()
+            .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+    SignedData<ProposalPayload> signedProposal =
+        PayloadDeserializers.from(proposalPayload, signature);
 
     final PreparePayload preparePayload =
         new PreparePayload(ROUND_IDENTIFIER, Hash.fromHexStringLenient("0x8523ba6e7c5f59ae87"));
-    final SignedData<PreparePayload> signedPrepare = SignedData.from(preparePayload, signature);
+    final SignedData<PreparePayload> signedPrepare =
+        PayloadDeserializers.from(preparePayload, signature);
 
     final PreparedCertificate preparedCert =
         new PreparedCertificate(signedProposal, Lists.newArrayList(signedPrepare));

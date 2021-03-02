@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,6 +32,10 @@ import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
+import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -48,6 +51,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -82,7 +86,7 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder frontierDefinition(
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode) {
+      final boolean goQuorumMode) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
@@ -101,7 +105,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, false, Optional.empty(), quorumCompatibilityMode))
+                    gasCalculator, false, Optional.empty(), goQuorumMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -139,12 +143,28 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .blockProcessorBuilder(MainnetBlockProcessor::new)
-        .blockValidatorBuilder(MainnetBlockValidator::new)
+        .blockProcessorBuilder(MainnetProtocolSpecs.blockProcessorBuilder(goQuorumMode))
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .name("Frontier");
+  }
+
+  public static BlockValidatorBuilder blockValidatorBuilder(final boolean goQuorumMode) {
+    if (goQuorumMode) {
+      return GoQuorumBlockValidator::new;
+    } else {
+      return MainnetBlockValidator::new;
+    }
+  }
+
+  public static BlockProcessorBuilder blockProcessorBuilder(final boolean goQuorumMode) {
+    if (goQuorumMode) {
+      return GoQuorumBlockProcessor::new;
+    } else {
+      return MainnetBlockProcessor::new;
+    }
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
@@ -184,7 +204,8 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                gasBudgetCalculator) ->
+                gasBudgetCalculator,
+                goQuorumPrivacyParameters) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
                         transactionProcessor,
@@ -192,7 +213,8 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        gasBudgetCalculator)))
+                        gasBudgetCalculator,
+                        Optional.empty())))
         .name("DaoRecoveryInit");
   }
 
@@ -321,7 +343,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Constantinople");
   }
 
-  public static ProtocolSpecBuilder constantinopleFixDefinition(
+  public static ProtocolSpecBuilder petersburgDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -333,8 +355,8 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode)
-        .gasCalculator(ConstantinopleFixGasCalculator::new)
-        .name("ConstantinopleFix");
+        .gasCalculator(PetersburgGasCalculator::new)
+        .name("Petersburg");
   }
 
   public static ProtocolSpecBuilder istanbulDefinition(
@@ -345,7 +367,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    return constantinopleFixDefinition(
+    return petersburgDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
@@ -390,9 +412,6 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode) {
-    if (!ExperimentalEIPs.berlinEnabled) {
-      throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
-    }
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
@@ -400,6 +419,14 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             quorumCompatibilityMode)
         .gasCalculator(BerlinGasCalculator::new)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    true,
+                    chainId,
+                    Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
+                    quorumCompatibilityMode))
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
@@ -436,8 +463,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionPriceCalculator,
                     true,
                     chainId,
-                    Optional.of(eip1559),
-                    AcceptedTransactionTypes.FEE_MARKET_TRANSITIONAL_TRANSACTIONS,
+                    Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
                     genesisConfigOptions.isQuorum()))
         .transactionProcessorBuilder(
             (gasCalculator,
@@ -470,7 +496,7 @@ public abstract class MainnetProtocolSpecs {
       final WorldState worldState,
       final long gasUsed) {
     return new TransactionReceipt(
-        worldState.rootHash(),
+        worldState.frontierRootHash(),
         gasUsed,
         result.getLogs(),
         Optional.empty()); // No revert reason in frontier

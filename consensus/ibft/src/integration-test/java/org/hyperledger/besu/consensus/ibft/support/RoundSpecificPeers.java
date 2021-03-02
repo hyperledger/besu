@@ -18,20 +18,20 @@ import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
+import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.IbftMessage;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
-import org.hyperledger.besu.consensus.ibft.payload.Payload;
 import org.hyperledger.besu.consensus.ibft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -72,7 +72,7 @@ public class RoundSpecificPeers {
     peers.forEach(ValidatorPeer::clearReceivedMessages);
   }
 
-  public List<Signature> sign(final Hash digest) {
+  public List<SECPSignature> sign(final Hash digest) {
     return peers.stream().map(peer -> peer.getBlockSignature(digest)).collect(Collectors.toList());
   }
 
@@ -151,35 +151,35 @@ public class RoundSpecificPeers {
   }
 
   @SafeVarargs
-  public final void verifyMessagesReceivedProposer(final IbftMessage<? extends Payload>... msgs) {
+  public final void verifyMessagesReceivedProposer(final BftMessage<? extends Payload>... msgs) {
     verifyMessagesReceived(ImmutableList.of(proposer), msgs);
   }
 
   @SafeVarargs
   public final void verifyMessagesReceivedNonPropsingExcluding(
-      final ValidatorPeer exclude, final IbftMessage<? extends Payload>... msgs) {
+      final ValidatorPeer exclude, final BftMessage<? extends Payload>... msgs) {
     final Collection<ValidatorPeer> candidates = Lists.newArrayList(nonProposingPeers);
     candidates.remove(exclude);
     verifyMessagesReceived(candidates, msgs);
   }
 
-  public final void verifyMessagesReceivedNonPropsing(final IbftMessage<?>... msgs) {
+  public final void verifyMessagesReceivedNonPropsing(final BftMessage<?>... msgs) {
     verifyMessagesReceived(nonProposingPeers, msgs);
   }
 
-  public final void verifyMessagesReceived(final IbftMessage<?>... msgs) {
+  public final void verifyMessagesReceived(final BftMessage<?>... msgs) {
     verifyMessagesReceived(peers, msgs);
   }
 
   private void verifyMessagesReceived(
-      final Collection<ValidatorPeer> candidates, final IbftMessage<?>... msgs) {
+      final Collection<ValidatorPeer> candidates, final BftMessage<?>... msgs) {
     candidates.forEach(n -> assertThat(n.getReceivedMessages().size()).isEqualTo(msgs.length));
 
-    List<IbftMessage<? extends Payload>> msgList = Arrays.asList(msgs);
+    List<BftMessage<? extends Payload>> msgList = Arrays.asList(msgs);
 
     for (int i = 0; i < msgList.size(); i++) {
       final int index = i;
-      final IbftMessage<? extends Payload> msg = msgList.get(index);
+      final BftMessage<? extends Payload> msg = msgList.get(index);
       candidates.forEach(
           n -> {
             final List<MessageData> rxMsgs = n.getReceivedMessages();
@@ -190,8 +190,8 @@ public class RoundSpecificPeers {
     candidates.forEach(ValidatorPeer::clearReceivedMessages);
   }
 
-  private void verifyMessage(final MessageData actual, final IbftMessage<?> expectedMessage) {
-    IbftMessage<?> actualSignedPayload = null;
+  private void verifyMessage(final MessageData actual, final BftMessage<?> expectedMessage) {
+    BftMessage<?> actualSignedPayload = null;
 
     switch (expectedMessage.getMessageType()) {
       case IbftV2.PROPOSAL:

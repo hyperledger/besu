@@ -32,6 +32,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
+import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
@@ -39,8 +40,10 @@ import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -115,7 +118,7 @@ public abstract class CommandTestAbstract {
   private final HashMap<String, String> environment = new HashMap<>();
 
   private final List<TestBesuCommand> besuCommands = new ArrayList<>();
-  private SECP256K1.KeyPair keyPair;
+  private KeyPair keyPair;
 
   @Mock protected RunnerBuilder mockRunnerBuilder;
   @Mock protected Runner mockRunner;
@@ -189,6 +192,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.gasLimitCalculator(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.reorgLoggingThreshold(anyLong())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
 
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
@@ -235,11 +239,15 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.pidPath(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.ethstatsUrl(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.ethstatsContact(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.forkIdSupplier(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
+
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     final Bytes32 keyPairPrvKey =
         Bytes32.fromHexString("0xf7a58d5e755d51fa2f6206e91dd574597c73248aaf946ec1964b8c6268d6207b");
-    keyPair = SECP256K1.KeyPair.create(SECP256K1.PrivateKey.create(keyPairPrvKey));
+    keyPair = signatureAlgorithm.createKeyPair(signatureAlgorithm.createPrivateKey(keyPairPrvKey));
 
     lenient().when(nodeKey.getPublicKey()).thenReturn(keyPair.getPublicKey());
 
@@ -328,12 +336,12 @@ public abstract class CommandTestAbstract {
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
     private Vertx vertx;
     private final NodeKey mockNodeKey;
-    private final SECP256K1.KeyPair keyPair;
+    private final KeyPair keyPair;
 
     TestBesuCommand(
         final Logger mockLogger,
         final NodeKey mockNodeKey,
-        final SECP256K1.KeyPair keyPair,
+        final KeyPair keyPair,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -376,7 +384,7 @@ public abstract class CommandTestAbstract {
     }
 
     @Override
-    SECP256K1.KeyPair loadKeyPair() {
+    KeyPair loadKeyPair() {
       // for testing.
       return keyPair;
     }
@@ -403,6 +411,10 @@ public abstract class CommandTestAbstract {
 
     public MetricsCLIOptions getMetricsCLIOptions() {
       return unstableMetricsCLIOptions;
+    }
+
+    public LauncherOptions getLauncherOptions() {
+      return unstableLauncherOptions;
     }
 
     public void close() {

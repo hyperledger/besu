@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -48,7 +48,7 @@ public class PrivacyParameters {
   private URI enclaveUri;
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
-  private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
+  private Optional<KeyPair> signingKeyPair = Optional.empty();
   private Enclave enclave;
   private PrivacyStorageProvider privateStorageProvider;
   private WorldStateArchive privateWorldStateArchive;
@@ -57,6 +57,7 @@ public class PrivacyParameters {
   private boolean onchainPrivacyGroupsEnabled;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
+  private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
 
   public Integer getPrivacyAddress() {
     return onchainPrivacyGroupsEnabled ? Address.PRIVACY - 1 : Address.PRIVACY;
@@ -95,11 +96,11 @@ public class PrivacyParameters {
     this.enclavePublicKeyFile = enclavePublicKeyFile;
   }
 
-  public Optional<SECP256K1.KeyPair> getSigningKeyPair() {
+  public Optional<KeyPair> getSigningKeyPair() {
     return signingKeyPair;
   }
 
-  private void setSigningKeyPair(final SECP256K1.KeyPair signingKeyPair) {
+  private void setSigningKeyPair(final KeyPair signingKeyPair) {
     this.signingKeyPair = Optional.ofNullable(signingKeyPair);
   }
 
@@ -168,6 +169,16 @@ public class PrivacyParameters {
     this.privateWorldStateReader = privateWorldStateReader;
   }
 
+  public Optional<GoQuorumPrivacyParameters> getGoQuorumPrivacyParameters() {
+    return goQuorumPrivacyParameters;
+  }
+
+  private void setGoQuorumPrivacyParameters(
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+    this.goQuorumPrivacyParameters =
+        goQuorumPrivacyParameters != null ? goQuorumPrivacyParameters : Optional.empty();
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{"
@@ -197,6 +208,7 @@ public class PrivacyParameters {
     private Path privacyKeyStorePasswordFile;
     private Path privacyTlsKnownEnclaveFile;
     private boolean onchainPrivacyGroupsEnabled;
+    private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -248,6 +260,12 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setGoQuorumPrivacyParameters(
+        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+      this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
+      return this;
+    }
+
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -292,6 +310,7 @@ public class PrivacyParameters {
       config.setEnclaveUri(enclaveUrl);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
+      config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
       return config;
     }
 

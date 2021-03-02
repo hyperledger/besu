@@ -18,8 +18,10 @@ import org.hyperledger.besu.enclave.RequestTransmitter.ResponseBodyHandler;
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.enclave.types.GoQuorumSendRequest;
 import org.hyperledger.besu.enclave.types.GoQuorumSendSignedRequest;
+import org.hyperledger.besu.enclave.types.GoQuorumStoreRawRequest;
 import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.hyperledger.besu.enclave.types.StoreRawResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -67,6 +69,15 @@ public class GoQuorumEnclave {
         request,
         "/sendsignedtx",
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class, 201));
+  }
+
+  public StoreRawResponse storeRaw(final String payload) {
+    final GoQuorumStoreRawRequest request = new GoQuorumStoreRawRequest(payload);
+    return post(
+        JSON,
+        request,
+        "/storeraw",
+        (statusCode, body) -> handleJsonResponse(statusCode, body, StoreRawResponse.class, 200));
   }
 
   public GoQuorumReceiveResponse receive(final String payloadKey) {

@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
-import org.hyperledger.besu.consensus.ibft.blockcreation.ProposerSelector;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -43,7 +43,7 @@ public class MessageValidatorFactory {
 
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
     return protocolContext
-        .getConsensusState(IbftContext.class)
+        .getConsensusState(BftContext.class)
         .getVoteTallyCache()
         .getVoteTallyAfterBlock(parentHeader)
         .getValidators();
@@ -83,8 +83,8 @@ public class MessageValidatorFactory {
         new RoundChangePayloadValidator(
             (roundIdentifier) -> createSignedDataValidator(roundIdentifier, parentHeader),
             validators,
-            IbftHelpers.prepareMessageCountForQuorum(
-                IbftHelpers.calculateRequiredValidatorQuorum(validators.size())),
+            BftHelpers.prepareMessageCountForQuorum(
+                BftHelpers.calculateRequiredValidatorQuorum(validators.size())),
             chainHeight),
         new ProposalBlockConsistencyValidator());
   }

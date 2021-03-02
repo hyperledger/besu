@@ -18,10 +18,13 @@ import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -33,6 +36,8 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.assertj.core.util.Lists;
 import org.junit.Test;
 
@@ -40,8 +45,10 @@ public class RoundChangePayloadTest {
 
   private static final ConsensusRoundIdentifier ROUND_IDENTIFIER =
       new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
-  private static final Signature SIGNATURE =
-      Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SECPSignature SIGNATURE =
+      SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
 
   @Test
   public void roundTripRlpWithNoPreparedCertificate() {
@@ -82,7 +89,8 @@ public class RoundChangePayloadTest {
 
     final PreparePayload preparePayload =
         new PreparePayload(ROUND_IDENTIFIER, Hash.fromHexStringLenient("0x8523ba6e7c5f59ae87"));
-    final SignedData<PreparePayload> signedPrepare = SignedData.from(preparePayload, SIGNATURE);
+    final SignedData<PreparePayload> signedPrepare =
+        PayloadDeserializers.from(preparePayload, SIGNATURE);
     final PreparedCertificate preparedCert =
         new PreparedCertificate(signedProposal, Lists.newArrayList(signedPrepare));
 
@@ -101,9 +109,11 @@ public class RoundChangePayloadTest {
 
   private SignedData<ProposalPayload> signedProposal() {
     final Block block =
-        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
+        ProposedBlockHelpers.createProposalBlock(
+            singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
-    final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    return SignedData.from(proposalPayload, signature);
+    final SECPSignature signature =
+        SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+    return PayloadDeserializers.from(proposalPayload, signature);
   }
 }

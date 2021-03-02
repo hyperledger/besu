@@ -41,6 +41,7 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.logging.log4j:log4j-api'
@@ -48,6 +49,8 @@ dependencies {
   implementation 'org.apache.tuweni:units'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
+
+  implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor 'org.immutables:value'
 

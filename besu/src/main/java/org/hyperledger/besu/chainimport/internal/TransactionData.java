@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.chainimport.internal;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -25,6 +27,8 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -37,7 +41,10 @@ public class TransactionData {
   private final Bytes data;
   private final Wei value;
   private final Optional<Address> to;
-  private final PrivateKey privateKey;
+  private final SECPPrivateKey privateKey;
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @JsonCreator
   public TransactionData(
@@ -52,11 +59,11 @@ public class TransactionData {
     this.data = data.map(Bytes::fromHexString).orElse(Bytes.EMPTY);
     this.value = value.map(Wei::fromHexString).orElse(Wei.ZERO);
     this.to = to.map(Address::fromHexString);
-    this.privateKey = PrivateKey.create(Bytes32.fromHexString(secretKey));
+    this.privateKey = SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes32.fromHexString(secretKey));
   }
 
   public Transaction getSignedTransaction(final NonceProvider nonceProvider) {
-    final KeyPair keyPair = KeyPair.create(privateKey);
+    final KeyPair keyPair = SIGNATURE_ALGORITHM.get().createKeyPair(privateKey);
 
     final Address fromAddress = Address.extract(keyPair.getPublicKey());
     final long nonce = nonceProvider.get(fromAddress);
@@ -67,6 +74,7 @@ public class TransactionData {
         .payload(data)
         .value(value)
         .to(to.orElse(null))
+        .guessType()
         .signAndBuild(keyPair);
   }
 

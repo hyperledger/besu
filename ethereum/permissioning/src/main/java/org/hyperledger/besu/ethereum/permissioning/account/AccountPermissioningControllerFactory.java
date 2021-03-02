@@ -14,18 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.account;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
@@ -60,14 +63,14 @@ public class AccountPermissioningControllerFactory {
     if (accountLocalConfigPermissioningController.isPresent()
         || transactionSmartContractPermissioningController.isPresent()) {
 
-      final Optional<QuorumQip714Gate> quorumQip714Gate =
+      final Optional<GoQuorumQip714Gate> goQuorumQip714Gate =
           permissioningConfiguration
               .getQuorumPermissioningConfig()
               .flatMap(
                   config -> {
                     if (config.isEnabled()) {
                       return Optional.of(
-                          QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
+                          GoQuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
                     } else {
                       return Optional.empty();
                     }
@@ -77,7 +80,7 @@ public class AccountPermissioningControllerFactory {
           new AccountPermissioningController(
               accountLocalConfigPermissioningController,
               transactionSmartContractPermissioningController,
-              quorumQip714Gate);
+              goQuorumQip714Gate);
 
       return Optional.of(controller);
     } else {
@@ -138,12 +141,17 @@ public class AccountPermissioningControllerFactory {
     try {
       LOG.debug("Validating onchain account permissioning smart contract configuration");
 
-      final SECP256K1.Signature FAKE_SIGNATURE =
-          SECP256K1.Signature.create(
-              SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
+      final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+      final SECPSignature FAKE_SIGNATURE =
+          signatureAlgorithm.createSignature(
+              signatureAlgorithm.getHalfCurveOrder(),
+              signatureAlgorithm.getHalfCurveOrder(),
+              (byte) 0);
 
       final Transaction transaction =
           Transaction.builder()
+              .type(TransactionType.FRONTIER)
               .sender(Address.ZERO)
               .gasLimit(0)
               .gasPrice(Wei.ZERO)

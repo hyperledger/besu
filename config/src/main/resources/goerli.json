@@ -1,16 +1,9 @@
 {
   "config":{
     "chainId":5,
-    "homesteadBlock":0,
-    "eip150Block":0,
-    "eip150Hash": "0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a",
-    "eip155Block":0,
-    "eip158Block":0,
-    "eip160Block":0,
-    "byzantiumBlock":0,
-    "constantinopleBlock":0,
     "petersburgBlock":0,
     "istanbulBlock":1561651,
+    "berlinBlock":4460644,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000

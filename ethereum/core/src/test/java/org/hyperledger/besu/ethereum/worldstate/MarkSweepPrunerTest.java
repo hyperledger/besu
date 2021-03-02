@@ -87,8 +87,9 @@ public class MarkSweepPrunerTest {
     pruner.sweepBefore(markBlock.getNumber());
 
     // Assert that the block we marked is still present and all accounts are accessible
-    assertThat(worldStateArchive.get(markBlock.getStateRoot())).isPresent();
-    final WorldState markedState = worldStateArchive.get(markBlock.getStateRoot()).get();
+    assertThat(worldStateArchive.get(markBlock.getStateRoot(), markBlock.getHash())).isPresent();
+    final WorldState markedState =
+        worldStateArchive.get(markBlock.getStateRoot(), markBlock.getHash()).get();
     // Traverse accounts and make sure all are accessible
     final int expectedAccounts = numAccounts * markBlockNumber;
     final long accounts = markedState.streamAccounts(Bytes32.ZERO, expectedAccounts * 2).count();
@@ -104,7 +105,7 @@ public class MarkSweepPrunerTest {
       if (curHeader.getNumber() == markBlock.getNumber()) {
         continue;
       }
-      assertThat(worldStateArchive.get(curHeader.getStateRoot())).isEmpty();
+      assertThat(worldStateArchive.get(curHeader.getStateRoot(), curHeader.getHash())).isEmpty();
     }
 
     // Check that storage contains only the values we expect
@@ -189,8 +190,9 @@ public class MarkSweepPrunerTest {
   private void generateBlockchainData(final int numBlocks, final int numAccounts) {
     Block parentBlock = blockchain.getChainHeadBlock();
     for (int i = 0; i < numBlocks; i++) {
+      final BlockHeader parentHeader = parentBlock.getHeader();
       final MutableWorldState worldState =
-          worldStateArchive.getMutable(parentBlock.getHeader().getStateRoot()).get();
+          worldStateArchive.getMutable(parentHeader.getStateRoot(), parentHeader.getHash()).get();
       gen.createRandomContractAccountsWithNonEmptyStorage(worldState, numAccounts);
       final Hash stateRoot = worldState.rootHash();
 
@@ -198,7 +200,7 @@ public class MarkSweepPrunerTest {
           gen.block(
               BlockOptions.create()
                   .setStateRoot(stateRoot)
-                  .setBlockNumber(parentBlock.getHeader().getNumber() + 1L)
+                  .setBlockNumber(parentHeader.getNumber() + 1L)
                   .setParentHash(parentBlock.getHash()));
       final List<TransactionReceipt> receipts = gen.receipts(block);
       blockchain.appendBlock(block, receipts);
@@ -261,7 +263,7 @@ public class MarkSweepPrunerTest {
 
   private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode,
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
         rootHash,
         Function.identity(),
         Function.identity());

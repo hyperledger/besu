@@ -18,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -53,7 +54,9 @@ public class EthGetTransactionReceiptTest {
   private final TransactionReceipt rootReceipt =
       new TransactionReceipt(stateRoot, 12, Collections.emptyList(), Optional.empty());
 
-  private final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1);
+  private final SECPSignature signature =
+      SignatureAlgorithmFactory.getInstance()
+          .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1);
   private final Address sender =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
   private final Transaction transaction =
@@ -65,6 +68,7 @@ public class EthGetTransactionReceiptTest {
           .value(Wei.ZERO)
           .signature(signature)
           .sender(sender)
+          .guessType()
           .build();
 
   private final Hash hash =

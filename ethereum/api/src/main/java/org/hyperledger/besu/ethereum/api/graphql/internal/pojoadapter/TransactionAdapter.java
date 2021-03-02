@@ -20,10 +20,10 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -144,7 +144,7 @@ public class TransactionAdapter extends AdapterBase {
   public Optional<AccountAdapter> getCreatedContract(final DataFetchingEnvironment environment) {
     final boolean contractCreated = transactionWithMetadata.getTransaction().isContractCreation();
     if (contractCreated) {
-      final Optional<Address> addr = transactionWithMetadata.getTransaction().getTo();
+      final Optional<Address> addr = transactionWithMetadata.getTransaction().contractAddress();
 
       if (addr.isPresent()) {
         final BlockchainQueries query = getBlockchainQueries(environment);
@@ -155,7 +155,7 @@ public class TransactionAdapter extends AdapterBase {
         }
         final long blockNumber = bn.orElseGet(txBlockNumber::get);
 
-        final Optional<MutableWorldState> ws = query.getWorldState(blockNumber);
+        final Optional<WorldState> ws = query.getWorldState(blockNumber);
         if (ws.isPresent()) {
           return Optional.of(new AccountAdapter(ws.get().get(addr.get())));
         }

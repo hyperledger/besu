@@ -129,7 +129,11 @@ public class GraphQLHttpService {
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(
-            new HttpServerOptions().setHost(config.getHost()).setPort(config.getPort()));
+            new HttpServerOptions()
+                .setHost(config.getHost())
+                .setPort(config.getPort())
+                .setHandle100ContinueAutomatically(true)
+                .setCompressionSupported(true));
 
     // Handle graphql http requests
     final Router router = Router.router(vertx);
