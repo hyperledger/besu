@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.Optional;
 
-import com.google.common.io.BaseEncoding;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -74,8 +73,7 @@ public class EthSubmitWorkTest {
   public void shouldFailIfMissingArguments() {
     final JsonRpcRequestContext request = requestWithParams();
     final PoWSolverInputs values =
-        new PoWSolverInputs(
-            UInt256.fromHexString(hexValue), BaseEncoding.base16().lowerCase().decode(hexValue), 0);
+        new PoWSolverInputs(UInt256.fromHexString(hexValue), Bytes.fromHexString(hexValue), 0);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
     assertThatThrownBy(
             () -> method.response(request), "Missing required json rpc parameter at index 0")
@@ -88,10 +86,11 @@ public class EthSubmitWorkTest {
         new PoWSolverInputs(
             UInt256.fromHexString(
                 "0x0083126e978d4fdf3b645a1cac083126e978d4fdf3b645a1cac083126e978d4f"),
-            new byte[] {
-              15, -114, -104, 87, -95, -36, -17, 120, 52, 1, 124, 61, -6, -66, 78, -27, -57, 118,
-              -18, -64, -103, -91, -74, -121, 42, 91, -14, -98, 101, 86, -43, -51
-            },
+            Bytes.wrap(
+                new byte[] {
+                  15, -114, -104, 87, -95, -36, -17, 120, 52, 1, 124, 61, -6, -66, 78, -27, -57,
+                  118, -18, -64, -103, -91, -74, -121, 42, 91, -14, -98, 101, 86, -43, -51
+                }),
             468);
 
     final PoWSolution expectedFirstOutput =

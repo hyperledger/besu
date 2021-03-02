@@ -128,8 +128,7 @@ public class StratumConnectionTest {
     assertThat(called.get()).isFalse();
     // now send work without waiting.
     protocol.setCurrentWorkTask(
-        new PoWSolverInputs(
-            UInt256.valueOf(3), Bytes.fromHexString("deadbeef").toArrayUnsafe(), 42));
+        new PoWSolverInputs(UInt256.valueOf(3), Bytes.fromHexString("deadbeef"), 42));
 
     assertThat(message.get())
         .isEqualTo(

@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -92,7 +91,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private void sendNewWork(final StratumConnection conn, final Object id) {
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);
     final String[] result = {
-      "0x" + BaseEncoding.base16().lowerCase().encode(currentInput.getPrePowHash()),
+      currentInput.getPrePowHash().toHexString(),
       "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
       currentInput.getTarget().toHexString()
     };
@@ -133,8 +132,8 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
             Bytes.fromHexString(req.getRequiredParameter(0, String.class)).getLong(0),
             req.getRequiredParameter(2, Hash.class),
             null,
-            Bytes.fromHexString(req.getRequiredParameter(1, String.class)).toArrayUnsafe());
-    if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
+            Bytes.fromHexString(req.getRequiredParameter(1, String.class)));
+    if (currentInput.getPrePowHash().equals(solution.getPowHash())) {
       result = submitCallback.apply(solution);
     }
 

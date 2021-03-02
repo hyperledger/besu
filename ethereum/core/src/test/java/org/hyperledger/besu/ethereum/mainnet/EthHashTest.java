@@ -63,7 +63,7 @@ public final class EthHashTest {
         EthHash.hashimotoLight(
             32 * 1024,
             cache,
-            Hex.decode("c9149cc0386e689d789a1c2f3d5d169a61a6218ed30e74414dc736e442ef3d1f"),
+            Bytes.fromHexString("c9149cc0386e689d789a1c2f3d5d169a61a6218ed30e74414dc736e442ef3d1f"),
             0L);
 
     assertThat(solution.getSolution().toHexString())

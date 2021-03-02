@@ -77,7 +77,7 @@ public class ProtocolSpec {
 
   private final BadBlockManager badBlockManager;
 
-  private final PoWHasher powHasher;
+  private final Optional<PoWHasher> powHasher;
 
   /**
    * Creates a new protocol specification instance.
@@ -131,7 +131,7 @@ public class ProtocolSpec {
       final Optional<EIP1559> eip1559,
       final TransactionGasBudgetCalculator gasBudgetCalculator,
       final BadBlockManager badBlockManager,
-      final PoWHasher powHasher) {
+      final Optional<PoWHasher> powHasher) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -361,7 +361,7 @@ public class ProtocolSpec {
    *
    * @return the Proof-of-Work hasher
    */
-  public PoWHasher getPoWHasher() {
+  public Optional<PoWHasher> getPoWHasher() {
     return powHasher;
   }
 }

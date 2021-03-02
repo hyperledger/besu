@@ -71,8 +71,7 @@ public class KeccakHasherTest {
             42L,
             new EpochCalculator.DefaultEpochCalculator(),
             Bytes.fromHexString(
-                    "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
-                .toArrayUnsafe());
+                "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"));
 
     assertThat(solution.getMixHash())
         .isEqualTo(

@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import java.util.Optional;
 
 import com.google.common.io.BaseEncoding;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,8 +65,7 @@ public class EthGetWorkTest {
   public void shouldReturnCorrectResultOnGenesisDAG() {
     final JsonRpcRequestContext request = requestWithParams();
     final PoWSolverInputs values =
-        new PoWSolverInputs(
-            UInt256.fromHexString(hexValue), BaseEncoding.base16().lowerCase().decode(hexValue), 0);
+        new PoWSolverInputs(UInt256.fromHexString(hexValue), Bytes.fromHexString(hexValue), 0);
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -84,10 +84,7 @@ public class EthGetWorkTest {
   public void shouldReturnCorrectResultOnHighBlockSeed() {
     final JsonRpcRequestContext request = requestWithParams();
     final PoWSolverInputs values =
-        new PoWSolverInputs(
-            UInt256.fromHexString(hexValue),
-            BaseEncoding.base16().lowerCase().decode(hexValue),
-            30000);
+        new PoWSolverInputs(UInt256.fromHexString(hexValue), Bytes.fromHexString(hexValue), 30000);
 
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -114,10 +111,7 @@ public class EthGetWorkTest {
     method = new EthGetWork(miningCoordinator);
     final JsonRpcRequestContext request = requestWithParams();
     final PoWSolverInputs values =
-        new PoWSolverInputs(
-            UInt256.fromHexString(hexValue),
-            BaseEncoding.base16().lowerCase().decode(hexValue),
-            60000);
+        new PoWSolverInputs(UInt256.fromHexString(hexValue), Bytes.fromHexString(hexValue), 60000);
 
     final String[] expectedValue = {
       "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",

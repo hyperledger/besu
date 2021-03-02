@@ -29,6 +29,7 @@ import java.util.function.BiConsumer;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 
@@ -75,18 +76,18 @@ public final class EthHash {
    *     bytes 32 to 63
    */
   public static PoWSolution hashimotoLight(
-      final long size, final int[] cache, final byte[] header, final long nonce) {
+      final long size, final int[] cache, final Bytes header, final long nonce) {
     return hashimoto(header, size, nonce, (target, ind) -> calcDatasetItem(target, cache, ind));
   }
 
   public static PoWSolution hashimoto(
-      final byte[] header,
+      final Bytes header,
       final long size,
       final long nonce,
       final BiConsumer<byte[], Integer> datasetLookup) {
     final int n = (int) Long.divideUnsigned(size, MIX_BYTES);
     final MessageDigest keccak512 = KECCAK_512.get();
-    keccak512.update(header);
+    keccak512.update(header.toArrayUnsafe());
     keccak512.update(Longs.toByteArray(Long.reverseBytes(nonce)));
     final byte[] seed = keccak512.digest();
     final ByteBuffer mixBuffer = ByteBuffer.allocate(MIX_BYTES).order(ByteOrder.LITTLE_ENDIAN);
@@ -171,7 +172,7 @@ public final class EthHash {
    * @param header Block Header
    * @return Truncated BlockHeader hash
    */
-  public static byte[] hashHeader(final SealableBlockHeader header) {
+  public static Bytes32 hashHeader(final SealableBlockHeader header) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeBytes(header.getParentHash());
@@ -192,7 +193,8 @@ public final class EthHash {
       out.writeLongScalar(header.getBaseFee().get());
     }
     out.endList();
-    return DirectAcyclicGraphSeed.KECCAK_256.get().digest(out.encoded().toArray());
+    return Bytes32.wrap(
+        DirectAcyclicGraphSeed.KECCAK_256.get().digest(out.encoded().toArrayUnsafe()));
   }
 
   /**

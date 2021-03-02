@@ -19,7 +19,6 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -161,7 +160,7 @@ public class PoWSolver {
 
     final PoWSolverJob job = jobSnapshot.get();
     final PoWSolverInputs inputs = job.getInputs();
-    if (!Arrays.equals(inputs.getPrePowHash(), solution.getPowHash())) {
+    if (!inputs.getPrePowHash().equals(solution.getPowHash())) {
       LOG.debug("Miner's solution does not match current job");
       return false;
     }

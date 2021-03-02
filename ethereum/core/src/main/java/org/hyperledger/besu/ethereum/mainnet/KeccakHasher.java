@@ -44,10 +44,10 @@ public class KeccakHasher implements PoWHasher {
       final long nonce,
       final long number,
       final EpochCalculator epochCalc,
-      final byte[] prePowHash) {
+      final Bytes prePowHash) {
 
     MessageDigest digest = KECCAK_256.get();
-    digest.update(prePowHash);
+    digest.update(prePowHash.toArrayUnsafe());
     digest.update(Bytes.ofUnsignedLong(nonce).toArrayUnsafe());
     Bytes32 solution = Bytes32.wrap(digest.digest());
     Hash mixHash = Hash.wrap(solution);

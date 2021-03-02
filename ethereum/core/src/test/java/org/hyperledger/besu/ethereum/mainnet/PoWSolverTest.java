@@ -62,7 +62,7 @@ public class PoWSolverTest {
             invocation -> {
               final Object[] args = invocation.getArguments();
               final long nonce = ((long) args[0]);
-              final byte[] prePow = ((byte[]) args[3]);
+              final Bytes prePow = (Bytes) args[3];
               PoWSolution solution =
                   new PoWSolution(
                       nonce,
@@ -83,7 +83,7 @@ public class PoWSolverTest {
             new EpochCalculator.DefaultEpochCalculator());
 
     final Stopwatch operationTimer = Stopwatch.createStarted();
-    final PoWSolverInputs inputs = new PoWSolverInputs(UInt256.ONE, new byte[0], 5);
+    final PoWSolverInputs inputs = new PoWSolverInputs(UInt256.ONE, Bytes.EMPTY, 5);
     solver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(inputs));
     final double runtimeSeconds = operationTimer.elapsed(TimeUnit.NANOSECONDS) / 1e9;
     final long worstCaseHashesPerSecond = (long) (noncesToTry.size() / runtimeSeconds);
@@ -104,10 +104,11 @@ public class PoWSolverTest {
         new PoWSolverInputs(
             UInt256.fromHexString(
                 "0x0083126e978d4fdf3b645a1cac083126e978d4fdf3b645a1cac083126e978d4f"),
-            new byte[] {
-              15, -114, -104, 87, -95, -36, -17, 120, 52, 1, 124, 61, -6, -66, 78, -27, -57, 118,
-              -18, -64, -103, -91, -74, -121, 42, 91, -14, -98, 101, 86, -43, -51
-            },
+            Bytes.wrap(
+                new byte[] {
+                  15, -114, -104, 87, -95, -36, -17, 120, 52, 1, 124, 61, -6, -66, 78, -27, -57,
+                  118, -18, -64, -103, -91, -74, -121, 42, 91, -14, -98, 101, 86, -43, -51
+                }),
             468);
 
     final PoWSolution expectedFirstOutput =
@@ -122,10 +123,11 @@ public class PoWSolverTest {
         new PoWSolverInputs(
             UInt256.fromHexString(
                 "0x0083126e978d4fdf3b645a1cac083126e978d4fdf3b645a1cac083126e978d4f"),
-            new byte[] {
-              -62, 121, -81, -31, 55, -38, -68, 102, -32, 95, -94, -83, -3, -48, -122, -68, 14,
-              -125, -83, 84, -55, -23, -123, -57, -34, 25, -89, 23, 64, -9, -114, -3,
-            },
+            Bytes.wrap(
+                new byte[] {
+                  -62, 121, -81, -31, 55, -38, -68, 102, -32, 95, -94, -83, -3, -48, -122, -68, 14,
+                  -125, -83, 84, -55, -23, -123, -57, -34, 25, -89, 23, 64, -9, -114, -3,
+                }),
             1);
 
     final PoWSolution expectedSecondOutput =

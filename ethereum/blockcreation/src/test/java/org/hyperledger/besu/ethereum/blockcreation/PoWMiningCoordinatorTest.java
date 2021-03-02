@@ -53,7 +53,7 @@ public class PoWMiningCoordinatorTest {
             syncState,
             DEFAULT_REMOTE_SEALERS_LIMIT,
             DEFAULT_REMOTE_SEALERS_TTL);
-    final PoWSolution solution = new PoWSolution(1L, Hash.EMPTY, null, new byte[Bytes32.SIZE]);
+    final PoWSolution solution = new PoWSolution(1L, Hash.EMPTY, null, Bytes32.ZERO);
 
     assertThat(miningCoordinator.isMining()).isFalse();
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(Optional.empty());

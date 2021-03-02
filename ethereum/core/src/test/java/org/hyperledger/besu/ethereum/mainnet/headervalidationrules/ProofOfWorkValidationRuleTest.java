@@ -98,7 +98,7 @@ public class ProofOfWorkValidationRuleTest {
             preHeader.getNonce(),
             preHeader.getNumber(),
             new EpochCalculator.DefaultEpochCalculator(),
-            headerHash.toArray());
+            headerHash);
 
     final BlockHeader header = headerBuilder.mixHash(solution.getMixHash()).buildBlockHeader();
 

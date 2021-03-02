@@ -121,8 +121,8 @@ public class JsonBlockImporter {
       final GenesisConfigOptions genesisConfig) {
     // Some fields can only be configured for ethash
     if (genesisConfig.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
-      // For simplicity only set these for ethash.  Other consensus algorithms use these fields for
-      // special purposes or ignore them
+      // For simplicity only set these for PoW consensus algorithms.
+      // Other consensus algorithms use these fields for special purposes or ignore them.
       miner.setCoinbase(blockData.getCoinbase().orElse(Address.ZERO));
       miner.setExtraData(blockData.getExtraData().orElse(Bytes.EMPTY));
     } else if (blockData.getCoinbase().isPresent() || blockData.getExtraData().isPresent()) {

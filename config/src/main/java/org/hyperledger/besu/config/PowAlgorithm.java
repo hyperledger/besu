@@ -16,8 +16,8 @@ package org.hyperledger.besu.config;
 
 /** An enumeration of supported Proof-of-work algorithms. */
 public enum PowAlgorithm {
-  ETHASH,
   UNSUPPORTED,
+  ETHASH,
   KECCAK256;
 
   public static PowAlgorithm fromString(final String str) {

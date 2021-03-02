@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
@@ -185,8 +184,8 @@ public class Stratum1Protocol implements StratumProtocol {
             Bytes.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0),
             Hash.fromHexString(message.getRequiredParameter(4, String.class)),
             null,
-            Bytes.fromHexString(message.getRequiredParameter(3, String.class)).toArrayUnsafe());
-    if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
+            Bytes.fromHexString(message.getRequiredParameter(3, String.class)));
+    if (currentInput.getPrePowHash().equals(solution.getPowHash())) {
       result = submitCallback.apply(solution);
     }
 

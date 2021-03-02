@@ -62,7 +62,7 @@ public class EthGetWork implements JsonRpcMethod {
       final byte[] dagSeed =
           DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber(), epochCalculator);
       final String[] result = {
-        "0x" + BaseEncoding.base16().lowerCase().encode(rawResult.getPrePowHash()),
+        rawResult.getPrePowHash().toHexString(),
         "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
         rawResult.getTarget().toHexString(),
         Quantity.create(rawResult.getBlockNumber())

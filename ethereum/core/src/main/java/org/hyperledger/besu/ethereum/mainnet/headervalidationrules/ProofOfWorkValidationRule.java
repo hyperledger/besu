@@ -61,7 +61,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
     final Hash headerHash = hashHeader(header);
     PoWSolution solution =
-        hasher.hash(header.getNonce(), header.getNumber(), epochCalculator, headerHash.toArray());
+        hasher.hash(header.getNonce(), header.getNumber(), epochCalculator, headerHash);
 
     if (header.getDifficulty().isZero()) {
       LOG.info("Invalid block header: difficulty is 0");

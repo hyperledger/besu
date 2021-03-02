@@ -82,7 +82,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getEip1559(),
         original.getGasBudgetCalculator(),
         original.getBadBlocksManager(),
-        null);
+        Optional.empty());
   }
 
   @Override

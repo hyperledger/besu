@@ -14,16 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import java.util.Arrays;
-
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class PoWSolverInputs {
   private final UInt256 target;
-  private final byte[] prePowHash;
+  private final Bytes prePowHash;
   private final long blockNumber;
 
-  public PoWSolverInputs(final UInt256 target, final byte[] prePowHash, final long blockNumber) {
+  public PoWSolverInputs(final UInt256 target, final Bytes prePowHash, final long blockNumber) {
     this.target = target;
     this.prePowHash = prePowHash;
     this.blockNumber = blockNumber;
@@ -33,7 +32,7 @@ public class PoWSolverInputs {
     return target;
   }
 
-  public byte[] getPrePowHash() {
+  public Bytes getPrePowHash() {
     return prePowHash;
   }
 
@@ -43,11 +42,11 @@ public class PoWSolverInputs {
 
   @Override
   public String toString() {
-    return "MiningSolverInputs{"
+    return "PoWSolverInputs{"
         + "target="
         + target
         + ", prePowHash="
-        + Arrays.toString(prePowHash)
+        + prePowHash
         + ", blockNumber="
         + blockNumber
         + '}';

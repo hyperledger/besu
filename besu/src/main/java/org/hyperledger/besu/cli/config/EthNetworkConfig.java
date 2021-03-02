@@ -57,7 +57,7 @@ public class EthNetworkConfig {
   private static final String RINKEBY_GENESIS = "/rinkeby.json";
   private static final String GOERLI_GENESIS = "/goerli.json";
   private static final String DEV_GENESIS = "/dev.json";
-  private static final String ECIP1049_DEV_GENESIS = "/ecip1049_dev.json";
+  private static final String DEV_ECIP1049_GENESIS = "/ecip1049_dev.json";
   private static final String CLASSIC_GENESIS = "/classic.json";
   private static final String KOTTI_GENESIS = "/kotti.json";
   private static final String MORDOR_GENESIS = "/mordor.json";
@@ -158,7 +158,7 @@ public class EthNetworkConfig {
             jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, CLASSIC_BOOTSTRAP_NODES, null);
       case ECIP1049_DEV:
         return new EthNetworkConfig(
-            jsonConfig(ECIP1049_DEV_GENESIS), ECIP1049_DEV_NETWORK_ID, new ArrayList<>(), null);
+            jsonConfig(DEV_ECIP1049_GENESIS), ECIP1049_DEV_NETWORK_ID, new ArrayList<>(), null);
       case KOTTI:
         return new EthNetworkConfig(
             jsonConfig(KOTTI_GENESIS), KOTTI_NETWORK_ID, KOTTI_BOOTSTRAP_NODES, null);
@@ -200,7 +200,7 @@ public class EthNetworkConfig {
       case DEV:
         return jsonConfig(DEV_GENESIS);
       case ECIP1049_DEV:
-        return jsonConfig(ECIP1049_DEV_GENESIS);
+        return jsonConfig(DEV_ECIP1049_GENESIS);
       case CLASSIC:
         return jsonConfig(CLASSIC_GENESIS);
       case KOTTI:

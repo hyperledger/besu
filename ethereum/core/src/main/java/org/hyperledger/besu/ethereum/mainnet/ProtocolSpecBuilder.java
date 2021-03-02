@@ -270,7 +270,6 @@ public class ProtocolSpecBuilder {
     checkNotNull(transactionPriceCalculator, "Missing transaction price calculator");
     checkNotNull(eip1559, "Missing eip1559 optional wrapper");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
-    checkNotNull(powHasher, "Missing PoW hasher");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final EVM evm = evmBuilder.apply(gasCalculator);
@@ -372,7 +371,7 @@ public class ProtocolSpecBuilder {
         eip1559,
         gasBudgetCalculator,
         badBlockManager,
-        powHasher);
+        Optional.ofNullable(powHasher));
   }
 
   public interface TransactionProcessorBuilder {

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public interface PoWHasher {
 
   PoWHasher ETHASH_LIGHT = new EthashLight();
@@ -28,7 +30,7 @@ public interface PoWHasher {
    * @param prePowHash Block Header (without mix digest and nonce) Hash
    * @return the PoW solution computed by the hashing function
    */
-  PoWSolution hash(long nonce, long number, EpochCalculator epochCalc, byte[] prePowHash);
+  PoWSolution hash(long nonce, long number, EpochCalculator epochCalc, Bytes prePowHash);
 
   /** Implementation of Ethash Hashimoto Light Implementation. */
   final class EthashLight implements PoWHasher {
@@ -42,7 +44,7 @@ public interface PoWHasher {
         final long nonce,
         final long number,
         final EpochCalculator epochCalc,
-        final byte[] prePowHash) {
+        final Bytes prePowHash) {
       final EthHashCacheFactory.EthHashDescriptor cache =
           cacheFactory.ethHashCacheFor(number, epochCalc);
       final PoWSolution solution =
@@ -61,7 +63,7 @@ public interface PoWHasher {
         final long nonce,
         final long number,
         final EpochCalculator epochCalc,
-        final byte[] prePowHash) {
+        final Bytes prePowHash) {
       throw new UnsupportedOperationException("Hashing is unsupported");
     }
   }
