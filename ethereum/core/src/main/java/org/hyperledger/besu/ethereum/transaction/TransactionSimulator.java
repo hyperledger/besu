@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldState;
 
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -45,7 +44,6 @@ import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -56,8 +54,6 @@ import org.apache.tuweni.units.bigints.UInt256;
  * blockchain or to estimate the transaction gas cost.
  */
 public class TransactionSimulator {
-  private static final Logger LOG = getLogger();
-
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
