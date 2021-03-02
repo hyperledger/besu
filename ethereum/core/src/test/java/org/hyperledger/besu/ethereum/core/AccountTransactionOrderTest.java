@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 
 import java.util.stream.Stream;
 
@@ -24,7 +25,7 @@ import org.junit.Test;
 
 public class AccountTransactionOrderTest {
 
-  private static final KeyPair KEYS = KeyPair.generate();
+  private static final KeyPair KEYS = SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
   private final Transaction transaction1 = transaction(1);
   private final Transaction transaction2 = transaction(2);

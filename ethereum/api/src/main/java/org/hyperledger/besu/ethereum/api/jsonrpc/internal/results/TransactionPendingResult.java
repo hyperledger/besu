@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.core.AccessList;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.TransactionType;
+
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class TransactionPendingResult implements TransactionResult {
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final AccessList accessList;
+  private final List<AccessListEntry> accessList;
 
   private final String chainId;
   private final String from;
@@ -66,8 +68,7 @@ public class TransactionPendingResult implements TransactionResult {
 
   public TransactionPendingResult(final Transaction transaction) {
     final TransactionType transactionType = transaction.getType();
-    this.accessList =
-        transactionType.equals(TransactionType.ACCESS_LIST) ? transaction.getAccessList() : null;
+    this.accessList = transaction.getAccessList().orElse(null);
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
@@ -91,7 +92,7 @@ public class TransactionPendingResult implements TransactionResult {
   }
 
   @JsonGetter(value = "accessList")
-  public AccessList getAccessList() {
+  public List<AccessListEntry> getAccessList() {
     return accessList;
   }
 

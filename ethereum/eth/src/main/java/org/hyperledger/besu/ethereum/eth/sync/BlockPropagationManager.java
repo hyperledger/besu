@@ -229,7 +229,8 @@ public class BlockPropagationManager {
 
       // Process known blocks we care about
       for (final NewBlockHash newBlock : newBlocks) {
-        processAnnouncedBlock(message.getPeer(), newBlock)
+        EthPeer bestPeer = ethContext.getEthPeers().bestPeer().orElse(message.getPeer());
+        processAnnouncedBlock(bestPeer, newBlock)
             .whenComplete((r, t) -> requestedBlocks.remove(newBlock.hash()));
       }
     } catch (final RLPException e) {

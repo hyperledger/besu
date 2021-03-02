@@ -26,7 +26,8 @@ import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -43,7 +44,7 @@ import org.junit.Test;
 
 public class CliqueExtraDataValidationRuleTest {
 
-  private final KeyPair proposerKeyPair = KeyPair.generate();
+  private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private Address localAddr;
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
@@ -82,7 +83,7 @@ public class CliqueExtraDataValidationRuleTest {
 
   @Test
   public void signerNotInExpectedValidatorsFailsValidation() {
-    final KeyPair otherSigner = KeyPair.generate();
+    final KeyPair otherSigner = SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parent = headerBuilder.number(1).buildHeader();

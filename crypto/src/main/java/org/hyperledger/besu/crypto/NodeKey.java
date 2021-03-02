@@ -22,25 +22,26 @@ import org.apache.tuweni.bytes.Bytes32;
 public class NodeKey {
 
   private final SecurityModule securityModule;
+  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
   public NodeKey(final SecurityModule securityModule) {
     this.securityModule = securityModule;
   }
 
-  public SECP256K1.Signature sign(final Bytes32 dataHash) {
+  public SECPSignature sign(final Bytes32 dataHash) {
     final Signature signature = securityModule.sign(dataHash);
 
-    return SECP256K1.normaliseSignature(
+    return signatureAlgorithm.normaliseSignature(
         signature.getR(), signature.getS(), getPublicKey(), dataHash);
   }
 
-  public SECP256K1.PublicKey getPublicKey() {
-    return SECP256K1.PublicKey.create(
+  public SECPPublicKey getPublicKey() {
+    return signatureAlgorithm.createPublicKey(
         ECPointUtil.getEncodedBytes(securityModule.getPublicKey().getW()));
   }
 
-  public Bytes32 calculateECDHKeyAgreement(final SECP256K1.PublicKey partyKey) {
+  public Bytes32 calculateECDHKeyAgreement(final SECPPublicKey partyKey) {
     return securityModule.calculateECDHKeyAgreement(
-        () -> ECPointUtil.fromBouncyCastleECPoint(partyKey.asEcPoint()));
+        () -> ECPointUtil.fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(partyKey)));
   }
 }

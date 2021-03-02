@@ -18,8 +18,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -33,14 +35,12 @@ import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Random;
@@ -64,6 +64,7 @@ public class BlockDataGenerator {
 
   private final Random random;
   private final KeyPairGenerator keyPairGenerator;
+  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
   private Supplier<BlockOptions> blockOptionsSupplier = BlockOptions::create;
 
   public BlockDataGenerator(final int seed) {
@@ -82,11 +83,14 @@ public class BlockDataGenerator {
   private KeyPairGenerator createKeyPairGenerator(final long seed) {
     final KeyPairGenerator keyPairGenerator;
     try {
-      keyPairGenerator = KeyPairGenerator.getInstance(SECP256K1.ALGORITHM, SECP256K1.PROVIDER);
+      keyPairGenerator =
+          KeyPairGenerator.getInstance(
+              SignatureAlgorithm.ALGORITHM, signatureAlgorithm.getProvider());
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
-    final ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec(SECP256K1.CURVE_NAME);
+    final ECGenParameterSpec ecGenParameterSpec =
+        new ECGenParameterSpec(signatureAlgorithm.getCurveName());
     try {
       final SecureRandom secureRandom = SecureRandomProvider.createSecureRandom();
       secureRandom.setSeed(seed);
@@ -377,17 +381,17 @@ public class BlockDataGenerator {
         .signAndBuild(generateKeyPair());
   }
 
-  private AccessList accessList() {
+  private List<AccessListEntry> accessList() {
     final List<Address> accessedAddresses =
         Stream.generate(this::address).limit(1 + random.nextInt(3)).collect(toUnmodifiableList());
-    final List<Map.Entry<Address, List<Bytes32>>> accessedStorage = new ArrayList<>();
+    final List<AccessListEntry> accessedStorage = new ArrayList<>();
     for (int i = 0; i < accessedAddresses.size(); ++i) {
       accessedStorage.add(
-          new AbstractMap.SimpleEntry<>(
+          new AccessListEntry(
               accessedAddresses.get(i),
               Stream.generate(this::bytes32).limit(2L * i).collect(toUnmodifiableList())));
     }
-    return new AccessList(accessedStorage);
+    return accessedStorage;
   }
 
   private Transaction eip1559Transaction(final Bytes payload, final Address to) {
@@ -578,7 +582,7 @@ public class BlockDataGenerator {
     return bytes;
   }
 
-  private SECP256K1.KeyPair generateKeyPair() {
+  private KeyPair generateKeyPair() {
     final java.security.KeyPair rawKeyPair = keyPairGenerator.generateKeyPair();
     final BCECPrivateKey privateKey = (BCECPrivateKey) rawKeyPair.getPrivate();
     final BCECPublicKey publicKey = (BCECPublicKey) rawKeyPair.getPublic();
@@ -592,8 +596,9 @@ public class BlockDataGenerator {
     final BigInteger publicKeyValue =
         new BigInteger(1, Arrays.copyOfRange(publicKeyBytes, 1, publicKeyBytes.length));
 
-    return new SECP256K1.KeyPair(
-        SECP256K1.PrivateKey.create(privateKeyValue), SECP256K1.PublicKey.create(publicKeyValue));
+    return new KeyPair(
+        signatureAlgorithm.createPrivateKey(privateKeyValue),
+        signatureAlgorithm.createPublicKey(publicKeyValue));
   }
 
   public static class BlockOptions {

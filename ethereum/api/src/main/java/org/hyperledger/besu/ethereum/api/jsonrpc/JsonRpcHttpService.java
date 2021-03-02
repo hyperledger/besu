@@ -67,12 +67,15 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.extension.trace.propagation.B3Propagator;
+import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
+import io.opentelemetry.extension.trace.propagation.TraceMultiPropagator;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -107,6 +110,12 @@ public class JsonRpcHttpService {
   private static final String APPLICATION_JSON = "application/json";
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
   private static final String EMPTY_RESPONSE = "";
+
+  private static final TextMapPropagator traceFormats =
+      TraceMultiPropagator.create(
+          JaegerPropagator.getInstance(),
+          B3Propagator.getInstance(),
+          W3CBaggagePropagator.getInstance());
 
   private static final TextMapPropagator.Getter<HttpServerRequest> requestAttributesGetter =
       new TextMapPropagator.Getter<>() {
@@ -313,17 +322,15 @@ public class JsonRpcHttpService {
     final SocketAddress address = routingContext.request().connection().remoteAddress();
 
     Context parent =
-        B3Propagator.getInstance()
-            .extract(Context.current(), routingContext.request(), requestAttributesGetter);
+        traceFormats.extract(Context.current(), routingContext.request(), requestAttributesGetter);
     final Span serverSpan =
         tracer
             .spanBuilder(address.host() + ":" + address.port())
             .setParent(parent)
             .setSpanKind(Span.Kind.SERVER)
             .startSpan();
-    routingContext.put(SPAN_CONTEXT, Context.root().with(serverSpan));
+    routingContext.put(SPAN_CONTEXT, Context.current().with(serverSpan));
 
-    routingContext.addBodyEndHandler(event -> serverSpan.end());
     routingContext.addEndHandler(
         event -> {
           if (event.failed()) {

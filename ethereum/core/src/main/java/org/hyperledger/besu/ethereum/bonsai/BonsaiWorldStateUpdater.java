@@ -155,9 +155,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
           accountsToUpdate.computeIfAbsent(
               deletedAddress,
               __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
-      if (accountValue.getOriginal() != null) {
-        storageToClear.add(deletedAddress);
-      }
+      storageToClear.add(deletedAddress);
       final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
         codeValue.setUpdated(null);
@@ -220,7 +218,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       } else {
         updatedAccount.setBalance(tracked.getBalance());
         updatedAccount.setNonce(tracked.getNonce());
-        updatedAccount.setCode(tracked.getCode());
+        if (tracked.codeWasUpdated()) {
+          updatedAccount.setCode(tracked.getCode());
+        }
         if (tracked.getStorageWasCleared()) {
           updatedAccount.clearStorage();
         }
@@ -272,7 +272,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     if (localCode == null) {
       return wrappedWorldView().getCode(address);
     } else {
-      return Optional.of(localCode.getUpdated());
+      return Optional.ofNullable(localCode.getUpdated());
     }
   }
 
@@ -295,7 +295,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         storageToUpdate.computeIfAbsent(address, key -> new HashMap<>());
     final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
     if (value != null) {
-      return Optional.of(value.getUpdated());
+      return Optional.ofNullable(value.getUpdated());
     } else {
       final Optional<UInt256> valueUInt =
           wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
@@ -307,6 +307,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public UInt256 getOriginalStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
+    if (storageToClear.contains(address)) {
+      return UInt256.ZERO;
+    }
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage =
         storageToUpdate.computeIfAbsent(address, key -> new HashMap<>());
     final Hash slotHashBytes = Hash.hash(storageKey.toBytes());
