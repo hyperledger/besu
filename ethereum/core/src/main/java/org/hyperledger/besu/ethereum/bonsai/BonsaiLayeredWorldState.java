@@ -236,11 +236,14 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public MutableWorldState copy() {
-    return null;
+    throw new UnsupportedOperationException(
+        "Bonsai Tries does not support direct duplication of the persisted tries.");
   }
 
   @Override
-  public void persist(final BlockHeader blockHeader) {}
+  public void persist(final BlockHeader blockHeader) {
+    throw new UnsupportedOperationException("Layered worldState can not be persisted.");
+  }
 
   @Override
   public WorldUpdater updater() {

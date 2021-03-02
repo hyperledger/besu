@@ -62,9 +62,9 @@ public class TrieLogLayer {
   }
 
   public TrieLogLayer(final Map<Address, ArrayDeque<Hash>> contractCodeChangesHistory) {
-    accounts = new HashMap<>();
-    code = new HashMap<>();
-    storage = new HashMap<>();
+    this.accounts = new HashMap<>();
+    this.code = new HashMap<>();
+    this.storage = new HashMap<>();
     this.contractCodeChangesHistory = contractCodeChangesHistory;
   }
 
