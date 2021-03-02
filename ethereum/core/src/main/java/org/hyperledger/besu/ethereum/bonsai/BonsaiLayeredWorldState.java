@@ -85,6 +85,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
         final Optional<TrieLogLayer> maybeTrieLogLayer =
             worldStateArchive.getTrieLogLayer(maybeLastChangedCodeLocation.get());
         if (maybeTrieLogLayer.isPresent()) {
+          System.out.println(maybeTrieLogLayer.get().getCode(address));
           return maybeTrieLogLayer.get().getCode(address);
         }
       }

@@ -25,12 +25,10 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
-import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -53,7 +51,7 @@ public class TrieLogLayer {
   private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
   private final Map<Address, BonsaiValue<Bytes>> code;
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;
-  private final Map<Address, ArrayDeque<Hash>> contractCodeChangesHistory;
+  private final Map<Address, Hash> contractCodeChangesHistory;
   private boolean frozen = false;
 
   TrieLogLayer() {
@@ -61,7 +59,7 @@ public class TrieLogLayer {
     this(new HashMap<>());
   }
 
-  public TrieLogLayer(final Map<Address, ArrayDeque<Hash>> contractCodeChangesHistory) {
+  public TrieLogLayer(final Map<Address, Hash> contractCodeChangesHistory) {
     this.accounts = new HashMap<>();
     this.code = new HashMap<>();
     this.storage = new HashMap<>();
@@ -97,10 +95,7 @@ public class TrieLogLayer {
         address,
         new BonsaiValue<>(
             oldValue == null ? Bytes.EMPTY : oldValue, newValue == null ? Bytes.EMPTY : newValue));
-    final ArrayDeque<Hash> blockHashes =
-        contractCodeChangesHistory.getOrDefault(address, new ArrayDeque<>());
-    blockHashes.add(blockHash);
-    contractCodeChangesHistory.put(address, blockHashes);
+    contractCodeChangesHistory.put(address, blockHash);
   }
 
   void addStorageChange(
@@ -165,13 +160,7 @@ public class TrieLogLayer {
       if (input.nextIsNull()) {
         input.skipNext();
       } else {
-        final ArrayDeque<Hash> blockHashes = new ArrayDeque<Hash>();
-        input.enterList();
-        while (!input.isEndOfCurrentList()) {
-          blockHashes.add(Hash.wrap(input.readBytes32()));
-        }
-        input.leaveList();
-        newLayer.contractCodeChangesHistory.put(address, blockHashes);
+        newLayer.contractCodeChangesHistory.put(address, Hash.wrap(input.readBytes32()));
       }
 
       // TODO add trie nodes
@@ -230,15 +219,11 @@ public class TrieLogLayer {
         output.endList();
       }
 
-      final Queue<Hash> blockHashes = contractCodeChangesHistory.get(address);
-      if (blockHashes == null) {
+      final Hash blockHash = contractCodeChangesHistory.get(address);
+      if (blockHash == null) {
         output.writeNull();
       } else {
-        output.startList();
-        for (Hash blockHash : blockHashes) {
-          output.writeBytes(blockHash);
-        }
-        output.endList();
+        output.writeBytes(blockHash);
       }
 
       // TODO write trie nodes
@@ -260,7 +245,7 @@ public class TrieLogLayer {
     return storage.entrySet().stream();
   }
 
-  public Map<Address, ArrayDeque<Hash>> getContractCodeChangesHistory() {
+  public Map<Address, Hash> getContractCodeChangesHistory() {
     return contractCodeChangesHistory;
   }
 
@@ -288,7 +273,7 @@ public class TrieLogLayer {
   public Optional<Hash> getLastChangedCodeLocation(final Address address) {
     if (contractCodeChangesHistory.containsKey(address)
         && !contractCodeChangesHistory.get(address).isEmpty()) {
-      return Optional.of(contractCodeChangesHistory.get(address).getLast());
+      return Optional.of(contractCodeChangesHistory.get(address));
     }
     return Optional.empty();
   }

@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
-import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -58,7 +57,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   private Hash worldStateRootHash;
   private Hash worldStateBlockHash;
 
-  private final Map<Address, ArrayDeque<Hash>> contractCodeChangesHistory;
+  private final Map<Address, Hash> contractCodeChangesHistory;
 
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
