@@ -405,12 +405,8 @@ public class MainnetTransactionProcessor {
                 Optional.empty());
           }
         }
-        final CoinbaseFeePriceCalculator coinbaseCreditService =
-            transaction.getType().equals(TransactionType.FRONTIER)
-                ? CoinbaseFeePriceCalculator.frontier()
-                : coinbaseFeePriceCalculator;
         final Wei coinbaseWeiDelta =
-            coinbaseCreditService.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+            coinbaseFeePriceCalculator.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
 
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
