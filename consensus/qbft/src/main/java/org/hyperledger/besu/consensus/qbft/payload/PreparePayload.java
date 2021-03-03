@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 public class PreparePayload implements Payload {
+
   private static final int TYPE = QbftV1.PREPARE;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
@@ -36,7 +37,8 @@ public class PreparePayload implements Payload {
 
   public static PreparePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
+    final ConsensusRoundIdentifier roundIdentifier =
+        new ConsensusRoundIdentifier(rlpInput.readLongScalar(), rlpInput.readIntScalar());
     final Hash digest = Payload.readDigest(rlpInput);
     rlpInput.leaveList();
     return new PreparePayload(roundIdentifier, digest);
@@ -45,7 +47,8 @@ public class PreparePayload implements Payload {
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    roundIdentifier.writeTo(rlpOutput);
+    rlpOutput.writeLongScalar(roundIdentifier.getSequenceNumber());
+    rlpOutput.writeIntScalar(roundIdentifier.getRoundNumber());
     rlpOutput.writeBytes(digest);
     rlpOutput.endList();
   }

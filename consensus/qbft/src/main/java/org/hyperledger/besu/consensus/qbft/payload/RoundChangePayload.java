@@ -50,7 +50,8 @@ public class RoundChangePayload implements Payload {
   public void writeTo(final RLPOutput rlpOutput) {
     // RLP encode of the message data content (round identifier and prepared certificate)
     rlpOutput.startList();
-    roundChangeIdentifier.writeTo(rlpOutput);
+    rlpOutput.writeLongScalar(roundChangeIdentifier.getSequenceNumber());
+    rlpOutput.writeIntScalar(roundChangeIdentifier.getRoundNumber());
 
     rlpOutput.startList();
     preparedRoundMetadata.ifPresent(prm -> prm.writeTo(rlpOutput));
@@ -61,7 +62,8 @@ public class RoundChangePayload implements Payload {
 
   public static RoundChangePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
+    final ConsensusRoundIdentifier roundIdentifier =
+        new ConsensusRoundIdentifier(rlpInput.readLongScalar(), rlpInput.readIntScalar());
     final Optional<PreparedRoundMetadata> preparedRoundMetadata;
 
     rlpInput.enterList();
