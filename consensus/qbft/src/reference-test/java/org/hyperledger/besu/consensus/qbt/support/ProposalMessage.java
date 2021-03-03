@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbt.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
@@ -67,7 +68,7 @@ public class ProposalMessage implements RlpTestCaseMessage {
     final Block block =
         Block.readFrom(
             RLP.input(Bytes.fromHexString(signedProposal.unsignedProposal.block)),
-            BftBlockHeaderFunctions.forCommittedSeal());
+            BftBlockHeaderFunctions.forCommittedSeal(new IbftExtraDataEncoder()));
     final ProposalPayload proposalPayload =
         new ProposalPayload(
             new ConsensusRoundIdentifier(
