@@ -41,6 +41,8 @@ import org.apache.tuweni.bytes.Bytes;
 public class IbftExtraData implements BftExtraData {
   private static final Logger LOG = LogManager.getLogger();
 
+  public static final int EXTRA_VANITY_LENGTH = 32;
+
   private final Bytes vanityData;
   private final Collection<SECPSignature> seals;
   private final Optional<Vote> vote;
@@ -65,38 +67,23 @@ public class IbftExtraData implements BftExtraData {
     this.vote = vote;
   }
 
-  @Override
-  public Bytes encode() {
-    return encode(EncodingType.ALL);
-  }
-
-  @Override
-  public Bytes encodeWithoutCommitSeals() {
-    return encode(EncodingType.EXCLUDE_COMMIT_SEALS);
-  }
-
-  @Override
-  public Bytes encodeWithoutCommitSealsAndRoundNumber() {
-    return encode(EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
-  }
-
-  static BftExtraData fromAddresses(Collection<Address> addresses) {
+  public static BftExtraData fromAddresses(final Collection<Address> addresses) {
     return new IbftExtraData(
         Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses);
   }
 
-  static BftExtraData decode(BlockHeader blockHeader) {
+  public static BftExtraData decode(final BlockHeader blockHeader) {
     final Object inputExtraData = blockHeader.getParsedExtraData();
     if (inputExtraData instanceof BftExtraData) {
       return (BftExtraData) inputExtraData;
     }
-    IbftExtraData.LOG.warn(
+    LOG.warn(
         "Expected a BftExtraData instance but got {}. Reparsing required.",
         inputExtraData != null ? inputExtraData.getClass().getName() : "null");
     return decodeRaw(blockHeader.getExtraData());
   }
 
-  static BftExtraData decodeRaw(Bytes input) {
+  static BftExtraData decodeRaw(final Bytes input) {
     if (input.isEmpty()) {
       throw new IllegalArgumentException("Invalid Bytes supplied - Bft Extra Data required.");
     }
@@ -122,11 +109,19 @@ public class IbftExtraData implements BftExtraData {
     return new IbftExtraData(vanityData, seals, vote, round, validators);
   }
 
-  static String createGenesisExtraDataString(List<Address> validators) {
-    final BftExtraData extraData =
-        new IbftExtraData(
-            Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
-    return extraData.encode().toString();
+  @Override
+  public Bytes encode() {
+    return encode(EncodingType.ALL);
+  }
+
+  @Override
+  public Bytes encodeWithoutCommitSeals() {
+    return encode(EncodingType.EXCLUDE_COMMIT_SEALS);
+  }
+
+  @Override
+  public Bytes encodeWithoutCommitSealsAndRoundNumber() {
+    return encode(EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
   }
 
   private enum EncodingType {
@@ -158,7 +153,15 @@ public class IbftExtraData implements BftExtraData {
     return encoder.encoded();
   }
 
+  public static String createGenesisExtraDataString(final List<Address> validators) {
+    final BftExtraData extraData =
+        new IbftExtraData(
+            Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
+    return extraData.encode().toString();
+  }
+
   // Accessors
+
   @Override
   public Bytes getVanityData() {
     return vanityData;
@@ -186,7 +189,7 @@ public class IbftExtraData implements BftExtraData {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", IbftExtraData.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", BftExtraData.class.getSimpleName() + "[", "]")
         .add("vanityData=" + vanityData)
         .add("seals=" + seals)
         .add("vote=" + vote)

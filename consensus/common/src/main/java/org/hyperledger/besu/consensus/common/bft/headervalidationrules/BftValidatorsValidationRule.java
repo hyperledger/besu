@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -48,7 +49,7 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
               .getConsensusState(BftContext.class)
               .getVoteTallyCache()
               .getVoteTallyAfterBlock(parent);
-      final BftExtraData bftExtraData = BftExtraData.decode(header);
+      final BftExtraData bftExtraData = IbftExtraData.decode(header);
 
       final NavigableSet<Address> sortedReportedValidators =
           new TreeSet<>(bftExtraData.getValidators());

@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -51,7 +52,7 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
             .getConsensusState(BftContext.class)
             .getVoteTallyCache()
             .getVoteTallyAfterBlock(parent);
-    final BftExtraData bftExtraData = BftExtraData.decode(header);
+    final BftExtraData bftExtraData = IbftExtraData.decode(header);
 
     final List<Address> committers =
         BftBlockHashing.recoverCommitterAddresses(header, bftExtraData);

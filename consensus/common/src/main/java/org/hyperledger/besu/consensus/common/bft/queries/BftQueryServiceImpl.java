@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.PoaQueryServiceImpl;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -46,7 +47,7 @@ public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQuery
   @Override
   public int getRoundNumberFrom(final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
-    final BftExtraData extraData = BftExtraData.decode(headerFromChain);
+    final BftExtraData extraData = IbftExtraData.decode(headerFromChain);
     return extraData.getRound();
   }
 
@@ -54,7 +55,7 @@ public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQuery
   public Collection<Address> getSignersFrom(
       final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
-    final BftExtraData extraData = BftExtraData.decode(headerFromChain);
+    final BftExtraData extraData = IbftExtraData.decode(headerFromChain);
 
     return Collections.unmodifiableList(
         BftBlockHashing.recoverCommitterAddresses(headerFromChain, extraData));
