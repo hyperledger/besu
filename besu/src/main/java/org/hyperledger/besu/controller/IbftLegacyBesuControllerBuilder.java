@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99Protocol;
@@ -94,7 +95,10 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
             blockInterface);
 
     final VoteProposer voteProposer = new VoteProposer();
-    return new BftContext(voteTallyCache, voteProposer, epochManager, blockInterface);
+
+    // TODO change legacy to use a bftEncoder
+    return new BftContext(
+        voteTallyCache, voteProposer, epochManager, blockInterface, new IbftExtraDataEncoder());
   }
 
   @Override

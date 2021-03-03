@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -52,7 +52,7 @@ public class ProposalBlockConsistencyValidator {
   private boolean validateBlockMatchesProposalRound(
       final ProposalPayload payload, final Block block) {
     final ConsensusRoundIdentifier msgRound = payload.getRoundIdentifier();
-    final BftExtraData extraData = IbftExtraData.decode(block.getHeader());
+    final BftExtraData extraData = new IbftExtraDataEncoder().decode(block.getHeader());
     if (extraData.getRound() != msgRound.getRoundNumber()) {
       LOG.info("Invalid Proposal message, round number in block does not match that in message.");
       return false;

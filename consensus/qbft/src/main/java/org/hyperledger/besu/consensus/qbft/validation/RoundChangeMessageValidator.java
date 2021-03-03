@@ -17,9 +17,10 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasDuplicateAuthors;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasSufficientEntries;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
@@ -112,7 +113,9 @@ public class RoundChangeMessageValidator {
       return false;
     }
 
-    final BftExtraData extraData = IbftExtraData.decode(block.getHeader());
+    final BftExtraDataEncoder bftExtraDataEncoder =
+        protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
+    final BftExtraData extraData = bftExtraDataEncoder.decode(block.getHeader());
     if (metadata.getPreparedRound() != extraData.getRound()) {
       LOG.info(
           "{}: Prepared metadata contains a different round to that in the supplied block",

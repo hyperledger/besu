@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -38,17 +39,20 @@ public class RoundChangeCertificateValidator {
 
   private final Collection<Address> validators;
   private final MessageValidatorForHeightFactory messageValidatorFactory;
+  private final BftExtraDataEncoder bftExtraDataEncoder;
   private final long quorum;
   private final long chainHeight;
 
   public RoundChangeCertificateValidator(
       final Collection<Address> validators,
       final MessageValidatorForHeightFactory messageValidatorFactory,
-      final long chainHeight) {
+      final long chainHeight,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.validators = validators;
     this.messageValidatorFactory = messageValidatorFactory;
     this.quorum = BftHelpers.calculateRequiredValidatorQuorum(validators.size());
     this.chainHeight = chainHeight;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
   }
 
   public boolean validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
@@ -128,7 +132,8 @@ public class RoundChangeCertificateValidator {
                 .getPayload()
                 .getRoundIdentifier()
                 .getRoundNumber(),
-            BftBlockHeaderFunctions.forCommittedSeal());
+            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
+            bftExtraDataEncoder);
 
     if (!currentBlockWithOldRound
         .getHash()

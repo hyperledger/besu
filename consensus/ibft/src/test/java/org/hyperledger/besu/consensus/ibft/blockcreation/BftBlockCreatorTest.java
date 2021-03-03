@@ -25,7 +25,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -74,11 +74,13 @@ public class BftBlockCreatorTest {
       initialValidatorList.add(AddressHelpers.ofValue(i));
     }
 
+    final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
-            IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
+            IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+            bftExtraDataEncoder);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
@@ -99,13 +101,13 @@ public class BftBlockCreatorTest {
         new BftBlockCreator(
             initialValidatorList.get(0),
             parent ->
-                new IbftExtraData(
+                bftExtraDataEncoder.encode(
+                    new BftExtraData(
                         Bytes.wrap(new byte[32]),
                         Collections.emptyList(),
                         Optional.empty(),
                         0,
-                        initialValidatorList)
-                    .encode(),
+                        initialValidatorList)),
             pendingTransactions,
             protContext,
             protocolSchedule,
@@ -129,8 +131,10 @@ public class BftBlockCreatorTest {
     assertThat(validationResult).isTrue();
 
     final BlockHeader header = block.getHeader();
-    final BftExtraData extraData = IbftExtraData.decode(header);
+    final BftExtraData extraData = bftExtraDataEncoder.decode(header);
     assertThat(block.getHash())
-        .isEqualTo(BftBlockHashing.calculateDataHashForCommittedSeal(header, extraData));
+        .isEqualTo(
+            new BftBlockHashing(bftExtraDataEncoder)
+                .calculateDataHashForCommittedSeal(header, extraData));
   }
 }

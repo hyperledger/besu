@@ -28,6 +28,12 @@ import java.util.Optional;
 
 public class BftBlockInterface implements BlockInterface {
 
+  private final BftExtraDataEncoder bftExtraDataEncoder;
+
+  public BftBlockInterface(final BftExtraDataEncoder bftExtraDataEncoder) {
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
+  }
+
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
     return header.getCoinbase();
@@ -40,7 +46,7 @@ public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
-    final BftExtraData bftExtraData = IbftExtraData.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataEncoder.decode(header);
 
     if (bftExtraData.getVote().isPresent()) {
       final Vote headerVote = bftExtraData.getVote().get();
@@ -56,15 +62,18 @@ public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    final BftExtraData bftExtraData = IbftExtraData.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataEncoder.decode(header);
     return bftExtraData.getValidators();
   }
 
   public static Block replaceRoundInBlock(
-      final Block block, final int round, final BlockHeaderFunctions blockHeaderFunctions) {
-    final BftExtraData prevExtraData = IbftExtraData.decode(block.getHeader());
+      final Block block,
+      final int round,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
+    final BftExtraData prevExtraData = bftExtraDataEncoder.decode(block.getHeader());
     final BftExtraData substituteExtraData =
-        new IbftExtraData(
+        new BftExtraData(
             prevExtraData.getVanityData(),
             prevExtraData.getSeals(),
             prevExtraData.getVote(),
@@ -73,7 +82,7 @@ public class BftBlockInterface implements BlockInterface {
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
-        .extraData(substituteExtraData.encode())
+        .extraData(bftExtraDataEncoder.encode(substituteExtraData))
         .blockHeaderFunctions(blockHeaderFunctions);
 
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();

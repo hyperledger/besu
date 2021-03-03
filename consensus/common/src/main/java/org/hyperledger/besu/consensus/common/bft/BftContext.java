@@ -27,16 +27,19 @@ public class BftContext implements PoaContext {
   private final VoteProposer voteProposer;
   private final EpochManager epochManager;
   private final BlockInterface blockInterface;
+  private final BftExtraDataEncoder bftExtraDataEncoder;
 
   public BftContext(
       final VoteTallyCache voteTallyCache,
       final VoteProposer voteProposer,
       final EpochManager epochManager,
-      final BlockInterface blockInterface) {
+      final BlockInterface blockInterface,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;
     this.epochManager = epochManager;
     this.blockInterface = blockInterface;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
   }
 
   public VoteTallyCache getVoteTallyCache() {
@@ -49,6 +52,10 @@ public class BftContext implements PoaContext {
 
   public EpochManager getEpochManager() {
     return epochManager;
+  }
+
+  public BftExtraDataEncoder getBftExtraDataEncoder() {
+    return bftExtraDataEncoder;
   }
 
   @Override

@@ -29,19 +29,20 @@ public class ProposedBlockHelpers {
 
   public static Block createProposalBlock(
       final List<Address> validators, final ConsensusRoundIdentifier roundId) {
-    final Bytes extraData =
-        new IbftExtraData(
-                Bytes.wrap(new byte[32]),
-                Collections.emptyList(),
-                Optional.empty(),
-                roundId.getRoundNumber(),
-                validators)
-            .encode();
+    final BftExtraData bftExtraData =
+        new BftExtraData(
+            Bytes.wrap(new byte[32]),
+            Collections.emptyList(),
+            Optional.empty(),
+            roundId.getRoundNumber(),
+            validators);
+    final Bytes extraData = new IbftExtraDataEncoder().encode(bftExtraData);
     final BlockOptions blockOptions =
         BlockOptions.create()
             .setExtraData(extraData)
             .setBlockNumber(roundId.getSequenceNumber())
-            .setBlockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal())
+            .setBlockHeaderFunctions(
+                BftBlockHeaderFunctions.forCommittedSeal(new IbftExtraDataEncoder()))
             .hasOmmers(false)
             .hasTransactions(false);
 

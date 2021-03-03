@@ -21,7 +21,7 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 import static org.hyperledger.besu.consensus.common.bft.headervalidationrules.HeaderValidationTestHelpers.createProposedBlockHeader;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -75,7 +75,7 @@ public class BftCommitSealsValidationRuleTest {
     final BlockHeader header = createProposedBlockHeader(validators, emptyList(), false);
 
     // Note that no committer seals are in the header's BFT extra data.
-    final BftExtraData headerExtraData = IbftExtraData.decode(header);
+    final BftExtraData headerExtraData = new IbftExtraDataEncoder().decode(header);
     assertThat(headerExtraData.getSeals().size()).isEqualTo(0);
 
     assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();

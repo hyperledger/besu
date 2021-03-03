@@ -63,7 +63,7 @@ public class BftExtraDataFixture {
       final boolean useDifferentRoundNumbersForCommittedSeals) {
 
     final BftExtraData bftExtraDataNoCommittedSeals =
-        new IbftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
+        new BftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
 
     // if useDifferentRoundNumbersForCommittedSeals is true then each committed seal will be
     // calculated for an extraData field with a different round number
@@ -77,7 +77,7 @@ public class BftExtraDataFixture {
                           : bftExtraDataNoCommittedSeals.getRound();
 
                   BftExtraData extraDataForCommittedSealCalculation =
-                      new IbftExtraData(
+                      new BftExtraData(
                           bftExtraDataNoCommittedSeals.getVanityData(),
                           emptyList(),
                           bftExtraDataNoCommittedSeals.getVote(),
@@ -85,14 +85,15 @@ public class BftExtraDataFixture {
                           bftExtraDataNoCommittedSeals.getValidators());
 
                   final Hash headerHashForCommitters =
-                      BftBlockHashing.calculateDataHashForCommittedSeal(
-                          header, extraDataForCommittedSealCalculation);
+                      new BftBlockHashing(new IbftExtraDataEncoder())
+                          .calculateDataHashForCommittedSeal(
+                              header, extraDataForCommittedSealCalculation);
 
                   return committerNodeKeys.get(i).sign(headerHashForCommitters);
                 })
             .collect(Collectors.toList());
 
-    return new IbftExtraData(
+    return new BftExtraData(
         bftExtraDataNoCommittedSeals.getVanityData(),
         commitSeals,
         bftExtraDataNoCommittedSeals.getVote(),

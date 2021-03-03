@@ -28,11 +28,13 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EthSynchronizerUpdater;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.UniqueMessageMulticaster;
@@ -86,7 +88,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
-  private final BlockInterface blockInterface = new BftBlockInterface();
+  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private final BlockInterface blockInterface = new BftBlockInterface(bftExtraDataEncoder);
 
   @Override
   protected void prepForBuild() {
@@ -215,7 +218,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain, nodeKey);
+    return new IbftQueryPluginServiceFactory(blockchain, bftExtraDataEncoder, nodeKey);
   }
 
   @Override
@@ -224,7 +227,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
+        IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+        bftExtraDataEncoder);
   }
 
   @Override
@@ -250,13 +254,14 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     return new BftContext(
         new ForkingVoteTallyCache(
             blockchain,
-            new VoteTallyUpdater(epochManager, new BftBlockInterface()),
+            new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new BftBlockInterface(),
+            new BftBlockInterface(bftExtraDataEncoder),
             new BftValidatorOverrides(ibftValidatorForkMap)),
         new VoteProposer(),
         epochManager,
-        blockInterface);
+        blockInterface,
+        bftExtraDataEncoder);
   }
 
   private Map<Long, List<Address>> convertIbftForks(final List<BftFork> bftForks) {

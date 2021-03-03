@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
@@ -64,6 +65,8 @@ public class MessageValidatorFactory {
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
+    final BftExtraDataEncoder bftExtraDataEncoder =
+        protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
     return new MessageValidator(
         createSignedDataValidator(roundIdentifier, parentHeader),
         new ProposalBlockConsistencyValidator(),
@@ -72,7 +75,8 @@ public class MessageValidatorFactory {
         new RoundChangeCertificateValidator(
             validators,
             (ri) -> createSignedDataValidator(ri, parentHeader),
-            roundIdentifier.getSequenceNumber()));
+            roundIdentifier.getSequenceNumber(),
+            bftExtraDataEncoder));
   }
 
   public RoundChangeMessageValidator createRoundChangeMessageValidator(

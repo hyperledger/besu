@@ -22,23 +22,28 @@ import java.util.function.Function;
 
 public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
 
-  private static final BftBlockHeaderFunctions COMMITTED_SEAL =
-      new BftBlockHeaderFunctions(BftBlockHashing::calculateDataHashForCommittedSeal);
-  private static final BftBlockHeaderFunctions ON_CHAIN =
-      new BftBlockHeaderFunctions(BftBlockHashing::calculateHashOfBftBlockOnChain);
-
   private final Function<BlockHeader, Hash> hashFunction;
+  private final BftExtraDataEncoder bftExtraDataEncoder;
 
-  private BftBlockHeaderFunctions(final Function<BlockHeader, Hash> hashFunction) {
+  public BftBlockHeaderFunctions(
+      final Function<BlockHeader, Hash> hashFunction,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.hashFunction = hashFunction;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
   }
 
-  public static BlockHeaderFunctions forOnChainBlock() {
-    return ON_CHAIN;
+  public static BlockHeaderFunctions forOnChainBlock(
+      final BftExtraDataEncoder bftExtraDataEncoder) {
+    return new BftBlockHeaderFunctions(
+        h -> new BftBlockHashing(bftExtraDataEncoder).calculateHashOfBftBlockOnChain(h),
+        bftExtraDataEncoder);
   }
 
-  public static BlockHeaderFunctions forCommittedSeal() {
-    return COMMITTED_SEAL;
+  public static BlockHeaderFunctions forCommittedSeal(
+      final BftExtraDataEncoder bftExtraDataEncoder) {
+    return new BftBlockHeaderFunctions(
+        h -> new BftBlockHashing(bftExtraDataEncoder).calculateDataHashForCommittedSeal(h),
+        bftExtraDataEncoder);
   }
 
   @Override
@@ -48,6 +53,6 @@ public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
 
   @Override
   public BftExtraData parseExtraData(final BlockHeader header) {
-    return IbftExtraData.decodeRaw(header.getExtraData());
+    return bftExtraDataEncoder.decodeRaw(header.getExtraData());
   }
 }

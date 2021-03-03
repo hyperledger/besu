@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.common.ValidatorVote;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
@@ -96,29 +96,23 @@ public class BftBlockCreatorFactory {
   }
 
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    final VoteTally voteTally =
-        protocolContext
-            .getConsensusState(BftContext.class)
-            .getVoteTallyCache()
-            .getVoteTallyAfterBlock(parentHeader);
+    final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
+    final VoteTally voteTally = bftContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
 
     final Optional<ValidatorVote> proposal =
-        protocolContext
-            .getConsensusState(BftContext.class)
-            .getVoteProposer()
-            .getVote(localAddress, voteTally);
+        bftContext.getVoteProposer().getVote(localAddress, voteTally);
 
     final List<Address> validators = new ArrayList<>(voteTally.getValidators());
 
     final BftExtraData extraData =
-        new IbftExtraData(
-            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraData.EXTRA_VANITY_LENGTH),
+        new BftExtraData(
+            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataEncoder.EXTRA_VANITY_LENGTH),
             Collections.emptyList(),
             toVote(proposal),
             round,
             validators);
 
-    return extraData.encode();
+    return bftContext.getBftExtraDataEncoder().encode(extraData);
   }
 
   public void changeTargetGasLimit(final Long targetGasLimit) {

@@ -21,7 +21,9 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -331,7 +333,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     builder.timestamp(6000 * number);
     builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
-    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal());
+    builder.blockHeaderFunctions(
+        BftBlockHeaderFunctions.forCommittedSeal(new IbftExtraDataEncoder()));
 
     if (modifier != null) {
       modifier.update(builder);
@@ -340,13 +343,13 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final BftExtraData bftExtraData =
         BftExtraDataFixture.createExtraData(
             builder.buildHeader(),
-            Bytes.wrap(new byte[BftExtraData.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[BftExtraDataEncoder.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),
             0xDEADBEEF);
 
-    builder.extraData(bftExtraData.encode());
+    builder.extraData(new IbftExtraDataEncoder().encode(bftExtraData));
     return builder;
   }
 

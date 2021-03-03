@@ -18,6 +18,7 @@ package org.hyperledger.besu.evmtool;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import javax.inject.Named;
 
 class IBFTGenesisFileModule extends GenesisFileModule {
+  final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
 
   IBFTGenesisFileModule(final String genesisConfig) {
     super(genesisConfig);
@@ -35,11 +37,13 @@ class IBFTGenesisFileModule extends GenesisFileModule {
       final GenesisConfigOptions configOptions,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
     return BftProtocolSchedule.create(
-        configOptions, IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
+        configOptions,
+        IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+        bftExtraDataEncoder);
   }
 
   @Override
   BlockHeaderFunctions blockHashFunction() {
-    return BftBlockHeaderFunctions.forOnChainBlock();
+    return BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder);
   }
 }

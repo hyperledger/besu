@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -72,7 +73,9 @@ public class RoundChangeCertificateValidatorTest {
 
     proposedBlock = ProposedBlockHelpers.createProposalBlock(validators, roundIdentifier);
 
-    validator = new RoundChangeCertificateValidator(validators, validatorFactory, 5);
+    validator =
+        new RoundChangeCertificateValidator(
+            validators, validatorFactory, 5, new IbftExtraDataEncoder());
   }
 
   @Test

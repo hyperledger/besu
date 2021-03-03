@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
@@ -30,9 +31,10 @@ public class BftVanityDataValidationRule implements AttachedBlockHeaderValidatio
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-    final BftExtraData extraData = IbftExtraData.decode(header);
+    final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
+    final BftExtraData extraData = bftContext.getBftExtraDataEncoder().decode(header);
 
-    if (extraData.getVanityData().size() != BftExtraData.EXTRA_VANITY_LENGTH) {
+    if (extraData.getVanityData().size() != BftExtraDataEncoder.EXTRA_VANITY_LENGTH) {
       LOG.info("Invalid block header: Bft Extra Data does not contain 32 bytes of vanity data.");
       return false;
     }

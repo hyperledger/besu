@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -57,11 +58,13 @@ public class ProposalBlockConsistencyValidatorTest {
     final Proposal proposalMsg =
         proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
+    final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
     final Block misMatchedBlock =
         BftBlockInterface.replaceRoundInBlock(
             block,
             roundIdentifier.getRoundNumber() + 1,
-            BftBlockHeaderFunctions.forCommittedSeal());
+            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
+            bftExtraDataEncoder);
 
     assertThat(
             consistencyChecker.validateProposalMatchesBlock(

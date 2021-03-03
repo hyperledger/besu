@@ -42,7 +42,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-public class BftExtraDataValidationRuleTest {
+public class BftExtraDataEncoderValidationRuleTest {
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 

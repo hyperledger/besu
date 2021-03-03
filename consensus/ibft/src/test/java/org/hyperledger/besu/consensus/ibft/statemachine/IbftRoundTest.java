@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
@@ -105,9 +105,9 @@ public class IbftRoundTest {
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
     proposedExtraData =
-        new IbftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
+        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
-    headerTestFixture.extraData(proposedExtraData.encode());
+    headerTestFixture.extraData(new IbftExtraDataEncoder().encode(proposedExtraData));
     headerTestFixture.number(1);
 
     final BlockHeader header = headerTestFixture.buildHeader();
@@ -217,8 +217,8 @@ public class IbftRoundTest {
             roundTimer);
 
     final Hash commitSealHash =
-        BftBlockHashing.calculateDataHashForCommittedSeal(
-            proposedBlock.getHeader(), proposedExtraData);
+        new BftBlockHashing(new IbftExtraDataEncoder())
+            .calculateDataHashForCommittedSeal(proposedBlock.getHeader(), proposedExtraData);
     final SECPSignature localCommitSeal = nodeKey.sign(commitSealHash);
 
     // Receive Proposal Message
@@ -240,7 +240,7 @@ public class IbftRoundTest {
 
     // Ensure imported block contains both commit seals.
     final BftExtraData importedExtraData =
-        IbftExtraData.decode(capturedBlock.getValue().getHeader());
+        new IbftExtraDataEncoder().decode(capturedBlock.getValue().getHeader());
     assertThat(importedExtraData.getSeals()).containsOnly(remoteCommitSeal, localCommitSeal);
   }
 
@@ -260,8 +260,8 @@ public class IbftRoundTest {
             roundTimer);
 
     final Hash commitSealHash =
-        BftBlockHashing.calculateDataHashForCommittedSeal(
-            proposedBlock.getHeader(), proposedExtraData);
+        new BftBlockHashing(new IbftExtraDataEncoder())
+            .calculateDataHashForCommittedSeal(proposedBlock.getHeader(), proposedExtraData);
     final SECPSignature localCommitSeal = nodeKey.sign(commitSealHash);
 
     round.createAndSendProposalMessage(15);
@@ -338,7 +338,8 @@ public class IbftRoundTest {
             blockCaptor.capture(),
             eq(Optional.of(roundChangeArtifacts.getRoundChangeCertificate())));
 
-    final BftExtraData proposedExtraData = IbftExtraData.decode(blockCaptor.getValue().getHeader());
+    final BftExtraData proposedExtraData =
+        new IbftExtraDataEncoder().decode(blockCaptor.getValue().getHeader());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which

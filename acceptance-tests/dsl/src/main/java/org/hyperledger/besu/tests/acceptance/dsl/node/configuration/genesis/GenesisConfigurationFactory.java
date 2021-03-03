@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 
@@ -50,7 +50,7 @@ public class GenesisConfigurationFactory {
       final Collection<? extends RunnableNode> validators, final String genesisFile) {
     final String template = readGenesisFile(genesisFile);
     return updateGenesisExtraData(
-        validators, template, IbftExtraData::createGenesisExtraDataString);
+        validators, template, IbftExtraDataEncoder::createGenesisExtraDataString);
   }
 
   public Optional<String> createIbft2GenesisConfigFilterBootnode(
@@ -61,21 +61,21 @@ public class GenesisConfigurationFactory {
             .filter(node -> !node.getConfiguration().isBootnodeEligible())
             .collect(toList());
     return updateGenesisExtraData(
-        filteredList, template, IbftExtraData::createGenesisExtraDataString);
+        filteredList, template, IbftExtraDataEncoder::createGenesisExtraDataString);
   }
 
   public Optional<String> createPrivacyIbft2GenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/ibft/privacy-ibft.json");
     return updateGenesisExtraData(
-        validators, template, IbftExtraData::createGenesisExtraDataString);
+        validators, template, IbftExtraDataEncoder::createGenesisExtraDataString);
   }
 
   public Optional<String> createQbftGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/qbft/qbft.json");
     return updateGenesisExtraData(
-        validators, template, IbftExtraData::createGenesisExtraDataString);
+        validators, template, IbftExtraDataEncoder::createGenesisExtraDataString);
   }
 
   private Optional<String> updateGenesisExtraData(

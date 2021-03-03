@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -28,7 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.StringJoiner;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,41 +35,24 @@ import org.apache.tuweni.bytes.Bytes;
  * Represents the data structure stored in the extraData field of the BlockHeader used when
  * operating under an BFT consensus mechanism.
  */
-public class IbftExtraData implements BftExtraData {
+public class IbftExtraDataEncoder implements BftExtraDataEncoder {
   private static final Logger LOG = LogManager.getLogger();
 
   public static final int EXTRA_VANITY_LENGTH = 32;
 
-  private final Bytes vanityData;
-  private final Collection<SECPSignature> seals;
-  private final Optional<Vote> vote;
-  private final int round;
-  private final Collection<Address> validators;
-
-  public IbftExtraData(
-      final Bytes vanityData,
-      final Collection<SECPSignature> seals,
-      final Optional<Vote> vote,
-      final int round,
-      final Collection<Address> validators) {
-
-    checkNotNull(vanityData);
-    checkNotNull(seals);
-    checkNotNull(validators);
-
-    this.vanityData = vanityData;
-    this.seals = seals;
-    this.round = round;
-    this.validators = validators;
-    this.vote = vote;
+  public static Bytes encodeFromAddresses(final Collection<Address> addresses) {
+    return new IbftExtraDataEncoder()
+        .encode(
+            new BftExtraData(
+                Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses));
   }
 
-  public static BftExtraData fromAddresses(final Collection<Address> addresses) {
-    return new IbftExtraData(
-        Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses);
+  public static String createGenesisExtraDataString(final List<Address> validators) {
+    return encodeFromAddresses(validators).toString();
   }
 
-  public static BftExtraData decode(final BlockHeader blockHeader) {
+  @Override
+  public BftExtraData decode(final BlockHeader blockHeader) {
     final Object inputExtraData = blockHeader.getParsedExtraData();
     if (inputExtraData instanceof BftExtraData) {
       return (BftExtraData) inputExtraData;
@@ -83,7 +63,8 @@ public class IbftExtraData implements BftExtraData {
     return decodeRaw(blockHeader.getExtraData());
   }
 
-  static BftExtraData decodeRaw(final Bytes input) {
+  @Override
+  public BftExtraData decodeRaw(final Bytes input) {
     if (input.isEmpty()) {
       throw new IllegalArgumentException("Invalid Bytes supplied - Bft Extra Data required.");
     }
@@ -106,46 +87,40 @@ public class IbftExtraData implements BftExtraData {
             rlp -> SignatureAlgorithmFactory.getInstance().decodeSignature(rlp.readBytes()));
     rlpInput.leaveList();
 
-    return new IbftExtraData(vanityData, seals, vote, round, validators);
+    return new BftExtraData(vanityData, seals, vote, round, validators);
   }
 
   @Override
-  public Bytes encode() {
-    return encode(EncodingType.ALL);
+  public Bytes encode(final BftExtraData bftExtraData) {
+    return encode(bftExtraData, EncodingType.ALL);
   }
 
   @Override
-  public Bytes encodeWithoutCommitSeals() {
-    return encode(EncodingType.EXCLUDE_COMMIT_SEALS);
+  public Bytes encodeWithoutCommitSeals(final BftExtraData bftExtraData) {
+    return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS);
   }
 
   @Override
-  public Bytes encodeWithoutCommitSealsAndRoundNumber() {
-    return encode(EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
+  public Bytes encodeWithoutCommitSealsAndRoundNumber(final BftExtraData bftExtraData) {
+    return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
   }
 
-  private enum EncodingType {
-    ALL,
-    EXCLUDE_COMMIT_SEALS,
-    EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
-  }
-
-  private Bytes encode(final EncodingType encodingType) {
-
+  private Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
-    encoder.writeBytes(vanityData);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
-    if (vote.isPresent()) {
-      vote.get().writeTo(encoder);
+    encoder.writeBytes(bftExtraData.getVanityData());
+    encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+    if (bftExtraData.getVote().isPresent()) {
+      bftExtraData.getVote().get().writeTo(encoder);
     } else {
       encoder.writeNull();
     }
 
     if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
-      encoder.writeInt(round);
+      encoder.writeInt(bftExtraData.getRound());
       if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
-        encoder.writeList(seals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
+        encoder.writeList(
+            bftExtraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
       }
     }
     encoder.endList();
@@ -153,48 +128,9 @@ public class IbftExtraData implements BftExtraData {
     return encoder.encoded();
   }
 
-  public static String createGenesisExtraDataString(final List<Address> validators) {
-    final BftExtraData extraData =
-        new IbftExtraData(
-            Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
-    return extraData.encode().toString();
-  }
-
-  // Accessors
-
-  @Override
-  public Bytes getVanityData() {
-    return vanityData;
-  }
-
-  @Override
-  public Collection<SECPSignature> getSeals() {
-    return seals;
-  }
-
-  @Override
-  public Collection<Address> getValidators() {
-    return validators;
-  }
-
-  @Override
-  public Optional<Vote> getVote() {
-    return vote;
-  }
-
-  @Override
-  public int getRound() {
-    return round;
-  }
-
-  @Override
-  public String toString() {
-    return new StringJoiner(", ", BftExtraData.class.getSimpleName() + "[", "]")
-        .add("vanityData=" + vanityData)
-        .add("seals=" + seals)
-        .add("vote=" + vote)
-        .add("round=" + round)
-        .add("validators=" + validators)
-        .toString();
+  private enum EncodingType {
+    ALL,
+    EXCLUDE_COMMIT_SEALS,
+    EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
   }
 }

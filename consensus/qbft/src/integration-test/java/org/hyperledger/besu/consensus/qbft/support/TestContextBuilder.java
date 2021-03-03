@@ -31,12 +31,13 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
@@ -157,6 +158,7 @@ public class TestContextBuilder {
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
   private boolean useGossip = false;
+  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -190,7 +192,8 @@ public class TestContextBuilder {
 
     final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
     final MutableBlockchain blockChain =
-        createInMemoryBlockchain(genesisBlock, BftBlockHeaderFunctions.forOnChainBlock());
+        createInMemoryBlockchain(
+            genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder));
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
@@ -253,9 +256,9 @@ public class TestContextBuilder {
     final Address coinbase = Iterables.get(validators, 0);
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     final BftExtraData extraData =
-        new IbftExtraData(
+        new BftExtraData(
             Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
-    headerTestFixture.extraData(extraData.encode());
+    headerTestFixture.extraData(new IbftExtraDataEncoder().encode(extraData));
     headerTestFixture.mixHash(BftHelpers.EXPECTED_MIX_HASH);
     headerTestFixture.difficulty(Difficulty.ONE);
     headerTestFixture.ommersHash(Hash.EMPTY_LIST_HASH);
@@ -291,22 +294,25 @@ public class TestContextBuilder {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
 
+    final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
-            genesisConfigOptions, QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
+            genesisConfigOptions,
+            QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+            bftExtraDataEncoder);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
-    final BlockInterface blockInterface = new BftBlockInterface();
+    final BlockInterface blockInterface = new BftBlockInterface(bftExtraDataEncoder);
 
     final VoteTallyCache voteTallyCache =
         new VoteTallyCache(
             blockChain,
             new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new BftBlockInterface());
+            new BftBlockInterface(bftExtraDataEncoder));
 
     final VoteProposer voteProposer = new VoteProposer();
 
@@ -314,7 +320,8 @@ public class TestContextBuilder {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            new BftContext(voteTallyCache, voteProposer, epochManager, blockInterface));
+            new BftContext(
+                voteTallyCache, voteProposer, epochManager, blockInterface, bftExtraDataEncoder));
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

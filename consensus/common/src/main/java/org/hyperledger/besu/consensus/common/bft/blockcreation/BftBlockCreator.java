@@ -15,6 +15,8 @@
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
@@ -57,12 +59,14 @@ public class BftBlockCreator extends AbstractBlockCreator {
 
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
+    final BftExtraDataEncoder bftExtraDataEncoder =
+        protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)
             .mixHash(BftHelpers.EXPECTED_MIX_HASH)
             .nonce(0L)
-            .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal());
+            .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder));
 
     return builder.buildBlockHeader();
   }

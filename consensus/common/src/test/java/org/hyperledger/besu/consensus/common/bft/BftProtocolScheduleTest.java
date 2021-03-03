@@ -54,7 +54,10 @@ public class BftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     final ProtocolSchedule schedule =
-        BftProtocolSchedule.create(genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder);
+        BftProtocolSchedule.create(
+            genesisConfig,
+            BftProtocolScheduleTest::arbitraryRulesetBuilder,
+            new IbftExtraDataEncoder());
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     spec.getBlockReward();
@@ -76,7 +79,9 @@ public class BftProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
-                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
+                    genesisConfig,
+                    BftProtocolScheduleTest::arbitraryRulesetBuilder,
+                    new IbftExtraDataEncoder()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Mining beneficiary in config is not a valid ethereum address");
   }
@@ -91,7 +96,10 @@ public class BftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     final ProtocolSchedule schedule =
-        BftProtocolSchedule.create(genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder);
+        BftProtocolSchedule.create(
+            genesisConfig,
+            BftProtocolScheduleTest::arbitraryRulesetBuilder,
+            new IbftExtraDataEncoder());
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     final Address headerCoinbase = Address.fromHexString("0x123");
@@ -115,7 +123,9 @@ public class BftProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
-                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
+                    genesisConfig,
+                    BftProtocolScheduleTest::arbitraryRulesetBuilder,
+                    new IbftExtraDataEncoder()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Bft Block reward in config cannot be negative");
   }
@@ -132,7 +142,9 @@ public class BftProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
-                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
+                    genesisConfig,
+                    BftProtocolScheduleTest::arbitraryRulesetBuilder,
+                    new IbftExtraDataEncoder()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -149,7 +161,9 @@ public class BftProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
-                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
+                    genesisConfig,
+                    BftProtocolScheduleTest::arbitraryRulesetBuilder,
+                    new IbftExtraDataEncoder()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
