@@ -19,7 +19,6 @@ public interface BftExtraData extends ParsedExtraData {
 
   Bytes encodeWithoutCommitSealsAndRoundNumber();
 
-  // Accessors
   Bytes getVanityData();
 
   Collection<SECPSignature> getSeals();
@@ -29,7 +28,4 @@ public interface BftExtraData extends ParsedExtraData {
   Optional<Vote> getVote();
 
   int getRound();
-
-  @Override
-  String toString();
 }
