@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,9 +26,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
@@ -66,12 +66,12 @@ public class ProposalValidatorTest {
   private static class RoundSpecificItems {
 
     public final Block block;
-    public final QbftConsensusRoundIdentifier roundIdentifier;
+    public final ConsensusRoundIdentifier roundIdentifier;
     public final ProposalValidator messageValidator;
 
     public RoundSpecificItems(
         final Block block,
-        final QbftConsensusRoundIdentifier roundIdentifier,
+        final ConsensusRoundIdentifier roundIdentifier,
         final ProposalValidator messageValidator) {
       this.block = block;
       this.roundIdentifier = roundIdentifier;
@@ -106,8 +106,7 @@ public class ProposalValidatorTest {
   }
 
   private RoundSpecificItems createRoundSpecificItems(final int roundNumber) {
-    final QbftConsensusRoundIdentifier roundIdentifier =
-        new QbftConsensusRoundIdentifier(1, roundNumber);
+    final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, roundNumber);
 
     return new RoundSpecificItems(
         ProposedBlockHelpers.createProposalBlock(validators.getNodeAddresses(), roundIdentifier),
@@ -326,7 +325,7 @@ public class ProposalValidatorTest {
     final SignedData<RoundChangePayload> preparedRoundChange =
         SignedData.create(
             illegalPayload,
-            validators.getNode(2).getNodeKey().sign(qbftHashForSignature(illegalPayload)));
+            validators.getNode(2).getNodeKey().sign(hashForSignature(illegalPayload)));
 
     roundChanges.add(preparedRoundChange);
 
@@ -502,7 +501,7 @@ public class ProposalValidatorTest {
             validators
                 .getNode(3)
                 .getNodeKey()
-                .sign(qbftHashForSignature(illegalPreparedRoundChangePayload)));
+                .sign(hashForSignature(illegalPreparedRoundChangePayload)));
 
     roundChanges.add(preparedRoundChange);
 
@@ -540,10 +539,7 @@ public class ProposalValidatorTest {
     final SignedData<RoundChangePayload> preparedRoundChange =
         SignedData.create(
             preparedRoundChangePayload,
-            validators
-                .getNode(2)
-                .getNodeKey()
-                .sign(qbftHashForSignature(preparedRoundChangePayload)));
+            validators.getNode(2).getNodeKey().sign(hashForSignature(preparedRoundChangePayload)));
 
     roundChanges.add(preparedRoundChange);
 

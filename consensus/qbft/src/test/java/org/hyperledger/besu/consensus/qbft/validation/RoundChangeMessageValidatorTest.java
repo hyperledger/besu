@@ -30,7 +30,6 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
@@ -68,8 +67,8 @@ public class RoundChangeMessageValidatorTest {
   private static final int VALIDATOR_COUNT = 4;
   private final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
   private static final int CHAIN_HEIGHT = 3;
-  private final QbftConsensusRoundIdentifier targetRound =
-      new QbftConsensusRoundIdentifier(CHAIN_HEIGHT, 3);
+  private final ConsensusRoundIdentifier targetRound =
+      new ConsensusRoundIdentifier(CHAIN_HEIGHT, 3);
   private final ConsensusRoundIdentifier roundIdentifier =
       ConsensusRoundHelpers.createFrom(targetRound, 0, -1);
 

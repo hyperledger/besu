@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.consensus.qbt.support;
 
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -52,7 +52,7 @@ public class CommitMessage implements RlpTestCaseMessage {
   public BftMessage<CommitPayload> toBftMessage() {
     final CommitPayload commitPayload =
         new CommitPayload(
-            new QbftConsensusRoundIdentifier(unsignedCommit.sequence, unsignedCommit.round),
+            new ConsensusRoundIdentifier(unsignedCommit.sequence, unsignedCommit.round),
             Hash.fromHexStringLenient(unsignedCommit.digest),
             SIGNATURE_ALGORITHM
                 .get()

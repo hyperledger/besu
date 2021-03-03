@@ -34,10 +34,10 @@ public class CommitPayload implements Payload {
   private final SECPSignature commitSeal;
 
   public CommitPayload(
-      final QbftConsensusRoundIdentifier roundIdentifier,
+      final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final SECPSignature commitSeal) {
-    this.roundIdentifier = roundIdentifier;
+    this.roundIdentifier = new QbftConsensusRoundIdentifier(roundIdentifier);
     this.digest = digest;
     this.commitSeal = commitSeal;
   }

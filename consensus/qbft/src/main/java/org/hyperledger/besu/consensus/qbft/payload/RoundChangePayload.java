@@ -32,9 +32,9 @@ public class RoundChangePayload implements Payload {
   private final Optional<PreparedRoundMetadata> preparedRoundMetadata;
 
   public RoundChangePayload(
-      final QbftConsensusRoundIdentifier roundChangeIdentifier,
+      final ConsensusRoundIdentifier roundChangeIdentifier,
       final Optional<PreparedRoundMetadata> preparedRoundMetadata) {
-    this.roundChangeIdentifier = roundChangeIdentifier;
+    this.roundChangeIdentifier = new QbftConsensusRoundIdentifier(roundChangeIdentifier);
     this.preparedRoundMetadata = preparedRoundMetadata;
   }
 

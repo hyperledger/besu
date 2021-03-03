@@ -31,8 +31,8 @@ public class PreparePayload implements Payload {
   private final QbftConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
 
-  public PreparePayload(final QbftConsensusRoundIdentifier roundIdentifier, final Hash digest) {
-    this.roundIdentifier = roundIdentifier;
+  public PreparePayload(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
+    this.roundIdentifier = new QbftConsensusRoundIdentifier(roundIdentifier);
     this.digest = digest;
   }
 

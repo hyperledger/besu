@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -44,7 +44,7 @@ public class RoundChangePayloadValidatorTest {
   public void roundChangeIsValidIfItMatchesExpectedValues() {
     final RoundChangePayload payload =
         new RoundChangePayload(
-            new QbftConsensusRoundIdentifier(chainHeight, 1),
+            new ConsensusRoundIdentifier(chainHeight, 1),
             Optional.of(new PreparedRoundMetadata(preparedBlockHash, 0)));
 
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
@@ -57,7 +57,7 @@ public class RoundChangePayloadValidatorTest {
   @Test
   public void roundChangePayloadWithMissingPreparedMetadataIsValid() {
     final RoundChangePayload payload =
-        new RoundChangePayload(new QbftConsensusRoundIdentifier(chainHeight, 1), Optional.empty());
+        new RoundChangePayload(new ConsensusRoundIdentifier(chainHeight, 1), Optional.empty());
 
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
       final SignedData<RoundChangePayload> signedPayload =
@@ -70,7 +70,7 @@ public class RoundChangePayloadValidatorTest {
   public void roundChangePayloadSignedByNonValidatorFails() {
     final RoundChangePayload payload =
         new RoundChangePayload(
-            new QbftConsensusRoundIdentifier(chainHeight, 1),
+            new ConsensusRoundIdentifier(chainHeight, 1),
             Optional.of(new PreparedRoundMetadata(preparedBlockHash, 0)));
 
     final NodeKey nonValidatorKey = NodeKeyUtils.generate();
@@ -83,7 +83,7 @@ public class RoundChangePayloadValidatorTest {
   public void roundChangeForFutureHeightFails() {
     final RoundChangePayload payload =
         new RoundChangePayload(
-            new QbftConsensusRoundIdentifier(chainHeight + 1, 1),
+            new ConsensusRoundIdentifier(chainHeight + 1, 1),
             Optional.of(new PreparedRoundMetadata(preparedBlockHash, 0)));
 
     final SignedData<RoundChangePayload> signedPayload =
@@ -95,7 +95,7 @@ public class RoundChangePayloadValidatorTest {
   public void roundChangeForPriorHeightFails() {
     final RoundChangePayload payload =
         new RoundChangePayload(
-            new QbftConsensusRoundIdentifier(chainHeight - 1, 1),
+            new ConsensusRoundIdentifier(chainHeight - 1, 1),
             Optional.of(new PreparedRoundMetadata(preparedBlockHash, 0)));
 
     final SignedData<RoundChangePayload> signedPayload =
@@ -107,7 +107,7 @@ public class RoundChangePayloadValidatorTest {
   public void roundChangeWithMatchingTargetAndPrepareFails() {
     final RoundChangePayload payload =
         new RoundChangePayload(
-            new QbftConsensusRoundIdentifier(chainHeight, 1),
+            new ConsensusRoundIdentifier(chainHeight, 1),
             Optional.of(new PreparedRoundMetadata(preparedBlockHash, 1)));
 
     final SignedData<RoundChangePayload> signedPayload =
@@ -119,7 +119,7 @@ public class RoundChangePayloadValidatorTest {
   public void roundChangeWithPreparedRoundInTheFutureFails() {
     final RoundChangePayload payload =
         new RoundChangePayload(
-            new QbftConsensusRoundIdentifier(chainHeight, 1),
+            new ConsensusRoundIdentifier(chainHeight, 1),
             Optional.of(new PreparedRoundMetadata(preparedBlockHash, 2)));
 
     final SignedData<RoundChangePayload> signedPayload =
@@ -131,7 +131,7 @@ public class RoundChangePayloadValidatorTest {
   public void roundChangeWithZeroTargetRoundFails() {
     final RoundChangePayload payload =
         new RoundChangePayload(
-            new QbftConsensusRoundIdentifier(chainHeight, 0),
+            new ConsensusRoundIdentifier(chainHeight, 0),
             Optional.of(new PreparedRoundMetadata(preparedBlockHash, 0)));
 
     final SignedData<RoundChangePayload> signedPayload =
@@ -143,7 +143,7 @@ public class RoundChangePayloadValidatorTest {
   public void roundChangeWithNegativeTargetRoundFails() {
     final RoundChangePayload payload =
         new RoundChangePayload(
-            new QbftConsensusRoundIdentifier(chainHeight, -3),
+            new ConsensusRoundIdentifier(chainHeight, -3),
             Optional.of(new PreparedRoundMetadata(preparedBlockHash, 1)));
 
     final SignedData<RoundChangePayload> signedPayload =

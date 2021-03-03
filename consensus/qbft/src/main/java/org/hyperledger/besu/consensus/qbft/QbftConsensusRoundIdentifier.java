@@ -20,10 +20,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 public class QbftConsensusRoundIdentifier extends ConsensusRoundIdentifier {
 
-  public QbftConsensusRoundIdentifier(final long sequence, final int round) {
-    super(sequence, round);
-  }
-
   public QbftConsensusRoundIdentifier(final ConsensusRoundIdentifier consensusRoundIdentifier) {
     super(consensusRoundIdentifier.getSequenceNumber(), consensusRoundIdentifier.getRoundNumber());
   }

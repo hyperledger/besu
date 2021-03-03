@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.qbt.support;
 
 import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions.forCommittedSeal;
 
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -112,8 +112,7 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
               : Optional.empty();
       final RoundChangePayload roundChangePayload =
           new RoundChangePayload(
-              new QbftConsensusRoundIdentifier(
-                  unsignedRoundChange.sequence, unsignedRoundChange.round),
+              new ConsensusRoundIdentifier(unsignedRoundChange.sequence, unsignedRoundChange.round),
               preparedRoundMetadata);
       return SignedData.create(
           roundChangePayload,

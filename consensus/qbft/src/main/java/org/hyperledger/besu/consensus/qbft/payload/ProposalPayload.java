@@ -34,8 +34,8 @@ public class ProposalPayload implements Payload {
   private final Block proposedBlock;
 
   public ProposalPayload(
-      final QbftConsensusRoundIdentifier roundIdentifier, final Block proposedBlock) {
-    this.roundIdentifier = roundIdentifier;
+      final ConsensusRoundIdentifier roundIdentifier, final Block proposedBlock) {
+    this.roundIdentifier = new QbftConsensusRoundIdentifier(roundIdentifier);
     this.proposedBlock = proposedBlock;
   }
 
