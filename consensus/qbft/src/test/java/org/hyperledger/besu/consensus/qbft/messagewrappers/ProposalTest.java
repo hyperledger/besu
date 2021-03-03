@@ -19,6 +19,7 @@ import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.h
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
@@ -43,7 +44,7 @@ import org.junit.Test;
 public class ProposalTest {
 
   private static final BftExtraData extraData =
-      new BftExtraData(
+      new IbftExtraData(
           Bytes32.ZERO, Collections.emptyList(), Optional.empty(), 1, Collections.emptyList());
 
   private static final Block BLOCK =

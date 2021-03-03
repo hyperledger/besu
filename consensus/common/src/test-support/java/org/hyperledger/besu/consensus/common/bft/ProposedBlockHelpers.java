@@ -30,7 +30,7 @@ public class ProposedBlockHelpers {
   public static Block createProposalBlock(
       final List<Address> validators, final ConsensusRoundIdentifier roundId) {
     final Bytes extraData =
-        new BftExtraData(
+        new IbftExtraData(
                 Bytes.wrap(new byte[32]),
                 Collections.emptyList(),
                 Optional.empty(),

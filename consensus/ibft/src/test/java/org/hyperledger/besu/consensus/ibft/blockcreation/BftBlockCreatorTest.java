@@ -25,6 +25,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -98,7 +99,7 @@ public class BftBlockCreatorTest {
         new BftBlockCreator(
             initialValidatorList.get(0),
             parent ->
-                new BftExtraData(
+                new IbftExtraData(
                         Bytes.wrap(new byte[32]),
                         Collections.emptyList(),
                         Optional.empty(),

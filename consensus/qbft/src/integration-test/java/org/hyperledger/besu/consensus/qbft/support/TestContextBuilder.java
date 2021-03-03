@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
@@ -252,7 +253,7 @@ public class TestContextBuilder {
     final Address coinbase = Iterables.get(validators, 0);
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     final BftExtraData extraData =
-        new BftExtraData(
+        new IbftExtraData(
             Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
     headerTestFixture.extraData(extraData.encode());
     headerTestFixture.mixHash(BftHelpers.EXPECTED_MIX_HASH);

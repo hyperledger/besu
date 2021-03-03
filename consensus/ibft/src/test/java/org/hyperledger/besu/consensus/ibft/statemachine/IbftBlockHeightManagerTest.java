@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
@@ -114,7 +115,7 @@ public class IbftBlockHeightManagerTest {
   private void buildCreatedBlock() {
 
     final BftExtraData extraData =
-        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
+        new IbftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
 
     headerTestFixture.extraData(extraData.encode());
     final BlockHeader header = headerTestFixture.buildHeader();

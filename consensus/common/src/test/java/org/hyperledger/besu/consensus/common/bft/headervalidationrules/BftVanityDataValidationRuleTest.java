@@ -19,6 +19,7 @@ import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
@@ -39,7 +40,8 @@ public class BftVanityDataValidationRuleTest {
 
   public boolean headerWithVanityDataOfSize(final int extraDataSize) {
     final BftExtraData extraData =
-        new BftExtraData(Bytes.wrap(new byte[extraDataSize]), emptyList(), empty(), 0, emptyList());
+        new IbftExtraData(
+            Bytes.wrap(new byte[extraDataSize]), emptyList(), empty(), 0, emptyList());
     final BlockHeader header =
         new BlockHeaderTestFixture().extraData(extraData.encode()).buildHeader();
 

@@ -22,6 +22,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -70,7 +71,7 @@ public class BftQueryServiceImplTest {
             .collect(Collectors.toList());
 
     final BftExtraData unsignedExtraData =
-        new BftExtraData(
+        new IbftExtraData(
             Bytes.wrap(new byte[32]),
             Collections.emptyList(),
             Optional.empty(),
@@ -93,7 +94,7 @@ public class BftQueryServiceImplTest {
             .collect(Collectors.toList());
 
     signedExtraData =
-        new BftExtraData(
+        new IbftExtraData(
             Bytes.wrap(new byte[32]),
             validatorSignatures,
             Optional.empty(),

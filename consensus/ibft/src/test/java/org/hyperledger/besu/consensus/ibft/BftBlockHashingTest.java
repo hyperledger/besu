@@ -20,6 +20,7 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -91,7 +92,7 @@ public class BftBlockHashingTest {
             .collect(Collectors.toList());
 
     BftExtraData extraDataWithCommitSeals =
-        new BftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
+        new IbftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
 
     builder.extraData(extraDataWithCommitSeals.encode());
     BlockHeader actualHeader = builder.buildBlockHeader();
@@ -156,7 +157,7 @@ public class BftBlockHashingTest {
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
     builder.extraData(
-        new BftExtraData(VANITY_DATA, emptyList(), VOTE, ROUND, VALIDATORS)
+        new IbftExtraData(VANITY_DATA, emptyList(), VOTE, ROUND, VALIDATORS)
             .encodeWithoutCommitSeals());
 
     BytesValueRLPOutput rlpForHeaderFroCommittersSigning = new BytesValueRLPOutput();
@@ -168,7 +169,7 @@ public class BftBlockHashingTest {
             .collect(Collectors.toList());
 
     BftExtraData extraDataWithCommitSeals =
-        new BftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
+        new IbftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
 
     builder.extraData(extraDataWithCommitSeals.encode());
     return builder.buildBlockHeader();
@@ -178,7 +179,7 @@ public class BftBlockHashingTest {
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
     builder.extraData(
-        new BftExtraData(VANITY_DATA, emptyList(), VOTE, 0, VALIDATORS)
+        new IbftExtraData(VANITY_DATA, emptyList(), VOTE, 0, VALIDATORS)
             .encodeWithoutCommitSealsAndRoundNumber());
 
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();

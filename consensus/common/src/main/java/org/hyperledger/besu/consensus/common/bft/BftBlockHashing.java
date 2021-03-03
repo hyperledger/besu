@@ -45,7 +45,7 @@ public class BftBlockHashing {
   }
 
   public static Hash calculateDataHashForCommittedSeal(final BlockHeader header) {
-    final BftExtraData bftExtraData = BftExtraData.decode(header);
+    final BftExtraData bftExtraData = IbftExtraData.decode(header);
     return Hash.hash(serializeHeader(header, bftExtraData::encodeWithoutCommitSeals));
   }
 
@@ -57,7 +57,7 @@ public class BftBlockHashing {
    * @return the hash of the header to be used when referencing the header on the blockchain
    */
   public static Hash calculateHashOfBftBlockOnChain(final BlockHeader header) {
-    final BftExtraData bftExtraData = BftExtraData.decode(header);
+    final BftExtraData bftExtraData = IbftExtraData.decode(header);
     return Hash.hash(serializeHeader(header, bftExtraData::encodeWithoutCommitSealsAndRoundNumber));
   }
 
@@ -65,7 +65,7 @@ public class BftBlockHashing {
    * Recovers the {@link Address} for each validator that contributed a committed seal to the block.
    *
    * @param header the block header that was signed by the committed seals
-   * @param bftExtraData the parsed {@link BftExtraData} from the header
+   * @param bftExtraData the parsed {@link IbftExtraData} from the header
    * @return the addresses of validators that provided a committed seal
    */
   public static List<Address> recoverCommitterAddresses(

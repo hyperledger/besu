@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.common.ValidatorVote;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
@@ -110,7 +111,7 @@ public class BftBlockCreatorFactory {
     final List<Address> validators = new ArrayList<>(voteTally.getValidators());
 
     final BftExtraData extraData =
-        new BftExtraData(
+        new IbftExtraData(
             ConsensusHelpers.zeroLeftPad(vanityData, BftExtraData.EXTRA_VANITY_LENGTH),
             Collections.emptyList(),
             toVote(proposal),

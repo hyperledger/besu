@@ -63,7 +63,7 @@ public class BftExtraDataFixture {
       final boolean useDifferentRoundNumbersForCommittedSeals) {
 
     final BftExtraData bftExtraDataNoCommittedSeals =
-        new BftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
+        new IbftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
 
     // if useDifferentRoundNumbersForCommittedSeals is true then each committed seal will be
     // calculated for an extraData field with a different round number
@@ -77,7 +77,7 @@ public class BftExtraDataFixture {
                           : bftExtraDataNoCommittedSeals.getRound();
 
                   BftExtraData extraDataForCommittedSealCalculation =
-                      new BftExtraData(
+                      new IbftExtraData(
                           bftExtraDataNoCommittedSeals.getVanityData(),
                           emptyList(),
                           bftExtraDataNoCommittedSeals.getVote(),
@@ -92,7 +92,7 @@ public class BftExtraDataFixture {
                 })
             .collect(Collectors.toList());
 
-    return new BftExtraData(
+    return new IbftExtraData(
         bftExtraDataNoCommittedSeals.getVanityData(),
         commitSeals,
         bftExtraDataNoCommittedSeals.getVote(),
