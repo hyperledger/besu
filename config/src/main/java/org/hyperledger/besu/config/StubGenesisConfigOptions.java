@@ -40,15 +40,15 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   // TODO EIP-1559 change for the actual fork name when known
   private final OptionalLong eip1559BlockNumber = OptionalLong.empty();
-  private final OptionalLong classicForkBlock = OptionalLong.empty();
-  private final OptionalLong ecip1015BlockNumber = OptionalLong.empty();
-  private final OptionalLong diehardBlockNumber = OptionalLong.empty();
-  private final OptionalLong gothamBlockNumber = OptionalLong.empty();
-  private final OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
-  private final OptionalLong atlantisBlockNumber = OptionalLong.empty();
-  private final OptionalLong aghartaBlockNumber = OptionalLong.empty();
-  private final OptionalLong phoenixBlockNumber = OptionalLong.empty();
-  private final OptionalLong thanosBlockNumber = OptionalLong.empty();
+  private OptionalLong classicForkBlock = OptionalLong.empty();
+  private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
+  private OptionalLong diehardBlockNumber = OptionalLong.empty();
+  private OptionalLong gothamBlockNumber = OptionalLong.empty();
+  private OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
+  private OptionalLong atlantisBlockNumber = OptionalLong.empty();
+  private OptionalLong aghartaBlockNumber = OptionalLong.empty();
+  private OptionalLong phoenixBlockNumber = OptionalLong.empty();
+  private OptionalLong thanosBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -229,6 +229,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
+
+    // mainnet fork blocks
     getHomesteadBlockNumber().ifPresent(l -> builder.put("homesteadBlock", l));
     getDaoForkBlock()
         .ifPresent(
@@ -249,6 +251,18 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     // TODO EIP-1559 change for the actual fork name when known
     getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
+
+    // classic fork blocks
+    getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
+    getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
+    getDieHardBlockNumber().ifPresent(l -> builder.put("dieHardBlock", l));
+    getGothamBlockNumber().ifPresent(l -> builder.put("gothamBlock", l));
+    getDefuseDifficultyBombBlockNumber().ifPresent(l -> builder.put("ecip1041Block", l));
+    getAtlantisBlockNumber().ifPresent(l -> builder.put("atlantisBlock", l));
+    getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
+    getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
+    getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
     if (isClique()) {
@@ -333,6 +347,51 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions berlinBlock(final long blockNumber) {
     berlinBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions classicForkBlock(final long blockNumber) {
+    classicForkBlock = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions ecip1015(final long blockNumber) {
+    ecip1015BlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions dieHard(final long blockNumber) {
+    diehardBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions gotham(final long blockNumber) {
+    gothamBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions defuseDifficultyBomb(final long blockNumber) {
+    defuseDifficultyBombBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions atlantis(final long blockNumber) {
+    atlantisBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions agharta(final long blockNumber) {
+    aghartaBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions phoenix(final long blockNumber) {
+    phoenixBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions thanos(final long blockNumber) {
+    thanosBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
