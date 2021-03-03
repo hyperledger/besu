@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.common.bft.payload;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 public class PayloadHelpers {
 
@@ -24,5 +25,15 @@ public class PayloadHelpers {
     return Hash.hash(
         Bytes.concatenate(
             Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
+  }
+
+  public static Hash qbftHashForSignature(final Payload unsignedMessageData) {
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(unsignedMessageData.getMessageType());
+    final Bytes encodedBytes = unsignedMessageData.encoded();
+    out.writeRaw(encodedBytes);
+    out.endList();
+    return Hash.hash(out.encoded());
   }
 }

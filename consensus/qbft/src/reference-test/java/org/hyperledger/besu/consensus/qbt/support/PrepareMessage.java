@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbt.support;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -53,7 +54,7 @@ public class PrepareMessage implements RlpTestCaseMessage {
     final UnsignedPrepare unsignedPrepare = prepareMessage.unsignedPrepare;
     return SignedData.create(
         new PreparePayload(
-            new ConsensusRoundIdentifier(unsignedPrepare.sequence, unsignedPrepare.round),
+            new QbftConsensusRoundIdentifier(unsignedPrepare.sequence, unsignedPrepare.round),
             Hash.fromHexString(unsignedPrepare.digest)),
         SignatureAlgorithmFactory.getInstance()
             .decodeSignature(Bytes.fromHexString(prepareMessage.signature)));

@@ -24,6 +24,10 @@ public class QbftConsensusRoundIdentifier extends ConsensusRoundIdentifier {
     super(sequence, round);
   }
 
+  public QbftConsensusRoundIdentifier(final ConsensusRoundIdentifier consensusRoundIdentifier) {
+    super(consensusRoundIdentifier.getSequenceNumber(), consensusRoundIdentifier.getRoundNumber());
+  }
+
   public static QbftConsensusRoundIdentifier readFrom(final RLPInput in) {
     return new QbftConsensusRoundIdentifier(in.readLongScalar(), in.readIntScalar());
   }

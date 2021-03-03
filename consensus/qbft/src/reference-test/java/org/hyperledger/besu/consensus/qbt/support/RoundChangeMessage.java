@@ -16,9 +16,16 @@ package org.hyperledger.besu.consensus.qbt.support;
 
 import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions.forCommittedSeal;
 
-import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -28,15 +35,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChangeMessage implements RlpTestCaseMessage {
   private final SignedRoundChange signedRoundChange;
@@ -112,7 +110,7 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
               : Optional.empty();
       final RoundChangePayload roundChangePayload =
           new RoundChangePayload(
-              new ConsensusRoundIdentifier(unsignedRoundChange.sequence, unsignedRoundChange.round),
+              new QbftConsensusRoundIdentifier(unsignedRoundChange.sequence, unsignedRoundChange.round),
               preparedRoundMetadata);
       return SignedData.create(
           roundChangePayload,

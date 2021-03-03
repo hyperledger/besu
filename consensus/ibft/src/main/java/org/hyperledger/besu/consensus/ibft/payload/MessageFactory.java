@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.payload;
 
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
@@ -79,7 +79,7 @@ public class MessageFactory {
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
-    final SECPSignature signature = nodeKey.sign(hashForSignature(payload));
+    final SECPSignature signature = nodeKey.sign(qbftHashForSignature(payload));
     return SignedData.create(payload, signature);
   }
 }
