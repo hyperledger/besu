@@ -18,12 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
@@ -38,6 +33,12 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class ProposalTest {
@@ -56,7 +57,8 @@ public class ProposalTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final Address addr = Util.publicKeyToAddress(nodeKey.getPublicKey());
 
-    final ProposalPayload payload = new ProposalPayload(new QbftConsensusRoundIdentifier(1, 1), BLOCK);
+    final ProposalPayload payload =
+        new ProposalPayload(new QbftConsensusRoundIdentifier(1, 1), BLOCK);
 
     final SignedData<ProposalPayload> signedPayload =
         SignedData.create(payload, nodeKey.sign(qbftHashForSignature(payload)));

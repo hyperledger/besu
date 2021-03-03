@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
-import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
@@ -107,7 +106,8 @@ public class ProposalValidatorTest {
   }
 
   private RoundSpecificItems createRoundSpecificItems(final int roundNumber) {
-    final QbftConsensusRoundIdentifier roundIdentifier = new QbftConsensusRoundIdentifier(1, roundNumber);
+    final QbftConsensusRoundIdentifier roundIdentifier =
+        new QbftConsensusRoundIdentifier(1, roundNumber);
 
     return new RoundSpecificItems(
         ProposedBlockHelpers.createProposalBlock(validators.getNodeAddresses(), roundIdentifier),
@@ -540,7 +540,10 @@ public class ProposalValidatorTest {
     final SignedData<RoundChangePayload> preparedRoundChange =
         SignedData.create(
             preparedRoundChangePayload,
-            validators.getNode(2).getNodeKey().sign(qbftHashForSignature(preparedRoundChangePayload)));
+            validators
+                .getNode(2)
+                .getNodeKey()
+                .sign(qbftHashForSignature(preparedRoundChangePayload)));
 
     roundChanges.add(preparedRoundChange);
 

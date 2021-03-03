@@ -16,15 +16,17 @@ package org.hyperledger.besu.consensus.common.bft.payload;
 
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
 
-import java.util.Objects;
-import java.util.StringJoiner;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
+import java.util.Objects;
+import java.util.StringJoiner;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class SignedData<M extends Payload> implements Authored {
 

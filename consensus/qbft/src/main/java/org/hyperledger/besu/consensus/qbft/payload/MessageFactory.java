@@ -16,9 +16,6 @@ package org.hyperledger.besu.consensus.qbft.payload;
 
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -32,6 +29,10 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public class MessageFactory {
 
@@ -47,13 +48,15 @@ public class MessageFactory {
       final List<SignedData<RoundChangePayload>> roundChanges,
       final List<SignedData<PreparePayload>> prepares) {
 
-    final ProposalPayload payload = new ProposalPayload(new QbftConsensusRoundIdentifier(roundIdentifier), block);
+    final ProposalPayload payload =
+        new ProposalPayload(new QbftConsensusRoundIdentifier(roundIdentifier), block);
 
     return new Proposal(createSignedMessage(payload), roundChanges, prepares);
   }
 
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
-    final PreparePayload payload = new PreparePayload(new QbftConsensusRoundIdentifier(roundIdentifier), digest);
+    final PreparePayload payload =
+        new PreparePayload(new QbftConsensusRoundIdentifier(roundIdentifier), digest);
     return new Prepare(createSignedMessage(payload));
   }
 
@@ -61,7 +64,8 @@ public class MessageFactory {
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final SECPSignature commitSeal) {
-    final CommitPayload payload = new CommitPayload(new QbftConsensusRoundIdentifier(roundIdentifier), digest, commitSeal);
+    final CommitPayload payload =
+        new CommitPayload(new QbftConsensusRoundIdentifier(roundIdentifier), digest, commitSeal);
     return new Commit(createSignedMessage(payload));
   }
 
@@ -86,7 +90,9 @@ public class MessageFactory {
           preparedRoundData.get().getPrepares());
 
     } else {
-      payload = new RoundChangePayload(new QbftConsensusRoundIdentifier(roundIdentifier), Optional.empty());
+      payload =
+          new RoundChangePayload(
+              new QbftConsensusRoundIdentifier(roundIdentifier), Optional.empty());
       return new RoundChange(
           createSignedMessage(payload), Optional.empty(), Collections.emptyList());
     }

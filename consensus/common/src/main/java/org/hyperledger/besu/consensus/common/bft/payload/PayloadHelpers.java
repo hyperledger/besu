@@ -15,9 +15,9 @@
 package org.hyperledger.besu.consensus.common.bft.payload;
 
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 public class PayloadHelpers {
 
