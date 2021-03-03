@@ -188,6 +188,10 @@ allprojects {
     ]
 
     options.errorprone {
+      if ('true'.equalsIgnoreCase(System.getProperty('avt.disableErrorProne'))) {
+        enabled = false
+      }
+
       excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*)'
 
       // Our equals need to be symmetric, this checker doesn't respect that.
