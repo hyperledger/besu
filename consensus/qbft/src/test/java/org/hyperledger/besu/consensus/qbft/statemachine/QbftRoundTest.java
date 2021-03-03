@@ -302,7 +302,7 @@ public class QbftRoundTest {
     verify(transmitter, times(1))
         .multicastPrepare(eq(roundIdentifier), eq(blockCaptor.getValue().getHash()));
 
-    final BftExtraData proposedExtraData = BftExtraData.decode(blockCaptor.getValue().getHeader());
+    final BftExtraData proposedExtraData = IbftExtraData.decode(blockCaptor.getValue().getHeader());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which

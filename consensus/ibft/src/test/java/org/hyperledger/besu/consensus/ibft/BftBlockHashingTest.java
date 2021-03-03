@@ -68,7 +68,7 @@ public class BftBlockHashingTest {
   public void testRecoverCommitterAddresses() {
     List<Address> actualCommitterAddresses =
         BftBlockHashing.recoverCommitterAddresses(
-            HEADER_TO_BE_HASHED, BftExtraData.decode(HEADER_TO_BE_HASHED));
+            HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED));
 
     List<Address> expectedCommitterAddresses =
         COMMITTERS_NODE_KEYS.stream()
@@ -82,7 +82,7 @@ public class BftBlockHashingTest {
   public void testCalculateDataHashForCommittedSeal() {
     Hash dataHahsForCommittedSeal =
         BftBlockHashing.calculateDataHashForCommittedSeal(
-            HEADER_TO_BE_HASHED, BftExtraData.decode(HEADER_TO_BE_HASHED));
+            HEADER_TO_BE_HASHED, IbftExtraData.decode(HEADER_TO_BE_HASHED));
 
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 

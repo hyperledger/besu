@@ -129,7 +129,7 @@ public class BftBlockCreatorTest {
     assertThat(validationResult).isTrue();
 
     final BlockHeader header = block.getHeader();
-    final BftExtraData extraData = BftExtraData.decode(header);
+    final BftExtraData extraData = IbftExtraData.decode(header);
     assertThat(block.getHash())
         .isEqualTo(BftBlockHashing.calculateDataHashForCommittedSeal(header, extraData));
   }
