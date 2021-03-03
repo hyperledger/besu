@@ -41,7 +41,8 @@ public class ProposalPayload implements Payload {
 
   public static ProposalPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final QbftConsensusRoundIdentifier roundIdentifier = QbftConsensusRoundIdentifier.readFrom(rlpInput);
+    final QbftConsensusRoundIdentifier roundIdentifier =
+        QbftConsensusRoundIdentifier.readFrom(rlpInput);
     final Block proposedBlock =
         Block.readFrom(rlpInput, BftBlockHeaderFunctions.forCommittedSeal());
     rlpInput.leaveList();

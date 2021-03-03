@@ -62,7 +62,8 @@ public class RoundChangePayload implements Payload {
 
   public static RoundChangePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final QbftConsensusRoundIdentifier roundIdentifier = QbftConsensusRoundIdentifier.readFrom(rlpInput);
+    final QbftConsensusRoundIdentifier roundIdentifier =
+        QbftConsensusRoundIdentifier.readFrom(rlpInput);
     final Optional<PreparedRoundMetadata> preparedRoundMetadata;
 
     rlpInput.enterList();

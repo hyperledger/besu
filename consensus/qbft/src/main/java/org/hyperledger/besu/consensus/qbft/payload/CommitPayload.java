@@ -44,7 +44,8 @@ public class CommitPayload implements Payload {
 
   public static CommitPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final QbftConsensusRoundIdentifier roundIdentifier = QbftConsensusRoundIdentifier.readFrom(rlpInput);
+    final QbftConsensusRoundIdentifier roundIdentifier =
+        QbftConsensusRoundIdentifier.readFrom(rlpInput);
     final Hash digest = Payload.readDigest(rlpInput);
     final SECPSignature commitSeal =
         rlpInput.readBytes(SignatureAlgorithmFactory.getInstance()::decodeSignature);
