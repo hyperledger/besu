@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.payload;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -29,19 +30,18 @@ import com.google.common.base.MoreObjects;
 public class ProposalPayload implements Payload {
 
   private static final int TYPE = QbftV1.PROPOSAL;
-  private final ConsensusRoundIdentifier roundIdentifier;
+  private final QbftConsensusRoundIdentifier roundIdentifier;
   private final Block proposedBlock;
 
   public ProposalPayload(
-      final ConsensusRoundIdentifier roundIdentifier, final Block proposedBlock) {
+      final QbftConsensusRoundIdentifier roundIdentifier, final Block proposedBlock) {
     this.roundIdentifier = roundIdentifier;
     this.proposedBlock = proposedBlock;
   }
 
   public static ProposalPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final ConsensusRoundIdentifier roundIdentifier =
-        new ConsensusRoundIdentifier(rlpInput.readLongScalar(), rlpInput.readIntScalar());
+    final QbftConsensusRoundIdentifier roundIdentifier = QbftConsensusRoundIdentifier.readFrom(rlpInput);
     final Block proposedBlock =
         Block.readFrom(rlpInput, BftBlockHeaderFunctions.forCommittedSeal());
     rlpInput.leaveList();
@@ -52,8 +52,7 @@ public class ProposalPayload implements Payload {
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    rlpOutput.writeLongScalar(roundIdentifier.getSequenceNumber());
-    rlpOutput.writeIntScalar(roundIdentifier.getRoundNumber());
+    roundIdentifier.writeTo(rlpOutput);
     proposedBlock.writeTo(rlpOutput);
     rlpOutput.endList();
   }

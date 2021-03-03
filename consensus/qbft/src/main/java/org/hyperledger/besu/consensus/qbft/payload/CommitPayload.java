@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -28,12 +29,12 @@ import java.util.StringJoiner;
 
 public class CommitPayload implements Payload {
   private static final int TYPE = QbftV1.COMMIT;
-  private final ConsensusRoundIdentifier roundIdentifier;
+  private final QbftConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
   private final SECPSignature commitSeal;
 
   public CommitPayload(
-      final ConsensusRoundIdentifier roundIdentifier,
+      final QbftConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
       final SECPSignature commitSeal) {
     this.roundIdentifier = roundIdentifier;
@@ -43,8 +44,7 @@ public class CommitPayload implements Payload {
 
   public static CommitPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final ConsensusRoundIdentifier roundIdentifier =
-        new ConsensusRoundIdentifier(rlpInput.readLongScalar(), rlpInput.readIntScalar());
+    final QbftConsensusRoundIdentifier roundIdentifier = QbftConsensusRoundIdentifier.readFrom(rlpInput);
     final Hash digest = Payload.readDigest(rlpInput);
     final SECPSignature commitSeal =
         rlpInput.readBytes(SignatureAlgorithmFactory.getInstance()::decodeSignature);
@@ -56,8 +56,7 @@ public class CommitPayload implements Payload {
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    rlpOutput.writeLongScalar(roundIdentifier.getSequenceNumber());
-    rlpOutput.writeIntScalar(roundIdentifier.getRoundNumber());
+    roundIdentifier.writeTo(rlpOutput);
     rlpOutput.writeBytes(digest);
     rlpOutput.writeBytes(commitSeal.encodedBytes());
     rlpOutput.endList();

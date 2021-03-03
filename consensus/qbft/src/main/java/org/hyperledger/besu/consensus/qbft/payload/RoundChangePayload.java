@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -27,11 +28,11 @@ import com.google.common.base.MoreObjects;
 
 public class RoundChangePayload implements Payload {
   private static final int TYPE = QbftV1.ROUND_CHANGE;
-  private final ConsensusRoundIdentifier roundChangeIdentifier;
+  private final QbftConsensusRoundIdentifier roundChangeIdentifier;
   private final Optional<PreparedRoundMetadata> preparedRoundMetadata;
 
   public RoundChangePayload(
-      final ConsensusRoundIdentifier roundChangeIdentifier,
+      final QbftConsensusRoundIdentifier roundChangeIdentifier,
       final Optional<PreparedRoundMetadata> preparedRoundMetadata) {
     this.roundChangeIdentifier = roundChangeIdentifier;
     this.preparedRoundMetadata = preparedRoundMetadata;
@@ -50,8 +51,7 @@ public class RoundChangePayload implements Payload {
   public void writeTo(final RLPOutput rlpOutput) {
     // RLP encode of the message data content (round identifier and prepared certificate)
     rlpOutput.startList();
-    rlpOutput.writeLongScalar(roundChangeIdentifier.getSequenceNumber());
-    rlpOutput.writeIntScalar(roundChangeIdentifier.getRoundNumber());
+    roundChangeIdentifier.writeTo(rlpOutput);
 
     rlpOutput.startList();
     preparedRoundMetadata.ifPresent(prm -> prm.writeTo(rlpOutput));
@@ -62,8 +62,7 @@ public class RoundChangePayload implements Payload {
 
   public static RoundChangePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final ConsensusRoundIdentifier roundIdentifier =
-        new ConsensusRoundIdentifier(rlpInput.readLongScalar(), rlpInput.readIntScalar());
+    final QbftConsensusRoundIdentifier roundIdentifier = QbftConsensusRoundIdentifier.readFrom(rlpInput);
     final Optional<PreparedRoundMetadata> preparedRoundMetadata;
 
     rlpInput.enterList();
