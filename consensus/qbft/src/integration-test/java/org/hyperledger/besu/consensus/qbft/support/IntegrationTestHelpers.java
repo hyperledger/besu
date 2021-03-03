@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.support;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.IbftExtraData;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
@@ -30,7 +31,7 @@ public class IntegrationTestHelpers {
   public static SignedData<CommitPayload> createSignedCommitPayload(
       final ConsensusRoundIdentifier roundId, final Block block, final NodeKey nodeKey) {
 
-    final BftExtraData extraData = BftExtraData.decode(block.getHeader());
+    final BftExtraData extraData = IbftExtraData.decode(block.getHeader());
 
     final SECPSignature commitSeal =
         nodeKey.sign(
