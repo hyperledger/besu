@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
