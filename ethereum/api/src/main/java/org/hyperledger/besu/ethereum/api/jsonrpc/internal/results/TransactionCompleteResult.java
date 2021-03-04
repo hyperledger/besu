@@ -78,8 +78,7 @@ public class TransactionCompleteResult implements TransactionResult {
   public TransactionCompleteResult(final TransactionWithMetadata tx) {
     final Transaction transaction = tx.getTransaction();
     final TransactionType transactionType = transaction.getType();
-    this.accessList =
-        transactionType.equals(TransactionType.ACCESS_LIST) ? transaction.getAccessList() : null;
+    this.accessList = transaction.getAccessList().orElse(null);
     this.blockHash = tx.getBlockHash().get().toString();
     this.blockNumber = Quantity.create(tx.getBlockNumber().get());
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);

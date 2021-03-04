@@ -30,7 +30,7 @@ import java.util.Optional;
 public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
   protected final WorldUpdater publicWorldUpdater;
-  private final WorldUpdater privateWorldUpdater;
+  protected final WorldUpdater privateWorldUpdater;
 
   public DefaultMutablePrivateWorldStateUpdater(
       final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
