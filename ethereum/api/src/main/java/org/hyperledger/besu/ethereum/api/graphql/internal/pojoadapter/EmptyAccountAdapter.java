@@ -23,30 +23,35 @@ import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-@SuppressWarnings("unused") // reflected by GraphQL
-public class EmptyAccountAdapter extends AdapterBase {
+public class EmptyAccountAdapter extends AccountAdapter {
   private final Address address;
 
   public EmptyAccountAdapter(final Address address) {
+    super(null);
     this.address = address;
   }
 
+  @Override
   public Optional<Address> getAddress() {
     return Optional.of(address);
   }
 
+  @Override
   public Optional<Wei> getBalance() {
     return Optional.of(Wei.ZERO);
   }
 
+  @Override
   public Optional<Long> getTransactionCount() {
     return Optional.of(0L);
   }
 
+  @Override
   public Optional<Bytes> getCode() {
     return Optional.of(Bytes.EMPTY);
   }
 
+  @Override
   public Optional<Bytes32> getStorage(final DataFetchingEnvironment environment) {
     return Optional.of(Bytes32.ZERO);
   }
