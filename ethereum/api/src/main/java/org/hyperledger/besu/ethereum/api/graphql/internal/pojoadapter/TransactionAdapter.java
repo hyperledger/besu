@@ -144,7 +144,7 @@ public class TransactionAdapter extends AdapterBase {
   public Optional<AccountAdapter> getCreatedContract(final DataFetchingEnvironment environment) {
     final boolean contractCreated = transactionWithMetadata.getTransaction().isContractCreation();
     if (contractCreated) {
-      final Optional<Address> addr = transactionWithMetadata.getTransaction().getTo();
+      final Optional<Address> addr = transactionWithMetadata.getTransaction().contractAddress();
 
       if (addr.isPresent()) {
         final BlockchainQueries query = getBlockchainQueries(environment);

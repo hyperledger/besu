@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class CommitValidatorTest {
   @Test
   public void commitIsValidIfItMatchesExpectedValues() {
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
-      final Signature commitSeal = validators.getNode(i).getNodeKey().sign(expectedHash);
+      final SECPSignature commitSeal = validators.getNode(i).getNodeKey().sign(expectedHash);
       final Commit msg =
           validators.getMessageFactory(i).createCommit(round, expectedHash, commitSeal);
       assertThat(validator.validate(msg)).isTrue();
@@ -47,7 +47,7 @@ public class CommitValidatorTest {
   @Test
   public void commitSignedByANonValidatorFails() {
     final QbftNode nonValidator = QbftNode.create();
-    final Signature commitSeal = nonValidator.getNodeKey().sign(expectedHash);
+    final SECPSignature commitSeal = nonValidator.getNodeKey().sign(expectedHash);
     final Commit msg =
         nonValidator.getMessageFactory().createCommit(round, expectedHash, commitSeal);
     assertThat(validator.validate(msg)).isFalse();
@@ -55,7 +55,7 @@ public class CommitValidatorTest {
 
   @Test
   public void commitForWrongRoundFails() {
-    final Signature commitSeal = validators.getNode(0).getNodeKey().sign(expectedHash);
+    final SECPSignature commitSeal = validators.getNode(0).getNodeKey().sign(expectedHash);
     final Commit msg =
         validators
             .getMessageFactory(0)
@@ -65,7 +65,7 @@ public class CommitValidatorTest {
 
   @Test
   public void commitForWrongSequenceFails() {
-    final Signature commitSeal = validators.getNode(0).getNodeKey().sign(expectedHash);
+    final SECPSignature commitSeal = validators.getNode(0).getNodeKey().sign(expectedHash);
     final Commit msg =
         validators
             .getMessageFactory(0)
@@ -75,7 +75,7 @@ public class CommitValidatorTest {
 
   @Test
   public void commitWithWrongDigestFails() {
-    final Signature commitSeal = validators.getNode(0).getNodeKey().sign(expectedHash);
+    final SECPSignature commitSeal = validators.getNode(0).getNodeKey().sign(expectedHash);
     final Commit msg =
         validators
             .getMessageFactory(0)
@@ -85,7 +85,7 @@ public class CommitValidatorTest {
 
   @Test
   public void commitWithMismatchedSealFails() {
-    final Signature commitSeal =
+    final SECPSignature commitSeal =
         validators.getNode(0).getNodeKey().sign(Hash.fromHexStringLenient("0x2"));
     final Commit msg =
         validators.getMessageFactory(0).createCommit(round, expectedHash, commitSeal);
