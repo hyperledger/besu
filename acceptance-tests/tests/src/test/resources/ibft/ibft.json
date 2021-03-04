@@ -1,9 +1,7 @@
 {
   "config": {
     "chainId": 4,
-    "homesteadBlock": 1,
-    "eip150Block": 2,
-    "eip158Block": 3,
+    "eip158Block": 0,
     "byzantiumBlock": 1035301,
     "ibft2": {
       "blockperiodseconds": 1,

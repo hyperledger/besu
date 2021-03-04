@@ -142,6 +142,9 @@ public class TransactionPool implements BlockAddedObserver {
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
+    if (transaction.getChainId().isEmpty() && !configuration.isUnprotectedTransactionsAllowed()) {
+      return ValidationResult.invalid(TransactionInvalidReason.UNPROTECTED_TRANSACTION);
+    }
     if (!configuration.getTxFeeCap().isZero()
         && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
       return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);

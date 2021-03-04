@@ -26,6 +26,8 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.tx.Contract;
+import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.TransactionManager;
 
 public class DeploySmartContractTransaction<T extends Contract> implements Transaction<T> {
 
@@ -46,10 +48,11 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
   @Override
   public T execute(final NodeRequests node) {
     try {
+      TransactionManager manager = new RawTransactionManager(node.eth(), BENEFACTOR_ONE, 2018L);
       if (args != null && args.length != 0) {
         final ArrayList<Object> parameterObjects = new ArrayList<>();
         parameterObjects.addAll(
-            Arrays.asList(node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT));
+            Arrays.asList(node.eth(), manager, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT));
         parameterObjects.addAll(Arrays.asList(args));
 
         final Method method =
@@ -67,11 +70,15 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
       } else {
         final Method method =
             clazz.getMethod(
-                "deploy", Web3j.class, Credentials.class, BigInteger.class, BigInteger.class);
+                "deploy",
+                Web3j.class,
+                TransactionManager.class,
+                BigInteger.class,
+                BigInteger.class);
 
         final Object invoked =
             method.invoke(
-                METHOD_IS_STATIC, node.eth(), BENEFACTOR_ONE, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
+                METHOD_IS_STATIC, node.eth(), manager, DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT);
 
         return cast(invoked).send();
       }

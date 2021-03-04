@@ -23,6 +23,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBa
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,6 +99,7 @@ public class PrivGetPrivateTransactionAcceptanceTest extends PrivacyAcceptanceTe
         .gasPrice(Wei.of(999999))
         .gasLimit(3000000)
         .to(null)
+        .chainId(BigInteger.valueOf(4))
         .value(Wei.ZERO)
         .payload(Bytes.wrap(new byte[] {}))
         .sender(node.getAddress())

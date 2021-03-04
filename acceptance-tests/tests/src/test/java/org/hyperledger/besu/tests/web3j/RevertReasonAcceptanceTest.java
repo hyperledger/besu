@@ -42,7 +42,7 @@ public class RevertReasonAcceptanceTest extends AcceptanceTestBase {
     final EthSendTransaction transaction =
         minerNode.execute(
             contractTransactions.callSmartContract(
-                FUNC_REVERTWITHREVERTREASON, revertReasonContract.getContractAddress()));
+                FUNC_REVERTWITHREVERTREASON, revertReasonContract.getContractAddress(), 2018L));
     minerNode.verify(
         eth.expectSuccessfulTransactionReceiptWithReason(
             transaction.getTransactionHash(), "RevertReason"));
@@ -55,7 +55,7 @@ public class RevertReasonAcceptanceTest extends AcceptanceTestBase {
     final EthSendTransaction transaction =
         minerNode.execute(
             contractTransactions.callSmartContract(
-                FUNC_REVERTWITHOUTREVERTREASON, revertReasonContract.getContractAddress()));
+                FUNC_REVERTWITHOUTREVERTREASON, revertReasonContract.getContractAddress(), 2018L));
     minerNode.verify(
         eth.expectSuccessfulTransactionReceiptWithoutReason(transaction.getTransactionHash()));
   }

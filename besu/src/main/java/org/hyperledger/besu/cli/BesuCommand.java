@@ -832,6 +832,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
 
   @Option(
+      names = {"--rpc-allow-unprotected-txs"},
+      description =
+          "Allow for unprotected (non EIP155 signed) transactions to be submitted via RPC (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Boolean unprotectedTransactionsAllowed = false;
+
+  @Option(
       names = {"--min-block-occupancy-ratio"},
       description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
       arity = "1")
@@ -2213,6 +2220,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(priceBump))
         .txFeeCap(txFeeCap)
+        .isUnprotectedTransactionsAllowed(unprotectedTransactionsAllowed)
         .build();
   }
 

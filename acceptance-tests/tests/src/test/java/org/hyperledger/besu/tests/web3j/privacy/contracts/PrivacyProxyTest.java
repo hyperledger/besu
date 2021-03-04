@@ -34,6 +34,8 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Base64String;
 
@@ -124,11 +126,14 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
     final Web3j web3j = Web3j.build(httpService);
 
     // load the proxy contract, use it with another signer
+    TransactionManager manager =
+        new RawTransactionManager(
+            web3j, Credentials.create(Accounts.GENESIS_ACCOUNT_TWO_PRIVATE_KEY), 2018L);
     final OnChainPrivacyGroupManagementProxy proxyContractAccount2 =
         OnChainPrivacyGroupManagementProxy.load(
             onChainPrivacyGroupManagementProxy.getContractAddress(),
             web3j,
-            Credentials.create(Accounts.GENESIS_ACCOUNT_TWO_PRIVATE_KEY),
+            manager,
             new DefaultGasProvider());
     // contract is the proxy contract and uses genesis account 2. It should not be able to upgrade
     // the contract, because it is not the owner of "upgradedContract"

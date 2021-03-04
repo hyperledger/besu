@@ -26,6 +26,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -130,6 +131,7 @@ public class PrivacyReceiptAcceptanceTest extends PrivacyAcceptanceTestBase {
         .gasLimit(3000000)
         .to(null)
         .value(Wei.ZERO)
+        .chainId(BigInteger.valueOf(4))
         .payload(payload.orElse(defaultPayload))
         .sender(node.getAddress())
         .privateFrom(Bytes.fromBase64String(node.getEnclaveKey()))

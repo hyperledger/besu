@@ -35,10 +35,13 @@ public class CallSmartContractFunction implements Transaction<EthSendTransaction
 
   private final String functionName;
   private final String contractAddress;
+  private final long chainId;
 
-  public CallSmartContractFunction(final String functionName, final String contractAddress) {
+  public CallSmartContractFunction(
+      final String functionName, final String contractAddress, final long chainId) {
     this.functionName = functionName;
     this.contractAddress = contractAddress;
+    this.chainId = chainId;
   }
 
   @Override
@@ -46,7 +49,7 @@ public class CallSmartContractFunction implements Transaction<EthSendTransaction
     final Function function =
         new Function(functionName, Collections.emptyList(), Collections.emptyList());
     final RawTransactionManager transactionManager =
-        new RawTransactionManager(node.eth(), BENEFACTOR_ONE);
+        new RawTransactionManager(node.eth(), BENEFACTOR_ONE, chainId);
     try {
       return transactionManager.sendTransaction(
           GAS_PRICE, GAS_LIMIT, contractAddress, FunctionEncoder.encode(function), BigInteger.ZERO);

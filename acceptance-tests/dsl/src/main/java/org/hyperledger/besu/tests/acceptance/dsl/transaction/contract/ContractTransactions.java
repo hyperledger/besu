@@ -32,7 +32,7 @@ public class ContractTransactions {
   }
 
   public CallSmartContractFunction callSmartContract(
-      final String functionName, final String contractAddress) {
-    return new CallSmartContractFunction(functionName, contractAddress);
+      final String functionName, final String contractAddress, final long chainId) {
+    return new CallSmartContractFunction(functionName, contractAddress, chainId);
   }
 }

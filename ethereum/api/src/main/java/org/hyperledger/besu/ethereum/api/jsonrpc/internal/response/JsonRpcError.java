@@ -39,6 +39,7 @@ public enum JsonRpcError {
       "The method eth_sendTransaction is not supported. Use eth_sendRawTransaction to send a signed transaction to Besu."),
   ETH_SEND_TX_ALREADY_KNOWN(-32000, "Known transaction"),
   ETH_SEND_TX_REPLACEMENT_UNDERPRICED(-32000, "Replacement transaction underpriced"),
+  ETH_FORBIDDEN_UNPROTECTED_TRANSACTION(-32000, "Forbidden unprotected transactions"),
   // P2P related errors
   P2P_DISABLED(-32000, "P2P has been disabled. This functionality is not available"),
   P2P_NETWORK_NOT_RUNNING(-32000, "P2P network is not running"),

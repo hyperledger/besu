@@ -38,29 +38,29 @@ public class AccountSmartContractPermissioningAcceptanceTest
     otherAccount = accounts.createAccount("other-account");
 
     // ensure primary benefactor is permitted (account used to permit/forbid other accounts)
-    node.execute(allowAccount(accounts.getPrimaryBenefactor()));
+    node.execute(allowAccount(accounts.getPrimaryBenefactor(), 999));
     node.verify(accountIsAllowed(accounts.getPrimaryBenefactor()));
 
     // ensure allowedSender has got some ether available
-    node.execute(accountTransactions.createTransfer(allowedSender, 10));
+    node.execute(accountTransactions.createTransfer(allowedSender, 10, 999));
     node.verify(allowedSender.balanceEquals(10));
   }
 
   @Test
   public void allowedAccountCanTransferValue() {
-    node.execute(allowAccount(allowedSender));
+    node.execute(allowAccount(allowedSender, 999));
     node.verify(accountIsAllowed(allowedSender));
 
-    node.execute(accountTransactions.createTransfer(allowedSender, otherAccount, 5));
+    node.execute(accountTransactions.createTransfer(allowedSender, otherAccount, 5, 999));
     node.verify(otherAccount.balanceEquals(5));
   }
 
   @Test
   public void forbiddenAccountCannotTransferValue() {
-    node.execute(forbidAccount(allowedSender));
+    node.execute(forbidAccount(allowedSender, 999));
     node.verify(accountIsForbidden(allowedSender));
 
-    node.execute(accountTransactions.createTransfer(allowedSender, otherAccount, 5));
+    node.execute(accountTransactions.createTransfer(allowedSender, otherAccount, 5, 999));
     node.verify(otherAccount.balanceDoesNotChange(0));
   }
 }

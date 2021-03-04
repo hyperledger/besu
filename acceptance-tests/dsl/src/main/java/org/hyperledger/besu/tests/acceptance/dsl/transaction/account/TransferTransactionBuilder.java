@@ -26,6 +26,7 @@ public class TransferTransactionBuilder {
   private Amount transferAmount;
   private Amount gasPrice;
   private BigInteger nonce;
+  private Long chainId;
 
   public TransferTransactionBuilder sender(final Account sender) {
     this.sender = sender;
@@ -54,10 +55,22 @@ public class TransferTransactionBuilder {
     return this;
   }
 
+  public TransferTransactionBuilder chainId(final long chainId) {
+    this.chainId = chainId;
+    return this;
+  }
+
   public TransferTransaction build() {
     validateSender();
     validateTransferAmount();
-    return new TransferTransaction(sender, recipient, transferAmount, gasPrice, nonce);
+    validateChainId();
+    return new TransferTransaction(sender, recipient, transferAmount, gasPrice, nonce, chainId);
+  }
+
+  private void validateChainId() {
+    if (chainId == null) {
+      throw new IllegalArgumentException("NULL chainId is not allowed.");
+    }
   }
 
   private void validateSender() {

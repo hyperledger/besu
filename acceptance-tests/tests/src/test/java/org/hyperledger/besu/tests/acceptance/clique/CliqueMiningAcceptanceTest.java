@@ -32,13 +32,13 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
 
-    minerNode.execute(accountTransactions.createTransfer(sender, 50));
+    minerNode.execute(accountTransactions.createTransfer(sender, 50, 4L));
     cluster.verify(sender.balanceEquals(50));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1, 4L));
     cluster.verify(receiver.balanceEquals(1));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2, 4L));
     cluster.verify(receiver.balanceEquals(3));
   }
 
@@ -52,13 +52,13 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBase {
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
 
-    minerNode1.execute(accountTransactions.createTransfer(sender, 50));
+    minerNode1.execute(accountTransactions.createTransfer(sender, 50, 4L));
     cluster.verify(sender.balanceEquals(50));
 
-    minerNode2.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
+    minerNode2.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1, 4L));
     cluster.verify(receiver.balanceEquals(1));
 
-    minerNode3.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    minerNode3.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2, 4L));
     cluster.verify(receiver.balanceEquals(3));
   }
 

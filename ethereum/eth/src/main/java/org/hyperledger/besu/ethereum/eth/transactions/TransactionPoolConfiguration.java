@@ -31,6 +31,7 @@ public interface TransactionPoolConfiguration {
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
+  boolean ALLOW_UNPROTECTED_TRANSACTIONS = false;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -67,5 +68,10 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Wei getTxFeeCap() {
     return DEFAULT_RPC_TX_FEE_CAP;
+  }
+
+  @Value.Default
+  default boolean isUnprotectedTransactionsAllowed() {
+    return ALLOW_UNPROTECTED_TRANSACTIONS;
   }
 }

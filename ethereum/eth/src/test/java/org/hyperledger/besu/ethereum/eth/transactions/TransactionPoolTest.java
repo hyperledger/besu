@@ -735,6 +735,38 @@ public class TransactionPoolTest {
     assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
   }
 
+  @Test
+  public void shouldRejectUnprotectedTransactions() {
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthContext ethContext = ethProtocolManager.ethContext();
+    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
+    final Wei twoEthers = Wei.fromEth(2);
+    TransactionPool transactionPool =
+        new TransactionPool(
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            Optional.of(pendingBatchAddedListener),
+            syncState,
+            ethContext,
+            peerTransactionTracker,
+            Optional.of(peerPendingTransactionTracker),
+            Wei.ZERO,
+            metricsSystem,
+            Optional.empty(),
+            ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
+
+    final TransactionTestFixture builder = new TransactionTestFixture();
+    final Transaction transactionLocal =
+        builder.nonce(1).chainId(Optional.empty()).createTransaction(KEY_PAIR1);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transactionLocal);
+    assertThat(result.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.UNPROTECTED_TRANSACTION);
+  }
+
   private void assertTransactionPending(final Transaction t) {
     assertThat(transactions.getTransactionByHash(t.getHash())).contains(t);
   }

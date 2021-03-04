@@ -77,7 +77,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
     waitForBlockHeight(bootnode, 5);
 
     nodeA.verify(beneficiary.balanceEquals(0));
-    nodeA.execute(accountTransactions.createTransfer(sender, beneficiary, 1));
+    nodeA.execute(accountTransactions.createTransfer(sender, beneficiary, 1, 4));
     nodeA.verify(beneficiary.balanceEquals(1));
 
     permissionedCluster.startNode(nodeC);

@@ -83,12 +83,12 @@ class AccountSmartContractPermissioningAcceptanceTestBase extends AcceptanceTest
     super.tearDownAcceptanceTestBase();
   }
 
-  protected Transaction<Hash> allowAccount(final Account account) {
-    return smartContractAccountPermissioning.allowAccount(CONTRACT_ADDRESS, account);
+  protected Transaction<Hash> allowAccount(final Account account, final long chainId) {
+    return smartContractAccountPermissioning.allowAccount(CONTRACT_ADDRESS, account, chainId);
   }
 
-  protected Transaction<Hash> forbidAccount(final Account account) {
-    return smartContractAccountPermissioning.forbidAccount(CONTRACT_ADDRESS, account);
+  protected Transaction<Hash> forbidAccount(final Account account, final long chainId) {
+    return smartContractAccountPermissioning.forbidAccount(CONTRACT_ADDRESS, account, chainId);
   }
 
   protected Condition accountIsAllowed(final Account account) {

@@ -40,12 +40,17 @@ public class AccountSmartContractPermissioningForbidAccountTransaction
   private final Account sender;
   private final Address contractAddress;
   private final Address account;
+  private final long chainId;
 
   public AccountSmartContractPermissioningForbidAccountTransaction(
-      final Account sender, final Address contractAddress, final Address account) {
+      final Account sender,
+      final Address contractAddress,
+      final Address account,
+      final long chainId) {
     this.sender = sender;
     this.contractAddress = contractAddress;
     this.account = account;
+    this.chainId = chainId;
   }
 
   @Override
@@ -74,6 +79,6 @@ public class AccountSmartContractPermissioningForbidAccountTransaction
             payload.toString());
 
     return toHexString(
-        TransactionEncoder.signMessage(transaction, sender.web3jCredentialsOrThrow()));
+        TransactionEncoder.signMessage(transaction, chainId, sender.web3jCredentialsOrThrow()));
   }
 }

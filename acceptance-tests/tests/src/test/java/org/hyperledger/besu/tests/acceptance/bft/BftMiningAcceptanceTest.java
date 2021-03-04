@@ -38,13 +38,13 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
 
-    minerNode.execute(accountTransactions.createTransfer(sender, 50));
+    minerNode.execute(accountTransactions.createTransfer(sender, 50, 4));
     cluster.verify(sender.balanceEquals(50));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1, 4));
     cluster.verify(receiver.balanceEquals(1));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2, 4));
     cluster.verify(receiver.balanceEquals(3));
   }
 
@@ -61,16 +61,16 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
 
-    minerNode1.execute(accountTransactions.createTransfer(sender, 50));
+    minerNode1.execute(accountTransactions.createTransfer(sender, 50, 4));
     cluster.verify(sender.balanceEquals(50));
 
-    minerNode2.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
+    minerNode2.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1, 4));
     cluster.verify(receiver.balanceEquals(1));
 
-    minerNode3.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    minerNode3.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2, 4));
     cluster.verify(receiver.balanceEquals(3));
 
-    minerNode4.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 3));
+    minerNode4.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 3, 4));
     cluster.verify(receiver.balanceEquals(6));
   }
 
@@ -92,13 +92,14 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
 
-    validator1.execute(accountTransactions.createTransfer(sender, 50));
+    validator1.execute(accountTransactions.createTransfer(sender, 50, 4));
     cluster.verify(sender.balanceEquals(50));
 
-    validator2.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
+    validator2.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1, 4));
     cluster.verify(receiver.balanceEquals(1));
 
-    nonValidatorNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    nonValidatorNode.execute(
+        accountTransactions.createIncrementalTransfers(sender, receiver, 2, 4));
     cluster.verify(receiver.balanceEquals(3));
   }
 
@@ -119,7 +120,7 @@ public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
     final Account receiver = accounts.createAccount("account2");
 
     cluster.stopNode(nonProposerNode);
-    validators.get(0).execute(accountTransactions.createTransfer(receiver, 80));
+    validators.get(0).execute(accountTransactions.createTransfer(receiver, 80, 4));
 
     cluster.verifyOnActiveNodes(receiver.balanceEquals(80));
   }
