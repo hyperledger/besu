@@ -12,29 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft;
+package org.hyperledger.besu.consensus.qbft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-public class QbftConsensusRoundIdentifier extends ConsensusRoundIdentifier {
+public abstract class QbftPayload implements Payload {
 
-  public QbftConsensusRoundIdentifier(final long sequence, final int round) {
-    super(sequence, round);
+  protected void writeConsensusRound(final RLPOutput out) {
+    out.writeLongScalar(getRoundIdentifier().getSequenceNumber());
+    out.writeIntScalar(getRoundIdentifier().getRoundNumber());
   }
 
-  public QbftConsensusRoundIdentifier(final ConsensusRoundIdentifier consensusRoundIdentifier) {
-    super(consensusRoundIdentifier.getSequenceNumber(), consensusRoundIdentifier.getRoundNumber());
-  }
-
-  public static QbftConsensusRoundIdentifier readFrom(final RLPInput in) {
-    return new QbftConsensusRoundIdentifier(in.readLongScalar(), in.readIntScalar());
-  }
-
-  @Override
-  public void writeTo(final RLPOutput out) {
-    out.writeLongScalar(getSequenceNumber());
-    out.writeIntScalar(getRoundNumber());
+  protected static ConsensusRoundIdentifier readConsensusRound(final RLPInput in) {
+    return new ConsensusRoundIdentifier(in.readLongScalar(), in.readIntScalar());
   }
 }

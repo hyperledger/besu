@@ -101,6 +101,7 @@ public class BftExtraData implements ParsedExtraData {
     } else {
       vote = Optional.of(Vote.readFrom(rlpInput));
     }
+
     final int round = rlpInput.readInt();
     final List<SECPSignature> seals =
         rlpInput.readList(

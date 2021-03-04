@@ -48,7 +48,7 @@ public class CommitTest {
                 .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0));
 
     final SignedData<CommitPayload> signedCommitPayload =
-        SignedData.create(commitPayload, nodeKey.sign(hashForSignature(commitPayload)));
+        SignedData.create(commitPayload, nodeKey.sign(qbftHashForSignature(commitPayload)));
 
     final Commit commitMsg = new Commit(signedCommitPayload);
 

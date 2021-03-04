@@ -15,8 +15,9 @@
 package org.hyperledger.besu.consensus.qbft.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
+import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
 
+import java.util.Optional;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -25,9 +26,6 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Hash;
-
-import java.util.Optional;
-
 import org.junit.Test;
 
 public class RoundChangePayloadValidatorTest {
@@ -139,21 +137,9 @@ public class RoundChangePayloadValidatorTest {
     assertThat(messageValidator.validate(signedPayload)).isFalse();
   }
 
-  @Test
-  public void roundChangeWithNegativeTargetRoundFails() {
-    final RoundChangePayload payload =
-        new RoundChangePayload(
-            new ConsensusRoundIdentifier(chainHeight, -3),
-            Optional.of(new PreparedRoundMetadata(preparedBlockHash, 1)));
-
-    final SignedData<RoundChangePayload> signedPayload =
-        createSignedPayload(payload, validators.getNode(0).getNodeKey());
-    assertThat(messageValidator.validate(signedPayload)).isFalse();
-  }
-
   private SignedData<RoundChangePayload> createSignedPayload(
       final RoundChangePayload payload, final NodeKey nodeKey) {
-    final SECPSignature signature = nodeKey.sign(hashForSignature(payload));
+    final SECPSignature signature = nodeKey.sign(qbftHashForSignature(payload));
     return SignedData.create(payload, signature);
   }
 }

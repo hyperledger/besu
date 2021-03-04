@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.qbft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
-import org.hyperledger.besu.consensus.qbft.QbftConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -25,21 +24,19 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class PreparePayload implements Payload {
-
+public class PreparePayload extends QbftPayload {
   private static final int TYPE = QbftV1.PREPARE;
-  private final QbftConsensusRoundIdentifier roundIdentifier;
+  private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
 
   public PreparePayload(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
-    this.roundIdentifier = new QbftConsensusRoundIdentifier(roundIdentifier);
+    this.roundIdentifier = roundIdentifier;
     this.digest = digest;
   }
 
   public static PreparePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final QbftConsensusRoundIdentifier roundIdentifier =
-        QbftConsensusRoundIdentifier.readFrom(rlpInput);
+    final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
     final Hash digest = Payload.readDigest(rlpInput);
     rlpInput.leaveList();
     return new PreparePayload(roundIdentifier, digest);
@@ -48,7 +45,7 @@ public class PreparePayload implements Payload {
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    roundIdentifier.writeTo(rlpOutput);
+    writeConsensusRound(rlpOutput);
     rlpOutput.writeBytes(digest);
     rlpOutput.endList();
   }
