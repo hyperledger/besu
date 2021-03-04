@@ -100,6 +100,7 @@ public abstract class PeerDiscoveryAgent {
 
   private final StorageProvider storageProvider;
   private final Supplier<List<Bytes>> forkIdSupplier;
+  private String advertisedAddress;
 
   protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
@@ -123,7 +124,7 @@ public abstract class PeerDiscoveryAgent {
     this.config = config;
     this.nodeKey = nodeKey;
 
-    id = nodeKey.getPublicKey().getEncodedBytes();
+    this.id = nodeKey.getPublicKey().getEncodedBytes();
 
     this.storageProvider = storageProvider;
     this.forkIdSupplier = forkIdSupplier;
@@ -147,8 +148,7 @@ public abstract class PeerDiscoveryAgent {
       LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
 
       // override advertised host if we detect an external IP address via NAT manager
-      final String advertisedAddress =
-          natService.queryExternalIPAddress(config.getAdvertisedHost());
+      this.advertisedAddress = natService.queryExternalIPAddress(config.getAdvertisedHost());
 
       return listenForConnections()
           .thenApply(
@@ -166,8 +166,7 @@ public abstract class PeerDiscoveryAgent {
                 this.localNode = Optional.of(ourNode);
                 isActive = true;
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
-                ourNode.setNodeRecord(
-                    addLocalNodeRecord(id, advertisedAddress, tcpPort, discoveryPort));
+                ourNode.setNodeRecord(updateNodeRecord());
                 startController(ourNode);
                 return discoveryPort;
               });
@@ -177,11 +176,7 @@ public abstract class PeerDiscoveryAgent {
     }
   }
 
-  private NodeRecord addLocalNodeRecord(
-      final Bytes nodeId,
-      final String advertisedAddress,
-      final Integer tcpPort,
-      final Integer udpPort) {
+  public NodeRecord updateNodeRecord() {
     final KeyValueStorage keyValueStorage =
         storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
     final NodeRecordFactory nodeRecordFactory = NodeRecordFactory.DEFAULT;
@@ -192,13 +187,16 @@ public abstract class PeerDiscoveryAgent {
             .map(nodeRecordFactory::fromBytes);
 
     final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
+    final Integer discoveryPort = localNode.get().getEnodeURL().getDiscoveryPortOrZero();
+    final Integer listeningPort = localNode.get().getEnodeURL().getListeningPortOrZero();
     return existingNodeRecord
         .filter(
             nodeRecord ->
-                nodeId.equals(nodeRecord.get(EnrField.PKEY_SECP256K1))
+                id.equals(nodeRecord.get(EnrField.PKEY_SECP256K1))
                     && addressBytes.equals(nodeRecord.get(EnrField.IP_V4))
-                    && tcpPort.equals(nodeRecord.get(EnrField.TCP))
-                    && udpPort.equals(nodeRecord.get(EnrField.UDP)))
+                    && discoveryPort.equals(nodeRecord.get(EnrField.TCP))
+                    && listeningPort.equals(nodeRecord.get(EnrField.UDP))
+                    && forkIdSupplier.get().equals(nodeRecord.get("eth")))
         .orElseGet(
             () -> {
               final UInt64 sequenceNumber =
@@ -207,10 +205,10 @@ public abstract class PeerDiscoveryAgent {
                   nodeRecordFactory.createFromValues(
                       sequenceNumber,
                       new EnrField(EnrField.ID, IdentitySchema.V4),
-                      new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(nodeId)),
+                      new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(id)),
                       new EnrField(EnrField.IP_V4, addressBytes),
-                      new EnrField(EnrField.TCP, tcpPort),
-                      new EnrField(EnrField.UDP, udpPort),
+                      new EnrField(EnrField.TCP, discoveryPort),
+                      new EnrField(EnrField.UDP, listeningPort),
                       new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
               nodeRecord.setSignature(
                   nodeKey
@@ -227,6 +225,25 @@ public abstract class PeerDiscoveryAgent {
               return nodeRecord;
             });
   }
+  //
+  //  private NodeRecord updatedNodeRecord(final NodeRecord currentNodeRecord) {
+  //    final DiscoveryPeer localNode = this.localNode.get();
+  //    return localNode
+  //        .getNodeRecord()
+  //        .map(
+  //            nodeRecord -> {
+  //              final EnodeURL enodeURL = localNode.getEnodeURL();
+  //              return NodeRecordFactory.DEFAULT.createFromValues(
+  //                  currentNodeRecord.getSeq().add(1),
+  //                  List.of(
+  //                      new EnrField(EnrField.ID, IdentitySchema.V4),
+  //                      new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(id)),
+  //                      new EnrField(EnrField.IP_V4, advertisedAddress),
+  //                      new EnrField(EnrField.TCP, enodeURL.getListeningPort()),
+  //                      new EnrField(EnrField.UDP, enodeURL.getListeningPort()),
+  //                      new EnrField("eth", Collections.singletonList(forkIdSupplier.get()))));
+  //            });
+  //  }
 
   public void addPeerRequirement(final PeerRequirement peerRequirement) {
     this.peerRequirements.add(peerRequirement);
