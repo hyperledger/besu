@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
@@ -44,9 +45,11 @@ public class IbftProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder ->
-                applyIbftChanges(
-                    blockPeriod, builder, config.isQuorum(), ibftConfig.getCeil2Nby3Block()),
+            ProtocolSpecAdapters.create(
+                0,
+                builder ->
+                    applyIbftChanges(
+                        blockPeriod, builder, config.isQuorum(), ibftConfig.getCeil2Nby3Block())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
