@@ -47,7 +47,7 @@ public class MainnetProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            Function.identity(),
+            ProtocolSpecAdapters.create(0, Function.identity()),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
