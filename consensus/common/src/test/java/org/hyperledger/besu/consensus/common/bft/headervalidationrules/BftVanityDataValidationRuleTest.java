@@ -17,9 +17,11 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
@@ -46,6 +48,8 @@ public class BftVanityDataValidationRuleTest {
             .extraData(new IbftExtraDataEncoder().encode(extraData))
             .buildHeader();
 
-    return validationRule.validate(header, null, null);
+    final ProtocolContext context =
+        new ProtocolContext(null, null, setupContextWithValidators(emptyList()));
+    return validationRule.validate(header, null, context);
   }
 }
