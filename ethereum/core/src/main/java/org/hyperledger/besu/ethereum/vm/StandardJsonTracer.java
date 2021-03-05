@@ -79,7 +79,6 @@ public class StandardJsonTracer implements OperationTracer {
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add(shortBytes(messageFrame.getStackItem(i)));
     }
-    final ArrayNode returnStack = traceLine.putArray("returnStack");
     Bytes returnData = messageFrame.getReturnData();
     traceLine.put("returnData", returnData.size() > 0 ? returnData.toHexString() : null);
     traceLine.put("depth", messageFrame.getMessageStackDepth() + 1);
