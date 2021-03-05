@@ -20,8 +20,7 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
-import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99Protocol;
@@ -82,7 +81,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected BftContext createConsensusContext(
+  protected IbftLegacyContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     final IbftLegacyConfigOptions ibftConfig =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getIbftLegacyConfigOptions();
@@ -96,9 +95,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
     final VoteProposer voteProposer = new VoteProposer();
 
-    // TODO change legacy to use a bftEncoder
-    return new BftContext(
-        voteTallyCache, voteProposer, epochManager, blockInterface, new IbftExtraDataEncoder());
+    return new IbftLegacyContext(voteTallyCache, voteProposer, epochManager, blockInterface);
   }
 
   @Override
