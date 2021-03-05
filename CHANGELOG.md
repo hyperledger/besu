@@ -1,6 +1,6 @@
 # Changelog
 
-## 21.1.2
+## 21.1.1
 
 ### Additions and Improvements
 * Added `besu_transaction_pool_transactions` to the reported metrics, counting the mempool size [\#1869](https://github.com/hyperledger/besu/pull/1869)
@@ -18,25 +18,16 @@
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
-## 21.1.1
-
-### Additions and Improvements
-* Berlin Network Upgrade: this release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are:
-  * Ropsten 9_812_189 (10 Mar 2021)
-  * Goerli 4_460_644 (17 Mar 2021)
-  * Rinkeby 8_290_928 (24 Mar 2021)
-  * Ethereum 12_244_000 (14 Apr 2021)
-### Bug Fixes
-
-### Early Access Features
-
-#### Previously identified known issues
-
 ## 21.1.0
 
 ## 21.1.0 Features
 
 Features added between 20.10.0 to 21.1.0 include:
+* Berlin Network Upgrade: this release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are: 
+  * Ropsten 9_812_189 (10 Mar 2021)
+  * Goerli 4_460_644 (17 Mar 2021)
+  * Rinkeby 8_290_928 (24 Mar 2021)
+  * Ethereum 12_244_000 (14 Apr 2021)
 * Besu Launcher: Besu now has support for the [Quorum Mainnet Launcher](https://github.com/ConsenSys/quorum-mainnet-launcher) which makes it easy for users to configure and launch Besu on the Ethereum mainnet.
 * Bonsai Tries: A new database format which reduces storage requirements and improves performance for access to recent state. _Note: only full sync is currently supported._
 * Miner Data JSON-RPC: The `eth_getMinerDataByBlockHash` and `eth_getMinerDataByBlockNumber` endpoints return miner rewards and coinbase address for a given block. 
