@@ -17,11 +17,6 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
-import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -32,33 +27,17 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class BftCoinbaseValidationRuleTest {
 
-  public static BlockHeader createProposedBlockHeader(
-      final NodeKey proposerNodeKey,
-      final List<Address> validators,
-      final List<NodeKey> committerNodeKeys) {
+  public static BlockHeader createProposedBlockHeader(final NodeKey proposerNodeKey) {
 
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
     builder.number(1); // must NOT be block 0, as that should not contain seals at all
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
-    final BlockHeader header = builder.buildHeader();
-
-    final BftExtraData bftExtraData =
-        BftExtraDataFixture.createExtraData(
-            header,
-            Bytes.wrap(new byte[BftExtraDataEncoder.EXTRA_VANITY_LENGTH]),
-            Optional.of(Vote.authVote(Address.fromHexString("1"))),
-            validators,
-            committerNodeKeys);
-
-    builder.extraData(new IbftExtraDataEncoder().encode(bftExtraData));
     return builder.buildHeader();
   }
 
@@ -70,14 +49,12 @@ public class BftCoinbaseValidationRuleTest {
 
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
-    final List<NodeKey> committers = Lists.newArrayList(proposerNodeKey);
-
     final ProtocolContext context =
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
-    BlockHeader header = createProposedBlockHeader(proposerNodeKey, validators, committers);
+    BlockHeader header = createProposedBlockHeader(proposerNodeKey);
 
     assertThat(coinbaseValidationRule.validate(header, null, context)).isTrue();
   }
@@ -92,14 +69,12 @@ public class BftCoinbaseValidationRuleTest {
 
     final List<Address> validators = Lists.newArrayList(otherValidatorNodeAddress);
 
-    final List<NodeKey> committers = Lists.newArrayList(otherValidatorNodeKey);
-
     final ProtocolContext context =
         new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
-    BlockHeader header = createProposedBlockHeader(proposerNodeKey, validators, committers);
+    BlockHeader header = createProposedBlockHeader(proposerNodeKey);
 
     assertThat(coinbaseValidationRule.validate(header, null, context)).isFalse();
   }

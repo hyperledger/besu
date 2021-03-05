@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.qbft.test.round;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -25,10 +25,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRound;
@@ -88,27 +88,31 @@ public class QbftRoundIntegrationTest {
 
   @Before
   public void setup() {
-    protocolContext =
-        new ProtocolContext(blockChain, worldStateArchive, setupContextWithValidators(emptyList()));
-
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
     when(nodeKey.sign(any())).thenThrow(new SecurityModuleException("Hsm Is Down"));
 
+    final QbftExtraDataEncoder qbftExtraDataEncoder = new QbftExtraDataEncoder();
     throwingMessageFactory = new MessageFactory(nodeKey);
     transmitter = new QbftMessageTransmitter(throwingMessageFactory, multicaster);
 
     final BftExtraData proposedExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
-    headerTestFixture.extraData(new IbftExtraDataEncoder().encode(proposedExtraData));
+    headerTestFixture.extraData(qbftExtraDataEncoder.encode(proposedExtraData));
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
     proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
 
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(true);
+
+    protocolContext =
+        new ProtocolContext(
+            blockChain,
+            worldStateArchive,
+            setupContextWithBftExtraDataEncoder(emptyList(), qbftExtraDataEncoder));
   }
 
   @Test

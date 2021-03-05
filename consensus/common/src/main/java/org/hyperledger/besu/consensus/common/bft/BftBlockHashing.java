@@ -75,7 +75,7 @@ public class BftBlockHashing {
    * Recovers the {@link Address} for each validator that contributed a committed seal to the block.
    *
    * @param header the block header that was signed by the committed seals
-   * @param bftExtraData the parsed {@link IbftExtraDataEncoder} from the header
+   * @param bftExtraData the parsed {@link BftExtraData} from the header
    * @return the addresses of validators that provided a committed seal
    */
   public List<Address> recoverCommitterAddresses(

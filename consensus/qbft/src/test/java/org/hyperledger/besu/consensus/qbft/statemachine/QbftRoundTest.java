@@ -32,10 +32,10 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
@@ -111,7 +111,7 @@ public class QbftRoundTest {
     proposedExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
-    headerTestFixture.extraData(new IbftExtraDataEncoder().encode(proposedExtraData));
+    headerTestFixture.extraData(new QbftExtraDataEncoder().encode(proposedExtraData));
     headerTestFixture.number(1);
 
     final BlockHeader header = headerTestFixture.buildHeader();
@@ -224,7 +224,7 @@ public class QbftRoundTest {
             roundTimer);
 
     final Hash commitSealHash =
-        new BftBlockHashing(new IbftExtraDataEncoder())
+        new BftBlockHashing(new QbftExtraDataEncoder())
             .calculateDataHashForCommittedSeal(proposedBlock.getHeader(), proposedExtraData);
     final SECPSignature localCommitSeal = nodeKey.sign(commitSealHash);
 
@@ -303,7 +303,7 @@ public class QbftRoundTest {
         .multicastPrepare(eq(roundIdentifier), eq(blockCaptor.getValue().getHash()));
 
     final BftExtraData proposedExtraData =
-        new IbftExtraDataEncoder().decode(blockCaptor.getValue().getHeader());
+        new QbftExtraDataEncoder().decode(blockCaptor.getValue().getHeader());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which

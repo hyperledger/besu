@@ -20,7 +20,6 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;

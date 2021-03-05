@@ -19,30 +19,15 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class ProposedBlockHelpers {
 
   public static Block createProposalBlock(
       final List<Address> validators, final ConsensusRoundIdentifier roundId) {
-    final BftExtraData bftExtraData =
-        new BftExtraData(
-            Bytes.wrap(new byte[32]),
-            Collections.emptyList(),
-            Optional.empty(),
-            roundId.getRoundNumber(),
-            validators);
-    final Bytes extraData = new IbftExtraDataEncoder().encode(bftExtraData);
     final BlockOptions blockOptions =
         BlockOptions.create()
-            .setExtraData(extraData)
             .setBlockNumber(roundId.getSequenceNumber())
-            .setBlockHeaderFunctions(
-                BftBlockHeaderFunctions.forCommittedSeal(new IbftExtraDataEncoder()))
             .hasOmmers(false)
             .hasTransactions(false);
 

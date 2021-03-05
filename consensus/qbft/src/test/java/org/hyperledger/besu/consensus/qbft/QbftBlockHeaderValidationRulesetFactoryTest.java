@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -324,6 +323,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
       final BlockHeader parent,
       final HeaderModifier modifier) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
+    final QbftExtraDataEncoder qbftExtraDataEncoder = new QbftExtraDataEncoder();
 
     if (parent != null) {
       builder.parentHash(parent.getHash());
@@ -333,8 +333,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     builder.timestamp(6000 * number);
     builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
-    builder.blockHeaderFunctions(
-        BftBlockHeaderFunctions.forCommittedSeal(new IbftExtraDataEncoder()));
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(qbftExtraDataEncoder));
 
     if (modifier != null) {
       modifier.update(builder);
@@ -347,9 +346,10 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),
-            0xDEADBEEF);
+            0xDEADBEEF,
+            qbftExtraDataEncoder);
 
-    builder.extraData(new IbftExtraDataEncoder().encode(bftExtraData));
+    builder.extraData(qbftExtraDataEncoder.encode(bftExtraData));
     return builder;
   }
 

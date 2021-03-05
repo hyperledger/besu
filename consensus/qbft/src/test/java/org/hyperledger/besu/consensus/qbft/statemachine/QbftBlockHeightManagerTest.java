@@ -34,12 +34,12 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -115,7 +115,7 @@ public class QbftBlockHeightManagerTest {
     final BftExtraData extraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
 
-    headerTestFixture.extraData(new IbftExtraDataEncoder().encode(extraData));
+    headerTestFixture.extraData(new QbftExtraDataEncoder().encode(extraData));
     final BlockHeader header = headerTestFixture.buildHeader();
     createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
   }

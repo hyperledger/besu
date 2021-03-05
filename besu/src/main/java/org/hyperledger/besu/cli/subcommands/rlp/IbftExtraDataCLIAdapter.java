@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.subcommands.rlp;
 
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.io.IOException;

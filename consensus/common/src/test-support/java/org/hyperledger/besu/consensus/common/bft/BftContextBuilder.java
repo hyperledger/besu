@@ -29,6 +29,21 @@ import java.util.Collection;
 public class BftContextBuilder {
 
   public static BftContext setupContextWithValidators(final Collection<Address> validators) {
+    final BftExtraDataEncoder mockExtraDataEncoder =
+        mock(BftExtraDataEncoder.class, withSettings().lenient());
+    return setupContextWithBftExtraDataEncoder(validators, mockExtraDataEncoder);
+  }
+
+  public static BftContext setupContextWithBftExtraData(
+      final Collection<Address> validators, final BftExtraData bftExtraData) {
+    final BftExtraDataEncoder mockExtraDataEncoder =
+        mock(BftExtraDataEncoder.class, withSettings().lenient());
+    when(mockExtraDataEncoder.decode(any())).thenReturn(bftExtraData);
+    return setupContextWithBftExtraDataEncoder(validators, mockExtraDataEncoder);
+  }
+
+  public static BftContext setupContextWithBftExtraDataEncoder(
+      final Collection<Address> validators, final BftExtraDataEncoder bftExtraDataEncoder) {
     final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
     final VoteTallyCache mockCache = mock(VoteTallyCache.class, withSettings().lenient());
     final VoteTally mockVoteTally = mock(VoteTally.class, withSettings().lenient());
@@ -36,7 +51,7 @@ public class BftContextBuilder {
     when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
     when(mockVoteTally.getValidators()).thenReturn(validators);
     when(bftContext.getVoteProposer()).thenReturn(new VoteProposer());
-    when(bftContext.getBftExtraDataEncoder()).thenReturn(new IbftExtraDataEncoder());
+    when(bftContext.getBftExtraDataEncoder()).thenReturn(bftExtraDataEncoder);
 
     return bftContext;
   }

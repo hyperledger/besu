@@ -18,8 +18,8 @@ import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -163,7 +163,7 @@ public class GossipTest {
   public void futureMessageGetGossipedLater() {
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(
-            new IbftExtraDataEncoder(), block, peers.sign(block.getHash()));
+            new QbftExtraDataEncoder(), block, peers.sign(block.getHash()));
 
     final ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
     final Prepare futurePrepare = sender.injectPrepare(futureRoundId, block.getHash());

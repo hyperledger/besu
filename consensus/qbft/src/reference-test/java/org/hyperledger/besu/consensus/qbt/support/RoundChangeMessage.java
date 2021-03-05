@@ -17,9 +17,9 @@ package org.hyperledger.besu.consensus.qbt.support;
 import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions.forCommittedSeal;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -64,7 +64,7 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
   public BftMessage<RoundChangePayload> toBftMessage() {
     final Optional<RLPInput> blockRlp = this.block.map(s -> RLP.input(Bytes.fromHexString(s)));
     final Optional<Block> block =
-        blockRlp.map(r -> Block.readFrom(r, forCommittedSeal(new IbftExtraDataEncoder())));
+        blockRlp.map(r -> Block.readFrom(r, forCommittedSeal(new QbftExtraDataEncoder())));
     final List<SignedData<PreparePayload>> signedPrepares =
         prepares.stream().map(PrepareMessage::toSignedPreparePayload).collect(Collectors.toList());
     return new RoundChange(

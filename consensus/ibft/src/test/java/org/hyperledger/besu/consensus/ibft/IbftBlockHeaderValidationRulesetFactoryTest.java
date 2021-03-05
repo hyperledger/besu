@@ -22,7 +22,6 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -318,6 +317,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
 
+    final IbftExtraDataEncoder ibftExtraDataEncoder = new IbftExtraDataEncoder();
     final BftExtraData bftExtraData =
         BftExtraDataFixture.createExtraData(
             builder.buildHeader(),
@@ -325,9 +325,10 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),
-            0xDEADBEEF);
+            0xDEADBEEF,
+            ibftExtraDataEncoder);
 
-    builder.extraData(new IbftExtraDataEncoder().encode(bftExtraData));
+    builder.extraData(ibftExtraDataEncoder.encode(bftExtraData));
     return builder;
   }
 }

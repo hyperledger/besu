@@ -37,7 +37,6 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
@@ -53,6 +52,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
@@ -158,7 +158,7 @@ public class TestContextBuilder {
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
   private boolean useGossip = false;
-  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -258,7 +258,7 @@ public class TestContextBuilder {
     final BftExtraData extraData =
         new BftExtraData(
             Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
-    headerTestFixture.extraData(new IbftExtraDataEncoder().encode(extraData));
+    headerTestFixture.extraData(new QbftExtraDataEncoder().encode(extraData));
     headerTestFixture.mixHash(BftHelpers.EXPECTED_MIX_HASH);
     headerTestFixture.difficulty(Difficulty.ONE);
     headerTestFixture.ommersHash(Hash.EMPTY_LIST_HASH);
@@ -294,7 +294,7 @@ public class TestContextBuilder {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
 
-    final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+    final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
             genesisConfigOptions,

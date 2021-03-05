@@ -33,16 +33,19 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQueryService {
 
+  private final BftBlockHashing bftBlockHashing;
   private final BftExtraDataEncoder bftExtraDataEncoder;
   private final String consensusMechanismName;
 
   public BftQueryServiceImpl(
       final BlockInterface blockInterface,
+      final BftBlockHashing bftBlockHashing,
       final BftExtraDataEncoder bftExtraDataEncoder,
       final Blockchain blockchain,
       final NodeKey nodeKey,
       final String consensusMechanismName) {
     super(blockInterface, blockchain, nodeKey);
+    this.bftBlockHashing = bftBlockHashing;
     this.bftExtraDataEncoder = bftExtraDataEncoder;
     this.consensusMechanismName = consensusMechanismName;
   }
@@ -61,8 +64,7 @@ public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQuery
     final BftExtraData extraData = bftExtraDataEncoder.decode(headerFromChain);
 
     return Collections.unmodifiableList(
-        new BftBlockHashing(bftExtraDataEncoder)
-            .recoverCommitterAddresses(headerFromChain, extraData));
+        bftBlockHashing.recoverCommitterAddresses(headerFromChain, extraData));
   }
 
   @Override

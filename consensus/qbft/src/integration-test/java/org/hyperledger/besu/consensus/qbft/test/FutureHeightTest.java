@@ -21,8 +21,8 @@ import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
@@ -59,7 +59,7 @@ public class FutureHeightTest {
   private final ConsensusRoundIdentifier futureHeightRoundId = new ConsensusRoundIdentifier(2, 0);
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
-  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
 
   @Test
   public void messagesForFutureHeightAreBufferedUntilChainHeightCatchesUp() {

@@ -21,7 +21,7 @@ import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99Protocol;

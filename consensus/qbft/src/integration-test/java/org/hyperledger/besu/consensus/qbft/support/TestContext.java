@@ -18,10 +18,10 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
-import org.hyperledger.besu.consensus.common.bft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -101,7 +101,7 @@ public class TestContext {
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
         .coinbase(proposer)
-        .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(new IbftExtraDataEncoder()));
+        .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataEncoder()));
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
 
     return new Block(newHeader, block.getBody());
