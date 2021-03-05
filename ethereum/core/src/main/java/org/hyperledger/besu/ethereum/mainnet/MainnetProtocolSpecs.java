@@ -427,9 +427,6 @@ public abstract class MainnetProtocolSpecs {
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
                     quorumCompatibilityMode))
-        .evmBuilder(
-            gasCalculator ->
-                MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::berlin)
         .transactionReceiptFactory(
             enableRevertReason
