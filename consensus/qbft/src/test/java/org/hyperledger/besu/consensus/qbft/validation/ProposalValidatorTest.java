@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.qbft.validation;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
@@ -29,6 +29,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
@@ -87,11 +88,15 @@ public class ProposalValidatorTest {
   private ProtocolContext protocolContext;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
+  final QbftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
 
   @Before
   public void setup() {
     protocolContext =
-        new ProtocolContext(blockChain, worldStateArchive, setupContextWithValidators(emptyList()));
+        new ProtocolContext(
+            blockChain,
+            worldStateArchive,
+            setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder));
 
     // typically tests require the blockValidation to be successful
     when(blockValidator.validateAndProcessBlock(
@@ -109,7 +114,8 @@ public class ProposalValidatorTest {
     final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, roundNumber);
 
     return new RoundSpecificItems(
-        ProposedBlockHelpers.createProposalBlock(validators.getNodeAddresses(), roundIdentifier),
+        ProposedBlockHelpers.createProposalBlock(
+            validators.getNodeAddresses(), roundIdentifier, bftExtraDataEncoder),
         roundIdentifier,
         new ProposalValidator(
             blockValidator,

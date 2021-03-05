@@ -19,7 +19,11 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class ProposedBlockHelpers {
 
@@ -28,6 +32,32 @@ public class ProposedBlockHelpers {
     final BlockOptions blockOptions =
         BlockOptions.create()
             .setBlockNumber(roundId.getSequenceNumber())
+            .hasOmmers(false)
+            .hasTransactions(false);
+
+    if (validators.size() > 0) {
+      blockOptions.setCoinbase(validators.get(0));
+    }
+    return new BlockDataGenerator().block(blockOptions);
+  }
+
+  public static Block createProposalBlock(
+      final List<Address> validators,
+      final ConsensusRoundIdentifier roundId,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
+    final Bytes extraData =
+        bftExtraDataEncoder.encode(
+            new BftExtraData(
+                Bytes.wrap(new byte[32]),
+                Collections.emptyList(),
+                Optional.empty(),
+                roundId.getRoundNumber(),
+                validators));
+    final BlockOptions blockOptions =
+        BlockOptions.create()
+            .setExtraData(extraData)
+            .setBlockNumber(roundId.getSequenceNumber())
+            .setBlockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder))
             .hasOmmers(false)
             .hasTransactions(false);
 
