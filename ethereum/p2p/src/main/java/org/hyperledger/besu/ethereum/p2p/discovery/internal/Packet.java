@@ -190,20 +190,31 @@ public class Packet {
   }
 
   private static Bytes encodeSignature(final SECPSignature signature) {
-    final MutableBytes encoded = MutableBytes.create(65);
+    final MutableBytes encoded =
+        MutableBytes.create(SIGNATURE_ALGORITHM.get().getSignatureByteLength());
     UInt256.valueOf(signature.getR()).toBytes().copyTo(encoded, 0);
-    UInt256.valueOf(signature.getS()).toBytes().copyTo(encoded, 32);
+    UInt256.valueOf(signature.getS())
+        .toBytes()
+        .copyTo(encoded, SIGNATURE_ALGORITHM.get().getPrivateKeyByteLength());
     final int v = signature.getRecId();
-    encoded.set(64, (byte) v);
+    encoded.set(SIGNATURE_ALGORITHM.get().getPublicKeyByteLength(), (byte) v);
     return encoded;
   }
 
   private static SECPSignature decodeSignature(final Bytes encodedSignature) {
+    int signatureLength = SIGNATURE_ALGORITHM.get().getSignatureByteLength();
+    int privateKeyLength = SIGNATURE_ALGORITHM.get().getPrivateKeyByteLength();
+
     checkArgument(
-        encodedSignature != null && encodedSignature.size() == 65, "encodedSignature is 65 bytes");
-    final BigInteger r = encodedSignature.slice(0, 32).toUnsignedBigInteger();
-    final BigInteger s = encodedSignature.slice(32, 32).toUnsignedBigInteger();
-    final int recId = encodedSignature.get(64);
+        encodedSignature != null && encodedSignature.size() == signatureLength,
+        new StringBuilder("encodedSignature is ")
+            .append(signatureLength)
+            .append(" bytes")
+            .toString());
+    final BigInteger r = encodedSignature.slice(0, privateKeyLength).toUnsignedBigInteger();
+    final BigInteger s =
+        encodedSignature.slice(privateKeyLength, privateKeyLength).toUnsignedBigInteger();
+    final int recId = encodedSignature.get(SIGNATURE_ALGORITHM.get().getPublicKeyByteLength());
     return SIGNATURE_ALGORITHM.get().createSignature(r, s, (byte) recId);
   }
 }
