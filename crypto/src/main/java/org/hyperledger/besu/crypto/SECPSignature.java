@@ -103,9 +103,9 @@ public class SECPSignature {
     checkArgument(
         bytes.size() == signatureLength,
         new StringBuilder()
-            .append("encoded signature must be")
+            .append("Encoded signature must be ")
             .append(signatureLength)
-            .append("bytes long")
+            .append(" bytes long")
             .toString());
 
     final BigInteger r = bytes.slice(0, privateKeyLength).toUnsignedBigInteger();

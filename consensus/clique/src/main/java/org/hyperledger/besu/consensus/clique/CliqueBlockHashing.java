@@ -68,7 +68,7 @@ public class CliqueBlockHashing {
 
   private static Bytes encodeExtraDataWithoutProposerSeal(final CliqueExtraData cliqueExtraData) {
     final Bytes extraDataBytes = cliqueExtraData.encode();
-    // Always trim off final 65 bytes (which maybe zeros)
+    // Always trim off the final bytes (which may be zeros)
     return extraDataBytes.slice(
         0,
         extraDataBytes.size() - SignatureAlgorithmFactory.getInstance().getSignatureByteLength());
