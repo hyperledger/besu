@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import java.io.IOException;
+import org.hyperledger.besu.ethereum.core.json.AccessListEntryDeserializer;
+import org.hyperledger.besu.ethereum.core.json.AccessListEntrySerializer;
+
 import java.util.List;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonSerialize(using = AccessListEntry.Serializer.class)
+@JsonSerialize(using = AccessListEntrySerializer.class)
+@JsonDeserialize(using = AccessListEntryDeserializer.class)
 public class AccessListEntry {
   private final Address address;
   private final List<Bytes32> storageKeys;
@@ -40,34 +41,5 @@ public class AccessListEntry {
 
   public List<Bytes32> getStorageKeys() {
     return storageKeys;
-  }
-
-  public static class Serializer extends StdSerializer<AccessListEntry> {
-
-    Serializer() {
-      this(null);
-    }
-
-    protected Serializer(final Class<AccessListEntry> t) {
-      super(t);
-    }
-
-    @Override
-    public void serialize(
-        final AccessListEntry accessListEntry,
-        final JsonGenerator gen,
-        final SerializerProvider provider)
-        throws IOException {
-      gen.writeStartObject();
-      gen.writeFieldName("address");
-      gen.writeString(accessListEntry.getAddress().toHexString());
-      gen.writeFieldName("storageKeys");
-      final List<Bytes32> storageKeys = accessListEntry.getStorageKeys();
-      gen.writeArray(
-          storageKeys.stream().map(Bytes32::toHexString).toArray(String[]::new),
-          0,
-          storageKeys.size());
-      gen.writeEndObject();
-    }
   }
 }

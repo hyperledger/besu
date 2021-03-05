@@ -68,8 +68,7 @@ public class TransactionPendingResult implements TransactionResult {
 
   public TransactionPendingResult(final Transaction transaction) {
     final TransactionType transactionType = transaction.getType();
-    this.accessList =
-        transactionType.equals(TransactionType.ACCESS_LIST) ? transaction.getAccessList() : null;
+    this.accessList = transaction.getAccessList().orElse(null);
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());

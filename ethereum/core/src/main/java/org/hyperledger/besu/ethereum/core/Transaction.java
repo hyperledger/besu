@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.Collections.emptyList;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -77,7 +76,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final Bytes payload;
 
-  private final List<AccessListEntry> accessList;
+  private final Optional<List<AccessListEntry>> maybeAccessList;
 
   private final Optional<BigInteger> chainId;
 
@@ -119,7 +118,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param value the value being transferred to the recipient
    * @param signature the signature
    * @param payload the payload
-   * @param accessList the list of addresses/storage slots this transaction intends to preload
+   * @param maybeAccessList the optional list of addresses/storage slots this transaction intends to
+   *     preload
    * @param sender the transaction sender
    * @param chainId the chain id to apply the transaction to
    * @param v the v value. This is only passed in directly for GoQuorum private transactions
@@ -141,13 +141,21 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Wei value,
       final SECPSignature signature,
       final Bytes payload,
-      final List<AccessListEntry> accessList,
+      final Optional<List<AccessListEntry>> maybeAccessList,
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v) {
     if (v.isPresent() && chainId.isPresent()) {
       throw new IllegalStateException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
+    }
+    if (Objects.equals(transactionType, TransactionType.ACCESS_LIST)) {
+      checkState(
+          maybeAccessList.isPresent(), "Must specify access list for access list transaction");
+    } else {
+      checkState(
+          maybeAccessList.isEmpty(),
+          "Must not specify access list for non-access list transaction");
     }
     this.transactionType = transactionType;
     this.nonce = nonce;
@@ -159,7 +167,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.value = value;
     this.signature = signature;
     this.payload = payload;
-    this.accessList = accessList;
+    this.maybeAccessList = maybeAccessList;
     this.sender = sender;
     this.chainId = chainId;
     this.v = v;
@@ -189,7 +197,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         value,
         signature,
         payload,
-        emptyList(),
+        Optional.empty(),
         sender,
         chainId,
         v);
@@ -380,8 +388,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
   }
 
-  public List<AccessListEntry> getAccessList() {
-    return accessList;
+  public Optional<List<AccessListEntry>> getAccessList() {
+    return maybeAccessList;
   }
 
   /**
@@ -441,7 +449,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               to,
               value,
               payload,
-              accessList,
+              maybeAccessList,
               chainId);
     }
     return hashNoSignature;
@@ -564,7 +572,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Optional<Address> to,
       final Wei value,
       final Bytes payload,
-      final List<AccessListEntry> accessList,
+      final Optional<List<AccessListEntry>> accessList,
       final Optional<BigInteger> chainId) {
     final Bytes preimage;
     switch (transactionType) {
@@ -578,7 +586,18 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         break;
       case ACCESS_LIST:
         preimage =
-            accessListPreimage(nonce, gasPrice, gasLimit, to, value, payload, accessList, chainId);
+            accessListPreimage(
+                nonce,
+                gasPrice,
+                gasLimit,
+                to,
+                value,
+                payload,
+                accessList.orElseThrow(
+                    () ->
+                        new IllegalStateException(
+                            "Developer error: the transaction should be guaranteed to have an access list here")),
+                chainId);
         break;
       default:
         throw new IllegalStateException(
@@ -705,9 +724,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     if (v.isPresent()) sb.append("v=").append(v.get()).append(", ");
-    sb.append("payload=").append(getPayload()).append(", ");
+    sb.append("payload=").append(getPayload());
     if (transactionType.equals(TransactionType.ACCESS_LIST)) {
-      sb.append("accessList=").append(accessList);
+      sb.append(", ").append("accessList=").append(maybeAccessList);
     }
     return sb.append("}").toString();
   }
@@ -741,7 +760,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected Bytes payload;
 
-    protected List<AccessListEntry> accessList = emptyList();
+    protected Optional<List<AccessListEntry>> accessList = Optional.empty();
 
     protected Address sender;
 
@@ -805,7 +824,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     public Builder accessList(final List<AccessListEntry> accessList) {
-      this.accessList = accessList;
+      this.accessList = Optional.ofNullable(accessList);
       return this;
     }
 
@@ -820,7 +839,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     public Builder guessType() {
-      if (!accessList.isEmpty()) {
+      if (accessList.isPresent()) {
         transactionType = TransactionType.ACCESS_LIST;
       } else if (gasPremium != null || feeCap != null) {
         transactionType = TransactionType.EIP1559;

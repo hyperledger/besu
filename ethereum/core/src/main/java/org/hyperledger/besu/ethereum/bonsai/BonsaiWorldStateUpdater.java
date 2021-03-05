@@ -217,7 +217,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       } else {
         updatedAccount.setBalance(tracked.getBalance());
         updatedAccount.setNonce(tracked.getNonce());
-        updatedAccount.setCode(tracked.getCode());
+        if (tracked.codeWasUpdated()) {
+          updatedAccount.setCode(tracked.getCode());
+        }
         if (tracked.getStorageWasCleared()) {
           updatedAccount.clearStorage();
         }
