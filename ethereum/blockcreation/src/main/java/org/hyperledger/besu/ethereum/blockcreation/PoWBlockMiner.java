@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -26,16 +26,16 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * Provides the EthHash specific aspects of the mining operation - i.e. getting the work definition,
- * reporting the hashrate of the miner and accepting work submissions.
+ * Provides the proof-of-work specific aspects of the mining operation - i.e. getting the work
+ * definition, reporting the hashrate of the miner and accepting work submissions.
  *
  * <p>All other aspects of mining (i.e. pre-block delays, block creation and importing to the chain)
  * are all conducted by the parent class.
  */
-public class EthHashBlockMiner extends BlockMiner<EthHashBlockCreator> {
+public class PoWBlockMiner extends BlockMiner<PoWBlockCreator> {
 
-  public EthHashBlockMiner(
-      final Function<BlockHeader, EthHashBlockCreator> blockCreator,
+  public PoWBlockMiner(
+      final Function<BlockHeader, PoWBlockCreator> blockCreator,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Subscribers<MinedBlockObserver> observers,
@@ -44,7 +44,7 @@ public class EthHashBlockMiner extends BlockMiner<EthHashBlockCreator> {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
   }
 
-  public Optional<EthHashSolverInputs> getWorkDefinition() {
+  public Optional<PoWSolverInputs> getWorkDefinition() {
     return minerBlockCreator.getWorkDefinition();
   }
 
@@ -52,7 +52,7 @@ public class EthHashBlockMiner extends BlockMiner<EthHashBlockCreator> {
     return minerBlockCreator.getHashesPerSecond();
   }
 
-  public boolean submitWork(final EthHashSolution solution) {
+  public boolean submitWork(final PoWSolution solution) {
     return minerBlockCreator.submitWork(solution);
   }
 }

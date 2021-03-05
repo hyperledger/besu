@@ -38,9 +38,22 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldUseKeccak256WhenKeccak256InConfig() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("keccak256", emptyMap()));
+    assertThat(config.isKeccak256()).isTrue();
+    assertThat(config.getConsensusEngine()).isEqualTo("keccak256");
+  }
+
+  @Test
   public void shouldNotUseEthHashIfEthHashNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isEthHash()).isFalse();
+  }
+
+  @Test
+  public void shouldNotUseKeccak256IfEthHashNotPresent() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.isKeccak256()).isFalse();
   }
 
   @Test
@@ -186,6 +199,13 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  // TODO ECIP-1049 change for the actual fork name when known
+  public void shouldGetECIP1049BlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
+    assertThat(config.getEcip1049BlockNumber()).hasValue(1000);
+  }
+
+  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
@@ -198,6 +218,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();
+    assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
   @Test

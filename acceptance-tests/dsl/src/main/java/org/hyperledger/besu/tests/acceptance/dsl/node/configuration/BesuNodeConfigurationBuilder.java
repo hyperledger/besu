@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -55,6 +56,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
+  private NetworkName network = null;
   private boolean secp256K1Native = false;
   private boolean altbn128Native = false;
   private final List<String> plugins = new ArrayList<>();
@@ -162,6 +164,11 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder metricsConfiguration(
       final MetricsConfiguration metricsConfiguration) {
     this.metricsConfiguration = metricsConfiguration;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder network(final NetworkName network) {
+    this.network = network;
     return this;
   }
 
@@ -295,6 +302,7 @@ public class BesuNodeConfigurationBuilder {
         permissioningConfiguration,
         Optional.ofNullable(keyFilePath),
         devMode,
+        network,
         genesisConfigProvider,
         p2pEnabled,
         networkingConfiguration,

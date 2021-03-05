@@ -67,6 +67,15 @@ public class GenesisConfigFile {
     }
   }
 
+  public static GenesisConfigFile ecip1049dev() {
+    try {
+      return fromConfig(
+          Resources.toString(GenesisConfigFile.class.getResource("/ecip1049_dev.json"), UTF_8));
+    } catch (final IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   public static GenesisConfigFile fromConfig(final String jsonString) {
     return fromConfig(JsonUtil.objectNodeFromString(jsonString, false));
   }

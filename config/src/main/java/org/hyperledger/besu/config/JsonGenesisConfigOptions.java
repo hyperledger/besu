@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableMap;
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
+  private static final String KECCAK256_CONFIG_KEY = "keccak256";
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String QBFT_CONFIG_KEY = "qbft";
@@ -94,6 +95,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public String getConsensusEngine() {
     if (isEthHash()) {
       return ETHASH_CONFIG_KEY;
+    } else if (isKeccak256()) {
+      return KECCAK256_CONFIG_KEY;
     } else if (isIbft2()) {
       return IBFT2_CONFIG_KEY;
     } else if (isIbftLegacy()) {
@@ -110,6 +113,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isEthHash() {
     return configRoot.has(ETHASH_CONFIG_KEY);
+  }
+
+  @Override
+  public boolean isKeccak256() {
+    return configRoot.has(KECCAK256_CONFIG_KEY);
   }
 
   @Override
@@ -159,6 +167,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, ETHASH_CONFIG_KEY)
         .map(EthashConfigOptions::new)
         .orElse(EthashConfigOptions.DEFAULT);
+  }
+
+  @Override
+  public Keccak256ConfigOptions getKeccak256ConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, KECCAK256_CONFIG_KEY)
+        .map(Keccak256ConfigOptions::new)
+        .orElse(Keccak256ConfigOptions.DEFAULT);
   }
 
   @Override
@@ -290,6 +305,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1049BlockNumber() {
+    return getOptionalLong("ecip1049block");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }
@@ -317,6 +337,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getQip714BlockNumber() {
     return getOptionalLong("qip714block");
+  }
+
+  @Override
+  public PowAlgorithm getPowAlgorithm() {
+    return isEthHash()
+        ? PowAlgorithm.ETHASH
+        : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
   }
 
   @Override
@@ -358,6 +385,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+    getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
@@ -369,6 +397,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
+    }
+    if (isKeccak256()) {
+      builder.put("keccak256", getKeccak256ConfigOptions().asMap());
     }
     if (isIbftLegacy()) {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
@@ -451,7 +482,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getAtlantisBlockNumber(),
             getAghartaBlockNumber(),
             getPhoenixBlockNumber(),
-            getThanosBlockNumber());
+            getThanosBlockNumber(),
+            getEcip1049BlockNumber());
 
     return forkBlockNumbers
         .filter(OptionalLong::isPresent)
