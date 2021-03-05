@@ -49,6 +49,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong aghartaBlockNumber = OptionalLong.empty();
   private OptionalLong phoenixBlockNumber = OptionalLong.empty();
   private OptionalLong thanosBlockNumber = OptionalLong.empty();
+  private OptionalLong ecip1049BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -62,6 +63,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isEthHash() {
     return true;
+  }
+
+  @Override
+  public boolean isKeccak256() {
+    return false;
   }
 
   @Override
@@ -102,6 +108,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
+  }
+
+  @Override
+  public Keccak256ConfigOptions getKeccak256ConfigOptions() {
+    return Keccak256ConfigOptions.DEFAULT;
   }
 
   @Override
@@ -206,6 +217,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1049BlockNumber() {
+    return ecip1049BlockNumber;
+  }
+
+  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -262,6 +278,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+    getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
@@ -270,6 +287,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
+    }
+    if (isKeccak256()) {
+      builder.put("keccak256", getKeccak256ConfigOptions().asMap());
     }
     if (isIbftLegacy()) {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
@@ -293,6 +313,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getQip714BlockNumber() {
     return OptionalLong.empty();
+  }
+
+  @Override
+  public PowAlgorithm getPowAlgorithm() {
+    return isEthHash()
+        ? PowAlgorithm.ETHASH
+        : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
   }
 
   @Override
@@ -392,6 +419,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions thanos(final long blockNumber) {
     thanosBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions ecip1049(final long blockNumber) {
+    ecip1049BlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

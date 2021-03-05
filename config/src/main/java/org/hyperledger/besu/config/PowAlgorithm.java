@@ -12,17 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.config;
+package org.hyperledger.besu.config;
 
-public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  YOLO_V3,
-  ECIP1049_DEV
+/** An enumeration of supported Proof-of-work algorithms. */
+public enum PowAlgorithm {
+  UNSUPPORTED,
+  ETHASH,
+  KECCAK256;
+
+  public static PowAlgorithm fromString(final String str) {
+    for (final PowAlgorithm powAlgorithm : PowAlgorithm.values()) {
+      if (powAlgorithm.name().equalsIgnoreCase(str)) {
+        return powAlgorithm;
+      }
+    }
+    return null;
+  }
 }

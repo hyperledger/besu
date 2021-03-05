@@ -19,15 +19,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHasher;
+import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValidationRule {
@@ -36,19 +35,16 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   private static final BigInteger ETHASH_TARGET_UPPER_BOUND = BigInteger.valueOf(2).pow(256);
 
-  static final EthHasher HASHER = new EthHasher.Light();
+  private final PoWHasher hasher;
 
   private final EpochCalculator epochCalculator;
   private final boolean includeBaseFee;
 
-  public ProofOfWorkValidationRule(final EpochCalculator epochCalculator) {
-    this(epochCalculator, false);
-  }
-
   public ProofOfWorkValidationRule(
-      final EpochCalculator epochCalculator, final boolean includeBaseFee) {
+      final EpochCalculator epochCalculator, final boolean includeBaseFee, final PoWHasher hasher) {
     this.epochCalculator = epochCalculator;
     this.includeBaseFee = includeBaseFee;
+    this.hasher = hasher;
   }
 
   @Override
@@ -63,10 +59,9 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
       }
     }
 
-    final byte[] hashBuffer = new byte[64];
     final Hash headerHash = hashHeader(header);
-    HASHER.hash(
-        hashBuffer, header.getNonce(), header.getNumber(), epochCalculator, headerHash.toArray());
+    PoWSolution solution =
+        hasher.hash(header.getNonce(), header.getNumber(), epochCalculator, headerHash);
 
     if (header.getDifficulty().isZero()) {
       LOG.info("Invalid block header: difficulty is 0");
@@ -77,7 +72,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
         difficulty.equals(BigInteger.ONE)
             ? UInt256.MAX_VALUE
             : UInt256.valueOf(ETHASH_TARGET_UPPER_BOUND.divide(difficulty));
-    final UInt256 result = UInt256.fromBytes(Bytes32.wrap(hashBuffer, 32));
+    final UInt256 result = UInt256.fromBytes(solution.getSolution());
     if (result.compareTo(target) > 0) {
       LOG.info(
           "Invalid block header: the EthHash result {} was greater than the target {}.\n"
@@ -88,8 +83,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
       return false;
     }
 
-    final Hash mixedHash =
-        Hash.wrap(Bytes32.leftPad(Bytes.wrap(hashBuffer).slice(0, Bytes32.SIZE)));
+    final Hash mixedHash = solution.getMixHash();
     if (!header.getMixHash().equals(mixedHash)) {
       LOG.info(
           "Invalid block header: header mixed hash {} does not equal calculated mixed hash {}.\n"

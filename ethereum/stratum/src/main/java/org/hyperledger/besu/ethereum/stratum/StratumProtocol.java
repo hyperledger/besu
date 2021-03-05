@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.stratum;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.io.IOException;
 import java.util.function.Function;
@@ -63,9 +63,9 @@ public interface StratumProtocol {
    *
    * @param input the new proof-of-work job to send to miners
    */
-  void setCurrentWorkTask(EthHashSolverInputs input);
+  void setCurrentWorkTask(PoWSolverInputs input);
 
-  void setSubmitCallback(Function<EthHashSolution, Boolean> submitSolutionCallback);
+  void setSubmitCallback(Function<PoWSolution, Boolean> submitSolutionCallback);
 
   default void handleHashrateSubmit(
       final JsonMapper mapper,
