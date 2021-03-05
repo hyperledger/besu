@@ -131,7 +131,6 @@ allprojects {
     maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
     maven { url "https://dl.bintray.com/open-telemetry/maven" }
     maven { url "https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/"}
-    maven { url "https://dl.cloudsmith.io/public/consensys/orion/maven/"}
   }
 
   dependencies { errorprone "com.google.errorprone:error_prone_core" }
