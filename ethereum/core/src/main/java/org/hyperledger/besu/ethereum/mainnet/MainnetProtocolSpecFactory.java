@@ -160,4 +160,14 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         quorumCompatibilityMode);
   }
+
+  public ProtocolSpecBuilder ecip1049Definition() {
+    return ClassicProtocolSpecs.ecip1049Definition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
+        quorumCompatibilityMode);
+  }
 }

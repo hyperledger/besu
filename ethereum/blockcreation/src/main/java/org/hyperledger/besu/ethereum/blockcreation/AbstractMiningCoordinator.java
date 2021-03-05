@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
+import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -44,7 +44,7 @@ public abstract class AbstractMiningCoordinator<
   }
 
   private final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
-  private final Subscribers<EthHashObserver> ethHashObservers = Subscribers.create();
+  private final Subscribers<PoWObserver> ethHashObservers = Subscribers.create();
   private final AbstractMinerExecutor<M> executor;
   private final SyncState syncState;
   protected final Blockchain blockchain;
@@ -189,7 +189,7 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
-  public void addEthHashObserver(final EthHashObserver obs) {
+  public void addEthHashObserver(final PoWObserver obs) {
     ethHashObservers.subscribe(obs);
   }
 

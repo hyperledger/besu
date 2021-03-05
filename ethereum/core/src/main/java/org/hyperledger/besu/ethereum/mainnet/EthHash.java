@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -23,10 +24,13 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.DigestException;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.function.BiConsumer;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 
 /** Implementation of EthHash. */
@@ -71,19 +75,19 @@ public final class EthHash {
    * @return A byte array holding MixHash in its first 32 bytes and the EthHash result in the in
    *     bytes 32 to 63
    */
-  public static byte[] hashimotoLight(
-      final long size, final int[] cache, final byte[] header, final long nonce) {
+  public static PoWSolution hashimotoLight(
+      final long size, final int[] cache, final Bytes header, final long nonce) {
     return hashimoto(header, size, nonce, (target, ind) -> calcDatasetItem(target, cache, ind));
   }
 
-  public static byte[] hashimoto(
-      final byte[] header,
+  public static PoWSolution hashimoto(
+      final Bytes header,
       final long size,
       final long nonce,
       final BiConsumer<byte[], Integer> datasetLookup) {
     final int n = (int) Long.divideUnsigned(size, MIX_BYTES);
     final MessageDigest keccak512 = KECCAK_512.get();
-    keccak512.update(header);
+    keccak512.update(header.toArrayUnsafe());
     keccak512.update(Longs.toByteArray(Long.reverseBytes(nonce)));
     final byte[] seed = keccak512.digest();
     final ByteBuffer mixBuffer = ByteBuffer.allocate(MIX_BYTES).order(ByteOrder.LITTLE_ENDIAN);
@@ -121,7 +125,12 @@ public final class EthHash {
     } catch (final DigestException ex) {
       throw new IllegalStateException(ex);
     }
-    return result;
+
+    return new PoWSolution(
+        nonce,
+        Hash.wrap(Bytes32.wrap(Arrays.copyOf(result, 32))),
+        Bytes32.wrap(result, 32),
+        header);
   }
 
   /**
@@ -163,7 +172,7 @@ public final class EthHash {
    * @param header Block Header
    * @return Truncated BlockHeader hash
    */
-  public static byte[] hashHeader(final SealableBlockHeader header) {
+  public static Bytes32 hashHeader(final SealableBlockHeader header) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeBytes(header.getParentHash());
@@ -184,7 +193,8 @@ public final class EthHash {
       out.writeLongScalar(header.getBaseFee().get());
     }
     out.endList();
-    return DirectAcyclicGraphSeed.KECCAK_256.get().digest(out.encoded().toArray());
+    return Bytes32.wrap(
+        DirectAcyclicGraphSeed.KECCAK_256.get().digest(out.encoded().toArrayUnsafe()));
   }
 
   /**

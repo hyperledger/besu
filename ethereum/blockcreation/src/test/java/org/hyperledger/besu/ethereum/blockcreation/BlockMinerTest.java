@@ -53,8 +53,8 @@ public class BlockMinerTest {
 
     final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 
-    final EthHashBlockCreator blockCreator = mock(EthHashBlockCreator.class);
-    final Function<BlockHeader, EthHashBlockCreator> blockCreatorSupplier =
+    final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
+    final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong())).thenReturn(blockToCreate);
 
@@ -69,8 +69,8 @@ public class BlockMinerTest {
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
     when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
-    final BlockMiner<EthHashBlockCreator> miner =
-        new EthHashBlockMiner(
+    final BlockMiner<PoWBlockCreator> miner =
+        new PoWBlockMiner(
             blockCreatorSupplier,
             protocolSchedule,
             protocolContext,
@@ -93,8 +93,8 @@ public class BlockMinerTest {
 
     final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 
-    final EthHashBlockCreator blockCreator = mock(EthHashBlockCreator.class);
-    final Function<BlockHeader, EthHashBlockCreator> blockCreatorSupplier =
+    final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
+    final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong())).thenReturn(blockToCreate);
 
@@ -108,8 +108,8 @@ public class BlockMinerTest {
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
     when(scheduler.waitUntilNextBlockCanBeMined(any())).thenReturn(5L);
-    final BlockMiner<EthHashBlockCreator> miner =
-        new EthHashBlockMiner(
+    final BlockMiner<PoWBlockCreator> miner =
+        new PoWBlockMiner(
             blockCreatorSupplier,
             protocolSchedule,
             protocolContext,

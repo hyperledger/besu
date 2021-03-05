@@ -14,20 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.function.Function;
 
-/** Observer of new work for the EthHash PoW algorithm */
-public interface EthHashObserver {
+/** Observer of new work for the PoW algorithm */
+public interface PoWObserver {
 
   /**
    * Send a new proof-of-work job to observers
    *
    * @param jobInput the proof-of-work job
    */
-  void newJob(EthHashSolverInputs jobInput);
+  void newJob(PoWSolverInputs jobInput);
 
   /**
    * Sets a callback for the observer to provide solutions to jobs.
@@ -35,5 +35,5 @@ public interface EthHashObserver {
    * @param submitSolutionCallback the callback to set on the observer, consuming a solution and
    *     returning true if the solution is accepted, false if rejected.
    */
-  void setSubmitWorkCallback(Function<EthHashSolution, Boolean> submitSolutionCallback);
+  void setSubmitWorkCallback(Function<PoWSolution, Boolean> submitSolutionCallback);
 }

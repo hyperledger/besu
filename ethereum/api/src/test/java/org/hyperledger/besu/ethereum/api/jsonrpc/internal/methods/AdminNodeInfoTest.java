@@ -367,7 +367,8 @@ public class AdminNodeInfoTest {
             .atlantis(6)
             .agharta(7)
             .phoenix(8)
-            .thanos(9);
+            .thanos(9)
+            .ecip1049(10);
 
     final AdminNodeInfo methodClassic =
         new AdminNodeInfo(
@@ -390,7 +391,8 @@ public class AdminNodeInfoTest {
             "atlantisBlock", 6L,
             "aghartaBlock", 7L,
             "phoenixBlock", 8L,
-            "thanosBlock", 9L);
+            "thanosBlock", 9L,
+            "ecip1049Block", 10L);
 
     final JsonRpcResponse response = methodClassic.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);

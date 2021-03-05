@@ -141,7 +141,6 @@ public class TransactionSimulator {
     if (header == null) {
       return Optional.empty();
     }
-
     final MutableWorldState publicWorldState =
         worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
 
