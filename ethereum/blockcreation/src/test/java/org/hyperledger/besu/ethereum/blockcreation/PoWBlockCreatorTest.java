@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -71,7 +72,7 @@ public class PoWBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        Function.identity(),
+                        ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum())
@@ -130,7 +131,7 @@ public class PoWBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        Function.identity(),
+                        ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum())
@@ -184,7 +185,7 @@ public class PoWBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        Function.identity(),
+                        ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum())
@@ -254,7 +255,7 @@ public class PoWBlockCreatorTest {
                 new ProtocolScheduleBuilder(
                         genesisConfigOptions,
                         BigInteger.valueOf(42),
-                        Function.identity(),
+                        ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum())

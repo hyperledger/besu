@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.graphql;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.AccountAdapter;
+import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.EmptyAccountAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.LogAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBlockAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.PendingStateAdapter;
@@ -186,8 +187,9 @@ public class GraphQLDataFetchers {
         final Optional<WorldState> ws = blockchainQuery.getWorldState(bn);
         if (ws.isPresent()) {
           final Account account = ws.get().get(addr);
-          Preconditions.checkArgument(
-              account != null, "Account with address %s does not exist", addr);
+          if (account == null) {
+            return Optional.of(new EmptyAccountAdapter(addr));
+          }
           return Optional.of(new AccountAdapter(account));
         } else if (bn > blockchainQuery.getBlockchain().getChainHeadBlockNumber()) {
           // block is past chainhead
@@ -201,13 +203,13 @@ public class GraphQLDataFetchers {
         final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
         final Optional<WorldState> ows = blockchainQuery.getWorldState(latestBn);
         return ows.flatMap(
-                ws -> {
-                  Account account = ws.get(addr);
-                  Preconditions.checkArgument(
-                      account != null, "Account with address %s does not exist", addr);
-                  return Optional.ofNullable(account);
-                })
-            .map(AccountAdapter::new);
+            ws -> {
+              Account account = ws.get(addr);
+              if (account == null) {
+                return Optional.of(new EmptyAccountAdapter(addr));
+              }
+              return Optional.of(new AccountAdapter(account));
+            });
       }
     };
   }

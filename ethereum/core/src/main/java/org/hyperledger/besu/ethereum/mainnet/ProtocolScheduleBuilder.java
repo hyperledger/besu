@@ -24,16 +24,47 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class ProtocolScheduleBuilder {
 
+  private static class BuilderMapEntry {
+
+    private final long block;
+    private final ProtocolSpecBuilder builder;
+    private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
+
+    public BuilderMapEntry(
+        final long block,
+        final ProtocolSpecBuilder builder,
+        final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+      this.block = block;
+      this.builder = builder;
+      this.modifier = modifier;
+    }
+
+    public long getBlock() {
+      return block;
+    }
+
+    public ProtocolSpecBuilder getBuilder() {
+      return builder;
+    }
+
+    public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifier() {
+      return modifier;
+    }
+  }
+
   private static final Logger LOG = LogManager.getLogger();
   private final GenesisConfigOptions config;
-  private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter;
+  private final ProtocolSpecAdapters protocolSpecAdapters;
   private final Optional<BigInteger> defaultChainId;
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
@@ -43,29 +74,39 @@ public class ProtocolScheduleBuilder {
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
-      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
+      final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode) {
     this(
         config,
         Optional.of(defaultChainId),
-        protocolSpecAdapter,
+        protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode);
   }
 
+  private Optional<BuilderMapEntry> create(
+      final OptionalLong block, final ProtocolSpecBuilder builder) {
+    if (block.isEmpty()) {
+      return Optional.empty();
+    }
+    final long blockVal = block.getAsLong();
+    return Optional.of(
+        new BuilderMapEntry(blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
+  }
+
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
-      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
+      final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode) {
     this(
         config,
         Optional.empty(),
-        protocolSpecAdapter,
+        protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode);
@@ -74,13 +115,13 @@ public class ProtocolScheduleBuilder {
   private ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Optional<BigInteger> defaultChainId,
-      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
+      final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode) {
     this.config = config;
     this.defaultChainId = defaultChainId;
-    this.protocolSpecAdapter = protocolSpecAdapter;
+    this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
@@ -91,19 +132,38 @@ public class ProtocolScheduleBuilder {
         config.getChainId().map(Optional::of).orElse(defaultChainId);
     final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(chainId);
 
+    final MainnetProtocolSpecFactory specFactory =
+        new MainnetProtocolSpecFactory(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled,
+            quorumCompatibilityMode,
+            config.getEcip1017EraRounds());
+
     validateForkOrdering();
 
-    addProtocolSpec(
-        protocolSchedule,
-        OptionalLong.of(0),
-        MainnetProtocolSpecs.frontierDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getHomesteadBlockNumber(),
-        MainnetProtocolSpecs.homesteadDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
+    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory, chainId);
 
+    // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
+    // inserted _AT_ the modifier block entry.
+    protocolSpecAdapters.stream()
+        .forEach(
+            entry -> {
+              final long modifierBlock = entry.getKey();
+              final BuilderMapEntry parent = builders.floorEntry(modifierBlock).getValue();
+              builders.put(
+                  modifierBlock,
+                  new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
+            });
+
+    // Create the ProtocolSchedule, such that the Dao/fork milestones can be inserted
+    builders
+        .values()
+        .forEach(e -> addProtocolSpec(protocolSchedule, e.getBlock(), e.getBuilder(), e.modifier));
+
+    // NOTE: It is assumed that Daofork blocks will not be used for private networks
+    // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
     config
         .getDaoForkBlock()
         .ifPresent(
@@ -112,107 +172,17 @@ public class ProtocolScheduleBuilder {
                   protocolSchedule.getByBlockNumber(daoBlockNumber);
               addProtocolSpec(
                   protocolSchedule,
-                  OptionalLong.of(daoBlockNumber),
-                  MainnetProtocolSpecs.daoRecoveryInitDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      quorumCompatibilityMode));
+                  daoBlockNumber,
+                  specFactory.daoRecoveryInitDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
               addProtocolSpec(
                   protocolSchedule,
-                  OptionalLong.of(daoBlockNumber + 1),
-                  MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      quorumCompatibilityMode));
-
+                  daoBlockNumber + 1L,
+                  specFactory.daoRecoveryTransitionDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
               // Return to the previous protocol spec after the dao fork has completed.
               protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
             });
-
-    addProtocolSpec(
-        protocolSchedule,
-        config.getTangerineWhistleBlockNumber(),
-        MainnetProtocolSpecs.tangerineWhistleDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getSpuriousDragonBlockNumber(),
-        MainnetProtocolSpecs.spuriousDragonDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getByzantiumBlockNumber(),
-        MainnetProtocolSpecs.byzantiumDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getConstantinopleBlockNumber(),
-        MainnetProtocolSpecs.constantinopleDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getPetersburgBlockNumber(),
-        MainnetProtocolSpecs.petersburgDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getIstanbulBlockNumber(),
-        MainnetProtocolSpecs.istanbulDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getMuirGlacierBlockNumber(),
-        MainnetProtocolSpecs.muirGlacierDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-
-    addProtocolSpec(
-        protocolSchedule,
-        config.getBerlinBlockNumber(),
-        MainnetProtocolSpecs.berlinDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-
-    if (ExperimentalEIPs.eip1559Enabled) {
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator =
-          Optional.of(TransactionPriceCalculator.eip1559());
-      addProtocolSpec(
-          protocolSchedule,
-          config.getEIP1559BlockNumber(),
-          MainnetProtocolSpecs.eip1559Definition(
-              chainId,
-              transactionPriceCalculator,
-              config.getContractSizeLimit(),
-              config.getEvmStackSize(),
-              isRevertReasonEnabled,
-              config,
-              quorumCompatibilityMode));
-    }
 
     // specs for classic network
     config
@@ -231,93 +201,70 @@ public class ProtocolScheduleBuilder {
               protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
             });
 
-    addProtocolSpec(
-        protocolSchedule,
-        config.getEcip1015BlockNumber(),
-        ClassicProtocolSpecs.tangerineWhistleDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getDieHardBlockNumber(),
-        ClassicProtocolSpecs.dieHardDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getGothamBlockNumber(),
-        ClassicProtocolSpecs.gothamDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getDefuseDifficultyBombBlockNumber(),
-        ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getAtlantisBlockNumber(),
-        ClassicProtocolSpecs.atlantisDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getAghartaBlockNumber(),
-        ClassicProtocolSpecs.aghartaDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getPhoenixBlockNumber(),
-        ClassicProtocolSpecs.phoenixDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getThanosBlockNumber(),
-        ClassicProtocolSpecs.thanosDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getEcip1049BlockNumber(),
-        ClassicProtocolSpecs.ecip1049Definition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
     return protocolSchedule;
+  }
+
+  private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
+      final MainnetProtocolSpecFactory specFactory, final Optional<BigInteger> chainId) {
+    final TreeMap<Long, BuilderMapEntry> builders =
+        Lists.newArrayList(
+                create(OptionalLong.of(0), specFactory.frontierDefinition()),
+                create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
+                create(
+                    config.getTangerineWhistleBlockNumber(),
+                    specFactory.tangerineWhistleDefinition()),
+                create(
+                    config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
+                create(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
+                create(
+                    config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
+                create(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
+                create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
+                create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
+                create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+                // Classic Milestones
+                create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
+                create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
+                create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
+                create(
+                    config.getDefuseDifficultyBombBlockNumber(),
+                    specFactory.defuseDifficultyBombDefinition()),
+                create(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
+                create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
+                create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
+                create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
+                create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
+            .stream()
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(
+                Collectors.toMap(
+                    BuilderMapEntry::getBlock,
+                    b -> b,
+                    (existing, replacement) -> replacement,
+                    TreeMap::new));
+
+    if (ExperimentalEIPs.eip1559Enabled) {
+      final Optional<TransactionPriceCalculator> transactionPriceCalculator =
+          Optional.of(TransactionPriceCalculator.eip1559());
+      final long eip1559Block = config.getEIP1559BlockNumber().getAsLong();
+      builders.put(
+          eip1559Block,
+          new BuilderMapEntry(
+              eip1559Block,
+              MainnetProtocolSpecs.eip1559Definition(
+                  chainId,
+                  transactionPriceCalculator,
+                  config.getContractSizeLimit(),
+                  config.getEvmStackSize(),
+                  isRevertReasonEnabled,
+                  config,
+                  quorumCompatibilityMode),
+              protocolSpecAdapters.getModifierForBlock(eip1559Block)));
+    }
+
+    return builders;
   }
 
   private void addProtocolSpec(
@@ -325,16 +272,21 @@ public class ProtocolScheduleBuilder {
       final OptionalLong blockNumber,
       final ProtocolSpecBuilder definition) {
     blockNumber.ifPresent(
-        number ->
-            protocolSchedule.putMilestone(
-                number,
-                protocolSpecAdapter
-                    .apply(definition)
-                    .badBlocksManager(badBlockManager)
-                    .privacyParameters(privacyParameters)
-                    .privateTransactionValidatorBuilder(
-                        () -> new PrivateTransactionValidator(protocolSchedule.getChainId()))
-                    .build(protocolSchedule)));
+        bn -> addProtocolSpec(protocolSchedule, bn, definition, Function.identity()));
+  }
+
+  private void addProtocolSpec(
+      final MutableProtocolSchedule protocolSchedule,
+      final long blockNumber,
+      final ProtocolSpecBuilder definition,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+    definition
+        .badBlocksManager(badBlockManager)
+        .privacyParameters(privacyParameters)
+        .privateTransactionValidatorBuilder(
+            () -> new PrivateTransactionValidator(protocolSchedule.getChainId()));
+
+    protocolSchedule.putMilestone(blockNumber, modifier.apply(definition).build(protocolSchedule));
   }
 
   private long validateForkOrder(

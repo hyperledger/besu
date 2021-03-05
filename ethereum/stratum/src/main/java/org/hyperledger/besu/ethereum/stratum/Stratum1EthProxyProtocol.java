@@ -18,7 +18,6 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
@@ -34,6 +33,7 @@ import java.util.function.Function;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.io.BaseEncoding;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -55,7 +55,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
     if (!(miningCoordinator instanceof PoWMiningCoordinator)) {
       throw new IllegalArgumentException(
-          "Stratum1 Proxies require an EthHashMiningCoordinator not "
+          "Stratum1 Proxies require an PoWMiningCoordinator not "
               + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
     }
     this.miningCoordinator = miningCoordinator;
@@ -64,21 +64,20 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
 
   @Override
   public boolean canHandle(final String initialMessage, final StratumConnection conn) {
-    JsonRpcRequestContext req;
+    JsonRpcRequest req;
     try {
-      req = new JsonObject(initialMessage).mapTo(JsonRpcRequestContext.class);
-    } catch (IllegalArgumentException e) {
+      req = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
+    } catch (DecodeException | IllegalArgumentException e) {
       LOG.debug(e.getMessage(), e);
       return false;
     }
-    if (!"eth_submitLogin".equals(req.getRequest().getMethod())) {
-      LOG.debug("Invalid first message method: {}", req.getRequest().getMethod());
+    if (!"eth_submitLogin".equals(req.getMethod())) {
+      LOG.debug("Invalid first message method: {}", req.getMethod());
       return false;
     }
 
     try {
-      String response =
-          mapper.writeValueAsString(new JsonRpcSuccessResponse(req.getRequest().getId(), true));
+      String response = mapper.writeValueAsString(new JsonRpcSuccessResponse(req.getId(), true));
       conn.send(response + "\n");
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);

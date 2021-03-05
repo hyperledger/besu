@@ -9,6 +9,7 @@
 * add support for keccak mining and a ecip1049_dev network [\#1882](https://github.com/hyperledger/besu/pull/1882)
 ### Bug Fixes
 * Fixed incorrect `groupId` in published maven pom files.
+* Fixed GraphQL response for missing account, return empty account instead [\#1946](https://github.com/hyperledger/besu/issues/1946)
 
 ### Early Access Features
 
