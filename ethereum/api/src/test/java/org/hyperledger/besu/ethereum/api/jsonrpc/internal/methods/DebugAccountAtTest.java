@@ -56,7 +56,7 @@ public class DebugAccountAtTest {
   private final Transaction transaction = Mockito.mock(Transaction.class);
 
   @Test
-  public void nameShouldBeDebugTraceBlock() {
+  public void nameShouldBeDebugAccountAt() {
     Assertions.assertThat(debugAccountAt.getName()).isEqualTo("debug_accountAt");
   }
 
