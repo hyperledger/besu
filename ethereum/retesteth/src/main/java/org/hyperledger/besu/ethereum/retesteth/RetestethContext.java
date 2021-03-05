@@ -43,11 +43,11 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
-import org.hyperledger.besu.ethereum.mainnet.EthHasher;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -72,12 +72,9 @@ import org.apache.tuweni.bytes.Bytes;
 public class RetestethContext {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final EthHasher NO_WORK_HASHER =
-      (final byte[] buffer,
-          final long nonce,
-          final long number,
-          EpochCalculator epochCalc,
-          final byte[] headerHash) -> {};
+  private static final PoWHasher NO_WORK_HASHER =
+      (final long nonce, final long number, EpochCalculator epochCalc, final Bytes headerHash) ->
+          null;
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
@@ -93,7 +90,7 @@ public class RetestethContext {
 
   private TransactionPool transactionPool;
   private EthScheduler ethScheduler;
-  private EthHashSolver ethHashSolver;
+  private PoWSolver poWSolver;
 
   public boolean resetContext(
       final String genesisConfigString, final String sealEngine, final Optional<Long> clockTime) {
@@ -161,17 +158,17 @@ public class RetestethContext {
             : HeaderValidationMode.FULL;
 
     final Iterable<Long> nonceGenerator = new IncrementingNonceGenerator(0);
-    ethHashSolver =
+    poWSolver =
         ("NoProof".equals(sealengine) || "NoReward".equals(sealEngine))
-            ? new EthHashSolver(
+            ? new PoWSolver(
                 nonceGenerator,
                 NO_WORK_HASHER,
                 false,
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator())
-            : new EthHashSolver(
+            : new PoWSolver(
                 nonceGenerator,
-                new EthHasher.Light(),
+                PoWHasher.ETHASH_LIGHT,
                 false,
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator());
@@ -288,7 +285,7 @@ public class RetestethContext {
     return retestethClock;
   }
 
-  public EthHashSolver getEthHashSolver() {
-    return ethHashSolver;
+  public PoWSolver getEthHashSolver() {
+    return poWSolver;
   }
 }

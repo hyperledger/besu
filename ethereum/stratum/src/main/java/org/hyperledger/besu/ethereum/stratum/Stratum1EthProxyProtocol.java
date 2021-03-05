@@ -19,16 +19,15 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -49,18 +48,18 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private static final JsonMapper mapper = new JsonMapper();
 
   private final MiningCoordinator miningCoordinator;
-  private EthHashSolverInputs currentInput;
-  private Function<EthHashSolution, Boolean> submitCallback;
+  private PoWSolverInputs currentInput;
+  private Function<PoWSolution, Boolean> submitCallback;
   private final EpochCalculator epochCalculator;
 
   public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
-    if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
+    if (!(miningCoordinator instanceof PoWMiningCoordinator)) {
       throw new IllegalArgumentException(
-          "Stratum1 Proxies require an EthHashMiningCoordinator not "
+          "Stratum1 Proxies require an PoWMiningCoordinator not "
               + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
     }
     this.miningCoordinator = miningCoordinator;
-    this.epochCalculator = ((EthHashMiningCoordinator) miningCoordinator).getEpochCalculator();
+    this.epochCalculator = ((PoWMiningCoordinator) miningCoordinator).getEpochCalculator();
   }
 
   @Override
@@ -91,7 +90,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   private void sendNewWork(final StratumConnection conn, final Object id) {
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);
     final String[] result = {
-      "0x" + BaseEncoding.base16().lowerCase().encode(currentInput.getPrePowHash()),
+      currentInput.getPrePowHash().toHexString(),
       "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
       currentInput.getTarget().toHexString()
     };
@@ -127,12 +126,13 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
       throws IOException {
     LOG.debug("Miner submitted solution {}", req);
     boolean result = false;
-    final EthHashSolution solution =
-        new EthHashSolution(
+    final PoWSolution solution =
+        new PoWSolution(
             Bytes.fromHexString(req.getRequiredParameter(0, String.class)).getLong(0),
             req.getRequiredParameter(2, Hash.class),
-            Bytes.fromHexString(req.getRequiredParameter(1, String.class)).toArrayUnsafe());
-    if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
+            null,
+            Bytes.fromHexString(req.getRequiredParameter(1, String.class)));
+    if (currentInput.getPrePowHash().equals(solution.getPowHash())) {
       result = submitCallback.apply(solution);
     }
 
@@ -141,12 +141,12 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   @Override
-  public void setCurrentWorkTask(final EthHashSolverInputs input) {
+  public void setCurrentWorkTask(final PoWSolverInputs input) {
     this.currentInput = input;
   }
 
   @Override
-  public void setSubmitCallback(final Function<EthHashSolution, Boolean> submitSolutionCallback) {
+  public void setSubmitCallback(final Function<PoWSolution, Boolean> submitSolutionCallback) {
     this.submitCallback = submitSolutionCallback;
   }
 }

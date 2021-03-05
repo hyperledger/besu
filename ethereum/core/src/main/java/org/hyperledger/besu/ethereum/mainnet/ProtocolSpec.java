@@ -77,6 +77,8 @@ public class ProtocolSpec {
 
   private final BadBlockManager badBlockManager;
 
+  private final Optional<PoWHasher> powHasher;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -103,6 +105,7 @@ public class ProtocolSpec {
    * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    * @param gasBudgetCalculator the gas budget calculator to use.
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param powHasher the proof-of-work hasher
    */
   public ProtocolSpec(
       final String name,
@@ -127,7 +130,8 @@ public class ProtocolSpec {
       final TransactionPriceCalculator transactionPriceCalculator,
       final Optional<EIP1559> eip1559,
       final TransactionGasBudgetCalculator gasBudgetCalculator,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final Optional<PoWHasher> powHasher) {
     this.name = name;
     this.evm = evm;
     this.transactionValidator = transactionValidator;
@@ -151,6 +155,7 @@ public class ProtocolSpec {
     this.eip1559 = eip1559;
     this.gasBudgetCalculator = gasBudgetCalculator;
     this.badBlockManager = badBlockManager;
+    this.powHasher = powHasher;
   }
 
   /**
@@ -349,5 +354,14 @@ public class ProtocolSpec {
    */
   public BadBlockManager getBadBlocksManager() {
     return badBlockManager;
+  }
+
+  /**
+   * Returns the Proof-of-Work hasher
+   *
+   * @return the Proof-of-Work hasher
+   */
+  public Optional<PoWHasher> getPoWHasher() {
+    return powHasher;
   }
 }
