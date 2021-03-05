@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.SHA256PrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.operations.BalanceOperation;
-import org.hyperledger.besu.ethereum.vm.operations.BeginSubOperation;
 import org.hyperledger.besu.ethereum.vm.operations.BlockHashOperation;
 import org.hyperledger.besu.ethereum.vm.operations.ExpOperation;
 import org.hyperledger.besu.ethereum.vm.operations.ExtCodeCopyOperation;
@@ -385,13 +384,6 @@ public interface GasCalculator {
    * @return the refund amount for deleting an account in a self destruct operation
    */
   Gas getSelfDestructRefundAmount();
-
-  /**
-   * Returns the cost for executing a {@link BeginSubOperation}.
-   *
-   * @return the cost for executing begin sub operation
-   */
-  Gas getBeginSubGasCost();
 
   /**
    * Returns the cost of a SLOAD to a storage slot not previously loaded in the TX context.
