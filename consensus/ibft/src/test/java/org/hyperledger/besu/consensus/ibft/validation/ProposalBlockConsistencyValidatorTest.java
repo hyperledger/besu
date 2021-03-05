@@ -44,7 +44,8 @@ public class ProposalBlockConsistencyValidatorTest {
       new ConsensusRoundIdentifier(chainHeight, 4);
 
   private final Block block =
-      ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
+      ProposedBlockHelpers.createProposalBlock(
+          Collections.emptyList(), roundIdentifier, new IbftExtraDataEncoder());
   private ProposalBlockConsistencyValidator consistencyChecker;
 
   @Before

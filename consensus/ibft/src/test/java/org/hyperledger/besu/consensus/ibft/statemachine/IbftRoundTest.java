@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft.statemachine;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -98,7 +98,10 @@ public class IbftRoundTest {
   @Before
   public void setup() {
     protocolContext =
-        new ProtocolContext(blockChain, worldStateArchive, setupContextWithValidators(emptyList()));
+        new ProtocolContext(
+            blockChain,
+            worldStateArchive,
+            setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataEncoder()));
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);

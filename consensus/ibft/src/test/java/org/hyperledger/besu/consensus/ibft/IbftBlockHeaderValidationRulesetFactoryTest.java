@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
@@ -45,7 +45,8 @@ import org.junit.Test;
 public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
-    return new ProtocolContext(null, null, setupContextWithValidators(validators));
+    return new ProtocolContext(
+        null, null, setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataEncoder()));
   }
 
   @Test

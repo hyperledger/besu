@@ -62,6 +62,7 @@ public class RoundChangeCertificateValidatorTest {
   private final MessageValidatorForHeightFactory validatorFactory =
       mock(MessageValidatorForHeightFactory.class);
   private final SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
+  final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
 
   private Block proposedBlock;
 
@@ -71,11 +72,11 @@ public class RoundChangeCertificateValidatorTest {
     validators.add(Util.publicKeyToAddress(validatorKey.getPublicKey()));
     validators.add(Util.publicKeyToAddress(otherValidatorKey.getPublicKey()));
 
-    proposedBlock = ProposedBlockHelpers.createProposalBlock(validators, roundIdentifier);
+    proposedBlock =
+        ProposedBlockHelpers.createProposalBlock(validators, roundIdentifier, bftExtraDataEncoder);
 
     validator =
-        new RoundChangeCertificateValidator(
-            validators, validatorFactory, 5, new IbftExtraDataEncoder());
+        new RoundChangeCertificateValidator(validators, validatorFactory, 5, bftExtraDataEncoder);
   }
 
   @Test
@@ -138,7 +139,8 @@ public class RoundChangeCertificateValidatorTest {
     // identical
     // to the proposedBlock in the new proposal (so should fail).
     final Block prevProposedBlock =
-        ProposedBlockHelpers.createProposalBlock(validators.subList(0, 1), preparedRound);
+        ProposedBlockHelpers.createProposalBlock(
+            validators.subList(0, 1), preparedRound, bftExtraDataEncoder);
 
     final PreparedRoundArtifacts mismatchedRoundArtefacts =
         new PreparedRoundArtifacts(
@@ -164,7 +166,8 @@ public class RoundChangeCertificateValidatorTest {
     final ConsensusRoundIdentifier latterPrepareRound =
         ConsensusRoundHelpers.createFrom(roundIdentifier, 0, -1);
     final Block latterBlock =
-        ProposedBlockHelpers.createProposalBlock(validators, latterPrepareRound);
+        ProposedBlockHelpers.createProposalBlock(
+            validators, latterPrepareRound, bftExtraDataEncoder);
     final Proposal latterProposal =
         proposerMessageFactory.createProposal(latterPrepareRound, latterBlock, empty());
     final Optional<PreparedRoundArtifacts> latterTerminatedRoundArtefacts =
@@ -181,7 +184,8 @@ public class RoundChangeCertificateValidatorTest {
         new ConsensusRoundIdentifier(
             roundIdentifier.getSequenceNumber(), roundIdentifier.getRoundNumber() - 2);
     final Block earlierBlock =
-        ProposedBlockHelpers.createProposalBlock(validators.subList(0, 1), earlierPreparedRound);
+        ProposedBlockHelpers.createProposalBlock(
+            validators.subList(0, 1), earlierPreparedRound, bftExtraDataEncoder);
     final Proposal earlierProposal =
         proposerMessageFactory.createProposal(earlierPreparedRound, earlierBlock, empty());
     final Optional<PreparedRoundArtifacts> earlierTerminatedRoundArtefacts =
