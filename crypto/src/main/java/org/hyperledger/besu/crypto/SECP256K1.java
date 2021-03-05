@@ -15,7 +15,6 @@
 package org.hyperledger.besu.crypto;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.SECP256K1_EC_UNCOMPRESSED;
 
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1;
@@ -30,19 +29,15 @@ import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import com.google.common.base.Suppliers;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -54,12 +49,9 @@ import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
-import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
-import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
-import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 
 /*
@@ -70,48 +62,49 @@ import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
  * Adapted from the web3j (Apache 2 License) implementations:
  * https://github.com/web3j/web3j/crypto/src/main/java/org/web3j/crypto/*.java
  */
-public class SECP256K1 {
+public class SECP256K1 implements SignatureAlgorithm {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static boolean useNative = true;
+  private boolean useNative = true;
 
-  public static final String ALGORITHM = "ECDSA";
   public static final String CURVE_NAME = "secp256k1";
   public static final String PROVIDER = "BC";
 
-  public static final ECDomainParameters CURVE;
-  public static final BigInteger HALF_CURVE_ORDER;
+  private final ECDomainParameters curve;
+  private final BigInteger halfCurveOrder;
 
-  private static final KeyPairGenerator KEY_PAIR_GENERATOR;
-  private static final BigInteger CURVE_ORDER;
+  private final KeyPairGenerator keyPairGenerator;
+  private final BigInteger curveOrder;
 
-  static {
+  public SECP256K1() {
     Security.addProvider(new BouncyCastleProvider());
 
     final X9ECParameters params = SECNamedCurves.getByName(CURVE_NAME);
-    CURVE = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
-    CURVE_ORDER = CURVE.getN();
-    HALF_CURVE_ORDER = CURVE_ORDER.shiftRight(1);
+    curve = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
+    curveOrder = curve.getN();
+    halfCurveOrder = curveOrder.shiftRight(1);
     try {
-      KEY_PAIR_GENERATOR = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
+      keyPairGenerator = KeyPairGenerator.getInstance(ALGORITHM, PROVIDER);
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
     final ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec(CURVE_NAME);
     try {
-      KEY_PAIR_GENERATOR.initialize(ecGenParameterSpec, SecureRandomProvider.createSecureRandom());
+      keyPairGenerator.initialize(ecGenParameterSpec, SecureRandomProvider.createSecureRandom());
     } catch (final InvalidAlgorithmParameterException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static void enableNative() {
+  @Override
+  public void enableNative() {
     useNative = LibSecp256k1.CONTEXT != null;
     LOG.info(useNative ? "Using native secp256k1" : "Native secp256k1 requested but not available");
   }
 
-  public static Signature sign(final Bytes32 dataHash, final KeyPair keyPair) {
+  @Override
+  public SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair) {
     if (useNative) {
       return signNative(dataHash, keyPair);
     } else {
@@ -130,7 +123,8 @@ public class SECP256K1 {
    * @param pub The public key bytes to use.
    * @return True if the verification is successful.
    */
-  public static boolean verify(final Bytes data, final Signature signature, final PublicKey pub) {
+  @Override
+  public boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
     if (useNative) {
       return verifyNative(data, signature, pub);
     } else {
@@ -139,13 +133,13 @@ public class SECP256K1 {
   }
 
   /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
-  private static ECPoint decompressKey(final BigInteger xBN, final boolean yBit) {
+  private ECPoint decompressKey(final BigInteger xBN, final boolean yBit) {
     final X9IntegerConverter x9 = new X9IntegerConverter();
-    final byte[] compEnc = x9.integerToBytes(xBN, 1 + x9.getByteLength(CURVE.getCurve()));
+    final byte[] compEnc = x9.integerToBytes(xBN, 1 + x9.getByteLength(curve.getCurve()));
     compEnc[0] = (byte) (yBit ? 0x03 : 0x02);
     // TODO: Find a better way to handle an invalid point compression here.
     // Currently ECCurve#decodePoint throws an IllegalArgumentException.
-    return CURVE.getCurve().decodePoint(compEnc);
+    return curve.getCurve().decodePoint(compEnc);
   }
 
   /**
@@ -164,7 +158,7 @@ public class SECP256K1 {
    * @param dataHash Hash of the data that was signed.
    * @return An ECKey containing only the public part, or null if recovery wasn't possible.
    */
-  private static BigInteger recoverFromSignature(
+  private BigInteger recoverFromSignature(
       final int recId, final BigInteger r, final BigInteger s, final Bytes32 dataHash) {
     assert (recId >= 0);
     assert (r.signum() >= 0);
@@ -173,7 +167,7 @@ public class SECP256K1 {
 
     // 1.0 For j from 0 to h (h == recId here and the loop is outside this function)
     // 1.1 Let x = r + jn
-    final BigInteger n = CURVE.getN(); // Curve order.
+    final BigInteger n = curve.getN(); // Curve order.
     final BigInteger i = BigInteger.valueOf((long) recId / 2);
     final BigInteger x = r.add(i.multiply(n));
     // 1.2. Convert the integer x to an octet string X of length mlen using the conversion
@@ -216,7 +210,7 @@ public class SECP256K1 {
     final BigInteger rInv = r.modInverse(n);
     final BigInteger srInv = rInv.multiply(s).mod(n);
     final BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
-    final ECPoint q = ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
+    final ECPoint q = ECAlgorithms.sumOfTwoMultiplies(curve.getG(), eInvrInv, R, srInv);
 
     if (q.isInfinity()) {
       return null;
@@ -227,12 +221,12 @@ public class SECP256K1 {
     return new BigInteger(1, Arrays.copyOfRange(qBytes, 1, qBytes.length));
   }
 
-  private static Signature signDefault(final Bytes32 dataHash, final KeyPair keyPair) {
+  private SECPSignature signDefault(final Bytes32 dataHash, final KeyPair keyPair) {
     final ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
 
     final ECPrivateKeyParameters privKey =
         new ECPrivateKeyParameters(
-            keyPair.getPrivateKey().getEncodedBytes().toUnsignedBigInteger(), CURVE);
+            keyPair.getPrivateKey().getEncodedBytes().toUnsignedBigInteger(), curve);
     signer.init(true, privKey);
 
     final BigInteger[] components = signer.generateSignature(dataHash.toArrayUnsafe());
@@ -240,10 +234,11 @@ public class SECP256K1 {
     return normaliseSignature(components[0], components[1], keyPair.getPublicKey(), dataHash);
   }
 
-  public static Signature normaliseSignature(
+  @Override
+  public SECPSignature normaliseSignature(
       final BigInteger nativeR,
       final BigInteger nativeS,
-      final PublicKey publicKey,
+      final SECPPublicKey publicKey,
       final Bytes32 dataHash) {
 
     BigInteger s = nativeS;
@@ -253,14 +248,14 @@ public class SECP256K1 {
     // ability to modify the bits of a Bitcoin transaction after it's been signed, as that
     // violates various assumed invariants. Thus in future only one of those forms will be
     // considered legal and the other will be banned.
-    if (s.compareTo(HALF_CURVE_ORDER) > 0) {
+    if (s.compareTo(halfCurveOrder) > 0) {
       // The order of the curve is the number of valid points that exist on that curve.
       // If S is in the upper half of the number of valid points, then bring it back to
       // the lower half. Otherwise, imagine that
       // N = 10
       // s = 8, so (-8 % 10 == 2) thus both (r, 8) and (r, 2) are valid solutions.
       // 10 - 8 == 2, giving us always the latter solution, which is canonical.
-      s = CURVE.getN().subtract(s);
+      s = curve.getN().subtract(s);
     }
 
     // Now we have to work backwards to figure out the recId needed to recover the signature.
@@ -278,18 +273,18 @@ public class SECP256K1 {
           "Could not construct a recoverable key. This should never happen.");
     }
 
-    return new Signature(nativeR, s, (byte) recId);
+    return new SECPSignature(nativeR, s, (byte) recId);
   }
 
-  private static boolean verifyDefault(
-      final Bytes data, final Signature signature, final PublicKey pub) {
+  private boolean verifyDefault(
+      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
     final ECDSASigner signer = new ECDSASigner();
     final Bytes toDecode = Bytes.wrap(Bytes.of((byte) 4), pub.getEncodedBytes());
     final ECPublicKeyParameters params =
-        new ECPublicKeyParameters(CURVE.getCurve().decodePoint(toDecode.toArrayUnsafe()), CURVE);
+        new ECPublicKeyParameters(curve.getCurve().decodePoint(toDecode.toArrayUnsafe()), curve);
     signer.init(false, params);
     try {
-      return signer.verifySignature(data.toArrayUnsafe(), signature.r, signature.s);
+      return signer.verifySignature(data.toArrayUnsafe(), signature.getR(), signature.getS());
     } catch (final NullPointerException e) {
       // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those
       // signatures
@@ -309,10 +304,11 @@ public class SECP256K1 {
    *     a hashing function.
    * @return True if the verification is successful.
    */
-  public static boolean verify(
+  @Override
+  public boolean verify(
       final Bytes data,
-      final Signature signature,
-      final PublicKey pub,
+      final SECPSignature signature,
+      final SECPPublicKey pub,
       final UnaryOperator<Bytes> preprocessor) {
     checkArgument(preprocessor != null, "preprocessor must not be null");
     return verify(preprocessor.apply(data), signature, pub);
@@ -325,13 +321,15 @@ public class SECP256K1 {
    * @param theirPubKey The public key.
    * @return The agreed secret.
    */
-  public static Bytes32 calculateECDHKeyAgreement(
-      final PrivateKey privKey, final PublicKey theirPubKey) {
+  @Override
+  public Bytes32 calculateECDHKeyAgreement(
+      final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
     checkArgument(privKey != null, "missing private key");
     checkArgument(theirPubKey != null, "missing remote public key");
 
-    final ECPrivateKeyParameters privKeyP = new ECPrivateKeyParameters(privKey.getD(), CURVE);
-    final ECPublicKeyParameters pubKeyP = new ECPublicKeyParameters(theirPubKey.asEcPoint(), CURVE);
+    final ECPrivateKeyParameters privKeyP = new ECPrivateKeyParameters(privKey.getD(), curve);
+    final ECPublicKeyParameters pubKeyP =
+        new ECPublicKeyParameters(theirPubKey.asEcPoint(curve), curve);
 
     final ECDHBasicAgreement agreement = new ECDHBasicAgreement();
     agreement.init(privKeyP);
@@ -340,7 +338,84 @@ public class SECP256K1 {
     return UInt256.valueOf(agreed).toBytes();
   }
 
-  private static Signature signNative(final Bytes32 dataHash, final KeyPair keyPair) {
+  @Override
+  public SECPPrivateKey createPrivateKey(final BigInteger key) {
+    return SECPPrivateKey.create(key, ALGORITHM);
+  }
+
+  @Override
+  public SECPPrivateKey createPrivateKey(final Bytes32 key) {
+    return SECPPrivateKey.create(key, ALGORITHM);
+  }
+
+  @Override
+  public SECPPublicKey createPublicKey(final SECPPrivateKey privateKey) {
+    return SECPPublicKey.create(privateKey, curve, ALGORITHM);
+  }
+
+  @Override
+  public SECPPublicKey createPublicKey(final BigInteger key) {
+    return SECPPublicKey.create(key, ALGORITHM);
+  }
+
+  @Override
+  public SECPPublicKey createPublicKey(final Bytes encoded) {
+    return SECPPublicKey.create(encoded, ALGORITHM);
+  }
+
+  @Override
+  public Optional<SECPPublicKey> recoverPublicKeyFromSignature(
+      final Bytes32 dataHash, final SECPSignature signature) {
+    if (useNative) {
+      return recoverFromSignatureNative(dataHash, signature);
+    } else {
+      final BigInteger publicKeyBI =
+          recoverFromSignature(signature.getRecId(), signature.getR(), signature.getS(), dataHash);
+      return Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM));
+    }
+  }
+
+  @Override
+  public ECPoint publicKeyAsEcPoint(final SECPPublicKey publicKey) {
+    return publicKey.asEcPoint(curve);
+  }
+
+  @Override
+  public KeyPair createKeyPair(final SECPPrivateKey privateKey) {
+    return KeyPair.create(privateKey, curve, ALGORITHM);
+  }
+
+  @Override
+  public KeyPair generateKeyPair() {
+    return KeyPair.generate(keyPairGenerator, ALGORITHM);
+  }
+
+  @Override
+  public SECPSignature createSignature(final BigInteger r, final BigInteger s, final byte recId) {
+    return SECPSignature.create(r, s, recId, curveOrder);
+  }
+
+  @Override
+  public SECPSignature decodeSignature(final Bytes bytes) {
+    return SECPSignature.decode(bytes, curveOrder);
+  }
+
+  @Override
+  public BigInteger getHalfCurveOrder() {
+    return halfCurveOrder;
+  }
+
+  @Override
+  public String getProvider() {
+    return PROVIDER;
+  }
+
+  @Override
+  public String getCurveName() {
+    return CURVE_NAME;
+  }
+
+  private SECPSignature signNative(final Bytes32 dataHash, final KeyPair keyPair) {
     final LibSecp256k1.secp256k1_ecdsa_recoverable_signature signature =
         new secp256k1_ecdsa_recoverable_signature();
     // sign in internal form
@@ -348,7 +423,7 @@ public class SECP256K1 {
             LibSecp256k1.CONTEXT,
             signature,
             dataHash.toArrayUnsafe(),
-            keyPair.privateKey.getEncoded(),
+            keyPair.getPrivateKey().getEncoded(),
             null,
             null)
         == 0) {
@@ -367,12 +442,12 @@ public class SECP256K1 {
     // wrap in signature object
     final Bytes32 r = Bytes32.wrap(sig, 0);
     final Bytes32 s = Bytes32.wrap(sig, 32);
-    return Signature.create(
-        r.toUnsignedBigInteger(), s.toUnsignedBigInteger(), (byte) recId.getValue());
+    return SECPSignature.create(
+        r.toUnsignedBigInteger(), s.toUnsignedBigInteger(), (byte) recId.getValue(), curveOrder);
   }
 
-  private static boolean verifyNative(
-      final Bytes data, final Signature signature, final PublicKey pub) {
+  private boolean verifyNative(
+      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
 
     // translate signature
     final LibSecp256k1.secp256k1_ecdsa_signature _signature = new secp256k1_ecdsa_signature();
@@ -396,8 +471,8 @@ public class SECP256K1 {
         != 0;
   }
 
-  private static Optional<PublicKey> recoverFromSignatureNative(
-      final Bytes32 dataHash, final Signature signature) {
+  private Optional<SECPPublicKey> recoverFromSignatureNative(
+      final Bytes32 dataHash, final SECPSignature signature) {
 
     // parse the sig
     final LibSecp256k1.secp256k1_ecdsa_recoverable_signature parsedSignature =
@@ -426,360 +501,7 @@ public class SECP256K1 {
     LibSecp256k1.secp256k1_ec_pubkey_serialize(
         LibSecp256k1.CONTEXT, recoveredKey, keySize, newPubKey, SECP256K1_EC_UNCOMPRESSED);
 
-    return Optional.of(PublicKey.create(Bytes.wrapByteBuffer(recoveredKey).slice(1)));
-  }
-
-  public static class PrivateKey implements java.security.PrivateKey {
-
-    private final Bytes32 encoded;
-
-    private PrivateKey(final Bytes32 encoded) {
-      checkNotNull(encoded);
-      this.encoded = encoded;
-    }
-
-    public static PrivateKey create(final BigInteger key) {
-      checkNotNull(key);
-      return create(UInt256.valueOf(key).toBytes());
-    }
-
-    public static PrivateKey create(final Bytes32 key) {
-      return new PrivateKey(key);
-    }
-
-    @Override
-    public boolean equals(final Object other) {
-      if (!(other instanceof PrivateKey)) {
-        return false;
-      }
-
-      final PrivateKey that = (PrivateKey) other;
-      return this.encoded.equals(that.encoded);
-    }
-
-    @Override
-    public byte[] getEncoded() {
-      return encoded.toArrayUnsafe();
-    }
-
-    public Bytes32 getEncodedBytes() {
-      return encoded;
-    }
-
-    public BigInteger getD() {
-      return encoded.toUnsignedBigInteger();
-    }
-
-    @Override
-    public String getAlgorithm() {
-      return ALGORITHM;
-    }
-
-    @Override
-    public String getFormat() {
-      return null;
-    }
-
-    @Override
-    public int hashCode() {
-      return encoded.hashCode();
-    }
-
-    @Override
-    public String toString() {
-      return encoded.toString();
-    }
-  }
-
-  public static class PublicKey implements java.security.PublicKey {
-
-    public static final int BYTE_LENGTH = 64;
-
-    private final Bytes encoded;
-
-    public static PublicKey create(final PrivateKey privateKey) {
-      BigInteger privKey = privateKey.getEncodedBytes().toUnsignedBigInteger();
-
-      /*
-       * TODO: FixedPointCombMultiplier currently doesn't support scalars longer than the group
-       * order, but that could change in future versions.
-       */
-      if (privKey.bitLength() > CURVE.getN().bitLength()) {
-        privKey = privKey.mod(CURVE.getN());
-      }
-
-      final ECPoint point = new FixedPointCombMultiplier().multiply(CURVE.getG(), privKey);
-      return PublicKey.create(Bytes.wrap(Arrays.copyOfRange(point.getEncoded(false), 1, 65)));
-    }
-
-    private static Bytes toBytes64(final byte[] backing) {
-      if (backing.length == BYTE_LENGTH) {
-        return Bytes.wrap(backing);
-      } else if (backing.length > BYTE_LENGTH) {
-        return Bytes.wrap(backing, backing.length - BYTE_LENGTH, BYTE_LENGTH);
-      } else {
-        final MutableBytes res = MutableBytes.create(BYTE_LENGTH);
-        Bytes.wrap(backing).copyTo(res, BYTE_LENGTH - backing.length);
-        return res;
-      }
-    }
-
-    public static PublicKey create(final BigInteger key) {
-      checkNotNull(key);
-      return create(toBytes64(key.toByteArray()));
-    }
-
-    public static PublicKey create(final Bytes encoded) {
-      return new PublicKey(encoded);
-    }
-
-    public static Optional<PublicKey> recoverFromSignature(
-        final Bytes32 dataHash, final Signature signature) {
-      if (useNative) {
-        return recoverFromSignatureNative(dataHash, signature);
-      } else {
-        final BigInteger publicKeyBI =
-            SECP256K1.recoverFromSignature(
-                signature.getRecId(), signature.getR(), signature.getS(), dataHash);
-        return Optional.ofNullable(publicKeyBI).map(PublicKey::create);
-      }
-    }
-
-    private PublicKey(final Bytes encoded) {
-      checkNotNull(encoded);
-      checkArgument(
-          encoded.size() == BYTE_LENGTH,
-          "Encoding must be %s bytes long, got %s",
-          BYTE_LENGTH,
-          encoded.size());
-      this.encoded = encoded;
-    }
-
-    /**
-     * Returns this public key as an {@link ECPoint} of Bouncy Castle, to facilitate cryptographic
-     * operations.
-     *
-     * @return This public key represented as an Elliptic Curve point.
-     */
-    public ECPoint asEcPoint() {
-      // 0x04 is the prefix for uncompressed keys.
-      final Bytes val = Bytes.concatenate(Bytes.of(0x04), encoded);
-      return CURVE.getCurve().decodePoint(val.toArrayUnsafe());
-    }
-
-    @Override
-    public boolean equals(final Object other) {
-      if (!(other instanceof PublicKey)) {
-        return false;
-      }
-
-      final PublicKey that = (PublicKey) other;
-      return this.encoded.equals(that.encoded);
-    }
-
-    @Override
-    public byte[] getEncoded() {
-      return encoded.toArrayUnsafe();
-    }
-
-    public Bytes getEncodedBytes() {
-      return encoded;
-    }
-
-    @Override
-    public String getAlgorithm() {
-      return ALGORITHM;
-    }
-
-    @Override
-    public String getFormat() {
-      return null;
-    }
-
-    @Override
-    public int hashCode() {
-      return encoded.hashCode();
-    }
-
-    @Override
-    public String toString() {
-      return encoded.toString();
-    }
-  }
-
-  public static class KeyPair {
-
-    private final PrivateKey privateKey;
-    private final PublicKey publicKey;
-
-    public KeyPair(final PrivateKey privateKey, final PublicKey publicKey) {
-      checkNotNull(privateKey);
-      checkNotNull(publicKey);
-      this.privateKey = privateKey;
-      this.publicKey = publicKey;
-    }
-
-    public static KeyPair create(final PrivateKey privateKey) {
-      return new KeyPair(privateKey, PublicKey.create(privateKey));
-    }
-
-    public static KeyPair generate() {
-      final java.security.KeyPair rawKeyPair = KEY_PAIR_GENERATOR.generateKeyPair();
-      final BCECPrivateKey privateKey = (BCECPrivateKey) rawKeyPair.getPrivate();
-      final BCECPublicKey publicKey = (BCECPublicKey) rawKeyPair.getPublic();
-
-      final BigInteger privateKeyValue = privateKey.getD();
-
-      // Ethereum does not use encoded public keys like bitcoin - see
-      // https://en.bitcoin.it/wiki/Elliptic_Curve_Digital_Signature_Algorithm for details
-      // Additionally, as the first bit is a constant prefix (0x04) we ignore this value
-      final byte[] publicKeyBytes = publicKey.getQ().getEncoded(false);
-      final BigInteger publicKeyValue =
-          new BigInteger(1, Arrays.copyOfRange(publicKeyBytes, 1, publicKeyBytes.length));
-
-      return new KeyPair(PrivateKey.create(privateKeyValue), PublicKey.create(publicKeyValue));
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(privateKey, publicKey);
-    }
-
-    @Override
-    public boolean equals(final Object other) {
-      if (!(other instanceof KeyPair)) {
-        return false;
-      }
-
-      final KeyPair that = (KeyPair) other;
-      return this.privateKey.equals(that.privateKey) && this.publicKey.equals(that.publicKey);
-    }
-
-    public PrivateKey getPrivateKey() {
-      return privateKey;
-    }
-
-    public PublicKey getPublicKey() {
-      return publicKey;
-    }
-  }
-
-  public static class Signature {
-
-    public static final int BYTES_REQUIRED = 65;
-    /**
-     * The recovery id to reconstruct the public key used to create the signature.
-     *
-     * <p>The recId is an index from 0 to 3 which indicates which of the 4 possible keys is the
-     * correct one. Because the key recovery operation yields multiple potential keys, the correct
-     * key must either be stored alongside the signature, or you must be willing to try each recId
-     * in turn until you find one that outputs the key you are expecting.
-     */
-    private final byte recId;
-
-    private final BigInteger r;
-    private final BigInteger s;
-
-    private final Supplier<Bytes> encoded = Suppliers.memoize(this::_encodedBytes);
-
-    Signature(final BigInteger r, final BigInteger s, final byte recId) {
-      this.r = r;
-      this.s = s;
-      this.recId = recId;
-    }
-
-    /**
-     * Creates a new signature object given its parameters.
-     *
-     * @param r the 'r' part of the signature.
-     * @param s the 's' part of the signature.
-     * @param recId the recovery id part of the signature.
-     * @return the created {@link Signature} object.
-     * @throws NullPointerException if {@code r} or {@code s} are {@code null}.
-     * @throws IllegalArgumentException if any argument is invalid (for instance, {@code v} is
-     *     neither 27 or 28).
-     */
-    public static Signature create(final BigInteger r, final BigInteger s, final byte recId) {
-      checkNotNull(r);
-      checkNotNull(s);
-      checkInBounds("r", r);
-      checkInBounds("s", s);
-      if (recId != 0 && recId != 1) {
-        throw new IllegalArgumentException(
-            "Invalid 'recId' value, should be 0 or 1 but got " + recId);
-      }
-      return new Signature(r, s, recId);
-    }
-
-    private static void checkInBounds(final String name, final BigInteger i) {
-      if (i.compareTo(BigInteger.ONE) < 0) {
-        throw new IllegalArgumentException(
-            String.format("Invalid '%s' value, should be >= 1 but got %s", name, i));
-      }
-
-      if (i.compareTo(CURVE_ORDER) >= 0) {
-        throw new IllegalArgumentException(
-            String.format("Invalid '%s' value, should be < %s but got %s", CURVE_ORDER, name, i));
-      }
-    }
-
-    public static Signature decode(final Bytes bytes) {
-      checkArgument(
-          bytes.size() == BYTES_REQUIRED, "encoded SECP256K1 signature must be 65 bytes long");
-
-      final BigInteger r = bytes.slice(0, 32).toUnsignedBigInteger();
-      final BigInteger s = bytes.slice(32, 32).toUnsignedBigInteger();
-      final byte recId = bytes.get(64);
-      return SECP256K1.Signature.create(r, s, recId);
-    }
-
-    public Bytes encodedBytes() {
-      return encoded.get();
-    }
-
-    private Bytes _encodedBytes() {
-      final MutableBytes bytes = MutableBytes.create(BYTES_REQUIRED);
-      UInt256.valueOf(r).toBytes().copyTo(bytes, 0);
-      UInt256.valueOf(s).toBytes().copyTo(bytes, 32);
-      bytes.set(64, recId);
-      return bytes;
-    }
-
-    @Override
-    public boolean equals(final Object other) {
-      if (!(other instanceof Signature)) {
-        return false;
-      }
-
-      final Signature that = (Signature) other;
-      return this.r.equals(that.r) && this.s.equals(that.s) && this.recId == that.recId;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(r, s, recId);
-    }
-
-    public byte getRecId() {
-      return recId;
-    }
-
-    public BigInteger getR() {
-      return r;
-    }
-
-    public BigInteger getS() {
-      return s;
-    }
-
-    @Override
-    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      sb.append("SECP256K1.Signature").append("{");
-      sb.append("r=").append(r).append(", ");
-      sb.append("s=").append(s).append(", ");
-      sb.append("recId=").append(recId);
-      return sb.append("}").toString();
-    }
+    return Optional.of(
+        SECPPublicKey.create(Bytes.wrapByteBuffer(recoveredKey).slice(1), ALGORITHM));
   }
 }

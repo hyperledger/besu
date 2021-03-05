@@ -35,7 +35,7 @@ public interface GenesisConfigOptions {
 
   String getConsensusEngine();
 
-  BftConfigOptions getIbftLegacyConfigOptions();
+  IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
   CliqueConfigOptions getCliqueConfigOptions();
 
