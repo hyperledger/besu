@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -105,7 +106,8 @@ public class EthGetTransactionReceiptTest {
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
           TransactionGasBudgetCalculator.frontier(),
-          null);
+          null,
+          Optional.of(PoWHasher.ETHASH_LIGHT));
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           "status",
@@ -130,7 +132,8 @@ public class EthGetTransactionReceiptTest {
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
           TransactionGasBudgetCalculator.frontier(),
-          null);
+          null,
+          Optional.of(PoWHasher.ETHASH_LIGHT));
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);

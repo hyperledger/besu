@@ -14,19 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.assertj.core.api.Assertions;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
@@ -50,32 +48,28 @@ public final class EthHashTest {
     final long epoch = epochCalculator.cacheEpoch(blockNumber);
     final long datasetSize = EthHash.datasetSize(epoch);
     final long cacheSize = EthHash.cacheSize(epoch);
-    Assertions.assertThat(datasetSize).isEqualTo(1157627776);
-    Assertions.assertThat(cacheSize).isEqualTo(18087488);
+    assertThat(datasetSize).isEqualTo(1157627776);
+    assertThat(cacheSize).isEqualTo(18087488);
     final int[] cache = EthHash.mkCache((int) cacheSize, blockNumber, epochCalculator);
-    Assertions.assertThat(
-            Hash.wrap(
-                Bytes32.wrap(
-                    Arrays.copyOf(
-                        EthHash.hashimotoLight(
-                            datasetSize, cache, EthHash.hashHeader(header), header.getNonce()),
-                        32))))
-        .isEqualTo(header.getMixHash());
+    PoWSolution solution =
+        EthHash.hashimotoLight(datasetSize, cache, EthHash.hashHeader(header), header.getNonce());
+    assertThat(solution.getMixHash()).isEqualTo(header.getMixHash());
   }
 
   @Test
   public void hashimotoLightExample() {
     final int[] cache = EthHash.mkCache(1024, 1L, new EpochCalculator.DefaultEpochCalculator());
-    Assertions.assertThat(
-            Hex.toHexString(
-                EthHash.hashimotoLight(
-                    32 * 1024,
-                    cache,
-                    Hex.decode("c9149cc0386e689d789a1c2f3d5d169a61a6218ed30e74414dc736e442ef3d1f"),
-                    0L)))
-        .isEqualTo(
-            "e4073cffaef931d37117cefd9afd27ea0f1cad6a981dd2605c4a1ac97c519800"
-                + "d3539235ee2e6f8db665c0a72169f55b7f6c605712330b778ec3944f0eb5a557");
+    PoWSolution solution =
+        EthHash.hashimotoLight(
+            32 * 1024,
+            cache,
+            Bytes.fromHexString("c9149cc0386e689d789a1c2f3d5d169a61a6218ed30e74414dc736e442ef3d1f"),
+            0L);
+
+    assertThat(solution.getSolution().toHexString())
+        .isEqualTo("0xd3539235ee2e6f8db665c0a72169f55b7f6c605712330b778ec3944f0eb5a557");
+    assertThat(solution.getMixHash().toHexString())
+        .isEqualTo("0xe4073cffaef931d37117cefd9afd27ea0f1cad6a981dd2605c4a1ac97c519800");
   }
 
   @Test
@@ -86,7 +80,7 @@ public final class EthHashTest {
     for (final int i : cache) {
       buffer.putInt(i);
     }
-    Assertions.assertThat(Hex.toHexString(buffer.array()))
+    assertThat(Hex.toHexString(buffer.array()))
         .isEqualTo(
             new StringBuilder()
                 .append(

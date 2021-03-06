@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 
 /** A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty. */
 public class FixedDifficultyProtocolSchedule {
@@ -28,7 +29,10 @@ public class FixedDifficultyProtocolSchedule {
       final boolean isRevertReasonEnabled) {
     return new ProtocolScheduleBuilder(
             config,
-            builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)),
+            ProtocolSpecAdapters.create(
+                0,
+                builder ->
+                    builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
