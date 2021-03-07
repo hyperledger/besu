@@ -55,6 +55,7 @@ public class QbftExtraDataEncoderTest {
 
   private final BftExtraData DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING =
       getDecodedExtraDataForRawHexEncodingString();
+  private final QbftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
 
   private static BftExtraData getDecodedExtraDataForRawHexEncodingString() {
     final List<Address> validators =
@@ -100,7 +101,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    final BftExtraData extraData = new QbftExtraDataEncoder().decodeRaw(bufferToInject);
+    final BftExtraData extraData = bftExtraDataEncoder.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getRound()).isEqualTo(round);
@@ -140,7 +141,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> new QbftExtraDataEncoder().decodeRaw(bufferToInject))
+    assertThatThrownBy(() -> bftExtraDataEncoder.decodeRaw(bufferToInject))
         .isInstanceOf(RLPException.class);
   }
 
@@ -168,7 +169,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    final BftExtraData extraData = new QbftExtraDataEncoder().decodeRaw(bufferToInject);
+    final BftExtraData extraData = bftExtraDataEncoder.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getVote().isPresent()).isEqualTo(false);
@@ -191,9 +192,9 @@ public class QbftExtraDataEncoderTest {
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final QbftExtraDataEncoder QbftExtraDataEncoder = new QbftExtraDataEncoder();
+    final QbftExtraDataEncoder bftExtraDataEncoder = this.bftExtraDataEncoder;
     BftExtraData actualExtraData =
-        QbftExtraDataEncoder.decodeRaw(QbftExtraDataEncoder.encode(expectedExtraData));
+        bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -223,7 +224,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    final BftExtraData extraData = new QbftExtraDataEncoder().decodeRaw(bufferToInject);
+    final BftExtraData extraData = bftExtraDataEncoder.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getRound()).isEqualTo(round);
@@ -245,9 +246,9 @@ public class QbftExtraDataEncoderTest {
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final QbftExtraDataEncoder QbftExtraDataEncoder = new QbftExtraDataEncoder();
+    final QbftExtraDataEncoder bftExtraDataEncoder = this.bftExtraDataEncoder;
     BftExtraData actualExtraData =
-        QbftExtraDataEncoder.decodeRaw(QbftExtraDataEncoder.encode(expectedExtraData));
+        bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -284,7 +285,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    final BftExtraData extraData = new QbftExtraDataEncoder().decodeRaw(bufferToInject);
+    final BftExtraData extraData = bftExtraDataEncoder.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getVote())
@@ -311,10 +312,10 @@ public class QbftExtraDataEncoderTest {
 
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
-    final QbftExtraDataEncoder QbftExtraDataEncoder = new QbftExtraDataEncoder();
+    final QbftExtraDataEncoder bftExtraDataEncoder = this.bftExtraDataEncoder;
 
     BftExtraData actualExtraData =
-        QbftExtraDataEncoder.decodeRaw(QbftExtraDataEncoder.encode(expectedExtraData));
+        bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -322,7 +323,7 @@ public class QbftExtraDataEncoderTest {
   @Test
   public void encodingMatchesKnownRawHexString() {
     final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_HEX_ENCODING_STRING);
-    assertThat(new QbftExtraDataEncoder().encode(DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING))
+    assertThat(bftExtraDataEncoder.encode(DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING))
         .isEqualTo(expectedRawDecoding);
   }
 
@@ -332,7 +333,7 @@ public class QbftExtraDataEncoderTest {
     final BftExtraData expectedExtraData = DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING;
 
     Bytes rawDecoding = Bytes.fromHexString(RAW_HEX_ENCODING_STRING);
-    BftExtraData actualExtraData = new QbftExtraDataEncoder().decodeRaw(rawDecoding);
+    BftExtraData actualExtraData = bftExtraDataEncoder.decodeRaw(rawDecoding);
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -366,9 +367,8 @@ public class QbftExtraDataEncoderTest {
     Bytes expectedEncoding = encoder.encoded();
 
     Bytes actualEncoding =
-        new QbftExtraDataEncoder()
-            .encodeWithoutCommitSeals(
-                new BftExtraData(vanity_data, committerSeals, vote, round, validators));
+        bftExtraDataEncoder.encodeWithoutCommitSeals(
+            new BftExtraData(vanity_data, committerSeals, vote, round, validators));
 
     assertThat(actualEncoding).isEqualTo(expectedEncoding);
   }
@@ -401,9 +401,8 @@ public class QbftExtraDataEncoderTest {
     Bytes expectedEncoding = encoder.encoded();
 
     Bytes actualEncoding =
-        new QbftExtraDataEncoder()
-            .encodeWithoutCommitSealsAndRoundNumber(
-                new BftExtraData(vanity_data, committerSeals, vote, round, validators));
+        bftExtraDataEncoder.encodeWithoutCommitSealsAndRoundNumber(
+            new BftExtraData(vanity_data, committerSeals, vote, round, validators));
 
     assertThat(actualEncoding).isEqualTo(expectedEncoding);
   }
@@ -434,7 +433,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> new QbftExtraDataEncoder().decodeRaw(bufferToInject))
+    assertThatThrownBy(() -> bftExtraDataEncoder.decodeRaw(bufferToInject))
         .isInstanceOf(RLPException.class);
   }
 
@@ -471,7 +470,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> new QbftExtraDataEncoder().decodeRaw(bufferToInject))
+    assertThatThrownBy(() -> bftExtraDataEncoder.decodeRaw(bufferToInject))
         .isInstanceOf(RLPException.class);
   }
 
@@ -479,7 +478,7 @@ public class QbftExtraDataEncoderTest {
   public void emptyExtraDataThrowsException() {
     final Bytes bufferToInject = Bytes.EMPTY;
 
-    assertThatThrownBy(() -> new QbftExtraDataEncoder().decodeRaw(bufferToInject))
+    assertThatThrownBy(() -> bftExtraDataEncoder.decodeRaw(bufferToInject))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid Bytes supplied - Bft Extra Data required.");
   }
