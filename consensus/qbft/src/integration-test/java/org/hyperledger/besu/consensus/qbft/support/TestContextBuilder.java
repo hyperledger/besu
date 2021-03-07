@@ -152,13 +152,13 @@ public class TestContextBuilder {
   public static final int DUPLICATE_MESSAGE_LIMIT = 100;
   public static final int FUTURE_MESSAGES_MAX_DISTANCE = 10;
   public static final int FUTURE_MESSAGES_LIMIT = 1000;
+  private static final BftExtraDataEncoder BFT_EXTRA_DATA_ENCODER = new QbftExtraDataEncoder();
 
   private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
   private BftEventQueue bftEventQueue = new BftEventQueue(MESSAGE_QUEUE_LIMIT);
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
   private boolean useGossip = false;
-  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -193,7 +193,7 @@ public class TestContextBuilder {
     final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
     final MutableBlockchain blockChain =
         createInMemoryBlockchain(
-            genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder));
+            genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(BFT_EXTRA_DATA_ENCODER));
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
@@ -258,7 +258,7 @@ public class TestContextBuilder {
     final BftExtraData extraData =
         new BftExtraData(
             Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
-    headerTestFixture.extraData(new QbftExtraDataEncoder().encode(extraData));
+    headerTestFixture.extraData(BFT_EXTRA_DATA_ENCODER.encode(extraData));
     headerTestFixture.mixHash(BftHelpers.EXPECTED_MIX_HASH);
     headerTestFixture.difficulty(Difficulty.ONE);
     headerTestFixture.ommersHash(Hash.EMPTY_LIST_HASH);
@@ -294,25 +294,24 @@ public class TestContextBuilder {
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
 
-    final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
             genesisConfigOptions,
             QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-            bftExtraDataEncoder);
+            BFT_EXTRA_DATA_ENCODER);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
-    final BlockInterface blockInterface = new BftBlockInterface(bftExtraDataEncoder);
+    final BlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
     final VoteTallyCache voteTallyCache =
         new VoteTallyCache(
             blockChain,
             new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new BftBlockInterface(bftExtraDataEncoder));
+            new BftBlockInterface(BFT_EXTRA_DATA_ENCODER));
 
     final VoteProposer voteProposer = new VoteProposer();
 
@@ -321,7 +320,11 @@ public class TestContextBuilder {
             blockChain,
             worldStateArchive,
             new BftContext(
-                voteTallyCache, voteProposer, epochManager, blockInterface, bftExtraDataEncoder));
+                voteTallyCache,
+                voteProposer,
+                epochManager,
+                blockInterface,
+                BFT_EXTRA_DATA_ENCODER));
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

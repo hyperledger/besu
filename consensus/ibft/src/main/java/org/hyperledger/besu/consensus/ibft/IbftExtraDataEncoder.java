@@ -41,13 +41,15 @@ import org.apache.tuweni.bytes.Bytes;
 public class IbftExtraDataEncoder implements BftExtraDataEncoder {
   private static final Logger LOG = LogManager.getLogger();
 
-  public static final int EXTRA_VANITY_LENGTH = 32;
-
   public static Bytes encodeFromAddresses(final Collection<Address> addresses) {
     return new IbftExtraDataEncoder()
         .encode(
             new BftExtraData(
-                Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, addresses));
+                Bytes.wrap(new byte[EXTRA_VANITY_LENGTH]),
+                Collections.emptyList(),
+                Optional.empty(),
+                0,
+                addresses));
   }
 
   public static String createGenesisExtraDataString(final List<Address> validators) {

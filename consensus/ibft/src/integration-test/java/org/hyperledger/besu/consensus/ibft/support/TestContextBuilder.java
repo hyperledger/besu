@@ -157,7 +157,7 @@ public class TestContextBuilder {
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
   private boolean useGossip = false;
-  private final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private static final IbftExtraDataEncoder IBFT_EXTRA_DATA_ENCODER = new IbftExtraDataEncoder();
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -193,7 +193,7 @@ public class TestContextBuilder {
 
     final MutableBlockchain blockChain =
         createInMemoryBlockchain(
-            genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder));
+            genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(IBFT_EXTRA_DATA_ENCODER));
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
@@ -258,7 +258,7 @@ public class TestContextBuilder {
     final BftExtraData extraData =
         new BftExtraData(
             Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
-    headerTestFixture.extraData(new IbftExtraDataEncoder().encode(extraData));
+    headerTestFixture.extraData(IBFT_EXTRA_DATA_ENCODER.encode(extraData));
     headerTestFixture.mixHash(BftHelpers.EXPECTED_MIX_HASH);
     headerTestFixture.difficulty(Difficulty.ONE);
     headerTestFixture.ommersHash(Hash.EMPTY_LIST_HASH);
@@ -298,20 +298,20 @@ public class TestContextBuilder {
         BftProtocolSchedule.create(
             genesisConfigOptions,
             IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-            new IbftExtraDataEncoder());
+            IBFT_EXTRA_DATA_ENCODER);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
-    final BlockInterface blockInterface = new BftBlockInterface(new IbftExtraDataEncoder());
+    final BlockInterface blockInterface = new BftBlockInterface(IBFT_EXTRA_DATA_ENCODER);
 
     final VoteTallyCache voteTallyCache =
         new VoteTallyCache(
             blockChain,
             new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new BftBlockInterface(new IbftExtraDataEncoder()));
+            new BftBlockInterface(IBFT_EXTRA_DATA_ENCODER));
 
     final VoteProposer voteProposer = new VoteProposer();
 
@@ -324,7 +324,7 @@ public class TestContextBuilder {
                 voteProposer,
                 epochManager,
                 blockInterface,
-                new IbftExtraDataEncoder()));
+                IBFT_EXTRA_DATA_ENCODER));
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

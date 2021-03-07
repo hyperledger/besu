@@ -28,7 +28,7 @@ public interface BftExtraDataEncoder {
 
   Bytes encodeWithoutCommitSealsAndRoundNumber(BftExtraData bftExtraData);
 
-  BftExtraData decode(final BlockHeader blockHeader);
+  BftExtraData decode(BlockHeader blockHeader);
 
-  BftExtraData decodeRaw(final Bytes bytes);
+  BftExtraData decodeRaw(Bytes bytes);
 }
