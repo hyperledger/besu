@@ -1,5 +1,19 @@
 # Changelog
 
+## 21.1.2
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Early Access Features
+
+#### Previously identified known issues
+
+- [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
+- [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+
 ## 21.1.1
 
 ### Berlin Network Upgrade
@@ -28,6 +42,11 @@ This release contains the activation blocks for Berlin across all supported test
 
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+### Download link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.1/besu-21.1.1.zip
+sha256: `c22a80a54e9fed864734b9fbd69a0a46840fd27ca5211648a3eaf8a955417218 `
+
 
 ## 21.1.0
 
