@@ -124,7 +124,7 @@ public class MainnetTransactionValidator {
               transactionType, acceptedTransactionTypes.toString()));
     }
 
-    if (transactionType.equals(TransactionType.EIP1559)) {
+    if (baseFee.isPresent()) {
       final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
       if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(
