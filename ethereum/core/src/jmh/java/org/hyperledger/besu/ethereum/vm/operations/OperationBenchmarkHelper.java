@@ -114,8 +114,7 @@ public class OperationBenchmarkHelper {
         .completer(messageFrame -> {})
         .miningBeneficiary(messageFrame.getMiningBeneficiary())
         .maxStackSize(messageFrame.getMaxStackSize())
-        .blockHashLookup(messageFrame.getBlockHashLookup())
-        .returnStack(messageFrame.getReturnStack());
+        .blockHashLookup(messageFrame.getBlockHashLookup());
   }
 
   public void cleanUp() throws IOException {
