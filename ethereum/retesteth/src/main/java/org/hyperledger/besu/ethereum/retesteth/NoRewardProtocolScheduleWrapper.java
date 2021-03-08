@@ -81,7 +81,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getTransactionPriceCalculator(),
         original.getEip1559(),
         original.getGasBudgetCalculator(),
-        original.getBadBlocksManager());
+        original.getBadBlocksManager(),
+        Optional.empty());
   }
 
   @Override

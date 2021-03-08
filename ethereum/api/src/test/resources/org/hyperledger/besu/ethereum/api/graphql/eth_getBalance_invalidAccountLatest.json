@@ -1,25 +1,12 @@
 {
   "request": "{account(address: \"0xdeaff00ddeaff00ddeaff00ddeaff00ddeaff00d\") { balance } }",
   "response": {
-    "errors": [
-      {
-        "message": "Exception while fetching data (/account) : Account with address 0xdeaff00ddeaff00ddeaff00ddeaff00ddeaff00d does not exist",
-        "locations": [
-          {
-            "line": 1,
-            "column": 2
-          }
-        ],
-        "path": [
-          "account"
-        ],
-        "extensions": {
-          "classification": "DataFetchingException"
-        }
+    "data" : {
+      "account" : {
+        "balance" : "0x"
       }
-    ],
-    "data": null
+    }
   },
-  "statusCode": 400
+  "statusCode": 200
 }
 

@@ -72,6 +72,7 @@ public class ProtocolSpecBuilder {
   private TransactionGasBudgetCalculator gasBudgetCalculator =
       TransactionGasBudgetCalculator.frontier();
   private BadBlockManager badBlockManager;
+  private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -238,6 +239,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder powHasher(final PoWHasher powHasher) {
+    this.powHasher = powHasher;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
@@ -364,7 +370,8 @@ public class ProtocolSpecBuilder {
         transactionPriceCalculator,
         eip1559,
         gasBudgetCalculator,
-        badBlockManager);
+        badBlockManager,
+        Optional.ofNullable(powHasher));
   }
 
   public interface TransactionProcessorBuilder {
