@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.CoinbaseNotSetException;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class MinerStartTest {
 
   private MinerStart method;
 
-  @Mock private EthHashMiningCoordinator miningCoordinator;
+  @Mock private PoWMiningCoordinator miningCoordinator;
 
   @Before
   public void before() {

@@ -73,7 +73,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     layeredWorldStates.put(worldState.blockHash(), worldState);
   }
 
-  private Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
+  public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
     if (layeredWorldStates.containsKey(blockHash)) {
       return Optional.of(layeredWorldStates.get(blockHash).getTrieLog());
     } else {
@@ -86,6 +86,22 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return layeredWorldStates.containsKey(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
+  }
+
+  @Override
+  public Optional<MutableWorldState> getWorldState(final Hash rootHash, final Hash blockHash) {
+    if (layeredWorldStates.containsKey(blockHash)) {
+      return Optional.of(layeredWorldStates.get(blockHash));
+    } else {
+      final Optional<TrieLogLayer> trieLogLayer = getTrieLogLayer(blockHash);
+      if (trieLogLayer.isPresent()) {
+        final BlockHeader header = blockchain.getBlockHeader(persistedState.blockHash()).get();
+        return Optional.of(
+            new BonsaiLayeredWorldState(
+                this, persistedState, header.getNumber(), blockHash, trieLogLayer.get()));
+      }
+    }
+    return Optional.empty();
   }
 
   @Override
