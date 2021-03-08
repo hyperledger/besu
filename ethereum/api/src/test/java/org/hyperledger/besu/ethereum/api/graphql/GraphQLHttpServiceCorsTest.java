@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -210,8 +210,7 @@ public class GraphQLHttpServiceCorsTest {
     final BlockchainQueries blockchainQueries = Mockito.mock(BlockchainQueries.class);
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
 
-    final EthHashMiningCoordinator miningCoordinatorMock =
-        Mockito.mock(EthHashMiningCoordinator.class);
+    final PoWMiningCoordinator miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
 
     final GraphQLDataFetcherContextImpl dataFetcherContext =
         Mockito.mock(GraphQLDataFetcherContextImpl.class);

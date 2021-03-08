@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -36,20 +36,20 @@ import org.apache.logging.log4j.Logger;
  * Responsible for determining when a block mining operation should be started/stopped, then
  * creating an appropriate miner and starting it running in a thread.
  */
-public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashBlockMiner>
+public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMiner>
     implements BlockAddedObserver {
 
   private static final Logger LOG = getLogger();
 
-  private final EthHashMinerExecutor executor;
+  private final PoWMinerExecutor executor;
 
   private final Cache<String, Long> sealerHashRate;
 
   private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
 
-  public EthHashMiningCoordinator(
+  public PoWMiningCoordinator(
       final Blockchain blockchain,
-      final EthHashMinerExecutor executor,
+      final PoWMinerExecutor executor,
       final SyncState syncState,
       final int remoteSealersLimit,
       final long remoteSealersTimeToLive) {
@@ -96,7 +96,7 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
 
   private Optional<Long> localHashesPerSecond() {
     final Optional<Long> currentHashesPerSecond =
-        currentRunningMiner.flatMap(EthHashBlockMiner::getHashesPerSecond);
+        currentRunningMiner.flatMap(PoWBlockMiner::getHashesPerSecond);
 
     if (currentHashesPerSecond.isPresent()) {
       cachedHashesPerSecond = currentHashesPerSecond;
@@ -122,19 +122,19 @@ public class EthHashMiningCoordinator extends AbstractMiningCoordinator<EthHashB
   }
 
   @Override
-  public Optional<EthHashSolverInputs> getWorkDefinition() {
-    return currentRunningMiner.flatMap(EthHashBlockMiner::getWorkDefinition);
+  public Optional<PoWSolverInputs> getWorkDefinition() {
+    return currentRunningMiner.flatMap(PoWBlockMiner::getWorkDefinition);
   }
 
   @Override
-  public boolean submitWork(final EthHashSolution solution) {
+  public boolean submitWork(final PoWSolution solution) {
     synchronized (this) {
       return currentRunningMiner.map(miner -> miner.submitWork(solution)).orElse(false);
     }
   }
 
   @Override
-  protected void haltMiner(final EthHashBlockMiner miner) {
+  protected void haltMiner(final PoWBlockMiner miner) {
     miner.cancel();
     miner.getHashesPerSecond().ifPresent(val -> cachedHashesPerSecond = Optional.of(val));
   }

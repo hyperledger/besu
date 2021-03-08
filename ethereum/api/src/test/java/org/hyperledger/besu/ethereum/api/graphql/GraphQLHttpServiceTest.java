@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -70,7 +70,7 @@ public class GraphQLHttpServiceTest {
   private static BlockchainQueries blockchainQueries;
   private static GraphQL graphQL;
   private static GraphQLDataFetcherContextImpl dataFetcherContext;
-  private static EthHashMiningCoordinator miningCoordinatorMock;
+  private static PoWMiningCoordinator miningCoordinatorMock;
 
   private final GraphQLTestHelper testHelper = new GraphQLTestHelper();
 
@@ -80,7 +80,7 @@ public class GraphQLHttpServiceTest {
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
     graphQL = Mockito.mock(GraphQL.class);
 
-    miningCoordinatorMock = Mockito.mock(EthHashMiningCoordinator.class);
+    miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
 
     dataFetcherContext = Mockito.mock(GraphQLDataFetcherContextImpl.class);
     Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);

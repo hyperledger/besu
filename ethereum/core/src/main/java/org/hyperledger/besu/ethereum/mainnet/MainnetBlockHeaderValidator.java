@@ -41,7 +41,11 @@ public final class MainnetBlockHeaderValidator {
       Bytes.fromHexString("0x94365e3a8c0b35089c1d1195081fe7489b528a84b22199c916180db8b28ade7f");
 
   public static BlockHeaderValidator.Builder create() {
-    return createValidator();
+    return createValidator(PoWHasher.ETHASH_LIGHT);
+  }
+
+  public static BlockHeaderValidator.Builder create(final PoWHasher hasher) {
+    return createValidator(hasher);
   }
 
   public static BlockHeaderValidator.Builder createDaoValidator() {
@@ -52,7 +56,11 @@ public final class MainnetBlockHeaderValidator {
   }
 
   public static BlockHeaderValidator.Builder createClassicValidator() {
-    return createValidator()
+    return createClassicValidator(PoWHasher.ETHASH_LIGHT);
+  }
+
+  public static BlockHeaderValidator.Builder createClassicValidator(final PoWHasher hasher) {
+    return createValidator(hasher)
         .addRule(
             new ConstantFieldValidationRule<>(
                 "hash",
@@ -69,10 +77,16 @@ public final class MainnetBlockHeaderValidator {
   }
 
   static BlockHeaderValidator.Builder createOmmerValidator() {
-    return createOmmerValidator(new EpochCalculator.DefaultEpochCalculator());
+    return createOmmerValidator(
+        new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
   }
 
-  static BlockHeaderValidator.Builder createOmmerValidator(final EpochCalculator epochCalculator) {
+  static BlockHeaderValidator.Builder createOmmerValidator(final PoWHasher hasher) {
+    return createOmmerValidator(new EpochCalculator.DefaultEpochCalculator(), hasher);
+  }
+
+  static BlockHeaderValidator.Builder createOmmerValidator(
+      final EpochCalculator epochCalculator, final PoWHasher hasher) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
@@ -80,15 +94,19 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(epochCalculator));
+        .addRule(new ProofOfWorkValidationRule(epochCalculator, false, hasher));
   }
 
   private static BlockHeaderValidator.Builder createValidator() {
-    return createBlockHeaderValidator(new EpochCalculator.DefaultEpochCalculator());
+    return createValidator(PoWHasher.ETHASH_LIGHT);
+  }
+
+  private static BlockHeaderValidator.Builder createValidator(final PoWHasher hasher) {
+    return createBlockHeaderValidator(new EpochCalculator.DefaultEpochCalculator(), hasher);
   }
 
   static BlockHeaderValidator.Builder createBlockHeaderValidator(
-      final EpochCalculator epochCalculator) {
+      final EpochCalculator epochCalculator, final PoWHasher hasher) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
@@ -97,7 +115,7 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(epochCalculator));
+        .addRule(new ProofOfWorkValidationRule(epochCalculator, false, hasher));
   }
 
   static BlockHeaderValidator.Builder createEip1559Validator(final EIP1559 eip1559) {
@@ -109,7 +127,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator(), true))
+        .addRule(
+            new ProofOfWorkValidationRule(
+                new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 
@@ -121,7 +141,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(new EpochCalculator.DefaultEpochCalculator(), true))
+        .addRule(
+            new ProofOfWorkValidationRule(
+                new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

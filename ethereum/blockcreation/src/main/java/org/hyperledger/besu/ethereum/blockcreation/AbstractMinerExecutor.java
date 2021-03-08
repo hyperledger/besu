@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
+import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -72,7 +72,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
 
   public Optional<M> startAsyncMining(
       final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<EthHashObserver> ethHashObservers,
+      final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader) {
     try {
       final M currentRunningMiner = createMiner(observers, ethHashObservers, parentHeader);
@@ -98,7 +98,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
 
   public abstract M createMiner(
       final Subscribers<MinedBlockObserver> subscribers,
-      final Subscribers<EthHashObserver> ethHashObservers,
+      final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader);
 
   public void setExtraData(final Bytes extraData) {

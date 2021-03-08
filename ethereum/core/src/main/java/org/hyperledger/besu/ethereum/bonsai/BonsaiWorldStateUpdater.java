@@ -335,8 +335,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return results;
   }
 
-  public TrieLogLayer generateTrieLog(final Hash blockHash) {
-    final TrieLogLayer layer = new TrieLogLayer();
+  public TrieLogLayer generateTrieLog(
+      final Hash blockHash, final Map<Address, Hash> contractCodeChangesHistory) {
+    final TrieLogLayer layer = new TrieLogLayer(contractCodeChangesHistory);
     importIntoTrieLog(layer, blockHash);
     return layer;
   }
@@ -373,7 +374,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       layer.addCodeChange(
           updatedCode.getKey(),
           updatedCode.getValue().getOriginal(),
-          updatedCode.getValue().getUpdated());
+          updatedCode.getValue().getUpdated(),
+          blockHash);
     }
 
     for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> updatesStorage :
