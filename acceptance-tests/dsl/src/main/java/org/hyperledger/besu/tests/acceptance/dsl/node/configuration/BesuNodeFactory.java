@@ -60,6 +60,7 @@ public class BesuNodeFactory {
         config.getPermissioningConfiguration(),
         config.getKeyFilePath(),
         config.isDevMode(),
+        config.getNetwork(),
         config.getGenesisConfigProvider(),
         config.isP2pEnabled(),
         config.getNetworkingConfiguration(),

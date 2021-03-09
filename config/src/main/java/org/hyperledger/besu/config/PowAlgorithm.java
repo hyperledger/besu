@@ -12,20 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.config;
 
-import org.hyperledger.besu.ethereum.vm.FixedStack;
+/** An enumeration of supported Proof-of-work algorithms. */
+public enum PowAlgorithm {
+  UNSUPPORTED,
+  ETHASH,
+  KECCAK256;
 
-/**
- * This class describes the behaviour of the Return stack introduce on the
- * https://eips.ethereum.org/EIPS/eip-2315
- */
-public class ReturnStack extends FixedStack<Integer> {
-
-  // as defined on https://eips.ethereum.org/EIPS/eip-2315
-  private static final int MAX_RETURN_STACK_SIZE = 1023;
-
-  public ReturnStack() {
-    super(MAX_RETURN_STACK_SIZE, Integer.class);
+  public static PowAlgorithm fromString(final String str) {
+    for (final PowAlgorithm powAlgorithm : PowAlgorithm.values()) {
+      if (powAlgorithm.name().equalsIgnoreCase(str)) {
+        return powAlgorithm;
+      }
+    }
+    return null;
   }
 }

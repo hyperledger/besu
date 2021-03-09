@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.graphql;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -123,8 +123,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
     Mockito.when(synchronizerMock.getSyncStatus()).thenReturn(Optional.of(status));
 
-    final EthHashMiningCoordinator miningCoordinatorMock =
-        Mockito.mock(EthHashMiningCoordinator.class);
+    final PoWMiningCoordinator miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
     Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(Wei.of(16));
 
     final TransactionPool transactionPoolMock = Mockito.mock(TransactionPool.class);

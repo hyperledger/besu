@@ -14,35 +14,57 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-public interface EthHasher {
+import org.apache.tuweni.bytes.Bytes;
+
+public interface PoWHasher {
+
+  PoWHasher ETHASH_LIGHT = new EthashLight();
+  PoWHasher UNSUPPORTED = new Unsupported();
 
   /**
    * Hash of a particular block and nonce.
    *
-   * @param buffer At least 64 bytes long buffer to store EthHash result in
    * @param nonce Block Nonce
    * @param number Block Number
    * @param epochCalc EpochCalculator for calculating epoch
-   * @param headerHash Block Header (without mix digest and nonce) Hash
+   * @param prePowHash Block Header (without mix digest and nonce) Hash
+   * @return the PoW solution computed by the hashing function
    */
-  void hash(byte[] buffer, long nonce, long number, EpochCalculator epochCalc, byte[] headerHash);
+  PoWSolution hash(long nonce, long number, EpochCalculator epochCalc, Bytes prePowHash);
 
-  final class Light implements EthHasher {
+  /** Implementation of Ethash Hashimoto Light Implementation. */
+  final class EthashLight implements PoWHasher {
 
     private static final EthHashCacheFactory cacheFactory = new EthHashCacheFactory();
 
+    private EthashLight() {}
+
     @Override
-    public void hash(
-        final byte[] buffer,
+    public PoWSolution hash(
         final long nonce,
         final long number,
         final EpochCalculator epochCalc,
-        final byte[] headerHash) {
+        final Bytes prePowHash) {
       final EthHashCacheFactory.EthHashDescriptor cache =
           cacheFactory.ethHashCacheFor(number, epochCalc);
-      final byte[] hash =
-          EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), headerHash, nonce);
-      System.arraycopy(hash, 0, buffer, 0, hash.length);
+      final PoWSolution solution =
+          EthHash.hashimotoLight(cache.getDatasetSize(), cache.getCache(), prePowHash, nonce);
+      return solution;
+    }
+  }
+
+  /** Implementation of an inoperative hasher. */
+  final class Unsupported implements PoWHasher {
+
+    private Unsupported() {}
+
+    @Override
+    public PoWSolution hash(
+        final long nonce,
+        final long number,
+        final EpochCalculator epochCalc,
+        final Bytes prePowHash) {
+      throw new UnsupportedOperationException("Hashing is unsupported");
     }
   }
 }
