@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.stream.Stream;
 
@@ -85,7 +86,8 @@ public final class RunnerBuilderTest {
     final EthProtocolManager ethProtocolManager = mock(EthProtocolManager.class);
     final EthContext ethContext = mock(EthContext.class);
     final ProtocolContext protocolContext = mock(ProtocolContext.class);
-    final NodeKey nodeKey = new NodeKey(new KeyPairSecurityModule(new SECP256K1().generateKeyPair()));
+    final NodeKey nodeKey =
+        new NodeKey(new KeyPairSecurityModule(new SECP256K1().generateKeyPair()));
 
     when(subProtocolConfiguration.getProtocolManagers())
         .thenReturn(
@@ -189,7 +191,10 @@ public final class RunnerBuilderTest {
                 .setBlockNumber(1)
                 .setParentHash(genesisBlock.getHash()));
     blockchain.appendBlock(block, gen.receipts(block));
-    System.out.println(
-        storageProvider.getStorageBySegmentIdentifier(BLOCKCHAIN).streamKeys().count());
+    assertThat(
+            storageProvider
+                .getStorageBySegmentIdentifier(BLOCKCHAIN)
+                .get("local-enr-seqno".getBytes(StandardCharsets.UTF_8)))
+        .isNotNull();
   }
 }
