@@ -76,7 +76,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public static BonsaiWorldStateArchive createInMemoryWorldStateArchive(
       final Blockchain blockchain) {
-    return new BonsaiWorldStateArchive(new InMemoryStorageProvider(), blockchain);
+    return new BonsaiWorldStateArchive(new InMemoryKeyValueStorageProvider(), blockchain);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
