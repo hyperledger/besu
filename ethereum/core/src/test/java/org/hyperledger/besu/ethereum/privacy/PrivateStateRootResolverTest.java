@@ -55,7 +55,8 @@ public class PrivateStateRootResolverTest {
 
   @BeforeClass
   public static void setupClass() {
-    BLOCKCHAIN = InMemoryKeyValueStorageProvider.createInMemoryBlockchain(BLOCK_GENERATOR.genesisBlock());
+    BLOCKCHAIN =
+        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(BLOCK_GENERATOR.genesisBlock());
     for (int i = 1; i <= 69; i++) {
       final BlockDataGenerator.BlockOptions options =
           new BlockDataGenerator.BlockOptions()
