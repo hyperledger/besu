@@ -107,11 +107,11 @@ public class SECP256K1 implements SignatureAlgorithm {
   }
 
   @Override
-  public SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair) {
+  public SECPSignature sign(final Bytes dataHash, final KeyPair keyPair) {
     if (useNative) {
-      return signNative(dataHash, keyPair);
+      return signNative((Bytes32) dataHash, keyPair);
     } else {
-      return signDefault(dataHash, keyPair);
+      return signDefault((Bytes32) dataHash, keyPair);
     }
   }
 
@@ -242,7 +242,7 @@ public class SECP256K1 implements SignatureAlgorithm {
       final BigInteger nativeR,
       final BigInteger nativeS,
       final SECPPublicKey publicKey,
-      final Bytes32 dataHash) {
+      final Bytes dataHash) {
 
     BigInteger s = nativeS;
     // Automatically adjust the S component to be less than or equal to half the curve
@@ -265,7 +265,7 @@ public class SECP256K1 implements SignatureAlgorithm {
     int recId = -1;
     final BigInteger publicKeyBI = publicKey.getEncodedBytes().toUnsignedBigInteger();
     for (int i = 0; i < 4; i++) {
-      final BigInteger k = recoverFromSignature(i, nativeR, s, dataHash);
+      final BigInteger k = recoverFromSignature(i, nativeR, s, (Bytes32) dataHash);
       if (k != null && k.equals(publicKeyBI)) {
         recId = i;
         break;
@@ -368,12 +368,13 @@ public class SECP256K1 implements SignatureAlgorithm {
 
   @Override
   public Optional<SECPPublicKey> recoverPublicKeyFromSignature(
-      final Bytes32 dataHash, final SECPSignature signature) {
+      final Bytes dataHash, final SECPSignature signature) {
     if (useNative) {
-      return recoverFromSignatureNative(dataHash, signature);
+      return recoverFromSignatureNative((Bytes32) dataHash, signature);
     } else {
       final BigInteger publicKeyBI =
-          recoverFromSignature(signature.getRecId(), signature.getR(), signature.getS(), dataHash);
+          recoverFromSignature(
+              signature.getRecId(), signature.getR(), signature.getS(), (Bytes32) dataHash);
       return Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM, PUBLIC_KEY_BYTE_LENGTH));
     }
   }

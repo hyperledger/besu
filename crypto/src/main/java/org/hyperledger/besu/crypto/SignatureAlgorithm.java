@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.math.ec.ECPoint;
 
 public interface SignatureAlgorithm {
@@ -28,7 +27,7 @@ public interface SignatureAlgorithm {
 
   void enableNative();
 
-  SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair);
+  SECPSignature sign(final Bytes dataHash, final KeyPair keyPair);
 
   boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub);
 
@@ -42,9 +41,9 @@ public interface SignatureAlgorithm {
       final BigInteger nativeR,
       final BigInteger nativeS,
       final SECPPublicKey publicKey,
-      final Bytes32 dataHash);
+      final Bytes dataHash);
 
-  Bytes32 calculateECDHKeyAgreement(final SECPPrivateKey privKey, final SECPPublicKey theirPubKey);
+  Bytes calculateECDHKeyAgreement(final SECPPrivateKey privKey, final SECPPublicKey theirPubKey);
 
   BigInteger getHalfCurveOrder();
 
@@ -63,7 +62,7 @@ public interface SignatureAlgorithm {
   SECPPublicKey createPublicKey(final Bytes encoded);
 
   Optional<SECPPublicKey> recoverPublicKeyFromSignature(
-      final Bytes32 dataHash, final SECPSignature signature);
+      final Bytes dataHash, final SECPSignature signature);
 
   ECPoint publicKeyAsEcPoint(final SECPPublicKey publicKey);
 

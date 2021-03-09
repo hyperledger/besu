@@ -72,8 +72,8 @@ public class KeyPairSecurityModule implements SecurityModule {
     try {
       final Bytes encodedECPoint = ECPointUtil.getEncodedBytes(partyKey.getW());
       final SECPPublicKey secp256KPartyKey = signatureAlgorithm.createPublicKey(encodedECPoint);
-      return signatureAlgorithm.calculateECDHKeyAgreement(
-          keyPair.getPrivateKey(), secp256KPartyKey);
+      return (Bytes32)
+          signatureAlgorithm.calculateECDHKeyAgreement(keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
       throw new SecurityModuleException(
           "Unexpected error while calculating ECDH Key Agreement: " + e.getMessage(), e);
