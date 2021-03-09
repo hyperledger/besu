@@ -125,20 +125,23 @@ public class LogRollingTests {
     secondArchive = new BonsaiWorldStateArchive(secondProvider, null);
     secondAccountStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
+            secondProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     secondCodeStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
+            secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
     secondStorageStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(
+            secondProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
     secondTrieBranchStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+            secondProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     secondTrieLogStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+            secondProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
   }
 
   @Test
