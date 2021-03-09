@@ -443,12 +443,6 @@ public class FrontierGasCalculator implements GasCalculator {
     return SELF_DESTRUCT_REFUND_AMOUNT;
   }
 
-  @Override
-  public Gas getBeginSubGasCost() {
-    throw new UnsupportedOperationException(
-        "BEGINSUB operation not supported by " + getClass().getSimpleName());
-  }
-
   protected Gas copyWordsToMemoryGasCost(
       final MessageFrame frame,
       final Gas baseGasCost,
