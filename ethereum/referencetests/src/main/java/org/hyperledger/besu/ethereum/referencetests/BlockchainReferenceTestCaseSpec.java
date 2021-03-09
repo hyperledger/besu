@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
@@ -63,7 +63,7 @@ public class BlockchainReferenceTestCaseSpec {
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
     final WorldStateArchive worldStateArchive =
-        InMemoryStorageProvider.createInMemoryWorldStateArchive();
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
 
     final MutableWorldState worldState = worldStateArchive.getMutable();
     final WorldUpdater updater = worldState.updater();
@@ -81,7 +81,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
     final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
-    return InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+    return InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
   }
 
   @JsonCreator
