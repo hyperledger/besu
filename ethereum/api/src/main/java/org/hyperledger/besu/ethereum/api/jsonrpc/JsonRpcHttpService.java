@@ -83,6 +83,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -231,29 +232,7 @@ public class JsonRpcHttpService {
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
 
-      httpServer.connectionHandler(
-          connection -> {
-            if (activeConnectionsCount.get() >= maxActiveConnections) {
-              LOG.info("Max Active Connections limit reached! Rejecting all new connections.");
-              // disallow new connections to prevent DoS
-              LOG.warn(
-                  "Rejecting new client connection: remoteAddress: {} connection count: {}",
-                  connection.remoteAddress(),
-                  activeConnectionsCount.incrementAndGet());
-              connection.close();
-            } else {
-              LOG.info(
-                  "New client connection: remoteAddress: {} connection count: {}",
-                  connection.remoteAddress(),
-                  activeConnectionsCount.incrementAndGet());
-            }
-            connection.closeHandler(
-                c ->
-                    LOG.info(
-                        "connection closed: remoteAddress: {} connection count: {}",
-                        connection.remoteAddress(),
-                        activeConnectionsCount.decrementAndGet()));
-          });
+      httpServer.connectionHandler(connectionHandler());
 
       httpServer
           .requestHandler(buildRouter())
@@ -294,6 +273,32 @@ public class JsonRpcHttpService {
     }
 
     return resultFuture;
+  }
+
+  private Handler<HttpConnection> connectionHandler() {
+
+    return connection -> {
+      if (activeConnectionsCount.get() >= maxActiveConnections) {
+        LOG.info("Max Active Connections limit reached. Rejecting all new connections.");
+        // disallow new connections to prevent DoS
+        LOG.warn(
+            "Rejecting new client connection: remoteAddress: {} connection count: {}",
+            connection.remoteAddress(),
+            activeConnectionsCount.incrementAndGet());
+        connection.close();
+      } else {
+        LOG.info(
+            "New client connection: remoteAddress: {} connection count: {}",
+            connection.remoteAddress(),
+            activeConnectionsCount.incrementAndGet());
+      }
+      connection.closeHandler(
+          c ->
+              LOG.info(
+                  "Connection closed: remoteAddress: {} connection count: {}",
+                  connection.remoteAddress(),
+                  activeConnectionsCount.decrementAndGet()));
+    };
   }
 
   private Router buildRouter() {

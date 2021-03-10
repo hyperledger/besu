@@ -210,7 +210,7 @@ public class JsonRpcConfiguration {
     return maxActiveConnections;
   }
 
-  public void setMaxActiveConnections(int maxActiveConnections) {
+  public void setMaxActiveConnections(final int maxActiveConnections) {
     this.maxActiveConnections = maxActiveConnections;
   }
 }
