@@ -12,28 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.payload;
+package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class PayloadHelpers {
+public class MessageHashFunction {
 
   public static Hash hashForSignature(final Payload unsignedMessageData) {
     return Hash.hash(
         Bytes.concatenate(
             Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
-  }
-
-  public static Hash qbftHashForSignature(final Payload unsignedMessageData) {
-    BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.startList();
-    out.writeIntScalar(unsignedMessageData.getMessageType());
-    final Bytes encodedBytes = unsignedMessageData.encoded();
-    out.writeRaw(encodedBytes);
-    out.endList();
-    return Hash.hash(out.encoded());
   }
 }

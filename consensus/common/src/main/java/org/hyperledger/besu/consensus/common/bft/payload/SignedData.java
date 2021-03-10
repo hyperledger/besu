@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common.bft.payload;
 
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
-
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -25,6 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -35,8 +34,8 @@ public class SignedData<M extends Payload> implements Authored {
   private final M unsignedPayload;
 
   public static <T extends Payload> SignedData<T> create(
-      final T payload, final SECPSignature signature) {
-    final Hash msgHash = qbftHashForSignature(payload);
+      final T payload, final SECPSignature signature, final Function<T, Hash> hashFunction) {
+    final Hash msgHash = hashFunction.apply(payload);
     return new SignedData<>(payload, Util.signatureToAddress(signature, msgHash), signature);
   }
 

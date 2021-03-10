@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbt.support;
+package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 

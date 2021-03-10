@@ -12,11 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbt.support;
+package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.MessageHashFunction;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -56,7 +57,8 @@ public class PrepareMessage implements RlpTestCaseMessage {
             new ConsensusRoundIdentifier(unsignedPrepare.sequence, unsignedPrepare.round),
             Hash.fromHexString(unsignedPrepare.digest)),
         SignatureAlgorithmFactory.getInstance()
-            .decodeSignature(Bytes.fromHexString(prepareMessage.signature)));
+            .decodeSignature(Bytes.fromHexString(prepareMessage.signature)),
+        MessageHashFunction::hashForSignature);
   }
 
   public static class UnsignedPrepare {

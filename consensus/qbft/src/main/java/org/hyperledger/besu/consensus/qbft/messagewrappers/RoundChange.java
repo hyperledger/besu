@@ -75,7 +75,8 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<RoundChangePayload> payload = readPayload(rlpIn, RoundChangePayload::readFrom);
+    final SignedData<RoundChangePayload> payload =
+        readPayload(rlpIn, RoundChangePayload::readFrom, MessageHashFunction::hashForSignature);
 
     final Optional<Block> block;
     if (rlpIn.nextIsNull()) {
@@ -86,7 +87,8 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     }
 
     final List<SignedData<PreparePayload>> prepares =
-        rlpIn.readList(r -> readPayload(r, PreparePayload::readFrom));
+        rlpIn.readList(
+            r -> readPayload(r, PreparePayload::readFrom, MessageHashFunction::hashForSignature));
     rlpIn.leaveList();
 
     return new RoundChange(payload, block, prepares);

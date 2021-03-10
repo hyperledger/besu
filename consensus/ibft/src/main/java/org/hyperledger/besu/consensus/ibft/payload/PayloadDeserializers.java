@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.ibft.messagewrappers.MessageHashFunction;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -65,7 +66,7 @@ public class PayloadDeserializers {
 
   protected static <M extends Payload> SignedData<M> from(
       final M unsignedMessageData, final SECPSignature signature) {
-    return SignedData.create(unsignedMessageData, signature);
+    return SignedData.create(unsignedMessageData, signature, MessageHashFunction::hashForSignature);
   }
 
   protected static SECPSignature readSignature(final RLPInput signedMessage) {

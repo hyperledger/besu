@@ -12,13 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbt.support;
+package org.hyperledger.besu.consensus.qbft.support;
 
 import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions.forCommittedSeal;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.MessageHashFunction;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChangeMessage implements RlpTestCaseMessage {
+
   private final SignedRoundChange signedRoundChange;
   private final Optional<String> block;
 
@@ -70,6 +72,7 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
   }
 
   public static class UnsignedRoundChange {
+
     private final long sequence;
     private final int round;
     private final Optional<String> preparedValue;
@@ -89,6 +92,7 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
   }
 
   public static class SignedRoundChange {
+
     private final UnsignedRoundChange unsignedRoundChange;
     private final String signature;
 
@@ -117,7 +121,8 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
       return SignedData.create(
           roundChangePayload,
           SignatureAlgorithmFactory.getInstance()
-              .decodeSignature(Bytes.fromHexString(signedRoundChange.signature)));
+              .decodeSignature(Bytes.fromHexString(signedRoundChange.signature)),
+          MessageHashFunction::hashForSignature);
     }
   }
 }

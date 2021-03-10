@@ -12,17 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbt.support;
+package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.MessageHashFunction;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.qbt.support.RoundChangeMessage.SignedRoundChange;
+import org.hyperledger.besu.consensus.qbft.support.RoundChangeMessage.SignedRoundChange;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -77,7 +78,8 @@ public class ProposalMessage implements RlpTestCaseMessage {
         SignedData.create(
             proposalPayload,
             SignatureAlgorithmFactory.getInstance()
-                .decodeSignature(Bytes.fromHexString(signedProposal.signature)));
+                .decodeSignature(Bytes.fromHexString(signedProposal.signature)),
+            MessageHashFunction::hashForSignature);
     return new Proposal(signedProposalPayload, signedRoundChanges, signedPrepares);
   }
 

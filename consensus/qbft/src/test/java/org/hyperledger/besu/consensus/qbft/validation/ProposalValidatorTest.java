@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createEmptyRoundChangePayloads;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.MessageHashFunction;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
@@ -325,7 +325,11 @@ public class ProposalValidatorTest {
     final SignedData<RoundChangePayload> preparedRoundChange =
         SignedData.create(
             illegalPayload,
-            validators.getNode(2).getNodeKey().sign(hashForSignature(illegalPayload)));
+            validators
+                .getNode(2)
+                .getNodeKey()
+                .sign(MessageHashFunction.hashForSignature(illegalPayload)),
+            MessageHashFunction::hashForSignature);
 
     roundChanges.add(preparedRoundChange);
 
@@ -501,7 +505,8 @@ public class ProposalValidatorTest {
             validators
                 .getNode(3)
                 .getNodeKey()
-                .sign(hashForSignature(illegalPreparedRoundChangePayload)));
+                .sign(MessageHashFunction.hashForSignature(illegalPreparedRoundChangePayload)),
+            MessageHashFunction::hashForSignature);
 
     roundChanges.add(preparedRoundChange);
 
@@ -539,7 +544,11 @@ public class ProposalValidatorTest {
     final SignedData<RoundChangePayload> preparedRoundChange =
         SignedData.create(
             preparedRoundChangePayload,
-            validators.getNode(2).getNodeKey().sign(hashForSignature(preparedRoundChangePayload)));
+            validators
+                .getNode(2)
+                .getNodeKey()
+                .sign(MessageHashFunction.hashForSignature(preparedRoundChangePayload)),
+            MessageHashFunction::hashForSignature);
 
     roundChanges.add(preparedRoundChange);
 

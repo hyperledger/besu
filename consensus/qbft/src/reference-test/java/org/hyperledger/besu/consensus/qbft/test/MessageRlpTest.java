@@ -12,13 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbt.test;
+package org.hyperledger.besu.consensus.qbft.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
-import org.hyperledger.besu.consensus.qbt.support.RlpTestCaseSpec;
+import org.hyperledger.besu.consensus.qbft.support.RlpTestCaseSpec;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Collection;

@@ -35,6 +35,7 @@ public class Prepare extends BftMessage<PreparePayload> {
 
   public static Prepare decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
-    return new Prepare(readPayload(rlpIn, PreparePayload::readFrom));
+    return new Prepare(
+        readPayload(rlpIn, PreparePayload::readFrom, MessageHashFunction::hashForSignature));
   }
 }

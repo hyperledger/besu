@@ -15,10 +15,10 @@
 package org.hyperledger.besu.consensus.qbft.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.qbftHashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.MessageHashFunction;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -141,7 +141,7 @@ public class RoundChangePayloadValidatorTest {
 
   private SignedData<RoundChangePayload> createSignedPayload(
       final RoundChangePayload payload, final NodeKey nodeKey) {
-    final SECPSignature signature = nodeKey.sign(qbftHashForSignature(payload));
-    return SignedData.create(payload, signature);
+    final SECPSignature signature = nodeKey.sign(MessageHashFunction.hashForSignature(payload));
+    return SignedData.create(payload, signature, MessageHashFunction::hashForSignature);
   }
 }

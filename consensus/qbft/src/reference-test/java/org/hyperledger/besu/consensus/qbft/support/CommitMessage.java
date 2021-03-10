@@ -12,12 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbt.support;
+package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
+import org.hyperledger.besu.consensus.qbft.messagewrappers.MessageHashFunction;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -60,7 +61,8 @@ public class CommitMessage implements RlpTestCaseMessage {
     final SignedData<CommitPayload> signedCommitPayload =
         SignedData.create(
             commitPayload,
-            SIGNATURE_ALGORITHM.get().decodeSignature(Bytes.fromHexString(signature)));
+            SIGNATURE_ALGORITHM.get().decodeSignature(Bytes.fromHexString(signature)),
+            MessageHashFunction::hashForSignature);
     return new Commit(signedCommitPayload);
   }
 
