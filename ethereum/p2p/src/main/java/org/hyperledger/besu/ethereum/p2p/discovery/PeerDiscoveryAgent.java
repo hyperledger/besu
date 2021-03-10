@@ -194,8 +194,8 @@ public abstract class PeerDiscoveryAgent {
             nodeRecord ->
                 id.equals(nodeRecord.get(EnrField.PKEY_SECP256K1))
                     && addressBytes.equals(nodeRecord.get(EnrField.IP_V4))
-                    && discoveryPort.equals(nodeRecord.get(EnrField.TCP))
-                    && listeningPort.equals(nodeRecord.get(EnrField.UDP))
+                    && discoveryPort.equals(nodeRecord.get(EnrField.UDP))
+                    && listeningPort.equals(nodeRecord.get(EnrField.TCP))
                     && forkIdSupplier.get().equals(nodeRecord.get("eth")))
         .orElseGet(
             () -> {
@@ -207,8 +207,8 @@ public abstract class PeerDiscoveryAgent {
                       new EnrField(EnrField.ID, IdentitySchema.V4),
                       new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(id)),
                       new EnrField(EnrField.IP_V4, addressBytes),
-                      new EnrField(EnrField.TCP, discoveryPort),
-                      new EnrField(EnrField.UDP, listeningPort),
+                      new EnrField(EnrField.TCP, listeningPort),
+                      new EnrField(EnrField.UDP, discoveryPort),
                       new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
               nodeRecord.setSignature(
                   nodeKey
