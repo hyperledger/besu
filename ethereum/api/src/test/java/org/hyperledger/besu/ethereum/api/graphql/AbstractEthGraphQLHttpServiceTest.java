@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -146,11 +146,11 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                     Instant.ofEpochSecond(Integer.MAX_VALUE))));
 
     final WorldStateArchive stateArchive =
-        InMemoryStorageProvider.createInMemoryWorldStateArchive();
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());
 
     final MutableBlockchain blockchain =
-        InMemoryStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
+        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
     context = new ProtocolContext(blockchain, stateArchive, null);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
