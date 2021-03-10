@@ -112,8 +112,6 @@ public class JsonRpcHttpService {
   private static final String APPLICATION_JSON = "application/json";
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
   private static final String EMPTY_RESPONSE = "";
-  private int maxActiveConnections;
-  private AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   private static final TextMapPropagator traceFormats =
       TraceMultiPropagator.create(
@@ -145,6 +143,8 @@ public class JsonRpcHttpService {
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
   private final Tracer tracer;
+  private final int maxActiveConnections;
+  private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
