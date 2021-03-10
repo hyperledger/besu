@@ -59,7 +59,7 @@ public class LogRollingTests {
   private InMemoryKeyValueStorage secondStorageStorage;
   private InMemoryKeyValueStorage secondTrieBranchStorage;
   private InMemoryKeyValueStorage secondTrieLogStorage;
-  private Blockchain blockchain = mock(Blockchain.class);
+  private final Blockchain blockchain = mock(Blockchain.class);
 
   private static final Address addressOne =
       Address.fromHexString("0x1111111111111111111111111111111111111111");
