@@ -338,8 +338,4 @@ public class Runner implements AutoCloseable {
       LOG.warn(String.format("Error writing %s file", fileName), e);
     }
   }
-
-  public NetworkRunner getNetworkRunner() {
-    return networkRunner;
-  }
 }
