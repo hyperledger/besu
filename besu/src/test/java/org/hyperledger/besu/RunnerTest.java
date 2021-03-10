@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -204,7 +204,7 @@ public final class RunnerTest {
             .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
             .staticNodes(emptySet())
-            .storageProvider(new InMemoryStorageProvider())
+            .storageProvider(new InMemoryKeyValueStorageProvider())
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
 
     Runner runnerBehind = null;
@@ -248,7 +248,7 @@ public final class RunnerTest {
               .networkId(networkId)
               .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
               .nodeKey(NodeKeyUtils.generate())
-              .storageProvider(new InMemoryStorageProvider())
+              .storageProvider(new InMemoryKeyValueStorageProvider())
               .metricsSystem(noOpMetricsSystem)
               .privacyParameters(PrivacyParameters.DEFAULT)
               .clock(TestClock.fixed())
