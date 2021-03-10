@@ -4,6 +4,8 @@
 
 ### Additions and Improvements
 
+* Ethereum Node Records are now dynamically recalculated when we pass network upgrade blocks. This allows for better peering through transitions without needing to restart the node. [\#1998](https://github.com/hyperledger/besu/pull/1998)
+
 ### Bug Fixes
 
 ### Early Access Features
