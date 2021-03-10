@@ -116,11 +116,10 @@ public final class RunnerBuilderTest {
   @Test
   public void enodeUrlShouldHaveAdvertisedHostWhenDiscoveryDisabled() {
     final String p2pAdvertisedHost = "172.0.0.1";
-    final int p2pListenPort = 30301;
+    final int p2pListenPort = 30302;
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
             .p2pListenInterface("0.0.0.0")
             .p2pListenPort(p2pListenPort)
             .p2pAdvertisedHost(p2pAdvertisedHost)
@@ -145,7 +144,7 @@ public final class RunnerBuilderTest {
             .ipAddress(p2pAdvertisedHost)
             .discoveryPort(0)
             .listeningPort(p2pListenPort)
-            .nodeId(new byte[64])
+            .nodeId(besuController.getNodeKey().getPublicKey().getEncoded())
             .build();
     assertThat(runner.getLocalEnode().orElseThrow()).isEqualTo(expectedEodeURL);
   }
@@ -168,7 +167,6 @@ public final class RunnerBuilderTest {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pEnabled(true)
             .natMethod(NatMethod.NONE)
-            .discovery(true)
             .besuController(besuController)
             .ethNetworkConfig(mock(EthNetworkConfig.class))
             .metricsSystem(mock(ObservableMetricsSystem.class))
