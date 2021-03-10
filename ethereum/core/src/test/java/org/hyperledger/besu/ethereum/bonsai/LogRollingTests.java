@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -102,7 +102,7 @@ public class LogRollingTests {
 
   @Before
   public void createStorage() {
-    final InMemoryStorageProvider provider = new InMemoryStorageProvider();
+    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     archive = new BonsaiWorldStateArchive(provider, null);
     accountStorage =
         (InMemoryKeyValueStorage)
@@ -121,24 +121,27 @@ public class LogRollingTests {
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
-    final InMemoryStorageProvider secondProvider = new InMemoryStorageProvider();
+    final InMemoryKeyValueStorageProvider secondProvider = new InMemoryKeyValueStorageProvider();
     secondArchive = new BonsaiWorldStateArchive(secondProvider, null);
     secondAccountStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
+            secondProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
     secondCodeStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
+            secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
     secondStorageStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(
+            secondProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
     secondTrieBranchStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+            secondProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     secondTrieLogStorage =
         (InMemoryKeyValueStorage)
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+            secondProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
   }
 
   @Test
