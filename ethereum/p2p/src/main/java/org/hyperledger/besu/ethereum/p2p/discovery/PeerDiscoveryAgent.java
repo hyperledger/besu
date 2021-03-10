@@ -189,41 +189,42 @@ public abstract class PeerDiscoveryAgent {
     final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
     final Integer discoveryPort = localNode.get().getEnodeURL().getDiscoveryPortOrZero();
     final Integer listeningPort = localNode.get().getEnodeURL().getListeningPortOrZero();
-    final NodeRecord nodeRecord1 = existingNodeRecord
+    final NodeRecord nodeRecord1 =
+        existingNodeRecord
             .filter(
-                    nodeRecord ->
-                            id.equals(nodeRecord.get(EnrField.PKEY_SECP256K1))
-                                    && addressBytes.equals(nodeRecord.get(EnrField.IP_V4))
-                                    && discoveryPort.equals(nodeRecord.get(EnrField.TCP))
-                                    && listeningPort.equals(nodeRecord.get(EnrField.UDP))
-                                    && forkIdSupplier.get().equals(nodeRecord.get("eth")))
+                nodeRecord ->
+                    id.equals(nodeRecord.get(EnrField.PKEY_SECP256K1))
+                        && addressBytes.equals(nodeRecord.get(EnrField.IP_V4))
+                        && discoveryPort.equals(nodeRecord.get(EnrField.TCP))
+                        && listeningPort.equals(nodeRecord.get(EnrField.UDP))
+                        && forkIdSupplier.get().equals(nodeRecord.get("eth")))
             .orElseGet(
-                    () -> {
-                      final UInt64 sequenceNumber =
-                              existingNodeRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
-                      final NodeRecord nodeRecord =
-                              nodeRecordFactory.createFromValues(
-                                      sequenceNumber,
-                                      new EnrField(EnrField.ID, IdentitySchema.V4),
-                                      new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(id)),
-                                      new EnrField(EnrField.IP_V4, addressBytes),
-                                      new EnrField(EnrField.TCP, discoveryPort),
-                                      new EnrField(EnrField.UDP, listeningPort),
-                                      new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
-                      nodeRecord.setSignature(
-                              nodeKey
-                                      .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
-                                      .encodedBytes()
-                                      .slice(0, 64));
+                () -> {
+                  final UInt64 sequenceNumber =
+                      existingNodeRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
+                  final NodeRecord nodeRecord =
+                      nodeRecordFactory.createFromValues(
+                          sequenceNumber,
+                          new EnrField(EnrField.ID, IdentitySchema.V4),
+                          new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(id)),
+                          new EnrField(EnrField.IP_V4, addressBytes),
+                          new EnrField(EnrField.TCP, discoveryPort),
+                          new EnrField(EnrField.UDP, listeningPort),
+                          new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
+                  nodeRecord.setSignature(
+                      nodeKey
+                          .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
+                          .encodedBytes()
+                          .slice(0, 64));
 
-                      final KeyValueStorageTransaction keyValueStorageTransaction =
-                              keyValueStorage.startTransaction();
-                      keyValueStorageTransaction.put(
-                              Bytes.wrap(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray(),
-                              nodeRecord.serialize().toArray());
-                      keyValueStorageTransaction.commit();
-                      return nodeRecord;
-                    });
+                  final KeyValueStorageTransaction keyValueStorageTransaction =
+                      keyValueStorage.startTransaction();
+                  keyValueStorageTransaction.put(
+                      Bytes.wrap(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray(),
+                      nodeRecord.serialize().toArray());
+                  keyValueStorageTransaction.commit();
+                  return nodeRecord;
+                });
     return nodeRecord1;
   }
 
