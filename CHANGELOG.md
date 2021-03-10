@@ -3,6 +3,7 @@
 ## 21.1.2
 
 ### Additions and Improvements
+- Added option to set a limit for JSON-RPC HTTP connections `--rpc-http-max-active-connections` 
 
 ### Bug Fixes
 
