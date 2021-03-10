@@ -81,7 +81,8 @@ public class BlockTransactionSelectorTest {
           metricsSystem,
           blockchain::getChainHeadHeader,
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
-  private final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
+  private final MutableWorldState worldState =
+      InMemoryKeyValueStorageProvider.createInMemoryWorldState();
   private final MainnetTransactionProcessor transactionProcessor =
       mock(MainnetTransactionProcessor.class);
 
