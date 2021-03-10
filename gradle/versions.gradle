@@ -87,7 +87,7 @@ dependencyManagement {
 
     dependency 'junit:junit:4.13.1'
 
-    dependency 'net.consensys:orion:20.10.1'
+    dependency 'net.consensys:orion:21.1.1'
 
     dependency 'net.java.dev.jna:jna:5.6.0'
 
