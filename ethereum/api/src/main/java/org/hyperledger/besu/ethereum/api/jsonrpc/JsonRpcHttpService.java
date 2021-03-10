@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -110,6 +111,8 @@ public class JsonRpcHttpService {
   private static final String APPLICATION_JSON = "application/json";
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
   private static final String EMPTY_RESPONSE = "";
+  private int maxActiveConnections;
+  private AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   private static final TextMapPropagator traceFormats =
       TraceMultiPropagator.create(
@@ -207,6 +210,7 @@ public class JsonRpcHttpService {
     this.livenessService = livenessService;
     this.readinessService = readinessService;
     this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
+    this.maxActiveConnections = config.getMaxActiveConnections();
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -214,15 +218,43 @@ public class JsonRpcHttpService {
         config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
         "Invalid port configuration.");
     checkArgument(config.getHost() != null, "Required host is not configured.");
+    checkArgument(
+        config.getMaxActiveConnections() > 0, "Invalid max active connections configuration.");
   }
 
   public CompletableFuture<?> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
+    LOG.debug("max number of active connections {}", maxActiveConnections);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
+
+      httpServer.connectionHandler(
+          connection -> {
+            if (activeConnectionsCount.get() >= maxActiveConnections) {
+              LOG.info("Max Active Connections limit reached! Rejecting all new connections.");
+              // disallow new connections to prevent DoS
+              LOG.warn(
+                  "Rejecting new client connection: remoteAddress: {} connection count: {}",
+                  connection.remoteAddress(),
+                  activeConnectionsCount.incrementAndGet());
+              connection.close();
+            } else {
+              LOG.info(
+                  "New client connection: remoteAddress: {} connection count: {}",
+                  connection.remoteAddress(),
+                  activeConnectionsCount.incrementAndGet());
+            }
+            connection.closeHandler(
+                c ->
+                    LOG.info(
+                        "connection closed: remoteAddress: {} connection count: {}",
+                        connection.remoteAddress(),
+                        activeConnectionsCount.decrementAndGet()));
+          });
+
       httpServer
           .requestHandler(buildRouter())
           .listen(
