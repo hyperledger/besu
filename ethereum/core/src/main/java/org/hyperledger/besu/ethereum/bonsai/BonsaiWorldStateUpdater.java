@@ -335,9 +335,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return results;
   }
 
-  public TrieLogLayer generateTrieLog(
-      final Hash blockHash, final Map<Address, Hash> contractCodeChangesHistory) {
-    final TrieLogLayer layer = new TrieLogLayer(contractCodeChangesHistory);
+  public TrieLogLayer generateTrieLog(final Hash blockHash) {
+    final TrieLogLayer layer = new TrieLogLayer();
     importIntoTrieLog(layer, blockHash);
     return layer;
   }

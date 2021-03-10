@@ -37,28 +37,29 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** A World State backed first by trie log layer and then by another world state. */
 public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
 
-  private final BonsaiWorldStateArchive worldStateArchive;
-  private final BonsaiWorldView parent;
+  private Optional<BonsaiWorldView> parent;
   protected final long height;
   protected final TrieLogLayer trieLog;
 
   private final Hash worldStateRootHash;
 
   BonsaiLayeredWorldState(
-      final BonsaiWorldStateArchive worldStateArchive,
-      final BonsaiWorldView parent,
+      final Optional<BonsaiWorldView> parent,
       final long height,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog) {
-    this.worldStateArchive = worldStateArchive;
     this.parent = parent;
     this.height = height;
     this.worldStateRootHash = worldStateRootHash;
     this.trieLog = trieLog;
   }
 
-  public BonsaiWorldView getParent() {
+  public Optional<BonsaiWorldView> getParent() {
     return parent;
+  }
+
+  public void setParent(final Optional<BonsaiWorldView> parent) {
+    this.parent = parent;
   }
 
   public TrieLogLayer getTrieLog() {
@@ -71,29 +72,23 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public Optional<Bytes> getCode(final Address address) {
-    // this must be iterative and lambda light because the stack may blow up
-    // mainly because we don't have tail calls.
     BonsaiLayeredWorldState currentLayer = this;
     while (currentLayer != null) {
       final Optional<Bytes> maybeCode = currentLayer.trieLog.getCode(address);
-      if (maybeCode.isPresent()) {
+      final Optional<Bytes> maybeOriginalCode = currentLayer.trieLog.getOriginalCode(address);
+      if (currentLayer == this && maybeCode.isPresent()) {
         return maybeCode;
+      } else if (maybeOriginalCode.isPresent()) {
+        return maybeOriginalCode;
+      } else if (maybeCode.isPresent()) {
+        return Optional.empty();
       }
-      final Optional<Hash> maybeLastChangedCodeLocation =
-          currentLayer.trieLog.getLastChangedCodeLocation(address);
-      if (maybeLastChangedCodeLocation.isPresent()) {
-        final Optional<TrieLogLayer> maybeTrieLogLayer =
-            worldStateArchive.getTrieLogLayer(maybeLastChangedCodeLocation.get());
-        if (maybeTrieLogLayer.isPresent()) {
-          return maybeTrieLogLayer.get().getCode(address);
-        }
-      }
-      if (currentLayer.parent == null) {
+      if (currentLayer.parent.isEmpty()) {
         currentLayer = null;
-      } else if (currentLayer.parent instanceof BonsaiLayeredWorldState) {
-        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent;
+      } else if (currentLayer.parent.get() instanceof BonsaiLayeredWorldState) {
+        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent.get();
       } else {
-        return currentLayer.parent.getCode(address);
+        return currentLayer.parent.get().getCode(address);
       }
     }
     return Optional.empty();
@@ -105,12 +100,12 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
     // mainly because we don't have tail calls.
     BonsaiLayeredWorldState currentLayer = this;
     while (currentLayer != null) {
-      if (currentLayer.parent == null) {
+      if (currentLayer.parent.isEmpty()) {
         currentLayer = null;
-      } else if (currentLayer.parent instanceof BonsaiLayeredWorldState) {
-        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent;
+      } else if (currentLayer.parent.get() instanceof BonsaiLayeredWorldState) {
+        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent.get();
       } else {
-        return currentLayer.parent.getStateTrieNode(location);
+        return currentLayer.parent.get().getStateTrieNode(location);
       }
     }
     return Optional.empty();
@@ -129,15 +124,21 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
     while (currentLayer != null) {
       final Optional<UInt256> maybeValue =
           currentLayer.trieLog.getStorageBySlotHash(address, slotHash);
-      if (maybeValue.isPresent()) {
+      final Optional<UInt256> maybeOriginalValue =
+          currentLayer.trieLog.getOriginalStorageBySlotHash(address, slotHash);
+      if (currentLayer == this && maybeValue.isPresent()) {
         return maybeValue;
+      } else if (maybeOriginalValue.isPresent()) {
+        return maybeOriginalValue;
+      } else if (maybeValue.isPresent()) {
+        return Optional.empty();
       }
-      if (currentLayer.parent == null) {
+      if (currentLayer.parent.isEmpty()) {
         currentLayer = null;
-      } else if (currentLayer.parent instanceof BonsaiLayeredWorldState) {
-        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent;
+      } else if (currentLayer.parent.get() instanceof BonsaiLayeredWorldState) {
+        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent.get();
       } else {
-        return currentLayer.parent.getStorageValueBySlotHash(address, slotHash);
+        return currentLayer.parent.get().getStorageValueBySlotHash(address, slotHash);
       }
     }
     return Optional.empty();
@@ -169,12 +170,12 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
                   }
                 });
       }
-      if (currentLayer.parent == null) {
+      if (currentLayer.parent.isEmpty()) {
         currentLayer = null;
-      } else if (currentLayer.parent instanceof BonsaiLayeredWorldState) {
-        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent;
+      } else if (currentLayer.parent.get() instanceof BonsaiLayeredWorldState) {
+        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent.get();
       } else {
-        final Account account = currentLayer.parent.get(address);
+        final Account account = currentLayer.parent.get().get(address);
         if (account != null) {
           account
               .storageEntriesFrom(Hash.ZERO, Integer.MAX_VALUE)
@@ -199,16 +200,23 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
     while (currentLayer != null) {
       final Optional<StateTrieAccountValue> maybeStateTrieAccount =
           currentLayer.trieLog.getAccount(address);
-      if (maybeStateTrieAccount.isPresent()) {
+      final Optional<StateTrieAccountValue> maybeOriginalStateTrieAccount =
+          currentLayer.trieLog.getOriginalAccount(address);
+      if (currentLayer == this && maybeStateTrieAccount.isPresent()) {
         return new BonsaiAccount(
             BonsaiLayeredWorldState.this, address, maybeStateTrieAccount.get(), false);
+      } else if (maybeOriginalStateTrieAccount.isPresent()) {
+        return new BonsaiAccount(
+            BonsaiLayeredWorldState.this, address, maybeOriginalStateTrieAccount.get(), false);
+      } else if (maybeStateTrieAccount.isPresent()) {
+        return null;
       }
-      if (currentLayer.parent == null) {
+      if (currentLayer.parent.isEmpty()) {
         currentLayer = null;
-      } else if (currentLayer.parent instanceof BonsaiLayeredWorldState) {
-        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent;
+      } else if (currentLayer.parent.get() instanceof BonsaiLayeredWorldState) {
+        currentLayer = (BonsaiLayeredWorldState) currentLayer.parent.get();
       } else {
-        return currentLayer.parent.get(address);
+        return currentLayer.parent.get().get(address);
       }
     }
     return null;

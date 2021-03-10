@@ -47,7 +47,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final Blockchain blockchain;
 
   private final BonsaiPersistedWorldState persistedState;
-  private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStates;
+  private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
@@ -55,13 +55,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
     worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
-    layeredWorldStates = new HashMap<>();
+    layeredWorldStatesByHash = new HashMap<>();
   }
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    if (layeredWorldStates.containsKey(rootHash)) {
-      return Optional.of(layeredWorldStates.get(blockHash));
+    if (layeredWorldStatesByHash.containsKey(rootHash)) {
+      return Optional.of(layeredWorldStatesByHash.get(blockHash));
     } else if (rootHash.equals(persistedState.blockHash())) {
       return Optional.of(persistedState);
     } else {
@@ -69,13 +69,30 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     }
   }
 
-  void addLayeredWorldState(final BonsaiLayeredWorldState worldState) {
-    layeredWorldStates.put(worldState.blockHash(), worldState);
+  public void addLayeredWorldState(
+      final BonsaiWorldStateArchive archive,
+      final BonsaiWorldView persistedWorldState,
+      final long blockNumber,
+      final Hash worldStateRootHash,
+      final TrieLogLayer trieLog) {
+    final BonsaiLayeredWorldState bonsaiLayeredWorldState =
+        new BonsaiLayeredWorldState(
+            Optional.of(persistedWorldState), blockNumber, worldStateRootHash, trieLog);
+    layeredWorldStatesByHash.put(bonsaiLayeredWorldState.blockHash(), bonsaiLayeredWorldState);
+    if (blockNumber > 0) {
+      final Optional<Hash> blockHashByNumber = blockchain.getBlockHashByNumber(blockNumber - 1);
+      if (blockHashByNumber.isPresent()
+          && layeredWorldStatesByHash.containsKey(blockHashByNumber.get())) {
+        layeredWorldStatesByHash
+            .get(blockHashByNumber.get())
+            .setParent(Optional.of(bonsaiLayeredWorldState));
+      }
+    }
   }
 
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
-    if (layeredWorldStates.containsKey(blockHash)) {
-      return Optional.of(layeredWorldStates.get(blockHash).getTrieLog());
+    if (layeredWorldStatesByHash.containsKey(blockHash)) {
+      return Optional.of(layeredWorldStatesByHash.get(blockHash).getTrieLog());
     } else {
       return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
@@ -83,23 +100,15 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return layeredWorldStates.containsKey(blockHash)
+    return layeredWorldStatesByHash.containsKey(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override
   public Optional<MutableWorldState> getWorldState(final Hash rootHash, final Hash blockHash) {
-    if (layeredWorldStates.containsKey(blockHash)) {
-      return Optional.of(layeredWorldStates.get(blockHash));
-    } else {
-      final Optional<TrieLogLayer> trieLogLayer = getTrieLogLayer(blockHash);
-      if (trieLogLayer.isPresent()) {
-        final BlockHeader header = blockchain.getBlockHeader(persistedState.blockHash()).get();
-        return Optional.of(
-            new BonsaiLayeredWorldState(
-                this, persistedState, header.getNumber(), blockHash, trieLogLayer.get()));
-      }
+    if (layeredWorldStatesByHash.containsKey(blockHash)) {
+      return Optional.of(layeredWorldStatesByHash.get(blockHash));
     }
     return Optional.empty();
   }
@@ -194,6 +203,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   void scrubLayeredCache(final long newMaxHeight) {
     final long waterline = newMaxHeight - RETAINED_LAYERS;
-    layeredWorldStates.entrySet().removeIf(entry -> entry.getValue().getHeight() < waterline);
+    layeredWorldStatesByHash.entrySet().removeIf(entry -> entry.getValue().getHeight() < waterline);
   }
 }
