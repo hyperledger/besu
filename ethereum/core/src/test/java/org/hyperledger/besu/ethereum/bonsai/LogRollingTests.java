@@ -17,7 +17,9 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -57,6 +59,7 @@ public class LogRollingTests {
   private InMemoryKeyValueStorage secondStorageStorage;
   private InMemoryKeyValueStorage secondTrieBranchStorage;
   private InMemoryKeyValueStorage secondTrieLogStorage;
+  private Blockchain blockchain = mock(Blockchain.class);
 
   private static final Address addressOne =
       Address.fromHexString("0x1111111111111111111111111111111111111111");
@@ -103,7 +106,7 @@ public class LogRollingTests {
   @Before
   public void createStorage() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    archive = new BonsaiWorldStateArchive(provider, null);
+    archive = new BonsaiWorldStateArchive(provider, blockchain);
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -122,7 +125,7 @@ public class LogRollingTests {
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
     final InMemoryKeyValueStorageProvider secondProvider = new InMemoryKeyValueStorageProvider();
-    secondArchive = new BonsaiWorldStateArchive(secondProvider, null);
+    secondArchive = new BonsaiWorldStateArchive(secondProvider, blockchain);
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(

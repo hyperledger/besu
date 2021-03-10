@@ -251,8 +251,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
           LOG.debug("Writing Trie Log for {}", worldStateBlockHash);
           final TrieLogLayer trieLog = updater.generateTrieLog(worldStateBlockHash);
           trieLog.freeze();
-          archive.addLayeredWorldState(
-              getArchive(), this, blockHeader.getNumber(), worldStateRootHash, trieLog);
+          archive.addLayeredWorldState(this, blockHeader.getNumber(), worldStateRootHash, trieLog);
           final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
           trieLog.writeTo(rlpLog);
 

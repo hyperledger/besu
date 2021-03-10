@@ -70,7 +70,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   public void addLayeredWorldState(
-      final BonsaiWorldStateArchive archive,
       final BonsaiWorldView persistedWorldState,
       final long blockNumber,
       final Hash worldStateRootHash,
