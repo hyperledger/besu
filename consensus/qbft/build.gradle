@@ -117,7 +117,7 @@ task ('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = '2fe00d76d97e35aa2df6449b5f567c41cf6f58fc'
+    def expectedHash = '5a5751bfba33dc7024805bb1f2a8d6f8d96a1549'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "consensus/qbft/src/reference-test/resources").toAbsolutePath()
     try {
       exec {
