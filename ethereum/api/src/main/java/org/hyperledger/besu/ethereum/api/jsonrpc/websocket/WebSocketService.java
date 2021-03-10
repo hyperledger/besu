@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -30,6 +31,7 @@ import com.google.common.collect.Iterables;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
@@ -48,6 +50,9 @@ public class WebSocketService {
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
+
+  private int maxActiveConnections;
+  private AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   private final Vertx vertx;
   private final WebSocketConfiguration configuration;
@@ -95,6 +100,7 @@ public class WebSocketService {
                     .setCompressionSupported(true)
                     .addWebSocketSubProtocol("undefined"))
             .webSocketHandler(websocketHandler())
+            .connectionHandler(connectionHandler())
             .requestHandler(httpHandler())
             .listen(startHandler(resultFuture));
 
@@ -147,6 +153,32 @@ public class WebSocketService {
                 socketAddressAsString(socketAddress));
             websocket.close();
           });
+    };
+  }
+
+  private Handler<HttpConnection> connectionHandler() {
+
+    return connection -> {
+      if (activeConnectionsCount.get() >= maxActiveConnections) {
+        LOG.info("Max Active Connections limit reached! Rejecting all new connections.");
+        // disallow new connections to prevent DoS
+        LOG.warn(
+            "Rejecting new client connection: remoteAddress: {} connection count: {}",
+            connection.remoteAddress(),
+            activeConnectionsCount.incrementAndGet());
+        connection.close();
+      } else {
+        LOG.info(
+            "New client connection: remoteAddress: {} connection count: {}",
+            connection.remoteAddress(),
+            activeConnectionsCount.incrementAndGet());
+      }
+      connection.closeHandler(
+          c ->
+              LOG.info(
+                  "connection closed: remoteAddress: {} connection count: {}",
+                  connection.remoteAddress(),
+                  activeConnectionsCount.decrementAndGet()));
     };
   }
 
