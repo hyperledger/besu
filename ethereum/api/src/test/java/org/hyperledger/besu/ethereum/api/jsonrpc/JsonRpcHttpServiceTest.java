@@ -2158,7 +2158,7 @@ public class JsonRpcHttpServiceTest {
   public void limitActiveConnections() throws Exception {
     OkHttpClient newClient = new OkHttpClient();
     int i;
-    for (i = 0; i < createJsonRpcConfig().getMaxActiveConnections(); i++) {
+    for (i = 0; i < createJsonRpcConfig().getMaxActiveConnections() - 1; i++) {
       // create a new client for each request because we want to test the limit
       try (final Response resp = newClient.newCall(buildGetRequest("/readiness")).execute()) {
         assertThat(resp.code()).isEqualTo(200);
@@ -2166,7 +2166,7 @@ public class JsonRpcHttpServiceTest {
       newClient = new OkHttpClient();
     }
     // now we should get a rejected connection because we have hit the limit
-    assertThat(i).isEqualTo(createJsonRpcConfig().getMaxActiveConnections());
+    assertThat(i).isEqualTo(createJsonRpcConfig().getMaxActiveConnections() - 1);
     final OkHttpClient newClient2 = new OkHttpClient();
 
     assertThatThrownBy(() -> newClient2.newCall(buildGetRequest("/readiness")).execute())
