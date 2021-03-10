@@ -289,14 +289,14 @@ public class JsonRpcHttpService {
             activeConnectionsCount.incrementAndGet());
         connection.close();
       } else {
-        LOG.debug(
+        LOG.warn(
             "New client connection: remoteAddress: {} connection count: {}",
             connection.remoteAddress(),
             activeConnectionsCount.incrementAndGet());
       }
       connection.closeHandler(
           c ->
-              LOG.debug(
+              LOG.warn(
                   "Connection closed: remoteAddress: {} connection count: {}",
                   connection.remoteAddress(),
                   activeConnectionsCount.decrementAndGet()));
