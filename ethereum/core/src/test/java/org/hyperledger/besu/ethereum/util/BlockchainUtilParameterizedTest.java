@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public class BlockchainUtilParameterizedTest {
   @BeforeClass
   public static void setupClass() {
     genesisBlock = blockDataGenerator.genesisBlock();
-    localBlockchain = InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+    localBlockchain = InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
     // Setup local chain.
     for (int i = 1; i <= chainHeight; i++) {
       final BlockDataGenerator.BlockOptions options =
@@ -75,7 +75,7 @@ public class BlockchainUtilParameterizedTest {
 
   @Before
   public void setup() {
-    remoteBlockchain = InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+    remoteBlockchain = InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
 
     commonHeader = genesisBlock.getHeader();
     for (long i = 1; i <= commonAncestorHeight; i++) {

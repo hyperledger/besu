@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -74,7 +74,7 @@ public final class GenesisStateTest {
     assertThat(header.getOmmersHash()).isEqualTo(Hash.EMPTY_LIST_HASH);
     assertThat(header.getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
-    final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
+    final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     genesisState.writeStateTo(worldState);
     final Account first =
         worldState.get(Address.fromHexString("0x0000000000000000000000000000000000000001"));
@@ -110,7 +110,7 @@ public final class GenesisStateTest {
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash()).isEqualTo(Hash.fromHexString(blockHash));
 
-    final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
+    final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     genesisState.writeStateTo(worldState);
     final Account contract =
         worldState.get(Address.fromHexString("0x3850000000000000000000000000000000000000"));
