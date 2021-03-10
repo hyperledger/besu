@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -2157,7 +2158,7 @@ public class JsonRpcHttpServiceTest {
   public void limitActiveConnections() throws Exception {
     OkHttpClient newClient = new OkHttpClient();
     int i;
-    for (i = 0; i < createJsonRpcConfig().getMaxActiveConnections() - 1; i++) {
+    for (i = 0; i < createJsonRpcConfig().getMaxActiveConnections(); i++) {
       // create a new client for each request because we want to test the limit
       try (final Response resp = newClient.newCall(buildGetRequest("/readiness")).execute()) {
         assertThat(resp.code()).isEqualTo(200);
@@ -2165,12 +2166,12 @@ public class JsonRpcHttpServiceTest {
       newClient = new OkHttpClient();
     }
     // now we should get a rejected connection because we have hit the limit
-    assertThat(i).isEqualTo(createJsonRpcConfig().getMaxActiveConnections() - 1);
-    try {
-      newClient.newCall(buildGetRequest("/readiness")).execute();
-    } catch (Exception e) {
-      assertThat(e).isInstanceOf(java.net.ConnectException.class);
-    }
+    assertThat(i).isEqualTo(createJsonRpcConfig().getMaxActiveConnections());
+    final OkHttpClient newClient2 = new OkHttpClient();
+
+    assertThatThrownBy(() -> newClient2.newCall(buildGetRequest("/readiness")).execute())
+        .isInstanceOf(java.net.ConnectException.class)
+        .hasMessageContaining("Failed to connect");
   }
 
   private Request buildPostRequest(final RequestBody body) {

@@ -279,7 +279,9 @@ public class JsonRpcHttpService {
 
     return connection -> {
       if (activeConnectionsCount.get() >= maxActiveConnections) {
-        LOG.info("Max Active Connections limit reached. Rejecting all new connections.");
+        LOG.warn(
+            "Max Active Connections limit {} reached. Rejecting all new connections.",
+            maxActiveConnections);
         // disallow new connections to prevent DoS
         LOG.warn(
             "Rejecting new client connection: remoteAddress: {} connection count: {}",
@@ -287,14 +289,14 @@ public class JsonRpcHttpService {
             activeConnectionsCount.incrementAndGet());
         connection.close();
       } else {
-        LOG.info(
+        LOG.debug(
             "New client connection: remoteAddress: {} connection count: {}",
             connection.remoteAddress(),
             activeConnectionsCount.incrementAndGet());
       }
       connection.closeHandler(
           c ->
-              LOG.info(
+              LOG.debug(
                   "Connection closed: remoteAddress: {} connection count: {}",
                   connection.remoteAddress(),
                   activeConnectionsCount.decrementAndGet()));
