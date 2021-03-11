@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 public class CommitPayload extends QbftPayload {
-  public static final int TYPE = QbftV1.COMMIT;
+  private static final int TYPE = QbftV1.COMMIT;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
   private final SECPSignature commitSeal;
