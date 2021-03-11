@@ -52,7 +52,7 @@ public class WebSocketService {
   private static final String APPLICATION_JSON = "application/json";
 
   private int maxActiveConnections;
-  private AtomicInteger activeConnectionsCount = new AtomicInteger();
+  private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   private final Vertx vertx;
   private final WebSocketConfiguration configuration;
