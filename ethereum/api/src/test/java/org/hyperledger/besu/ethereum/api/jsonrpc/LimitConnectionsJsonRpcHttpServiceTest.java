@@ -18,6 +18,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.IOException;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
 import org.junit.BeforeClass;
@@ -47,8 +49,7 @@ public class LimitConnectionsJsonRpcHttpServiceTest extends JsonRpcHttpServiceTe
     final OkHttpClient newClient2 = new OkHttpClient();
 
     assertThatThrownBy(() -> newClient2.newCall(buildGetRequest("/readiness")).execute())
-        .getCause()
-        .isInstanceOf(java.net.ConnectException.class)
+        .isInstanceOf(IOException.class)
         .hasMessageContaining("Connection refused");
   }
 }
