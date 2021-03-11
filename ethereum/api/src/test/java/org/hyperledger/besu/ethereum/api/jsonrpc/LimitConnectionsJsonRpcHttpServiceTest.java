@@ -47,7 +47,8 @@ public class LimitConnectionsJsonRpcHttpServiceTest extends JsonRpcHttpServiceTe
     final OkHttpClient newClient2 = new OkHttpClient();
 
     assertThatThrownBy(() -> newClient2.newCall(buildGetRequest("/readiness")).execute())
+        .getCause()
         .isInstanceOf(java.net.ConnectException.class)
-        .hasMessageContaining("Failed to connect");
+        .hasMessageContaining("Connection refused");
   }
 }
