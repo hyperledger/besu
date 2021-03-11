@@ -88,11 +88,11 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
     BonsaiLayeredWorldState currentLayer = this;
     while (currentLayer != null) {
       final Optional<Bytes> maybeCode = currentLayer.trieLog.getCode(address);
-      final Optional<Bytes> maybeOriginalCode = currentLayer.trieLog.getPriorCode(address);
+      final Optional<Bytes> maybePriorCode = currentLayer.trieLog.getPriorCode(address);
       if (currentLayer == this && maybeCode.isPresent()) {
         return maybeCode;
-      } else if (maybeOriginalCode.isPresent()) {
-        return maybeOriginalCode;
+      } else if (maybePriorCode.isPresent()) {
+        return maybePriorCode;
       } else if (maybeCode.isPresent()) {
         return Optional.empty();
       }
@@ -137,12 +137,12 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
     while (currentLayer != null) {
       final Optional<UInt256> maybeValue =
           currentLayer.trieLog.getStorageBySlotHash(address, slotHash);
-      final Optional<UInt256> maybeOriginalValue =
+      final Optional<UInt256> maybePriorValue =
           currentLayer.trieLog.getPriorStorageBySlotHash(address, slotHash);
       if (currentLayer == this && maybeValue.isPresent()) {
         return maybeValue;
-      } else if (maybeOriginalValue.isPresent()) {
-        return maybeOriginalValue;
+      } else if (maybePriorValue.isPresent()) {
+        return maybePriorValue;
       } else if (maybeValue.isPresent()) {
         return Optional.empty();
       }
@@ -213,14 +213,14 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
     while (currentLayer != null) {
       final Optional<StateTrieAccountValue> maybeStateTrieAccount =
           currentLayer.trieLog.getAccount(address);
-      final Optional<StateTrieAccountValue> maybeOriginalStateTrieAccount =
+      final Optional<StateTrieAccountValue> maybePriorStateTrieAccount =
           currentLayer.trieLog.getPriorAccount(address);
       if (currentLayer == this && maybeStateTrieAccount.isPresent()) {
         return new BonsaiAccount(
             BonsaiLayeredWorldState.this, address, maybeStateTrieAccount.get(), false);
-      } else if (maybeOriginalStateTrieAccount.isPresent()) {
+      } else if (maybePriorStateTrieAccount.isPresent()) {
         return new BonsaiAccount(
-            BonsaiLayeredWorldState.this, address, maybeOriginalStateTrieAccount.get(), false);
+            BonsaiLayeredWorldState.this, address, maybePriorStateTrieAccount.get(), false);
       } else if (maybeStateTrieAccount.isPresent()) {
         return null;
       }
