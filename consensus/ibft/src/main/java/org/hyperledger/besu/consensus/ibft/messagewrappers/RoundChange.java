@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -71,8 +70,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
 
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
-    final SignedData<RoundChangePayload> payload =
-        PayloadDeserializers.readSignedRoundChangePayloadFrom(rlpIn);
+    final SignedData<RoundChangePayload> payload = readPayload(rlpIn, RoundChangePayload::readFrom);
     Optional<Block> block = Optional.empty();
     if (!rlpIn.nextIsNull()) {
       block = Optional.of(Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal()));

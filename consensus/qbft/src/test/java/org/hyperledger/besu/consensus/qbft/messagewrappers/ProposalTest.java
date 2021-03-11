@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -59,12 +58,12 @@ public class ProposalTest {
     final ProposalPayload payload = new ProposalPayload(new ConsensusRoundIdentifier(1, 1), BLOCK);
 
     final SignedData<ProposalPayload> signedPayload =
-        SignedData.create(payload, nodeKey.sign(hashForSignature(payload)));
+        SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
 
     final PreparePayload preparePayload =
         new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
     final SignedData<PreparePayload> prepare =
-        SignedData.create(preparePayload, nodeKey.sign(hashForSignature(preparePayload)));
+        SignedData.create(preparePayload, nodeKey.sign(preparePayload.hashForSignature()));
 
     final RoundChangePayload roundChangePayload =
         new RoundChangePayload(
@@ -72,7 +71,7 @@ public class ProposalTest {
             Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
 
     final SignedData<RoundChangePayload> roundChange =
-        SignedData.create(roundChangePayload, nodeKey.sign(hashForSignature(roundChangePayload)));
+        SignedData.create(roundChangePayload, nodeKey.sign(roundChangePayload.hashForSignature()));
 
     final Proposal proposal = new Proposal(signedPayload, List.of(roundChange), List.of(prepare));
 

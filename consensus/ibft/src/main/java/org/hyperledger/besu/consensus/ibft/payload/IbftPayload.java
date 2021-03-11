@@ -12,6 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.payload;
+package org.hyperledger.besu.consensus.ibft.payload;
 
-public class PayloadHelpers {}
+import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.ethereum.core.Hash;
+
+import org.apache.tuweni.bytes.Bytes;
+
+public abstract class IbftPayload implements Payload {
+
+  @Override
+  public Hash hashForSignature() {
+    return Hash.hash(Bytes.concatenate(Bytes.of(getMessageType()), encoded()));
+  }
+}

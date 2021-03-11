@@ -16,6 +16,8 @@ package org.hyperledger.besu.consensus.qbft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -28,5 +30,15 @@ public abstract class QbftPayload implements Payload {
 
   protected static ConsensusRoundIdentifier readConsensusRound(final RLPInput in) {
     return new ConsensusRoundIdentifier(in.readLongScalar(), in.readIntScalar());
+  }
+
+  @Override
+  public Hash hashForSignature() {
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(getMessageType());
+    out.writeRaw(this.encoded());
+    out.endList();
+    return Hash.hash(out.encoded());
   }
 }

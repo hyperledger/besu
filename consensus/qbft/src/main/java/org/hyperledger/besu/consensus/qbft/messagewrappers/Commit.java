@@ -40,7 +40,6 @@ public class Commit extends BftMessage<CommitPayload> {
 
   public static Commit decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
-
     return new Commit(readPayload(rlpIn, CommitPayload::readFrom));
   }
 }
