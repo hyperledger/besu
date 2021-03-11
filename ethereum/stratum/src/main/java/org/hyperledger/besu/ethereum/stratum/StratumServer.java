@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.stratum;
 import static org.apache.logging.log4j.LogManager.getLogger;
 
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.chain.PoWObserver;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,7 +36,7 @@ import org.apache.logging.log4j.Logger;
  * TCP server allowing miners to connect to the client over persistent TCP connections, using the
  * various Stratum protocols.
  */
-public class StratumServer implements EthHashObserver {
+public class StratumServer implements PoWObserver {
 
   private static final Logger logger = getLogger();
 
@@ -118,19 +118,18 @@ public class StratumServer implements EthHashObserver {
   }
 
   @Override
-  public void newJob(final EthHashSolverInputs ethHashSolverInputs) {
+  public void newJob(final PoWSolverInputs poWSolverInputs) {
     if (!started.get()) {
-      logger.debug("Discarding {} as stratum server is not started", ethHashSolverInputs);
+      logger.debug("Discarding {} as stratum server is not started", poWSolverInputs);
       return;
     }
     for (StratumProtocol protocol : protocols) {
-      protocol.setCurrentWorkTask(ethHashSolverInputs);
+      protocol.setCurrentWorkTask(poWSolverInputs);
     }
   }
 
   @Override
-  public void setSubmitWorkCallback(
-      final Function<EthHashSolution, Boolean> submitSolutionCallback) {
+  public void setSubmitWorkCallback(final Function<PoWSolution, Boolean> submitSolutionCallback) {
     for (StratumProtocol protocol : protocols) {
       protocol.setSubmitCallback(submitSolutionCallback);
     }

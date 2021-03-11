@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.stratum;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class Stratum1EthProxyProtocolTest {
 
   @Before
   public void setUp() {
-    MiningCoordinator coordinator = mock(EthHashMiningCoordinator.class);
+    MiningCoordinator coordinator = mock(PoWMiningCoordinator.class);
     protocol = new Stratum1EthProxyProtocol(coordinator);
     receivedMessages = new ArrayList<>();
     conn = new StratumConnection(new StratumProtocol[0], null, receivedMessages::add);

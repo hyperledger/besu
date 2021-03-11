@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -82,7 +82,7 @@ public final class RlpBlockExporterTest {
         .fromGenesisConfig(GenesisConfigFile.mainnet())
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-        .storageProvider(new InMemoryStorageProvider())
+        .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
         .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
         .nodeKey(NodeKeyUtils.generate())

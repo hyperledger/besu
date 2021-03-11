@@ -16,9 +16,9 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMinerExecutor;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMinerExecutor;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -42,8 +42,9 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    final EthHashMinerExecutor executor =
-        new EthHashMinerExecutor(
+
+    final PoWMinerExecutor executor =
+        new PoWMinerExecutor(
             protocolContext,
             protocolSchedule,
             transactionPool.getPendingTransactions(),
@@ -55,8 +56,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
             gasLimitCalculator,
             epochCalculator);
 
-    final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(
+    final PoWMiningCoordinator miningCoordinator =
+        new PoWMiningCoordinator(
             protocolContext.getBlockchain(),
             executor,
             syncState,

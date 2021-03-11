@@ -28,8 +28,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -205,7 +205,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     ProtocolScheduleFixture.MAINNET,
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(EthHashMiningCoordinator.class),
+                    mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),
@@ -264,7 +264,7 @@ public class JsonRpcHttpServiceRpcApisTest {
             .vertx(vertx)
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())
-            .storageProvider(new InMemoryStorageProvider())
+            .storageProvider(new InMemoryKeyValueStorageProvider())
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .build();
 
@@ -302,7 +302,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                     ProtocolScheduleFixture.MAINNET,
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(EthHashMiningCoordinator.class),
+                    mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),

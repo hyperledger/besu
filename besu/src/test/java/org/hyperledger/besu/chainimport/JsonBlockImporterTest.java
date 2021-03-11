@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -415,7 +415,7 @@ public abstract class JsonBlockImporterTest {
         .fromGenesisConfig(genesisConfigFile)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-        .storageProvider(new InMemoryStorageProvider())
+        .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.valueOf(10))
         .miningParameters(
             new MiningParametersTestBuilder()
