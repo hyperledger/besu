@@ -31,7 +31,7 @@ import com.google.common.base.MoreObjects;
 public class JsonRpcConfiguration {
   private static final String DEFAULT_JSON_RPC_HOST = "127.0.0.1";
   public static final int DEFAULT_JSON_RPC_PORT = 8545;
-  public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 100;
+  public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
   private int port;
