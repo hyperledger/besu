@@ -191,11 +191,11 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void traceReportingWithTraceId() {
 
+    OkHttpClient okClient = new OkHttpClient();
     WaitUtils.waitFor(
         30,
         () -> {
           // call the json RPC endpoint to generate a trace - with trace metadata of our own
-          OkHttpClient okClient = new OkHttpClient();
           Configuration config =
               new Configuration("okhttp")
                   .withSampler(

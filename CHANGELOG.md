@@ -3,6 +3,7 @@
 ## 21.1.2
 
 ### Additions and Improvements
+- Added option to set a limit for JSON-RPC HTTP connections `--rpc-http-max-active-connections` [\#1996](https://github.com/hyperledger/besu/pull/1996)
 
 ### Bug Fixes
 
@@ -144,7 +145,7 @@ sha256: `b0fe3942052b8fd43fc3025a298a6c701f9edae2e100f0c563a1c5a4ceef71f1`
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
 ### Download link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.4.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/20.10.4/besu-20.10.4.zip
 sha256: f15cd5243b809659bba1706c1745aecafc012d3fc44a91419522da925493537c
 
 ## 20.10.3
@@ -166,7 +167,7 @@ sha256: f15cd5243b809659bba1706c1745aecafc012d3fc44a91419522da925493537c
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
 ### Download link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.3.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/20.10.3/besu-20.10.3.zip
 sha256: `b5f46d945754dedcbbb1e5dd96bf2bfd13272ff09c6a66c0150b979a578f4389`
 
 ## 20.10.2
@@ -190,7 +191,7 @@ sha256: `b5f46d945754dedcbbb1e5dd96bf2bfd13272ff09c6a66c0150b979a578f4389`
 
 ### Download Link
 
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.2.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/20.10.2/besu-20.10.2.zip
 sha256: `710aed228dcbe9b8103aef39e4431b0c63e73c3a708ce88bcd1ecfa1722ad307`
 
 ## 20.10.1
@@ -235,7 +236,7 @@ The [Besu Sample Networks repository](https://github.com/ConsenSys/besu-sample-n
 
 ### Download Link
 
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.1.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/20.10.1/besu-20.10.1.zip
 sha256: `ac4fae310957c176564396f73c0f03c60c41129d43d078560d0dab533a69fd2a`
 
 ## 20.10.0
@@ -288,7 +289,7 @@ Deprecated in 1.5.1
 on `--privacy-onchain-groups-enabled`. [\#1222](https://github.com/hyperledger/besu/pull/1222)
 
 ### Download link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-20.10.0.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/20.10.0/besu-20.10.0.zip
 
 sha256sum: `2b50a375aae64b838a2cd9d43747006492cae573f1be11745b7f643646fd5a01`
 
@@ -310,7 +311,7 @@ sha256sum: `2b50a375aae64b838a2cd9d43747006492cae573f1be11745b7f643646fd5a01`
 
 ### Download link
 
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.5.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/1.5.5/besu-1.5.5.zip
 
 sha256sum: `e67b0a899dc4421054eaa9a8112cb89e1e5f6a56f0d8aa1b0c5111c53dfad2ad`
 
@@ -337,7 +338,7 @@ sha256sum: `e67b0a899dc4421054eaa9a8112cb89e1e5f6a56f0d8aa1b0c5111c53dfad2ad`
 - [Changes not saved to database correctly causing inconsistent private states](KNOWN_ISSUES.md#Changes-not-saved-to-database-correctly-causing-inconsistent-private-states)
 
 ### Download link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.4.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/1.5.4/besu-1.5.4.zip
 
 sha256sum: `1f4df8e1c5e3b5b3abf6289ccfe70f302aa7c29a652b2eb713ffbdc507670420`
 
@@ -375,7 +376,7 @@ To enhance control over permissions on the privacy group management contract:
 The onchain privacy support in the current version of the web3js-eea library (v0.9) will not be compatible with Besu v1.5.3.  We are actively working on an upgrade to webj3-eea that will support these changes.   
 
 ### Download link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.3.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/1.5.3/besu-1.5.3.zip
 
 sha256sum: `735cd511e1dae1590f2829d9535cb383aa8c526f059b3451859e5fcfccc48985`
 
@@ -417,7 +418,7 @@ The intent is that the major Java VM version or Java VM type shipped with the de
 - [Edward Evans](https://github.com/hyperledger/besu/commits?author=EdJoJob) voluntarily moved to [emeritus status](https://github.com/hyperledger/besu/pull/1270).
 
 ### Download link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.2.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/1.5.2/besu-1.5.2.zip
 
 sha256sum: `629f44e230a635b09f8d82f2196d70d31193233718118a46412f11c50772dc85`
 
@@ -458,7 +459,7 @@ Known issues are open issues categorized as [Very High or High impact](https://w
 - [Restarts caused by insufficient memory can cause inconsistent private state](KNOWN_ISSUES.md#Restart-caused-by-insufficient-memory-can-cause-inconsistent-private-state)
 
 ### Download link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.1.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/1.5.1/besu-1.5.1.zip
 
 sha256sum: `c17f49b6b8686822417184952487fc135772f0be03514085926a6984fd955b88`
 
@@ -555,11 +556,11 @@ Workaround - Ensure you allocate enough memory for the Java Runtime Environment 
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
 ### Download link
-https://dl.bintray.com/hyperledger-org/besu-repo/besu-1.5.0.zip
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/1.5.0/besu-1.5.0.zip
 
 sha256sum: `56929d6a71cc681688351041c919e9630ab6df7de37dd0c4ae9e19a4f44460b2`
 
-**For download links of releases prior to 1.5.0, please visit https://dl.bintray.com/hyperledger-org/besu-repo/**
+**For download links of releases prior to 1.5.0, please visit https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/**
 
 ## 1.4.6
 
