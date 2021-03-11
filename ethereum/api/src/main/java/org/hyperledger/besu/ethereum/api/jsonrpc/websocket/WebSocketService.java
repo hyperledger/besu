@@ -51,7 +51,7 @@ public class WebSocketService {
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
 
-  private int maxActiveConnections;
+  private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   private final Vertx vertx;
