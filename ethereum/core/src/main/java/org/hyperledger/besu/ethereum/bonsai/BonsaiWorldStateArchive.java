@@ -76,7 +76,12 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final TrieLogLayer trieLog) {
     final BonsaiLayeredWorldState bonsaiLayeredWorldState =
         new BonsaiLayeredWorldState(
-            Optional.of(persistedWorldState), blockNumber, worldStateRootHash, trieLog);
+            blockchain,
+            this,
+            Optional.of(persistedWorldState),
+            blockNumber,
+            worldStateRootHash,
+            trieLog);
     layeredWorldStatesByHash.put(bonsaiLayeredWorldState.blockHash(), bonsaiLayeredWorldState);
     if (blockNumber > 0) {
       final Optional<Hash> blockHashByNumber = blockchain.getBlockHashByNumber(blockNumber - 1);
@@ -84,7 +89,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           && layeredWorldStatesByHash.containsKey(blockHashByNumber.get())) {
         layeredWorldStatesByHash
             .get(blockHashByNumber.get())
-            .setParent(Optional.of(bonsaiLayeredWorldState));
+            .setNextWorldView(Optional.of(bonsaiLayeredWorldState));
       }
     }
   }
@@ -105,9 +110,37 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<MutableWorldState> getWorldState(final Hash rootHash, final Hash blockHash) {
-    if (layeredWorldStatesByHash.containsKey(blockHash)) {
-      return Optional.of(layeredWorldStatesByHash.get(blockHash));
+  public Optional<MutableWorldState> getMutable(
+      final long blockNumber, final boolean isPersistingState) {
+    final Optional<Hash> blockHashByNumber = blockchain.getBlockHashByNumber(blockNumber);
+    if (blockHashByNumber.isPresent()) {
+      return getMutable(null, blockHashByNumber.get(), isPersistingState);
+    }
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<MutableWorldState> getMutable(
+      final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
+    if (!isPersistingState) {
+      if (layeredWorldStatesByHash.containsKey(blockHash)) {
+        return Optional.of(layeredWorldStatesByHash.get(blockHash));
+      } else {
+        final Optional<TrieLogLayer> trieLogLayer = getTrieLogLayer(blockHash);
+        if (trieLogLayer.isPresent()) {
+          final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
+          return Optional.of(
+              new BonsaiLayeredWorldState(
+                  blockchain,
+                  this,
+                  Optional.empty(),
+                  header.getNumber(),
+                  blockHash,
+                  trieLogLayer.get()));
+        }
+      }
+    } else {
+      return getMutable(rootHash, blockHash);
     }
     return Optional.empty();
   }

@@ -241,18 +241,18 @@ public class TrieLogLayer {
     }
   }
 
-  public Optional<Bytes> getOriginalCode(final Address address) {
-    return Optional.ofNullable(code.get(address)).map(BonsaiValue::getOriginal);
+  public Optional<Bytes> getPriorCode(final Address address) {
+    return Optional.ofNullable(code.get(address)).map(BonsaiValue::getPrior);
   }
 
   public Optional<Bytes> getCode(final Address address) {
     return Optional.ofNullable(code.get(address)).map(BonsaiValue::getUpdated);
   }
 
-  Optional<UInt256> getOriginalStorageBySlotHash(final Address address, final Hash slotHash) {
+  Optional<UInt256> getPriorStorageBySlotHash(final Address address, final Hash slotHash) {
     return Optional.ofNullable(storage.get(address))
         .map(i -> i.get(slotHash))
-        .map(BonsaiValue::getOriginal);
+        .map(BonsaiValue::getPrior);
   }
 
   Optional<UInt256> getStorageBySlotHash(final Address address, final Hash slotHash) {
@@ -261,8 +261,8 @@ public class TrieLogLayer {
         .map(BonsaiValue::getUpdated);
   }
 
-  public Optional<StateTrieAccountValue> getOriginalAccount(final Address address) {
-    return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getOriginal);
+  public Optional<StateTrieAccountValue> getPriorAccount(final Address address) {
+    return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getPrior);
   }
 
   public Optional<StateTrieAccountValue> getAccount(final Address address) {
@@ -276,20 +276,20 @@ public class TrieLogLayer {
     for (final Map.Entry<Address, BonsaiValue<StateTrieAccountValue>> account :
         accounts.entrySet()) {
       sb.append(" : ").append(account.getKey()).append("\n");
-      if (Objects.equals(account.getValue().getOriginal(), account.getValue().getUpdated())) {
+      if (Objects.equals(account.getValue().getPrior(), account.getValue().getUpdated())) {
         sb.append("   = ").append(account.getValue().getUpdated()).append("\n");
       } else {
-        sb.append("   - ").append(account.getValue().getOriginal()).append("\n");
+        sb.append("   - ").append(account.getValue().getPrior()).append("\n");
         sb.append("   + ").append(account.getValue().getUpdated()).append("\n");
       }
     }
     sb.append("code").append("\n");
     for (final Map.Entry<Address, BonsaiValue<Bytes>> code : code.entrySet()) {
       sb.append(" : ").append(code.getKey()).append("\n");
-      if (Objects.equals(code.getValue().getOriginal(), code.getValue().getUpdated())) {
-        sb.append("   = ").append(code.getValue().getOriginal()).append("\n");
+      if (Objects.equals(code.getValue().getPrior(), code.getValue().getUpdated())) {
+        sb.append("   = ").append(code.getValue().getPrior()).append("\n");
       } else {
-        sb.append("   - ").append(code.getValue().getOriginal()).append("\n");
+        sb.append("   - ").append(code.getValue().getPrior()).append("\n");
         sb.append("   + ").append(code.getValue().getUpdated()).append("\n");
       }
     }
@@ -297,7 +297,7 @@ public class TrieLogLayer {
     for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storage : storage.entrySet()) {
       sb.append(" : ").append(storage.getKey()).append("\n");
       for (final Map.Entry<Hash, BonsaiValue<UInt256>> slot : storage.getValue().entrySet()) {
-        final UInt256 originalValue = slot.getValue().getOriginal();
+        final UInt256 originalValue = slot.getValue().getPrior();
         final UInt256 updatedValue = slot.getValue().getUpdated();
         sb.append("   : ").append(slot.getKey()).append("\n");
         if (Objects.equals(originalValue, updatedValue)) {

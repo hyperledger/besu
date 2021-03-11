@@ -133,7 +133,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Hash updatedAddressHash = Hash.hash(updatedAddress);
       final BonsaiValue<BonsaiAccount> accountValue =
           updater.getAccountsToUpdate().get(updatedAddress);
-      final BonsaiAccount accountOriginal = accountValue.getOriginal();
+      final BonsaiAccount accountOriginal = accountValue.getPrior();
       final Hash storageRoot =
           (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
@@ -378,7 +378,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public UInt256 getOriginalStorageValue(final Address address, final UInt256 storageKey) {
+  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     return getStorageValue(address, storageKey);
   }
 

@@ -174,14 +174,14 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       while (iter.hasNext()) {
         final Map.Entry<Hash, BonsaiValue<UInt256>> updateEntry = iter.next();
         final BonsaiValue<UInt256> updatedSlot = updateEntry.getValue();
-        if (updatedSlot.getOriginal() == null || updatedSlot.getOriginal().isZero()) {
+        if (updatedSlot.getPrior() == null || updatedSlot.getPrior().isZero()) {
           iter.remove();
         } else {
           updatedSlot.setUpdated(null);
         }
       }
 
-      final BonsaiAccount originalValue = accountValue.getOriginal();
+      final BonsaiAccount originalValue = accountValue.getPrior();
       if (originalValue != null) {
         // Enumerate and delete addresses not updated
         wrappedWorldView()
@@ -304,7 +304,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   }
 
   @Override
-  public UInt256 getOriginalStorageValue(final Address address, final UInt256 storageKey) {
+  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     if (storageToClear.contains(address)) {
       return UInt256.ZERO;
@@ -318,7 +318,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if (updated != null) {
         return updated;
       }
-      final UInt256 original = value.getOriginal();
+      final UInt256 original = value.getPrior();
       if (original != null) {
         return original;
       }
@@ -346,7 +346,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
         accountsToUpdate.entrySet()) {
       final BonsaiValue<BonsaiAccount> bonsaiValue = updatedAccount.getValue();
-      final BonsaiAccount oldValue = bonsaiValue.getOriginal();
+      final BonsaiAccount oldValue = bonsaiValue.getPrior();
       final StateTrieAccountValue oldAccount =
           oldValue == null
               ? null
@@ -372,7 +372,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
       layer.addCodeChange(
           updatedCode.getKey(),
-          updatedCode.getValue().getOriginal(),
+          updatedCode.getValue().getPrior(),
           updatedCode.getValue().getUpdated(),
           blockHash);
     }
@@ -385,7 +385,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         layer.addStorageChange(
             address,
             slotUpdate.getKey(),
-            slotUpdate.getValue().getOriginal(),
+            slotUpdate.getValue().getPrior(),
             slotUpdate.getValue().getUpdated());
       }
     }
@@ -397,13 +397,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         .forEach(
             entry ->
                 rollAccountChange(
-                    entry.getKey(), entry.getValue().getOriginal(), entry.getValue().getUpdated()));
+                    entry.getKey(), entry.getValue().getPrior(), entry.getValue().getUpdated()));
     layer
         .streamCodeChanges()
         .forEach(
             entry ->
                 rollCodeChange(
-                    entry.getKey(), entry.getValue().getOriginal(), entry.getValue().getUpdated()));
+                    entry.getKey(), entry.getValue().getPrior(), entry.getValue().getUpdated()));
     layer
         .streamStorageChanges()
         .forEach(
@@ -413,7 +413,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                     .forEach(
                         (key, value) ->
                             rollStorageChange(
-                                entry.getKey(), key, value.getOriginal(), value.getUpdated())));
+                                entry.getKey(), key, value.getPrior(), value.getUpdated())));
   }
 
   public void rollBack(final TrieLogLayer layer) {
@@ -422,13 +422,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         .forEach(
             entry ->
                 rollAccountChange(
-                    entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getOriginal()));
+                    entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getPrior()));
     layer
         .streamCodeChanges()
         .forEach(
             entry ->
                 rollCodeChange(
-                    entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getOriginal()));
+                    entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getPrior()));
     layer
         .streamStorageChanges()
         .forEach(
@@ -438,10 +438,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                     .forEach(
                         (slotHash, value) ->
                             rollStorageChange(
-                                entry.getKey(),
-                                slotHash,
-                                value.getUpdated(),
-                                value.getOriginal())));
+                                entry.getKey(), slotHash, value.getUpdated(), value.getPrior())));
   }
 
   private void rollAccountChange(
@@ -480,7 +477,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
             "Address=" + address + " Prior Value in Rolling Change");
       }
       if (replacementValue == null) {
-        if (accountValue.getOriginal() == null) {
+        if (accountValue.getPrior() == null) {
           accountsToUpdate.remove(address);
         } else {
           accountValue.setUpdated(null);
@@ -545,7 +542,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 expectedCode == null ? "null" : Hash.hash(expectedCode),
                 Hash.hash(codeValue.getUpdated())));
       }
-      if (replacementCode == null && codeValue.getOriginal() == null) {
+      if (replacementCode == null && codeValue.getPrior() == null) {
         codeToUpdate.remove(address);
       } else {
         codeValue.setUpdated(replacementCode);
@@ -616,7 +613,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 expectedValue == null ? "null" : expectedValue.toShortHexString(),
                 existingSlotValue == null ? "null" : existingSlotValue.toShortHexString()));
       }
-      if (replacementValue == null && slotValue.getOriginal() == null) {
+      if (replacementValue == null && slotValue.getPrior() == null) {
         final Map<Hash, BonsaiValue<UInt256>> thisStorageUpdate =
             maybeCreateStorageMap(storageMap, address);
         thisStorageUpdate.remove(slotHash);

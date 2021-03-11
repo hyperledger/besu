@@ -142,7 +142,7 @@ public class TransactionSimulator {
       return Optional.empty();
     }
     final MutableWorldState publicWorldState =
-        worldStateArchive.getWorldState(header.getStateRoot(), header.getHash()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
 
     if (publicWorldState == null) {
       return Optional.empty();
@@ -216,7 +216,7 @@ public class TransactionSimulator {
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
     final BlockHeader header = blockchain.getChainHeadHeader();
     final MutableWorldState worldState =
-        worldStateArchive.getWorldState(header.getStateRoot(), header.getHash()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
 
     return doesAddressExist(worldState, address, header);
   }
