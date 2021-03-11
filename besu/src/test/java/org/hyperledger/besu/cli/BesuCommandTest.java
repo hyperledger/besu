@@ -1896,6 +1896,21 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcWsMaxActiveConnectionsPropertyMustBeUsed() {
+    int maxConnections = 99;
+    parseCommand("--rpc-ws-max-active-connections", String.valueOf(maxConnections));
+
+    verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(wsRpcConfigArgumentCaptor.getValue().getMaxActiveConnections())
+        .isEqualTo(maxConnections);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
   public void rpcHttpTlsRequiresRpcHttpEnabled() {
     parseCommand("--rpc-http-tls-enabled");
 
@@ -2543,10 +2558,22 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcWsOptionsRequiresServiceToBeEnabled() {
-    parseCommand("--rpc-ws-api", "ETH,NET", "--rpc-ws-host", "0.0.0.0", "--rpc-ws-port", "1234");
+    parseCommand(
+        "--rpc-ws-api",
+        "ETH,NET",
+        "--rpc-ws-host",
+        "0.0.0.0",
+        "--rpc-ws-port",
+        "1234",
+        "--rpc-ws-max-active-connections",
+        "77");
 
     verifyOptionsConstraintLoggerCall(
-        "--rpc-ws-enabled", "--rpc-ws-host", "--rpc-ws-port", "--rpc-ws-api");
+        "--rpc-ws-enabled",
+        "--rpc-ws-host",
+        "--rpc-ws-port",
+        "--rpc-ws-api",
+        "--rpc-ws-max-active-connections");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

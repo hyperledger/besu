@@ -59,6 +59,7 @@ public class WebSocketServiceTest {
   private WebSocketRequestHandler webSocketRequestHandlerSpy;
   private WebSocketService websocketService;
   private HttpClient httpClient;
+  private int maxConnections = 2;
 
   @Before
   public void before() {
@@ -67,6 +68,7 @@ public class WebSocketServiceTest {
     websocketConfiguration = WebSocketConfiguration.createDefault();
     websocketConfiguration.setPort(0);
     websocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
+    websocketConfiguration.setMaxActiveConnections(maxConnections);
 
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(
@@ -98,6 +100,39 @@ public class WebSocketServiceTest {
   public void after() {
     reset(webSocketRequestHandlerSpy);
     websocketService.stop();
+  }
+
+  @Test
+  public void limitActiveConnections(final TestContext context) {
+    final Async async = context.async();
+
+    final String request = "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}";
+    // the number in the response is the subscription ID, so in successive responses this increments
+    final String expectedResponse1 = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}";
+    final String expectedResponse2 = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x2\"}";
+
+    // attempt to exceed max connections - but only the first 2 should get through
+    for (int i = 0; i < maxConnections + 1; i++) {
+      httpClient.websocket(
+          "/",
+          webSocket -> {
+            webSocket.handler(
+                buffer -> {
+                  context.assertNotNull(buffer.toString());
+                  // assert that we got either 0x1 or 0x2. The third request does not get sent.
+                  context.assertTrue(
+                      buffer.toString().startsWith(expectedResponse1.substring(0, 36)));
+                  context.assertTrue(
+                      expectedResponse1.equals(buffer.toString())
+                          || expectedResponse2.equals(buffer.toString()),
+                      "buffer " + buffer.toString());
+                  async.countDown();
+                });
+
+            webSocket.writeTextMessage(request);
+          });
+    }
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 
   @Test
@@ -196,7 +231,7 @@ public class WebSocketServiceTest {
   }
 
   @Test
-  public void webSocketDoesNotToHandlePingPayloadAsJsonRpcRequest(final TestContext context) {
+  public void webSocketDoesNotHandlePingPayloadAsJsonRpcRequest(final TestContext context) {
     final Async async = context.async();
 
     httpClient.webSocket(
