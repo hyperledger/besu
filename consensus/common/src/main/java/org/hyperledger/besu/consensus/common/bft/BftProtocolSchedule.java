@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -30,8 +31,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
 public class BftProtocolSchedule {
@@ -57,7 +60,14 @@ public class BftProtocolSchedule {
                 bftExtraDataCodec,
                 config.getBftConfigOptions().getBlockRewardWei()));
 
-    config.getTransitions().getIbftForks().stream()
+    final Supplier<List<BftFork>> forks;
+    if (config.isIbft2()) {
+      forks = () -> config.getTransitions().getIbftForks();
+    } else {
+      forks = () -> config.getTransitions().getQbftForks();
+    }
+
+    forks.get().stream()
         .filter(fork -> fork.getBlockRewardWei().isPresent())
         .forEach(
             fork ->
