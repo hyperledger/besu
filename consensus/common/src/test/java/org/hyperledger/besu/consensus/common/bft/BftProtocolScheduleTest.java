@@ -21,15 +21,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.TransitionsConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -50,6 +54,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
+    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
@@ -72,6 +77,7 @@ public class BftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
+    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     assertThatThrownBy(
             () ->
@@ -89,6 +95,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     final ProtocolSchedule schedule =
         BftProtocolSchedule.create(genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder);
@@ -111,6 +118,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(configOptions.getEpochLength()).thenReturn(3000L);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     assertThatThrownBy(
             () ->
@@ -128,6 +136,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getEpochLength()).thenReturn(0L);
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     assertThatThrownBy(
             () ->
@@ -145,6 +154,7 @@ public class BftProtocolScheduleTest {
     when(configOptions.getEpochLength()).thenReturn(-3000L);
     when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
 
     assertThatThrownBy(
             () ->
@@ -152,5 +162,37 @@ public class BftProtocolScheduleTest {
                     genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
+  }
+
+  @Test
+  public void blockRewardSpecifiedInTransitionCreatesNewMilestone() {
+    final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
+    final String miningBeneficiary = Address.fromHexString("0x1").toString();
+    final BftConfigOptions configOptions = mock(BftConfigOptions.class);
+    when(configOptions.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
+    when(configOptions.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
+    when(configOptions.getEpochLength()).thenReturn(3000L);
+    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+    when(genesisConfig.isIbft2()).thenReturn(true);
+
+    final long transitionBlock = 5L;
+    final BftFork fork = mock(BftFork.class);
+    when(fork.getForkBlock()).thenReturn(transitionBlock);
+    final BigInteger forkBlockReward = arbitraryBlockReward.multiply(BigInteger.valueOf(2));
+    when(fork.getBlockRewardWei()).thenReturn(Optional.of(forkBlockReward));
+    final TransitionsConfigOptions transitions = mock(TransitionsConfigOptions.class);
+    when(transitions.getIbftForks()).thenReturn(List.of(fork));
+    when(genesisConfig.getTransitions()).thenReturn(transitions);
+
+    final MutableProtocolSchedule schedule =
+        (MutableProtocolSchedule)
+            BftProtocolSchedule.create(
+                genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder);
+
+    assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(2);
+    assertThat(schedule.getByBlockNumber(0).getBlockReward())
+        .isEqualTo(Wei.of(arbitraryBlockReward));
+    assertThat(schedule.getByBlockNumber(transitionBlock).getBlockReward())
+        .isEqualTo(Wei.of(forkBlockReward));
   }
 }
