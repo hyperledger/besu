@@ -64,9 +64,10 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   public Optional<BonsaiWorldView> getNextWorldView() {
     if (nextWorldView.isEmpty()) {
       final Optional<Hash> blockHashByNumber = blockchain.getBlockHashByNumber(height + 1);
-      blockHashByNumber
-          .map(hash -> archive.getMutable(null, hash, false).map(BonsaiWorldView.class::cast))
-          .orElseGet(() -> Optional.of(archive.getMutable()).map(BonsaiWorldView.class::cast));
+      nextWorldView =
+          blockHashByNumber
+              .map(hash -> archive.getMutable(null, hash, false).map(BonsaiWorldView.class::cast))
+              .orElseGet(() -> Optional.of(archive.getMutable()).map(BonsaiWorldView.class::cast));
     }
     return nextWorldView;
   }
