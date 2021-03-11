@@ -57,12 +57,16 @@ import okhttp3.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
 public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
-  protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
+  @BeforeClass
+  public static void setup() throws Exception {
+    initServerAndClient();
+  }
 
   protected static JsonRpcConfiguration createJsonRpcConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();

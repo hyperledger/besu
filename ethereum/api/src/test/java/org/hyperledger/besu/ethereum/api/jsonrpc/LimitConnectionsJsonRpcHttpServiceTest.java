@@ -20,15 +20,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class LimitConnectionsJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
+
+  @BeforeClass
+  public static void initLimitedServerAndClient() throws Exception {
+    maxConnections = 2;
+    initServerAndClient();
+  }
 
   @Test
   public void limitActiveConnections() throws Exception {
     OkHttpClient newClient = new OkHttpClient();
     int i;
-    for (i = 0; i < JsonRpcConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS; i++) {
+    for (i = 0; i < maxConnections; i++) {
       // create a new client for each request because we want to test the limit
       try (final Response resp = newClient.newCall(buildGetRequest("/readiness")).execute()) {
         assertThat(resp.code()).isEqualTo(200);
@@ -36,7 +43,7 @@ public class LimitConnectionsJsonRpcHttpServiceTest extends JsonRpcHttpServiceTe
       newClient = new OkHttpClient();
     }
     // now we should get a rejected connection because we have hit the limit
-    assertThat(i).isEqualTo(JsonRpcConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    assertThat(i).isEqualTo(maxConnections);
     final OkHttpClient newClient2 = new OkHttpClient();
 
     assertThatThrownBy(() -> newClient2.newCall(buildGetRequest("/readiness")).execute())

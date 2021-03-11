@@ -58,13 +58,13 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 public class JsonRpcHttpServiceTestBase {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
   private static final Vertx vertx = Vertx.vertx();
 
@@ -84,8 +84,8 @@ public class JsonRpcHttpServiceTestBase {
   protected static final Collection<RpcApi> JSON_RPC_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.ADMIN);
   protected static final NatService natService = new NatService(Optional.empty());
+  protected static int maxConnections = 80;
 
-  @BeforeClass
   public static void initServerAndClient() throws Exception {
     peerDiscoveryMock = mock(P2PNetwork.class);
     ethPeersMock = mock(EthPeers.class);
@@ -163,6 +163,7 @@ public class JsonRpcHttpServiceTestBase {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     config.setHostsAllowlist(Collections.singletonList("*"));
+    config.setMaxActiveConnections(maxConnections);
     return config;
   }
 
