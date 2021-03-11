@@ -513,6 +513,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
 
+  @Option(
+      names = {"--rpc-http-max-active-connections"},
+      description =
+          "Maximum number of connections allowed for JSON-RPC HTTP (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
+      arity = "1")
+  private final Integer rpcHttpMaxConnections = DEFAULT_HTTP_MAX_CONNECTIONS;
+
   // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
   @Option(
       names = {"--rpc-http-cors-origins"},
@@ -1702,6 +1709,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-http-cors-origins",
             "--rpc-http-host",
             "--rpc-http-port",
+            "--rpc-http-max-active-connections",
             "--rpc-http-authentication-enabled",
             "--rpc-http-authentication-credentials-file",
             "--rpc-http-authentication-public-key-file",
@@ -1724,6 +1732,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
     jsonRpcConfiguration.setHost(rpcHttpHost);
     jsonRpcConfiguration.setPort(rpcHttpPort);
+    jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
     jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
     jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
