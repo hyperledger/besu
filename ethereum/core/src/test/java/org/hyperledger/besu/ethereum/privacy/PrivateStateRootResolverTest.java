@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
@@ -55,7 +55,8 @@ public class PrivateStateRootResolverTest {
 
   @BeforeClass
   public static void setupClass() {
-    BLOCKCHAIN = InMemoryStorageProvider.createInMemoryBlockchain(BLOCK_GENERATOR.genesisBlock());
+    BLOCKCHAIN =
+        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(BLOCK_GENERATOR.genesisBlock());
     for (int i = 1; i <= 69; i++) {
       final BlockDataGenerator.BlockOptions options =
           new BlockDataGenerator.BlockOptions()
@@ -69,7 +70,7 @@ public class PrivateStateRootResolverTest {
 
   @Before
   public void setUp() {
-    privateStateStorage = InMemoryStorageProvider.createInMemoryPrivateStateStorage();
+    privateStateStorage = InMemoryKeyValueStorageProvider.createInMemoryPrivateStateStorage();
   }
 
   @Test

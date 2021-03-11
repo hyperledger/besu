@@ -15,33 +15,31 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumKeyValueStorage;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-public class InMemoryStorageProvider implements StorageProvider {
+public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
+
+  public InMemoryKeyValueStorageProvider() {
+    super(
+        segmentIdentifier -> new InMemoryKeyValueStorage(),
+        new InMemoryKeyValueStorage(),
+        new InMemoryKeyValueStorage(),
+        true);
+  }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
     return createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
@@ -65,11 +63,11 @@ public class InMemoryStorageProvider implements StorageProvider {
 
   public static BonsaiWorldStateArchive createInMemoryWorldStateArchive(
       final Blockchain blockchain) {
-    return new BonsaiWorldStateArchive(new InMemoryStorageProvider(), blockchain);
+    return new BonsaiWorldStateArchive(new InMemoryKeyValueStorageProvider(), blockchain);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
-    final InMemoryStorageProvider provider = new InMemoryStorageProvider();
+    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     return new DefaultMutableWorldState(
         provider.createWorldStateStorage(DataStorageFormat.FOREST),
         provider.createWorldStatePreimageStorage());
@@ -78,52 +76,4 @@ public class InMemoryStorageProvider implements StorageProvider {
   public static PrivateStateStorage createInMemoryPrivateStateStorage() {
     return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
   }
-
-  @Override
-  public BlockchainStorage createBlockchainStorage(final ProtocolSchedule protocolSchedule) {
-    return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        new InMemoryKeyValueStorage(), ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
-  }
-
-  @Override
-  public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
-    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(this);
-    } else {
-      return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-    }
-  }
-
-  @Override
-  public WorldStatePreimageStorage createWorldStatePreimageStorage() {
-    return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-  }
-
-  @Override
-  public WorldStateStorage createPrivateWorldStateStorage() {
-    return new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-  }
-
-  @Override
-  public WorldStatePreimageStorage createPrivateWorldStatePreimageStorage() {
-    return new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
-  }
-
-  @Override
-  public GoQuorumPrivateStorage createGoQuorumPrivateStorage() {
-    return new GoQuorumKeyValueStorage(new InMemoryKeyValueStorage());
-  }
-
-  @Override
-  public KeyValueStorage getStorageBySegmentIdentifier(final SegmentIdentifier segment) {
-    return new InMemoryKeyValueStorage();
-  }
-
-  @Override
-  public boolean isWorldStateIterable() {
-    return true;
-  }
-
-  @Override
-  public void close() {}
 }

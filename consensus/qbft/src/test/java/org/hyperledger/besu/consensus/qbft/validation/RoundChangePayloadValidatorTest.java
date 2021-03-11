@@ -139,18 +139,6 @@ public class RoundChangePayloadValidatorTest {
     assertThat(messageValidator.validate(signedPayload)).isFalse();
   }
 
-  @Test
-  public void roundChangeWithNegativeTargetRoundFails() {
-    final RoundChangePayload payload =
-        new RoundChangePayload(
-            new ConsensusRoundIdentifier(chainHeight, -3),
-            Optional.of(new PreparedRoundMetadata(preparedBlockHash, 1)));
-
-    final SignedData<RoundChangePayload> signedPayload =
-        createSignedPayload(payload, validators.getNode(0).getNodeKey());
-    assertThat(messageValidator.validate(signedPayload)).isFalse();
-  }
-
   private SignedData<RoundChangePayload> createSignedPayload(
       final RoundChangePayload payload, final NodeKey nodeKey) {
     final SECPSignature signature = nodeKey.sign(hashForSignature(payload));
