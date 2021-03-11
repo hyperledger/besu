@@ -21,26 +21,28 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
 import org.junit.Test;
 
 public class QbftPayloadTest {
 
-  private final QbftPayload payload = new QbftPayload() {
-    @Override
-    public void writeTo(final RLPOutput rlpOutput) {
-      writeConsensusRound(rlpOutput);
-    }
+  private final QbftPayload payload =
+      new QbftPayload() {
+        @Override
+        public void writeTo(final RLPOutput rlpOutput) {
+          writeConsensusRound(rlpOutput);
+        }
 
-    @Override
-    public int getMessageType() {
-      return 0;
-    }
+        @Override
+        public int getMessageType() {
+          return 0;
+        }
 
-    @Override
-    public ConsensusRoundIdentifier getRoundIdentifier() {
-      return new ConsensusRoundIdentifier(5, 10);
-    }
-  };
+        @Override
+        public ConsensusRoundIdentifier getRoundIdentifier() {
+          return new ConsensusRoundIdentifier(5, 10);
+        }
+      };
 
   @Test
   public void roundAndSequenceAreEncodedAsScalars() {
@@ -74,5 +76,4 @@ public class QbftPayloadTest {
     assertThat(roundIdentifier.getSequenceNumber()).isEqualTo(sequence);
     assertThat(roundIdentifier.getRoundNumber()).isEqualTo(round);
   }
-
 }
