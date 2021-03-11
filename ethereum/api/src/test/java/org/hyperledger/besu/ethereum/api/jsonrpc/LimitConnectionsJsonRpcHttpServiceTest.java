@@ -42,14 +42,17 @@ public class LimitConnectionsJsonRpcHttpServiceTest extends JsonRpcHttpServiceTe
       try (final Response resp = newClient.newCall(buildGetRequest("/readiness")).execute()) {
         assertThat(resp.code()).isEqualTo(200);
       }
+      // new client for each request so that connection does NOT get reused
       newClient = new OkHttpClient();
     }
     // now we should get a rejected connection because we have hit the limit
     assertThat(i).isEqualTo(maxConnections);
     final OkHttpClient newClient2 = new OkHttpClient();
 
+    // end of stream gets wrapped locally by ConnectException with message "Connection refused"
+    // but in CI it comes through as is
     assertThatThrownBy(() -> newClient2.newCall(buildGetRequest("/readiness")).execute())
         .isInstanceOf(IOException.class)
-        .hasMessageContaining("Connection refused");
+        .hasStackTraceContaining("unexpected end of stream");
   }
 }

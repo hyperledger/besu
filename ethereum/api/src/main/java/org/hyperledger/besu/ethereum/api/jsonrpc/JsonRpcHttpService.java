@@ -286,7 +286,7 @@ public class JsonRpcHttpService {
             activeConnectionsCount.getAndIncrement());
         connection.close();
       } else {
-        LOG.debug(
+        LOG.warn(
             "Opened connection from {}. Total of active connections: {}/{}",
             connection.remoteAddress(),
             activeConnectionsCount.incrementAndGet(),
@@ -294,7 +294,7 @@ public class JsonRpcHttpService {
       }
       connection.closeHandler(
           c ->
-              LOG.debug(
+              LOG.warn(
                   "Connection closed from {}. Total of active connections: {}/{}",
                   connection.remoteAddress(),
                   activeConnectionsCount.decrementAndGet(),
