@@ -59,7 +59,7 @@ public class WebSocketServiceTest {
   private WebSocketRequestHandler webSocketRequestHandlerSpy;
   private WebSocketService websocketService;
   private HttpClient httpClient;
-  private int maxConnections = 2;
+  private final int maxConnections = 2;
 
   @Before
   public void before() {
