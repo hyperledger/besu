@@ -80,17 +80,15 @@ public class SECP256R1Test {
   public void signatureGeneration() {
     final SECPPrivateKey privateKey =
         secp256R1.createPrivateKey(
-            new BigInteger("80efca15d2f582aa65a7359158f58f699ff3b3c3d5a169c33323dcddce58c1c8", 16));
+            new BigInteger("909753034398cf9371b88871c0a8b3051f1bb55d4f28d3d7261abe7d32adcdde", 16));
     final KeyPair keyPair = secp256R1.createKeyPair(privateKey);
 
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
     final SECPSignature expectedSignature =
         secp256R1.createSignature(
-            new BigInteger(
-                "02203c4a8a272588165c52a18d926ee4368d1448ce576a7dda6848ef841948981227", 16),
-            new BigInteger(
-                "0220344ddb43192c20076cc0de45f41f43358a9116124308798849c55fb650a27062", 16),
+            new BigInteger("6ae3ac096d1b69ab1e18a721689cc40f2710ab25c35a4f465b8384c470e7079b", 16),
+            new BigInteger("28a39d61a8812005312b552e022afd6fa3db323754f48033c87f4acf6e9960e6", 16),
             (byte) 1);
 
     final SECPSignature actualSignature = secp256R1.sign(dataHash, keyPair);
