@@ -110,7 +110,7 @@ public class TransactionTracer {
                         processTransaction(
                             header,
                             blockchain,
-                            worldUpdater,
+                            worldUpdater.updater(),
                             transaction,
                             transactionProcessor,
                             new StandardJsonTracer(out, showMemory));
