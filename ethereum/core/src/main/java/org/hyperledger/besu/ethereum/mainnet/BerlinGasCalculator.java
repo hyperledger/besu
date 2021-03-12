@@ -93,8 +93,9 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
     }
 
     return new GasAndAccessedState(
-        ACCESS_LIST_ADDRESS_COST
-            .times(accessList.size())
+        super.transactionIntrinsicGasCostAndAccessedState(transaction)
+            .getGas()
+            .plus(ACCESS_LIST_ADDRESS_COST.times(accessList.size()))
             .plus(ACCESS_LIST_STORAGE_COST.times(accessedStorageCount)),
         accessedAddresses,
         accessedStorage);
