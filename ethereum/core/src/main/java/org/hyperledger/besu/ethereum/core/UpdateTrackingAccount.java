@@ -199,7 +199,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   void markTransactionBoundary() {
-    this.transactionBoundary = true;
+    //this.transactionBoundary = true;
   }
 
   @Override
