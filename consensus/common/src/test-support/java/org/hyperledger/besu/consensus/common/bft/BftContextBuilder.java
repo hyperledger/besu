@@ -29,17 +29,33 @@ import java.util.Collection;
 public class BftContextBuilder {
 
   public static BftContext setupContextWithValidators(final Collection<Address> validators) {
-    final BftExtraDataEncoder mockExtraDataEncoder =
-        mock(BftExtraDataEncoder.class, withSettings().lenient());
-    return setupContextWithBftExtraDataEncoder(validators, mockExtraDataEncoder);
+    final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
+    final VoteTallyCache mockCache = mock(VoteTallyCache.class, withSettings().lenient());
+    final VoteTally mockVoteTally = mock(VoteTally.class, withSettings().lenient());
+    final BftBlockInterface mockBftBlockInterface =
+        mock(BftBlockInterface.class, withSettings().lenient());
+    when(bftContext.getVoteTallyCache()).thenReturn(mockCache);
+    when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
+    when(mockVoteTally.getValidators()).thenReturn(validators);
+    when(bftContext.getVoteProposer()).thenReturn(new VoteProposer());
+    when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
+    return bftContext;
   }
 
   public static BftContext setupContextWithBftExtraData(
       final Collection<Address> validators, final BftExtraData bftExtraData) {
-    final BftExtraDataEncoder mockExtraDataEncoder =
-        mock(BftExtraDataEncoder.class, withSettings().lenient());
-    when(mockExtraDataEncoder.decode(any())).thenReturn(bftExtraData);
-    return setupContextWithBftExtraDataEncoder(validators, mockExtraDataEncoder);
+    final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
+    final VoteTallyCache mockCache = mock(VoteTallyCache.class, withSettings().lenient());
+    final VoteTally mockVoteTally = mock(VoteTally.class, withSettings().lenient());
+    final BftBlockInterface mockBftBlockInterface =
+        mock(BftBlockInterface.class, withSettings().lenient());
+    when(bftContext.getVoteTallyCache()).thenReturn(mockCache);
+    when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
+    when(mockVoteTally.getValidators()).thenReturn(validators);
+    when(bftContext.getVoteProposer()).thenReturn(new VoteProposer());
+    when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
+    when(mockBftBlockInterface.getExtraData(any())).thenReturn(bftExtraData);
+    return bftContext;
   }
 
   public static BftContext setupContextWithBftExtraDataEncoder(
@@ -51,6 +67,7 @@ public class BftContextBuilder {
     when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
     when(mockVoteTally.getValidators()).thenReturn(validators);
     when(bftContext.getVoteProposer()).thenReturn(new VoteProposer());
+    when(bftContext.getBlockInterface()).thenReturn(new BftBlockInterface(bftExtraDataEncoder));
 
     return bftContext;
   }
