@@ -60,9 +60,8 @@ public class SStoreOperation extends AbstractOperation {
     }
 
     final Address address = account.getAddress();
-
-    System.out.printf(
-        "[%d] SSTORE: %s -> %s\n", frame.getPC(), key.toShortHexString(), value.toShortHexString());
+    System.out.println("SSTORE pc: " + frame.getPC());
+    System.out.printf("SSTORE: %s -> %s\n", key.toShortHexString(), value.toShortHexString());
     final boolean slotIsWarm = frame.warmUpStorage(address, key.toBytes());
     System.out.println("is warm: " + slotIsWarm);
     final Gas cost =

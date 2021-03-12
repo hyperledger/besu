@@ -31,6 +31,7 @@ public interface Operation {
     }
 
     public Optional<Gas> getGasCost() {
+      System.out.println("OperationResult.getGasCost = " + gasCost.orElse(Gas.ZERO).toLong());
       return gasCost;
     }
 
