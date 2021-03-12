@@ -208,47 +208,6 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
     }
   }
 
-  // defined in Istanbul, but re-implemented with new constants
-  @Override
-  // As per https://eips.ethereum.org/EIPS/eip-2200
-  public Gas calculateStorageRefundAmount(
-      final Account account, final UInt256 key, final UInt256 newValue) {
-
-    final UInt256 currentValue = account.getStorageValue(key);
-    if (currentValue.equals(newValue)) {
-      return Gas.ZERO;
-    } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
-      if (originalValue.equals(currentValue)) {
-        if (originalValue.isZero()) {
-          return Gas.ZERO;
-        } else if (newValue.isZero()) {
-          return SSTORE_CLEARS_SCHEDULE;
-        } else {
-          return Gas.ZERO;
-        }
-      } else {
-        Gas refund = Gas.ZERO;
-        if (!originalValue.isZero()) {
-          if (currentValue.isZero()) {
-            refund = NEGATIVE_SSTORE_CLEARS_SCHEDULE;
-          } else if (newValue.isZero()) {
-            refund = SSTORE_CLEARS_SCHEDULE;
-          }
-        }
-
-        if (originalValue.equals(newValue)) {
-          refund =
-              refund.plus(
-                  originalValue.isZero()
-                      ? SSTORE_SET_GAS_LESS_SLOAD_GAS
-                      : SSTORE_RESET_GAS_LESS_SLOAD_GAS);
-        }
-        return refund;
-      }
-    }
-  }
-
   @Override
   public Gas modExpGasCost(final Bytes input) {
     final BigInteger baseLength =
