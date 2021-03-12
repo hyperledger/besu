@@ -42,7 +42,7 @@ dependencies {
   implementation 'org.web3j:abi'
   implementation 'org.web3j:besu'
   implementation 'org.web3j:crypto'
-  implementation 'tech.pegasys.ethsigner.internal:core' //TODO: ethsigner-core
+  implementation 'tech.pegasys.ethsigner.internal:ethsigner-core' //TODO: ethsigner-core
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'
 }
