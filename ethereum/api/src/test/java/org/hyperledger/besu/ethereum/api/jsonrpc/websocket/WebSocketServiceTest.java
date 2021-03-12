@@ -148,16 +148,21 @@ public class WebSocketServiceTest {
     final String request = "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}";
     final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}";
 
-    httpClient.websocket(
+    httpClient.webSocket(
         "/",
-        webSocket -> {
-          webSocket.handler(
-              buffer -> {
-                context.assertEquals(expectedResponse, buffer.toString());
-                async.complete();
-              });
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.handler(
+                buffer -> {
+                  context.assertEquals(expectedResponse, buffer.toString());
+                  async.complete();
+                });
 
-          webSocket.writeTextMessage(request);
+            ws.writeTextMessage(request);
+          } else {
+            context.fail("websocket connection failed");
+          }
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
@@ -187,11 +192,16 @@ public class WebSocketServiceTest {
     final byte[] bigMessage = new byte[HttpServerOptions.DEFAULT_MAX_WEBSOCKET_MESSAGE_SIZE + 1];
     Arrays.fill(bigMessage, (byte) 1);
 
-    httpClient.websocket(
+    httpClient.webSocket(
         "/",
-        webSocket -> {
-          webSocket.write(Buffer.buffer(bigMessage));
-          webSocket.closeHandler(v -> async.complete());
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.write(Buffer.buffer(bigMessage));
+            ws.closeHandler(v -> async.complete());
+          } else {
+            context.fail("websocket connection failed");
+          }
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
