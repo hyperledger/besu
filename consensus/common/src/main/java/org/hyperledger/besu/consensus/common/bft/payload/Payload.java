@@ -37,4 +37,6 @@ public interface Payload extends RoundSpecific {
   static Hash readDigest(final RLPInput messageData) {
     return Hash.wrap(messageData.readBytes32());
   }
+
+  Hash hashForSignature();
 }

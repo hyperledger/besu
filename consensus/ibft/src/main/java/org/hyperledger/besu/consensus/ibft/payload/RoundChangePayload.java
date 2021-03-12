@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.ibft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -24,7 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 
-public class RoundChangePayload implements Payload {
+public class RoundChangePayload extends IbftPayload {
   private static final int TYPE = IbftV2.ROUND_CHANGE;
   private final ConsensusRoundIdentifier roundChangeIdentifier;
 
