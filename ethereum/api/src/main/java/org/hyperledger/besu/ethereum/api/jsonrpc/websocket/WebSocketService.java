@@ -163,9 +163,10 @@ public class WebSocketService {
       if (activeConnectionsCount.get() >= maxActiveConnections) {
         // disallow new connections to prevent DoS
         LOG.warn(
-            "Rejecting new connection from {}. Max {} active connections limit reached.",
+            "Rejecting new connection from {}. {}/{} max active connections limit reached.",
             connection.remoteAddress(),
-            activeConnectionsCount.getAndIncrement());
+            activeConnectionsCount.getAndIncrement(),
+            maxActiveConnections);
         connection.close();
       } else {
         LOG.debug(
