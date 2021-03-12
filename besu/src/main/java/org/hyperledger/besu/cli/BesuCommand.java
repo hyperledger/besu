@@ -516,7 +516,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--rpc-http-max-active-connections"},
       description =
-          "Maximum number of connections allowed for JSON-RPC HTTP (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
+          "Maximum number of HTTP connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
       arity = "1")
   private final Integer rpcHttpMaxConnections = DEFAULT_HTTP_MAX_CONNECTIONS;
 
@@ -616,6 +616,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Port for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
+
+  @Option(
+      names = {"--rpc-ws-max-active-connections"},
+      description =
+          "Maximum number of WebSocket connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
+      arity = "1")
+  private final Integer rpcWsMaxConnections = DEFAULT_WS_MAX_CONNECTIONS;
 
   @Option(
       names = {"--rpc-ws-api", "--rpc-ws-apis"},
@@ -1702,28 +1709,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private JsonRpcConfiguration jsonRpcConfiguration() {
     checkRpcTlsClientAuthOptionsDependencies();
     checkRpcTlsOptionsDependencies();
-
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--rpc-http-enabled",
-        !isRpcHttpEnabled,
-        asList(
-            "--rpc-http-api",
-            "--rpc-http-apis",
-            "--rpc-http-cors-origins",
-            "--rpc-http-host",
-            "--rpc-http-port",
-            "--rpc-http-max-active-connections",
-            "--rpc-http-authentication-enabled",
-            "--rpc-http-authentication-credentials-file",
-            "--rpc-http-authentication-public-key-file",
-            "--rpc-http-tls-enabled",
-            "--rpc-http-tls-keystore-file",
-            "--rpc-http-tls-keystore-password-file",
-            "--rpc-http-tls-client-auth-enabled",
-            "--rpc-http-tls-known-clients-file",
-            "--rpc-http-tls-ca-clients-enabled"));
+    checkRpcHttpOptionsDependencies();
 
     if (isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
@@ -1747,6 +1733,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     return jsonRpcConfiguration;
+  }
+
+  private void checkRpcHttpOptionsDependencies() {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--rpc-http-enabled",
+        !isRpcHttpEnabled,
+        asList(
+            "--rpc-http-api",
+            "--rpc-http-apis",
+            "--rpc-http-cors-origins",
+            "--rpc-http-host",
+            "--rpc-http-port",
+            "--rpc-http-max-active-connections",
+            "--rpc-http-authentication-enabled",
+            "--rpc-http-authentication-credentials-file",
+            "--rpc-http-authentication-public-key-file",
+            "--rpc-http-tls-enabled",
+            "--rpc-http-tls-keystore-file",
+            "--rpc-http-tls-keystore-password-file",
+            "--rpc-http-tls-client-auth-enabled",
+            "--rpc-http-tls-known-clients-file",
+            "--rpc-http-tls-ca-clients-enabled"));
   }
 
   private void checkRpcTlsOptionsDependencies() {
@@ -1844,6 +1854,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-apis",
             "--rpc-ws-host",
             "--rpc-ws-port",
+            "--rpc-ws-max-active-connections",
             "--rpc-ws-authentication-enabled",
             "--rpc-ws-authentication-credentials-file",
             "--rpc-ws-authentication-public-key-file"));
@@ -1860,6 +1871,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setEnabled(isRpcWsEnabled);
     webSocketConfiguration.setHost(rpcWsHost);
     webSocketConfiguration.setPort(rpcWsPort);
+    webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
     webSocketConfiguration.setRpcApis(rpcWsApis);
     webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());

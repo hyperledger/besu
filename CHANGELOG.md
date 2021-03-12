@@ -3,7 +3,9 @@
 ## 21.1.2
 
 ### Additions and Improvements
-- Added option to set a limit for JSON-RPC HTTP connections `--rpc-http-max-active-connections` [\#1996](https://github.com/hyperledger/besu/pull/1996)
+- Added option to set a limit for JSON-RPC connections 
+  * HTTP connections `--rpc-http-max-active-connections` [\#1996](https://github.com/hyperledger/besu/pull/1996)
+  * WS connections `--rpc-ws-max-active-connections` [\#2006](https://github.com/hyperledger/besu/pull/2006)
 
 ### Bug Fixes
 
