@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -81,7 +81,8 @@ public class BlockTransactionSelectorTest {
           metricsSystem,
           blockchain::getChainHeadHeader,
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
-  private final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
+  private final MutableWorldState worldState =
+      InMemoryKeyValueStorageProvider.createInMemoryWorldState();
   private final MainnetTransactionProcessor transactionProcessor =
       mock(MainnetTransactionProcessor.class);
 

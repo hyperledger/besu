@@ -22,9 +22,9 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.EthHash;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolver;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.math.BigInteger;
@@ -34,18 +34,18 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class EthHashBlockCreator extends AbstractBlockCreator {
+public class PoWBlockCreator extends AbstractBlockCreator {
 
-  private final EthHashSolver nonceSolver;
+  private final PoWSolver nonceSolver;
 
-  public EthHashBlockCreator(
+  public PoWBlockCreator(
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final GasLimitCalculator gasLimitCalculator,
-      final EthHashSolver nonceSolver,
+      final PoWSolver nonceSolver,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
@@ -66,11 +66,10 @@ public class EthHashBlockCreator extends AbstractBlockCreator {
 
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-    final EthHashSolverInputs workDefinition = generateNonceSolverInputs(sealableBlockHeader);
-    final EthHashSolution solution;
+    final PoWSolverInputs workDefinition = generateNonceSolverInputs(sealableBlockHeader);
+    final PoWSolution solution;
     try {
-      solution =
-          nonceSolver.solveFor(EthHashSolver.EthHashSolverJob.createFromInputs(workDefinition));
+      solution = nonceSolver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(workDefinition));
     } catch (final InterruptedException ex) {
       throw new CancellationException();
     } catch (final ExecutionException ex) {
@@ -84,19 +83,18 @@ public class EthHashBlockCreator extends AbstractBlockCreator {
         .buildBlockHeader();
   }
 
-  private EthHashSolverInputs generateNonceSolverInputs(
-      final SealableBlockHeader sealableBlockHeader) {
+  private PoWSolverInputs generateNonceSolverInputs(final SealableBlockHeader sealableBlockHeader) {
     final BigInteger difficulty = sealableBlockHeader.getDifficulty().toBigInteger();
     final UInt256 target =
         difficulty.equals(BigInteger.ONE)
             ? UInt256.MAX_VALUE
             : UInt256.valueOf(EthHash.TARGET_UPPER_BOUND.divide(difficulty));
 
-    return new EthHashSolverInputs(
+    return new PoWSolverInputs(
         target, EthHash.hashHeader(sealableBlockHeader), sealableBlockHeader.getNumber());
   }
 
-  public Optional<EthHashSolverInputs> getWorkDefinition() {
+  public Optional<PoWSolverInputs> getWorkDefinition() {
     return nonceSolver.getWorkDefinition();
   }
 
@@ -104,7 +102,7 @@ public class EthHashBlockCreator extends AbstractBlockCreator {
     return nonceSolver.hashesPerSecond();
   }
 
-  public boolean submitWork(final EthHashSolution solution) {
+  public boolean submitWork(final PoWSolution solution) {
     return nonceSolver.submitSolution(solution);
   }
 

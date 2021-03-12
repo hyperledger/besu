@@ -16,17 +16,21 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 
-import java.util.Arrays;
 import java.util.Objects;
 
-public class EthHashSolution {
+import org.apache.tuweni.bytes.Bytes;
+
+public class PoWSolution {
   private final long nonce;
   private final Hash mixHash;
-  private final byte[] powHash;
+  private final Bytes powHash;
+  private final Bytes solution;
 
-  public EthHashSolution(final long nonce, final Hash mixHash, final byte[] powHash) {
+  public PoWSolution(
+      final long nonce, final Hash mixHash, final Bytes solution, final Bytes powHash) {
     this.nonce = nonce;
     this.mixHash = mixHash;
+    this.solution = solution;
     this.powHash = powHash;
   }
 
@@ -38,24 +42,27 @@ public class EthHashSolution {
     return mixHash;
   }
 
-  public byte[] getPowHash() {
+  public Bytes getPowHash() {
     return powHash;
+  }
+
+  public Bytes getSolution() {
+    return solution;
   }
 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    EthHashSolution that = (EthHashSolution) o;
+    PoWSolution that = (PoWSolution) o;
     return nonce == that.nonce
         && Objects.equals(mixHash, that.mixHash)
-        && Arrays.equals(powHash, that.powHash);
+        && Objects.equals(solution, that.solution)
+        && Objects.equals(powHash, that.powHash);
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hash(nonce, mixHash);
-    result = 31 * result + Arrays.hashCode(powHash);
-    return result;
+    return Objects.hash(nonce, mixHash, solution, powHash);
   }
 }

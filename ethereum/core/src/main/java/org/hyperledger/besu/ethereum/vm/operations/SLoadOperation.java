@@ -55,12 +55,16 @@ public class SLoadOperation extends AbstractOperation {
       final Address address = account.getAddress();
       final Bytes32 key = frame.popStackItem();
       final boolean slotIsWarm = frame.warmUpStorage(address, key);
+      System.out.printf("SLOAD > key: %s - slot is warm: %b\n", key.toHexString(), slotIsWarm);
       final Optional<Gas> optionalCost = slotIsWarm ? warmCost : coldCost;
       if (frame.getRemainingGas().compareTo(optionalCost.get()) < 0) {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
-        frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)).toBytes());
+        final UInt256 storageValue = account.getStorageValue(UInt256.fromBytes(key));
+        System.out.printf("SLOAD > storageValue: %s\n", storageValue.toShortHexString());
+
+        frame.pushStackItem(storageValue.toBytes());
 
         return slotIsWarm ? warmSuccess : coldSuccess;
       }

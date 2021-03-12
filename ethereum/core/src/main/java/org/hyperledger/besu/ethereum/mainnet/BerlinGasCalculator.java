@@ -196,13 +196,18 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final Account account, final UInt256 key, final UInt256 newValue) {
 
     final UInt256 currentValue = account.getStorageValue(key);
+    System.out.println("currentValue: " + currentValue.toShortHexString());
     if (currentValue.equals(newValue)) {
+      System.out.println("currentValue.equals(newValue)");
       return SLOAD_GAS;
     } else {
       final UInt256 originalValue = account.getOriginalStorageValue(key);
+      System.out.println("originalValue: " + originalValue.toShortHexString());
       if (originalValue.equals(currentValue)) {
+        System.out.println("originalValue.equals(currentValue)");
         return originalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
       } else {
+        System.out.println("!originalValue.equals(currentValue)");
         return SLOAD_GAS;
       }
     }

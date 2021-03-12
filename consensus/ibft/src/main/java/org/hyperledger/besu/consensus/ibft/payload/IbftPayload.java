@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,20 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm.operations;
+package org.hyperledger.besu.consensus.ibft.payload;
 
-import org.hyperledger.besu.ethereum.vm.FixedStack;
+import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.ethereum.core.Hash;
 
-/**
- * This class describes the behaviour of the Return stack introduce on the
- * https://eips.ethereum.org/EIPS/eip-2315
- */
-public class ReturnStack extends FixedStack<Integer> {
+import org.apache.tuweni.bytes.Bytes;
 
-  // as defined on https://eips.ethereum.org/EIPS/eip-2315
-  private static final int MAX_RETURN_STACK_SIZE = 1023;
+public abstract class IbftPayload implements Payload {
 
-  public ReturnStack() {
-    super(MAX_RETURN_STACK_SIZE, Integer.class);
+  @Override
+  public Hash hashForSignature() {
+    return Hash.hash(Bytes.concatenate(Bytes.of(getMessageType()), encoded()));
   }
 }

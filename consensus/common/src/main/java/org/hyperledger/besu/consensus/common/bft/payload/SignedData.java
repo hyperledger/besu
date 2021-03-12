@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common.bft.payload;
 
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
-
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -36,7 +34,7 @@ public class SignedData<M extends Payload> implements Authored {
 
   public static <T extends Payload> SignedData<T> create(
       final T payload, final SECPSignature signature) {
-    final Hash msgHash = hashForSignature(payload);
+    final Hash msgHash = payload.hashForSignature();
     return new SignedData<>(payload, Util.signatureToAddress(signature, msgHash), signature);
   }
 

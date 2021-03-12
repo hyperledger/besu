@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -80,7 +81,7 @@ public class ReferenceTestProtocolSchedules {
     return new ProtocolScheduleBuilder(
             options,
             CHAIN_ID,
-            Function.identity(),
+            ProtocolSpecAdapters.create(0, Function.identity()),
             PrivacyParameters.DEFAULT,
             false,
             options.isQuorum())

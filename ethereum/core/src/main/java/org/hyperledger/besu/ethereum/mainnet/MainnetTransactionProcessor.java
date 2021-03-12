@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -253,7 +252,7 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     try {
-      LOG.trace("Starting execution of {}", transaction);
+      LOG.info("Starting execution of {}", transaction);
 
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(transaction, blockHeader.getBaseFee());
@@ -311,7 +310,6 @@ public class MainnetTransactionProcessor {
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
-              .returnStack(new ReturnStack())
               .blockchain(blockchain)
               .worldState(worldUpdater.updater())
               .initialGas(gasAvailable)
