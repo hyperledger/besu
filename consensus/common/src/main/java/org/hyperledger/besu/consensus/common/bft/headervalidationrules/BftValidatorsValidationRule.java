@@ -46,7 +46,7 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
       final BftContext bftContext = context.getConsensusState(BftContext.class);
       final ValidatorProvider validatorProvider =
           bftContext.getVoteTallyCache().getVoteTallyAfterBlock(parent);
-      final BftExtraData bftExtraData = bftContext.getBftExtraDataEncoder().decode(header);
+      final BftExtraData bftExtraData = bftContext.getBlockInterface().getExtraData(header);
 
       final NavigableSet<Address> sortedReportedValidators =
           new TreeSet<>(bftExtraData.getValidators());

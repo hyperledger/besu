@@ -19,11 +19,10 @@ import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHel
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -119,14 +118,12 @@ public class ProposalValidator {
         // to create a block with the old round in it, then re-calc expected hash
         // Need to check that if we substitute the LatestPrepareCert round number into the supplied
         // block that we get the SAME hash as PreparedCert.
-        final BftExtraDataEncoder bftExtraDataEncoder =
-            protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
         final Block currentBlockWithOldRound =
             BftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(),
                 metadata.getPreparedRound(),
-                BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
-                bftExtraDataEncoder);
+                BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataEncoder()),
+                new QbftExtraDataEncoder());
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 

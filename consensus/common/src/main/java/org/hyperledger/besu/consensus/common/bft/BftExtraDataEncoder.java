@@ -16,19 +16,46 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public interface BftExtraDataEncoder {
+public abstract class BftExtraDataEncoder {
 
-  int EXTRA_VANITY_LENGTH = 32;
+  protected enum EncodingType {
+    ALL,
+    EXCLUDE_COMMIT_SEALS,
+    EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
+  }
 
-  Bytes encode(BftExtraData extraData);
+  private static final Logger LOG = LogManager.getLogger();
 
-  Bytes encodeWithoutCommitSeals(BftExtraData bftExtraData);
+  public static int EXTRA_VANITY_LENGTH = 32;
 
-  Bytes encodeWithoutCommitSealsAndRoundNumber(BftExtraData bftExtraData);
+  public Bytes encode(final BftExtraData bftExtraData) {
+    return encode(bftExtraData, EncodingType.ALL);
+  }
 
-  BftExtraData decode(BlockHeader blockHeader);
+  public Bytes encodeWithoutCommitSeals(final BftExtraData bftExtraData) {
+    return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS);
+  }
 
-  BftExtraData decodeRaw(Bytes bytes);
+  public Bytes encodeWithoutCommitSealsAndRoundNumber(final BftExtraData bftExtraData) {
+    return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
+  }
+
+  protected abstract Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType);
+
+  public BftExtraData decode(final BlockHeader blockHeader) {
+    final Object inputExtraData = blockHeader.getParsedExtraData();
+    if (inputExtraData instanceof BftExtraData) {
+      return (BftExtraData) inputExtraData;
+    }
+    LOG.warn(
+        "Expected a BftExtraData instance but got {}. Reparsing required.",
+        inputExtraData != null ? inputExtraData.getClass().getName() : "null");
+    return decodeRaw(blockHeader.getExtraData());
+  }
+
+  public abstract BftExtraData decodeRaw(Bytes bytes);
 }

@@ -43,6 +43,7 @@ public class BftBlockCreatorFactory {
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
+  private final BftExtraDataEncoder bftExtraDataEncoder;
   private final Address localAddress;
   final Address miningBeneficiary;
 
@@ -57,7 +58,8 @@ public class BftBlockCreatorFactory {
       final ProtocolSchedule protocolSchedule,
       final MiningParameters miningParams,
       final Address localAddress,
-      final Address miningBeneficiary) {
+      final Address miningBeneficiary,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
@@ -67,6 +69,7 @@ public class BftBlockCreatorFactory {
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
     this.miningBeneficiary = miningBeneficiary;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
   }
 
   public BftBlockCreator create(final BlockHeader parentHeader, final int round) {
@@ -80,7 +83,8 @@ public class BftBlockCreatorFactory {
         minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader,
-        miningBeneficiary);
+        miningBeneficiary,
+        bftExtraDataEncoder);
   }
 
   public void setExtraData(final Bytes extraData) {
@@ -112,7 +116,7 @@ public class BftBlockCreatorFactory {
             round,
             validators);
 
-    return bftContext.getBftExtraDataEncoder().encode(extraData);
+    return bftExtraDataEncoder.encode(extraData);
   }
 
   public void changeTargetGasLimit(final Long targetGasLimit) {

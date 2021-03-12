@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteProposer;
@@ -89,7 +88,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
   private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
-  private final BlockInterface blockInterface = new BftBlockInterface(bftExtraDataEncoder);
+  private final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataEncoder);
 
   @Override
   protected void prepForBuild() {
@@ -134,7 +133,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
+            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
+            bftExtraDataEncoder);
 
     final VoteTallyCache voteTallyCache =
         protocolContext.getConsensusState(BftContext.class).getVoteTallyCache();
@@ -260,8 +260,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             new BftValidatorOverrides(bftValidatorForkMap)),
         new VoteProposer(),
         epochManager,
-        blockInterface,
-        bftExtraDataEncoder);
+        blockInterface);
   }
 
   private Map<Long, List<Address>> convertBftForks(final List<BftFork> bftForks) {

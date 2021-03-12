@@ -44,7 +44,7 @@ public class BftCommitSealsValidationRuleTest {
   private final BftBlockHashing bftBlockHashing = mock(BftBlockHashing.class);
   private final BlockHeader blockHeader = mock(BlockHeader.class);
   private final BftCommitSealsValidationRule commitSealsValidationRule =
-      new BftCommitSealsValidationRule(bftExtraDataEncoder -> bftBlockHashing);
+      new BftCommitSealsValidationRule();
 
   @Test
   public void correctlyConstructedHeaderPassesValidation() {

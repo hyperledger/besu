@@ -51,7 +51,6 @@ public class BftContextBuilder {
     when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
     when(mockVoteTally.getValidators()).thenReturn(validators);
     when(bftContext.getVoteProposer()).thenReturn(new VoteProposer());
-    when(bftContext.getBftExtraDataEncoder()).thenReturn(bftExtraDataEncoder);
 
     return bftContext;
   }

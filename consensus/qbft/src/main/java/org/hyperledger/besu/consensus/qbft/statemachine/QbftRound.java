@@ -19,7 +19,6 @@ import static java.util.Collections.emptyList;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
@@ -65,6 +65,7 @@ public class QbftRound {
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
+  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
 
   public QbftRound(
       final RoundState roundState,
@@ -94,12 +95,8 @@ public class QbftRound {
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     final Block block = blockCreator.createBlock(headerTimeStampSeconds);
-    final BftExtraDataEncoder bftExtraDataEncoder =
-        protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
-    final BftExtraData extraData = bftExtraDataEncoder.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    LOG.trace(
-        "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
+    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
@@ -115,8 +112,6 @@ public class QbftRound {
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
-      final BftExtraDataEncoder bftExtraDataEncoder =
-          protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
       blockToPublish =
           BftBlockInterface.replaceRoundInBlock(
               bestPreparedCertificate.get().getBlock(),
@@ -257,8 +252,7 @@ public class QbftRound {
   }
 
   private void importBlockToChain() {
-    final BftExtraDataEncoder bftExtraDataEncoder =
-        protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
+
     final Block blockToImport =
         BftHelpers.createSealedBlock(
             bftExtraDataEncoder, roundState.getProposedBlock().get(), roundState.getCommitSeals());
@@ -286,8 +280,6 @@ public class QbftRound {
 
   private SECPSignature createCommitSeal(final Block block) {
     final BlockHeader proposedHeader = block.getHeader();
-    final BftExtraDataEncoder bftExtraDataEncoder =
-        protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
     final BftExtraData extraData = bftExtraDataEncoder.decode(proposedHeader);
     final Hash commitHash =
         new BftBlockHashing(bftExtraDataEncoder)

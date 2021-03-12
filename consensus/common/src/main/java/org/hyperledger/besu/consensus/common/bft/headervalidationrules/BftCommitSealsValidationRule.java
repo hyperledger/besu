@@ -17,10 +17,7 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import static org.hyperledger.besu.consensus.common.bft.BftHelpers.calculateRequiredValidatorQuorum;
 
 import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -30,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,29 +41,14 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
 
   private static final Logger LOGGER = LogManager.getLogger();
 
-  private final Function<BftExtraDataEncoder, BftBlockHashing> bftBlockHashingCreator;
-
-  public BftCommitSealsValidationRule(
-      final Function<BftExtraDataEncoder, BftBlockHashing> bftBlockHashingCreator) {
-    this.bftBlockHashingCreator = bftBlockHashingCreator;
-  }
-
-  public BftCommitSealsValidationRule() {
-    this.bftBlockHashingCreator = BftBlockHashing::new;
-  }
-
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
     final ValidatorProvider validatorProvider =
         bftContext.getVoteTallyCache().getVoteTallyAfterBlock(parent);
-    final BftExtraData bftExtraData = bftContext.getBftExtraDataEncoder().decode(header);
 
-    final List<Address> committers =
-        bftBlockHashingCreator
-            .apply(bftContext.getBftExtraDataEncoder())
-            .recoverCommitterAddresses(header, bftExtraData);
+    final List<Address> committers = bftContext.getBlockInterface().getCommitters(header);
     final List<Address> committersWithoutDuplicates = new ArrayList<>(new HashSet<>(committers));
 
     if (committers.size() != committersWithoutDuplicates.size()) {

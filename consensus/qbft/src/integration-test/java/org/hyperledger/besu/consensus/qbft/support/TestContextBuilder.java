@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createI
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
@@ -304,7 +303,7 @@ public class TestContextBuilder {
     // From here down is BASICALLY taken from IbftBesuController
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
-    final BlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
+    final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
     final VoteTallyCache voteTallyCache =
         new VoteTallyCache(
@@ -319,12 +318,7 @@ public class TestContextBuilder {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            new BftContext(
-                voteTallyCache,
-                voteProposer,
-                epochManager,
-                blockInterface,
-                BFT_EXTRA_DATA_ENCODER));
+            new BftContext(voteTallyCache, voteProposer, epochManager, blockInterface));
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -345,7 +339,8 @@ public class TestContextBuilder {
             protocolSchedule,
             miningParams,
             localAddress,
-            localAddress);
+            localAddress,
+            BFT_EXTRA_DATA_ENCODER);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);

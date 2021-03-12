@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -30,16 +29,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Represents the data structure stored in the extraData field of the BlockHeader used when
  * operating under an BFT consensus mechanism.
  */
-public class IbftExtraDataEncoder implements BftExtraDataEncoder {
-  private static final Logger LOG = LogManager.getLogger();
+public class IbftExtraDataEncoder extends BftExtraDataEncoder {
 
   public static Bytes encodeFromAddresses(final Collection<Address> addresses) {
     return new IbftExtraDataEncoder()
@@ -54,18 +50,6 @@ public class IbftExtraDataEncoder implements BftExtraDataEncoder {
 
   public static String createGenesisExtraDataString(final List<Address> validators) {
     return encodeFromAddresses(validators).toString();
-  }
-
-  @Override
-  public BftExtraData decode(final BlockHeader blockHeader) {
-    final Object inputExtraData = blockHeader.getParsedExtraData();
-    if (inputExtraData instanceof BftExtraData) {
-      return (BftExtraData) inputExtraData;
-    }
-    LOG.warn(
-        "Expected a BftExtraData instance but got {}. Reparsing required.",
-        inputExtraData != null ? inputExtraData.getClass().getName() : "null");
-    return decodeRaw(blockHeader.getExtraData());
   }
 
   @Override
@@ -96,21 +80,7 @@ public class IbftExtraDataEncoder implements BftExtraDataEncoder {
   }
 
   @Override
-  public Bytes encode(final BftExtraData bftExtraData) {
-    return encode(bftExtraData, EncodingType.ALL);
-  }
-
-  @Override
-  public Bytes encodeWithoutCommitSeals(final BftExtraData bftExtraData) {
-    return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS);
-  }
-
-  @Override
-  public Bytes encodeWithoutCommitSealsAndRoundNumber(final BftExtraData bftExtraData) {
-    return encode(bftExtraData, EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER);
-  }
-
-  private Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
+  protected Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(bftExtraData.getVanityData());
@@ -131,11 +101,5 @@ public class IbftExtraDataEncoder implements BftExtraDataEncoder {
     encoder.endList();
 
     return encoder.encoded();
-  }
-
-  private enum EncodingType {
-    ALL,
-    EXCLUDE_COMMIT_SEALS,
-    EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER
   }
 }

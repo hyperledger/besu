@@ -115,7 +115,8 @@ public class BftBlockCreatorTest {
             Wei.ZERO,
             0.8,
             parentHeader,
-            initialValidatorList.get(0));
+            initialValidatorList.get(0),
+            bftExtraDataEncoder);
 
     final int secondsBetweenBlocks = 1;
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);

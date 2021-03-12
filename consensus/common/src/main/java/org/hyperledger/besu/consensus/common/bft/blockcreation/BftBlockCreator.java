@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -33,6 +32,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 // too hard to coordinate with the state machine).
 public class BftBlockCreator extends AbstractBlockCreator {
 
+  private final BftExtraDataEncoder bftExtraDataEncoder;
+
   public BftBlockCreator(
       final Address localAddress,
       final ExtraDataCalculator extraDataCalculator,
@@ -43,7 +44,8 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
-      final Address miningBeneficiary) {
+      final Address miningBeneficiary,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     super(
         localAddress,
         extraDataCalculator,
@@ -55,12 +57,11 @@ public class BftBlockCreator extends AbstractBlockCreator {
         miningBeneficiary,
         minBlockOccupancyRatio,
         parentHeader);
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
   }
 
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-    final BftExtraDataEncoder bftExtraDataEncoder =
-        protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)

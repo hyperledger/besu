@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftDiscardValidatorVote;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetPendingVotes;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.methods.QbftGetSignerMetrics;
@@ -56,8 +57,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
     final BftContext bftContext = context.getConsensusState(BftContext.class);
     final VoteProposer voteProposer = bftContext.getVoteProposer();
-    final BlockInterface blockInterface =
-        new BftBlockInterface(bftContext.getBftExtraDataEncoder());
+    final BlockInterface blockInterface = new BftBlockInterface(new QbftExtraDataEncoder());
 
     final VoteTallyCache voteTallyCache = createVoteTallyCache(context, mutableBlockchain);
 
@@ -74,8 +74,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ProtocolContext context, final MutableBlockchain blockchain) {
     final BftContext bftContext = context.getConsensusState(BftContext.class);
     final EpochManager epochManager = bftContext.getEpochManager();
-    final BftBlockInterface bftBlockInterface =
-        new BftBlockInterface(bftContext.getBftExtraDataEncoder());
+    final BftBlockInterface bftBlockInterface = new BftBlockInterface(new QbftExtraDataEncoder());
     final VoteTallyUpdater voteTallyUpdater = new VoteTallyUpdater(epochManager, bftBlockInterface);
     return new VoteTallyCache(blockchain, voteTallyUpdater, epochManager, bftBlockInterface);
   }

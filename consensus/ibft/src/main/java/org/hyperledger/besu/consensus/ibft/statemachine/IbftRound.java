@@ -17,12 +17,13 @@ package org.hyperledger.besu.consensus.ibft.statemachine;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
@@ -59,7 +60,7 @@ public class IbftRound {
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final IbftMessageTransmitter transmitter;
-  private final BftContext bftContext;
+  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
 
   public IbftRound(
       final RoundState roundState,
@@ -79,7 +80,6 @@ public class IbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
-    this.bftContext = protocolContext.getConsensusState(BftContext.class);
     roundTimer.startTimer(getRoundIdentifier());
   }
 
@@ -89,7 +89,7 @@ public class IbftRound {
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     final Block block = blockCreator.createBlock(headerTimeStampSeconds);
-    final BftExtraData extraData = bftContext.getBftExtraDataEncoder().decode(block.getHeader());
+    final BftExtraData extraData = bftExtraDataEncoder.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     LOG.trace(
         "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
@@ -113,8 +113,8 @@ public class IbftRound {
           BftBlockInterface.replaceRoundInBlock(
               bestBlockFromRoundChange.get(),
               getRoundIdentifier().getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal(bftContext.getBftExtraDataEncoder()),
-              bftContext.getBftExtraDataEncoder());
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
+              bftExtraDataEncoder);
     }
 
     updateStateWithProposalAndTransmit(blockToPublish, Optional.of(roundChangeCertificate));
@@ -238,13 +238,10 @@ public class IbftRound {
   private void importBlockToChain() {
     final Block blockToImport =
         BftHelpers.createSealedBlock(
-            bftContext.getBftExtraDataEncoder(),
-            roundState.getProposedBlock().get(),
-            roundState.getCommitSeals());
+            bftExtraDataEncoder, roundState.getProposedBlock().get(), roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
-    final BftExtraData extraData =
-        bftContext.getBftExtraDataEncoder().decode(blockToImport.getHeader());
+    final BftExtraData extraData = bftExtraDataEncoder.decode(blockToImport.getHeader());
     LOG.log(
         getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
         "Importing block to chain. round={}, hash={}",
@@ -266,9 +263,9 @@ public class IbftRound {
 
   private SECPSignature createCommitSeal(final Block block) {
     final BlockHeader proposedHeader = block.getHeader();
-    final BftExtraData extraData = bftContext.getBftExtraDataEncoder().decode(proposedHeader);
+    final BftExtraData extraData = bftExtraDataEncoder.decode(proposedHeader);
     final Hash commitHash =
-        new BftBlockHashing(bftContext.getBftExtraDataEncoder())
+        new BftBlockHashing(bftExtraDataEncoder)
             .calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
   }

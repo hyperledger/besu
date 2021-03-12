@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteProposer;
@@ -89,7 +88,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
   private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
-  private final BlockInterface blockInterface = new BftBlockInterface(bftExtraDataEncoder);
+  private final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataEncoder);
 
   @Override
   protected void prepForBuild() {
@@ -134,7 +133,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
+            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
+            bftExtraDataEncoder);
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -164,7 +164,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, protocolSchedule, protocolContext, bftExtraDataEncoder);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
@@ -256,12 +257,11 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             blockchain,
             new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new BftBlockInterface(bftExtraDataEncoder),
+            blockInterface,
             new BftValidatorOverrides(ibftValidatorForkMap)),
         new VoteProposer(),
         epochManager,
-        blockInterface,
-        bftExtraDataEncoder);
+        blockInterface);
   }
 
   private Map<Long, List<Address>> convertIbftForks(final List<BftFork> bftForks) {

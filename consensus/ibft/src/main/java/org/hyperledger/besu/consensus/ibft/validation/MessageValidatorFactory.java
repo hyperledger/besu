@@ -32,14 +32,17 @@ public class MessageValidatorFactory {
   private final ProposerSelector proposerSelector;
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
+  private final BftExtraDataEncoder bftExtraDataEncoder;
 
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
       final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.proposerSelector = proposerSelector;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
   }
 
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
@@ -65,8 +68,6 @@ public class MessageValidatorFactory {
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
-    final BftExtraDataEncoder bftExtraDataEncoder =
-        protocolContext.getConsensusState(BftContext.class).getBftExtraDataEncoder();
     return new MessageValidator(
         createSignedDataValidator(roundIdentifier, parentHeader),
         new ProposalBlockConsistencyValidator(),
