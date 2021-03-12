@@ -90,7 +90,7 @@ public class TransactionTracer {
 
     if (!Files.isDirectory(traceDir) && !traceDir.toFile().mkdirs()) {
       throw new RuntimeException(
-          String.format("Trace directory '%s' does not exist and could not be made.", traceDir));
+          String.format("Trace directory '%s' does not exist and could not be made", traceDir));
     }
 
     return blockReplay
