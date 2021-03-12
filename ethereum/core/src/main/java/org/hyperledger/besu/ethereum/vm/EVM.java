@@ -112,7 +112,8 @@ public class EVM {
 
   private static void logState(final MessageFrame frame, final Gas currentGasCost) {
     final String opcode = frame.getCurrentOperation().getName();
-    if (opcode.equals("SSTORE") && frame.getPC() == 2166) {
+    if (opcode.equals("SSTORE") && frame.getPC() == 2166
+        || opcode.equals("POP") && frame.getPC() == 2167) {
       final StringBuilder builder = new StringBuilder();
       builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
       builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
