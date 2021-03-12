@@ -16,9 +16,12 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.ethereum.beacon.discovery.schema.EnrField;
@@ -29,6 +32,9 @@ import org.ethereum.beacon.discovery.util.Functions;
 import org.junit.Test;
 
 public class ENRResponsePacketDataTest {
+  private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
   @Test
   public void serializeDeserialize() {
     final Bytes requestHash = Bytes.fromHexStringLenient("0x1234");
@@ -48,7 +54,8 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.TCP, 8080),
             new EnrField(EnrField.TCP_V6, 8080),
             new EnrField(
-                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+                SIGNATURE_ALGORITHM.get().getCurveName(),
+                Functions.derivePublicKeyFromPrivate(privateKey)));
     nodeRecord.sign(privateKey);
 
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
@@ -82,7 +89,8 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
             new EnrField(EnrField.UDP, 30303),
             new EnrField(
-                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+                SIGNATURE_ALGORITHM.get().getCurveName(),
+                Functions.derivePublicKeyFromPrivate(privateKey)));
     nodeRecord.sign(privateKey);
 
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
@@ -119,7 +127,8 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
             new EnrField(EnrField.UDP, 30303),
             new EnrField(
-                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+                SIGNATURE_ALGORITHM.get().getCurveName(),
+                Functions.derivePublicKeyFromPrivate(privateKey)));
     nodeRecord.sign(privateKey);
 
     assertThat(nodeRecord.getNodeId()).isEqualTo(nodeId);
@@ -153,7 +162,9 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.ID, IdentitySchema.V4),
             new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
             new EnrField(EnrField.UDP, 30303),
-            new EnrField(EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)),
+            new EnrField(
+                SIGNATURE_ALGORITHM.get().getCurveName(),
+                Functions.derivePublicKeyFromPrivate(privateKey)),
             new EnrField("foo", Bytes.fromHexString("0x1234")));
     nodeRecord.sign(privateKey);
 
@@ -191,7 +202,8 @@ public class ENRResponsePacketDataTest {
             new EnrField(EnrField.IP_V4, Bytes.fromHexString("0x7F000001")),
             new EnrField(EnrField.UDP, 30303),
             new EnrField(
-                EnrField.PKEY_SECP256K1, Functions.derivePublicKeyFromPrivate(privateKey)));
+                SIGNATURE_ALGORITHM.get().getCurveName(),
+                Functions.derivePublicKeyFromPrivate(privateKey)));
     nodeRecord.sign(privateKey);
     nodeRecord.set(EnrField.UDP, 1234);
 

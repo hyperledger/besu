@@ -16,6 +16,8 @@ package org.hyperledger.besu.crypto;
 
 public class SignatureAlgorithmFactory {
 
+  private SignatureAlgorithmFactory() {}
+
   private static final SignatureAlgorithm instance = new SECP256K1();
 
   public static SignatureAlgorithm getInstance() {

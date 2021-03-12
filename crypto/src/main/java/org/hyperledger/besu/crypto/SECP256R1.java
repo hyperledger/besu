@@ -14,9 +14,13 @@
  */
 package org.hyperledger.besu.crypto;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 
 public class SECP256R1 extends AbstractSECP256 {
+
+  private static final Logger LOG = LogManager.getLogger();
   public static final String CURVE_NAME = "secp256r1";
 
   public SECP256R1() {
@@ -25,7 +29,7 @@ public class SECP256R1 extends AbstractSECP256 {
 
   @Override
   public void enableNative() {
-    throw new RuntimeException("No native library is implemented for SECP256R1");
+    LOG.info("Native secp256r1 requested but not available");
   }
 
   @Override

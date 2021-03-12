@@ -362,4 +362,9 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
         recoverFromSignature(signature.getRecId(), signature.getR(), signature.getS(), dataHash);
     return Optional.of(SECPPublicKey.create(publicKeyBI, ALGORITHM));
   }
+
+  @Override
+  public Bytes compressPublicKey(final SECPPublicKey uncompressedPublicKey) {
+    return Bytes.wrap(publicKeyAsEcPoint(uncompressedPublicKey).getEncoded(true));
+  }
 }
