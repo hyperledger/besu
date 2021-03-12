@@ -34,7 +34,7 @@ public abstract class QbftPayload implements Payload {
 
   @Override
   public Hash hashForSignature() {
-    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     out.writeIntScalar(getMessageType());
     out.writeRaw(this.encoded());
