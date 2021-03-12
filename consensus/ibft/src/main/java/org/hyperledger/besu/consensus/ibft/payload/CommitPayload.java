@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class CommitPayload implements Payload {
+public class CommitPayload extends IbftPayload {
   private static final int TYPE = IbftV2.COMMIT;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
