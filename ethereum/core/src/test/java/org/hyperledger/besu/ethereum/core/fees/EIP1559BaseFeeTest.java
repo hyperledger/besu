@@ -29,6 +29,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -92,6 +93,7 @@ public class EIP1559BaseFeeTest {
   }
 
   @Test
+  @Ignore("Need to have spec frozen to define correct values")
   public void assertThatBaseFeeIsCorrect() {
     assertThat(eip1559.computeBaseFee(0L, parentBaseFee, parentGasUsed, parentTargetGasUsed))
         .isEqualTo(expectedBaseFee);
