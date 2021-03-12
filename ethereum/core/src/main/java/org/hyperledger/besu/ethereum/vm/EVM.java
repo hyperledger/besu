@@ -111,18 +111,21 @@ public class EVM {
   }
 
   private static void logState(final MessageFrame frame, final Gas currentGasCost) {
-    final StringBuilder builder = new StringBuilder();
-    builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
-    builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
-    builder.append("PC: ").append(frame.getPC()).append("\n");
-    builder.append("Gas cost: ").append(currentGasCost).append("\n");
-    builder.append("Gas Remaining: ").append(frame.getRemainingGas()).append("\n");
-    builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
-    builder.append("Stack:");
-    for (int i = 0; i < frame.stackSize(); ++i) {
-      builder.append("\n\t").append(i).append(" ").append(frame.getStackItem(i));
+    final String opcode = frame.getCurrentOperation().getName();
+    if (opcode.equals("SSTORE")) {
+      final StringBuilder builder = new StringBuilder();
+      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
+      builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
+      builder.append("PC: ").append(frame.getPC()).append("\n");
+      builder.append("Gas cost: ").append(currentGasCost).append("\n");
+      builder.append("Gas Remaining: ").append(frame.getRemainingGas()).append("\n");
+      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
+      builder.append("Stack:");
+      for (int i = 0; i < frame.stackSize(); ++i) {
+        builder.append("\n\t").append(i).append(" ").append(frame.getStackItem(i));
+      }
+      System.out.println(builder.toString());
     }
-    System.out.println(builder.toString());
   }
 
   @VisibleForTesting
