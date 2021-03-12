@@ -420,6 +420,13 @@ public class MainnetTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        System.out.println(
+            "COMPLETED_SUCCESS -> "
+                + initialFrame.getRemainingGas()
+                + " "
+                + initialFrame.getOutputData()
+                + " "
+                + transaction.getHash());
         return TransactionProcessingResult.successful(
             initialFrame.getLogs(),
             gasUsedByTransaction.toLong(),
