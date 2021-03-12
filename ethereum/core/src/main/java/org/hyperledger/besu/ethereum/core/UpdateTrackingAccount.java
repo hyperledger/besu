@@ -53,7 +53,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   // deletion.
   private final NavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
-  private final boolean transactionBoundary = false;
+  private boolean transactionBoundary = false;
 
   UpdateTrackingAccount(final Address address) {
     checkNotNull(address);
@@ -199,8 +199,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   void markTransactionBoundary() {
-    System.out.println(transactionBoundary);
-    // this.transactionBoundary = true;
+    this.transactionBoundary = true;
   }
 
   @Override
