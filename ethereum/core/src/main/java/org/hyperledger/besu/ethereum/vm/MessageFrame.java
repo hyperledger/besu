@@ -1061,7 +1061,6 @@ public class MessageFrame {
   }
 
   public void setGasCost(final Optional<Gas> gasCost) {
-    System.out.println("MessageFrame.setGasCost = " + gasCost.orElse(Gas.ZERO).toLong());
     this.gasCost = gasCost;
   }
 
