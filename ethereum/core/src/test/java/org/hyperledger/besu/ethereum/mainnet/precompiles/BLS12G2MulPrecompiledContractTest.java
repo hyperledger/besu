@@ -40,7 +40,7 @@ import org.mockito.ArgumentCaptor;
 public class BLS12G2MulPrecompiledContractTest extends AbstractPrecompiledContractTest {
 
   public BLS12G2MulPrecompiledContractTest() {
-    super(MainnetPrecompiledContractRegistries::berlin, Address.BLS12_G2MUL);
+    super(MainnetPrecompiledContractRegistries::bls12, Address.BLS12_G2MUL);
   }
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
