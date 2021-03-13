@@ -99,25 +99,6 @@ public class StaticCallOperation extends AbstractCallOperation {
     final UInt256 outputDataOffset = outputDataOffset(frame);
     final UInt256 outputDataLength = outputDataLength(frame);
     final Account recipient = frame.getWorldState().get(address(frame));
-    if (frame.getPC() == 4578) {
-      System.out.println(
-          "STATIC-> inputDataOffset "
-              + inputDataOffset
-              + " "
-              + frame.getStackItem(2)
-              + "inputDataLength "
-              + inputDataLength
-              + " "
-              + frame.getStackItem(2)
-              + "outputDataOffset "
-              + outputDataOffset
-              + " "
-              + frame.getStackItem(4)
-              + "outputDataLength "
-              + outputDataLength
-              + " "
-              + frame.getStackItem(5));
-    }
     return gasCalculator()
         .callOperationGasCost(
             frame,

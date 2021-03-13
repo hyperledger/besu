@@ -178,23 +178,6 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
             transferValue,
             recipient,
             to);
-    if (frame.getPC() == 4578) {
-      System.out.println(
-          "STATIC->"
-              + inputDataOffset
-              + " "
-              + inputDataLength
-              + " "
-              + outputDataOffset
-              + " "
-              + outputDataLength
-              + " "
-              + transferValue
-              + " "
-              + recipient
-              + " "
-              + to);
-    }
     final boolean accountIsWarm = frame.warmUpAddress(to) || isPrecompile(to);
     return baseCost.plus(accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
