@@ -1,5 +1,5 @@
 # Hyperledger Repolinter Action
-name: Repolint
+name: Repolinter
 
 on:
   push:
