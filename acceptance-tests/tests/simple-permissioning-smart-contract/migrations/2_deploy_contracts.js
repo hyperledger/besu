@@ -1,3 +1,5 @@
+// Copyright ConsenSys AG.
+// SPDX-License-Identifier: Apache-2.0
 var SimpleNodePermissioning = artifacts.require("SimpleNodePermissioning");
 var SimpleAccountPermissioning = artifacts.require("SimpleAccountPermissioning");
 
