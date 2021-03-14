@@ -36,7 +36,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -82,7 +83,8 @@ public class TransactionPoolTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_TRANSACTION_HASHES = 5;
-  private static final KeyPair KEY_PAIR1 = KeyPair.generate();
+  private static final KeyPair KEY_PAIR1 =
+      SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
   private final PendingTransactionListener listener = mock(PendingTransactionListener.class);
   private final TransactionPool.TransactionBatchAddedListener batchAddedListener =

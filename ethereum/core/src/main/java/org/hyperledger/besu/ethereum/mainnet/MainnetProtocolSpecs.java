@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -149,6 +150,21 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .name("Frontier");
+  }
+
+  public static PoWHasher powHasher(final PowAlgorithm powAlgorithm) {
+    if (powAlgorithm == null) {
+      return PoWHasher.UNSUPPORTED;
+    }
+    switch (powAlgorithm) {
+      case ETHASH:
+        return PoWHasher.ETHASH_LIGHT;
+      case KECCAK256:
+        return KeccakHasher.KECCAK256;
+      case UNSUPPORTED:
+      default:
+        return PoWHasher.UNSUPPORTED;
+    }
   }
 
   public static BlockValidatorBuilder blockValidatorBuilder(final boolean goQuorumMode) {
@@ -412,9 +428,6 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode) {
-    if (!ExperimentalEIPs.berlinEnabled) {
-      throw new RuntimeException("Berlin feature flag must be enabled --Xberlin-enabled");
-    }
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
@@ -430,10 +443,6 @@ public abstract class MainnetProtocolSpecs {
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
                     quorumCompatibilityMode))
-        .evmBuilder(
-            gasCalculator ->
-                MainnetEvmRegistries.berlin(gasCalculator, chainId.orElse(BigInteger.ZERO)))
-        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::berlin)
         .transactionReceiptFactory(
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled

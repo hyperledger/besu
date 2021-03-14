@@ -30,7 +30,7 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderFrontier() throws Exception {
     final BlockHeaderValidator headerValidator =
-        MainnetBlockHeaderValidator.create()
+        MainnetBlockHeaderValidator.create(PoWHasher.ETHASH_LIGHT)
             .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
             .build();
     assertThat(
@@ -45,7 +45,7 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderHomestead() throws Exception {
     final BlockHeaderValidator headerValidator =
-        MainnetBlockHeaderValidator.create()
+        MainnetBlockHeaderValidator.create(PoWHasher.ETHASH_LIGHT)
             .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
             .build();
     assertThat(
@@ -60,7 +60,7 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void invalidParentHash() throws Exception {
     final BlockHeaderValidator headerValidator =
-        MainnetBlockHeaderValidator.create()
+        MainnetBlockHeaderValidator.create(PoWHasher.ETHASH_LIGHT)
             .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
             .build();
     assertThat(
@@ -75,7 +75,7 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderByzantium() throws Exception {
     final BlockHeaderValidator headerValidator =
-        MainnetBlockHeaderValidator.create()
+        MainnetBlockHeaderValidator.create(PoWHasher.ETHASH_LIGHT)
             .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
             .build();
     assertThat(

@@ -18,7 +18,6 @@ import static com.google.common.collect.Iterables.toArray;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparePayloads;
 import static org.hyperledger.besu.consensus.qbft.validation.ValidationTestHelpers.createPreparedCertificate;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,7 +33,7 @@ import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -404,7 +403,8 @@ public class RoundChangeMessageValidatorTest {
         ProposedBlockHelpers.createProposalBlock(Collections.emptyList(), roundIdentifier);
 
     final RoundChangePayload payload = new RoundChangePayload(targetRound, Optional.empty());
-    final Signature signature = validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
+    final SECPSignature signature =
+        validators.getNode(0).getNodeKey().sign(payload.hashForSignature());
 
     final RoundChange message =
         new RoundChange(SignedData.create(payload, signature), Optional.of(block), emptyList());
@@ -436,7 +436,8 @@ public class RoundChangeMessageValidatorTest {
             Optional.of(
                 new PreparedRoundMetadata(
                     Hash.fromHexStringLenient("0x1"), roundIdentifier.getRoundNumber())));
-    final Signature signature = validators.getNode(0).getNodeKey().sign(hashForSignature(payload));
+    final SECPSignature signature =
+        validators.getNode(0).getNodeKey().sign(payload.hashForSignature());
 
     final RoundChange message =
         new RoundChange(

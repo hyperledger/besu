@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 
 import static org.hyperledger.besu.consensus.ibftlegacy.IbftBlockHeaderValidationRulesetFactory.ibftBlockHeaderValidator;
 
-import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.IbftLegacyConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
@@ -38,13 +39,17 @@ public class IbftProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
-    final BftConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
+    final IbftLegacyConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder -> applyIbftChanges(blockPeriod, builder, config.isQuorum()),
+            ProtocolSpecAdapters.create(
+                0,
+                builder ->
+                    applyIbftChanges(
+                        blockPeriod, builder, config.isQuorum(), ibftConfig.getCeil2Nby3Block())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -59,10 +64,11 @@ public class IbftProtocolSchedule {
   private static ProtocolSpecBuilder applyIbftChanges(
       final long secondsBetweenBlocks,
       final ProtocolSpecBuilder builder,
-      final boolean goQuorumMode) {
+      final boolean goQuorumMode,
+      final long ceil2nBy3Block) {
     return builder
-        .blockHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks))
-        .ommerHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks))
+        .blockHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
+        .ommerHeaderValidatorBuilder(ibftBlockHeaderValidator(secondsBetweenBlocks, ceil2nBy3Block))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)

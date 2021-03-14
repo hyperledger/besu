@@ -16,11 +16,12 @@ package org.hyperledger.besu.crypto;
 
 public class NodeKeyUtils {
 
-  public static NodeKey createFrom(final SECP256K1.KeyPair keyPair) {
+  public static NodeKey createFrom(final KeyPair keyPair) {
     return new NodeKey(new KeyPairSecurityModule(keyPair));
   }
 
   public static NodeKey generate() {
-    return new NodeKey(new KeyPairSecurityModule(SECP256K1.KeyPair.generate()));
+    return new NodeKey(
+        new KeyPairSecurityModule(SignatureAlgorithmFactory.getInstance().generateKeyPair()));
   }
 }

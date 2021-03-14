@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -102,11 +101,6 @@ public class GeneralStateReferenceTestTools {
 
     // Don't do time consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
-
-    // Berlin isn't finalized
-    if (!ExperimentalEIPs.berlinEnabled) {
-      params.ignore(".*[_-]Berlin");
-    }
   }
 
   public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {

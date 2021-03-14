@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -50,12 +51,17 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return worldStateStorage.isWorldStateAvailable(rootHash);
+    return worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
+  }
+
+  @Override
+  public Optional<MutableWorldState> getWorldState(final Hash rootHash, final Hash blockHash) {
+    return getMutable(rootHash, blockHash);
   }
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    if (!worldStateStorage.isWorldStateAvailable(rootHash)) {
+    if (!worldStateStorage.isWorldStateAvailable(rootHash, blockHash)) {
       return Optional.empty();
     }
     return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));
@@ -64,6 +70,11 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   @Override
   public MutableWorldState getMutable() {
     return getMutable(EMPTY_ROOT_HASH, null).get();
+  }
+
+  @Override
+  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
+    // ignore for forest
   }
 
   @Override

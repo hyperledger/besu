@@ -25,7 +25,7 @@ import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -72,7 +72,7 @@ public final class RunnerBuilderTest {
     final EthContext ethContext = mock(EthContext.class);
     final ProtocolContext protocolContext = mock(ProtocolContext.class);
     final NodeKey nodeKey = mock(NodeKey.class);
-    final SECP256K1.PublicKey publicKey = mock(SECP256K1.PublicKey.class);
+    final SECPPublicKey publicKey = mock(SECPPublicKey.class);
 
     when(subProtocolConfiguration.getProtocolManagers())
         .thenReturn(
@@ -124,6 +124,7 @@ public final class RunnerBuilderTest {
             .vertx(vertx)
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .build();
     runner.start();
 

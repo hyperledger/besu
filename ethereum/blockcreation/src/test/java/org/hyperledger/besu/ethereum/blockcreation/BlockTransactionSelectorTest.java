@@ -22,14 +22,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -67,7 +68,7 @@ import org.junit.Test;
 
 public class BlockTransactionSelectorTest {
 
-  private static final KeyPair keyPair = KeyPair.generate();
+  private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final Blockchain blockchain = new ReferenceTestBlockchain();
@@ -80,7 +81,8 @@ public class BlockTransactionSelectorTest {
           metricsSystem,
           blockchain::getChainHeadHeader,
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
-  private final MutableWorldState worldState = InMemoryStorageProvider.createInMemoryWorldState();
+  private final MutableWorldState worldState =
+      InMemoryKeyValueStorageProvider.createInMemoryWorldState();
   private final MainnetTransactionProcessor transactionProcessor =
       mock(MainnetTransactionProcessor.class);
 

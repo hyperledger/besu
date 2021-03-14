@@ -124,7 +124,7 @@ public abstract class MainnetPrecompiledContractRegistries {
     return registry;
   }
 
-  private static void populateForBerlin(
+  private static void populateForBLS12(
       final PrecompileContractRegistry registry,
       final GasCalculator gasCalculator,
       final int accountVersion) {
@@ -153,10 +153,10 @@ public abstract class MainnetPrecompiledContractRegistries {
         new BLS12MapFp2ToG2PrecompiledContract());
   }
 
-  public static PrecompileContractRegistry berlin(
+  public static PrecompileContractRegistry bls12(
       final PrecompiledContractConfiguration precompiledContractConfiguration) {
     final PrecompileContractRegistry registry = new PrecompileContractRegistry();
-    populateForBerlin(
+    populateForBLS12(
         registry, precompiledContractConfiguration.getGasCalculator(), Account.DEFAULT_VERSION);
     return registry;
   }

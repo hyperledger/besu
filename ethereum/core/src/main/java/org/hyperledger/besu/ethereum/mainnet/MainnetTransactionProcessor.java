@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
+import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayDeque;
@@ -61,6 +61,8 @@ public class MainnetTransactionProcessor {
   private final AbstractMessageProcessor messageCallProcessor;
 
   protected final int maxStackSize;
+
+  protected final boolean clearEmptyAccounts;
 
   protected final int createContractAccountVersion;
 
@@ -101,7 +103,8 @@ public class MainnetTransactionProcessor {
         OperationTracer.NO_TRACING,
         blockHashLookup,
         isPersistingPrivateState,
-        transactionValidationParams);
+        transactionValidationParams,
+        null);
   }
 
   /**
@@ -140,7 +143,8 @@ public class MainnetTransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        transactionValidationParams);
+        transactionValidationParams,
+        null);
   }
 
   /**
@@ -174,7 +178,8 @@ public class MainnetTransactionProcessor {
         operationTracer,
         blockHashLookup,
         isPersistingPrivateState,
-        ImmutableTransactionValidationParams.builder().build());
+        ImmutableTransactionValidationParams.builder().build(),
+        null);
   }
 
   /**
@@ -213,8 +218,6 @@ public class MainnetTransactionProcessor {
         transactionValidationParams,
         null);
   }
-
-  protected final boolean clearEmptyAccounts;
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -262,7 +265,9 @@ public class MainnetTransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
-      final EvmAccount sender = worldState.getOrCreate(senderAddress);
+
+      final EvmAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
+
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
       if (!validationResult.isValid()) {
@@ -305,7 +310,6 @@ public class MainnetTransactionProcessor {
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
-              .returnStack(new ReturnStack())
               .blockchain(blockchain)
               .worldState(worldUpdater.updater())
               .initialGas(gasAvailable)
@@ -328,7 +332,7 @@ public class MainnetTransactionProcessor {
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
         final Address contractAddress =
-            Address.contractAddress(senderAddress, sender.getNonce() - 1L);
+            Address.contractAddress(senderAddress, senderMutableAccount.getNonce() - 1L);
 
         initialFrame =
             commonMessageFrameBuilder
@@ -383,28 +387,31 @@ public class MainnetTransactionProcessor {
       final Gas gasUsedByTransaction =
           Gas.of(transaction.getGasLimit()).minus(initialFrame.getRemainingGas());
 
-      final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
-      final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
-      if (blockHeader.getBaseFee().isPresent()) {
-        final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
-        if (transactionGasPrice.compareTo(baseFee) < 0) {
-          return TransactionProcessingResult.failed(
-              gasUsedByTransaction.toLong(),
-              refunded.toLong(),
-              ValidationResult.invalid(
-                  TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
-                  "transaction price must be greater than base fee"),
-              Optional.empty());
+      if (!worldState.getClass().equals(GoQuorumMutablePrivateWorldStateUpdater.class)) {
+        // if this is not a private GoQuorum transaction we have to update the coinbase
+        final MutableAccount coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
+        final Gas coinbaseFee = Gas.of(transaction.getGasLimit()).minus(refunded);
+        if (blockHeader.getBaseFee().isPresent()) {
+          final Wei baseFee = Wei.of(blockHeader.getBaseFee().get());
+          if (transactionGasPrice.compareTo(baseFee) < 0) {
+            return TransactionProcessingResult.failed(
+                gasUsedByTransaction.toLong(),
+                refunded.toLong(),
+                ValidationResult.invalid(
+                    TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                    "transaction price must be greater than base fee"),
+                Optional.empty());
+          }
         }
-      }
-      final CoinbaseFeePriceCalculator coinbaseCreditService =
-          transaction.getType().equals(TransactionType.FRONTIER)
-              ? CoinbaseFeePriceCalculator.frontier()
-              : coinbaseFeePriceCalculator;
-      final Wei coinbaseWeiDelta =
-          coinbaseCreditService.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+        final CoinbaseFeePriceCalculator coinbaseCreditService =
+            transaction.getType().equals(TransactionType.FRONTIER)
+                ? CoinbaseFeePriceCalculator.frontier()
+                : coinbaseFeePriceCalculator;
+        final Wei coinbaseWeiDelta =
+            coinbaseCreditService.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
 
-      coinbase.incrementBalance(coinbaseWeiDelta);
+        coinbase.incrementBalance(coinbaseWeiDelta);
+      }
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
@@ -433,6 +440,10 @@ public class MainnetTransactionProcessor {
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re.toString()));
     }
+  }
+
+  public MainnetTransactionValidator getTransactionValidator() {
+    return transactionValidator;
   }
 
   protected static void clearEmptyAccounts(final WorldUpdater worldState) {

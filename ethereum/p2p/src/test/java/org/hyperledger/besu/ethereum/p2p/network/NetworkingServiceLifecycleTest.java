@@ -20,7 +20,7 @@ import static org.hyperledger.besu.ethereum.p2p.NetworkingTestHelper.configWithR
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
@@ -30,8 +30,10 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Test;
@@ -160,6 +162,7 @@ public class NetworkingServiceLifecycleTest {
         .config(config)
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
-        .storageProvider(new InMemoryStorageProvider());
+        .storageProvider(new InMemoryKeyValueStorageProvider())
+        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
   }
 }

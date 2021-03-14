@@ -26,7 +26,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RI
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ROPSTEN_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.YOLO_V2_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.YOLO_V3_BOOTSTRAP_NODES;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 
@@ -47,15 +47,17 @@ public class EthNetworkConfig {
   public static final BigInteger RINKEBY_NETWORK_ID = BigInteger.valueOf(4);
   public static final BigInteger GOERLI_NETWORK_ID = BigInteger.valueOf(5);
   public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(2018);
+  public static final BigInteger ECIP1049_DEV_NETWORK_ID = BigInteger.valueOf(2021);
   public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
   public static final BigInteger KOTTI_NETWORK_ID = BigInteger.valueOf(6);
   public static final BigInteger MORDOR_NETWORK_ID = BigInteger.valueOf(7);
-  private static final BigInteger YOLO_V2_NETWORK_ID = BigInteger.valueOf(133519467574834L);
+  private static final BigInteger YOLO_V3_NETWORK_ID = BigInteger.valueOf(34180983699157880L);
   private static final String MAINNET_GENESIS = "/mainnet.json";
   private static final String ROPSTEN_GENESIS = "/ropsten.json";
   private static final String RINKEBY_GENESIS = "/rinkeby.json";
   private static final String GOERLI_GENESIS = "/goerli.json";
   private static final String DEV_GENESIS = "/dev.json";
+  private static final String DEV_ECIP1049_GENESIS = "/ecip1049_dev.json";
   private static final String CLASSIC_GENESIS = "/classic.json";
   private static final String KOTTI_GENESIS = "/kotti.json";
   private static final String MORDOR_GENESIS = "/mordor.json";
@@ -154,15 +156,18 @@ public class EthNetworkConfig {
       case CLASSIC:
         return new EthNetworkConfig(
             jsonConfig(CLASSIC_GENESIS), CLASSIC_NETWORK_ID, CLASSIC_BOOTSTRAP_NODES, null);
+      case ECIP1049_DEV:
+        return new EthNetworkConfig(
+            jsonConfig(DEV_ECIP1049_GENESIS), ECIP1049_DEV_NETWORK_ID, new ArrayList<>(), null);
       case KOTTI:
         return new EthNetworkConfig(
             jsonConfig(KOTTI_GENESIS), KOTTI_NETWORK_ID, KOTTI_BOOTSTRAP_NODES, null);
       case MORDOR:
         return new EthNetworkConfig(
             jsonConfig(MORDOR_GENESIS), MORDOR_NETWORK_ID, MORDOR_BOOTSTRAP_NODES, null);
-      case YOLO_V2:
+      case YOLO_V3:
         return new EthNetworkConfig(
-            jsonConfig(YOLO_GENESIS), YOLO_V2_NETWORK_ID, YOLO_V2_BOOTSTRAP_NODES, null);
+            jsonConfig(YOLO_GENESIS), YOLO_V3_NETWORK_ID, YOLO_V3_BOOTSTRAP_NODES, null);
       case MAINNET:
       default:
         return new EthNetworkConfig(
@@ -194,13 +199,15 @@ public class EthNetworkConfig {
         return jsonConfig(GOERLI_GENESIS);
       case DEV:
         return jsonConfig(DEV_GENESIS);
+      case ECIP1049_DEV:
+        return jsonConfig(DEV_ECIP1049_GENESIS);
       case CLASSIC:
         return jsonConfig(CLASSIC_GENESIS);
       case KOTTI:
         return jsonConfig(KOTTI_GENESIS);
       case MORDOR:
         return jsonConfig(MORDOR_GENESIS);
-      case YOLO_V2:
+      case YOLO_V3:
         return jsonConfig(YOLO_GENESIS);
       default:
         throw new IllegalArgumentException("Unknown network:" + network);

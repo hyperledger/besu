@@ -32,6 +32,7 @@ public class WebSocketConfiguration {
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
   public static final List<RpcApi> DEFAULT_WEBSOCKET_APIS =
       Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+  public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
   private int port;
@@ -42,6 +43,7 @@ public class WebSocketConfiguration {
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private File authenticationPublicKeyFile;
   private long timeoutSec;
+  private int maxActiveConnections;
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
@@ -50,6 +52,7 @@ public class WebSocketConfiguration {
     config.setPort(DEFAULT_WEBSOCKET_PORT);
     config.setRpcApis(DEFAULT_WEBSOCKET_APIS);
     config.setTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
+    config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     return config;
   }
 
@@ -174,5 +177,13 @@ public class WebSocketConfiguration {
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
         .add("timeoutSec", timeoutSec)
         .toString();
+  }
+
+  public int getMaxActiveConnections() {
+    return maxActiveConnections;
+  }
+
+  public void setMaxActiveConnections(final int maxActiveConnections) {
+    this.maxActiveConnections = maxActiveConnections;
   }
 }

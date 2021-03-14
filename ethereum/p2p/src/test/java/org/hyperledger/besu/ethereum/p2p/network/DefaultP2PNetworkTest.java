@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -52,12 +52,14 @@ import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -347,6 +349,7 @@ public final class DefaultP2PNetworkTest {
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Capability.create("eth", 63))
-        .storageProvider(new InMemoryStorageProvider());
+        .storageProvider(new InMemoryKeyValueStorageProvider())
+        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
   }
 }

@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -67,18 +68,22 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.extension.trace.propagation.B3Propagator;
+import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
+import io.opentelemetry.extension.trace.propagation.TraceMultiPropagator;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -108,6 +113,12 @@ public class JsonRpcHttpService {
   private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
   private static final String EMPTY_RESPONSE = "";
 
+  private static final TextMapPropagator traceFormats =
+      TraceMultiPropagator.create(
+          JaegerPropagator.getInstance(),
+          B3Propagator.getInstance(),
+          W3CBaggagePropagator.getInstance());
+
   private static final TextMapPropagator.Getter<HttpServerRequest> requestAttributesGetter =
       new TextMapPropagator.Getter<>() {
         @Override
@@ -132,6 +143,8 @@ public class JsonRpcHttpService {
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
   private final Tracer tracer;
+  private final int maxActiveConnections;
+  private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
@@ -198,6 +211,7 @@ public class JsonRpcHttpService {
     this.livenessService = livenessService;
     this.readinessService = readinessService;
     this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
+    this.maxActiveConnections = config.getMaxActiveConnections();
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -205,15 +219,21 @@ public class JsonRpcHttpService {
         config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
         "Invalid port configuration.");
     checkArgument(config.getHost() != null, "Required host is not configured.");
+    checkArgument(
+        config.getMaxActiveConnections() > 0, "Invalid max active connections configuration.");
   }
 
   public CompletableFuture<?> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
+    LOG.debug("max number of active connections {}", maxActiveConnections);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
+
+      httpServer.connectionHandler(connectionHandler());
+
       httpServer
           .requestHandler(buildRouter())
           .listen(
@@ -253,6 +273,33 @@ public class JsonRpcHttpService {
     }
 
     return resultFuture;
+  }
+
+  private Handler<HttpConnection> connectionHandler() {
+
+    return connection -> {
+      if (activeConnectionsCount.get() >= maxActiveConnections) {
+        // disallow new connections to prevent DoS
+        LOG.warn(
+            "Rejecting new connection from {}. Max {} active connections limit reached.",
+            connection.remoteAddress(),
+            activeConnectionsCount.getAndIncrement());
+        connection.close();
+      } else {
+        LOG.debug(
+            "Opened connection from {}. Total of active connections: {}/{}",
+            connection.remoteAddress(),
+            activeConnectionsCount.incrementAndGet(),
+            maxActiveConnections);
+      }
+      connection.closeHandler(
+          c ->
+              LOG.debug(
+                  "Connection closed from {}. Total of active connections: {}/{}",
+                  connection.remoteAddress(),
+                  activeConnectionsCount.decrementAndGet(),
+                  maxActiveConnections));
+    };
   }
 
   private Router buildRouter() {
@@ -313,17 +360,15 @@ public class JsonRpcHttpService {
     final SocketAddress address = routingContext.request().connection().remoteAddress();
 
     Context parent =
-        B3Propagator.getInstance()
-            .extract(Context.current(), routingContext.request(), requestAttributesGetter);
+        traceFormats.extract(Context.current(), routingContext.request(), requestAttributesGetter);
     final Span serverSpan =
         tracer
             .spanBuilder(address.host() + ":" + address.port())
             .setParent(parent)
             .setSpanKind(Span.Kind.SERVER)
             .startSpan();
-    routingContext.put(SPAN_CONTEXT, Context.root().with(serverSpan));
+    routingContext.put(SPAN_CONTEXT, Context.current().with(serverSpan));
 
-    routingContext.addBodyEndHandler(event -> serverSpan.end());
     routingContext.addEndHandler(
         event -> {
           if (event.failed()) {
@@ -340,7 +385,8 @@ public class JsonRpcHttpService {
         new HttpServerOptions()
             .setHost(config.getHost())
             .setPort(config.getPort())
-            .setHandle100ContinueAutomatically(true);
+            .setHandle100ContinueAutomatically(true)
+            .setCompressionSupported(true);
 
     applyTlsConfig(httpServerOptions);
     return httpServerOptions;

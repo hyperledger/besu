@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -25,7 +24,7 @@ import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 
-public class RoundChangePayload implements Payload {
+public class RoundChangePayload extends QbftPayload {
   private static final int TYPE = QbftV1.ROUND_CHANGE;
   private final ConsensusRoundIdentifier roundChangeIdentifier;
   private final Optional<PreparedRoundMetadata> preparedRoundMetadata;
@@ -50,23 +49,29 @@ public class RoundChangePayload implements Payload {
   public void writeTo(final RLPOutput rlpOutput) {
     // RLP encode of the message data content (round identifier and prepared certificate)
     rlpOutput.startList();
-    roundChangeIdentifier.writeTo(rlpOutput);
-    preparedRoundMetadata.ifPresentOrElse(prm -> prm.writeTo(rlpOutput), rlpOutput::writeNull);
+    writeConsensusRound(rlpOutput);
+
+    rlpOutput.startList();
+    preparedRoundMetadata.ifPresent(prm -> prm.writeTo(rlpOutput));
+    rlpOutput.endList();
+
     rlpOutput.endList();
   }
 
   public static RoundChangePayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
+    final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
     final Optional<PreparedRoundMetadata> preparedRoundMetadata;
-    if (rlpInput.nextIsNull()) {
+
+    rlpInput.enterList();
+    if (rlpInput.isEndOfCurrentList()) {
       preparedRoundMetadata = Optional.empty();
-      rlpInput.skipNext();
     } else {
       preparedRoundMetadata = Optional.of(PreparedRoundMetadata.readFrom(rlpInput));
     }
     rlpInput.leaveList();
 
+    rlpInput.leaveList();
     return new RoundChangePayload(roundIdentifier, preparedRoundMetadata);
   }
 

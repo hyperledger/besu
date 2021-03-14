@@ -38,9 +38,22 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldUseKeccak256WhenKeccak256InConfig() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("keccak256", emptyMap()));
+    assertThat(config.isKeccak256()).isTrue();
+    assertThat(config.getConsensusEngine()).isEqualTo("keccak256");
+  }
+
+  @Test
   public void shouldNotUseEthHashIfEthHashNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isEthHash()).isFalse();
+  }
+
+  @Test
+  public void shouldNotUseKeccak256IfEthHashNotPresent() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.isKeccak256()).isFalse();
   }
 
   @Test
@@ -55,7 +68,7 @@ public class GenesisConfigOptionsTest {
   public void shouldNotUseIbftLegacyIfIbftNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isIbftLegacy()).isFalse();
-    assertThat(config.getIbftLegacyConfigOptions()).isSameAs(BftConfigOptions.DEFAULT);
+    assertThat(config.getIbftLegacyConfigOptions()).isSameAs(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Test
@@ -163,24 +176,14 @@ public class GenesisConfigOptionsTest {
 
   @Test
   public void shouldGetBerlinBlockNumber() {
-    try {
-      ExperimentalEIPs.berlinEnabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("berlinBlock", 1000));
-      assertThat(config.getBerlinBlockNumber()).hasValue(1000);
-    } finally {
-      ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
-    }
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("berlinBlock", 1000));
+    assertThat(config.getBerlinBlockNumber()).hasValue(1000);
   }
 
   @Test
-  public void shouldGetYoloV2BlockNumber() {
-    try {
-      ExperimentalEIPs.berlinEnabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV2Block", 1000));
-      assertThat(config.getBerlinBlockNumber()).hasValue(1000);
-    } finally {
-      ExperimentalEIPs.berlinEnabled = ExperimentalEIPs.BERLIN_ENABLED_DEFAULT_VALUE;
-    }
+  public void shouldGetYoloV3BlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV3Block", 1000));
+    assertThat(config.getBerlinBlockNumber()).hasValue(1000);
   }
 
   @Test
@@ -196,6 +199,13 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  // TODO ECIP-1049 change for the actual fork name when known
+  public void shouldGetECIP1049BlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
+    assertThat(config.getEcip1049BlockNumber()).hasValue(1000);
+  }
+
+  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
@@ -208,6 +218,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();
+    assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
   @Test

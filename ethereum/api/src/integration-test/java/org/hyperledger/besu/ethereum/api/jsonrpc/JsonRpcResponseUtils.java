@@ -32,11 +32,10 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.STATE
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TOTAL_DIFFICULTY;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TRANSACTION_ROOT;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -53,7 +52,7 @@ import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -165,6 +164,7 @@ public class JsonRpcResponseUtils {
       final String s) {
 
     final Transaction transaction = mock(Transaction.class);
+    when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
     when(transaction.getGasPrice()).thenReturn(Wei.fromHexString(gasPrice));
     when(transaction.getNonce()).thenReturn(unsignedLong(nonce));
     when(transaction.getV()).thenReturn(bigInteger(v));
@@ -178,13 +178,16 @@ public class JsonRpcResponseUtils {
     when(transaction.getGasLimit()).thenReturn(unsignedLong(gas));
     when(transaction.getChainId()).thenReturn(Optional.ofNullable(bigInteger(chainId)));
     when(transaction.getPublicKey()).thenReturn(Optional.ofNullable(publicKey));
-    doAnswer(
-            answer -> {
-              answer.getArgument(0, RLPOutput.class).writeRLPBytes(Bytes.fromHexString(raw));
-              return null;
-            })
-        .when(transaction)
-        .writeTo(any());
+    when(transaction.getSignature())
+        .thenReturn(
+            SignatureAlgorithmFactory.getInstance()
+                .createSignature(
+                    Bytes.fromHexString(r).toUnsignedBigInteger(),
+                    Bytes.fromHexString(s).toUnsignedBigInteger(),
+                    Bytes.fromHexString(v)
+                        .toUnsignedBigInteger()
+                        .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
+                        .byteValueExact()));
 
     return new TransactionCompleteResult(
         new TransactionWithMetadata(

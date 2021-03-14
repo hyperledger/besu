@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
 import java.math.BigInteger;
@@ -64,14 +65,16 @@ public class CliqueProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            builder ->
-                applyCliqueSpecificModifications(
-                    epochManager,
-                    cliqueConfig.getBlockPeriodSeconds(),
-                    localNodeAddress,
-                    builder,
-                    eip1559,
-                    privacyParameters.getGoQuorumPrivacyParameters().isPresent()),
+            ProtocolSpecAdapters.create(
+                0,
+                builder ->
+                    applyCliqueSpecificModifications(
+                        epochManager,
+                        cliqueConfig.getBlockPeriodSeconds(),
+                        localNodeAddress,
+                        builder,
+                        eip1559,
+                        privacyParameters.getGoQuorumPrivacyParameters().isPresent())),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())

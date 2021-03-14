@@ -58,6 +58,12 @@ public class BigIntegerModularExponentiationPrecompiledContract
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);
     final BigInteger modulusLength = modulusLength(input);
+    // If baseLength and modulusLength are zero
+    // we could have a massively overflowing exp because it wouldn't have been filtered out at the
+    // gas cost phase
+    if (baseLength.equals(BigInteger.ZERO) && modulusLength.equals(BigInteger.ZERO)) {
+      return Bytes.EMPTY;
+    }
     final BigInteger exponentOffset = BASE_OFFSET.add(baseLength);
     final BigInteger modulusOffset = exponentOffset.add(exponentLength);
     final BigInteger base = extractParameter(input, BASE_OFFSET, baseLength.intValue());

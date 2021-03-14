@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -82,6 +82,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
 import org.junit.After;
@@ -203,7 +204,8 @@ public final class RunnerTest {
             .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
             .staticNodes(emptySet())
-            .storageProvider(new InMemoryStorageProvider());
+            .storageProvider(new InMemoryKeyValueStorageProvider())
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
 
     Runner runnerBehind = null;
     final Runner runnerAhead =
@@ -217,6 +219,7 @@ public final class RunnerTest {
             .dataDir(dbAhead)
             .pidPath(pidPath)
             .besuPluginContext(new BesuPluginContextImpl())
+            .forkIdSupplier(() -> controllerAhead.getProtocolManager().getForkIdAsBytesList())
             .build();
     try {
 
@@ -245,7 +248,7 @@ public final class RunnerTest {
               .networkId(networkId)
               .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
               .nodeKey(NodeKeyUtils.generate())
-              .storageProvider(new InMemoryStorageProvider())
+              .storageProvider(new InMemoryKeyValueStorageProvider())
               .metricsSystem(noOpMetricsSystem)
               .privacyParameters(PrivacyParameters.DEFAULT)
               .clock(TestClock.fixed())
@@ -269,6 +272,7 @@ public final class RunnerTest {
               .metricsConfiguration(behindMetricsConfiguration)
               .dataDir(temp.newFolder().toPath())
               .metricsSystem(noOpMetricsSystem)
+              .forkIdSupplier(() -> controllerBehind.getProtocolManager().getForkIdAsBytesList())
               .build();
 
       runnerBehind.start();

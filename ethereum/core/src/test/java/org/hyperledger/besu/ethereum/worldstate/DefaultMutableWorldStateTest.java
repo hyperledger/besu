@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldState;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
@@ -264,12 +264,12 @@ public class DefaultMutableWorldStateTest {
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Check that storage is empty before persisting
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isFalse();
 
     // Persist and re-run assertions
     worldState.persist(null);
 
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isTrue();
     assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);

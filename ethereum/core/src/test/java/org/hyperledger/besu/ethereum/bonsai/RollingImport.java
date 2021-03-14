@@ -18,7 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -37,7 +37,7 @@ public class RollingImport {
     final RollingFileReader reader =
         new RollingFileReader((i, c) -> Path.of(String.format(arg[0] + "-%04d.rdat", i)), false);
 
-    final InMemoryStorageProvider provider = new InMemoryStorageProvider();
+    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     final BonsaiWorldStateArchive archive = new BonsaiWorldStateArchive(provider, null);
     final InMemoryKeyValueStorage accountStorage =
         (InMemoryKeyValueStorage)
@@ -58,11 +58,8 @@ public class RollingImport {
     final BonsaiPersistedWorldState bonsaiState =
         new BonsaiPersistedWorldState(
             archive,
-            accountStorage,
-            codeStorage,
-            storageStorage,
-            trieBranchStorage,
-            trieLogStorage);
+            new BonsaiWorldStateKeyValueStorage(
+                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
 
     int count = 0;
     while (!reader.isDone()) {

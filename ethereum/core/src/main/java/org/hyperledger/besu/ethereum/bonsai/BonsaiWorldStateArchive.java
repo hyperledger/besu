@@ -24,9 +24,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,21 +48,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final BonsaiPersistedWorldState persistedState;
   private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStates;
-  private final KeyValueStorage trieLogStorage;
+  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
     this.blockchain = blockchain;
-    trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    persistedState =
-        new BonsaiPersistedWorldState(
-            this,
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
-            provider.getStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
-            trieLogStorage);
+
+    worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
+    persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     layeredWorldStates = new HashMap<>();
   }
 
@@ -83,11 +73,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     layeredWorldStates.put(worldState.blockHash(), worldState);
   }
 
-  private Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
+  public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
     if (layeredWorldStates.containsKey(blockHash)) {
       return Optional.of(layeredWorldStates.get(blockHash).getTrieLog());
     } else {
-      return trieLogStorage.get(blockHash.toArrayUnsafe()).map(TrieLogLayer::fromBytes);
+      return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
   }
 
@@ -95,7 +85,23 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return layeredWorldStates.containsKey(blockHash)
         || persistedState.blockHash().equals(blockHash)
-        || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
+        || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
+  }
+
+  @Override
+  public Optional<MutableWorldState> getWorldState(final Hash rootHash, final Hash blockHash) {
+    if (layeredWorldStates.containsKey(blockHash)) {
+      return Optional.of(layeredWorldStates.get(blockHash));
+    } else {
+      final Optional<TrieLogLayer> trieLogLayer = getTrieLogLayer(blockHash);
+      if (trieLogLayer.isPresent()) {
+        final BlockHeader header = blockchain.getBlockHeader(persistedState.blockHash()).get();
+        return Optional.of(
+            new BonsaiLayeredWorldState(
+                this, persistedState, header.getNumber(), blockHash, trieLogLayer.get()));
+      }
+    }
+    return Optional.empty();
   }
 
   @Override
@@ -139,13 +145,16 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             (BonsaiWorldStateUpdater) persistedState.updater();
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
+            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
             bonsaiUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
+            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
             bonsaiUpdater.rollForward(rollForwards.get(i));
           }
           bonsaiUpdater.commit();
           persistedState.persist(blockchain.getBlockHeader(blockHash).get());
+          LOG.debug("Archive rolling finished, now at {}", blockHash);
           return Optional.of(persistedState);
         } catch (final Exception e) {
           // if we fail we must clean up the updater
@@ -162,6 +171,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   @Override
   public MutableWorldState getMutable() {
     return persistedState;
+  }
+
+  @Override
+  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
+    persistedState.setArchiveStateUnSafe(blockHeader);
   }
 
   @Override

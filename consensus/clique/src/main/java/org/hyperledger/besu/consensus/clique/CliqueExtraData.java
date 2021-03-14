@@ -17,7 +17,8 @@ package org.hyperledger.besu.consensus.clique;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
@@ -42,12 +43,12 @@ public class CliqueExtraData implements ParsedExtraData {
 
   private final Bytes vanityData;
   private final List<Address> validators;
-  private final Optional<Signature> proposerSeal;
+  private final Optional<SECPSignature> proposerSeal;
   private final Supplier<Address> proposerAddress;
 
   public CliqueExtraData(
       final Bytes vanityData,
-      final Signature proposerSeal,
+      final SECPSignature proposerSeal,
       final List<Address> validators,
       final BlockHeader header) {
 
@@ -81,12 +82,13 @@ public class CliqueExtraData implements ParsedExtraData {
 
   static CliqueExtraData decodeRaw(final BlockHeader header) {
     final Bytes input = header.getExtraData();
-    if (input.size() < EXTRA_VANITY_LENGTH + Signature.BYTES_REQUIRED) {
+    if (input.size() < EXTRA_VANITY_LENGTH + SECPSignature.BYTES_REQUIRED) {
       throw new IllegalArgumentException(
           "Invalid Bytes supplied - too short to produce a valid Clique Extra Data object.");
     }
 
-    final int validatorByteCount = input.size() - EXTRA_VANITY_LENGTH - Signature.BYTES_REQUIRED;
+    final int validatorByteCount =
+        input.size() - EXTRA_VANITY_LENGTH - SECPSignature.BYTES_REQUIRED;
     if ((validatorByteCount % Address.SIZE) != 0) {
       throw new IllegalArgumentException("Bytes is of invalid size - i.e. contains unused bytes.");
     }
@@ -95,8 +97,8 @@ public class CliqueExtraData implements ParsedExtraData {
     final List<Address> validators =
         extractValidators(input.slice(EXTRA_VANITY_LENGTH, validatorByteCount));
 
-    final int proposerSealStartIndex = input.size() - Signature.BYTES_REQUIRED;
-    final Signature proposerSeal = parseProposerSeal(input.slice(proposerSealStartIndex));
+    final int proposerSealStartIndex = input.size() - SECPSignature.BYTES_REQUIRED;
+    final SECPSignature proposerSeal = parseProposerSeal(input.slice(proposerSealStartIndex));
 
     return new CliqueExtraData(vanityData, proposerSeal, validators, header);
   }
@@ -105,8 +107,10 @@ public class CliqueExtraData implements ParsedExtraData {
     return proposerAddress.get();
   }
 
-  private static Signature parseProposerSeal(final Bytes proposerSealRaw) {
-    return proposerSealRaw.isZero() ? null : Signature.decode(proposerSealRaw);
+  private static SECPSignature parseProposerSeal(final Bytes proposerSealRaw) {
+    return proposerSealRaw.isZero()
+        ? null
+        : SignatureAlgorithmFactory.getInstance().decodeSignature(proposerSealRaw);
   }
 
   private static List<Address> extractValidators(final Bytes validatorsRaw) {
@@ -130,21 +134,21 @@ public class CliqueExtraData implements ParsedExtraData {
   private static Bytes encode(
       final Bytes vanityData,
       final List<Address> validators,
-      final Optional<Signature> proposerSeal) {
+      final Optional<SECPSignature> proposerSeal) {
     final Bytes validatorData = Bytes.concatenate(validators.toArray(new Bytes[0]));
     return Bytes.concatenate(
         vanityData,
         validatorData,
         proposerSeal
-            .map(Signature::encodedBytes)
-            .orElse(Bytes.wrap(new byte[Signature.BYTES_REQUIRED])));
+            .map(SECPSignature::encodedBytes)
+            .orElse(Bytes.wrap(new byte[SECPSignature.BYTES_REQUIRED])));
   }
 
   public Bytes getVanityData() {
     return vanityData;
   }
 
-  public Optional<Signature> getProposerSeal() {
+  public Optional<SECPSignature> getProposerSeal() {
     return proposerSeal;
   }
 

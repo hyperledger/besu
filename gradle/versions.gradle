@@ -65,6 +65,11 @@ dependencyManagement {
     dependency 'io.opentelemetry:opentelemetry-sdk-trace:0.13.1'
     dependency 'io.opentelemetry:opentelemetry-sdk:0.13.1'
 
+    dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
+    dependency 'io.opentracing:opentracing-api:0.33.0'
+    dependency 'io.opentracing:opentracing-util:0.33.0'
+    dependency 'io.jaegertracing:jaeger-client:1.5.0'
+
     dependency 'io.pkts:pkts-core:3.0.7'
 
     dependency 'io.prometheus:simpleclient:0.9.0'
@@ -82,7 +87,7 @@ dependencyManagement {
 
     dependency 'junit:junit:4.13.1'
 
-    dependency 'net.consensys:orion:20.10.1'
+    dependency 'net.consensys:orion:21.1.1'
 
     dependency 'net.java.dev.jna:jna:5.6.0'
 
@@ -148,7 +153,7 @@ dependencyManagement {
 
     dependency 'org.yaml:snakeyaml:1.26'
 
-    dependency 'tech.pegasys.discovery:discovery:0.4.1'
+    dependency 'tech.pegasys.discovery:discovery:0.4.3'
 
     dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
     dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'

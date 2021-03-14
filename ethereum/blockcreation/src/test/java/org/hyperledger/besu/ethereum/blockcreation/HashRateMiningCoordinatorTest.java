@@ -33,7 +33,7 @@ import org.junit.runners.Parameterized.Parameters;
 public class HashRateMiningCoordinatorTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final SyncState syncState = mock(SyncState.class);
-  private final EthHashMinerExecutor minerExecutor = mock(EthHashMinerExecutor.class);
+  private final PoWMinerExecutor minerExecutor = mock(PoWMinerExecutor.class);
   private final String id;
   private final Long hashRate;
   private final Long wantTotalHashrate;
@@ -66,8 +66,8 @@ public class HashRateMiningCoordinatorTest {
 
   @Test
   public void test() {
-    final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(blockchain, minerExecutor, syncState, 1000, 10);
+    final PoWMiningCoordinator miningCoordinator =
+        new PoWMiningCoordinator(blockchain, minerExecutor, syncState, 1000, 10);
     for (int i = 0; i < startSealersSize; i++) {
       miningCoordinator.submitHashRate(UUID.randomUUID().toString(), 1L);
     }

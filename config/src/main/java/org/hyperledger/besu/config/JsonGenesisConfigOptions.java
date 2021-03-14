@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableMap;
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
+  private static final String KECCAK256_CONFIG_KEY = "keccak256";
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String QBFT_CONFIG_KEY = "qbft";
@@ -94,6 +95,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public String getConsensusEngine() {
     if (isEthHash()) {
       return ETHASH_CONFIG_KEY;
+    } else if (isKeccak256()) {
+      return KECCAK256_CONFIG_KEY;
     } else if (isIbft2()) {
       return IBFT2_CONFIG_KEY;
     } else if (isIbftLegacy()) {
@@ -110,6 +113,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isEthHash() {
     return configRoot.has(ETHASH_CONFIG_KEY);
+  }
+
+  @Override
+  public boolean isKeccak256() {
+    return configRoot.has(KECCAK256_CONFIG_KEY);
   }
 
   @Override
@@ -133,10 +141,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public BftConfigOptions getIbftLegacyConfigOptions() {
+  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
-        .map(BftConfigOptions::new)
-        .orElse(BftConfigOptions.DEFAULT);
+        .map(IbftLegacyConfigOptions::new)
+        .orElse(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Override
@@ -159,6 +167,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, ETHASH_CONFIG_KEY)
         .map(EthashConfigOptions::new)
         .orElse(EthashConfigOptions.DEFAULT);
+  }
+
+  @Override
+  public Keccak256ConfigOptions getKeccak256ConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, KECCAK256_CONFIG_KEY)
+        .map(Keccak256ConfigOptions::new)
+        .orElse(Keccak256ConfigOptions.DEFAULT);
   }
 
   @Override
@@ -226,19 +241,16 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getBerlinBlockNumber() {
-    if (ExperimentalEIPs.berlinEnabled) {
-      final OptionalLong berlinBlock = getOptionalLong("berlinblock");
-      final OptionalLong yolov2Block = getOptionalLong("yolov2block");
-      if (yolov2Block.isPresent()) {
-        if (berlinBlock.isPresent()) {
-          throw new RuntimeException(
-              "Genesis files cannot specify both berlinblock and yoloV2Block.");
-        }
-        return yolov2Block;
+    final OptionalLong berlinBlock = getOptionalLong("berlinblock");
+    final OptionalLong yolov3Block = getOptionalLong("yolov3block");
+    if (yolov3Block.isPresent()) {
+      if (berlinBlock.isPresent()) {
+        throw new RuntimeException(
+            "Genesis files cannot specify both berlinblock and yoloV2Block.");
       }
-      return berlinBlock;
+      return yolov3Block;
     }
-    return OptionalLong.empty();
+    return berlinBlock;
   }
 
   @Override
@@ -293,6 +305,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1049BlockNumber() {
+    return getOptionalLong("ecip1049block");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }
@@ -323,9 +340,18 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public PowAlgorithm getPowAlgorithm() {
+    return isEthHash()
+        ? PowAlgorithm.ETHASH
+        : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
+
+    // mainnet fork blocks
     getHomesteadBlockNumber().ifPresent(l -> builder.put("homesteadBlock", l));
     getDaoForkBlock()
         .ifPresent(
@@ -348,17 +374,32 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
+
+    // classic fork blocks
+    getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
+    getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
+    getDieHardBlockNumber().ifPresent(l -> builder.put("dieHardBlock", l));
+    getGothamBlockNumber().ifPresent(l -> builder.put("gothamBlock", l));
+    getDefuseDifficultyBombBlockNumber().ifPresent(l -> builder.put("ecip1041Block", l));
+    getAtlantisBlockNumber().ifPresent(l -> builder.put("atlantisBlock", l));
+    getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
+    getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
+    getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+    getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
+
     getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
-    getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
 
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
+    }
+    if (isKeccak256()) {
+      builder.put("keccak256", getKeccak256ConfigOptions().asMap());
     }
     if (isIbftLegacy()) {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
@@ -432,6 +473,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getPetersburgBlockNumber(),
             getIstanbulBlockNumber(),
             getMuirGlacierBlockNumber(),
+            getBerlinBlockNumber(),
             getEIP1559BlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
@@ -440,7 +482,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getAtlantisBlockNumber(),
             getAghartaBlockNumber(),
             getPhoenixBlockNumber(),
-            getThanosBlockNumber());
+            getThanosBlockNumber(),
+            getEcip1049BlockNumber());
 
     return forkBlockNumbers
         .filter(OptionalLong::isPresent)

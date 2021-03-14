@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.EthashConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.Keccak256ConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -66,6 +67,7 @@ public class BesuControllerBuilderTest {
   @Mock GenesisConfigFile genesisConfigFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock EthashConfigOptions ethashConfigOptions;
+  @Mock Keccak256ConfigOptions keccak256ConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock MiningParameters miningParameters;
@@ -95,6 +97,8 @@ public class BesuControllerBuilderTest {
     when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
     when(genesisConfigOptions.getEthashConfigOptions()).thenReturn(ethashConfigOptions);
     when(ethashConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
+    when(genesisConfigOptions.getKeccak256ConfigOptions()).thenReturn(keccak256ConfigOptions);
+    when(keccak256ConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
     when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
     when(storageProvider.createBlockchainStorage(any()))
@@ -111,11 +115,12 @@ public class BesuControllerBuilderTest {
             any(), anyString(), anyString(), anyString()))
         .thenReturn(labels -> null);
 
-    when(storageProvider.createWorldStateStorage()).thenReturn(worldStateStorage);
+    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
+        .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
     when(storageProvider.isWorldStateIterable()).thenReturn(true);
 
-    when(worldStateStorage.isWorldStateAvailable(any())).thenReturn(true);
+    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));

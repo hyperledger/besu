@@ -22,10 +22,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -45,6 +46,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.junit.Test;
@@ -52,6 +56,8 @@ import org.junit.Test;
 public class PeerDiscoveryAgentTest {
 
   private static final int BROADCAST_TCP_PORT = 30303;
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
@@ -74,10 +80,14 @@ public class PeerDiscoveryAgentTest {
   @Test
   public void testNodeRecordCreated() {
     KeyPair keyPair =
-        KeyPair.create(
-            PrivateKey.create(
-                Bytes32.fromHexString(
-                    "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createPrivateKey(
+                        Bytes32.fromHexString(
+                            "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
     final MockPeerDiscoveryAgent agent =
         helper.startDiscoveryAgent(
             helper
@@ -92,11 +102,14 @@ public class PeerDiscoveryAgentTest {
     assertThat(nodeRecord.getIdentityScheme()).isNotNull();
     assertThat(nodeRecord.getSignature()).isNotNull();
     assertThat(nodeRecord.getSeq()).isNotNull();
+    assertThat(nodeRecord.get("eth")).isNotNull();
+    assertThat(nodeRecord.get("eth"))
+        .isEqualTo(Collections.singletonList(Collections.singletonList(Bytes.EMPTY)));
     assertThat(nodeRecord.asEnr())
         .isEqualTo(
-            "enr:-Im4QIEcZbEzW8DSEX-0BPB36s1UwTT54D_I-mvrSHqsZpVzGg7wlXyHb6vRq3GTGNBNQyoUkKkJGryrTo"
-                + "DTersRuNYBgmlkgnY0gmlwhH8AAAGJc2VjcDI1NmsxoQPKY0yuDUmstAHYpMa2_oxVtw0RW_QAdpzBQA"
-                + "8yWM0xOIN0Y3ACg3VkcIJ2Xw");
+            "enr:-JC4QOfroMOa1sB6ajxcBKdWn3s9S4Ojl33pbRm72S5FnCwyZfskmjkJvZznQaWNTrOHrnKxw1R9xMm9rl"
+                + "EGOcsOyscBg2V0aMLBgIJpZIJ2NIJpcIR_AAABiXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEV"
+                + "v0AHacwUAPMljNMTiDdGNwAoN1ZHCCdl8");
   }
 
   @Test

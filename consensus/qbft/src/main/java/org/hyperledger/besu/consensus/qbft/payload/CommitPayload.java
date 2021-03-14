@@ -17,7 +17,8 @@ package org.hyperledger.besu.consensus.qbft.payload;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -25,16 +26,16 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class CommitPayload implements Payload {
+public class CommitPayload extends QbftPayload {
   private static final int TYPE = QbftV1.COMMIT;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
-  private final Signature commitSeal;
+  private final SECPSignature commitSeal;
 
   public CommitPayload(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
-      final Signature commitSeal) {
+      final SECPSignature commitSeal) {
     this.roundIdentifier = roundIdentifier;
     this.digest = digest;
     this.commitSeal = commitSeal;
@@ -42,9 +43,10 @@ public class CommitPayload implements Payload {
 
   public static CommitPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
+    final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
     final Hash digest = Payload.readDigest(rlpInput);
-    final Signature commitSeal = rlpInput.readBytes(Signature::decode);
+    final SECPSignature commitSeal =
+        rlpInput.readBytes(SignatureAlgorithmFactory.getInstance()::decodeSignature);
     rlpInput.leaveList();
 
     return new CommitPayload(roundIdentifier, digest, commitSeal);
@@ -53,7 +55,7 @@ public class CommitPayload implements Payload {
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    roundIdentifier.writeTo(rlpOutput);
+    writeConsensusRound(rlpOutput);
     rlpOutput.writeBytes(digest);
     rlpOutput.writeBytes(commitSeal.encodedBytes());
     rlpOutput.endList();
@@ -68,7 +70,7 @@ public class CommitPayload implements Payload {
     return digest;
   }
 
-  public Signature getCommitSeal() {
+  public SECPSignature getCommitSeal() {
     return commitSeal;
   }
 

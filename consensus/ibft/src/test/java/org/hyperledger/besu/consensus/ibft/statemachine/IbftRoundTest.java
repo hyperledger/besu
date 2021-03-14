@@ -39,7 +39,8 @@ import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -89,8 +90,9 @@ public class IbftRoundTest {
   private Block proposedBlock;
   private BftExtraData proposedExtraData;
 
-  private final Signature remoteCommitSeal =
-      Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1);
+  private final SECPSignature remoteCommitSeal =
+      SignatureAlgorithmFactory.getInstance()
+          .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
 
   @Before
   public void setup() {
@@ -216,7 +218,7 @@ public class IbftRoundTest {
     final Hash commitSealHash =
         BftBlockHashing.calculateDataHashForCommittedSeal(
             proposedBlock.getHeader(), proposedExtraData);
-    final Signature localCommitSeal = nodeKey.sign(commitSealHash);
+    final SECPSignature localCommitSeal = nodeKey.sign(commitSealHash);
 
     // Receive Proposal Message
     round.handleProposalMessage(
@@ -259,7 +261,7 @@ public class IbftRoundTest {
     final Hash commitSealHash =
         BftBlockHashing.calculateDataHashForCommittedSeal(
             proposedBlock.getHeader(), proposedExtraData);
-    final Signature localCommitSeal = nodeKey.sign(commitSealHash);
+    final SECPSignature localCommitSeal = nodeKey.sign(commitSealHash);
 
     round.createAndSendProposalMessage(15);
     verify(transmitter, never()).multicastCommit(any(), any(), any());

@@ -25,6 +25,8 @@ public interface GenesisConfigOptions {
 
   boolean isEthHash();
 
+  boolean isKeccak256();
+
   boolean isIbftLegacy();
 
   boolean isIbft2();
@@ -35,13 +37,15 @@ public interface GenesisConfigOptions {
 
   String getConsensusEngine();
 
-  BftConfigOptions getIbftLegacyConfigOptions();
+  IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
   CliqueConfigOptions getCliqueConfigOptions();
 
   BftConfigOptions getBftConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
+
+  Keccak256ConfigOptions getKeccak256ConfigOptions();
 
   OptionalLong getHomesteadBlockNumber();
 
@@ -173,6 +177,16 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getThanosBlockNumber();
 
+  /**
+   * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to
+   * keccak-256.
+   *
+   * @return block number of ECIP-1049 fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1049">https://ecips.ethereumclassic.org/ECIPs/ecip-1049</a>
+   */
+  OptionalLong getEcip1049BlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
@@ -209,4 +223,11 @@ public interface GenesisConfigOptions {
    * @return block number to activate Quorum Permissioning
    */
   OptionalLong getQip714BlockNumber();
+
+  /**
+   * The PoW algorithm associated with the genesis file.
+   *
+   * @return the PoW algorithm in use.
+   */
+  PowAlgorithm getPowAlgorithm();
 }
