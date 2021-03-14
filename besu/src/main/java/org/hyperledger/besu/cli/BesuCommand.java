@@ -832,11 +832,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
 
   @Option(
-      names = {"--rpc-allow-unprotected-txs"},
+      names = {"--rpc-require-chainid-in-txs"},
       description =
           "Allow for unprotected (non EIP155 signed) transactions to be submitted via RPC (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Boolean unprotectedTransactionsAllowed = false;
+  // TODO: set default to false for next major release
+  private final Boolean unprotectedTransactionsAllowed = true;
 
   @Option(
       names = {"--min-block-occupancy-ratio"},

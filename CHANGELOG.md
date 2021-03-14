@@ -61,7 +61,7 @@ This release contains the activation blocks for Berlin across all supported test
 * Distributions and maven artifacts have been moved off of bintray [\#1886](https://github.com/hyperledger/besu/pull/1886)
 * admin_peers json RPC response now includes the remote nodes enode URL
 * add support for keccak mining and a ecip1049_dev network [\#1882](https://github.com/hyperledger/besu/pull/1882)
-* Forbid unprotected transactions by default [\#1975](https://github.com/hyperledger/besu/issues/1975)
+* Allowing forbidding unprotected transactions (without a chain ID) [\#1975](https://github.com/hyperledger/besu/issues/1975)
 
 ### Bug Fixes
 * Fixed incorrect `groupId` in published maven pom files.
