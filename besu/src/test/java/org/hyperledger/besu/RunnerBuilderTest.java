@@ -20,6 +20,9 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.apache.tuweni.units.bigints.UInt64;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
@@ -180,17 +183,23 @@ public final class RunnerBuilderTest {
             .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .build();
     runner.start();
-    when(besuController.getProtocolSchedule().streamMilestoneBlocks()).thenReturn(Stream.of(1L));
-    final Block block =
-        gen.block(
-            BlockDataGenerator.BlockOptions.create()
-                .setBlockNumber(1)
-                .setParentHash(genesisBlock.getHash()));
-    blockchain.appendBlock(block, gen.receipts(block));
-    assertThat(
-            storageProvider
-                .getStorageBySegmentIdentifier(BLOCKCHAIN)
-                .get("local-enr-seqno".getBytes(StandardCharsets.UTF_8)))
-        .isNotNull();
+    when(besuController.getProtocolSchedule().streamMilestoneBlocks())
+        .thenAnswer(__ -> Stream.of(1L, 2L));
+    for (int i = 0; i < 2; ++i) {
+      final Block block =
+          gen.block(
+              BlockDataGenerator.BlockOptions.create()
+                  .setBlockNumber(1 + i)
+                  .setParentHash(blockchain.getChainHeadHash()));
+      blockchain.appendBlock(block, gen.receipts(block));
+      assertThat(
+              storageProvider
+                  .getStorageBySegmentIdentifier(BLOCKCHAIN)
+                  .get("local-enr-seqno".getBytes(StandardCharsets.UTF_8))
+                  .map(Bytes::of)
+                  .map(NodeRecordFactory.DEFAULT::fromBytes)
+                  .map(NodeRecord::getSeq))
+          .contains(UInt64.valueOf(2 + i));
+    }
   }
 }
