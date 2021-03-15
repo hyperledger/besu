@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
+  private static final IbftExtraDataEncoder BFT_EXTRA_DATA_ENCODER = new IbftExtraDataEncoder();
   private final Optional<Block> proposedBlock;
 
   public RoundChange(
@@ -79,7 +80,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
       block =
           Optional.of(
               Block.readFrom(
-                  rlpIn, BftBlockHeaderFunctions.forCommittedSeal(new IbftExtraDataEncoder())));
+                  rlpIn, BftBlockHeaderFunctions.forCommittedSeal(BFT_EXTRA_DATA_ENCODER)));
     } else {
       rlpIn.skipNext();
     }

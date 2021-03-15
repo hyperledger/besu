@@ -86,6 +86,7 @@ public class IbftRoundIntegrationTest {
   private final SECPSignature remoteCommitSeal =
       SignatureAlgorithmFactory.getInstance()
           .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
+  private final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
 
   @Before
   public void setup() {
@@ -95,14 +96,13 @@ public class IbftRoundIntegrationTest {
 
     when(nodeKey.sign(any())).thenThrow(new SecurityModuleException("Hsm Is Down"));
 
-    final IbftExtraDataEncoder ibftExtraDataEncoder = new IbftExtraDataEncoder();
     throwingMessageFactory = new MessageFactory(nodeKey);
     transmitter = new IbftMessageTransmitter(throwingMessageFactory, multicaster);
 
     BftExtraData proposedExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
-    headerTestFixture.extraData(ibftExtraDataEncoder.encode(proposedExtraData));
+    headerTestFixture.extraData(bftExtraDataEncoder.encode(proposedExtraData));
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
     proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
@@ -113,7 +113,7 @@ public class IbftRoundIntegrationTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), ibftExtraDataEncoder));
+            setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder));
   }
 
   @Test
@@ -130,7 +130,8 @@ public class IbftRoundIntegrationTest {
             nodeKey,
             throwingMessageFactory,
             transmitter,
-            roundTimer);
+            roundTimer,
+            bftExtraDataEncoder);
 
     round.handleProposalMessage(
         peerMessageFactory.createProposal(roundIdentifier, proposedBlock, Optional.empty()));
@@ -156,7 +157,8 @@ public class IbftRoundIntegrationTest {
             nodeKey,
             throwingMessageFactory,
             transmitter,
-            roundTimer);
+            roundTimer,
+            bftExtraDataEncoder);
 
     // inject a block first, then a prepare on it.
     round.handleProposalMessage(

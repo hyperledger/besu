@@ -164,7 +164,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, protocolSchedule, protocolContext, bftExtraDataEncoder);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
@@ -192,7 +193,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     protocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
-                    messageFactory),
+                    messageFactory,
+                    bftExtraDataEncoder),
                 messageValidatorFactory,
                 messageFactory),
             gossiper,

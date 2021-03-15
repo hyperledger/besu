@@ -242,7 +242,8 @@ public class TestContextBuilder {
         controllerAndState.getEventHandler(),
         controllerAndState.getFinalState(),
         controllerAndState.getEventMultiplexer(),
-        controllerAndState.getMessageFactory());
+        controllerAndState.getMessageFactory(),
+        BFT_EXTRA_DATA_ENCODER);
   }
 
   public TestContext buildAndStart() {
@@ -361,7 +362,8 @@ public class TestContextBuilder {
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, protocolSchedule, protocolContext, BFT_EXTRA_DATA_ENCODER);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
 
@@ -384,7 +386,8 @@ public class TestContextBuilder {
                     protocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
-                    messageFactory),
+                    messageFactory,
+                    BFT_EXTRA_DATA_ENCODER),
                 messageValidatorFactory,
                 messageFactory),
             gossiper,

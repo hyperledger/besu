@@ -16,12 +16,12 @@ package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -50,6 +50,7 @@ public class TestContext {
   private final BftFinalState finalState;
   private final EventMultiplexer eventMultiplexer;
   private final MessageFactory messageFactory;
+  private final BftExtraDataEncoder bftExtraDataEncoder;
 
   public TestContext(
       final Map<Address, ValidatorPeer> remotePeers,
@@ -58,7 +59,8 @@ public class TestContext {
       final BftEventHandler controller,
       final BftFinalState finalState,
       final EventMultiplexer eventMultiplexer,
-      final MessageFactory messageFactory) {
+      final MessageFactory messageFactory,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.remotePeers = remotePeers;
     this.blockchain = blockchain;
     this.bftExecutors = bftExecutors;
@@ -66,6 +68,7 @@ public class TestContext {
     this.finalState = finalState;
     this.eventMultiplexer = eventMultiplexer;
     this.messageFactory = messageFactory;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
   }
 
   public void start() {
@@ -101,7 +104,7 @@ public class TestContext {
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
         .coinbase(proposer)
-        .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataEncoder()));
+        .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder));
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
 
     return new Block(newHeader, block.getBody());

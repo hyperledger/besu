@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
+  private static final QbftExtraDataEncoder QBFT_EXTRA_DATA_ENCODER = new QbftExtraDataEncoder();
   private final Optional<Block> proposedBlock;
   private final List<SignedData<PreparePayload>> prepares;
 
@@ -86,7 +87,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
       block =
           Optional.of(
               Block.readFrom(
-                  rlpIn, BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataEncoder())));
+                  rlpIn, BftBlockHeaderFunctions.forCommittedSeal(QBFT_EXTRA_DATA_ENCODER)));
     }
 
     final List<SignedData<PreparePayload>> prepares =

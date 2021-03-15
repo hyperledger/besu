@@ -19,10 +19,10 @@ import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHel
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -53,6 +53,7 @@ public class ProposalValidator {
   private final Collection<Address> validators;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Address expectedProposer;
+  private final BftExtraDataEncoder bftExtraDataEncoder;
 
   public ProposalValidator(
       final BlockValidator blockValidator,
@@ -60,13 +61,15 @@ public class ProposalValidator {
       final int quorumMessageCount,
       final Collection<Address> validators,
       final ConsensusRoundIdentifier roundIdentifier,
-      final Address expectedProposer) {
+      final Address expectedProposer,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
     this.quorumMessageCount = quorumMessageCount;
     this.validators = validators;
     this.roundIdentifier = roundIdentifier;
     this.expectedProposer = expectedProposer;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
   }
 
   public boolean validate(final Proposal msg) {
@@ -122,8 +125,8 @@ public class ProposalValidator {
             BftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(),
                 metadata.getPreparedRound(),
-                BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataEncoder()),
-                new QbftExtraDataEncoder());
+                BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
+                bftExtraDataEncoder);
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 

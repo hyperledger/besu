@@ -123,7 +123,8 @@ public class ProposalValidatorTest {
             BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
             validators.getNodeAddresses(),
             roundIdentifier,
-            validators.getNode(0).getAddress()));
+            validators.getNode(0).getAddress(),
+            bftExtraDataEncoder));
   }
 
   // NOTE: tests herein assume the ProposalPayloadValidator works as expected, so other than

@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
@@ -60,7 +59,7 @@ public class IbftRound {
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final IbftMessageTransmitter transmitter;
-  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private final BftExtraDataEncoder bftExtraDataEncoder;
 
   public IbftRound(
       final RoundState roundState,
@@ -71,7 +70,8 @@ public class IbftRound {
       final NodeKey nodeKey,
       final MessageFactory messageFactory,
       final IbftMessageTransmitter transmitter,
-      final RoundTimer roundTimer) {
+      final RoundTimer roundTimer,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -80,6 +80,7 @@ public class IbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
     roundTimer.startTimer(getRoundIdentifier());
   }
 

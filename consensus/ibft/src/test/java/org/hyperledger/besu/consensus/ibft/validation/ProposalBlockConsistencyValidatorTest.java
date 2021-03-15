@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
@@ -43,9 +44,11 @@ public class ProposalBlockConsistencyValidatorTest {
   private final ConsensusRoundIdentifier roundIdentifier =
       new ConsensusRoundIdentifier(chainHeight, 4);
 
+  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataEncoder);
   private final Block block =
       ProposedBlockHelpers.createProposalBlock(
-          Collections.emptyList(), roundIdentifier, new IbftExtraDataEncoder());
+          Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
   private ProposalBlockConsistencyValidator consistencyChecker;
 
   @Before
@@ -69,7 +72,7 @@ public class ProposalBlockConsistencyValidatorTest {
 
     assertThat(
             consistencyChecker.validateProposalMatchesBlock(
-                proposalMsg.getSignedPayload(), misMatchedBlock))
+                proposalMsg.getSignedPayload(), misMatchedBlock, bftBlockInterface))
         .isFalse();
   }
 
@@ -81,7 +84,8 @@ public class ProposalBlockConsistencyValidatorTest {
         proposerMessageFactory.createProposal(futureRound, block, Optional.empty());
 
     assertThat(
-            consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
+            consistencyChecker.validateProposalMatchesBlock(
+                proposalMsg.getSignedPayload(), block, bftBlockInterface))
         .isFalse();
   }
 
@@ -93,7 +97,8 @@ public class ProposalBlockConsistencyValidatorTest {
         proposerMessageFactory.createProposal(futureHeight, block, Optional.empty());
 
     assertThat(
-            consistencyChecker.validateProposalMatchesBlock(proposalMsg.getSignedPayload(), block))
+            consistencyChecker.validateProposalMatchesBlock(
+                proposalMsg.getSignedPayload(), block, bftBlockInterface))
         .isFalse();
   }
 }

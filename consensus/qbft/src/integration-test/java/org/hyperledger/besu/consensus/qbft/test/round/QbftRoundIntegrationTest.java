@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
@@ -66,6 +67,7 @@ public class QbftRoundIntegrationTest {
   private final MessageFactory peerMessageFactory = new MessageFactory(NodeKeyUtils.generate());
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
+  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
   private ProtocolContext protocolContext;
 
   @Mock private MutableBlockchain blockChain;
@@ -129,7 +131,8 @@ public class QbftRoundIntegrationTest {
             nodeKey,
             throwingMessageFactory,
             transmitter,
-            roundTimer);
+            roundTimer,
+            bftExtraDataEncoder);
 
     round.handleProposalMessage(
         peerMessageFactory.createProposal(
@@ -156,7 +159,8 @@ public class QbftRoundIntegrationTest {
             nodeKey,
             throwingMessageFactory,
             transmitter,
-            roundTimer);
+            roundTimer,
+            bftExtraDataEncoder);
 
     // inject a block first, then a prepare on it.
     round.handleProposalMessage(

@@ -26,7 +26,6 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
@@ -65,7 +64,7 @@ public class QbftRound {
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
-  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
+  private final BftExtraDataEncoder bftExtraDataEncoder;
 
   public QbftRound(
       final RoundState roundState,
@@ -76,7 +75,8 @@ public class QbftRound {
       final NodeKey nodeKey,
       final MessageFactory messageFactory,
       final QbftMessageTransmitter transmitter,
-      final RoundTimer roundTimer) {
+      final RoundTimer roundTimer,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -85,6 +85,7 @@ public class QbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
+    this.bftExtraDataEncoder = bftExtraDataEncoder;
 
     roundTimer.startTimer(getRoundIdentifier());
   }

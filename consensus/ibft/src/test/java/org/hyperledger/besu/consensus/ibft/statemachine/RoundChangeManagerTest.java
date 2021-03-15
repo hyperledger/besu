@@ -19,10 +19,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
@@ -64,6 +66,8 @@ public class RoundChangeManagerTest {
   private final List<Address> validators = Lists.newArrayList();
   private final ProposalBlockConsistencyValidator proposalConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);
+  private final BftBlockInterface bftBlockInterface =
+      new BftBlockInterface(new IbftExtraDataEncoder());
 
   @Before
   public void setup() {
@@ -103,10 +107,12 @@ public class RoundChangeManagerTest {
                 BftHelpers.calculateRequiredValidatorQuorum(
                     BftHelpers.calculateRequiredValidatorQuorum(validators.size())),
                 2),
-            proposalConsistencyValidator);
+            proposalConsistencyValidator,
+            bftBlockInterface);
     manager = new RoundChangeManager(2, roundChangeMessageValidator);
 
-    when(proposalConsistencyValidator.validateProposalMatchesBlock(any(), any())).thenReturn(true);
+    when(proposalConsistencyValidator.validateProposalMatchesBlock(any(), any(), any()))
+        .thenReturn(true);
   }
 
   private RoundChange makeRoundChangeMessage(

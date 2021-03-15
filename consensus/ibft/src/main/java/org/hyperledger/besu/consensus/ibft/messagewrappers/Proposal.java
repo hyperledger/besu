@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class Proposal extends BftMessage<ProposalPayload> {
 
+  private static final IbftExtraDataEncoder BFT_EXTRA_DATA_ENCODER = new IbftExtraDataEncoder();
   private final Block proposedBlock;
 
   private final Optional<RoundChangeCertificate> roundChangeCertificate;
@@ -79,7 +80,7 @@ public class Proposal extends BftMessage<ProposalPayload> {
     final SignedData<ProposalPayload> payload =
         PayloadDeserializers.readSignedProposalPayloadFrom(rlpIn);
     final Block proposedBlock =
-        Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal(new IbftExtraDataEncoder()));
+        Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal(BFT_EXTRA_DATA_ENCODER));
 
     final Optional<RoundChangeCertificate> roundChangeCertificate =
         readRoundChangeCertificate(rlpIn);

@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -87,6 +88,7 @@ public class QbftBlockHeightManagerTest {
   private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
+  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
 
   @Mock private BftFinalState finalState;
   @Mock private QbftMessageTransmitter messageTransmitter;
@@ -115,7 +117,7 @@ public class QbftBlockHeightManagerTest {
     final BftExtraData extraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
 
-    headerTestFixture.extraData(new QbftExtraDataEncoder().encode(extraData));
+    headerTestFixture.extraData(bftExtraDataEncoder.encode(extraData));
     final BlockHeader header = headerTestFixture.buildHeader();
     createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
   }
@@ -163,7 +165,8 @@ public class QbftBlockHeightManagerTest {
                   nodeKey,
                   messageFactory,
                   messageTransmitter,
-                  roundTimer);
+                  roundTimer,
+                  bftExtraDataEncoder);
             });
 
     when(roundFactory.createNewRoundWithState(any(), any()))
@@ -179,7 +182,8 @@ public class QbftBlockHeightManagerTest {
                   nodeKey,
                   messageFactory,
                   messageTransmitter,
-                  roundTimer);
+                  roundTimer,
+                  bftExtraDataEncoder);
             });
   }
 
