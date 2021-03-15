@@ -28,7 +28,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import org.junit.Test;
 
-public class EthHashMinerExecutorTest {
+public class PoWMinerExecutorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Test
@@ -46,8 +46,8 @@ public class EthHashMinerExecutorTest {
             () -> null,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
-    final EthHashMinerExecutor executor =
-        new EthHashMinerExecutor(
+    final PoWMinerExecutor executor =
+        new PoWMinerExecutor(
             null,
             null,
             pendingTransactions,
@@ -75,8 +75,8 @@ public class EthHashMinerExecutorTest {
             () -> null,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
-    final EthHashMinerExecutor executor =
-        new EthHashMinerExecutor(
+    final PoWMinerExecutor executor =
+        new PoWMinerExecutor(
             null,
             null,
             pendingTransactions,

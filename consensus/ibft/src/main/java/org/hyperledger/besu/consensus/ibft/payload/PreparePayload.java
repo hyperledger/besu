@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class PreparePayload implements Payload {
+public class PreparePayload extends IbftPayload {
   private static final int TYPE = IbftV2.PREPARE;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;

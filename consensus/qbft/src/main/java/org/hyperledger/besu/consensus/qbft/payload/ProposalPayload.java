@@ -27,7 +27,7 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
-public class ProposalPayload implements Payload {
+public class ProposalPayload extends QbftPayload {
 
   private static final int TYPE = QbftV1.PROPOSAL;
   private final ConsensusRoundIdentifier roundIdentifier;
@@ -41,7 +41,7 @@ public class ProposalPayload implements Payload {
 
   public static ProposalPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
-    final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
+    final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
     final Block proposedBlock =
         Block.readFrom(
             rlpInput, BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataEncoder()));
@@ -53,7 +53,7 @@ public class ProposalPayload implements Payload {
   @Override
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    roundIdentifier.writeTo(rlpOutput);
+    writeConsensusRound(rlpOutput);
     proposedBlock.writeTo(rlpOutput);
     rlpOutput.endList();
   }

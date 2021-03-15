@@ -23,5 +23,7 @@ public enum NetworkName {
   CLASSIC,
   KOTTI,
   MORDOR,
-  YOLO_V3
+  YOLO_V3,
+  ECIP1049_DEV,
+  ASTOR
 }

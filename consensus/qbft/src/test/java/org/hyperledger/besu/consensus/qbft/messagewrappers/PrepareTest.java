@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -40,7 +39,7 @@ public class PrepareTest {
         new PreparePayload(new ConsensusRoundIdentifier(1, 1), Hash.ZERO);
 
     final SignedData<PreparePayload> signedPreparePayload =
-        SignedData.create(preparePayload, nodeKey.sign(hashForSignature(preparePayload)));
+        SignedData.create(preparePayload, nodeKey.sign(preparePayload.hashForSignature()));
 
     final Prepare prepareMsg = new Prepare(signedPreparePayload);
 

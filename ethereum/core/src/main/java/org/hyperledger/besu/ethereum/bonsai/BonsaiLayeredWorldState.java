@@ -18,8 +18,11 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.HashMap;
@@ -32,8 +35,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A World State backed first by trie log layer and then by another world state. */
-public class BonsaiLayeredWorldState implements BonsaiWorldView, WorldState {
+public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
 
+  private final BonsaiWorldStateArchive worldStateArchive;
   private final BonsaiWorldView parent;
   protected final long height;
   protected final TrieLogLayer trieLog;
@@ -41,10 +45,12 @@ public class BonsaiLayeredWorldState implements BonsaiWorldView, WorldState {
   private final Hash worldStateRootHash;
 
   BonsaiLayeredWorldState(
+      final BonsaiWorldStateArchive worldStateArchive,
       final BonsaiWorldView parent,
       final long height,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog) {
+    this.worldStateArchive = worldStateArchive;
     this.parent = parent;
     this.height = height;
     this.worldStateRootHash = worldStateRootHash;
@@ -72,6 +78,15 @@ public class BonsaiLayeredWorldState implements BonsaiWorldView, WorldState {
       final Optional<Bytes> maybeCode = currentLayer.trieLog.getCode(address);
       if (maybeCode.isPresent()) {
         return maybeCode;
+      }
+      final Optional<Hash> maybeLastChangedCodeLocation =
+          currentLayer.trieLog.getLastChangedCodeLocation(address);
+      if (maybeLastChangedCodeLocation.isPresent()) {
+        final Optional<TrieLogLayer> maybeTrieLogLayer =
+            worldStateArchive.getTrieLogLayer(maybeLastChangedCodeLocation.get());
+        if (maybeTrieLogLayer.isPresent()) {
+          return maybeTrieLogLayer.get().getCode(address);
+        }
       }
       if (currentLayer.parent == null) {
         currentLayer = null;
@@ -217,5 +232,21 @@ public class BonsaiLayeredWorldState implements BonsaiWorldView, WorldState {
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
     throw new UnsupportedOperationException("Bonsai does not support pruning and debug RPCs");
+  }
+
+  @Override
+  public MutableWorldState copy() {
+    throw new UnsupportedOperationException(
+        "Bonsai Tries does not support direct duplication of the persisted tries.");
+  }
+
+  @Override
+  public void persist(final BlockHeader blockHeader) {
+    throw new UnsupportedOperationException("Layered worldState can not be persisted.");
+  }
+
+  @Override
+  public WorldUpdater updater() {
+    return new BonsaiWorldStateUpdater(this);
   }
 }

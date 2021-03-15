@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,17 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.payload;
+package org.hyperledger.besu.config;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+/** An enumeration of supported Proof-of-work algorithms. */
+public enum PowAlgorithm {
+  UNSUPPORTED,
+  ETHASH,
+  KECCAK256;
 
-import org.apache.tuweni.bytes.Bytes;
-
-public class PayloadHelpers {
-
-  public static Hash hashForSignature(final Payload unsignedMessageData) {
-    return Hash.hash(
-        Bytes.concatenate(
-            Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
+  public static PowAlgorithm fromString(final String str) {
+    for (final PowAlgorithm powAlgorithm : PowAlgorithm.values()) {
+      if (powAlgorithm.name().equalsIgnoreCase(str)) {
+        return powAlgorithm;
+      }
+    }
+    return null;
   }
 }

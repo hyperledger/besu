@@ -33,6 +33,8 @@ public class JsonRpcConfigurationTest {
     assertThat(configuration.getCorsAllowedDomains()).isEmpty();
     assertThat(configuration.getRpcApis())
         .containsExactlyInAnyOrder(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+    assertThat(configuration.getMaxActiveConnections())
+        .isEqualTo(JsonRpcConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS);
   }
 
   @Test

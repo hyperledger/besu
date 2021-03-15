@@ -29,11 +29,16 @@ public class FixedDifficultyCalculators {
   public static final int DEFAULT_DIFFICULTY = 100;
 
   public static boolean isFixedDifficultyInConfig(final GenesisConfigOptions config) {
-    return config.getEthashConfigOptions().getFixedDifficulty().isPresent();
+    return config.getEthashConfigOptions().getFixedDifficulty().isPresent()
+        || config.getKeccak256ConfigOptions().getFixedDifficulty().isPresent();
   }
 
   public static DifficultyCalculator calculator(final GenesisConfigOptions config) {
-    long difficulty = config.getEthashConfigOptions().getFixedDifficulty().getAsLong();
+    long difficulty =
+        config
+            .getEthashConfigOptions()
+            .getFixedDifficulty()
+            .orElseGet(() -> config.getKeccak256ConfigOptions().getFixedDifficulty().getAsLong());
     return (time, parent, context) -> BigInteger.valueOf(difficulty);
   }
 }
