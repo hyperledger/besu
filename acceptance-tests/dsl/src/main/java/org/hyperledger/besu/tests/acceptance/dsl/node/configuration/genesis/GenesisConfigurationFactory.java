@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 
@@ -75,7 +76,7 @@ public class GenesisConfigurationFactory {
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/qbft/qbft.json");
     return updateGenesisExtraData(
-        validators, template, IbftExtraDataEncoder::createGenesisExtraDataString);
+        validators, template, QbftExtraDataEncoder::createGenesisExtraDataString);
   }
 
   private Optional<String> updateGenesisExtraData(
