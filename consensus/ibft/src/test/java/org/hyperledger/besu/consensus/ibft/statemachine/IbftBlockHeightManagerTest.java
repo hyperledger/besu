@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -107,6 +108,7 @@ public class IbftBlockHeightManagerTest {
 
   private final List<Address> validators = Lists.newArrayList();
   private final List<MessageFactory> validatorMessageFactory = Lists.newArrayList();
+  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
 
   private ProtocolContext protocolContext;
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
@@ -165,7 +167,8 @@ public class IbftBlockHeightManagerTest {
                   nodeKey,
                   messageFactory,
                   messageTransmitter,
-                  roundTimer);
+                  roundTimer,
+                  bftExtraDataEncoder);
             });
 
     when(roundFactory.createNewRoundWithState(any(), any()))
@@ -181,7 +184,8 @@ public class IbftBlockHeightManagerTest {
                   nodeKey,
                   messageFactory,
                   messageTransmitter,
-                  roundTimer);
+                  roundTimer,
+                  bftExtraDataEncoder);
             });
   }
 
