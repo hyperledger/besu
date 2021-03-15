@@ -27,6 +27,10 @@ This release contains the activation blocks for Berlin across all supported test
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
+### Download link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.2/besu-21.1.2.zip
+02f4b6622756b77fed814d8c1bbf986c6178d8f5adb9d61076e061124c3d12aa
+
 ## 21.1.1
 
 ### Berlin Network Upgrade
