@@ -187,8 +187,9 @@ public abstract class PeerDiscoveryAgent {
             .map(nodeRecordFactory::fromBytes);
 
     final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
-    final Integer discoveryPort = localNode.get().getEnodeURL().getDiscoveryPortOrZero();
-    final Integer listeningPort = localNode.get().getEnodeURL().getListeningPortOrZero();
+    final Optional<EnodeURL> maybeEnodeURL = localNode.map(DiscoveryPeer::getEnodeURL);
+    final Integer discoveryPort = maybeEnodeURL.flatMap(EnodeURL::getDiscoveryPort).orElse(0);
+    final Integer listeningPort = maybeEnodeURL.flatMap(EnodeURL::getListeningPort).orElse(0);
     return existingNodeRecord
         .filter(
             nodeRecord ->
