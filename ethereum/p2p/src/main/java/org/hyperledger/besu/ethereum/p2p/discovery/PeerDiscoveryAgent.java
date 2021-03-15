@@ -190,6 +190,7 @@ public abstract class PeerDiscoveryAgent {
     final Optional<EnodeURL> maybeEnodeURL = localNode.map(DiscoveryPeer::getEnodeURL);
     final Integer discoveryPort = maybeEnodeURL.flatMap(EnodeURL::getDiscoveryPort).orElse(0);
     final Integer listeningPort = maybeEnodeURL.flatMap(EnodeURL::getListeningPort).orElse(0);
+    final String forkIdEnrField = "eth";
     return existingNodeRecord
         .filter(
             nodeRecord ->
@@ -197,7 +198,7 @@ public abstract class PeerDiscoveryAgent {
                     && addressBytes.equals(nodeRecord.get(EnrField.IP_V4))
                     && discoveryPort.equals(nodeRecord.get(EnrField.UDP))
                     && listeningPort.equals(nodeRecord.get(EnrField.TCP))
-                    && forkIdSupplier.get().equals(nodeRecord.get("eth")))
+                    && forkIdSupplier.get().equals(nodeRecord.get(forkIdEnrField)))
         .orElseGet(
             () -> {
               final UInt64 sequenceNumber =
@@ -210,7 +211,8 @@ public abstract class PeerDiscoveryAgent {
                       new EnrField(EnrField.IP_V4, addressBytes),
                       new EnrField(EnrField.TCP, listeningPort),
                       new EnrField(EnrField.UDP, discoveryPort),
-                      new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
+                      new EnrField(
+                          forkIdEnrField, Collections.singletonList(forkIdSupplier.get())));
               nodeRecord.setSignature(
                   nodeKey
                       .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
