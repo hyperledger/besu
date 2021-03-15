@@ -14,11 +14,20 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil;
 
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
+
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.logging.log4j.Level;
-import tech.pegasys.ethsigner.core.Config;
+import tech.pegasys.ethsigner.core.config.Config;
+import tech.pegasys.ethsigner.core.config.TlsOptions;
+import tech.pegasys.ethsigner.core.config.tls.client.ClientTlsOptions;
 import tech.pegasys.ethsigner.core.signing.ChainIdProvider;
 
 public class EthSignerConfig implements Config {
@@ -67,6 +76,11 @@ public class EthSignerConfig implements Config {
   }
 
   @Override
+  public String getDownstreamHttpPath() {
+    return "/";
+  }
+
+  @Override
   public Duration getDownstreamHttpRequestTimeout() {
     return downstreamHttpRequestTimeout;
   }
@@ -89,5 +103,45 @@ public class EthSignerConfig implements Config {
   @Override
   public Path getDataPath() {
     return dataDirectory;
+  }
+
+  @Override
+  public Optional<TlsOptions> getTlsOptions() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<ClientTlsOptions> getClientTlsOptions() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Collection<String> getCorsAllowedOrigins() {
+    return List.of("*");
+  }
+
+  @Override
+  public Boolean isMetricsEnabled() {
+    return Boolean.FALSE;
+  }
+
+  @Override
+  public Integer getMetricsPort() {
+    return -1;
+  }
+
+  @Override
+  public String getMetricsHost() {
+    return "localhost";
+  }
+
+  @Override
+  public Set<MetricCategory> getMetricCategories() {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public List<String> getMetricsHostAllowList() {
+    return List.of("localhost", "127.0.0.1");
   }
 }
