@@ -1181,6 +1181,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
+      instantiateSignatureAlgorithmFactory();
 
       final BesuCommand controller = validateOptions().configure().controller();
 

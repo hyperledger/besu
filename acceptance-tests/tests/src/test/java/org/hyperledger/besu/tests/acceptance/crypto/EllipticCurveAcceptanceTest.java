@@ -17,6 +17,22 @@
 package org.hyperledger.besu.tests.acceptance.crypto;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.process.ExitedWithCode;
+import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+
+import java.io.IOException;
+
+import org.junit.Test;
 
 public class EllipticCurveAcceptanceTest extends AcceptanceTestBase {
+
+  protected static final String INVALID_GENESIS_FILE = "/crypto/invalid_ec_curve_genesis.json";
+
+  private Node node;
+
+  @Test
+  public void nodeShouldNotStartWithInvalidEllipticCurveOption() throws IOException {
+    node = besu.createCustomGenesisNode("node1", INVALID_GENESIS_FILE, true);
+    node.verify(new ExitedWithCode(1));
+  }
 }

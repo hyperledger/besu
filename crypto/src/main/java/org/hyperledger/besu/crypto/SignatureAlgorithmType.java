@@ -22,8 +22,7 @@ import java.util.function.Supplier;
 public class SignatureAlgorithmType {
 
   private static final Map<String, Supplier<SignatureAlgorithm>> TYPES =
-      Map.of("secp256k1", SECP256K1::new,
-             "secp256r1", SECP256K1::new);
+      Map.of("secp256k1", SECP256K1::new);
 
   public static final Supplier<SignatureAlgorithm> DEFAULT_SIGNATURE_ALGORITHM_TYPE =
       TYPES.get("secp256k1");
