@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.ibft.validation;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -85,7 +86,7 @@ public class MessageValidatorTest {
     when(signedDataValidator.validatePrepare(any())).thenReturn(true);
     when(signedDataValidator.validateCommit(any())).thenReturn(true);
 
-    when(proposalBlockConsistencyValidator.validateProposalMatchesBlock(any(), any()))
+    when(proposalBlockConsistencyValidator.validateProposalMatchesBlock(any(), any(), any()))
         .thenReturn(true);
 
     protocolContext =
@@ -136,12 +137,13 @@ public class MessageValidatorTest {
   public void ifProposalConsistencyChecksFailProposalIsIllegal() {
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, Optional.empty());
-    when(proposalBlockConsistencyValidator.validateProposalMatchesBlock(any(), any()))
+    when(proposalBlockConsistencyValidator.validateProposalMatchesBlock(any(), any(), any()))
         .thenReturn(false);
 
     assertThat(messageValidator.validateProposal(proposal)).isFalse();
     verify(proposalBlockConsistencyValidator, times(1))
-        .validateProposalMatchesBlock(proposal.getSignedPayload(), proposal.getBlock());
+        .validateProposalMatchesBlock(
+            eq(proposal.getSignedPayload()), eq(proposal.getBlock()), any());
   }
 
   @Test

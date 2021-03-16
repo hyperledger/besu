@@ -15,27 +15,27 @@
 package org.hyperledger.besu.consensus.common.bft.queries;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.NonBesuBlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.plugin.services.query.BftQueryService;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -52,107 +52,78 @@ public class BftQueryServiceImplTest {
 
   @Mock private Blockchain blockchain;
 
+  @Mock private BftExtraDataCodec bftExtraDataCodec;
+
+  @Mock private BftBlockInterface bftBlockInterface;
+
   private final List<NodeKey> validatorKeys =
       Lists.newArrayList(NodeKeyUtils.generate(), NodeKeyUtils.generate());
 
   private final List<NodeKey> signingKeys = Lists.newArrayList(validatorKeys.get(0));
-  private final int ROUND_NUMBER_IN_BLOCK = 5;
 
-  private BftExtraData signedExtraData;
   private BlockHeader blockHeader;
 
   @Before
   public void setup() {
-
-    final Collection<Address> validators =
-        validatorKeys.stream()
-            .map(validatorKeys -> Util.publicKeyToAddress(validatorKeys.getPublicKey()))
-            .collect(Collectors.toList());
-
-    final BftExtraData unsignedExtraData =
-        new BftExtraData(
-            Bytes.wrap(new byte[32]),
-            Collections.emptyList(),
-            Optional.empty(),
-            ROUND_NUMBER_IN_BLOCK,
-            validators);
-
     final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
     blockHeaderTestFixture.number(1); // can't be genesis block (due to extradata serialisation)
-    blockHeaderTestFixture.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock());
-    blockHeaderTestFixture.extraData(unsignedExtraData.encode());
+    blockHeaderTestFixture.blockHeaderFunctions(
+        BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
 
-    final BlockHeader unsignedBlockHeader = blockHeaderTestFixture.buildHeader();
-
-    final Collection<SECPSignature> validatorSignatures =
-        signingKeys.stream()
-            .map(
-                nodeKey ->
-                    nodeKey.sign(
-                        BftBlockHashing.calculateDataHashForCommittedSeal(unsignedBlockHeader)))
-            .collect(Collectors.toList());
-
-    signedExtraData =
-        new BftExtraData(
-            Bytes.wrap(new byte[32]),
-            validatorSignatures,
-            Optional.empty(),
-            ROUND_NUMBER_IN_BLOCK,
-            validators);
-
-    blockHeaderTestFixture.extraData(signedExtraData.encode());
     blockHeader = blockHeaderTestFixture.buildHeader();
   }
 
   @Test
   public void roundNumberFromBlockIsReturned() {
     final BftQueryService service =
-        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, null);
+        new BftQueryServiceImpl(bftBlockInterface, blockchain, null, null);
+    final int roundNumberInBlock = 5;
+    final BftExtraData extraData =
+        new BftExtraData(Bytes.EMPTY, List.of(), Optional.empty(), roundNumberInBlock, List.of());
+    when(bftBlockInterface.getExtraData(blockHeader)).thenReturn(extraData);
 
-    assertThat(service.getRoundNumberFrom(blockHeader)).isEqualTo(ROUND_NUMBER_IN_BLOCK);
+    assertThat(service.getRoundNumberFrom(blockHeader)).isEqualTo(roundNumberInBlock);
   }
 
   @Test
   public void getRoundNumberThrowsIfBlockIsNotOnTheChain() {
-    final NonBesuBlockHeader header =
-        new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.getExtraData());
-    when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
+    final NonBesuBlockHeader header = new NonBesuBlockHeader(Hash.EMPTY, Bytes.EMPTY);
 
     final BftQueryService service =
-        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, null);
-    assertThatExceptionOfType(RuntimeException.class)
+        new BftQueryServiceImpl(new BftBlockInterface(bftExtraDataCodec), blockchain, null, null);
+    assertThatExceptionOfType(NoSuchElementException.class)
         .isThrownBy(() -> service.getRoundNumberFrom(header));
   }
 
   @Test
   public void getSignersReturnsAddressesOfSignersInBlock() {
     final BftQueryService service =
-        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, null);
+        new BftQueryServiceImpl(bftBlockInterface, blockchain, null, null);
 
     final List<Address> signers =
         signingKeys.stream()
             .map(nodeKey -> Util.publicKeyToAddress(nodeKey.getPublicKey()))
             .collect(Collectors.toList());
+    when(bftBlockInterface.getCommitters(any())).thenReturn(signers);
 
     assertThat(service.getSignersFrom(blockHeader)).containsExactlyElementsOf(signers);
   }
 
   @Test
   public void getSignersThrowsIfBlockIsNotOnTheChain() {
-    final NonBesuBlockHeader header =
-        new NonBesuBlockHeader(blockHeader.getHash(), blockHeader.getExtraData());
-    when(blockchain.getBlockHeader(blockHeader.getHash())).thenReturn(Optional.empty());
+    final NonBesuBlockHeader header = new NonBesuBlockHeader(Hash.EMPTY, Bytes.EMPTY);
 
     final BftQueryService service =
-        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, null);
-    assertThatExceptionOfType(RuntimeException.class)
+        new BftQueryServiceImpl(bftBlockInterface, blockchain, null, null);
+    assertThatExceptionOfType(NoSuchElementException.class)
         .isThrownBy(() -> service.getSignersFrom(header));
   }
 
   @Test
   public void consensusMechanismNameReturnedIsSameAsThatPassedDuringCreation() {
     final BftQueryService service =
-        new BftQueryServiceImpl(new BftBlockInterface(), blockchain, null, "consensusMechanism");
+        new BftQueryServiceImpl(
+            new BftBlockInterface(bftExtraDataCodec), blockchain, null, "consensusMechanism");
     assertThat(service.getConsensusMechanismName()).isEqualTo("consensusMechanism");
   }
 }

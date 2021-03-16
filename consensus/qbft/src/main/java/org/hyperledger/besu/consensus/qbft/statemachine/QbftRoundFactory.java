@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
@@ -36,6 +37,7 @@ public class QbftRoundFactory {
   private final Subscribers<MinedBlockObserver> minedBlockObservers;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public QbftRoundFactory(
       final BftFinalState finalState,
@@ -43,7 +45,8 @@ public class QbftRoundFactory {
       final ProtocolSchedule protocolSchedule,
       final Subscribers<MinedBlockObserver> minedBlockObservers,
       final MessageValidatorFactory messageValidatorFactory,
-      final MessageFactory messageFactory) {
+      final MessageFactory messageFactory,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
     this.protocolContext = protocolContext;
@@ -51,6 +54,7 @@ public class QbftRoundFactory {
     this.minedBlockObservers = minedBlockObservers;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   public QbftRound createNewRound(final BlockHeader parentHeader, final int round) {
@@ -86,6 +90,7 @@ public class QbftRoundFactory {
         finalState.getNodeKey(),
         messageFactory,
         messageTransmitter,
-        finalState.getRoundTimer());
+        finalState.getRoundTimer(),
+        bftExtraDataCodec);
   }
 }

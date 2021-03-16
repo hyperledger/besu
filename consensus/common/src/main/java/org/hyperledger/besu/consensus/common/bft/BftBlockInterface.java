@@ -22,11 +22,21 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class BftBlockInterface implements BlockInterface {
+
+  private final BftExtraDataCodec bftExtraDataCodec;
+
+  public BftBlockInterface(final BftExtraDataCodec bftExtraDataCodec) {
+    this.bftExtraDataCodec = bftExtraDataCodec;
+  }
 
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
@@ -40,7 +50,7 @@ public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
-    final BftExtraData bftExtraData = BftExtraData.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
 
     if (bftExtraData.getVote().isPresent()) {
       final Vote headerVote = bftExtraData.getVote().get();
@@ -56,13 +66,16 @@ public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    final BftExtraData bftExtraData = BftExtraData.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
     return bftExtraData.getValidators();
   }
 
   public static Block replaceRoundInBlock(
-      final Block block, final int round, final BlockHeaderFunctions blockHeaderFunctions) {
-    final BftExtraData prevExtraData = BftExtraData.decode(block.getHeader());
+      final Block block,
+      final int round,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final BftExtraDataCodec bftExtraDataCodec) {
+    final BftExtraData prevExtraData = bftExtraDataCodec.decode(block.getHeader());
     final BftExtraData substituteExtraData =
         new BftExtraData(
             prevExtraData.getVanityData(),
@@ -73,11 +86,30 @@ public class BftBlockInterface implements BlockInterface {
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
-        .extraData(substituteExtraData.encode())
+        .extraData(bftExtraDataCodec.encode(substituteExtraData))
         .blockHeaderFunctions(blockHeaderFunctions);
 
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
 
     return new Block(newHeader, block.getBody());
+  }
+
+  public BftExtraData getExtraData(final BlockHeader header) {
+    return bftExtraDataCodec.decode(header);
+  }
+
+  public List<Address> getCommitters(final BlockHeader header) {
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
+
+    final Hash committerHash =
+        Hash.hash(
+            BftBlockHashing.serializeHeader(
+                header,
+                () -> bftExtraDataCodec.encodeWithoutCommitSeals(bftExtraData),
+                bftExtraDataCodec));
+
+    return bftExtraData.getSeals().stream()
+        .map(p -> Util.signatureToAddress(p, committerHash))
+        .collect(Collectors.toList());
   }
 }
