@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,7 +68,8 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
-    proposedBlock.ifPresentOrElse(pb -> pb.writeTo(rlpOut), rlpOut::writeNull);
+    proposedBlock.ifPresentOrElse(
+        pb -> pb.writeTo(rlpOut), () -> rlpOut.writeList(Collections.emptyList(), (r, b) -> {}));
     rlpOut.writeList(prepares, SignedData::writeTo);
     rlpOut.endList();
     return rlpOut.encoded();
