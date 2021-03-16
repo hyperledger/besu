@@ -54,7 +54,7 @@ public class BftCoinbaseValidationRuleTest {
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
-    BlockHeader header = createProposedBlockHeader(proposerNodeKey);
+    final BlockHeader header = createProposedBlockHeader(proposerNodeKey);
 
     assertThat(coinbaseValidationRule.validate(header, null, context)).isTrue();
   }
@@ -74,7 +74,7 @@ public class BftCoinbaseValidationRuleTest {
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
-    BlockHeader header = createProposedBlockHeader(proposerNodeKey);
+    final BlockHeader header = createProposedBlockHeader(proposerNodeKey);
 
     assertThat(coinbaseValidationRule.validate(header, null, context)).isFalse();
   }

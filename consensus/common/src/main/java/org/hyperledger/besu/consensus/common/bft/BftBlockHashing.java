@@ -47,13 +47,19 @@ public class BftBlockHashing {
   public Hash calculateDataHashForCommittedSeal(
       final BlockHeader header, final BftExtraData bftExtraData) {
     return Hash.hash(
-        serializeHeader(header, () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData)));
+        serializeHeader(
+            header,
+            () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData),
+            bftExtraDataEncoder));
   }
 
   public Hash calculateDataHashForCommittedSeal(final BlockHeader header) {
     final BftExtraData bftExtraData = bftExtraDataEncoder.decode(header);
     return Hash.hash(
-        serializeHeader(header, () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData)));
+        serializeHeader(
+            header,
+            () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData),
+            bftExtraDataEncoder));
   }
 
   /**
@@ -68,7 +74,8 @@ public class BftBlockHashing {
     return Hash.hash(
         serializeHeader(
             header,
-            () -> bftExtraDataEncoder.encodeWithoutCommitSealsAndRoundNumber(bftExtraData)));
+            () -> bftExtraDataEncoder.encodeWithoutCommitSealsAndRoundNumber(bftExtraData),
+            bftExtraDataEncoder));
   }
 
   /**
@@ -87,8 +94,10 @@ public class BftBlockHashing {
         .collect(Collectors.toList());
   }
 
-  private Bytes serializeHeader(
-      final BlockHeader header, final Supplier<Bytes> extraDataSerializer) {
+  public static Bytes serializeHeader(
+      final BlockHeader header,
+      final Supplier<Bytes> extraDataSerializer,
+      final BftExtraDataEncoder bftExtraDataEncoder) {
 
     // create a block header which is a copy of the header supplied as parameter except of the
     // extraData field

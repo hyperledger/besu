@@ -14,11 +14,9 @@
  */
 package org.hyperledger.besu.consensus.ibft.queries;
 
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.PoaQueryServiceImpl;
-import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,21 +31,18 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQueryService {
 
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftBlockInterface blockInterface;
 
   public IbftQueryServiceImpl(
-      final BlockInterface blockInterface,
-      final BftExtraDataEncoder bftExtraDataEncoder,
-      final Blockchain blockchain,
-      final NodeKey nodeKey) {
+      final BftBlockInterface blockInterface, final Blockchain blockchain, final NodeKey nodeKey) {
     super(blockInterface, blockchain, nodeKey);
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.blockInterface = blockInterface;
   }
 
   @Override
   public int getRoundNumberFrom(final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
-    final BftExtraData extraData = bftExtraDataEncoder.decode(headerFromChain);
+    final BftExtraData extraData = blockInterface.getExtraData(headerFromChain);
     return extraData.getRound();
   }
 
@@ -55,11 +50,7 @@ public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQue
   public Collection<Address> getSignersFrom(
       final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
-    final BftExtraData extraData = bftExtraDataEncoder.decode(headerFromChain);
-
-    return Collections.unmodifiableList(
-        new BftBlockHashing(bftExtraDataEncoder)
-            .recoverCommitterAddresses(headerFromChain, extraData));
+    return Collections.unmodifiableList(blockInterface.getCommitters(headerFromChain));
   }
 
   private BlockHeader getHeaderFromChain(

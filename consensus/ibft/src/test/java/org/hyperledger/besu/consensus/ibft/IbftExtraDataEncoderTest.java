@@ -314,7 +314,7 @@ public class IbftExtraDataEncoderTest {
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
     final IbftExtraDataEncoder ibftExtraDataEncoder = bftExtraDataEncoder;
 
-    BftExtraData actualExtraData =
+    final BftExtraData actualExtraData =
         ibftExtraDataEncoder.decodeRaw(ibftExtraDataEncoder.encode(expectedExtraData));
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);

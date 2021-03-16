@@ -24,15 +24,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class BftBlockInterface implements BlockInterface {
 
@@ -107,31 +103,13 @@ public class BftBlockInterface implements BlockInterface {
 
     final Hash committerHash =
         Hash.hash(
-            serializeHeader(
-                header, () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData)));
+            BftBlockHashing.serializeHeader(
+                header,
+                () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData),
+                bftExtraDataEncoder));
 
     return bftExtraData.getSeals().stream()
         .map(p -> Util.signatureToAddress(p, committerHash))
         .collect(Collectors.toList());
-  }
-
-  private Bytes serializeHeader(
-      final BlockHeader header, final Supplier<Bytes> extraDataSerializer) {
-
-    // create a block header which is a copy of the header supplied as parameter except of the
-    // extraData field
-    final BlockHeaderBuilder builder = BlockHeaderBuilder.fromHeader(header);
-    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder));
-
-    // set the extraData field using the supplied extraDataSerializer if the block height is not 0
-    if (header.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
-      builder.extraData(header.getExtraData());
-    } else {
-      builder.extraData(extraDataSerializer.get());
-    }
-
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    builder.buildBlockHeader().writeTo(out);
-    return out.encoded();
   }
 }

@@ -220,7 +220,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain, bftExtraDataEncoder, nodeKey);
+    return new IbftQueryPluginServiceFactory(blockchain, blockInterface, nodeKey);
   }
 
   @Override
