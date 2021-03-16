@@ -41,21 +41,22 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class QbftExtraDataEncoderTest {
+public class QbftExtraDataCodecTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private final String RAW_HEX_ENCODING_STRING =
-      "f8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea9400000000000000000000000000000000000"
-          + "00001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff8400fedc"
-          + "baf886b841000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000"
-          + "0000000000000000000000000000000000a00b84100000000000000000000000000000000000000000000000000000000000000"
-          + "0a000000000000000000000000000000000000000000000000000000000000000100";
+      "0xf8f0a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000"
+          + "000000000000000000000001940000000000000000000000000000000000000002d7940000000000000000"
+          + "00000000000000000000000181ff83fedcbaf886b841000000000000000000000000000000000000000000"
+          + "0000000000000000000001000000000000000000000000000000000000000000000000000000000000000a"
+          + "00b841000000000000000000000000000000000000000000000000000000000000000a0000000000000000"
+          + "00000000000000000000000000000000000000000000000100";
 
   private final BftExtraData DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING =
       getDecodedExtraDataForRawHexEncodingString();
-  private final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
+  private final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
 
   private static BftExtraData getDecodedExtraDataForRawHexEncodingString() {
     final List<Address> validators =
@@ -78,8 +79,8 @@ public class QbftExtraDataEncoderTest {
   public void correctlyCodedRoundConstitutesValidContent() {
     final List<Address> validators = Lists.newArrayList();
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
-    final int round = 0x00FEDCBA;
-    final byte[] roundAsByteArray = new byte[] {(byte) 0x00, (byte) 0xFE, (byte) 0xDC, (byte) 0xBA};
+    final int round = 0xDCBA;
+    final byte[] roundAsByteArray = new byte[] {(byte) 0xDC, (byte) 0xBA};
     final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
@@ -91,17 +92,17 @@ public class QbftExtraDataEncoderTest {
     encoder.writeBytes(vanity_data);
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
-    // encoded vote
     vote.get().writeTo(encoder);
 
-    // This is to verify that the decoding works correctly when the round is encoded as 4 bytes
+    // This is to verify that the decoding works correctly when the round is encoded as non-fixed
+    // length bytes
     encoder.writeBytes(Bytes.wrap(roundAsByteArray));
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
     final Bytes bufferToInject = encoder.encoded();
 
-    final BftExtraData extraData = bftExtraDataEncoder.decodeRaw(bufferToInject);
+    final BftExtraData extraData = bftExtraDataCodec.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getRound()).isEqualTo(round);
@@ -110,14 +111,15 @@ public class QbftExtraDataEncoderTest {
   }
 
   /**
-   * This test specifically verifies that {@link QbftExtraDataCodec#decode(BlockHeader)} uses {@link
-   * RLPInput#readInt()} rather than {@link RLPInput#readIntScalar()} to decode the round number
+   * This test specifically verifies that {@link QbftExtraDataCodec#decode(BlockHeader)} uses
+   * {@link RLPInput#readIntScalar()} rather than {@link RLPInput#readInt()} to decode the round
+   * number
    */
   @Test
   public void incorrectlyEncodedRoundThrowsRlpException() {
     final List<Address> validators = Lists.newArrayList();
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
-    final byte[] roundAsByteArray = new byte[] {(byte) 0xFE, (byte) 0xDC, (byte) 0xBA};
+    final byte[] roundAsByteArray = new byte[] {(byte) 0x00, (byte) 0xDC, (byte) 0xBA};
     final List<SECPSignature> committerSeals = Lists.newArrayList();
 
     // Create a byte buffer with no data.
@@ -132,15 +134,15 @@ public class QbftExtraDataEncoderTest {
     // encoded vote
     vote.get().writeTo(encoder);
 
-    // This is to verify that the decoding throws an exception when the round number is not encoded
-    // in 4 byte format
+    // This is to verify that the decoding throws an exception when the round number is encoded in
+    // 4 byte format
     encoder.writeBytes(Bytes.wrap(roundAsByteArray));
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
     final Bytes bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> bftExtraDataEncoder.decodeRaw(bufferToInject))
+    assertThatThrownBy(() -> bftExtraDataCodec.decodeRaw(bufferToInject))
         .isInstanceOf(RLPException.class);
   }
 
@@ -160,15 +162,15 @@ public class QbftExtraDataEncoderTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
     // encode an empty vote
-    encoder.writeNull();
+    encoder.writeList(List.of(), (v, r) -> {});
 
-    encoder.writeInt(round);
+    encoder.writeIntScalar(round);
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
     final Bytes bufferToInject = encoder.encoded();
 
-    final BftExtraData extraData = bftExtraDataEncoder.decodeRaw(bufferToInject);
+    final BftExtraData extraData = bftExtraDataCodec.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getVote().isPresent()).isEqualTo(false);
@@ -191,9 +193,8 @@ public class QbftExtraDataEncoderTest {
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final QbftExtraDataCodec bftExtraDataEncoder = this.bftExtraDataEncoder;
     BftExtraData actualExtraData =
-        bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));
+        bftExtraDataCodec.decodeRaw(bftExtraDataCodec.encode(expectedExtraData));
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -217,13 +218,13 @@ public class QbftExtraDataEncoderTest {
     // encoded vote
     vote.get().writeTo(encoder);
 
-    encoder.writeInt(round);
+    encoder.writeIntScalar(round);
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
     final Bytes bufferToInject = encoder.encoded();
 
-    final BftExtraData extraData = bftExtraDataEncoder.decodeRaw(bufferToInject);
+    final BftExtraData extraData = bftExtraDataCodec.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getRound()).isEqualTo(round);
@@ -245,9 +246,8 @@ public class QbftExtraDataEncoderTest {
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final QbftExtraDataCodec bftExtraDataEncoder = this.bftExtraDataEncoder;
     BftExtraData actualExtraData =
-        bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));
+        bftExtraDataCodec.decodeRaw(bftExtraDataCodec.encode(expectedExtraData));
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -278,13 +278,13 @@ public class QbftExtraDataEncoderTest {
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
-    encoder.writeInt(round);
+    encoder.writeIntScalar(round);
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
     encoder.endList();
 
     final Bytes bufferToInject = encoder.encoded();
 
-    final BftExtraData extraData = bftExtraDataEncoder.decodeRaw(bufferToInject);
+    final BftExtraData extraData = bftExtraDataCodec.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
     assertThat(extraData.getVote())
@@ -311,10 +311,9 @@ public class QbftExtraDataEncoderTest {
 
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
-    final QbftExtraDataCodec bftExtraDataEncoder = this.bftExtraDataEncoder;
 
     BftExtraData actualExtraData =
-        bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));
+        bftExtraDataCodec.decodeRaw(bftExtraDataCodec.encode(expectedExtraData));
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -322,7 +321,7 @@ public class QbftExtraDataEncoderTest {
   @Test
   public void encodingMatchesKnownRawHexString() {
     final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_HEX_ENCODING_STRING);
-    assertThat(bftExtraDataEncoder.encode(DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING))
+    assertThat(bftExtraDataCodec.encode(DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING))
         .isEqualTo(expectedRawDecoding);
   }
 
@@ -332,7 +331,7 @@ public class QbftExtraDataEncoderTest {
     final BftExtraData expectedExtraData = DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING;
 
     Bytes rawDecoding = Bytes.fromHexString(RAW_HEX_ENCODING_STRING);
-    BftExtraData actualExtraData = bftExtraDataEncoder.decodeRaw(rawDecoding);
+    BftExtraData actualExtraData = bftExtraDataCodec.decodeRaw(rawDecoding);
 
     assertThat(actualExtraData).isEqualToComparingFieldByField(expectedExtraData);
   }
@@ -360,20 +359,20 @@ public class QbftExtraDataEncoderTest {
     // encoded vote
     vote.get().writeTo(encoder);
 
-    encoder.writeInt(round);
+    encoder.writeIntScalar(round);
     encoder.endList();
 
     Bytes expectedEncoding = encoder.encoded();
 
     Bytes actualEncoding =
-        bftExtraDataEncoder.encodeWithoutCommitSeals(
+        bftExtraDataCodec.encodeWithoutCommitSeals(
             new BftExtraData(vanity_data, committerSeals, vote, round, validators));
 
     assertThat(actualEncoding).isEqualTo(expectedEncoding);
   }
 
   @Test
-  public void extraDataCanBeEncodedwithoutCommitSealsOrRoundNumber() {
+  public void extraDataCanBeEncodedWithoutCommitSealsOrRoundNumber() {
     final List<Address> validators =
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
@@ -400,7 +399,7 @@ public class QbftExtraDataEncoderTest {
     Bytes expectedEncoding = encoder.encoded();
 
     Bytes actualEncoding =
-        bftExtraDataEncoder.encodeWithoutCommitSealsAndRoundNumber(
+        bftExtraDataCodec.encodeWithoutCommitSealsAndRoundNumber(
             new BftExtraData(vanity_data, committerSeals, vote, round, validators));
 
     assertThat(actualEncoding).isEqualTo(expectedEncoding);
@@ -432,7 +431,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> bftExtraDataEncoder.decodeRaw(bufferToInject))
+    assertThatThrownBy(() -> bftExtraDataCodec.decodeRaw(bufferToInject))
         .isInstanceOf(RLPException.class);
   }
 
@@ -469,7 +468,7 @@ public class QbftExtraDataEncoderTest {
 
     final Bytes bufferToInject = encoder.encoded();
 
-    assertThatThrownBy(() -> bftExtraDataEncoder.decodeRaw(bufferToInject))
+    assertThatThrownBy(() -> bftExtraDataCodec.decodeRaw(bufferToInject))
         .isInstanceOf(RLPException.class);
   }
 
@@ -477,9 +476,38 @@ public class QbftExtraDataEncoderTest {
   public void emptyExtraDataThrowsException() {
     final Bytes bufferToInject = Bytes.EMPTY;
 
-    assertThatThrownBy(() -> bftExtraDataEncoder.decodeRaw(bufferToInject))
+    assertThatThrownBy(() -> bftExtraDataCodec.decodeRaw(bufferToInject))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid Bytes supplied - Bft Extra Data required.");
+  }
+
+  @Test
+  public void quorumDecode() {
+    final Bytes encodedValue =
+        Bytes.fromHexString(
+            "0xf85a80f8549444add0ec310f115a0e603b2d7db9f067778eaf8a94294fc7e8f22b3bcdcf955dd7ff3ba2ed833f8212946beaaed781d2d2ab6350f5c4566a2c6eaac407a6948be76812f765c24641ec63dc2852b378aba2b440c080c0");
+    final BftExtraData bftExtraData = bftExtraDataCodec.decodeRaw(encodedValue);
+    System.out.println("bftExtraData = " + bftExtraData);
+  }
+
+  @Test
+  public void quorumEncode() {
+    final SECPSignature signature = SIGNATURE_ALGORITHM.get()
+        .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+    final byte[] extraData = createNonEmptyVanityData();
+    System.out.println("signature = " + signature.encodedBytes());
+    final BftExtraData bftExtraData =
+        new BftExtraData(
+            Bytes.wrap(extraData),
+            List.of(signature),
+            Optional.of(new Vote(Address.fromHexString("0x44add0ec310f115a0e603b2d7db9f067778eaf8a"), VoteType.ADD)),
+            1,
+            List.of(
+                Address.fromHexString("0x44add0ec310f115a0e603b2d7db9f067778eaf8a"),
+                Address.fromHexString("0x294fc7e8f22b3bcdcf955dd7ff3ba2ed833f8212"),
+                Address.fromHexString("0x6beaaed781d2d2ab6350f5c4566a2c6eaac407a6"),
+                Address.fromHexString("0x8be76812f765c24641ec63dc2852b378aba2b440")));
+    System.out.println("encoded = " + bftExtraDataCodec.encode(bftExtraData));
   }
 
   private static byte[] createNonEmptyVanityData() {
