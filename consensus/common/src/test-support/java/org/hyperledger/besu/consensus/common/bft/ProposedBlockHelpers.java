@@ -44,9 +44,9 @@ public class ProposedBlockHelpers {
   public static Block createProposalBlock(
       final List<Address> validators,
       final ConsensusRoundIdentifier roundId,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     final Bytes extraData =
-        bftExtraDataEncoder.encode(
+        bftExtraDataCodec.encode(
             new BftExtraData(
                 Bytes.wrap(new byte[32]),
                 Collections.emptyList(),
@@ -57,7 +57,7 @@ public class ProposedBlockHelpers {
         BlockOptions.create()
             .setExtraData(extraData)
             .setBlockNumber(roundId.getSequenceNumber())
-            .setBlockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder))
+            .setBlockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec))
             .hasOmmers(false)
             .hasTransactions(false);
 

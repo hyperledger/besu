@@ -54,7 +54,7 @@ public class BftBlockHashingTest {
   private static final int ROUND = 0x00FEDCBA;
   private static final Bytes VANITY_DATA = vanityBytes();
 
-  private final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
   private final BftBlockHashing bftBlockHashing = new BftBlockHashing(bftExtraDataEncoder);
   private final BlockHeader headerToBeHashed = headerToBeHashed();
   private final Hash EXPECTED_HEADER_HASH = expectedHeaderHash();
@@ -142,8 +142,7 @@ public class BftBlockHashingTest {
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.nonce(0);
-    builder.blockHeaderFunctions(
-        BftBlockHeaderFunctions.forOnChainBlock(new IbftExtraDataEncoder()));
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(new IbftExtraDataCodec()));
     return builder;
   }
 

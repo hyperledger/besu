@@ -18,7 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -59,7 +59,7 @@ public class IbftRound {
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final IbftMessageTransmitter transmitter;
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public IbftRound(
       final RoundState roundState,
@@ -71,7 +71,7 @@ public class IbftRound {
       final MessageFactory messageFactory,
       final IbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -80,7 +80,7 @@ public class IbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.bftExtraDataCodec = bftExtraDataCodec;
     roundTimer.startTimer(getRoundIdentifier());
   }
 
@@ -90,7 +90,7 @@ public class IbftRound {
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     final Block block = blockCreator.createBlock(headerTimeStampSeconds);
-    final BftExtraData extraData = bftExtraDataEncoder.decode(block.getHeader());
+    final BftExtraData extraData = bftExtraDataCodec.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     LOG.trace(
         "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
@@ -114,8 +114,8 @@ public class IbftRound {
           BftBlockInterface.replaceRoundInBlock(
               bestBlockFromRoundChange.get(),
               getRoundIdentifier().getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
-              bftExtraDataEncoder);
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
+              bftExtraDataCodec);
     }
 
     updateStateWithProposalAndTransmit(blockToPublish, Optional.of(roundChangeCertificate));
@@ -239,10 +239,10 @@ public class IbftRound {
   private void importBlockToChain() {
     final Block blockToImport =
         BftHelpers.createSealedBlock(
-            bftExtraDataEncoder, roundState.getProposedBlock().get(), roundState.getCommitSeals());
+            bftExtraDataCodec, roundState.getProposedBlock().get(), roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
-    final BftExtraData extraData = bftExtraDataEncoder.decode(blockToImport.getHeader());
+    final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
     LOG.log(
         getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
         "Importing block to chain. round={}, hash={}",
@@ -264,9 +264,9 @@ public class IbftRound {
 
   private SECPSignature createCommitSeal(final Block block) {
     final BlockHeader proposedHeader = block.getHeader();
-    final BftExtraData extraData = bftExtraDataEncoder.decode(proposedHeader);
+    final BftExtraData extraData = bftExtraDataCodec.decode(proposedHeader);
     final Hash commitHash =
-        new BftBlockHashing(bftExtraDataEncoder)
+        new BftBlockHashing(bftExtraDataCodec)
             .calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
   }

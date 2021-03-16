@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
@@ -33,17 +33,17 @@ public class MessageValidatorFactory {
   private final ProposerSelector proposerSelector;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.proposerSelector = proposerSelector;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
@@ -89,7 +89,7 @@ public class MessageValidatorFactory {
             validatorsForHeight,
             roundIdentifier,
             proposerSelector.selectProposerForRound(roundIdentifier),
-            bftExtraDataEncoder);
+            bftExtraDataCodec);
 
     return new MessageValidator(
         expectedDigest ->

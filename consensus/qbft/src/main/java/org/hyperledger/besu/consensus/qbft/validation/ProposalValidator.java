@@ -19,7 +19,7 @@ import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHel
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -53,7 +53,7 @@ public class ProposalValidator {
   private final Collection<Address> validators;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Address expectedProposer;
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public ProposalValidator(
       final BlockValidator blockValidator,
@@ -62,14 +62,14 @@ public class ProposalValidator {
       final Collection<Address> validators,
       final ConsensusRoundIdentifier roundIdentifier,
       final Address expectedProposer,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
     this.quorumMessageCount = quorumMessageCount;
     this.validators = validators;
     this.roundIdentifier = roundIdentifier;
     this.expectedProposer = expectedProposer;
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   public boolean validate(final Proposal msg) {
@@ -125,8 +125,8 @@ public class ProposalValidator {
             BftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(),
                 metadata.getPreparedRound(),
-                BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
-                bftExtraDataEncoder);
+                BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
+                bftExtraDataCodec);
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 

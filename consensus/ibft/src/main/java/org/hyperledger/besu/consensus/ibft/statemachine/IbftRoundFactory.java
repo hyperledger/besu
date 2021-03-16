@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
@@ -37,7 +37,7 @@ public class IbftRoundFactory {
   private final Subscribers<MinedBlockObserver> minedBlockObservers;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public IbftRoundFactory(
       final BftFinalState finalState,
@@ -46,7 +46,7 @@ public class IbftRoundFactory {
       final Subscribers<MinedBlockObserver> minedBlockObservers,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.finalState = finalState;
     this.blockCreatorFactory = finalState.getBlockCreatorFactory();
     this.protocolContext = protocolContext;
@@ -54,7 +54,7 @@ public class IbftRoundFactory {
     this.minedBlockObservers = minedBlockObservers;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   public IbftRound createNewRound(final BlockHeader parentHeader, final int round) {
@@ -90,6 +90,6 @@ public class IbftRoundFactory {
         messageFactory,
         messageTransmitter,
         finalState.getRoundTimer(),
-        bftExtraDataEncoder);
+        bftExtraDataCodec);
   }
 }

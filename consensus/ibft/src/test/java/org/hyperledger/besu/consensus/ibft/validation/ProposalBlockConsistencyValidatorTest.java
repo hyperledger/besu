@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -44,11 +44,11 @@ public class ProposalBlockConsistencyValidatorTest {
   private final ConsensusRoundIdentifier roundIdentifier =
       new ConsensusRoundIdentifier(chainHeight, 4);
 
-  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
-  private final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataEncoder);
+  private final BftExtraDataCodec bftExtraDataCodec = new IbftExtraDataCodec();
+  private final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
   private final Block block =
       ProposedBlockHelpers.createProposalBlock(
-          Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+          Collections.emptyList(), roundIdentifier, bftExtraDataCodec);
   private ProposalBlockConsistencyValidator consistencyChecker;
 
   @Before
@@ -62,7 +62,7 @@ public class ProposalBlockConsistencyValidatorTest {
     final Proposal proposalMsg =
         proposerMessageFactory.createProposal(roundIdentifier, block, Optional.empty());
 
-    final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+    final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
     final Block misMatchedBlock =
         BftBlockInterface.replaceRoundInBlock(
             block,

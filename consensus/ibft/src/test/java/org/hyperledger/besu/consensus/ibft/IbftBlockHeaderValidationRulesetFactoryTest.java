@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -46,7 +46,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataEncoder()));
+        null, null, setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()));
   }
 
   @Test
@@ -318,11 +318,11 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
     builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
 
-    final IbftExtraDataEncoder ibftExtraDataEncoder = new IbftExtraDataEncoder();
+    final IbftExtraDataCodec ibftExtraDataEncoder = new IbftExtraDataCodec();
     final BftExtraData bftExtraData =
         BftExtraDataFixture.createExtraData(
             builder.buildHeader(),
-            Bytes.wrap(new byte[BftExtraDataEncoder.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[BftExtraDataCodec.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),

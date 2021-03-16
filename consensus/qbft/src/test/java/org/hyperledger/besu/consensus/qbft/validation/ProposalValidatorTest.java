@@ -28,7 +28,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
@@ -87,7 +87,7 @@ public class ProposalValidatorTest {
   private ProtocolContext protocolContext;
 
   private final Map<ROUND_ID, RoundSpecificItems> roundItems = new HashMap<>();
-  final QbftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
+  final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
 
   @Before
   public void setup() {

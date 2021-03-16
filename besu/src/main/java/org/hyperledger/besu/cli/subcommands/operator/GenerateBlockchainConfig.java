@@ -20,7 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
@@ -225,7 +225,7 @@ class GenerateBlockchainConfig implements Runnable {
     if (genesisConfigOptions.isIbft2()) {
       LOG.info("Generating IBFT extra data.");
       final String extraData =
-          IbftExtraDataEncoder.encodeFromAddresses(addressesForGenesisExtraData).toString();
+          IbftExtraDataCodec.encodeFromAddresses(addressesForGenesisExtraData).toString();
       genesisConfig.put("extraData", extraData);
     }
   }

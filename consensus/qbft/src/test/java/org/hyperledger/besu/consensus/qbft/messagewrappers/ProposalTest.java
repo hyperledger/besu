@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -49,7 +49,7 @@ public class ProposalTest {
   private static final Block BLOCK =
       new Block(
           new BlockHeaderTestFixture()
-              .extraData(new QbftExtraDataEncoder().encode(extraData))
+              .extraData(new QbftExtraDataCodec().encode(extraData))
               .buildHeader(),
           new BlockBody(Collections.emptyList(), Collections.emptyList()));
 

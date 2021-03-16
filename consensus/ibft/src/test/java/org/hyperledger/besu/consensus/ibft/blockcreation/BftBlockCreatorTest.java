@@ -27,7 +27,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -74,7 +74,7 @@ public class BftBlockCreatorTest {
       initialValidatorList.add(AddressHelpers.ofValue(i));
     }
 
-    final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+    final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")

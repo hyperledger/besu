@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
@@ -62,7 +62,7 @@ public class RoundChangeCertificateValidatorTest {
   private final MessageValidatorForHeightFactory validatorFactory =
       mock(MessageValidatorForHeightFactory.class);
   private final SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
-  final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
 
   private Block proposedBlock;
 

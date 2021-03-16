@@ -30,7 +30,7 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
@@ -51,7 +51,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
@@ -151,7 +151,7 @@ public class TestContextBuilder {
   public static final int DUPLICATE_MESSAGE_LIMIT = 100;
   public static final int FUTURE_MESSAGES_MAX_DISTANCE = 10;
   public static final int FUTURE_MESSAGES_LIMIT = 1000;
-  private static final BftExtraDataEncoder BFT_EXTRA_DATA_ENCODER = new QbftExtraDataEncoder();
+  private static final BftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new QbftExtraDataCodec();
 
   private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
   private BftEventQueue bftEventQueue = new BftEventQueue(MESSAGE_QUEUE_LIMIT);

@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 
 public class BftBlockHashing {
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
-  public BftBlockHashing(final BftExtraDataEncoder bftExtraDataEncoder) {
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+  public BftBlockHashing(final BftExtraDataCodec bftExtraDataCodec) {
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   /**
@@ -49,17 +49,17 @@ public class BftBlockHashing {
     return Hash.hash(
         serializeHeader(
             header,
-            () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData),
-            bftExtraDataEncoder));
+            () -> bftExtraDataCodec.encodeWithoutCommitSeals(bftExtraData),
+            bftExtraDataCodec));
   }
 
   public Hash calculateDataHashForCommittedSeal(final BlockHeader header) {
-    final BftExtraData bftExtraData = bftExtraDataEncoder.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
     return Hash.hash(
         serializeHeader(
             header,
-            () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData),
-            bftExtraDataEncoder));
+            () -> bftExtraDataCodec.encodeWithoutCommitSeals(bftExtraData),
+            bftExtraDataCodec));
   }
 
   /**
@@ -70,12 +70,12 @@ public class BftBlockHashing {
    * @return the hash of the header to be used when referencing the header on the blockchain
    */
   public Hash calculateHashOfBftBlockOnChain(final BlockHeader header) {
-    final BftExtraData bftExtraData = bftExtraDataEncoder.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
     return Hash.hash(
         serializeHeader(
             header,
-            () -> bftExtraDataEncoder.encodeWithoutCommitSealsAndRoundNumber(bftExtraData),
-            bftExtraDataEncoder));
+            () -> bftExtraDataCodec.encodeWithoutCommitSealsAndRoundNumber(bftExtraData),
+            bftExtraDataCodec));
   }
 
   /**
@@ -97,12 +97,12 @@ public class BftBlockHashing {
   public static Bytes serializeHeader(
       final BlockHeader header,
       final Supplier<Bytes> extraDataSerializer,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     // create a block header which is a copy of the header supplied as parameter except of the
     // extraData field
     final BlockHeaderBuilder builder = BlockHeaderBuilder.fromHeader(header);
-    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder));
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
 
     // set the extraData field using the supplied extraDataSerializer if the block height is not 0
     if (header.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {

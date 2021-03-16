@@ -28,7 +28,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftRound;
@@ -86,7 +86,7 @@ public class IbftRoundIntegrationTest {
   private final SECPSignature remoteCommitSeal =
       SignatureAlgorithmFactory.getInstance()
           .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
-  private final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
 
   @Before
   public void setup() {

@@ -24,12 +24,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRound;
@@ -67,7 +67,7 @@ public class QbftRoundIntegrationTest {
   private final MessageFactory peerMessageFactory = new MessageFactory(NodeKeyUtils.generate());
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
-  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
+  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private ProtocolContext protocolContext;
 
   @Mock private MutableBlockchain blockChain;
@@ -96,7 +96,7 @@ public class QbftRoundIntegrationTest {
 
     when(nodeKey.sign(any())).thenThrow(new SecurityModuleException("Hsm Is Down"));
 
-    final QbftExtraDataEncoder qbftExtraDataEncoder = new QbftExtraDataEncoder();
+    final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
     throwingMessageFactory = new MessageFactory(nodeKey);
     transmitter = new QbftMessageTransmitter(throwingMessageFactory, multicaster);
 
@@ -132,7 +132,7 @@ public class QbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataEncoder);
+            bftExtraDataCodec);
 
     round.handleProposalMessage(
         peerMessageFactory.createProposal(
@@ -160,7 +160,7 @@ public class QbftRoundIntegrationTest {
             throwingMessageFactory,
             transmitter,
             roundTimer,
-            bftExtraDataEncoder);
+            bftExtraDataCodec);
 
     // inject a block first, then a prepare on it.
     round.handleProposalMessage(

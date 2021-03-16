@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -64,7 +64,7 @@ public class ProposalPayloadValidatorTest {
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   final ConsensusRoundIdentifier roundIdentifier =
       ConsensusRoundHelpers.createFrom(targetRound, 1, 0);
-  final QbftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
+  final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
 
   @Before
   public void setup() {

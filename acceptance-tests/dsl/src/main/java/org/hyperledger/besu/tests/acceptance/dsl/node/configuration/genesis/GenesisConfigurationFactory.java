@@ -17,8 +17,8 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 
@@ -51,7 +51,7 @@ public class GenesisConfigurationFactory {
       final Collection<? extends RunnableNode> validators, final String genesisFile) {
     final String template = readGenesisFile(genesisFile);
     return updateGenesisExtraData(
-        validators, template, IbftExtraDataEncoder::createGenesisExtraDataString);
+        validators, template, IbftExtraDataCodec::createGenesisExtraDataString);
   }
 
   public Optional<String> createIbft2GenesisConfigFilterBootnode(
@@ -62,21 +62,21 @@ public class GenesisConfigurationFactory {
             .filter(node -> !node.getConfiguration().isBootnodeEligible())
             .collect(toList());
     return updateGenesisExtraData(
-        filteredList, template, IbftExtraDataEncoder::createGenesisExtraDataString);
+        filteredList, template, IbftExtraDataCodec::createGenesisExtraDataString);
   }
 
   public Optional<String> createPrivacyIbft2GenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/ibft/privacy-ibft.json");
     return updateGenesisExtraData(
-        validators, template, IbftExtraDataEncoder::createGenesisExtraDataString);
+        validators, template, IbftExtraDataCodec::createGenesisExtraDataString);
   }
 
   public Optional<String> createQbftGenesisConfig(
       final Collection<? extends RunnableNode> validators) {
     final String template = readGenesisFile("/qbft/qbft.json");
     return updateGenesisExtraData(
-        validators, template, QbftExtraDataEncoder::createGenesisExtraDataString);
+        validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
   }
 
   private Optional<String> updateGenesisExtraData(

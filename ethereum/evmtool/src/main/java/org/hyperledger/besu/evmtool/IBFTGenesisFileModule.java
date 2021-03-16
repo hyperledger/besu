@@ -19,14 +19,14 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import javax.inject.Named;
 
 class IBFTGenesisFileModule extends GenesisFileModule {
-  final IbftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
 
   IBFTGenesisFileModule(final String genesisConfig) {
     super(genesisConfig);

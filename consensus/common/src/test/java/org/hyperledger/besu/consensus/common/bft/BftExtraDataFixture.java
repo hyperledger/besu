@@ -37,10 +37,10 @@ public class BftExtraDataFixture {
       final Optional<Vote> vote,
       final List<Address> validators,
       final List<NodeKey> committerNodeKeys,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     return createExtraData(
-        header, vanityData, vote, validators, committerNodeKeys, 0, bftExtraDataEncoder);
+        header, vanityData, vote, validators, committerNodeKeys, 0, bftExtraDataCodec);
   }
 
   public static BftExtraData createExtraData(
@@ -50,7 +50,7 @@ public class BftExtraDataFixture {
       final List<Address> validators,
       final List<NodeKey> committerNodeKeys,
       final int roundNumber,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     return createExtraData(
         header,
@@ -60,7 +60,7 @@ public class BftExtraDataFixture {
         committerNodeKeys,
         roundNumber,
         false,
-        bftExtraDataEncoder);
+        bftExtraDataCodec);
   }
 
   public static BftExtraData createExtraData(
@@ -71,7 +71,7 @@ public class BftExtraDataFixture {
       final List<NodeKey> committerNodeKeys,
       final int baseRoundNumber,
       final boolean useDifferentRoundNumbersForCommittedSeals,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     final BftExtraData bftExtraDataNoCommittedSeals =
         new BftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
@@ -96,7 +96,7 @@ public class BftExtraDataFixture {
                           bftExtraDataNoCommittedSeals.getValidators());
 
                   final Hash headerHashForCommitters =
-                      new BftBlockHashing(bftExtraDataEncoder)
+                      new BftBlockHashing(bftExtraDataCodec)
                           .calculateDataHashForCommittedSeal(
                               header, extraDataForCommittedSealCalculation);
 

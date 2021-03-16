@@ -41,7 +41,7 @@ public class BftProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     return new ProtocolScheduleBuilder(
             config,
@@ -54,7 +54,7 @@ public class BftProtocolSchedule {
                         builder,
                         config.isQuorum(),
                         blockHeaderRuleset,
-                        bftExtraDataEncoder)),
+                        bftExtraDataCodec)),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -65,21 +65,20 @@ public class BftProtocolSchedule {
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         blockHeaderRuleset,
-        bftExtraDataEncoder);
+        bftExtraDataCodec);
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
-    return create(
-        config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset, bftExtraDataEncoder);
+      final BftExtraDataCodec bftExtraDataCodec) {
+    return create(config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset, bftExtraDataCodec);
   }
 
   private static ProtocolSpecBuilder applyBftChanges(
@@ -87,7 +86,7 @@ public class BftProtocolSchedule {
       final ProtocolSpecBuilder builder,
       final boolean goQuorumMode,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
@@ -108,7 +107,7 @@ public class BftProtocolSchedule {
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))
         .skipZeroBlockRewards(true)
-        .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder));
+        .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
 
     if (configOptions.getMiningBeneficiary().isPresent()) {
       final Address miningBeneficiary;

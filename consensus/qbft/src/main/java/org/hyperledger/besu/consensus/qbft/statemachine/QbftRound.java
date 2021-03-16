@@ -20,7 +20,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -64,7 +64,7 @@ public class QbftRound {
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public QbftRound(
       final RoundState roundState,
@@ -76,7 +76,7 @@ public class QbftRound {
       final MessageFactory messageFactory,
       final QbftMessageTransmitter transmitter,
       final RoundTimer roundTimer,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -85,7 +85,7 @@ public class QbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.bftExtraDataCodec = bftExtraDataCodec;
 
     roundTimer.startTimer(getRoundIdentifier());
   }
@@ -117,8 +117,8 @@ public class QbftRound {
           BftBlockInterface.replaceRoundInBlock(
               bestPreparedCertificate.get().getBlock(),
               getRoundIdentifier().getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
-              bftExtraDataEncoder);
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
+              bftExtraDataCodec);
     }
 
     updateStateWithProposalAndTransmit(
@@ -256,10 +256,10 @@ public class QbftRound {
 
     final Block blockToImport =
         BftHelpers.createSealedBlock(
-            bftExtraDataEncoder, roundState.getProposedBlock().get(), roundState.getCommitSeals());
+            bftExtraDataCodec, roundState.getProposedBlock().get(), roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
-    final BftExtraData extraData = bftExtraDataEncoder.decode(blockToImport.getHeader());
+    final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
     LOG.log(
         getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
         "Importing block to chain. round={}, hash={}",
@@ -281,9 +281,9 @@ public class QbftRound {
 
   private SECPSignature createCommitSeal(final Block block) {
     final BlockHeader proposedHeader = block.getHeader();
-    final BftExtraData extraData = bftExtraDataEncoder.decode(proposedHeader);
+    final BftExtraData extraData = bftExtraDataCodec.decode(proposedHeader);
     final Hash commitHash =
-        new BftBlockHashing(bftExtraDataEncoder)
+        new BftBlockHashing(bftExtraDataCodec)
             .calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
   }

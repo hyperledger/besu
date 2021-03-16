@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.qbft;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -35,10 +35,10 @@ import org.apache.tuweni.bytes.Bytes;
  * Represents the data structure stored in the extraData field of the BlockHeader used when
  * operating under an BFT consensus mechanism.
  */
-public class QbftExtraDataEncoder extends BftExtraDataEncoder {
+public class QbftExtraDataCodec extends BftExtraDataCodec {
 
   public static Bytes encodeFromAddresses(final Collection<Address> addresses) {
-    return new QbftExtraDataEncoder()
+    return new QbftExtraDataCodec()
         .encode(
             new BftExtraData(
                 Bytes.wrap(new byte[EXTRA_VANITY_LENGTH]),

@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -38,7 +38,7 @@ public class RoundChangeMessageValidatorTest {
   private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);
   private final BftBlockInterface bftBlockInterface =
-      new BftBlockInterface(new IbftExtraDataEncoder());
+      new BftBlockInterface(new IbftExtraDataCodec());
 
   private final RoundChangeMessageValidator validator =
       new RoundChangeMessageValidator(

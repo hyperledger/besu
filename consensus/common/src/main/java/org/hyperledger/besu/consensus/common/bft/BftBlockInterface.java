@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
 
 public class BftBlockInterface implements BlockInterface {
 
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
-  public BftBlockInterface(final BftExtraDataEncoder bftExtraDataEncoder) {
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+  public BftBlockInterface(final BftExtraDataCodec bftExtraDataCodec) {
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   @Override
@@ -50,7 +50,7 @@ public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header) {
-    final BftExtraData bftExtraData = bftExtraDataEncoder.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
 
     if (bftExtraData.getVote().isPresent()) {
       final Vote headerVote = bftExtraData.getVote().get();
@@ -66,7 +66,7 @@ public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Collection<Address> validatorsInBlock(final BlockHeader header) {
-    final BftExtraData bftExtraData = bftExtraDataEncoder.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
     return bftExtraData.getValidators();
   }
 
@@ -74,8 +74,8 @@ public class BftBlockInterface implements BlockInterface {
       final Block block,
       final int round,
       final BlockHeaderFunctions blockHeaderFunctions,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
-    final BftExtraData prevExtraData = bftExtraDataEncoder.decode(block.getHeader());
+      final BftExtraDataCodec bftExtraDataCodec) {
+    final BftExtraData prevExtraData = bftExtraDataCodec.decode(block.getHeader());
     final BftExtraData substituteExtraData =
         new BftExtraData(
             prevExtraData.getVanityData(),
@@ -86,7 +86,7 @@ public class BftBlockInterface implements BlockInterface {
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
-        .extraData(bftExtraDataEncoder.encode(substituteExtraData))
+        .extraData(bftExtraDataCodec.encode(substituteExtraData))
         .blockHeaderFunctions(blockHeaderFunctions);
 
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
@@ -95,18 +95,18 @@ public class BftBlockInterface implements BlockInterface {
   }
 
   public BftExtraData getExtraData(final BlockHeader header) {
-    return bftExtraDataEncoder.decode(header);
+    return bftExtraDataCodec.decode(header);
   }
 
   public List<Address> getCommitters(final BlockHeader header) {
-    final BftExtraData bftExtraData = bftExtraDataEncoder.decode(header);
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
 
     final Hash committerHash =
         Hash.hash(
             BftBlockHashing.serializeHeader(
                 header,
-                () -> bftExtraDataEncoder.encodeWithoutCommitSeals(bftExtraData),
-                bftExtraDataEncoder));
+                () -> bftExtraDataCodec.encodeWithoutCommitSeals(bftExtraData),
+                bftExtraDataCodec));
 
     return bftExtraData.getSeals().stream()
         .map(p -> Util.signatureToAddress(p, committerHash))

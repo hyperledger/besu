@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.emptyList;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -59,14 +59,14 @@ public class FutureHeightTest {
   private final ConsensusRoundIdentifier futureHeightRoundId = new ConsensusRoundIdentifier(2, 0);
 
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
-  private final BftExtraDataEncoder bftExtraDataEncoder = new IbftExtraDataEncoder();
+  private final BftExtraDataCodec bftExtraDataCodec = new IbftExtraDataCodec();
 
   @Test
   public void messagesForFutureHeightAreBufferedUntilChainHeightCatchesUp() {
     final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataEncoder, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
+            bftExtraDataCodec, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
 
     final Block futureHeightBlock =
         context.createBlockForProposal(signedCurrentHeightBlock.getHeader(), 0, 60);
@@ -114,7 +114,7 @@ public class FutureHeightTest {
     final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataEncoder, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
+            bftExtraDataCodec, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
 
     peers.getProposer().injectProposal(roundId, currentHeightBlock);
     peers.getNonProposing(0).injectPrepare(roundId, currentHeightBlock.getHash());
@@ -169,13 +169,13 @@ public class FutureHeightTest {
     final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataEncoder, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
+            bftExtraDataCodec, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
 
     final Block nextHeightBlock =
         context.createBlockForProposal(signedCurrentHeightBlock.getHeader(), 0, 60);
     final Block signedNextHeightBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataEncoder, nextHeightBlock, peers.sign(nextHeightBlock.getHash()));
+            bftExtraDataCodec, nextHeightBlock, peers.sign(nextHeightBlock.getHash()));
 
     final Block futureHeightBlock =
         context.createBlockForProposal(signedNextHeightBlock.getHeader(), 0, 90);

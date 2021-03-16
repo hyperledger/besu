@@ -27,7 +27,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
@@ -45,7 +45,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
@@ -87,8 +87,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
-  private final BftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
-  private final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataEncoder);
+  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+  private final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataCodec);
 
   @Override
   protected void prepForBuild() {
@@ -134,7 +134,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             miningParameters,
             localAddress,
             bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
-            bftExtraDataEncoder);
+            bftExtraDataCodec);
 
     final VoteTallyCache voteTallyCache =
         protocolContext.getConsensusState(BftContext.class).getVoteTallyCache();
@@ -165,7 +165,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(
-            proposerSelector, protocolSchedule, protocolContext, bftExtraDataEncoder);
+            proposerSelector, protocolSchedule, protocolContext, bftExtraDataCodec);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
@@ -194,7 +194,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     minedBlockObservers,
                     messageValidatorFactory,
                     messageFactory,
-                    bftExtraDataEncoder),
+                    bftExtraDataCodec),
                 messageValidatorFactory,
                 messageFactory),
             gossiper,
@@ -220,7 +220,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new BftQueryPluginServiceFactory(blockchain, bftExtraDataEncoder, nodeKey, "qbft");
+    return new BftQueryPluginServiceFactory(blockchain, bftExtraDataCodec, nodeKey, "qbft");
   }
 
   @Override
@@ -230,7 +230,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-        bftExtraDataEncoder);
+        bftExtraDataCodec);
   }
 
   @Override

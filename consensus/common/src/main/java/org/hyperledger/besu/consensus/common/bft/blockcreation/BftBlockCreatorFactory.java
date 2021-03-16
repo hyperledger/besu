@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.common.ValidatorVote;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
@@ -43,7 +43,7 @@ public class BftBlockCreatorFactory {
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
   private final Address localAddress;
   final Address miningBeneficiary;
 
@@ -59,7 +59,7 @@ public class BftBlockCreatorFactory {
       final MiningParameters miningParams,
       final Address localAddress,
       final Address miningBeneficiary,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
@@ -69,7 +69,7 @@ public class BftBlockCreatorFactory {
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
     this.miningBeneficiary = miningBeneficiary;
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   public BftBlockCreator create(final BlockHeader parentHeader, final int round) {
@@ -84,7 +84,7 @@ public class BftBlockCreatorFactory {
         minBlockOccupancyRatio,
         parentHeader,
         miningBeneficiary,
-        bftExtraDataEncoder);
+        bftExtraDataCodec);
   }
 
   public void setExtraData(final Bytes extraData) {
@@ -110,13 +110,13 @@ public class BftBlockCreatorFactory {
 
     final BftExtraData extraData =
         new BftExtraData(
-            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataEncoder.EXTRA_VANITY_LENGTH),
+            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataCodec.EXTRA_VANITY_LENGTH),
             Collections.emptyList(),
             toVote(proposal),
             round,
             validators);
 
-    return bftExtraDataEncoder.encode(extraData);
+    return bftExtraDataCodec.encode(extraData);
   }
 
   public void changeTargetGasLimit(final Long targetGasLimit) {

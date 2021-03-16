@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.qbft.messagewrappers;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
@@ -33,7 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class RoundChange extends BftMessage<RoundChangePayload> {
 
-  private static final QbftExtraDataEncoder QBFT_EXTRA_DATA_ENCODER = new QbftExtraDataEncoder();
+  private static final QbftExtraDataCodec QBFT_EXTRA_DATA_ENCODER = new QbftExtraDataCodec();
   private final Optional<Block> proposedBlock;
   private final List<SignedData<PreparePayload>> prepares;
 

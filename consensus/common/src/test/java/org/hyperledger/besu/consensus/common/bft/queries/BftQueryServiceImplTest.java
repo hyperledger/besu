@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -52,7 +52,7 @@ public class BftQueryServiceImplTest {
 
   @Mock private Blockchain blockchain;
 
-  @Mock private BftExtraDataEncoder bftExtraDataEncoder;
+  @Mock private BftExtraDataCodec bftExtraDataCodec;
 
   @Mock private BftBlockInterface bftBlockInterface;
 
@@ -68,7 +68,7 @@ public class BftQueryServiceImplTest {
     final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
     blockHeaderTestFixture.number(1); // can't be genesis block (due to extradata serialisation)
     blockHeaderTestFixture.blockHeaderFunctions(
-        BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataEncoder));
+        BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
 
     blockHeader = blockHeaderTestFixture.buildHeader();
   }
@@ -90,7 +90,7 @@ public class BftQueryServiceImplTest {
     final NonBesuBlockHeader header = new NonBesuBlockHeader(Hash.EMPTY, Bytes.EMPTY);
 
     final BftQueryService service =
-        new BftQueryServiceImpl(new BftBlockInterface(bftExtraDataEncoder), blockchain, null, null);
+        new BftQueryServiceImpl(new BftBlockInterface(bftExtraDataCodec), blockchain, null, null);
     assertThatExceptionOfType(NoSuchElementException.class)
         .isThrownBy(() -> service.getRoundNumberFrom(header));
   }
@@ -123,7 +123,7 @@ public class BftQueryServiceImplTest {
   public void consensusMechanismNameReturnedIsSameAsThatPassedDuringCreation() {
     final BftQueryService service =
         new BftQueryServiceImpl(
-            new BftBlockInterface(bftExtraDataEncoder), blockchain, null, "consensusMechanism");
+            new BftBlockInterface(bftExtraDataCodec), blockchain, null, "consensusMechanism");
     assertThat(service.getConsensusMechanismName()).isEqualTo("consensusMechanism");
   }
 }

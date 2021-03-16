@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -39,7 +39,7 @@ public class RoundChangeCertificateValidator {
 
   private final Collection<Address> validators;
   private final MessageValidatorForHeightFactory messageValidatorFactory;
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
   private final long quorum;
   private final long chainHeight;
 
@@ -47,12 +47,12 @@ public class RoundChangeCertificateValidator {
       final Collection<Address> validators,
       final MessageValidatorForHeightFactory messageValidatorFactory,
       final long chainHeight,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.validators = validators;
     this.messageValidatorFactory = messageValidatorFactory;
     this.quorum = BftHelpers.calculateRequiredValidatorQuorum(validators.size());
     this.chainHeight = chainHeight;
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   public boolean validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
@@ -132,8 +132,8 @@ public class RoundChangeCertificateValidator {
                 .getPayload()
                 .getRoundIdentifier()
                 .getRoundNumber(),
-            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
-            bftExtraDataEncoder);
+            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
+            bftExtraDataCodec);
 
     if (!currentBlockWithOldRound
         .getHash()

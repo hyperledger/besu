@@ -55,7 +55,7 @@ public class QbftExtraDataEncoderTest {
 
   private final BftExtraData DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING =
       getDecodedExtraDataForRawHexEncodingString();
-  private final QbftExtraDataEncoder bftExtraDataEncoder = new QbftExtraDataEncoder();
+  private final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
 
   private static BftExtraData getDecodedExtraDataForRawHexEncodingString() {
     final List<Address> validators =
@@ -110,9 +110,8 @@ public class QbftExtraDataEncoderTest {
   }
 
   /**
-   * This test specifically verifies that {@link QbftExtraDataEncoder#decode(BlockHeader)} uses
-   * {@link RLPInput#readInt()} rather than {@link RLPInput#readIntScalar()} to decode the round
-   * number
+   * This test specifically verifies that {@link QbftExtraDataCodec#decode(BlockHeader)} uses {@link
+   * RLPInput#readInt()} rather than {@link RLPInput#readIntScalar()} to decode the round number
    */
   @Test
   public void incorrectlyEncodedRoundThrowsRlpException() {
@@ -192,7 +191,7 @@ public class QbftExtraDataEncoderTest {
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final QbftExtraDataEncoder bftExtraDataEncoder = this.bftExtraDataEncoder;
+    final QbftExtraDataCodec bftExtraDataEncoder = this.bftExtraDataEncoder;
     BftExtraData actualExtraData =
         bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));
 
@@ -246,7 +245,7 @@ public class QbftExtraDataEncoderTest {
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
 
-    final QbftExtraDataEncoder bftExtraDataEncoder = this.bftExtraDataEncoder;
+    final QbftExtraDataCodec bftExtraDataEncoder = this.bftExtraDataEncoder;
     BftExtraData actualExtraData =
         bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));
 
@@ -312,7 +311,7 @@ public class QbftExtraDataEncoderTest {
 
     BftExtraData expectedExtraData =
         new BftExtraData(vanity_data, committerSeals, vote, round, validators);
-    final QbftExtraDataEncoder bftExtraDataEncoder = this.bftExtraDataEncoder;
+    final QbftExtraDataCodec bftExtraDataEncoder = this.bftExtraDataEncoder;
 
     BftExtraData actualExtraData =
         bftExtraDataEncoder.decodeRaw(bftExtraDataEncoder.encode(expectedExtraData));

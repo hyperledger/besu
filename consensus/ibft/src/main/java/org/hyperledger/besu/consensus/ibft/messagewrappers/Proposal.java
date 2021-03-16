@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft.messagewrappers;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
@@ -33,7 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class Proposal extends BftMessage<ProposalPayload> {
 
-  private static final IbftExtraDataEncoder BFT_EXTRA_DATA_ENCODER = new IbftExtraDataEncoder();
+  private static final IbftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new IbftExtraDataCodec();
   private final Block proposedBlock;
 
   private final Optional<RoundChangeCertificate> roundChangeCertificate;

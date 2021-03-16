@@ -21,7 +21,7 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -47,7 +47,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataEncoder()));
+        null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataCodec()));
   }
 
   @Test
@@ -324,7 +324,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
       final BlockHeader parent,
       final HeaderModifier modifier) {
     final BlockHeaderTestFixture builder = new BlockHeaderTestFixture();
-    final QbftExtraDataEncoder qbftExtraDataEncoder = new QbftExtraDataEncoder();
+    final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
 
     if (parent != null) {
       builder.parentHash(parent.getHash());
@@ -343,7 +343,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     final BftExtraData bftExtraData =
         BftExtraDataFixture.createExtraData(
             builder.buildHeader(),
-            Bytes.wrap(new byte[BftExtraDataEncoder.EXTRA_VANITY_LENGTH]),
+            Bytes.wrap(new byte[BftExtraDataCodec.EXTRA_VANITY_LENGTH]),
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataEncoder;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 // too hard to coordinate with the state machine).
 public class BftBlockCreator extends AbstractBlockCreator {
 
-  private final BftExtraDataEncoder bftExtraDataEncoder;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public BftBlockCreator(
       final Address localAddress,
@@ -45,7 +45,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final Address miningBeneficiary,
-      final BftExtraDataEncoder bftExtraDataEncoder) {
+      final BftExtraDataCodec bftExtraDataCodec) {
     super(
         localAddress,
         extraDataCalculator,
@@ -57,7 +57,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
         miningBeneficiary,
         minBlockOccupancyRatio,
         parentHeader);
-    this.bftExtraDataEncoder = bftExtraDataEncoder;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   @Override
@@ -67,7 +67,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
             .populateFrom(sealableBlockHeader)
             .mixHash(BftHelpers.EXPECTED_MIX_HASH)
             .nonce(0L)
-            .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder));
+            .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
 
     return builder.buildBlockHeader();
   }

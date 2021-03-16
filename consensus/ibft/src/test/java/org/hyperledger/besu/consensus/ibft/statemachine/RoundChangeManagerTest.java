@@ -24,7 +24,7 @@ import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
-import org.hyperledger.besu.consensus.ibft.IbftExtraDataEncoder;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
@@ -67,7 +67,7 @@ public class RoundChangeManagerTest {
   private final ProposalBlockConsistencyValidator proposalConsistencyValidator =
       mock(ProposalBlockConsistencyValidator.class);
   private final BftBlockInterface bftBlockInterface =
-      new BftBlockInterface(new IbftExtraDataEncoder());
+      new BftBlockInterface(new IbftExtraDataCodec());
 
   @Before
   public void setup() {
