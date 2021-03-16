@@ -22,9 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsExc
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +32,6 @@ public class GetBlockFromPeersTask extends AbstractEthTask<AbstractPeerTask.Peer
   private static final Logger LOG = LogManager.getLogger();
 
   private final List<EthPeer> peers;
-  private final List<EthPeer> triedAndInvalidPeers;
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
   private final Hash hash;
@@ -50,7 +47,6 @@ public class GetBlockFromPeersTask extends AbstractEthTask<AbstractPeerTask.Peer
       final MetricsSystem metricsSystem) {
     super(metricsSystem);
     this.peers = peers;
-    this.triedAndInvalidPeers = new ArrayList<>();
     this.ethContext = ethContext;
     this.blockNumber = blockNumber;
     this.metricsSystem = metricsSystem;
@@ -72,28 +68,30 @@ public class GetBlockFromPeersTask extends AbstractEthTask<AbstractPeerTask.Peer
   @Override
   protected void executeTask() {
     LOG.debug("Downloading block {} from peers {}.", hash, peers.stream().map(EthPeer::toString));
-    final Optional<EthPeer> peer =
-        peers.stream().filter(ethPeer -> !triedAndInvalidPeers.contains(ethPeer)).findFirst();
-    if (peer.isPresent() && !peer.get().isDisconnected()) {
-      peers.remove(peer.get());
-      triedAndInvalidPeers.add(peer.get()); // keep a list of already tried peers
-      LOG.debug("Trying downloading block {} from peer {}.", hash, peer.map(EthPeer::toString));
-      final AbstractPeerTask<Block> getBlockTask =
-          GetBlockFromPeerTask.create(
-                  protocolSchedule, ethContext, hash, blockNumber, metricsSystem)
-              .assignPeer(peer.get());
-      getBlockTask
-          .run()
-          .whenComplete(
-              (r, t) -> {
-                if (t != null) {
-                  executeTask();
-                } else {
-                  result.complete(r);
-                }
-              });
-    } else {
+    getBlockFromPeers(peers);
+  }
+
+  private void getBlockFromPeers(final List<EthPeer> peers) {
+    if (peers.isEmpty()) {
       result.completeExceptionally(new IncompleteResultsException());
     }
+    final EthPeer peer = peers.get(0);
+    if (peer.isDisconnected()) {
+      getBlockFromPeers(peers.subList(1, peers.size()));
+    }
+    LOG.debug("Trying downloading block {} from peer {}.", hash, peer);
+    final AbstractPeerTask<Block> getBlockTask =
+        GetBlockFromPeerTask.create(protocolSchedule, ethContext, hash, blockNumber, metricsSystem)
+            .assignPeer(peer);
+    getBlockTask
+        .run()
+        .whenComplete(
+            (r, t) -> {
+              if (t != null) {
+                getBlockFromPeers(peers.subList(1, peers.size()));
+              } else {
+                result.complete(r);
+              }
+            });
   }
 }
