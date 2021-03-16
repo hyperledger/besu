@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -52,7 +52,7 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private ProtocolContext setupContextWithValidators(final Collection<Address> validators) {
-    final BftContext bftContext = mock(BftContext.class);
+    final IbftLegacyContext bftContext = mock(IbftLegacyContext.class);
     final VoteTallyCache mockCache = mock(VoteTallyCache.class);
     final VoteTally mockVoteTally = mock(VoteTally.class);
     when(bftContext.getVoteTallyCache()).thenReturn(mockCache);

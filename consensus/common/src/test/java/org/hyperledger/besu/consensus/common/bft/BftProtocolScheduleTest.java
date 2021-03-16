@@ -15,8 +15,8 @@
 
 package org.hyperledger.besu.consensus.common.bft;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +37,7 @@ import org.junit.Test;
 public class BftProtocolScheduleTest {
 
   private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
+  private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
 
   private static BlockHeaderValidator.Builder arbitraryRulesetBuilder(final Integer blockSeconds) {
     return new BlockHeaderValidator.Builder();
@@ -54,7 +55,8 @@ public class BftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     final ProtocolSchedule schedule =
-        BftProtocolSchedule.create(genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder);
+        BftProtocolSchedule.create(
+            genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder, bftExtraDataCodec);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     spec.getBlockReward();
@@ -76,7 +78,9 @@ public class BftProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
-                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
+                    genesisConfig,
+                    BftProtocolScheduleTest::arbitraryRulesetBuilder,
+                    bftExtraDataCodec))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Mining beneficiary in config is not a valid ethereum address");
   }
@@ -91,7 +95,8 @@ public class BftProtocolScheduleTest {
     when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
 
     final ProtocolSchedule schedule =
-        BftProtocolSchedule.create(genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder);
+        BftProtocolSchedule.create(
+            genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder, bftExtraDataCodec);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     final Address headerCoinbase = Address.fromHexString("0x123");
@@ -115,7 +120,9 @@ public class BftProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
-                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
+                    genesisConfig,
+                    BftProtocolScheduleTest::arbitraryRulesetBuilder,
+                    bftExtraDataCodec))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Bft Block reward in config cannot be negative");
   }
@@ -132,7 +139,9 @@ public class BftProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
-                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
+                    genesisConfig,
+                    BftProtocolScheduleTest::arbitraryRulesetBuilder,
+                    bftExtraDataCodec))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -149,7 +158,9 @@ public class BftProtocolScheduleTest {
     assertThatThrownBy(
             () ->
                 BftProtocolSchedule.create(
-                    genesisConfig, BftProtocolScheduleTest::arbitraryRulesetBuilder))
+                    genesisConfig,
+                    BftProtocolScheduleTest::arbitraryRulesetBuilder,
+                    bftExtraDataCodec))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }

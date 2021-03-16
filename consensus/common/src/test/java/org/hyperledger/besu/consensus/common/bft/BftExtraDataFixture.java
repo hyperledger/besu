@@ -36,9 +36,11 @@ public class BftExtraDataFixture {
       final Bytes vanityData,
       final Optional<Vote> vote,
       final List<Address> validators,
-      final List<NodeKey> committerNodeKeys) {
+      final List<NodeKey> committerNodeKeys,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
-    return createExtraData(header, vanityData, vote, validators, committerNodeKeys, 0);
+    return createExtraData(
+        header, vanityData, vote, validators, committerNodeKeys, 0, bftExtraDataCodec);
   }
 
   public static BftExtraData createExtraData(
@@ -47,10 +49,18 @@ public class BftExtraDataFixture {
       final Optional<Vote> vote,
       final List<Address> validators,
       final List<NodeKey> committerNodeKeys,
-      final int roundNumber) {
+      final int roundNumber,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     return createExtraData(
-        header, vanityData, vote, validators, committerNodeKeys, roundNumber, false);
+        header,
+        vanityData,
+        vote,
+        validators,
+        committerNodeKeys,
+        roundNumber,
+        false,
+        bftExtraDataCodec);
   }
 
   public static BftExtraData createExtraData(
@@ -60,7 +70,8 @@ public class BftExtraDataFixture {
       final List<Address> validators,
       final List<NodeKey> committerNodeKeys,
       final int baseRoundNumber,
-      final boolean useDifferentRoundNumbersForCommittedSeals) {
+      final boolean useDifferentRoundNumbersForCommittedSeals,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     final BftExtraData bftExtraDataNoCommittedSeals =
         new BftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
@@ -85,8 +96,9 @@ public class BftExtraDataFixture {
                           bftExtraDataNoCommittedSeals.getValidators());
 
                   final Hash headerHashForCommitters =
-                      BftBlockHashing.calculateDataHashForCommittedSeal(
-                          header, extraDataForCommittedSealCalculation);
+                      new BftBlockHashing(bftExtraDataCodec)
+                          .calculateDataHashForCommittedSeal(
+                              header, extraDataForCommittedSealCalculation);
 
                   return committerNodeKeys.get(i).sign(headerHashForCommitters);
                 })
