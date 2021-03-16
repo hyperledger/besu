@@ -155,8 +155,10 @@ dependencyManagement {
 
     dependency 'tech.pegasys.discovery:discovery:0.4.3'
 
-    dependency 'tech.pegasys.ethsigner.internal:core:0.4.0'
-    dependency 'tech.pegasys.ethsigner.internal:file-based:0.4.0'
-    dependency 'tech.pegasys.ethsigner.internal:signing-api:0.4.0'
+    dependency 'tech.pegasys.ethsigner.internal:ethsigner-core:21.3.0'
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.16') {
+      entry 'signing-secp256k1-api'
+      entry 'signing-secp256k1-impl'
+    }
   }
 }

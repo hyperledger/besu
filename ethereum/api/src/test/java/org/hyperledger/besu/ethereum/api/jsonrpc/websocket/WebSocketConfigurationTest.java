@@ -31,5 +31,7 @@ public class WebSocketConfigurationTest {
     assertThat(configuration.getPort()).isEqualTo(8546);
     assertThat(configuration.getRpcApis())
         .containsExactlyInAnyOrder(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+    assertThat(configuration.getMaxActiveConnections())
+        .isEqualTo(WebSocketConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS);
   }
 }

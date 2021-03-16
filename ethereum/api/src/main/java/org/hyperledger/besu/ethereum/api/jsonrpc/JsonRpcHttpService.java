@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -82,6 +83,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -141,6 +143,8 @@ public class JsonRpcHttpService {
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
   private final Tracer tracer;
+  private final int maxActiveConnections;
+  private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
@@ -207,6 +211,7 @@ public class JsonRpcHttpService {
     this.livenessService = livenessService;
     this.readinessService = readinessService;
     this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
+    this.maxActiveConnections = config.getMaxActiveConnections();
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -214,15 +219,21 @@ public class JsonRpcHttpService {
         config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
         "Invalid port configuration.");
     checkArgument(config.getHost() != null, "Required host is not configured.");
+    checkArgument(
+        config.getMaxActiveConnections() > 0, "Invalid max active connections configuration.");
   }
 
   public CompletableFuture<?> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
+    LOG.debug("max number of active connections {}", maxActiveConnections);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
+
+      httpServer.connectionHandler(connectionHandler());
+
       httpServer
           .requestHandler(buildRouter())
           .listen(
@@ -262,6 +273,33 @@ public class JsonRpcHttpService {
     }
 
     return resultFuture;
+  }
+
+  private Handler<HttpConnection> connectionHandler() {
+
+    return connection -> {
+      if (activeConnectionsCount.get() >= maxActiveConnections) {
+        // disallow new connections to prevent DoS
+        LOG.warn(
+            "Rejecting new connection from {}. Max {} active connections limit reached.",
+            connection.remoteAddress(),
+            activeConnectionsCount.getAndIncrement());
+        connection.close();
+      } else {
+        LOG.debug(
+            "Opened connection from {}. Total of active connections: {}/{}",
+            connection.remoteAddress(),
+            activeConnectionsCount.incrementAndGet(),
+            maxActiveConnections);
+      }
+      connection.closeHandler(
+          c ->
+              LOG.debug(
+                  "Connection closed from {}. Total of active connections: {}/{}",
+                  connection.remoteAddress(),
+                  activeConnectionsCount.decrementAndGet(),
+                  maxActiveConnections));
+    };
   }
 
   private Router buildRouter() {

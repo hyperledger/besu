@@ -17,17 +17,19 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraData;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class BftVanityDataValidationRuleTest {
-
   private final BftVanityDataValidationRule validationRule = new BftVanityDataValidationRule();
+  private final BlockHeader blockHeader = mock(BlockHeader.class);
 
   @Test
   public void testCases() {
@@ -40,9 +42,9 @@ public class BftVanityDataValidationRuleTest {
   public boolean headerWithVanityDataOfSize(final int extraDataSize) {
     final BftExtraData extraData =
         new BftExtraData(Bytes.wrap(new byte[extraDataSize]), emptyList(), empty(), 0, emptyList());
-    final BlockHeader header =
-        new BlockHeaderTestFixture().extraData(extraData.encode()).buildHeader();
 
-    return validationRule.validate(header, null, null);
+    final ProtocolContext context =
+        new ProtocolContext(null, null, setupContextWithBftExtraData(emptyList(), extraData));
+    return validationRule.validate(blockHeader, null, context);
   }
 }

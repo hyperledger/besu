@@ -443,7 +443,6 @@ public abstract class MainnetProtocolSpecs {
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
                     quorumCompatibilityMode))
-        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::berlin)
         .transactionReceiptFactory(
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled

@@ -20,23 +20,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -44,43 +34,23 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -88,110 +58,17 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentMatchers;
 
-public class JsonRpcHttpServiceTest {
-
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
-
-  private static final Vertx vertx = Vertx.vertx();
-
-  protected static Map<String, JsonRpcMethod> rpcMethods;
-  protected static JsonRpcHttpService service;
-  protected static OkHttpClient client;
-  protected static String baseUrl;
-  protected static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-  protected static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
-  protected static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
-  protected static P2PNetwork peerDiscoveryMock;
-  protected static EthPeers ethPeersMock;
-  protected static Blockchain blockchain;
-  protected static BlockchainQueries blockchainQueries;
-  protected static ChainHead chainHead;
-  protected static Synchronizer synchronizer;
-  protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.ADMIN);
-  protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
-  protected static final NatService natService = new NatService(Optional.empty());
+public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
   @BeforeClass
-  public static void initServerAndClient() throws Exception {
-    peerDiscoveryMock = mock(P2PNetwork.class);
-    ethPeersMock = mock(EthPeers.class);
-    blockchain = mock(Blockchain.class);
-    blockchainQueries = mock(BlockchainQueries.class);
-    chainHead = mock(ChainHead.class);
-    synchronizer = mock(Synchronizer.class);
-
-    final Set<Capability> supportedCapabilities = new HashSet<>();
-    supportedCapabilities.add(EthProtocol.ETH62);
-    supportedCapabilities.add(EthProtocol.ETH63);
-
-    rpcMethods =
-        spy(
-            new JsonRpcMethodsFactory()
-                .methods(
-                    CLIENT_VERSION,
-                    CHAIN_ID,
-                    new StubGenesisConfigOptions(),
-                    peerDiscoveryMock,
-                    blockchainQueries,
-                    synchronizer,
-                    MainnetProtocolSchedule.fromConfig(
-                        new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
-                    mock(FilterManager.class),
-                    mock(TransactionPool.class),
-                    mock(PoWMiningCoordinator.class),
-                    new NoOpMetricsSystem(),
-                    supportedCapabilities,
-                    Optional.of(mock(AccountLocalConfigPermissioningController.class)),
-                    Optional.of(mock(NodeLocalConfigPermissioningController.class)),
-                    JSON_RPC_APIS,
-                    mock(PrivacyParameters.class),
-                    mock(JsonRpcConfiguration.class),
-                    mock(WebSocketConfiguration.class),
-                    mock(MetricsConfiguration.class),
-                    natService,
-                    new HashMap<>(),
-                    folder.getRoot().toPath(),
-                    ethPeersMock));
-    service = createJsonRpcHttpService();
-    service.start().join();
-
-    // Build an OkHttp client.
-    client = new OkHttpClient();
-    baseUrl = service.url();
+  public static void setup() throws Exception {
+    initServerAndClient();
   }
 
-  private static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config)
-      throws Exception {
-    return new JsonRpcHttpService(
-        vertx,
-        folder.newFolder().toPath(),
-        config,
-        new NoOpMetricsSystem(),
-        natService,
-        rpcMethods,
-        HealthService.ALWAYS_HEALTHY,
-        HealthService.ALWAYS_HEALTHY);
-  }
-
-  private static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
-    return new JsonRpcHttpService(
-        vertx,
-        folder.newFolder().toPath(),
-        createJsonRpcConfig(),
-        new NoOpMetricsSystem(),
-        natService,
-        rpcMethods,
-        HealthService.ALWAYS_HEALTHY,
-        HealthService.ALWAYS_HEALTHY);
-  }
-
-  private static JsonRpcConfiguration createJsonRpcConfig() {
+  protected static JsonRpcConfiguration createJsonRpcConfig() {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setPort(0);
     config.setHostsAllowlist(Collections.singletonList("*"));
@@ -2150,13 +2027,5 @@ public class JsonRpcHttpServiceTest {
     try (final Response resp = client.newCall(buildGetRequest("/readiness")).execute()) {
       assertThat(resp.code()).isEqualTo(200);
     }
-  }
-
-  private Request buildPostRequest(final RequestBody body) {
-    return new Request.Builder().post(body).url(baseUrl).build();
-  }
-
-  private Request buildGetRequest(final String path) {
-    return new Request.Builder().get().url(baseUrl + path).build();
   }
 }

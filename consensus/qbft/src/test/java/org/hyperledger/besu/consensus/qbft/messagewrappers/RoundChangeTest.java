@@ -15,11 +15,11 @@
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
@@ -47,7 +47,9 @@ public class RoundChangeTest {
 
   private static final Block BLOCK =
       new Block(
-          new BlockHeaderTestFixture().extraData(extraData.encode()).buildHeader(),
+          new BlockHeaderTestFixture()
+              .extraData(new QbftExtraDataCodec().encode(extraData))
+              .buildHeader(),
           new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
   @Test
@@ -61,12 +63,12 @@ public class RoundChangeTest {
             Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
 
     final SignedData<RoundChangePayload> signedRoundChangePayload =
-        SignedData.create(payload, nodeKey.sign(hashForSignature(payload)));
+        SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
 
     final PreparePayload preparePayload =
         new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
     final SignedData<PreparePayload> signedPreparePayload =
-        SignedData.create(preparePayload, nodeKey.sign(hashForSignature(preparePayload)));
+        SignedData.create(preparePayload, nodeKey.sign(preparePayload.hashForSignature()));
 
     final RoundChange roundChange =
         new RoundChange(
@@ -94,7 +96,7 @@ public class RoundChangeTest {
         new RoundChangePayload(new ConsensusRoundIdentifier(1, 1), Optional.empty());
 
     final SignedData<RoundChangePayload> signedRoundChangePayload =
-        SignedData.create(payload, nodeKey.sign(hashForSignature(payload)));
+        SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
 
     final RoundChange roundChange =
         new RoundChange(signedRoundChangePayload, Optional.empty(), Collections.emptyList());

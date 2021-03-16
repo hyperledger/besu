@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
@@ -31,14 +33,17 @@ public class MessageValidatorFactory {
   private final ProposerSelector proposerSelector;
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
       final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.proposerSelector = proposerSelector;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
@@ -72,13 +77,16 @@ public class MessageValidatorFactory {
         new RoundChangeCertificateValidator(
             validators,
             (ri) -> createSignedDataValidator(ri, parentHeader),
-            roundIdentifier.getSequenceNumber()));
+            roundIdentifier.getSequenceNumber(),
+            bftExtraDataCodec));
   }
 
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
       final long chainHeight, final BlockHeader parentHeader) {
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
+    final BftBlockInterface bftBlockInterface =
+        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
     return new RoundChangeMessageValidator(
         new RoundChangePayloadValidator(
             (roundIdentifier) -> createSignedDataValidator(roundIdentifier, parentHeader),
@@ -86,7 +94,8 @@ public class MessageValidatorFactory {
             BftHelpers.prepareMessageCountForQuorum(
                 BftHelpers.calculateRequiredValidatorQuorum(validators.size())),
             chainHeight),
-        new ProposalBlockConsistencyValidator());
+        new ProposalBlockConsistencyValidator(),
+        bftBlockInterface);
   }
 
   public FutureRoundProposalMessageValidator createFutureRoundProposalMessageValidator(

@@ -40,7 +40,8 @@ public class BftProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset) {
+      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     return new ProtocolScheduleBuilder(
             config,
@@ -52,7 +53,8 @@ public class BftProtocolSchedule {
                         config.getBftConfigOptions(),
                         builder,
                         config.isQuorum(),
-                        blockHeaderRuleset)),
+                        blockHeaderRuleset,
+                        bftExtraDataCodec)),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -62,21 +64,29 @@ public class BftProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, blockHeaderRuleset);
+      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
+      final BftExtraDataCodec bftExtraDataCodec) {
+    return create(
+        config,
+        PrivacyParameters.DEFAULT,
+        isRevertReasonEnabled,
+        blockHeaderRuleset,
+        bftExtraDataCodec);
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset) {
-    return create(config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset);
+      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
+      final BftExtraDataCodec bftExtraDataCodec) {
+    return create(config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset, bftExtraDataCodec);
   }
 
   private static ProtocolSpecBuilder applyBftChanges(
       final BftConfigOptions configOptions,
       final ProtocolSpecBuilder builder,
       final boolean goQuorumMode,
-      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset) {
+      final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
@@ -97,7 +107,7 @@ public class BftProtocolSchedule {
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))
         .skipZeroBlockRewards(true)
-        .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock());
+        .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
 
     if (configOptions.getMiningBeneficiary().isPresent()) {
       final Address miningBeneficiary;

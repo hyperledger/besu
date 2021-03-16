@@ -37,10 +37,16 @@ import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTest {
+public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   private static final Logger LOG = LogManager.getLogger();
+
+  @BeforeClass
+  public static void setup() throws Exception {
+    initServerAndClient();
+  }
 
   @Test
   public void getPeers() throws Exception {
