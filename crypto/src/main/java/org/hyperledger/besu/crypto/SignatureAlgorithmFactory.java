@@ -15,10 +15,28 @@
 package org.hyperledger.besu.crypto;
 
 public class SignatureAlgorithmFactory {
+  private static SignatureAlgorithm instance = null;
 
-  private static final SignatureAlgorithm instance = new SECP256K1();
+  private SignatureAlgorithmFactory() {}
 
+  public static void setInstance(final SignatureAlgorithmType signatureAlgorithmType) {
+    if (instance != null) {
+      throw new IllegalStateException(
+          "Instance of SignatureAlgorithmFactory can only be set once.");
+    }
+
+    instance = signatureAlgorithmType.getInstance();
+  }
+
+  /**
+   * getInstance will always return a valid SignatureAlgorithm and never null. This is necessary in
+   * the unit tests be able to use the factory without having to call setInstance first.
+   *
+   * @return SignatureAlgorithm
+   */
   public static SignatureAlgorithm getInstance() {
-    return instance;
+    return instance != null
+        ? instance
+        : SignatureAlgorithmType.DEFAULT_SIGNATURE_ALGORITHM_TYPE.get();
   }
 }

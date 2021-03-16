@@ -85,6 +85,7 @@ import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
@@ -2627,5 +2628,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .getDataStorageFormat()
           .getDatabaseVersion();
     }
+  }
+
+  private void instantiateSignatureAlgorithmFactory() {
+    GenesisConfigOptions options = readGenesisConfigOptions();
+    SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(options.getEcCurve()));
   }
 }
