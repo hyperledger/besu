@@ -219,6 +219,7 @@ public abstract class PeerDiscoveryAgent {
                       .encodedBytes()
                       .slice(0, 64));
 
+              LOG.info("Writing node record to disk. {}", nodeRecord);
               final KeyValueStorageTransaction keyValueStorageTransaction =
                   keyValueStorage.startTransaction();
               keyValueStorageTransaction.put(
