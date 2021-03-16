@@ -38,7 +38,7 @@ public interface BonsaiWorldView extends WorldView {
 
   Optional<UInt256> getStorageValueBySlotHash(Address address, Hash slotHash);
 
-  UInt256 getOriginalStorageValue(Address address, UInt256 key);
+  UInt256 getPriorStorageValue(Address address, UInt256 key);
 
   /**
    * Retrieve all the storage values of a account.
