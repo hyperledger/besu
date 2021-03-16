@@ -111,9 +111,8 @@ public class QbftExtraDataCodecTest {
   }
 
   /**
-   * This test specifically verifies that {@link QbftExtraDataCodec#decode(BlockHeader)} uses
-   * {@link RLPInput#readIntScalar()} rather than {@link RLPInput#readInt()} to decode the round
-   * number
+   * This test specifically verifies that {@link QbftExtraDataCodec#decode(BlockHeader)} uses {@link
+   * RLPInput#readIntScalar()} rather than {@link RLPInput#readInt()} to decode the round number
    */
   @Test
   public void incorrectlyEncodedRoundThrowsRlpException() {
@@ -492,15 +491,18 @@ public class QbftExtraDataCodecTest {
 
   @Test
   public void quorumEncode() {
-    final SECPSignature signature = SIGNATURE_ALGORITHM.get()
-        .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+    final SECPSignature signature =
+        SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     final byte[] extraData = createNonEmptyVanityData();
     System.out.println("signature = " + signature.encodedBytes());
     final BftExtraData bftExtraData =
         new BftExtraData(
             Bytes.wrap(extraData),
             List.of(signature),
-            Optional.of(new Vote(Address.fromHexString("0x44add0ec310f115a0e603b2d7db9f067778eaf8a"), VoteType.ADD)),
+            Optional.of(
+                new Vote(
+                    Address.fromHexString("0x44add0ec310f115a0e603b2d7db9f067778eaf8a"),
+                    VoteType.ADD)),
             1,
             List.of(
                 Address.fromHexString("0x44add0ec310f115a0e603b2d7db9f067778eaf8a"),

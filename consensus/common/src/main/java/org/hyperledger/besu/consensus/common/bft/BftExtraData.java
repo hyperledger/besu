@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.MoreObjects;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
@@ -24,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import java.util.Collection;
 import java.util.Optional;
 
+import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
 public class BftExtraData implements ParsedExtraData {
