@@ -2,20 +2,34 @@
 
 ## 21.1.2
 
+### Berlin Network Upgrade
+
+This release contains the activation blocks for Berlin across all supported testnets and the Ethereum mainnet. They are: 
+  * Ropsten 9_812_189 (10 Mar 2021)
+  * Goerli 4_460_644 (17 Mar 2021)
+  * Rinkeby 8_290_928 (24 Mar 2021)
+  * Ethereum 12_244_000 (14 Apr 2021)
+
+
+**Important note: the 21.1.1 release contains an outdated version of the Berlin network upgrade. If you are using Besu on public Ethereum networks, you must upgrade to 21.1.2.
+**
+
 ### Additions and Improvements
 - Added option to set a limit for JSON-RPC connections 
   * HTTP connections `--rpc-http-max-active-connections` [\#1996](https://github.com/hyperledger/besu/pull/1996)
   * WS connections `--rpc-ws-max-active-connections` [\#2006](https://github.com/hyperledger/besu/pull/2006)
-
+- Added ASTOR testnet ETC support [\#2017](https://github.com/hyperledger/besu/pull/2017)
 ### Bug Fixes
-
-### Early Access Features
+* Don't Register BLS12 precompiles for Berlin [\#2015](https://github.com/hyperledger/besu/pull/2015)
 
 #### Previously identified known issues
 
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
+### Download link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.2/besu-21.1.2.zip
+02f4b6622756b77fed814d8c1bbf986c6178d8f5adb9d61076e061124c3d12aa
 
 ## 21.1.1
 
