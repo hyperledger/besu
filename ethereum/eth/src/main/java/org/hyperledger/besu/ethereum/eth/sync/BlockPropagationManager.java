@@ -26,8 +26,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -229,8 +228,12 @@ public class BlockPropagationManager {
 
       // Process known blocks we care about
       for (final NewBlockHash newBlock : newBlocks) {
-        EthPeer bestPeer = ethContext.getEthPeers().bestPeer().orElse(message.getPeer());
-        processAnnouncedBlock(bestPeer, newBlock)
+        final List<EthPeer> peers =
+            ethContext.getEthPeers().streamBestPeers().collect(Collectors.toList());
+        if (!peers.contains(message.getPeer())) {
+          peers.add(message.getPeer());
+        }
+        processAnnouncedBlock(peers, newBlock)
             .whenComplete((r, t) -> requestedBlocks.remove(newBlock.hash()));
       }
     } catch (final RLPException e) {
@@ -243,15 +246,13 @@ public class BlockPropagationManager {
   }
 
   private CompletableFuture<Block> processAnnouncedBlock(
-      final EthPeer peer, final NewBlockHash newBlock) {
-    final AbstractPeerTask<Block> getBlockTask =
-        GetBlockFromPeerTask.create(
-                protocolSchedule, ethContext, newBlock.hash(), newBlock.number(), metricsSystem)
-            .assignPeer(peer);
-
+      final List<EthPeer> peers, final NewBlockHash newBlock) {
+    final GetBlockFromPeersTask getBlockTask =
+        GetBlockFromPeersTask.create(
+            peers, protocolSchedule, ethContext, newBlock.hash(), newBlock.number(), metricsSystem);
     return getBlockTask
         .run()
-        .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), peer.nodeId()));
+        .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
