@@ -76,6 +76,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
+  @Override
   public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream()
         .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
