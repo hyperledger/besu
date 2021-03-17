@@ -33,7 +33,8 @@ public class SignatureAlgorithmType {
     this.instantiator = instantiator;
   }
 
-  public static SignatureAlgorithmType create(final Optional<String> ecCurve) {
+  public static SignatureAlgorithmType create(final Optional<String> ecCurve)
+      throws IllegalArgumentException {
     if (ecCurve.isEmpty()) {
       return new SignatureAlgorithmType(DEFAULT_SIGNATURE_ALGORITHM_TYPE);
     }
@@ -57,7 +58,7 @@ public class SignatureAlgorithmType {
     return instantiator.get();
   }
 
-  private static boolean isValidType(final String ecCurve) {
+  public static boolean isValidType(final String ecCurve) {
     return TYPES.containsKey(ecCurve);
   }
 

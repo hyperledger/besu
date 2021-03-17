@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.crypto;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class SignatureAlgorithmFactory {
   private static SignatureAlgorithm instance = null;
 
   private SignatureAlgorithmFactory() {}
 
-  public static void setInstance(final SignatureAlgorithmType signatureAlgorithmType) {
+  public static void setInstance(final SignatureAlgorithmType signatureAlgorithmType)
+      throws IllegalStateException {
     if (instance != null) {
       throw new IllegalStateException(
           "Instance of SignatureAlgorithmFactory can only be set once.");
@@ -38,5 +41,14 @@ public class SignatureAlgorithmFactory {
     return instance != null
         ? instance
         : SignatureAlgorithmType.DEFAULT_SIGNATURE_ALGORITHM_TYPE.get();
+  }
+
+  public static boolean isInstanceSet() {
+    return instance != null;
+  }
+
+  @VisibleForTesting
+  public static void resetInstance() {
+    instance = null;
   }
 }

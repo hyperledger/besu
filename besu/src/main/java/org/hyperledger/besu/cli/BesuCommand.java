@@ -1181,7 +1181,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
-      instantiateSignatureAlgorithmFactory();
 
       final BesuCommand controller = validateOptions().configure().controller();
 
@@ -1570,6 +1569,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricsConfiguration = metricsConfiguration();
 
     logger.info("Security Module: {}", securityModuleName);
+    instantiateSignatureAlgorithmFactory();
     return this;
   }
 
@@ -2632,7 +2632,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void instantiateSignatureAlgorithmFactory() {
+    if (SignatureAlgorithmFactory.isInstanceSet()) {
+      return;
+    }
+
+    if (genesisFile == null) {
+      SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(Optional.empty()));
+      return;
+    }
+
     GenesisConfigOptions options = readGenesisConfigOptions();
-    SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(options.getEcCurve()));
+
+    try {
+      SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(options.getEcCurve()));
+    } catch (IllegalArgumentException e) {
+      throw new CommandLine.InitializationException(e.getMessage());
+    }
   }
 }

@@ -199,34 +199,24 @@ public class JsonGenesisConfigOptionsTest {
   }
 
   @Test
-  public void configWithoutEcCurveDefaultsToSECP256K1() {
+  public void configWithoutEcCurveReturnsEmptyOptional() {
     final ObjectNode configNode = loadCompleteDataSet();
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getEcCurve().getCurveName()).isEqualTo("secp256k1");
+    assertThat(configOptions.getEcCurve().isEmpty()).isTrue();
   }
 
   @Test
   public void configWithEcCurveIsCorrectlySet() {
     final ObjectNode configNode = loadCompleteDataSet();
-    configNode.put("ecCurve", "secp256k1");
+    configNode.put("eccurve", "secp256k1");
 
     final JsonGenesisConfigOptions configOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
 
-    assertThat(configOptions.getEcCurve().getCurveName()).isEqualTo("secp256k1");
-  }
-
-  @Test(expected = RuntimeException.class)
-  public void configWithInvalidEcCurveThrowsExeption() {
-    final ObjectNode configNode = loadCompleteDataSet();
-    configNode.put("ecCurve", "abc");
-
-    final JsonGenesisConfigOptions configOptions =
-        JsonGenesisConfigOptions.fromJsonObject(configNode);
-
-    configOptions.getEcCurve();
+    assertThat(configOptions.getEcCurve().isPresent()).isTrue();
+    assertThat(configOptions.getEcCurve().get()).isEqualTo("secp256k1");
   }
 }
