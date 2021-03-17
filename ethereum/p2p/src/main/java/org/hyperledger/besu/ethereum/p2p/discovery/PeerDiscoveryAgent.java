@@ -211,11 +211,11 @@ public abstract class PeerDiscoveryAgent {
                   nodeRecordFactory.createFromValues(
                       sequenceNumber,
                       new EnrField(EnrField.ID, IdentitySchema.V4),
-                          new EnrField(
-                                  SIGNATURE_ALGORITHM.get().getCurveName(),
-                                  SIGNATURE_ALGORITHM
-                                          .get()
-                                          .compressPublicKey(SIGNATURE_ALGORITHM.get().createPublicKey(id))),
+                      new EnrField(
+                          SIGNATURE_ALGORITHM.get().getCurveName(),
+                          SIGNATURE_ALGORITHM
+                              .get()
+                              .compressPublicKey(SIGNATURE_ALGORITHM.get().createPublicKey(id))),
                       new EnrField(EnrField.IP_V4, addressBytes),
                       new EnrField(EnrField.TCP, listeningPort),
                       new EnrField(EnrField.UDP, discoveryPort),
