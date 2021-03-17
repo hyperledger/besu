@@ -91,7 +91,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     if (bftExtraData.getVote().isPresent()) {
       bftExtraData.getVote().get().writeTo(encoder);
     } else {
-      encoder.writeList(Collections.emptyList(), (o, rlpOutput) -> {});
+      encoder.writeEmptyList();
     }
 
     if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {

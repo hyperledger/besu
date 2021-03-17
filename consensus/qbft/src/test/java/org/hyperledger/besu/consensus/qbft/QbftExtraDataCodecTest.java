@@ -161,7 +161,7 @@ public class QbftExtraDataCodecTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
     // encode an empty vote
-    encoder.writeList(List.of(), (v, r) -> {});
+    encoder.writeEmptyList();
 
     encoder.writeIntScalar(round);
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
@@ -326,7 +326,6 @@ public class QbftExtraDataCodecTest {
 
   @Test
   public void decodingOfKnownRawHexStringMatchesKnowExtraDataObject() {
-
     final BftExtraData expectedExtraData = DECODED_EXTRA_DATA_FOR_RAW_HEX_ENCODING_STRING;
 
     Bytes rawDecoding = Bytes.fromHexString(RAW_HEX_ENCODING_STRING);
@@ -478,38 +477,6 @@ public class QbftExtraDataCodecTest {
     assertThatThrownBy(() -> bftExtraDataCodec.decodeRaw(bufferToInject))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid Bytes supplied - Bft Extra Data required.");
-  }
-
-  @Test
-  public void quorumDecode() {
-    final Bytes encodedValue =
-        Bytes.fromHexString(
-            "0xf85a80f8549444add0ec310f115a0e603b2d7db9f067778eaf8a94294fc7e8f22b3bcdcf955dd7ff3ba2ed833f8212946beaaed781d2d2ab6350f5c4566a2c6eaac407a6948be76812f765c24641ec63dc2852b378aba2b440c080c0");
-    final BftExtraData bftExtraData = bftExtraDataCodec.decodeRaw(encodedValue);
-    System.out.println("bftExtraData = " + bftExtraData);
-  }
-
-  @Test
-  public void quorumEncode() {
-    final SECPSignature signature =
-        SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
-    final byte[] extraData = createNonEmptyVanityData();
-    System.out.println("signature = " + signature.encodedBytes());
-    final BftExtraData bftExtraData =
-        new BftExtraData(
-            Bytes.wrap(extraData),
-            List.of(signature),
-            Optional.of(
-                new Vote(
-                    Address.fromHexString("0x44add0ec310f115a0e603b2d7db9f067778eaf8a"),
-                    VoteType.ADD)),
-            1,
-            List.of(
-                Address.fromHexString("0x44add0ec310f115a0e603b2d7db9f067778eaf8a"),
-                Address.fromHexString("0x294fc7e8f22b3bcdcf955dd7ff3ba2ed833f8212"),
-                Address.fromHexString("0x6beaaed781d2d2ab6350f5c4566a2c6eaac407a6"),
-                Address.fromHexString("0x8be76812f765c24641ec63dc2852b378aba2b440")));
-    System.out.println("encoded = " + bftExtraDataCodec.encode(bftExtraData));
   }
 
   private static byte[] createNonEmptyVanityData() {

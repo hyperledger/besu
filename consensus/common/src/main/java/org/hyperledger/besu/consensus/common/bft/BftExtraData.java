@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import java.util.Collection;
 import java.util.Optional;
 
-import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
 public class BftExtraData implements ParsedExtraData {
@@ -67,16 +66,5 @@ public class BftExtraData implements ParsedExtraData {
 
   public int getRound() {
     return round;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("vanityData", vanityData)
-        .add("seals", seals)
-        .add("validators", validators)
-        .add("vote", vote)
-        .add("round", round)
-        .toString();
   }
 }
