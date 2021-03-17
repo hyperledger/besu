@@ -37,9 +37,11 @@ public class BftHelpers {
   }
 
   public static Block createSealedBlock(
-      final Block block, final Collection<SECPSignature> commitSeals) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final Block block,
+      final Collection<SECPSignature> commitSeals) {
     final BlockHeader initialHeader = block.getHeader();
-    final BftExtraData initialExtraData = BftExtraData.decode(initialHeader);
+    final BftExtraData initialExtraData = bftExtraDataCodec.decode(initialHeader);
 
     final BftExtraData sealedExtraData =
         new BftExtraData(
@@ -51,8 +53,8 @@ public class BftHelpers {
 
     final BlockHeader sealedHeader =
         BlockHeaderBuilder.fromHeader(initialHeader)
-            .extraData(sealedExtraData.encode())
-            .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock())
+            .extraData(bftExtraDataCodec.encode(sealedExtraData))
+            .blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec))
             .buildBlockHeader();
 
     return new Block(sealedHeader, block.getBody());

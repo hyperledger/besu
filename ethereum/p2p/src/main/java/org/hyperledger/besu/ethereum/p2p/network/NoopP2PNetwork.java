@@ -92,6 +92,9 @@ public class NoopP2PNetwork implements P2PNetwork {
   }
 
   @Override
+  public void updateNodeRecord() {}
+
+  @Override
   public void close() throws IOException {}
 
   @Override

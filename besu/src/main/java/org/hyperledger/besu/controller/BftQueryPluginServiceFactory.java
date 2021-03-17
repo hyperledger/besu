@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.queries.BftQueryServiceImpl;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -27,19 +27,24 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 public class BftQueryPluginServiceFactory implements PluginServiceFactory {
 
   private final Blockchain blockchain;
+  private final BftExtraDataCodec bftExtraDataCodec;
   private final NodeKey nodeKey;
   private final String consensusMechanismName;
 
   public BftQueryPluginServiceFactory(
-      final Blockchain blockchain, final NodeKey nodeKey, final String consensusMechanismName) {
+      final Blockchain blockchain,
+      final BftExtraDataCodec bftExtraDataCodec,
+      final NodeKey nodeKey,
+      final String consensusMechanismName) {
     this.blockchain = blockchain;
+    this.bftExtraDataCodec = bftExtraDataCodec;
     this.nodeKey = nodeKey;
     this.consensusMechanismName = consensusMechanismName;
   }
 
   @Override
   public void appendPluginServices(final BesuPluginContextImpl besuContext) {
-    final BlockInterface blockInterface = new BftBlockInterface();
+    final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataCodec);
 
     final BftQueryServiceImpl service =
         new BftQueryServiceImpl(blockInterface, blockchain, nodeKey, consensusMechanismName);

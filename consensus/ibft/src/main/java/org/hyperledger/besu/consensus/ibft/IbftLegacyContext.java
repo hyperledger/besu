@@ -12,26 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft;
+package org.hyperledger.besu.consensus.ibft;
 
+import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.PoaContext;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 
 /** Holds the BFT specific mutable state. */
-public class BftContext implements PoaContext {
+public class IbftLegacyContext implements PoaContext {
 
   private final VoteTallyCache voteTallyCache;
   private final VoteProposer voteProposer;
   private final EpochManager epochManager;
-  private final BftBlockInterface blockInterface;
+  private final BlockInterface blockInterface;
 
-  public BftContext(
+  public IbftLegacyContext(
       final VoteTallyCache voteTallyCache,
       final VoteProposer voteProposer,
       final EpochManager epochManager,
-      final BftBlockInterface blockInterface) {
+      final BlockInterface blockInterface) {
     this.voteTallyCache = voteTallyCache;
     this.voteProposer = voteProposer;
     this.epochManager = epochManager;
@@ -51,7 +52,7 @@ public class BftContext implements PoaContext {
   }
 
   @Override
-  public BftBlockInterface getBlockInterface() {
+  public BlockInterface getBlockInterface() {
     return blockInterface;
   }
 }

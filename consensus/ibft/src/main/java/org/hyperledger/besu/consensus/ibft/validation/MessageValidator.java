@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -69,8 +71,10 @@ public class MessageValidator {
       return false;
     }
 
+    final BftBlockInterface blockInterface =
+        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
     return proposalConsistencyValidator.validateProposalMatchesBlock(
-        msg.getSignedPayload(), msg.getBlock());
+        msg.getSignedPayload(), msg.getBlock(), blockInterface);
   }
 
   private boolean validateBlock(final Block block) {

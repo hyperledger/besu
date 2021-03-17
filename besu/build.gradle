@@ -79,6 +79,7 @@ dependencies {
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
+  testImplementation 'tech.pegasys.discovery:discovery'
   testImplementation 'com.google.auto.service:auto-service'
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'junit:junit'
