@@ -51,19 +51,13 @@ public class TrieLogLayer {
   private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
   private final Map<Address, BonsaiValue<Bytes>> code;
   private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;
-  private final Map<Address, Hash> contractCodeChangesHistory;
   private boolean frozen = false;
 
   TrieLogLayer() {
     // TODO when tuweni fixes zero length byte comparison consider TreeMap
-    this(new HashMap<>());
-  }
-
-  public TrieLogLayer(final Map<Address, Hash> contractCodeChangesHistory) {
     this.accounts = new HashMap<>();
     this.code = new HashMap<>();
     this.storage = new HashMap<>();
-    this.contractCodeChangesHistory = contractCodeChangesHistory;
   }
 
   /** Locks the layer so no new changes can be added; */
@@ -95,7 +89,6 @@ public class TrieLogLayer {
         address,
         new BonsaiValue<>(
             oldValue == null ? Bytes.EMPTY : oldValue, newValue == null ? Bytes.EMPTY : newValue));
-    contractCodeChangesHistory.put(address, blockHash);
   }
 
   void addStorageChange(
@@ -157,12 +150,6 @@ public class TrieLogLayer {
         newLayer.storage.put(address, storageChanges);
       }
 
-      if (input.nextIsNull()) {
-        input.skipNext();
-      } else {
-        newLayer.contractCodeChangesHistory.put(address, Hash.wrap(input.readBytes32()));
-      }
-
       // TODO add trie nodes
 
       // lenient leave list for forward compatible additions.
@@ -181,7 +168,6 @@ public class TrieLogLayer {
     addresses.addAll(accounts.keySet());
     addresses.addAll(code.keySet());
     addresses.addAll(storage.keySet());
-    addresses.addAll(contractCodeChangesHistory.keySet());
 
     output.startList(); // container
     output.writeBytes(blockHash);
@@ -219,13 +205,6 @@ public class TrieLogLayer {
         output.endList();
       }
 
-      final Hash blockHash = contractCodeChangesHistory.get(address);
-      if (blockHash == null) {
-        output.writeNull();
-      } else {
-        output.writeBytes(blockHash);
-      }
-
       // TODO write trie nodes
 
       output.endList(); // this change
@@ -245,10 +224,6 @@ public class TrieLogLayer {
     return storage.entrySet().stream();
   }
 
-  public Map<Address, Hash> getContractCodeChangesHistory() {
-    return contractCodeChangesHistory;
-  }
-
   boolean hasStorageChanges(final Address address) {
     return storage.containsKey(address);
   }
@@ -266,22 +241,28 @@ public class TrieLogLayer {
     }
   }
 
+  public Optional<Bytes> getPriorCode(final Address address) {
+    return Optional.ofNullable(code.get(address)).map(BonsaiValue::getPrior);
+  }
+
   public Optional<Bytes> getCode(final Address address) {
     return Optional.ofNullable(code.get(address)).map(BonsaiValue::getUpdated);
   }
 
-  public Optional<Hash> getLastChangedCodeLocation(final Address address) {
-    if (contractCodeChangesHistory.containsKey(address)
-        && !contractCodeChangesHistory.get(address).isEmpty()) {
-      return Optional.of(contractCodeChangesHistory.get(address));
-    }
-    return Optional.empty();
+  Optional<UInt256> getPriorStorageBySlotHash(final Address address, final Hash slotHash) {
+    return Optional.ofNullable(storage.get(address))
+        .map(i -> i.get(slotHash))
+        .map(BonsaiValue::getPrior);
   }
 
   Optional<UInt256> getStorageBySlotHash(final Address address, final Hash slotHash) {
     return Optional.ofNullable(storage.get(address))
         .map(i -> i.get(slotHash))
         .map(BonsaiValue::getUpdated);
+  }
+
+  public Optional<StateTrieAccountValue> getPriorAccount(final Address address) {
+    return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getPrior);
   }
 
   public Optional<StateTrieAccountValue> getAccount(final Address address) {
@@ -295,20 +276,20 @@ public class TrieLogLayer {
     for (final Map.Entry<Address, BonsaiValue<StateTrieAccountValue>> account :
         accounts.entrySet()) {
       sb.append(" : ").append(account.getKey()).append("\n");
-      if (Objects.equals(account.getValue().getOriginal(), account.getValue().getUpdated())) {
+      if (Objects.equals(account.getValue().getPrior(), account.getValue().getUpdated())) {
         sb.append("   = ").append(account.getValue().getUpdated()).append("\n");
       } else {
-        sb.append("   - ").append(account.getValue().getOriginal()).append("\n");
+        sb.append("   - ").append(account.getValue().getPrior()).append("\n");
         sb.append("   + ").append(account.getValue().getUpdated()).append("\n");
       }
     }
     sb.append("code").append("\n");
     for (final Map.Entry<Address, BonsaiValue<Bytes>> code : code.entrySet()) {
       sb.append(" : ").append(code.getKey()).append("\n");
-      if (Objects.equals(code.getValue().getOriginal(), code.getValue().getUpdated())) {
-        sb.append("   = ").append(code.getValue().getOriginal()).append("\n");
+      if (Objects.equals(code.getValue().getPrior(), code.getValue().getUpdated())) {
+        sb.append("   = ").append(code.getValue().getPrior()).append("\n");
       } else {
-        sb.append("   - ").append(code.getValue().getOriginal()).append("\n");
+        sb.append("   - ").append(code.getValue().getPrior()).append("\n");
         sb.append("   + ").append(code.getValue().getUpdated()).append("\n");
       }
     }
@@ -316,7 +297,7 @@ public class TrieLogLayer {
     for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storage : storage.entrySet()) {
       sb.append(" : ").append(storage.getKey()).append("\n");
       for (final Map.Entry<Hash, BonsaiValue<UInt256>> slot : storage.getValue().entrySet()) {
-        final UInt256 originalValue = slot.getValue().getOriginal();
+        final UInt256 originalValue = slot.getValue().getPrior();
         final UInt256 updatedValue = slot.getValue().getUpdated();
         sb.append("   : ").append(slot.getKey()).append("\n");
         if (Objects.equals(originalValue, updatedValue)) {

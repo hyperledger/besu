@@ -146,7 +146,9 @@ public class BlockReplay {
       return Optional.empty();
     }
     final MutableWorldState mutableWorldState =
-        worldStateArchive.getMutable(previous.getStateRoot(), previous.getHash()).orElse(null);
+        worldStateArchive
+            .getMutable(previous.getStateRoot(), previous.getHash(), false)
+            .orElse(null);
     if (mutableWorldState == null) {
       return Optional.empty();
     }

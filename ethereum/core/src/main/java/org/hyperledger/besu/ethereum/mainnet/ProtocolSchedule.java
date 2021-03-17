@@ -19,10 +19,13 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface ProtocolSchedule {
 
   ProtocolSpec getByBlockNumber(long number);
+
+  public Stream<Long> streamMilestoneBlocks();
 
   Optional<BigInteger> getChainId();
 
