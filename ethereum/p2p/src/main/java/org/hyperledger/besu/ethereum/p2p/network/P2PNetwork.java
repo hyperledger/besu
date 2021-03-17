@@ -147,4 +147,6 @@ public interface P2PNetwork extends Closeable {
    *     otherwise.
    */
   Optional<EnodeURL> getLocalEnode();
+
+  void updateNodeRecord();
 }
