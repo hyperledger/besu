@@ -402,9 +402,12 @@ public class MainnetTransactionProcessor {
                 Optional.empty());
           }
         }
+        final CoinbaseFeePriceCalculator coinbaseCalculator =
+            blockHeader.getBaseFee().isPresent()
+                ? coinbaseFeePriceCalculator
+                : CoinbaseFeePriceCalculator.frontier();
         final Wei coinbaseWeiDelta =
-            coinbaseFeePriceCalculator.price(
-                coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+            coinbaseCalculator.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
 
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
