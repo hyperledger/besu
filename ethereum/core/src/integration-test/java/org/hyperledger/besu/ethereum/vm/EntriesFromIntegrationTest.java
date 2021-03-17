@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -38,7 +38,7 @@ public class EntriesFromIntegrationTest {
   @SuppressWarnings("MathAbsoluteRandom")
   public void shouldCollectStateEntries() {
     final MutableWorldState worldState =
-        InMemoryStorageProvider.createInMemoryWorldStateArchive().getMutable();
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive().getMutable();
     final WorldUpdater updater = worldState.updater();
     MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56")).getMutable();
     final Map<Bytes32, AccountStorageEntry> expectedValues = new TreeMap<>();

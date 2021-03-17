@@ -22,23 +22,25 @@ import java.util.function.Function;
 
 public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
 
-  private static final BftBlockHeaderFunctions COMMITTED_SEAL =
-      new BftBlockHeaderFunctions(BftBlockHashing::calculateDataHashForCommittedSeal);
-  private static final BftBlockHeaderFunctions ON_CHAIN =
-      new BftBlockHeaderFunctions(BftBlockHashing::calculateHashOfBftBlockOnChain);
-
   private final Function<BlockHeader, Hash> hashFunction;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
-  private BftBlockHeaderFunctions(final Function<BlockHeader, Hash> hashFunction) {
+  public BftBlockHeaderFunctions(
+      final Function<BlockHeader, Hash> hashFunction, final BftExtraDataCodec bftExtraDataCodec) {
     this.hashFunction = hashFunction;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
-  public static BlockHeaderFunctions forOnChainBlock() {
-    return ON_CHAIN;
+  public static BlockHeaderFunctions forOnChainBlock(final BftExtraDataCodec bftExtraDataCodec) {
+    return new BftBlockHeaderFunctions(
+        h -> new BftBlockHashing(bftExtraDataCodec).calculateHashOfBftBlockOnChain(h),
+        bftExtraDataCodec);
   }
 
-  public static BlockHeaderFunctions forCommittedSeal() {
-    return COMMITTED_SEAL;
+  public static BlockHeaderFunctions forCommittedSeal(final BftExtraDataCodec bftExtraDataCodec) {
+    return new BftBlockHeaderFunctions(
+        h -> new BftBlockHashing(bftExtraDataCodec).calculateDataHashForCommittedSeal(h),
+        bftExtraDataCodec);
   }
 
   @Override
@@ -48,6 +50,6 @@ public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
 
   @Override
   public BftExtraData parseExtraData(final BlockHeader header) {
-    return BftExtraData.decodeRaw(header.getExtraData());
+    return bftExtraDataCodec.decodeRaw(header.getExtraData());
   }
 }

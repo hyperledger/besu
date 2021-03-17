@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 
 import java.util.ArrayDeque;
@@ -310,7 +309,6 @@ public class MainnetTransactionProcessor {
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
-              .returnStack(new ReturnStack())
               .blockchain(blockchain)
               .worldState(worldUpdater.updater())
               .initialGas(gasAvailable)

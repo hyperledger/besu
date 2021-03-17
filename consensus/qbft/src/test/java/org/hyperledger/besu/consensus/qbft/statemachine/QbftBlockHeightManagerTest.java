@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.RoundChangeMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -86,6 +88,7 @@ public class QbftBlockHeightManagerTest {
   private final NodeKey nodeKey = NodeKeyUtils.generate();
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
   private final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
+  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
 
   @Mock private BftFinalState finalState;
   @Mock private QbftMessageTransmitter messageTransmitter;
@@ -114,7 +117,7 @@ public class QbftBlockHeightManagerTest {
     final BftExtraData extraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), Optional.empty(), 0, validators);
 
-    headerTestFixture.extraData(extraData.encode());
+    headerTestFixture.extraData(bftExtraDataCodec.encode(extraData));
     final BlockHeader header = headerTestFixture.buildHeader();
     createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
   }
@@ -162,7 +165,8 @@ public class QbftBlockHeightManagerTest {
                   nodeKey,
                   messageFactory,
                   messageTransmitter,
-                  roundTimer);
+                  roundTimer,
+                  bftExtraDataCodec);
             });
 
     when(roundFactory.createNewRoundWithState(any(), any()))
@@ -178,7 +182,8 @@ public class QbftBlockHeightManagerTest {
                   nodeKey,
                   messageFactory,
                   messageTransmitter,
-                  roundTimer);
+                  roundTimer,
+                  bftExtraDataCodec);
             });
   }
 

@@ -204,6 +204,13 @@ public class DiscoveryConfiguration {
               .map(EnodeURL::fromString)
               .collect(toList()));
 
+  public static final List<EnodeURL> ASTOR_BOOTSTRAP_NODES =
+      Collections.unmodifiableList(
+          Stream.of(
+                  "enode://b638fc3dca6181ae97fac2ea0157e8330f5ac8a20c0d4c63aa6f98dcbac4e35b4e023f656757b58c1da7a7b2be9ffad9342e0f769b8cf0f5e35ff73116ff7dfd@3.16.171.213:30303")
+              .map(EnodeURL::fromString)
+              .collect(toList()));
+
   private boolean active = true;
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;

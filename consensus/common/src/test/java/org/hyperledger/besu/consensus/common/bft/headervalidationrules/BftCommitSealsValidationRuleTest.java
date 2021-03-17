@@ -18,9 +18,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
-import static org.hyperledger.besu.consensus.common.bft.headervalidationrules.HeaderValidationTestHelpers.createProposedBlockHeader;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -39,6 +41,7 @@ import org.junit.Test;
 
 public class BftCommitSealsValidationRuleTest {
 
+  private final BlockHeader blockHeader = mock(BlockHeader.class);
   private final BftCommitSealsValidationRule commitSealsValidationRule =
       new BftCommitSealsValidationRule();
 
@@ -53,12 +56,11 @@ public class BftCommitSealsValidationRuleTest {
             .sorted()
             .collect(Collectors.toList());
 
-    final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(committerAddresses));
+    final BftContext bftContext = setupContextWithValidators(committerAddresses);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    when(bftContext.getBlockInterface().getCommitters(any())).thenReturn(committerAddresses);
 
-    BlockHeader header = createProposedBlockHeader(committerAddresses, committerNodeKeys, false);
-
-    assertThat(commitSealsValidationRule.validate(header, null, context)).isTrue();
+    assertThat(commitSealsValidationRule.validate(blockHeader, null, context)).isTrue();
   }
 
   @Test
@@ -68,16 +70,11 @@ public class BftCommitSealsValidationRuleTest {
         Address.extract(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = singletonList(committerAddress);
-    final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+    final BftContext bftContext = setupContextWithValidators(validators);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    when(bftContext.getBlockInterface().getCommitters(any())).thenReturn(emptyList());
 
-    final BlockHeader header = createProposedBlockHeader(validators, emptyList(), false);
-
-    // Note that no committer seals are in the header's BFT extra data.
-    final BftExtraData headerExtraData = BftExtraData.decode(header);
-    assertThat(headerExtraData.getSeals().size()).isEqualTo(0);
-
-    assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();
+    assertThat(commitSealsValidationRule.validate(blockHeader, null, context)).isFalse();
   }
 
   @Test
@@ -90,93 +87,77 @@ public class BftCommitSealsValidationRuleTest {
     // Insert an extraData block with committer seals.
     final NodeKey nonValidatorNodeKey = NodeKeyUtils.generate();
 
-    final BlockHeader header =
-        createProposedBlockHeader(validators, singletonList(nonValidatorNodeKey), false);
+    final BftContext bftContext = setupContextWithValidators(validators);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    when(bftContext.getBlockInterface().getCommitters(any()))
+        .thenReturn(singletonList(Util.publicKeyToAddress(nonValidatorNodeKey.getPublicKey())));
 
-    final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
-
-    assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();
+    assertThat(commitSealsValidationRule.validate(blockHeader, null, context)).isFalse();
   }
 
   @Test
   public void ratioOfCommittersToValidatorsAffectValidation() {
-    assertThat(subExecution(4, 4, false)).isEqualTo(true);
-    assertThat(subExecution(4, 3, false)).isEqualTo(true);
-    assertThat(subExecution(4, 2, false)).isEqualTo(false);
+    assertThat(subExecution(4, 4)).isEqualTo(true);
+    assertThat(subExecution(4, 3)).isEqualTo(true);
+    assertThat(subExecution(4, 2)).isEqualTo(false);
 
-    assertThat(subExecution(5, 4, false)).isEqualTo(true);
-    assertThat(subExecution(5, 3, false)).isEqualTo(false);
-    assertThat(subExecution(5, 2, false)).isEqualTo(false);
+    assertThat(subExecution(5, 4)).isEqualTo(true);
+    assertThat(subExecution(5, 3)).isEqualTo(false);
+    assertThat(subExecution(5, 2)).isEqualTo(false);
 
-    assertThat(subExecution(6, 4, false)).isEqualTo(true);
-    assertThat(subExecution(6, 3, false)).isEqualTo(false);
-    assertThat(subExecution(6, 2, false)).isEqualTo(false);
+    assertThat(subExecution(6, 4)).isEqualTo(true);
+    assertThat(subExecution(6, 3)).isEqualTo(false);
+    assertThat(subExecution(6, 2)).isEqualTo(false);
 
-    assertThat(subExecution(7, 5, false)).isEqualTo(true);
-    assertThat(subExecution(7, 4, false)).isEqualTo(false);
+    assertThat(subExecution(7, 5)).isEqualTo(true);
+    assertThat(subExecution(7, 4)).isEqualTo(false);
 
-    assertThat(subExecution(8, 6, false)).isEqualTo(true);
-    assertThat(subExecution(8, 5, false)).isEqualTo(false);
-    assertThat(subExecution(8, 4, false)).isEqualTo(false);
+    assertThat(subExecution(8, 6)).isEqualTo(true);
+    assertThat(subExecution(8, 5)).isEqualTo(false);
+    assertThat(subExecution(8, 4)).isEqualTo(false);
 
-    assertThat(subExecution(9, 6, false)).isEqualTo(true);
-    assertThat(subExecution(9, 5, false)).isEqualTo(false);
-    assertThat(subExecution(9, 4, false)).isEqualTo(false);
+    assertThat(subExecution(9, 6)).isEqualTo(true);
+    assertThat(subExecution(9, 5)).isEqualTo(false);
+    assertThat(subExecution(9, 4)).isEqualTo(false);
 
-    assertThat(subExecution(10, 7, false)).isEqualTo(true);
-    assertThat(subExecution(10, 6, false)).isEqualTo(false);
+    assertThat(subExecution(10, 7)).isEqualTo(true);
+    assertThat(subExecution(10, 6)).isEqualTo(false);
 
-    assertThat(subExecution(12, 8, false)).isEqualTo(true);
-    assertThat(subExecution(12, 7, false)).isEqualTo(false);
-    assertThat(subExecution(12, 6, false)).isEqualTo(false);
-  }
-
-  @Test
-  public void validationFailsIfCommittedSealsAreForDifferentRounds() {
-    assertThat(subExecution(2, 2, true)).isEqualTo(false);
-    assertThat(subExecution(4, 4, true)).isEqualTo(false);
+    assertThat(subExecution(12, 8)).isEqualTo(true);
+    assertThat(subExecution(12, 7)).isEqualTo(false);
+    assertThat(subExecution(12, 6)).isEqualTo(false);
   }
 
   @Test
   public void headerContainsDuplicateSealsFailsValidation() {
     final NodeKey committerNodeKey = NodeKeyUtils.generate();
-    final List<Address> validators =
-        singletonList(Util.publicKeyToAddress(committerNodeKey.getPublicKey()));
-    final BlockHeader header =
-        createProposedBlockHeader(
-            validators, Lists.newArrayList(committerNodeKey, committerNodeKey), false);
+    final Address committerAddress = Util.publicKeyToAddress(committerNodeKey.getPublicKey());
+    final List<Address> validators = singletonList(committerAddress);
 
-    final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+    final BftContext bftContext = setupContextWithValidators(validators);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    when(bftContext.getBlockInterface().getCommitters(any()))
+        .thenReturn(List.of(committerAddress, committerAddress));
 
-    assertThat(commitSealsValidationRule.validate(header, null, context)).isFalse();
+    assertThat(commitSealsValidationRule.validate(blockHeader, null, context)).isFalse();
   }
 
-  private boolean subExecution(
-      final int validatorCount,
-      final int committerCount,
-      final boolean useDifferentRoundNumbersForCommittedSeals) {
+  private boolean subExecution(final int validatorCount, final int committerCount) {
 
     final List<Address> validators = Lists.newArrayList();
-    final List<NodeKey> committerKeys = Lists.newArrayList();
 
     for (int i = 0; i < validatorCount; i++) { // need -1 to account for proposer
       final NodeKey committerNodeKey = NodeKeyUtils.generate();
-      committerKeys.add(committerNodeKey);
       validators.add(Address.extract(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes())));
     }
 
     Collections.sort(validators);
-    final BlockHeader header =
-        createProposedBlockHeader(
-            validators,
-            committerKeys.subList(0, committerCount),
-            useDifferentRoundNumbersForCommittedSeals);
 
-    final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+    final BftContext bftContext = setupContextWithValidators(validators);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    when(bftContext.getBlockInterface().getCommitters(any()))
+        .thenReturn(validators.subList(0, committerCount));
 
-    return commitSealsValidationRule.validate(header, null, context);
+    return commitSealsValidationRule.validate(blockHeader, null, context);
   }
 }

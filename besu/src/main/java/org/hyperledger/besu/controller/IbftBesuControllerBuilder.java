@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteProposer;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
@@ -45,6 +45,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.IbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -86,7 +87,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
-  private final BlockInterface blockInterface = new BftBlockInterface();
+  private final BftExtraDataCodec bftExtraDataCodec = new IbftExtraDataCodec();
+  private final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataCodec);
 
   @Override
   protected void prepForBuild() {
@@ -131,7 +133,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
+            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
+            bftExtraDataCodec);
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -161,7 +164,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, protocolSchedule, protocolContext, bftExtraDataCodec);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
@@ -189,7 +193,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
                     protocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
-                    messageFactory),
+                    messageFactory,
+                    bftExtraDataCodec),
                 messageValidatorFactory,
                 messageFactory),
             gossiper,
@@ -215,7 +220,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain, nodeKey);
+    return new IbftQueryPluginServiceFactory(blockchain, blockInterface, nodeKey);
   }
 
   @Override
@@ -224,7 +229,8 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
+        IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+        bftExtraDataCodec);
   }
 
   @Override
@@ -250,9 +256,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     return new BftContext(
         new ForkingVoteTallyCache(
             blockchain,
-            new VoteTallyUpdater(epochManager, new BftBlockInterface()),
+            new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new BftBlockInterface(),
+            blockInterface,
             new BftValidatorOverrides(ibftValidatorForkMap)),
         new VoteProposer(),
         epochManager,

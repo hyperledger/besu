@@ -54,20 +54,22 @@ public class BftBlockHashingTest {
   private static final int ROUND = 0x00FEDCBA;
   private static final Bytes VANITY_DATA = vanityBytes();
 
-  private static final BlockHeader HEADER_TO_BE_HASHED = headerToBeHashed();
-  private static final Hash EXPECTED_HEADER_HASH = expectedHeaderHash();
+  private final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+  private final BftBlockHashing bftBlockHashing = new BftBlockHashing(bftExtraDataEncoder);
+  private final BlockHeader headerToBeHashed = headerToBeHashed();
+  private final Hash EXPECTED_HEADER_HASH = expectedHeaderHash();
 
   @Test
   public void testCalculateHashOfIbft2BlockOnChain() {
-    Hash actualHeaderHash = BftBlockHashing.calculateHashOfBftBlockOnChain(HEADER_TO_BE_HASHED);
+    Hash actualHeaderHash = bftBlockHashing.calculateHashOfBftBlockOnChain(headerToBeHashed);
     assertThat(actualHeaderHash).isEqualTo(EXPECTED_HEADER_HASH);
   }
 
   @Test
   public void testRecoverCommitterAddresses() {
     List<Address> actualCommitterAddresses =
-        BftBlockHashing.recoverCommitterAddresses(
-            HEADER_TO_BE_HASHED, BftExtraData.decode(HEADER_TO_BE_HASHED));
+        bftBlockHashing.recoverCommitterAddresses(
+            headerToBeHashed, bftExtraDataEncoder.decode(headerToBeHashed));
 
     List<Address> expectedCommitterAddresses =
         COMMITTERS_NODE_KEYS.stream()
@@ -80,8 +82,8 @@ public class BftBlockHashingTest {
   @Test
   public void testCalculateDataHashForCommittedSeal() {
     Hash dataHahsForCommittedSeal =
-        BftBlockHashing.calculateDataHashForCommittedSeal(
-            HEADER_TO_BE_HASHED, BftExtraData.decode(HEADER_TO_BE_HASHED));
+        bftBlockHashing.calculateDataHashForCommittedSeal(
+            headerToBeHashed, bftExtraDataEncoder.decode(headerToBeHashed));
 
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
@@ -90,12 +92,12 @@ public class BftBlockHashingTest {
             .map(nodeKey -> nodeKey.sign(dataHahsForCommittedSeal))
             .collect(Collectors.toList());
 
-    BftExtraData extraDataWithCommitSeals =
+    final BftExtraData extraDataWithCommitSeals =
         new BftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
 
-    builder.extraData(extraDataWithCommitSeals.encode());
+    builder.extraData(bftExtraDataEncoder.encode(extraDataWithCommitSeals));
     BlockHeader actualHeader = builder.buildBlockHeader();
-    assertThat(actualHeader).isEqualTo(HEADER_TO_BE_HASHED);
+    assertThat(actualHeader).isEqualTo(headerToBeHashed);
   }
 
   private static List<NodeKey> committersNodeKeys() {
@@ -140,7 +142,7 @@ public class BftBlockHashingTest {
     builder.mixHash(
         Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.nonce(0);
-    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock());
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(new IbftExtraDataCodec()));
     return builder;
   }
 
@@ -152,12 +154,12 @@ public class BftBlockHashingTest {
     return Bytes.wrap(vanity_bytes);
   }
 
-  private static BlockHeader headerToBeHashed() {
+  private BlockHeader headerToBeHashed() {
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
     builder.extraData(
-        new BftExtraData(VANITY_DATA, emptyList(), VOTE, ROUND, VALIDATORS)
-            .encodeWithoutCommitSeals());
+        bftExtraDataEncoder.encodeWithoutCommitSeals(
+            new BftExtraData(VANITY_DATA, emptyList(), VOTE, ROUND, VALIDATORS)));
 
     BytesValueRLPOutput rlpForHeaderFroCommittersSigning = new BytesValueRLPOutput();
     builder.buildBlockHeader().writeTo(rlpForHeaderFroCommittersSigning);
@@ -170,16 +172,16 @@ public class BftBlockHashingTest {
     BftExtraData extraDataWithCommitSeals =
         new BftExtraData(VANITY_DATA, commitSeals, VOTE, ROUND, VALIDATORS);
 
-    builder.extraData(extraDataWithCommitSeals.encode());
+    builder.extraData(bftExtraDataEncoder.encode(extraDataWithCommitSeals));
     return builder.buildBlockHeader();
   }
 
-  private static Hash expectedHeaderHash() {
+  private Hash expectedHeaderHash() {
     BlockHeaderBuilder builder = setHeaderFieldsExceptForExtraData();
 
     builder.extraData(
-        new BftExtraData(VANITY_DATA, emptyList(), VOTE, 0, VALIDATORS)
-            .encodeWithoutCommitSealsAndRoundNumber());
+        bftExtraDataEncoder.encodeWithoutCommitSealsAndRoundNumber(
+            new BftExtraData(VANITY_DATA, emptyList(), VOTE, 0, VALIDATORS)));
 
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     builder.buildBlockHeader().writeTo(rlpOutput);

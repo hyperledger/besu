@@ -15,12 +15,11 @@
 package org.hyperledger.besu.consensus.ibft.support;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
@@ -51,6 +50,7 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.statemachine.IbftBlockHeightManagerFactory;
@@ -156,6 +156,7 @@ public class TestContextBuilder {
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
   private boolean useGossip = false;
+  private static final IbftExtraDataCodec IBFT_EXTRA_DATA_ENCODER = new IbftExtraDataCodec();
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -188,8 +189,10 @@ public class TestContextBuilder {
         NetworkLayout.createNetworkLayout(validatorCount, indexOfFirstLocallyProposedBlock);
 
     final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
+
     final MutableBlockchain blockChain =
-        createInMemoryBlockchain(genesisBlock, BftBlockHeaderFunctions.forOnChainBlock());
+        createInMemoryBlockchain(
+            genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(IBFT_EXTRA_DATA_ENCODER));
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
@@ -254,7 +257,7 @@ public class TestContextBuilder {
     final BftExtraData extraData =
         new BftExtraData(
             Bytes.wrap(new byte[32]), Collections.emptyList(), Optional.empty(), 0, validators);
-    headerTestFixture.extraData(extraData.encode());
+    headerTestFixture.extraData(IBFT_EXTRA_DATA_ENCODER.encode(extraData));
     headerTestFixture.mixHash(BftHelpers.EXPECTED_MIX_HASH);
     headerTestFixture.difficulty(Difficulty.ONE);
     headerTestFixture.ommersHash(Hash.EMPTY_LIST_HASH);
@@ -292,20 +295,22 @@ public class TestContextBuilder {
 
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
-            genesisConfigOptions, IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
+            genesisConfigOptions,
+            IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+            IBFT_EXTRA_DATA_ENCODER);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
     final EpochManager epochManager = new EpochManager(EPOCH_LENGTH);
 
-    final BlockInterface blockInterface = new BftBlockInterface();
+    final BftBlockInterface blockInterface = new BftBlockInterface(IBFT_EXTRA_DATA_ENCODER);
 
     final VoteTallyCache voteTallyCache =
         new VoteTallyCache(
             blockChain,
             new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new BftBlockInterface());
+            new BftBlockInterface(IBFT_EXTRA_DATA_ENCODER));
 
     final VoteProposer voteProposer = new VoteProposer();
 
@@ -334,7 +339,8 @@ public class TestContextBuilder {
             protocolSchedule,
             miningParams,
             localAddress,
-            localAddress);
+            localAddress,
+            IBFT_EXTRA_DATA_ENCODER);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);
@@ -355,7 +361,8 @@ public class TestContextBuilder {
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, protocolSchedule, protocolContext, IBFT_EXTRA_DATA_ENCODER);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
 
@@ -378,7 +385,8 @@ public class TestContextBuilder {
                     protocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
-                    messageFactory),
+                    messageFactory,
+                    IBFT_EXTRA_DATA_ENCODER),
                 messageValidatorFactory,
                 messageFactory),
             gossiper,

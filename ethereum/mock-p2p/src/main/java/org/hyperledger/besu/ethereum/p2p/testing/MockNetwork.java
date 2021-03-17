@@ -214,6 +214,9 @@ public final class MockNetwork {
     public Optional<EnodeURL> getLocalEnode() {
       return Optional.empty();
     }
+
+    @Override
+    public void updateNodeRecord() {}
   }
 
   /**

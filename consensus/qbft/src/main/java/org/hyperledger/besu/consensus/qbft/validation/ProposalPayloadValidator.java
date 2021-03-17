@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -75,7 +76,11 @@ public class ProposalPayloadValidator {
       return false;
     }
 
-    final BftExtraData extraData = BftExtraData.decode(block.getHeader());
+    final BftExtraData extraData =
+        protocolContext
+            .getConsensusState(BftContext.class)
+            .getBlockInterface()
+            .getExtraData(block.getHeader());
     if (payload.getRoundIdentifier().getRoundNumber() != extraData.getRound()) {
       LOG.info(
           "{}: Proposal round contains a different round to that in the supplied block",

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -124,7 +124,6 @@ public class JumpOperationTest {
         createMessageFrameBuilder(Gas.of(100))
             .pushStackItem(Bytes32.fromHexString("0x04"))
             .code(new Code(Bytes.fromHexString("0x60045600")))
-            .returnStack(new ReturnStack())
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 

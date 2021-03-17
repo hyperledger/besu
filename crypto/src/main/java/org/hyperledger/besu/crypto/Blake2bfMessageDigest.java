@@ -21,7 +21,7 @@ import org.bouncycastle.jcajce.provider.digest.BCMessageDigest;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
 
-public class Blake2bfMessageDigest extends BCMessageDigest {
+public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable {
 
   public Blake2bfMessageDigest() {
     super(new Blake2bfDigest());

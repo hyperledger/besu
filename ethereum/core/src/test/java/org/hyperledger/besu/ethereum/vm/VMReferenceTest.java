@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.referencetests.EnvironmentInformation;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.VMReferenceTestCaseSpec;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
@@ -104,8 +103,6 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .badBlocksManager(new BadBlockManager())
             .build(new MutableProtocolSchedule(CHAIN_ID));
 
-    final ReturnStack returnStack = new ReturnStack();
-
     final ReferenceTestBlockchain blockchain =
         new ReferenceTestBlockchain(execEnv.getBlockHeader().getNumber());
     final MessageFrame frame =
@@ -131,7 +128,6 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .miningBeneficiary(execEnv.getBlockHeader().getCoinbase())
             .blockHashLookup(new BlockHashLookup(execEnv.getBlockHeader(), blockchain))
             .maxStackSize(MessageFrame.DEFAULT_MAX_STACK_SIZE)
-            .returnStack(returnStack)
             .build();
 
     // This is normally set inside the containing message executing the code.
