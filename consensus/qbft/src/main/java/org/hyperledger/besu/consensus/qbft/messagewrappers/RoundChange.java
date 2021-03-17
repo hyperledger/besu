@@ -80,7 +80,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     final SignedData<RoundChangePayload> payload = readPayload(rlpIn, RoundChangePayload::readFrom);
 
     final Optional<Block> block;
-    if (rlpIn.nextIsNull()) {
+    if (rlpIn.nextIsList() && rlpIn.nextSize() == 0) {
       rlpIn.skipNext();
       block = Optional.empty();
     } else {
