@@ -129,7 +129,7 @@ public class MainnetTransactionValidator {
       if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            String.format("gasPrice is less than the current BaseFee"));
+            "gasPrice is less than the current BaseFee");
       }
     }
 
