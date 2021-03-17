@@ -446,6 +446,19 @@ public class RunnerBuilder {
             .build();
 
     final P2PNetwork network = networkRunner.getNetwork();
+    // ForkId in Ethereum Node Record needs updating when we transition to a new protocol spec
+    context
+        .getBlockchain()
+        .observeBlockAdded(
+            blockAddedEvent -> {
+              if (protocolSchedule
+                  .streamMilestoneBlocks()
+                  .anyMatch(
+                      blockNumber ->
+                          blockNumber == blockAddedEvent.getBlock().getHeader().getNumber())) {
+                network.updateNodeRecord();
+              }
+            });
     nodePermissioningController.ifPresent(
         n ->
             n.setInsufficientPeersPermissioningProvider(

@@ -697,4 +697,63 @@ public class BlockPropagationManagerTest {
 
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
   }
+
+  @Test
+  public void shouldTryWithAnotherPeerWhenFailedDownloadingBlock() {
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+
+    // Sanity check
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    blockPropagationManager.start();
+
+    // Setup peer and messages
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+
+    final NewBlockHashesMessage nextAnnouncement =
+        NewBlockHashesMessage.create(
+            Collections.singletonList(
+                new NewBlockHashesMessage.NewBlockHash(
+                    nextBlock.getHash(), nextBlock.getHeader().getNumber())));
+
+    // Broadcast first message
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
+    peer.respondWhile(RespondingEthPeer.emptyResponder(), peer::hasOutstandingRequests);
+    secondPeer.respondWhile(
+        RespondingEthPeer.blockchainResponder(fullBlockchain), secondPeer::hasOutstandingRequests);
+
+    assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
+  }
+
+  @Test
+  public void shouldThrowErrorWhenNoValidPeerAvailable() {
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+
+    // Sanity check
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    blockPropagationManager.start();
+
+    // Setup peer and messages
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+
+    final NewBlockHashesMessage nextAnnouncement =
+        NewBlockHashesMessage.create(
+            Collections.singletonList(
+                new NewBlockHashesMessage.NewBlockHash(
+                    nextBlock.getHash(), nextBlock.getHeader().getNumber())));
+
+    // Broadcast first message
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
+    peer.respondWhile(RespondingEthPeer.emptyResponder(), peer::hasOutstandingRequests);
+    secondPeer.respondWhile(RespondingEthPeer.emptyResponder(), secondPeer::hasOutstandingRequests);
+
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+  }
 }

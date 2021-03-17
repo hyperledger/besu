@@ -28,6 +28,11 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 
 public class BftBlockHashing {
+  private final BftExtraDataCodec bftExtraDataCodec;
+
+  public BftBlockHashing(final BftExtraDataCodec bftExtraDataCodec) {
+    this.bftExtraDataCodec = bftExtraDataCodec;
+  }
 
   /**
    * Constructs a hash of the block header suitable for signing as a committed seal. The extra data
@@ -39,14 +44,22 @@ public class BftBlockHashing {
    *     calculated
    * @return the hash of the header including the validator and proposer seal in the extra data
    */
-  public static Hash calculateDataHashForCommittedSeal(
+  public Hash calculateDataHashForCommittedSeal(
       final BlockHeader header, final BftExtraData bftExtraData) {
-    return Hash.hash(serializeHeader(header, bftExtraData::encodeWithoutCommitSeals));
+    return Hash.hash(
+        serializeHeader(
+            header,
+            () -> bftExtraDataCodec.encodeWithoutCommitSeals(bftExtraData),
+            bftExtraDataCodec));
   }
 
-  public static Hash calculateDataHashForCommittedSeal(final BlockHeader header) {
-    final BftExtraData bftExtraData = BftExtraData.decode(header);
-    return Hash.hash(serializeHeader(header, bftExtraData::encodeWithoutCommitSeals));
+  public Hash calculateDataHashForCommittedSeal(final BlockHeader header) {
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
+    return Hash.hash(
+        serializeHeader(
+            header,
+            () -> bftExtraDataCodec.encodeWithoutCommitSeals(bftExtraData),
+            bftExtraDataCodec));
   }
 
   /**
@@ -56,9 +69,13 @@ public class BftBlockHashing {
    * @param header The header for which a block hash is to be calculated
    * @return the hash of the header to be used when referencing the header on the blockchain
    */
-  public static Hash calculateHashOfBftBlockOnChain(final BlockHeader header) {
-    final BftExtraData bftExtraData = BftExtraData.decode(header);
-    return Hash.hash(serializeHeader(header, bftExtraData::encodeWithoutCommitSealsAndRoundNumber));
+  public Hash calculateHashOfBftBlockOnChain(final BlockHeader header) {
+    final BftExtraData bftExtraData = bftExtraDataCodec.decode(header);
+    return Hash.hash(
+        serializeHeader(
+            header,
+            () -> bftExtraDataCodec.encodeWithoutCommitSealsAndRoundNumber(bftExtraData),
+            bftExtraDataCodec));
   }
 
   /**
@@ -68,23 +85,24 @@ public class BftBlockHashing {
    * @param bftExtraData the parsed {@link BftExtraData} from the header
    * @return the addresses of validators that provided a committed seal
    */
-  public static List<Address> recoverCommitterAddresses(
+  public List<Address> recoverCommitterAddresses(
       final BlockHeader header, final BftExtraData bftExtraData) {
-    final Hash committerHash =
-        BftBlockHashing.calculateDataHashForCommittedSeal(header, bftExtraData);
+    final Hash committerHash = calculateDataHashForCommittedSeal(header, bftExtraData);
 
     return bftExtraData.getSeals().stream()
         .map(p -> Util.signatureToAddress(p, committerHash))
         .collect(Collectors.toList());
   }
 
-  private static Bytes serializeHeader(
-      final BlockHeader header, final Supplier<Bytes> extraDataSerializer) {
+  public static Bytes serializeHeader(
+      final BlockHeader header,
+      final Supplier<Bytes> extraDataSerializer,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     // create a block header which is a copy of the header supplied as parameter except of the
     // extraData field
     final BlockHeaderBuilder builder = BlockHeaderBuilder.fromHeader(header);
-    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock());
+    builder.blockHeaderFunctions(BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec));
 
     // set the extraData field using the supplied extraDataSerializer if the block height is not 0
     if (header.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {

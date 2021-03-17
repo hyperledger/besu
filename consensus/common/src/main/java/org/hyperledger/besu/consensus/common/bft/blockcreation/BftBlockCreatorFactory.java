@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.common.ValidatorVote;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
@@ -42,6 +43,7 @@ public class BftBlockCreatorFactory {
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
+  private final BftExtraDataCodec bftExtraDataCodec;
   private final Address localAddress;
   final Address miningBeneficiary;
 
@@ -56,7 +58,8 @@ public class BftBlockCreatorFactory {
       final ProtocolSchedule protocolSchedule,
       final MiningParameters miningParams,
       final Address localAddress,
-      final Address miningBeneficiary) {
+      final Address miningBeneficiary,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
@@ -66,6 +69,7 @@ public class BftBlockCreatorFactory {
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
     this.miningBeneficiary = miningBeneficiary;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   public BftBlockCreator create(final BlockHeader parentHeader, final int round) {
@@ -79,7 +83,8 @@ public class BftBlockCreatorFactory {
         minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader,
-        miningBeneficiary);
+        miningBeneficiary,
+        bftExtraDataCodec);
   }
 
   public void setExtraData(final Bytes extraData) {
@@ -95,29 +100,23 @@ public class BftBlockCreatorFactory {
   }
 
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    final VoteTally voteTally =
-        protocolContext
-            .getConsensusState(BftContext.class)
-            .getVoteTallyCache()
-            .getVoteTallyAfterBlock(parentHeader);
+    final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
+    final VoteTally voteTally = bftContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
 
     final Optional<ValidatorVote> proposal =
-        protocolContext
-            .getConsensusState(BftContext.class)
-            .getVoteProposer()
-            .getVote(localAddress, voteTally);
+        bftContext.getVoteProposer().getVote(localAddress, voteTally);
 
     final List<Address> validators = new ArrayList<>(voteTally.getValidators());
 
     final BftExtraData extraData =
         new BftExtraData(
-            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraData.EXTRA_VANITY_LENGTH),
+            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataCodec.EXTRA_VANITY_LENGTH),
             Collections.emptyList(),
             toVote(proposal),
             round,
             validators);
 
-    return extraData.encode();
+    return bftExtraDataCodec.encode(extraData);
   }
 
   public void changeTargetGasLimit(final Long targetGasLimit) {

@@ -34,8 +34,8 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.WalletUtils;
 import tech.pegasys.ethsigner.core.EthSigner;
 import tech.pegasys.ethsigner.core.signing.ConfigurationChainId;
-import tech.pegasys.ethsigner.core.signing.SingleTransactionSignerProvider;
-import tech.pegasys.ethsigner.signer.filebased.CredentialTransactionSigner;
+import tech.pegasys.signers.secp256k1.api.SingleSignerProvider;
+import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
 
 public class EthSignerTestHarnessFactory {
 
@@ -62,8 +62,8 @@ public class EthSignerTestHarnessFactory {
     final EthSigner ethSigner =
         new EthSigner(
             config,
-            new SingleTransactionSignerProvider(
-                new CredentialTransactionSigner(
+            new SingleSignerProvider(
+                new CredentialSigner(
                     WalletUtils.loadCredentials("", keyFilePath.toAbsolutePath().toFile()))));
     ethSigner.run();
 

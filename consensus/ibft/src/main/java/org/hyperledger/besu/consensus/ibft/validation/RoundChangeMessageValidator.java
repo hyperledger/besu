@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 
 import org.apache.logging.log4j.LogManager;
@@ -25,12 +26,15 @@ public class RoundChangeMessageValidator {
 
   private final RoundChangePayloadValidator roundChangePayloadValidator;
   private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator;
+  private final BftBlockInterface bftBlockInterface;
 
   public RoundChangeMessageValidator(
       final RoundChangePayloadValidator roundChangePayloadValidator,
-      final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator) {
+      final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator,
+      final BftBlockInterface bftBlockInterface) {
     this.proposalBlockConsistencyValidator = proposalBlockConsistencyValidator;
     this.roundChangePayloadValidator = roundChangePayloadValidator;
+    this.bftBlockInterface = bftBlockInterface;
   }
 
   public boolean validateRoundChange(final RoundChange msg) {
@@ -48,7 +52,9 @@ public class RoundChangeMessageValidator {
 
     if (msg.getPreparedCertificate().isPresent()) {
       if (!proposalBlockConsistencyValidator.validateProposalMatchesBlock(
-          msg.getPreparedCertificate().get().getProposalPayload(), msg.getProposedBlock().get())) {
+          msg.getPreparedCertificate().get().getProposalPayload(),
+          msg.getProposedBlock().get(),
+          bftBlockInterface)) {
         LOG.info("Invalid RoundChange message, proposal did not align with supplied block.");
         return false;
       }
