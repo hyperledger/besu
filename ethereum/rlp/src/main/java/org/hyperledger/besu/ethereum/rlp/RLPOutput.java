@@ -251,11 +251,14 @@ public interface RLPOutput {
   }
 
   /**
-   * Writes an empty list.
+   * Writes an empty list to the output.
    *
    * <p>This is a shortcut for doing:
    *
-   * <p>startList(); endList();
+   * <pre>{@code
+   * startList();
+   * endList();
+   * }</pre>
    */
   default void writeEmptyList() {
     startList();
