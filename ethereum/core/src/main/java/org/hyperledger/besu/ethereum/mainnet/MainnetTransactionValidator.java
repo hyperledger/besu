@@ -70,7 +70,7 @@ public class MainnetTransactionValidator {
       final boolean quorumCompatibilityMode) {
     this(
         gasCalculator,
-        Optional.empty(),
+        Optional.of(TransactionPriceCalculator.frontier()),
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
