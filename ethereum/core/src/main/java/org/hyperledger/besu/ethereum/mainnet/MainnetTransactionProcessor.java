@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -403,12 +402,12 @@ public class MainnetTransactionProcessor {
                 Optional.empty());
           }
         }
-        final CoinbaseFeePriceCalculator coinbaseCreditService =
-            transaction.getType().equals(TransactionType.FRONTIER)
-                ? CoinbaseFeePriceCalculator.frontier()
-                : coinbaseFeePriceCalculator;
+        final CoinbaseFeePriceCalculator coinbaseCalculator =
+            blockHeader.getBaseFee().isPresent()
+                ? coinbaseFeePriceCalculator
+                : CoinbaseFeePriceCalculator.frontier();
         final Wei coinbaseWeiDelta =
-            coinbaseCreditService.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
+            coinbaseCalculator.price(coinbaseFee, transactionGasPrice, blockHeader.getBaseFee());
 
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
