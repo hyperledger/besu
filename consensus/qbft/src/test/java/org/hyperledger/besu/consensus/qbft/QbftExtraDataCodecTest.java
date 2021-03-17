@@ -358,6 +358,7 @@ public class QbftExtraDataCodecTest {
     vote.get().writeTo(encoder);
 
     encoder.writeIntScalar(round);
+    encoder.writeEmptyList();
     encoder.endList();
 
     Bytes expectedEncoding = encoder.encoded();
@@ -391,6 +392,9 @@ public class QbftExtraDataCodecTest {
 
     // encoded vote
     vote.get().writeTo(encoder);
+
+    encoder.writeNull();
+    encoder.writeEmptyList();
 
     encoder.endList();
 

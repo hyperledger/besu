@@ -91,7 +91,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     if (bftExtraData.getVote().isPresent()) {
       bftExtraData.getVote().get().writeTo(encoder);
     } else {
-      encoder.writeEmptyList();
+      encoder.writeList(Collections.emptyList(), (o, rlpOutput) -> {});
     }
 
     if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
@@ -99,7 +99,12 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
       if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
         encoder.writeList(
             bftExtraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
+      } else {
+        encoder.writeEmptyList();
       }
+    } else {
+      encoder.writeIntScalar(0);
+      encoder.writeEmptyList();
     }
     encoder.endList();
 
