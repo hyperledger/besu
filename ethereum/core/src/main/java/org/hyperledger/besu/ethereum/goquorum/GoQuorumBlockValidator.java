@@ -61,7 +61,11 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
     final MutableWorldState privateWorldState =
-        getPrivateWorldState(goQuorumPrivateStorage, goQuorumWorldStateArchive, block.getHeader());
+        getPrivateWorldState(
+            goQuorumPrivateStorage,
+            goQuorumWorldStateArchive,
+            worldState.rootHash(),
+            block.getHash());
 
     return ((GoQuorumBlockProcessor) blockProcessor)
         .processBlock(context.getBlockchain(), worldState, privateWorldState, block);
