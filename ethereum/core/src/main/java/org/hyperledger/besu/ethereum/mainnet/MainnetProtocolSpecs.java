@@ -171,7 +171,13 @@ public abstract class MainnetProtocolSpecs {
     if (goQuorumMode) {
       return GoQuorumBlockValidator::new;
     } else {
-      return MainnetBlockValidator::new;
+      return (blockHeaderValidator,
+          blockBodyValidator,
+          blockProcessor,
+          badBlockManager,
+          goQuorumPrivacyParameters) ->
+          new MainnetBlockValidator(
+              blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
     }
   }
 
