@@ -19,7 +19,7 @@ import java.util.Arrays;
 public enum TransactionType {
   FRONTIER(0xf8 /* doesn't end up being used as we don't serialize legacy txs with their type */),
   ACCESS_LIST(0x01),
-  EIP1559(0x02 /* placeholder value until we know what the real type byte will be */);
+  EIP1559(0x02);
 
   private final int typeValue;
 
