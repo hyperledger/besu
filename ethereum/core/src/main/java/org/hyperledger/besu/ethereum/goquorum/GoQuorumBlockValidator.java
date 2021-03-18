@@ -26,14 +26,12 @@ import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
 public class GoQuorumBlockValidator extends MainnetBlockValidator {
 
-  private final GoQuorumPrivateStorage goQuorumPrivateStorage;
-  private final WorldStateArchive goQuorumWorldStateArchive;
+  private final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
 
   public GoQuorumBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
@@ -41,31 +39,21 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
       final BlockProcessor blockProcessor,
       final BadBlockManager badBlockManager,
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
-    super(
-        blockHeaderValidator,
-        blockBodyValidator,
-        blockProcessor,
-        badBlockManager,
-        goQuorumPrivacyParameters);
+    super(blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+
+    this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
 
     if (!(blockProcessor instanceof GoQuorumBlockProcessor)) {
       throw new IllegalStateException(
           "GoQuorumBlockValidator requires an instance of GoQuorumBlockProcessor");
     }
-
-    goQuorumPrivateStorage = goQuorumPrivacyParameters.orElseThrow().privateStorage();
-    goQuorumWorldStateArchive = goQuorumPrivacyParameters.orElseThrow().worldStateArchive();
   }
 
   @Override
   protected Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
     final MutableWorldState privateWorldState =
-        getPrivateWorldState(
-            goQuorumPrivateStorage,
-            goQuorumWorldStateArchive,
-            worldState.rootHash(),
-            block.getHash());
+        getPrivateWorldState(goQuorumPrivacyParameters, worldState.rootHash(), block.getHash());
 
     return ((GoQuorumBlockProcessor) blockProcessor)
         .processBlock(context.getBlockchain(), worldState, privateWorldState, block);
