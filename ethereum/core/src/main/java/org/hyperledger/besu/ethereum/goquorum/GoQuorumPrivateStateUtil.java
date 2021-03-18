@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 public class GoQuorumPrivateStateUtil {
   private static final Logger LOG = getLogger();
 
-  public static MutableWorldState getPrivateWorldStateAtHead(
+  public static MutableWorldState getPrivateWorldStateAtBlock(
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
       final BlockHeader header) {
     return getPrivateWorldState(goQuorumPrivacyParameters, header.getStateRoot(), header.getHash());
