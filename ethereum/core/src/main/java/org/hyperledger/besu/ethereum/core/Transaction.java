@@ -646,7 +646,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         rlpOutput -> {
           rlpOutput.startList();
           rlpOutput.writeLongScalar(nonce);
-          rlpOutput.writeUInt256Scalar(gasPrice);
+          rlpOutput.writeNull();
           rlpOutput.writeLongScalar(gasLimit);
           rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
           rlpOutput.writeUInt256Scalar(value);

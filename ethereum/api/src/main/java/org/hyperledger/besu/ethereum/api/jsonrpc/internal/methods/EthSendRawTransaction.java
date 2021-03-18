@@ -22,16 +22,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EthSendRawTransaction implements JsonRpcMethod {
 
@@ -64,7 +65,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
 
     final Transaction transaction;
     try {
-      transaction = DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction);
+      transaction = Transaction.readFrom(RLP.input(Bytes.fromHexString(rawTransaction)));
     } catch (final InvalidJsonRpcRequestException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);

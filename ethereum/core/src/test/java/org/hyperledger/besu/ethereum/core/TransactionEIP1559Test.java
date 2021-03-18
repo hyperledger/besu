@@ -17,6 +17,9 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -24,12 +27,19 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.lang.reflect.Field;
+import java.math.BigInteger;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.After;
 import org.junit.Test;
 
 public class TransactionEIP1559Test {
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
   private final RLPInput legacyRLPInput =
       RLP.input(
           Bytes.fromHexString(
@@ -64,6 +74,33 @@ public class TransactionEIP1559Test {
     assertThat(eip1559Transaction.getGasPremium()).hasValue(expectedGasPremium);
     assertThat(eip1559Transaction.getFeeCap()).hasValue(expectedFeeCap);
     assertThat(eip1559Transaction.getGasPrice()).isEqualByComparingTo(Wei.ZERO);
+  }
+
+  @Test
+  public void buildEip1559Transaction() {
+    final Transaction tx =
+        Transaction.builder()
+            .chainId(BigInteger.valueOf(280))
+            .nonce(1)
+            .value(Wei.fromEth(1))
+            .gasLimit(21000)
+            .gasPremium(Wei.of(1000000000))
+            .payload(Bytes.EMPTY.trimLeadingZeros())
+            .feeCap(Wei.of(2000000000))
+            .gasPrice(null)
+            .to(Address.fromHexString("0xb8c3bfFb71F76BeE2B2f81bdBC53Ad4C43e3f58E"))
+            .guessType()
+            .signAndBuild(
+                keyPair("0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    tx.writeTo(out);
+    System.out.println(out.encoded().toHexString());
+  }
+
+  private static KeyPair keyPair(final String privateKey) {
+    final SignatureAlgorithm signatureAlgorithm = SIGNATURE_ALGORITHM.get();
+    return signatureAlgorithm.createKeyPair(
+        signatureAlgorithm.createPrivateKey(Bytes32.fromHexString(privateKey)));
   }
 
   private void set(final Object object, final String fieldName, final Object fieldValue) {
