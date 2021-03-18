@@ -67,7 +67,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     final BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     rlpOut.startList();
     getSignedPayload().writeTo(rlpOut);
-    proposedBlock.ifPresentOrElse(pb -> pb.writeTo(rlpOut), rlpOut::writeNull);
+    proposedBlock.ifPresentOrElse(pb -> pb.writeTo(rlpOut), rlpOut::writeEmptyList);
     rlpOut.writeList(prepares, SignedData::writeTo);
     rlpOut.endList();
     return rlpOut.encoded();
@@ -80,7 +80,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     final SignedData<RoundChangePayload> payload = readPayload(rlpIn, RoundChangePayload::readFrom);
 
     final Optional<Block> block;
-    if (rlpIn.nextIsNull()) {
+    if (rlpIn.nextIsList() && rlpIn.nextSize() == 0) {
       rlpIn.skipNext();
       block = Optional.empty();
     } else {

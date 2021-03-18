@@ -347,7 +347,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
             Optional.of(Vote.authVote(Address.fromHexString("1"))),
             validators,
             singletonList(proposerNodeKey),
-            0xDEADBEEF,
+            0x2A,
             qbftExtraDataEncoder);
 
     builder.extraData(qbftExtraDataEncoder.encode(bftExtraData));
