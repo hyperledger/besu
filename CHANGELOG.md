@@ -3,9 +3,11 @@
 ## 21.1.3
 
 ### Additions and Improvements
+* Increase node diversity when downloading blocks [\#2033](https://github.com/hyperledger/besu/pull/2033)
 
 ### Bug Fixes
 * Ethereum Node Records are now dynamically recalculated when we pass network upgrade blocks. This allows for better peering through transitions without needing to restart the node. [\#1998](https://github.com/hyperledger/besu/pull/1998)
+
 
 ### Early Access Features
 
