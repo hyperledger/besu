@@ -37,15 +37,15 @@ public class GoQuorumPrivateStateUtil {
         goQuorumPrivacyParameters.orElseThrow().privateStorage();
     final WorldStateArchive goQuorumWorldStateArchive =
         goQuorumPrivacyParameters.orElseThrow().worldStateArchive();
-    return getPrivateWorldState(goQuorumPrivateStorage, goQuorumWorldStateArchive, header);
+    return getPrivateWorldState(
+        goQuorumPrivateStorage, goQuorumWorldStateArchive, header.getStateRoot(), header.getHash());
   }
 
   public static MutableWorldState getPrivateWorldState(
       final GoQuorumPrivateStorage goQuorumPrivateStorage,
       final WorldStateArchive goQuorumWorldStateArchive,
-      final BlockHeader header) {
-    final Hash worldStateRootHash = header.getStateRoot();
-    final Hash publicBlockHash = header.getHash();
+      final Hash worldStateRootHash,
+      final Hash publicBlockHash) {
     final Hash privateStateRootHash =
         goQuorumPrivateStorage
             .getPrivateStateRootHash(worldStateRootHash)
