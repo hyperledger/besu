@@ -251,6 +251,21 @@ public interface RLPOutput {
   }
 
   /**
+   * Writes an empty list to the output.
+   *
+   * <p>This is a shortcut for doing:
+   *
+   * <pre>{@code
+   * startList();
+   * endList();
+   * }</pre>
+   */
+  default void writeEmptyList() {
+    startList();
+    endList();
+  }
+
+  /**
    * Writes an already RLP encoded item to the output.
    *
    * <p>This method is the functional equivalent of decoding the provided value entirely (to an
