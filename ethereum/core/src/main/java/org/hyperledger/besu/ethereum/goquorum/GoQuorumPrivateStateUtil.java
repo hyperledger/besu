@@ -30,22 +30,21 @@ import org.apache.logging.log4j.Logger;
 public class GoQuorumPrivateStateUtil {
   private static final Logger LOG = getLogger();
 
-  public static MutableWorldState getPrivateWorldState(
+  public static MutableWorldState getPrivateWorldStateAtBlock(
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
       final BlockHeader header) {
+    return getPrivateWorldState(goQuorumPrivacyParameters, header.getStateRoot(), header.getHash());
+  }
+
+  public static MutableWorldState getPrivateWorldState(
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
+      final Hash worldStateRootHash,
+      final Hash publicBlockHash) {
     final GoQuorumPrivateStorage goQuorumPrivateStorage =
         goQuorumPrivacyParameters.orElseThrow().privateStorage();
     final WorldStateArchive goQuorumWorldStateArchive =
         goQuorumPrivacyParameters.orElseThrow().worldStateArchive();
-    return getPrivateWorldState(
-        goQuorumPrivateStorage, goQuorumWorldStateArchive, header.getStateRoot(), header.getHash());
-  }
 
-  public static MutableWorldState getPrivateWorldState(
-      final GoQuorumPrivateStorage goQuorumPrivateStorage,
-      final WorldStateArchive goQuorumWorldStateArchive,
-      final Hash worldStateRootHash,
-      final Hash publicBlockHash) {
     final Hash privateStateRootHash =
         goQuorumPrivateStorage
             .getPrivateStateRootHash(worldStateRootHash)
