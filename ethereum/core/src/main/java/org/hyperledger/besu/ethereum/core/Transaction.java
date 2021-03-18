@@ -581,8 +581,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         break;
       case EIP1559:
         preimage =
-            eip1559Preimage(
-                nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
+            eip1559Preimage(nonce, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
         break;
       case ACCESS_LIST:
         preimage =
@@ -634,7 +633,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private static Bytes eip1559Preimage(
       final long nonce,
-      final Wei gasPrice,
       final Wei gasPremium,
       final Wei feeCap,
       final long gasLimit,
