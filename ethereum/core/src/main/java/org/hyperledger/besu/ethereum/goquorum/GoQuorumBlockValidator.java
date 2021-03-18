@@ -34,7 +34,6 @@ import java.util.Optional;
 import org.apache.logging.log4j.Logger;
 
 public class GoQuorumBlockValidator extends MainnetBlockValidator {
-  private static final Logger LOG = getLogger();
 
   private final GoQuorumPrivateStorage goQuorumPrivateStorage;
   private final WorldStateArchive goQuorumWorldStateArchive;
