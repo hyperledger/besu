@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.goquorum;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldState;
 
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
@@ -30,8 +29,6 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
-
-import org.apache.logging.log4j.Logger;
 
 public class GoQuorumBlockValidator extends MainnetBlockValidator {
 
