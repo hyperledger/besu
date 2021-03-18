@@ -80,9 +80,9 @@ public class TransactionEIP1559Test {
   public void buildEip1559Transaction() {
     final Transaction tx =
         Transaction.builder()
-            .chainId(BigInteger.valueOf(280))
+            .chainId(BigInteger.valueOf(1559))
             .nonce(1)
-            .value(Wei.fromEth(1))
+            .value(Wei.fromEth(3))
             .gasLimit(21000)
             .gasPremium(Wei.of(1000000000))
             .payload(Bytes.EMPTY.trimLeadingZeros())
