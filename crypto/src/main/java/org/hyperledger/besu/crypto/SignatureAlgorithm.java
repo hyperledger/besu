@@ -28,7 +28,7 @@ public interface SignatureAlgorithm {
 
   void enableNative();
 
-  SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair);
+  SECPSignature sign(final Bytes dataHash, final KeyPair keyPair);
 
   boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub);
 
@@ -42,7 +42,7 @@ public interface SignatureAlgorithm {
       final BigInteger nativeR,
       final BigInteger nativeS,
       final SECPPublicKey publicKey,
-      final Bytes32 dataHash);
+      final Bytes dataHash);
 
   Bytes32 calculateECDHKeyAgreement(final SECPPrivateKey privKey, final SECPPublicKey theirPubKey);
 
