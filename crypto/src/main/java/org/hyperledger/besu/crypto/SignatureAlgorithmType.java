@@ -34,10 +34,6 @@ public class SignatureAlgorithmType {
 
   public static SignatureAlgorithmType create(final String ecCurve)
       throws IllegalArgumentException {
-    if (ecCurve.isEmpty()) {
-      return new SignatureAlgorithmType(DEFAULT_SIGNATURE_ALGORITHM_TYPE);
-    }
-
     if (!isValidType(ecCurve)) {
       throw new IllegalArgumentException(
           new StringBuilder()

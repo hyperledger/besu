@@ -20,15 +20,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.junit.Test;
 
 public class SignatureAlgorithmTypeTest {
-
-  @Test
-  public void shouldReturnSECP256K1InstanceWithEmptyOptional() {
-    assertThatThrownBy(() -> SignatureAlgorithmType.create(""))
-        .hasMessage(
-            "Invalid genesis file configuration. Elliptic curve (ecCurve) is not in the list"
-                + " of valid elliptic curves [secp256k1]");
-  }
-
   @Test
   public void shouldReturnSECP256K1Instance() {
     SignatureAlgorithmType signatureAlgorithmType = SignatureAlgorithmType.create("secp256k1");
