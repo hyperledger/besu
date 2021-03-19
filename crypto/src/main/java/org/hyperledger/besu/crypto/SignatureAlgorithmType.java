@@ -16,16 +16,15 @@ package org.hyperledger.besu.crypto;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public class SignatureAlgorithmType {
 
-  private static final Map<String, Supplier<SignatureAlgorithm>> TYPES =
+  private static final Map<String, Supplier<SignatureAlgorithm>> SUPPORTED_ALGORITHMS =
       Map.of("secp256k1", SECP256K1::new);
 
   public static final Supplier<SignatureAlgorithm> DEFAULT_SIGNATURE_ALGORITHM_TYPE =
-      TYPES.get("secp256k1");
+      SUPPORTED_ALGORITHMS.get("secp256k1");
 
   private final Supplier<SignatureAlgorithm> instantiator;
 
@@ -33,25 +32,23 @@ public class SignatureAlgorithmType {
     this.instantiator = instantiator;
   }
 
-  public static SignatureAlgorithmType create(final Optional<String> ecCurve)
+  public static SignatureAlgorithmType create(final String ecCurve)
       throws IllegalArgumentException {
     if (ecCurve.isEmpty()) {
       return new SignatureAlgorithmType(DEFAULT_SIGNATURE_ALGORITHM_TYPE);
     }
 
-    String ecCurveName = ecCurve.get();
-
-    if (!isValidType(ecCurveName)) {
+    if (!isValidType(ecCurve)) {
       throw new IllegalArgumentException(
           new StringBuilder()
               .append("Invalid genesis file configuration. Elliptic curve (ecCurve) ")
-              .append(ecCurveName)
+              .append(ecCurve)
               .append(" is not in the list of valid elliptic curves ")
               .append(getEcCurvesListAsString())
               .toString());
     }
 
-    return new SignatureAlgorithmType(TYPES.get(ecCurveName));
+    return new SignatureAlgorithmType(SUPPORTED_ALGORITHMS.get(ecCurve));
   }
 
   public SignatureAlgorithm getInstance() {
@@ -59,11 +56,12 @@ public class SignatureAlgorithmType {
   }
 
   public static boolean isValidType(final String ecCurve) {
-    return TYPES.containsKey(ecCurve);
+    return SUPPORTED_ALGORITHMS.containsKey(ecCurve);
   }
 
   private static String getEcCurvesListAsString() {
-    Iterator<Map.Entry<String, Supplier<SignatureAlgorithm>>> it = TYPES.entrySet().iterator();
+    Iterator<Map.Entry<String, Supplier<SignatureAlgorithm>>> it =
+        SUPPORTED_ALGORITHMS.entrySet().iterator();
 
     StringBuilder ecCurveListBuilder = new StringBuilder();
     ecCurveListBuilder.append("[");

@@ -2632,19 +2632,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void instantiateSignatureAlgorithmFactory() {
-    if (SignatureAlgorithmFactory.isInstanceSet()) {
-      return;
-    }
-
-    if (genesisFile == null) {
-      SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(Optional.empty()));
+    if (SignatureAlgorithmFactory.isInstanceSet() || genesisFile == null) {
       return;
     }
 
     GenesisConfigOptions options = readGenesisConfigOptions();
 
+    if (options.getEcCurve().isEmpty()) {
+      return;
+    }
+
     try {
-      SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(options.getEcCurve()));
+      SignatureAlgorithmFactory.setInstance(
+          SignatureAlgorithmType.create(options.getEcCurve().get()));
     } catch (IllegalArgumentException e) {
       throw new CommandLine.InitializationException(e.getMessage());
     }
