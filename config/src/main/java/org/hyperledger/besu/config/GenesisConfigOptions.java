@@ -230,4 +230,11 @@ public interface GenesisConfigOptions {
    * @return the PoW algorithm in use.
    */
   PowAlgorithm getPowAlgorithm();
+
+  /**
+   * The elliptic curve which should be used in SignatureAlgorithm.
+   *
+   * @return the name of the elliptic curve.
+   */
+  Optional<String> getEcCurve();
 }
