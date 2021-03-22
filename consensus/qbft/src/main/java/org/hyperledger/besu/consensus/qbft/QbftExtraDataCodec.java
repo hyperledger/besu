@@ -63,14 +63,16 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     rlpInput.enterList(); // This accounts for the "root node" which contains BFT data items.
     final Bytes vanityData = rlpInput.readBytes();
     final List<Address> validators = rlpInput.readList(Address::readFrom);
+
     final Optional<Vote> vote;
-    if (rlpInput.nextIsNull()) {
+    if (rlpInput.nextIsList() && rlpInput.nextSize() == 0) {
       vote = Optional.empty();
       rlpInput.skipNext();
     } else {
       vote = Optional.of(Vote.readFrom(rlpInput));
     }
-    final int round = rlpInput.readInt();
+
+    final int round = rlpInput.readIntScalar();
     final List<SECPSignature> seals =
         rlpInput.readList(
             rlp -> SignatureAlgorithmFactory.getInstance().decodeSignature(rlp.readBytes()));
@@ -85,18 +87,24 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     encoder.startList();
     encoder.writeBytes(bftExtraData.getVanityData());
     encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+
     if (bftExtraData.getVote().isPresent()) {
       bftExtraData.getVote().get().writeTo(encoder);
     } else {
-      encoder.writeNull();
+      encoder.writeList(Collections.emptyList(), (o, rlpOutput) -> {});
     }
 
     if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
-      encoder.writeInt(bftExtraData.getRound());
+      encoder.writeIntScalar(bftExtraData.getRound());
       if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
         encoder.writeList(
             bftExtraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
+      } else {
+        encoder.writeEmptyList();
       }
+    } else {
+      encoder.writeIntScalar(0);
+      encoder.writeEmptyList();
     }
     encoder.endList();
 
