@@ -139,13 +139,16 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             (BonsaiWorldStateUpdater) persistedState.updater();
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
+            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
             bonsaiUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
+            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
             bonsaiUpdater.rollForward(rollForwards.get(i));
           }
           bonsaiUpdater.commit();
           persistedState.persist(blockchain.getBlockHeader(blockHash).get());
+          LOG.debug("Archive rolling finished, now at {}", blockHash);
           return Optional.of(persistedState);
         } catch (final Exception e) {
           // if we fail we must clean up the updater
