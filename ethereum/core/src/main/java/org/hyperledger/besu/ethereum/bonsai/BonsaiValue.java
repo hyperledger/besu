@@ -28,7 +28,7 @@ public class BonsaiValue<T> {
   private T updated;
 
   BonsaiValue(final T original, final T updated) {
-    if (original instanceof UInt256 &&  ((UInt256)original).toShortHexString().equals("0xbaa70")) {
+    if (original instanceof UInt256 && ((UInt256) original).toShortHexString().equals("0xbaa70")) {
       new Exception("Setting original to baa70").printStackTrace(System.out);
     }
     this.original = original;
@@ -87,13 +87,5 @@ public class BonsaiValue<T> {
   @Override
   public String toString() {
     return "BonsaiValue{" + "original=" + original + ", updated=" + updated + '}';
-  }
-
-  @Override
-  public String toString() {
-    return "BonsaiValue{" +
-        "original=" + original +
-        ", updated=" + updated +
-        '}';
   }
 }

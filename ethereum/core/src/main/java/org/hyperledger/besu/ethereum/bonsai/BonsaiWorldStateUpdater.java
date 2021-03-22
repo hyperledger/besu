@@ -181,8 +181,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         final BonsaiValue<UInt256> updatedSlot = updateEntry.getValue();
         if (updatedSlot != null) {
           System.out.printf(
-              " original = %s updated = %s%n",
-              updatedSlot.getOriginal(), updatedSlot.getUpdated());
+              " original = %s updated = %s%n", updatedSlot.getOriginal(), updatedSlot.getUpdated());
         }
         if (updatedSlot.getOriginal() == null
             || updatedSlot.getOriginal().isZero()
