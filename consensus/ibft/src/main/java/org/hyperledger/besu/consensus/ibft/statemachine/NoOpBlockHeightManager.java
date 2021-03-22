@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.ibftevent.RoundExpiry;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-public class NoOpBlockHeightManager implements BlockHeightManager {
+public class NoOpBlockHeightManager implements BaseIbftBlockHeightManager {
 
   private final BlockHeader parentHeader;
 

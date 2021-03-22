@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -56,6 +58,7 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
@@ -228,29 +231,34 @@ public abstract class BesuControllerBuilder {
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
-    final WorldStateStorage worldStateStorage = storageProvider.createWorldStateStorage();
-    final WorldStateArchive worldStateArchive = createWorldStateArchive(worldStateStorage);
+    final WorldStateStorage worldStateStorage =
+        storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
+
+    final BlockchainStorage blockchainStorage =
+        storageProvider.createBlockchainStorage(protocolSchedule);
+
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(
+            genesisState.getBlock(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
+
+    final WorldStateArchive worldStateArchive =
+        createWorldStateArchive(worldStateStorage, blockchain);
     final ProtocolContext protocolContext =
         ProtocolContext.init(
-            storageProvider,
-            worldStateArchive,
-            genesisState,
-            protocolSchedule,
-            metricsSystem,
-            this::createConsensusContext,
-            reorgLoggingThreshold);
+            blockchain, worldStateArchive, genesisState, this::createConsensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());
-
-    final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
     Optional<Pruner> maybePruner = Optional.empty();
     if (isPruningEnabled) {
       if (!storageProvider.isWorldStateIterable()) {
         LOG.warn(
             "Cannot enable pruning with current database version. Disabling. Resync to get the latest database version or disable pruning explicitly on the command line to remove this warning.");
+      } else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+        LOG.warn(
+            "Cannot enable pruning with Bonsai data storage format. Disabling. Change the data storage format or disable pruning explicitly on the command line to remove this warning.");
       } else {
         maybePruner =
             Optional.of(
@@ -423,10 +431,11 @@ public abstract class BesuControllerBuilder {
         genesisConfig.getForks());
   }
 
-  public WorldStateArchive createWorldStateArchive(final WorldStateStorage worldStateStorage) {
+  private WorldStateArchive createWorldStateArchive(
+      final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
-        return new BonsaiWorldStateArchive(storageProvider);
+        return new BonsaiWorldStateArchive(storageProvider, blockchain);
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

@@ -19,7 +19,6 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
@@ -70,7 +70,8 @@ public class CliqueProtocolSchedule {
                     cliqueConfig.getBlockPeriodSeconds(),
                     localNodeAddress,
                     builder,
-                    eip1559),
+                    eip1559,
+                    privacyParameters.getGoQuorumPrivacyParameters().isPresent()),
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum())
@@ -89,7 +90,8 @@ public class CliqueProtocolSchedule {
       final long secondsBetweenBlocks,
       final Address localNodeAddress,
       final ProtocolSpecBuilder specBuilder,
-      final Optional<EIP1559> eip1559) {
+      final Optional<EIP1559> eip1559,
+      final boolean goQuorumMode) {
 
     return specBuilder
         .blockHeaderValidatorBuilder(
@@ -97,7 +99,7 @@ public class CliqueProtocolSchedule {
         .ommerHeaderValidatorBuilder(
             getBlockHeaderValidator(epochManager, secondsBetweenBlocks, eip1559))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetBlockValidator::new)
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator(new CliqueDifficultyCalculator(localNodeAddress))
         .blockReward(Wei.ZERO)

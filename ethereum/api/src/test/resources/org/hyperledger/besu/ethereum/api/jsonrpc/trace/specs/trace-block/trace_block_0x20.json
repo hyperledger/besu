@@ -1,0 +1,72 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_block",
+    "params": [
+      "0x20"
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "action": {
+          "callType": "call",
+          "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas": "0xcd01",
+          "input": "0x000000000000000000000000000000000000000000000000000000000000ea60",
+          "to": "0x0180000000000000000000000000000000000000",
+          "value": "0x0"
+        },
+        "blockHash": "0x8b999c350ee739ebe2f7c5311c55c8c2e348704be2d196876ea9e92a509c7a6a",
+        "blockNumber": 32,
+        "result": {
+          "gasUsed": "0xcbc2",
+          "output": "0x"
+        },
+        "subtraces": 1,
+        "traceAddress": [],
+        "transactionHash": "0x3a9118fe52689f19ec58b4e1a50a0ae07021812f4c0d72c703a669e90622f3cd",
+        "transactionPosition": 0,
+        "type": "call"
+      },
+      {
+        "action": {
+          "creationMethod": "create",
+          "from": "0x0180000000000000000000000000000000000000",
+          "gas": "0x4eaa",
+          "init": "0x600c600055602060406000f000",
+          "value": "0x0"
+        },
+        "blockHash": "0x8b999c350ee739ebe2f7c5311c55c8c2e348704be2d196876ea9e92a509c7a6a",
+        "blockNumber": 32,
+        "error": "Out of gas",
+        "subtraces": 0,
+        "traceAddress": [
+          0
+        ],
+        "transactionHash": "0x3a9118fe52689f19ec58b4e1a50a0ae07021812f4c0d72c703a669e90622f3cd",
+        "transactionPosition": 0,
+        "type": "create"
+      },
+      {
+        "action": {
+          "author": "0x0000000000000000000000000000000000000000",
+          "rewardType": "block",
+          "value": "0x1bc16d674ec80000"
+        },
+        "blockHash": "0x8b999c350ee739ebe2f7c5311c55c8c2e348704be2d196876ea9e92a509c7a6a",
+        "blockNumber": 32,
+        "result": null,
+        "subtraces": 0,
+        "traceAddress": [],
+        "transactionHash": null,
+        "transactionPosition": null,
+        "type": "reward"
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

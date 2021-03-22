@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
 import org.hyperledger.besu.crypto.SECP256K1.Signature;
@@ -46,14 +46,14 @@ import org.junit.Test;
 public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext setupContextWithValidators(final Collection<Address> validators) {
-    final IbftContext ibftContext = mock(IbftContext.class);
+    final BftContext bftContext = mock(BftContext.class);
     final VoteTallyCache mockCache = mock(VoteTallyCache.class);
     final VoteTally mockVoteTally = mock(VoteTally.class);
-    when(ibftContext.getVoteTallyCache()).thenReturn(mockCache);
+    when(bftContext.getVoteTallyCache()).thenReturn(mockCache);
     when(mockCache.getVoteTallyAfterBlock(any())).thenReturn(mockVoteTally);
     when(mockVoteTally.getValidators()).thenReturn(validators);
 
-    return new ProtocolContext(null, null, ibftContext);
+    return new ProtocolContext(null, null, bftContext);
   }
 
   @Test

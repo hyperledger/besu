@@ -258,7 +258,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", tempConfigFile.toString());
 
     final String expectedOutputStart =
-        "Invalid TOML configuration: Unexpected '.', expected a-z, A-Z, 0-9, ', \", a table key, "
+        "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '.', expected a-z, A-Z, 0-9, ', \", a table key, "
             + "a newline, or end-of-input (line 1, column 1)";
     assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString()).isEmpty();
@@ -286,7 +286,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", tempConfigFile.toString());
 
     final String expectedOutputStart =
-        "Invalid TOML configuration: Unexpected '=', expected ', \", ''', \"\"\", a number, "
+        "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=', expected ', \", ''', \"\"\", a number, "
             + "a boolean, a date/time, an array, or a table (line 1, column 8)";
     assertThat(commandErrorOutput.toString()).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString()).isEmpty();
@@ -868,7 +868,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void dataDirOptionMustBeUsed() throws Exception {
+  public void dataDirOptionMustBeUsed() {
     final Path path = Paths.get(".");
 
     parseCommand("--data-path", path.toString());
@@ -913,7 +913,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEmpty();
     assertThat(config.getDnsDiscoveryUrl()).isNull();
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(3141592));
@@ -929,14 +929,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1));
   }
 
   @Test
-  public void testGenesisPathGoerliEthConfig() throws Exception {
+  public void testGenesisPathGoerliEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
@@ -945,14 +945,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(GOERLI_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(GOERLI_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(5));
   }
 
   @Test
-  public void testGenesisPathRinkebyEthConfig() throws Exception {
+  public void testGenesisPathRinkebyEthConfig() {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
@@ -961,7 +961,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    EthNetworkConfig config = networkArg.getValue();
+    final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
@@ -1140,6 +1140,19 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--bootnodes",
         "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304");
     assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void callingWithValidBootnodeButDiscoveryDisabledMustDisplayWarning() {
+    parseCommand(
+        "--bootnodes",
+        "enode://d2567893371ea5a6fa6371d483891ed0d129e79a8fc74d6df95a00a6545444cd4a6960bbffe0b4e2edcf35135271de57ee559c0909236bbc2074346ef2b5b47c@127.0.0.1:30304",
+        "--discovery-enabled",
+        "false");
+    assertThat(commandOutput.toString()).isEmpty();
+    verify(mockRunnerBuilder).build();
+    verify(mockLogger, atLeast(1)).warn("Discovery disabled: bootnodes will be ignored.");
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -1503,8 +1516,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void launcherDefaultOptionValue() {
+    TestBesuCommand besuCommand = parseCommand();
+
+    assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isFalse();
+    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
+  }
+
+  @Test
+  public void launcherOptionIsParsedCorrectly() {
+    TestBesuCommand besuCommand = parseCommand("--Xlauncher", "true", "--Xlauncher-force", "true");
+
+    assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isTrue();
+    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
+  }
+
+  @Test
   public void dnsEnabledOptionIsParsedCorrectly() {
-    TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
+    final TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
 
     assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
     assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
@@ -1512,7 +1541,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void dnsUpdateEnabledOptionIsParsedCorrectly() {
-    TestBesuCommand besuCommand =
+    final TestBesuCommand besuCommand =
         parseCommand("--Xdns-enabled", "true", "--Xdns-update-enabled", "true");
 
     assertThat(besuCommand.getEnodeDnsConfiguration().dnsEnabled()).isTrue();
@@ -3384,6 +3413,23 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
   }
 
+  @Test
+  public void privacyWithGoQuorumModeMustError() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--privacy-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
+
+    assertThat(commandErrorOutput.toString())
+        .contains("GoQuorum mode cannot be enabled with privacy.");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
 
   @Test
@@ -3974,8 +4020,42 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--genesis-file",
         genesisFile.toString(),
         "--min-gas-price",
-        "0");
+        "0",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH);
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsIfEnclaveKeyFileDoesNotExist() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0",
+        "--privacy-public-key-file",
+        "ThisFileDoesNotExist");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsIfEnclaveKeyFileIsNotSet() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand(
+        "--goquorum-compatibility-enabled",
+        "--genesis-file",
+        genesisFile.toString(),
+        "--min-gas-price",
+        "0");
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
   }
 
   @Test
@@ -4026,5 +4106,43 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "Port number '8546' has been specified multiple times. Please review the supplied configuration.");
+  }
+
+  @Test
+  public void staticNodesFileOptionValueAbsentMessage() {
+    parseCommand("--static-nodes-file");
+    assertThat(commandErrorOutput.toString()).startsWith("Missing required parameter for option");
+  }
+
+  @Test
+  public void staticNodesFilesOptionInvalidJSONFormatError() throws IOException {
+    final Path tempfile =
+        createTempFile(
+            "static-nodes-badformat.json",
+            "\"enode://c0b0e1151971f8a22dc2493c622317c8706c731f6fcf46d93104ef"
+                + "3a08f21f7750b5d5e17f311091f732c9f917b02e1ae6d39f076903779fd1e7"
+                + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
+    parseCommand("--static-nodes-file", tempfile.toString());
+    assertThat(commandErrorOutput.toString()).startsWith("Failed to decode:Cannot deserialize ");
+  }
+
+  @Test
+  public void staticNodesFileOptionFileDoesNotExistMessage() {
+    parseCommand("--static-nodes-file", "this-file-does-not-exist-at-all.json");
+    assertThat(commandErrorOutput.toString()).contains("Static nodes file", "does not exist");
+  }
+
+  @Test
+  public void staticNodesFileOptionValidParamenter() throws IOException {
+    final Path staticNodeTempFile =
+        createTempFile(
+            "static-nodes-goodformat.json",
+            "[\n"
+                + "\"enode://c0b0e1151971f8a22dc2493c622317c8706c731f6fcf46d93104ef"
+                + "3a08f21f7750b5d5e17f311091f732c9f917b02e1ae6d39f076903779fd1e7"
+                + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
+    parseCommand("--static-nodes-file", staticNodeTempFile.toString());
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }

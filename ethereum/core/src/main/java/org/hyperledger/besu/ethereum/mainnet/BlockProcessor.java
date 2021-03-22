@@ -36,9 +36,19 @@ public interface BlockProcessor {
      *
      * <p>This is only valid when {@code BlockProcessor#isSuccessful} returns {@code true}.
      *
-     * @return the receipts generated for the transactions the a block
+     * @return the receipts generated for the transactions in a block
      */
     List<TransactionReceipt> getReceipts();
+
+    /**
+     * The private receipts generated for the private transactions in a block when in
+     * goQuorumCompatibilityMode
+     *
+     * <p>This is only valid when {@code BlockProcessor#isSuccessful} returns {@code true}.
+     *
+     * @return the receipts generated for the private transactions in a block
+     */
+    List<TransactionReceipt> getPrivateReceipts();
 
     /**
      * Returns whether the block was successfully processed.
@@ -46,6 +56,10 @@ public interface BlockProcessor {
      * @return {@code true} if the block was processed successfully; otherwise {@code false}
      */
     boolean isSuccessful();
+
+    default boolean isFailed() {
+      return !isSuccessful();
+    }
   }
 
   /**
@@ -104,6 +118,26 @@ public interface BlockProcessor {
       List<Transaction> transactions,
       List<BlockHeader> ommers,
       PrivateMetadataUpdater privateMetadataUpdater);
+
+  /**
+   * Processes the block when running Besu in GoQuorum-compatible mode
+   *
+   * @param blockchain the blockchain to append the block to
+   * @param worldState the world state to apply public transactions to
+   * @param privateWorldState the private world state to apply private transaction to
+   * @param block the block to process
+   * @return the block processing result
+   */
+  default Result processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final MutableWorldState privateWorldState,
+      final Block block) {
+    /*
+     This method should never be executed. All GoQuorum processing must happen in the GoQuorumBlockProcessor.
+    */
+    throw new IllegalStateException("Tried to process GoQuorum block on AbstractBlockProcessor");
+  }
 
   /**
    * Get ommer reward in ${@link Wei}

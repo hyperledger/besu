@@ -56,6 +56,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.orion.testutil.OrionKeyConfiguration;
 import org.hyperledger.orion.testutil.OrionTestHarness;
@@ -91,12 +92,12 @@ public class PrivacyReorgTest {
       Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
   private static final String FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT =
-      "0x1bdf13f6d14c7322d6e695498aab258949e55574bef7eac366eb777f43d7dd2b";
+      "0xe368938a01d983e331eb0e4ea61224726d06075c1ad525569b369f664067ff26";
   private static final String FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT =
-      "0x16979b290f429e06d86a43584c7d8689d4292ade9a602e5c78e2867c6ebd904e";
+      "0x9c88988f9602184efc538cf1c2f482a6b8757ff918d234602884dc8e3b983edd";
   private static final String BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT =
       "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461";
-  private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE =
+  private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE =
       "0x2121b68f1333e93bae8cd717a3ca68c9d7e7003f6b288c36dfc59b0f87be9590";
   private static final Bytes32 PRIVACY_GROUP_BYTES32 =
       Bytes32.fromHexString("0xf250d523ae9164722b06ca25cfa2a7f3c45df96b09e215236f886c876f715bfa");
@@ -231,7 +232,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Block forkBlock =
@@ -259,7 +260,7 @@ public class PrivacyReorgTest {
         gen.block(getBlockOptionsNoTransaction(blockchain.getGenesisBlock(), firstBlockStateRoot));
 
     final String secondBlockStateRoot =
-        "0x35c315ee7d272e5b612d454ee87c948657310ab33208b57122f8d0525e91f35e";
+        "0x7e887f91d2a6205f4a643701aba022c2db0bac5ab235102ab7477edd7a8a4317";
     final Block secondBlock =
         gen.block(
             getBlockOptionsWithTransaction(
@@ -274,7 +275,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Difficulty remainingDifficultyToOutpace =
@@ -286,7 +287,7 @@ public class PrivacyReorgTest {
             .plus(blockchain.getBlockByNumber(2).get().getHeader().getDifficulty());
 
     final String forkBlockStateRoot =
-        "0x4a33bdf9d16e6dd4f4c67f1638971f663f132ebceac0c7c65c9a3f35172af4de";
+        "0x486b886bde6472e8d706f8eb4fb6378ebbdceb4848a5a8d69a726575b22e41b6";
     final Block forkBlock =
         gen.block(
             getBlockOptionsNoTransactionWithDifficulty(
@@ -321,7 +322,7 @@ public class PrivacyReorgTest {
 
     // Check that the private state root is not the empty state
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     // Create parallel fork of length 1 which removes privacy marker transaction
     final Block forkBlock =
@@ -333,10 +334,10 @@ public class PrivacyReorgTest {
 
     // Check that the private state root did not change
     assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     final String secondForkBlockStateRoot =
-        "0xd35eea814b8b5a0b12e690ab320785f3a33d9685bbf6875637c40a64203915da";
+        "0x2c37a360a700c614b10c980138f64be9ad66fc4a14cd5145199cd0d8ec43d51d";
     final Block secondForkBlock =
         gen.block(
             getBlockOptionsNoTransactionWithDifficulty(
@@ -354,7 +355,7 @@ public class PrivacyReorgTest {
 
     // Add another private transaction
     final String thirdForkBlockStateRoot =
-        "0xe22344ade05260177b79dcc6c4fed8f87ab95a506c2a6147631ac6547cf44846";
+        "0x8fe42678733e6099e7b10b9b1d4684b8f2ce3d6479cb122ea12932ef304a1793";
     final Block thirdForkBlock =
         gen.block(
             getBlockOptionsWithTransactionAndDifficulty(
@@ -366,8 +367,7 @@ public class PrivacyReorgTest {
     appendBlock(besuController, blockchain, protocolContext, thirdForkBlock);
 
     // Check that the private state did change after reorg
-    assertPrivateStateRoot(
-        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMTPY_STATE);
+    assertPrivateStateRoot(privateStateRootResolver, blockchain, EMPTY_ROOT_HASH);
   }
 
   @SuppressWarnings("unchecked")
@@ -432,6 +432,7 @@ public class PrivacyReorgTest {
 
   private Transaction buildMarkerTransaction(final Bytes payload) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .chainId(BigInteger.valueOf(2018))
         .gasLimit(60000)
         .gasPrice(Wei.of(1000))

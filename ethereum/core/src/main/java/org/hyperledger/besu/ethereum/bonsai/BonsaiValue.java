@@ -21,12 +21,20 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+import org.apache.tuweni.units.bigints.UInt256;
+
 public class BonsaiValue<T> {
   private T original;
   private T updated;
 
   BonsaiValue(final T original, final T updated) {
+    if (original instanceof UInt256 &&  ((UInt256)original).toShortHexString().equals("0xbaa70")) {
+      new Exception("Setting original to baa70").printStackTrace(System.out);
+    }
     this.original = original;
+    if (updated == null) {
+      new Exception("Setting updated to null").printStackTrace(System.out);
+    }
     this.updated = updated;
   }
 
@@ -38,11 +46,18 @@ public class BonsaiValue<T> {
     return updated;
   }
 
+  public T getEffective() {
+    return updated != null ? updated : original;
+  }
+
   public void setOriginal(final T original) {
     this.original = original;
   }
 
   public void setUpdated(final T updated) {
+    if (updated == null) {
+      new Exception("Setting updated to null").printStackTrace(System.out);
+    }
     this.updated = updated;
   }
 
@@ -69,7 +84,16 @@ public class BonsaiValue<T> {
     return Objects.equals(updated, original);
   }
 
-  T effective() {
-    return updated == null ? original : updated;
+  @Override
+  public String toString() {
+    return "BonsaiValue{" + "original=" + original + ", updated=" + updated + '}';
+  }
+
+  @Override
+  public String toString() {
+    return "BonsaiValue{" +
+        "original=" + original +
+        ", updated=" + updated +
+        '}';
   }
 }

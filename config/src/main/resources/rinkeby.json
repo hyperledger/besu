@@ -3,13 +3,12 @@
     "chainId": 4,
     "homesteadBlock": 1,
     "eip150Block": 2,
-    "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "eip155Block": 3,
     "eip158Block": 3,
     "byzantiumBlock": 1035301,
     "constantinopleBlock": 3660663,
     "petersburgBlock": 4321234,
     "istanbulBlock":  5435345,
+    "berlinBlock": 8290928,
     "clique": {
       "blockperiodseconds": 15,
       "epochlength": 30000

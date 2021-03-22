@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import com.google.common.base.Charsets;
@@ -63,7 +63,7 @@ public final class GenesisStateTest {
     final GenesisState genesisState =
         GenesisState.fromJson(
             Resources.toString(GenesisStateTest.class.getResource("genesis1.json"), Charsets.UTF_8),
-            MainnetProtocolSchedule.create());
+            ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot())
         .isEqualTo(
@@ -91,7 +91,7 @@ public final class GenesisStateTest {
     final GenesisState genesisState =
         GenesisState.fromJson(
             Resources.toString(GenesisStateTest.class.getResource("genesis2.json"), Charsets.UTF_8),
-            MainnetProtocolSchedule.create());
+            ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
@@ -106,7 +106,7 @@ public final class GenesisStateTest {
     final GenesisState genesisState =
         GenesisState.fromJson(
             Resources.toString(GenesisStateTest.class.getResource(sourceFile), Charsets.UTF_8),
-            MainnetProtocolSchedule.create());
+            ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash()).isEqualTo(Hash.fromHexString(blockHash));
 
@@ -144,7 +144,7 @@ public final class GenesisStateTest {
         GenesisState.fromJson(
             Resources.toString(
                 GenesisStateTest.class.getResource("genesisNonce.json"), Charsets.UTF_8),
-            MainnetProtocolSchedule.create());
+            ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
         .isEqualTo(
@@ -158,7 +158,7 @@ public final class GenesisStateTest {
         GenesisState.fromJson(
             Resources.toString(
                 GenesisStateTest.class.getResource("genesis-olympic.json"), Charsets.UTF_8),
-            MainnetProtocolSchedule.create());
+            ProtocolScheduleFixture.MAINNET);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     genesisState.getBlock().writeTo(tmp);
     assertThat(Hex.toHexString(genesisState.getBlock().getHeader().getHash().toArray()))

@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -149,7 +150,7 @@ public class TransactionSimulatorTest {
         OperationTracer.NO_TRACING,
         1L);
 
-    verify(mutableAccount).incrementBalance(Wei.of(Long.MAX_VALUE));
+    verify(mutableAccount).setBalance(Wei.of(UInt256.MAX_VALUE));
   }
 
   @Test
@@ -409,19 +410,19 @@ public class TransactionSimulatorTest {
       final Hash stateRoot, final Address address, final long nonce) {
     final Account account = mock(Account.class);
     when(account.getNonce()).thenReturn(nonce);
-    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
+    when(worldStateArchive.getMutable(eq(stateRoot), any())).thenReturn(Optional.of(worldState));
     when(worldState.get(eq(address))).thenReturn(account);
   }
 
   private void mockWorldStateForAbsentAccount(final Hash stateRoot) {
-    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
+    when(worldStateArchive.getMutable(eq(stateRoot), any())).thenReturn(Optional.of(worldState));
     when(worldState.get(any())).thenReturn(null);
   }
 
   private MutableAccount mockWorldUpdaterForAccount(final Hash stateRoot, final Address address) {
     final EvmAccount account = mock(EvmAccount.class);
     final MutableAccount mutableAccount = mock(MutableAccount.class);
-    when(worldStateArchive.getMutable(eq(stateRoot))).thenReturn(Optional.of(worldState));
+    when(worldStateArchive.getMutable(eq(stateRoot), any())).thenReturn(Optional.of(worldState));
     when(worldState.updater()).thenReturn(worldUpdater);
     when(worldUpdater.getOrCreate(eq(address))).thenReturn(account);
     when(account.getMutable()).thenReturn(mutableAccount);

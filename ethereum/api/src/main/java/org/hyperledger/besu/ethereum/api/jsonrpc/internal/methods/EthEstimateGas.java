@@ -68,7 +68,7 @@ public class EthEstimateGas implements JsonRpcMethod {
     }
     if (!blockchainQueries
         .getWorldStateArchive()
-        .isWorldStateAvailable(blockHeader.getStateRoot())) {
+        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
       return errorResponse(requestContext, JsonRpcError.WORLD_STATE_UNAVAILABLE);
     }
 
@@ -151,6 +151,7 @@ public class EthEstimateGas implements JsonRpcMethod {
       final TransactionProcessingResult resultTrx = result.getResult();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
         jsonRpcError = JsonRpcError.REVERT_ERROR;
+        jsonRpcError.setData(resultTrx.getRevertReason().get().toHexString());
       } else {
         jsonRpcError = JsonRpcError.INTERNAL_ERROR;
       }

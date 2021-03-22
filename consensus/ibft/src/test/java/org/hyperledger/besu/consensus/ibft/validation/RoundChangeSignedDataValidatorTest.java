@@ -22,7 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -206,5 +206,25 @@ public class RoundChangeSignedDataValidatorTest {
         .createAt(prepareCertificate.getProposalPayload().getPayload().getRoundIdentifier());
     verify(basicValidator, times(1)).validateProposal(prepareCertificate.getProposalPayload());
     verify(basicValidator, times(1)).validatePrepare(prepareMsg.getSignedPayload());
+  }
+
+  @Test
+  public void roundChangeWithDuplicatedPreparesFails() {
+    final RoundChangePayloadValidator validatorRequiringTwoPrepares =
+        new RoundChangePayloadValidator(validatorFactory, validators, 2, chainHeight);
+
+    final Prepare prepareMsg = validatorMessageFactory.createPrepare(currentRound, block.getHash());
+    final PreparedRoundArtifacts preparedRoundArtifacts =
+        new PreparedRoundArtifacts(
+            proposerMessageFactory.createProposal(currentRound, block, Optional.empty()),
+            Lists.newArrayList(prepareMsg, prepareMsg));
+    final PreparedCertificate prepareCertificate = preparedRoundArtifacts.getPreparedCertificate();
+    final RoundChange msg =
+        proposerMessageFactory.createRoundChange(targetRound, Optional.of(preparedRoundArtifacts));
+
+    when(basicValidator.validateProposal(prepareCertificate.getProposalPayload())).thenReturn(true);
+    when(basicValidator.validatePrepare(prepareMsg.getSignedPayload())).thenReturn(true);
+
+    assertThat(validatorRequiringTwoPrepares.validateRoundChange(msg.getSignedPayload())).isFalse();
   }
 }

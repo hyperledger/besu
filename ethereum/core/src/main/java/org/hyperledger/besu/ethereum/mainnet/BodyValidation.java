@@ -21,11 +21,13 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -54,9 +56,9 @@ public final class BodyValidation {
   public static Hash transactionsRoot(final List<Transaction> transactions) {
     final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
-    for (int i = 0; i < transactions.size(); ++i) {
-      trie.put(indexKey(i), RLP.encode(transactions.get(i)::writeTo));
-    }
+    IntStream.range(0, transactions.size())
+        .forEach(
+            i -> trie.put(indexKey(i), TransactionEncoder.encodeOpaqueBytes(transactions.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }
@@ -70,9 +72,13 @@ public final class BodyValidation {
   public static Hash receiptsRoot(final List<TransactionReceipt> receipts) {
     final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
 
-    for (int i = 0; i < receipts.size(); ++i) {
-      trie.put(indexKey(i), RLP.encode(receipts.get(i)::writeTo));
-    }
+    IntStream.range(0, receipts.size())
+        .forEach(
+            i ->
+                trie.put(
+                    indexKey(i),
+                    RLP.encode(
+                        rlpOutput -> receipts.get(i).writeToForReceiptTrie(rlpOutput, false))));
 
     return Hash.wrap(trie.getRootHash());
   }
@@ -94,7 +100,7 @@ public final class BodyValidation {
    * @return the logs bloom filter
    */
   public static LogsBloomFilter logsBloom(final List<TransactionReceipt> receipts) {
-    LogsBloomFilter.Builder filterBuilder = LogsBloomFilter.builder();
+    final LogsBloomFilter.Builder filterBuilder = LogsBloomFilter.builder();
 
     receipts.forEach(receipt -> filterBuilder.insertFilter(receipt.getBloomFilter()));
 

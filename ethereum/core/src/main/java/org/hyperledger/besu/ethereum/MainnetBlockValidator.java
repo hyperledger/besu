@@ -20,13 +20,17 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,26 +39,33 @@ import org.apache.logging.log4j.Logger;
 public class MainnetBlockValidator implements BlockValidator {
 
   private static final Logger LOG = getLogger();
-
-  private final BlockHeaderValidator blockHeaderValidator;
-
-  private final BlockBodyValidator blockBodyValidator;
-
-  private final BlockProcessor blockProcessor;
-
-  private final BadBlockManager badBlockManager;
+  protected final BlockHeaderValidator blockHeaderValidator;
+  protected final BlockBodyValidator blockBodyValidator;
+  protected final BlockProcessor blockProcessor;
+  protected final BadBlockManager badBlockManager;
 
   public MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
     this.blockProcessor = blockProcessor;
     this.badBlockManager = badBlockManager;
   }
 
+  /**
+   * Performs a full validation and processing of a block
+   *
+   * @param context the {@link ProtocolContext}
+   * @param block the block being validated and processed
+   * @param headerValidationMode the {@link HeaderValidationMode} used for validating the header
+   * @param ommerValidationMode the {@link HeaderValidationMode} used for validating the ommers
+   * @return an optional containing the {@link BlockProcessingOutputs} with the output of processing
+   *     the block, empty if the block was deemed invalid or couldn't be processed
+   */
   @Override
   public Optional<BlockProcessingOutputs> validateAndProcessBlock(
       final ProtocolContext context,
@@ -63,9 +74,10 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
 
+    final MutableBlockchain blockchain = context.getBlockchain();
     final Optional<BlockHeader> maybeParentHeader =
-        context.getBlockchain().getBlockHeader(header.getParentHash());
-    if (!maybeParentHeader.isPresent()) {
+        blockchain.getBlockHeader(header.getParentHash());
+    if (maybeParentHeader.isEmpty()) {
       LOG.error(
           "Attempted to import block {} with hash {} but parent block {} was not present",
           header.getNumber(),
@@ -81,32 +93,63 @@ public class MainnetBlockValidator implements BlockValidator {
       return Optional.empty();
     }
 
-    final MutableBlockchain blockchain = context.getBlockchain();
     final Optional<MutableWorldState> maybeWorldState =
-        context.getWorldStateArchive().getMutable(parentHeader.getStateRoot());
+        context
+            .getWorldStateArchive()
+            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
     if (!maybeWorldState.isPresent()) {
       LOG.debug(
           "Unable to process block {} because parent world state {} is not available",
-          header.getNumber(),
+          block.getHeader().getNumber(),
           parentHeader.getStateRoot());
       badBlockManager.addBadBlock(block);
       return Optional.empty();
     }
     final MutableWorldState worldState = maybeWorldState.get();
-    final BlockProcessor.Result result = blockProcessor.processBlock(blockchain, worldState, block);
-    if (!result.isSuccessful()) {
+
+    final Result result = processBlock(context, worldState, block);
+    if (result.isFailed()) {
       badBlockManager.addBadBlock(block);
       return Optional.empty();
     }
 
-    final List<TransactionReceipt> receipts = result.getReceipts();
+    List<TransactionReceipt> receipts = result.getReceipts();
     if (!blockBodyValidator.validateBody(
         context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
       badBlockManager.addBadBlock(block);
       return Optional.empty();
     }
 
+    if (!result.getPrivateReceipts().isEmpty()) {
+      // replace the public receipts for marker transactions with the private receipts if we are in
+      // goQuorumCompatibilityMode. That can be done now because we have validated the block.
+      final List<TransactionReceipt> privateTransactionReceipts = result.getPrivateReceipts();
+      final ArrayList<TransactionReceipt> resultingList = new ArrayList<>();
+      for (int i = 0; i < receipts.size(); i++) {
+        if (privateTransactionReceipts.get(i) != null) {
+          resultingList.add(privateTransactionReceipts.get(i));
+        } else {
+          resultingList.add(receipts.get(i));
+        }
+      }
+      receipts = Collections.unmodifiableList(resultingList);
+    }
+
     return Optional.of(new BlockProcessingOutputs(worldState, receipts));
+  }
+
+  /**
+   * Processes a block, returning the result of the processing
+   *
+   * @param context the ProtocolContext
+   * @param worldState the world state for the parent block state root hash
+   * @param block the block to be processed
+   * @return the result of processing the block
+   */
+  protected Result processBlock(
+      final ProtocolContext context, final MutableWorldState worldState, final Block block) {
+
+    return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
   }
 
   @Override

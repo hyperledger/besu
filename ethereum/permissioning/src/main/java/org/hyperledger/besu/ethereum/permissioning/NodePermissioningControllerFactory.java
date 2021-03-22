@@ -83,28 +83,30 @@ public class NodePermissioningControllerFactory {
       syncStatusProviderOptional = Optional.empty();
     }
 
-    final Optional<QuorumQip714Gate> quorumQip714Gate =
+    final Optional<GoQuorumQip714Gate> goQuorumQip714Gate =
         permissioningConfiguration
             .getQuorumPermissioningConfig()
             .flatMap(
                 config -> {
                   if (config.isEnabled()) {
                     return Optional.of(
-                        QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
+                        GoQuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
                   } else {
                     return Optional.empty();
                   }
                 });
 
     final NodePermissioningController nodePermissioningController =
-        new NodePermissioningController(syncStatusProviderOptional, providers, quorumQip714Gate);
+        new NodePermissioningController(syncStatusProviderOptional, providers, goQuorumQip714Gate);
 
     permissioningConfiguration
         .getSmartContractConfig()
         .ifPresent(
             config -> {
               if (config.isSmartContractNodeAllowlistEnabled()) {
-                validatePermissioningContract(nodePermissioningController);
+                validatePermissioningContract(
+                    nodePermissioningController,
+                    permissioningConfiguration.getSmartContractConfig().get());
               }
             });
 
@@ -145,7 +147,8 @@ public class NodePermissioningControllerFactory {
   }
 
   private void validatePermissioningContract(
-      final NodePermissioningController nodePermissioningController) {
+      final NodePermissioningController nodePermissioningController,
+      final SmartContractPermissioningConfiguration smartContractPermissioningConfig) {
     LOG.debug("Validating onchain node permissioning smart contract configuration");
 
     try {
@@ -156,8 +159,11 @@ public class NodePermissioningControllerFactory {
           EnodeURL.fromString(
               "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@10.3.58.6:30303"));
     } catch (Exception e) {
-      final String msg = "Error validating onchain node permissioning smart contract configuration";
-      LOG.error(msg + ":", e);
+      final String msg =
+          String.format(
+              "Error: node permissioning contract at address %s does not match the expected interface version %s.",
+              smartContractPermissioningConfig.getNodeSmartContractAddress(),
+              smartContractPermissioningConfig.getNodeSmartContractInterfaceVersion());
       throw new IllegalStateException(msg, e);
     }
   }

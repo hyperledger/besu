@@ -41,7 +41,7 @@ public class ExtraDataMaxLengthValidationRule implements DetachedBlockHeaderVali
 
   private boolean validateExtraData(final Bytes extraData) {
     if (extraData.size() > maxExtraDataBytes) {
-      LOG.trace(
+      LOG.info(
           "Invalid block header: extra data field length {} is greater {}",
           extraData.size(),
           maxExtraDataBytes);

@@ -58,6 +58,7 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
 
 /**
  * This component is the entrypoint for managing the lifecycle of peers.
@@ -334,6 +335,24 @@ public class PeerDiscoveryController {
         }
 
         break;
+      case ENR_REQUEST:
+        if (PeerDiscoveryStatus.BONDED.equals(peer.getStatus())) {
+          LOG.trace("ENR_REQUEST received from bonded peer Id: {}", peer.getId());
+          packet
+              .getPacketData(ENRRequestPacketData.class)
+              .ifPresent(p -> respondToENRRequest(p, packet.getHash(), peer));
+        }
+
+        break;
+      case ENR_RESPONSE:
+        // Currently there is no use case where an ENRResponse will be sent otherwise
+        // logic can be added here to query and store the response ENRs
+        packet
+            .getPacketData(ENRResponsePacketData.class)
+            .filter(p -> p.getEnr().getNodeId().equals(sender.getId()))
+            .ifPresent(p -> LOG.debug("Received NodeRecord: {}", p.getEnr().asEnr()));
+
+        break;
     }
   }
 
@@ -447,7 +466,10 @@ public class PeerDiscoveryController {
     final Consumer<PeerInteractionState> action =
         interaction -> {
           final PingPacketData data =
-              PingPacketData.create(localPeer.getEndpoint(), peer.getEndpoint());
+              PingPacketData.create(
+                  localPeer.getEndpoint(),
+                  peer.getEndpoint(),
+                  localPeer.getNodeRecord().map(NodeRecord::getSeq).orElse(null));
           createPacket(
               PacketType.PING,
               data,
@@ -542,7 +564,11 @@ public class PeerDiscoveryController {
       return;
     }
     // We don't care about the `from` field of the ping, we pong to the `sender`
-    final PongPacketData data = PongPacketData.create(sender.getEndpoint(), pingHash);
+    final PongPacketData data =
+        PongPacketData.create(
+            sender.getEndpoint(),
+            pingHash,
+            localPeer.getNodeRecord().map(NodeRecord::getSeq).orElse(null));
 
     sendPacket(sender, PacketType.PONG, data);
   }
@@ -557,6 +583,17 @@ public class PeerDiscoveryController {
     final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 16);
     final PacketData data = NeighborsPacketData.create(peers);
     sendPacket(sender, PacketType.NEIGHBORS, data);
+  }
+
+  private void respondToENRRequest(
+      final ENRRequestPacketData enrRequestPacketData,
+      final Bytes requestHash,
+      final DiscoveryPeer sender) {
+    if (enrRequestPacketData.getExpiration() >= Instant.now().getEpochSecond()) {
+      final ENRResponsePacketData data =
+          ENRResponsePacketData.create(requestHash, localPeer.getNodeRecord().orElse(null));
+      sendPacket(sender, PacketType.ENR_RESPONSE, data);
+    }
   }
 
   // Dispatches an event to a set of observers.

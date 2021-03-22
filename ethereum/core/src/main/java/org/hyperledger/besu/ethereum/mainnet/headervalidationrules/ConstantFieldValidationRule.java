@@ -40,8 +40,8 @@ public class ConstantFieldValidationRule<T> implements DetachedBlockHeaderValida
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     final T actualValue = accessor.apply(header);
     if (!actualValue.equals(expectedValue)) {
-      LOG.trace(
-          "{} failed validation. Actual != Expected ({} != {}).",
+      LOG.info(
+          "Invalid block header: Field {} failed validation. Actual != Expected ({} != {}).",
           fieldName,
           actualValue,
           expectedValue);

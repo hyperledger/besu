@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -30,6 +31,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,8 +50,16 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
-      final NatService natService) {
-    super(nodeKey, config, peerPermissions, natService, new NoOpMetricsSystem());
+      final NatService natService,
+      final Supplier<List<Bytes>> forkIdSupplier) {
+    super(
+        nodeKey,
+        config,
+        peerPermissions,
+        natService,
+        new NoOpMetricsSystem(),
+        new InMemoryStorageProvider(),
+        forkIdSupplier);
     this.agentNetwork = agentNetwork;
   }
 

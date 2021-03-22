@@ -17,12 +17,12 @@ package org.hyperledger.besu.consensus.ibft.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.support.NodeParams;
 import org.hyperledger.besu.consensus.ibft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;

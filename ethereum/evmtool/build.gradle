@@ -35,6 +35,7 @@ dependencies {
   implementation project(':config')
   implementation project(':crypto')
   implementation project(':consensus:clique')
+  implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')

@@ -28,13 +28,14 @@ import org.hyperledger.besu.crypto.SECP256K1.Signature;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -57,7 +58,7 @@ public class TransactionSmartContractPermissioningControllerTest {
 
   private TransactionSmartContractPermissioningController setupController(
       final String resourceName, final String contractAddressString) throws IOException {
-    final ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.create();
+    final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
 
     final String emptyContractFile =
         Resources.toString(this.getClass().getResource(resourceName), UTF_8);
@@ -96,6 +97,7 @@ public class TransactionSmartContractPermissioningControllerTest {
 
   private Transaction transactionForAccount(final Address address) {
     return Transaction.builder()
+        .type(TransactionType.FRONTIER)
         .sender(address)
         .value(Wei.ZERO)
         .gasPrice(Wei.ZERO)

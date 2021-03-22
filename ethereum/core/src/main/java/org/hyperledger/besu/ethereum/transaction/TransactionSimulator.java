@@ -32,10 +32,12 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -103,7 +105,7 @@ public class TransactionSimulator {
         blockchain.getChainHeadHeader());
   }
 
-  private Optional<TransactionSimulatorResult> process(
+  public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
@@ -112,7 +114,7 @@ public class TransactionSimulator {
       return Optional.empty();
     }
     final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
     if (worldState == null) {
       return Optional.empty();
     }
@@ -130,11 +132,12 @@ public class TransactionSimulator {
     final WorldUpdater updater = worldState.updater();
 
     if (transactionValidationParams.isAllowExceedingBalance()) {
-      updater.getOrCreate(senderAddress).getMutable().incrementBalance(Wei.of(Long.MAX_VALUE));
+      updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
     }
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(nonce)
             .gasPrice(gasPrice)
             .gasLimit(gasLimit)
@@ -177,7 +180,7 @@ public class TransactionSimulator {
     }
 
     final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
     if (worldState == null) {
       return Optional.empty();
     }

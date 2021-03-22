@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.consensus.ibft.network;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;

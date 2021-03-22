@@ -18,27 +18,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.ethereum.core.AcceptedTransactionTypes;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Test;
@@ -78,7 +80,8 @@ public class MainnetTransactionValidatorTest {
             .gasLimit(10)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
     assertThat(validator.validate(transaction, Optional.empty()))
         .isEqualTo(
@@ -254,33 +257,52 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectTransactionIfLegacyAfterEIP1559Finalized() {
-    final long forkBlock = 845L;
-    final EIP1559 eip1559 = new EIP1559(forkBlock);
+  public void shouldAcceptOnlyTransactionsInAcceptedTransactionTypes() {
     ExperimentalEIPs.eip1559Enabled = true;
-    final MainnetTransactionValidator validator =
+
+    final MainnetTransactionValidator frontierValidator =
         new MainnetTransactionValidator(
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
             Optional.empty(),
-            Optional.of(eip1559),
-            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS,
+            Set.of(TransactionType.FRONTIER),
             defaultGoQuorumCompatibilityMode);
+
+    final MainnetTransactionValidator eip1559Validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            Optional.of(transactionPriceCalculator),
+            false,
+            Optional.empty(),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            defaultGoQuorumCompatibilityMode);
+
     final Transaction transaction =
         new TransactionTestFixture()
+            .type(TransactionType.EIP1559)
+            .gasPremium(Optional.of(Wei.of(3)))
+            .feeCap(Optional.of(Wei.of(6)))
             .gasLimit(21000)
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
-    assertThat(validator.validate(transaction, Optional.empty()))
+
+    when(transactionPriceCalculator.price(eq(transaction), any())).thenReturn(Wei.of(160000L));
+
+    assertThat(frontierValidator.validate(transaction, Optional.empty()))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
+
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(0)));
+
+    assertThat(eip1559Validator.validate(transaction, Optional.of(1L)))
+        .isEqualTo(ValidationResult.valid());
+
     ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @Test
   public void shouldRejectTransactionIfEIP1559TransactionGasPriceLessBaseFee() {
-    final long forkBlock = 845L;
-    final EIP1559 eip1559 = new EIP1559(forkBlock);
     ExperimentalEIPs.eip1559Enabled = true;
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
@@ -288,11 +310,11 @@ public class MainnetTransactionValidatorTest {
             Optional.of(transactionPriceCalculator),
             false,
             Optional.empty(),
-            Optional.of(eip1559),
-            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS,
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode);
     final Transaction transaction =
         new TransactionTestFixture()
+            .type(TransactionType.EIP1559)
             .gasPremium(Optional.of(Wei.of(1)))
             .feeCap(Optional.of(Wei.of(1)))
             .chainId(Optional.empty())
@@ -305,32 +327,7 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectEIP1559TransactionIfEIP115Disabled() {
-    ExperimentalEIPs.eip1559Enabled = false;
-    final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            Optional.of(transactionPriceCalculator),
-            false,
-            Optional.empty(),
-            Optional.empty(),
-            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS,
-            defaultGoQuorumCompatibilityMode);
-    final Transaction transaction =
-        new TransactionTestFixture()
-            .gasPremium(Optional.of(Wei.of(1)))
-            .feeCap(Optional.of(Wei.of(1)))
-            .chainId(Optional.empty())
-            .createTransaction(senderKeys);
-    final Optional<Long> basefee = Optional.of(150000L);
-    assertThat(validator.validate(transaction, basefee))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
-  }
-
-  @Test
   public void shouldAcceptValidEIP1559() {
-    final long forkBlock = 845L;
-    final EIP1559 eip1559 = new EIP1559(forkBlock);
     ExperimentalEIPs.eip1559Enabled = true;
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
@@ -338,8 +335,7 @@ public class MainnetTransactionValidatorTest {
             Optional.of(transactionPriceCalculator),
             false,
             Optional.empty(),
-            Optional.of(eip1559),
-            AcceptedTransactionTypes.FEE_MARKET_TRANSACTIONS,
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode);
     final Transaction transaction =
         new TransactionTestFixture()
@@ -348,8 +344,8 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
-    when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(160000L));
-    when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
     assertThat(validator.validate(transaction, basefee)).isEqualTo(ValidationResult.valid());
     ExperimentalEIPs.eip1559Enabled = false;
@@ -380,7 +376,8 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
 
-    when(gasCalculator.transactionIntrinsicGasCost(transaction)).thenReturn(Gas.of(50));
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
     assertThat(validator.validate(transaction, Optional.empty()).isValid()).isTrue();
   }

@@ -18,8 +18,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -54,7 +54,7 @@ public class RoundChangeArtifactsTest {
 
     final ConsensusRoundIdentifier preparedRound =
         new ConsensusRoundIdentifier(chainHeight, fromRound);
-    final Block block = TestHelpers.createProposalBlock(emptyList(), preparedRound);
+    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), preparedRound);
 
     return new PreparedRoundArtifacts(
         messageFactories.get(0).createProposal(preparedRound, block, Optional.empty()),

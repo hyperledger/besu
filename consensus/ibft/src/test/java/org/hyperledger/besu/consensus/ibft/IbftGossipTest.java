@@ -17,11 +17,11 @@ package org.hyperledger.besu.consensus.ibft;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
+import org.hyperledger.besu.consensus.common.bft.network.MockPeerFactory;
+import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.RoundChangeMessageData;
-import org.hyperledger.besu.consensus.ibft.messagewrappers.IbftMessage;
-import org.hyperledger.besu.consensus.ibft.network.MockPeerFactory;
-import org.hyperledger.besu.consensus.ibft.network.ValidatorMulticaster;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -52,7 +52,7 @@ public class IbftGossipTest {
     peerConnection = MockPeerFactory.create(senderAddress);
   }
 
-  private <P extends IbftMessage<?>> void assertRebroadcastToAllExceptSignerAndSender(
+  private <P extends BftMessage<?>> void assertRebroadcastToAllExceptSignerAndSender(
       final Function<NodeKey, P> createPayload, final Function<P, MessageData> createMessageData) {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final P payload = createPayload.apply(nodeKey);

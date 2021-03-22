@@ -14,17 +14,17 @@
  */
 package org.hyperledger.besu.controller;
 
-import org.hyperledger.besu.config.IbftConfigOptions;
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
-import org.hyperledger.besu.consensus.ibft.IbftContext;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
-import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul64Protocol;
-import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul64ProtocolManager;
+import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99Protocol;
+import org.hyperledger.besu.consensus.ibftlegacy.protocol.Istanbul99ProtocolManager;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
@@ -58,7 +58,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   protected SubProtocolConfiguration createSubProtocolConfiguration(
       final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration()
-        .withSubProtocol(Istanbul64Protocol.get(), ethProtocolManager);
+        .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager);
   }
 
   @Override
@@ -81,9 +81,9 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected IbftContext createConsensusContext(
+  protected BftContext createConsensusContext(
       final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    final IbftConfigOptions ibftConfig =
+    final BftConfigOptions ibftConfig =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getIbftLegacyConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
     final VoteTallyCache voteTallyCache =
@@ -94,7 +94,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
             blockInterface);
 
     final VoteProposer voteProposer = new VoteProposer();
-    return new IbftContext(voteTallyCache, voteProposer, epochManager, blockInterface);
+    return new BftContext(voteTallyCache, voteProposer, epochManager, blockInterface);
   }
 
   @Override
@@ -113,7 +113,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected String getSupportedProtocol() {
-    return Istanbul64Protocol.get().getName();
+    return Istanbul99Protocol.get().getName();
   }
 
   @Override
@@ -128,7 +128,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators) {
     LOG.info("Operating on IBFT-1.0 network.");
-    return new Istanbul64ProtocolManager(
+    return new Istanbul99ProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
         protocolContext.getWorldStateArchive(),

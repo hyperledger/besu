@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
-import org.hyperledger.besu.consensus.ibft.payload.SignedData;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Collection;
@@ -96,6 +96,10 @@ public class RoundChangePayloadValidator {
       return false;
     }
 
+    if (hasDuplicateAuthors(certificate.getPreparePayloads())) {
+      return false;
+    }
+
     if (certificate.getPreparePayloads().size() < minimumPrepareMessages) {
       LOG.info(
           "Invalid RoundChange message, insufficient Prepare messages exist to justify "
@@ -111,6 +115,18 @@ public class RoundChangePayloadValidator {
     }
 
     return true;
+  }
+
+  private boolean hasDuplicateAuthors(
+      final Collection<SignedData<PreparePayload>> preparePayloads) {
+    final long distinctAuthorCount =
+        preparePayloads.stream().map(SignedData::getAuthor).distinct().count();
+
+    if (distinctAuthorCount != preparePayloads.size()) {
+      LOG.info("Invalid PreparePayloads list, multiple payloads from the same author.");
+      return true;
+    }
+    return false;
   }
 
   private boolean validatePreparedCertificateRound(

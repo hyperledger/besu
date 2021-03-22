@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
+import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -30,17 +32,23 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,6 +57,12 @@ import com.google.common.net.InetAddresses;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
+import org.ethereum.beacon.discovery.schema.EnrField;
+import org.ethereum.beacon.discovery.schema.IdentitySchema;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
+import org.ethereum.beacon.discovery.util.Functions;
 
 /**
  * The peer discovery agent is the network component that sends and receives peer discovery messages
@@ -56,6 +70,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public abstract class PeerDiscoveryAgent {
   private static final Logger LOG = LogManager.getLogger();
+  private static final String SEQ_NO_STORE_KEY = "local-enr-seqno";
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
@@ -83,12 +98,17 @@ public abstract class PeerDiscoveryAgent {
   private boolean isActive = false;
   protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
 
+  private final StorageProvider storageProvider;
+  private final Supplier<List<Bytes>> forkIdSupplier;
+
   protected PeerDiscoveryAgent(
       final NodeKey nodeKey,
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final StorageProvider storageProvider,
+      final Supplier<List<Bytes>> forkIdSupplier) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -104,6 +124,9 @@ public abstract class PeerDiscoveryAgent {
     this.nodeKey = nodeKey;
 
     id = nodeKey.getPublicKey().getEncodedBytes();
+
+    this.storageProvider = storageProvider;
+    this.forkIdSupplier = forkIdSupplier;
   }
 
   protected abstract TimerUtil createTimer();
@@ -143,6 +166,9 @@ public abstract class PeerDiscoveryAgent {
                 this.localNode = Optional.of(ourNode);
                 isActive = true;
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
+                addLocalNodeRecord(id, advertisedAddress, tcpPort, discoveryPort)
+                    .ifPresent(
+                        nodeRecord -> localNode.ifPresent(peer -> peer.setNodeRecord(nodeRecord)));
                 startController(ourNode);
                 return discoveryPort;
               });
@@ -150,6 +176,54 @@ public abstract class PeerDiscoveryAgent {
       this.isActive = false;
       return CompletableFuture.completedFuture(0);
     }
+  }
+
+  private Optional<NodeRecord> addLocalNodeRecord(
+      final Bytes nodeId,
+      final String advertisedAddress,
+      final Integer tcpPort,
+      final Integer udpPort) {
+    final KeyValueStorage keyValueStorage =
+        storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
+    final NodeRecordFactory nodeRecordFactory = NodeRecordFactory.DEFAULT;
+    final Optional<NodeRecord> existingNodeRecord =
+        keyValueStorage
+            .get(Bytes.of(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray())
+            .map(Bytes::of)
+            .flatMap(b -> Optional.of(nodeRecordFactory.fromBytes(b)));
+
+    final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
+    if (existingNodeRecord.isEmpty()
+        || !existingNodeRecord.get().get(EnrField.PKEY_SECP256K1).equals(nodeId)
+        || !addressBytes.equals(existingNodeRecord.get().get(EnrField.IP_V4))
+        || !tcpPort.equals(existingNodeRecord.get().get(EnrField.TCP))
+        || !udpPort.equals(existingNodeRecord.get().get(EnrField.UDP))) {
+      final UInt64 sequenceNumber =
+          existingNodeRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
+      final NodeRecord nodeRecord =
+          nodeRecordFactory.createFromValues(
+              sequenceNumber,
+              new EnrField(EnrField.ID, IdentitySchema.V4),
+              new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(nodeId)),
+              new EnrField(EnrField.IP_V4, addressBytes),
+              new EnrField(EnrField.TCP, tcpPort),
+              new EnrField(EnrField.UDP, udpPort),
+              new EnrField("eth", Collections.singletonList(forkIdSupplier.get())));
+      nodeRecord.setSignature(
+          nodeKey
+              .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
+              .encodedBytes()
+              .slice(0, 64));
+
+      final KeyValueStorageTransaction keyValueStorageTransaction =
+          keyValueStorage.startTransaction();
+      keyValueStorageTransaction.put(
+          Bytes.wrap(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray(), nodeRecord.serialize().toArray());
+      keyValueStorageTransaction.commit();
+      return Optional.of(nodeRecord);
+    }
+
+    return existingNodeRecord;
   }
 
   public void addPeerRequirement(final PeerRequirement peerRequirement) {

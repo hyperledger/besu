@@ -33,6 +33,7 @@ dependencies {
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')
   implementation project(':consensus:ibftlegacy')
+  implementation project(':consensus:qbft')
   implementation project(':crypto')
   implementation project(':enclave')
   implementation project(':ethereum:api')
@@ -67,7 +68,7 @@ dependencies {
   implementation 'org.apache.tuweni:units'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
-
+  implementation 'net.consensys.services:quorum-mainnet-launcher'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'

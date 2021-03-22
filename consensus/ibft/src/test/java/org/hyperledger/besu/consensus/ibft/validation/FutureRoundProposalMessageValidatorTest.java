@@ -20,8 +20,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -40,7 +41,8 @@ public class FutureRoundProposalMessageValidatorTest {
 
   private final MessageFactory messageFactoy = new MessageFactory(NodeKeyUtils.generate());
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
-  private final Block proposedBlock = TestHelpers.createProposalBlock(emptyList(), roundIdentifier);
+  private final Block proposedBlock =
+      ProposedBlockHelpers.createProposalBlock(emptyList(), roundIdentifier);
 
   private FutureRoundProposalMessageValidator validator;
 
@@ -72,7 +74,7 @@ public class FutureRoundProposalMessageValidatorTest {
   @Test
   public void proposalTargettingDifferentChainHeightFailsValidation() {
     final ConsensusRoundIdentifier futureChainIdentifier =
-        TestHelpers.createFrom(roundIdentifier, 1, 0);
+        ConsensusRoundHelpers.createFrom(roundIdentifier, 1, 0);
     final Proposal proposal =
         messageFactoy.createProposal(futureChainIdentifier, proposedBlock, Optional.empty());
 

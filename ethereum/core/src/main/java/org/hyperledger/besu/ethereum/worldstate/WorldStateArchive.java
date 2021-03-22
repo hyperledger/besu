@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -30,18 +31,18 @@ import org.apache.tuweni.units.bigints.UInt256;
 public interface WorldStateArchive {
   Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
-  Optional<WorldState> get(final Hash rootHash);
+  Optional<WorldState> get(Hash rootHash, Hash blockHash);
 
-  boolean isWorldStateAvailable(final Hash rootHash);
+  boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
-  Optional<MutableWorldState> getMutable(final Hash rootHash);
+  Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);
 
   MutableWorldState getMutable();
 
-  Optional<Bytes> getNodeData(final Hash hash);
+  void setArchiveStateUnSafe(BlockHeader blockHeader);
+
+  Optional<Bytes> getNodeData(Hash hash);
 
   Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
-      final Address accountAddress,
-      final List<UInt256> accountStorageKeys);
+      Hash worldStateRoot, Address accountAddress, List<UInt256> accountStorageKeys);
 }

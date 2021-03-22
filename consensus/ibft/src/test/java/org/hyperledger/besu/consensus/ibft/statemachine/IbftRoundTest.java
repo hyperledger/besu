@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft.statemachine;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.ibft.IbftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,11 +28,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.ibft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.consensus.ibft.RoundTimer;
-import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.RoundTimer;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
@@ -80,14 +80,14 @@ public class IbftRoundTest {
   @Mock private BlockImporter blockImporter;
   @Mock private IbftMessageTransmitter transmitter;
   @Mock private MinedBlockObserver minedBlockObserver;
-  @Mock private IbftBlockCreator blockCreator;
+  @Mock private BftBlockCreator blockCreator;
   @Mock private MessageValidator messageValidator;
   @Mock private RoundTimer roundTimer;
 
   @Captor private ArgumentCaptor<Block> blockCaptor;
 
   private Block proposedBlock;
-  private IbftExtraData proposedExtraData;
+  private BftExtraData proposedExtraData;
 
   private final Signature remoteCommitSeal =
       Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1);
@@ -102,7 +102,7 @@ public class IbftRoundTest {
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
     proposedExtraData =
-        new IbftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
+        new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     headerTestFixture.extraData(proposedExtraData.encode());
     headerTestFixture.number(1);
@@ -214,7 +214,7 @@ public class IbftRoundTest {
             roundTimer);
 
     final Hash commitSealHash =
-        IbftBlockHashing.calculateDataHashForCommittedSeal(
+        BftBlockHashing.calculateDataHashForCommittedSeal(
             proposedBlock.getHeader(), proposedExtraData);
     final Signature localCommitSeal = nodeKey.sign(commitSealHash);
 
@@ -236,8 +236,8 @@ public class IbftRoundTest {
     verify(blockImporter, times(1)).importBlock(any(), capturedBlock.capture(), any());
 
     // Ensure imported block contains both commit seals.
-    final IbftExtraData importedExtraData =
-        IbftExtraData.decode(capturedBlock.getValue().getHeader());
+    final BftExtraData importedExtraData =
+        BftExtraData.decode(capturedBlock.getValue().getHeader());
     assertThat(importedExtraData.getSeals()).containsOnly(remoteCommitSeal, localCommitSeal);
   }
 
@@ -257,7 +257,7 @@ public class IbftRoundTest {
             roundTimer);
 
     final Hash commitSealHash =
-        IbftBlockHashing.calculateDataHashForCommittedSeal(
+        BftBlockHashing.calculateDataHashForCommittedSeal(
             proposedBlock.getHeader(), proposedExtraData);
     final Signature localCommitSeal = nodeKey.sign(commitSealHash);
 
@@ -335,8 +335,7 @@ public class IbftRoundTest {
             blockCaptor.capture(),
             eq(Optional.of(roundChangeArtifacts.getRoundChangeCertificate())));
 
-    final IbftExtraData proposedExtraData =
-        IbftExtraData.decode(blockCaptor.getValue().getHeader());
+    final BftExtraData proposedExtraData = BftExtraData.decode(blockCaptor.getValue().getHeader());
     assertThat(proposedExtraData.getRound()).isEqualTo(roundIdentifier.getRoundNumber());
 
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which

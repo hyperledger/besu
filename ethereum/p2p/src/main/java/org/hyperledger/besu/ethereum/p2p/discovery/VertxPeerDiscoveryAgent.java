@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryControl
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
@@ -48,6 +50,7 @@ import io.vertx.core.datagram.DatagramSocket;
 import io.vertx.core.datagram.DatagramSocketOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   private static final Logger LOG = LogManager.getLogger();
@@ -62,8 +65,17 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final NatService natService,
-      final MetricsSystem metricsSystem) {
-    super(nodeKey, config, peerPermissions, natService, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final StorageProvider storageProvider,
+      final Supplier<List<Bytes>> forkIdSupplier) {
+    super(
+        nodeKey,
+        config,
+        peerPermissions,
+        natService,
+        metricsSystem,
+        storageProvider,
+        forkIdSupplier);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
 

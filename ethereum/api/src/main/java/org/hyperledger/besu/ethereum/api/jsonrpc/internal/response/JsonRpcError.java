@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(value = JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum JsonRpcError {
   // Standard errors
@@ -120,11 +122,18 @@ public enum JsonRpcError {
   UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
   PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
+  DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
   FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
   FIND_ONCHAIN_PRIVACY_GROUP_ERROR(-50100, "Error finding onchain privacy group"),
-  VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
-  DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
+  GOQUORUM_NO_PRIVATE_FOR(
+      -50100, "No privateFor specified in rawTxArgs for GoQuorum raw private transaction."),
+  GOQUORUM_ONLY_STANDARD_MODE_SUPPORTED(
+      -50100,
+      "Invalid private transaction mode defined in rawTxArgs for GoQuorum raw private transaction."),
+  GOQUORUM_LOOKUP_ID_NOT_AVAILABLE(
+      -50100, "No lookup id specified in GoQuorum raw private transaction."),
+  GOQUORUM_V_VALUE(-50100, "Signature v value not 37 or 38 for GoQuorum private transaction."),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
   OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Offchain Privacy group does not exist."),
   ONCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Onchain Privacy group does not exist."),
@@ -133,11 +142,12 @@ public enum JsonRpcError {
       -50100, "Offchain privacy group can't be used with Onchain privacy groups enabled."),
   ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE(
       -50100, "Private transactions to onchain privacy groups must use privacyGroupId"),
-  PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
-      -50100, "Private from does not match enclave public key"),
   PMT_FAILED_INTRINSIC_GAS_EXCEEDS_LIMIT(
       -50100,
       "Private Marker Transaction failed due to intrinsic gas exceeding the limit. Gas limit used from the Private Transaction."),
+  PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
+      -50100, "Private from does not match enclave public key"),
+  VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 
@@ -145,6 +155,7 @@ public enum JsonRpcError {
   ENODE_ID_INVALID(
       -32000,
       "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix."),
+  JSON_RPC_NOT_CANONICAL_ERROR(-32000, "Invalid input"),
 
   // Enclave errors
   NODE_MISSING_PEER_URL(-50200, "NodeMissingPeerUrl"),
@@ -184,10 +195,16 @@ public enum JsonRpcError {
 
   private final int code;
   private final String message;
+  private String data;
 
-  JsonRpcError(final int code, final String message) {
+  JsonRpcError(final int code, final String message, final String data) {
     this.code = code;
     this.message = message;
+    this.data = data;
+  }
+
+  JsonRpcError(final int code, final String message) {
+    this(code, message, null);
   }
 
   @JsonGetter("code")
@@ -200,11 +217,22 @@ public enum JsonRpcError {
     return message;
   }
 
+  @JsonGetter("data")
+  public String getData() {
+    return data;
+  }
+
+  public void setData(final String data) {
+    this.data = data;
+  }
+
   @JsonCreator
   public static JsonRpcError fromJson(
-      @JsonProperty("code") final int code, @JsonProperty("message") final String message) {
+      @JsonProperty("code") final int code,
+      @JsonProperty("message") final String message,
+      @JsonProperty("data") final String data) {
     for (final JsonRpcError error : JsonRpcError.values()) {
-      if (error.code == code && error.message.equals(message)) {
+      if (error.code == code && error.message.equals(message) && error.data.equals(data)) {
         return error;
       }
     }
