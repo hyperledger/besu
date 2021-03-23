@@ -138,8 +138,7 @@ public class FastSyncActions {
             })
         .map(
             peer -> {
-              final long pivotBlockNumber =
-                  peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
+              final long pivotBlockNumber = 12312520;
               if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
                 // Peer's chain isn't long enough, return an empty value so we can try again.
                 LOG.info("Waiting for peers with sufficient chain height");
