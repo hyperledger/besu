@@ -14,16 +14,11 @@ on:
       - main
 
 jobs:
-  build:
+  lint-repo:
     runs-on: ubuntu-latest
     container: hyperledger-tools.jfrog.io/repolinter:0.10.0
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
       - name: Lint Repo
-        run: bundle exec /app/bin/repolinter.js --rulesetUrl https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/master/repo_structure/repolint.json --format markdown > /repolinter-report.md
-      - name: Save repolinter-report file
-        uses: actions/upload-artifact@v2
-        with:
-          name: repolinter-report
-          path: /repolinter-report.md
+        run: bundle exec /app/bin/repolinter.js --rulesetUrl https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/master/repo_structure/repolint.json --format markdown
