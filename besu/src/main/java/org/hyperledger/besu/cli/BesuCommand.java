@@ -2643,11 +2643,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return;
     }
 
-      try {
-        SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
-      } catch (IllegalArgumentException e) {
-        throw new CommandLine.InitializationException(e.getMessage());
-      }
+    try {
+      SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
+    } catch (IllegalArgumentException e) {
+      throw new CommandLine.InitializationException(e.getMessage());
+    }
   }
 
   private Optional<String> getEcCurveFromGenesisFile() {
