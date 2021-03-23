@@ -113,6 +113,31 @@ public class PeerDiscoveryAgentTest {
   }
 
   @Test
+  public void testNodeRecordCreatedUpdatesDiscoveryPeer() {
+    KeyPair keyPair =
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createPrivateKey(
+                        Bytes32.fromHexString(
+                            "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
+    final MockPeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(
+            helper
+                .agentBuilder()
+                .nodeKey(NodeKeyUtils.createFrom(keyPair))
+                .advertisedHost("127.0.0.1")
+                .bindPort(30303));
+    agent.start(30303);
+    final NodeRecord pre = agent.getLocalNode().get().getNodeRecord().get();
+    agent.updateNodeRecord();
+    final NodeRecord post = agent.getLocalNode().get().getNodeRecord().get();
+    assertThat(pre).isNotEqualTo(post);
+  }
+
+  @Test
   public void neighborsPacketFromUnbondedPeerIsDropped() {
     // Start an agent with no bootstrap peers.
     final MockPeerDiscoveryAgent agent = helper.startDiscoveryAgent(Collections.emptyList());
