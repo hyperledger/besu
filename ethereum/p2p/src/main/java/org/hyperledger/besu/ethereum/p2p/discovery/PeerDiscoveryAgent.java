@@ -229,7 +229,9 @@ public abstract class PeerDiscoveryAgent {
                   keyValueStorageTransaction.commit();
                   return nodeRecord;
                 });
-    localNode.get().setNodeRecord(newNodeRecord);
+    localNode
+        .orElseThrow(() -> new IllegalStateException("Local node should be set here"))
+        .setNodeRecord(newNodeRecord);
     return newNodeRecord;
   }
 
