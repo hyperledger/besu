@@ -50,7 +50,6 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -133,10 +132,6 @@ public class BesuCommandTest extends CommandTestAbstract {
               new JsonObject().put("isquorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET =
       (new JsonObject()).put("config", new JsonObject().put("isquorum", true));
-  private static final JsonObject INVALID_GENESIS_EC_CURVE =
-      (new JsonObject()).put("config", new JsonObject().put("ecCurve", "abcd"));
-  private static final JsonObject VALID_GENESIS_EC_CURVE =
-      (new JsonObject()).put("config", new JsonObject().put("ecCurve", "secp256k1"));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
@@ -4194,28 +4189,6 @@ public class BesuCommandTest extends CommandTestAbstract {
                 + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
     parseCommand("--static-nodes-file", staticNodeTempFile.toString());
     assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void invalidEcCurveFailsWithErrorMessage() throws IOException {
-    SignatureAlgorithmFactory.resetInstance();
-    final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_EC_CURVE);
-
-    parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
-        .contains(
-            "Invalid genesis file configuration. "
-                + "Elliptic curve (ecCurve) abcd is not in the list of valid elliptic curves [secp256k1]");
-  }
-
-  @Test
-  public void validEcCurveSucceeds() throws IOException {
-    SignatureAlgorithmFactory.resetInstance();
-    final Path genesisFile = createFakeGenesisFile(VALID_GENESIS_EC_CURVE);
-
-    parseCommand("--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }
