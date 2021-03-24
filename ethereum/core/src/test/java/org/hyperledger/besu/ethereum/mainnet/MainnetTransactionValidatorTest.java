@@ -445,6 +445,21 @@ public class MainnetTransactionValidatorTest {
     assertThat(validator.validate(transaction, Optional.empty()).isValid()).isTrue();
   }
 
+  @Test
+  public void shouldRejectUnprotectedTransactions() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), true, false);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasPrice(Wei.ZERO)
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    final ValidationResult<TransactionInvalidReason> result =
+        validator.validate(transaction, Optional.empty());
+    assertThat(result.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.UNPROTECTED_TRANSACTION);
+  }
+
   private Account accountWithNonce(final long nonce) {
     return account(basicTransaction.getUpfrontCost(), nonce);
   }
