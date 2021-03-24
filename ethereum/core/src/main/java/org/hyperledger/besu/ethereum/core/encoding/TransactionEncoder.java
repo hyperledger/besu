@@ -163,23 +163,43 @@ public class TransactionEncoder {
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
     out.startList();
+    out.writeLongScalar(
+        transaction
+            .getChainId()
+            .orElseThrow(
+                () -> new IllegalArgumentException("chainId is required for EIP-1559 transactions"))
+            .longValue());
     out.writeLongScalar(transaction.getNonce());
-    out.writeNull();
-    out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-    out.writeUInt256Scalar(transaction.getValue());
-    out.writeBytes(transaction.getPayload());
     out.writeUInt256Scalar(
         transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
     out.writeUInt256Scalar(
         transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+    out.writeLongScalar(transaction.getGasLimit());
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeUInt256Scalar(transaction.getValue());
+    out.writeBytes(transaction.getPayload());
+    if (transaction.getAccessList().isEmpty()) {
+      out.writeEmptyList();
+    } else {
+      out.writeList(
+          transaction.getAccessList().get(),
+          (accessListEntry, accessListEntryRLPOutput) -> {
+            accessListEntryRLPOutput.startList();
+            out.writeBytes(accessListEntry.getAddress());
+            out.writeList(
+                accessListEntry.getStorageKeys(),
+                (storageKeyBytes, storageKeyBytesRLPOutput) ->
+                    storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
+            accessListEntryRLPOutput.endList();
+          });
+    }
     writeSignatureAndRecoveryId(transaction, out);
     out.endList();
   }
 
   private static void writeSignatureAndRecoveryId(
       final Transaction transaction, final RLPOutput out) {
-    out.writeBigIntegerScalar(transaction.getV());
+    out.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, out);
   }
 

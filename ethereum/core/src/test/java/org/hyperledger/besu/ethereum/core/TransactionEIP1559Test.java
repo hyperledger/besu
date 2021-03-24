@@ -14,20 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
-import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.util.List;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -40,76 +35,49 @@ public class TransactionEIP1559Test {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  private final RLPInput legacyRLPInput =
-      RLP.input(
-          Bytes.fromHexString(
-              "0xf901fc8032830138808080b901ae60056013565b6101918061001d6000396000f35b3360008190555056006001600060e060020a6000350480630a874df61461003a57806341c0e1b514610058578063a02b161e14610066578063dbbdf0831461007757005b610045600435610149565b80600160a060020a031660005260206000f35b610060610161565b60006000f35b6100716004356100d4565b60006000f35b61008560043560243561008b565b60006000f35b600054600160a060020a031632600160a060020a031614156100ac576100b1565b6100d0565b8060018360005260205260406000208190555081600060005260206000a15b5050565b600054600160a060020a031633600160a060020a031614158015610118575033600160a060020a0316600182600052602052604060002054600160a060020a031614155b61012157610126565b610146565b600060018260005260205260406000208190555080600060005260206000a15b50565b60006001826000526020526040600020549050919050565b600054600160a060020a031633600160a060020a0316146101815761018f565b600054600160a060020a0316ff5b561ca0c5689ed1ad124753d54576dfb4b571465a41900a1dff4058d8adf16f752013d0a01221cbd70ec28c94a3b55ec771bcbc70778d6ee0b51ca7ea9514594c861b1884"));
-  private final Wei expectedGasPremium = Wei.of(527);
-  private final Wei expectedFeeCap = Wei.of(369);
-
   @After
   public void reset() {
     ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 
   @Test
-  public void givenLegacyTransaction_assertThatRlpEncodingWorks() {
-    final Transaction legacyTransaction = Transaction.readFrom(legacyRLPInput);
-    assertThat(legacyTransaction.getType()).isEqualTo(TransactionType.FRONTIER);
-  }
-
-  @Test
-  public void givenEIP1559Transaction_assertThatRlpDecodingWorks() {
-    ExperimentalEIPs.eip1559Enabled = true;
-    final Transaction legacyTransaction = Transaction.readFrom(legacyRLPInput);
-    set(legacyTransaction, "transactionType", TransactionType.EIP1559);
-    set(legacyTransaction, "gasPrice", null);
-    set(legacyTransaction, "gasPremium", expectedGasPremium);
-    set(legacyTransaction, "feeCap", expectedFeeCap);
-    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    legacyTransaction.writeTo(rlpOutput);
-    final Transaction eip1559Transaction =
-        Transaction.readFrom(new BytesValueRLPInput(rlpOutput.encoded(), false));
-    assertThat(legacyTransaction.getType()).isEqualTo(TransactionType.EIP1559);
-    assertThat(eip1559Transaction.getGasPremium()).hasValue(expectedGasPremium);
-    assertThat(eip1559Transaction.getFeeCap()).hasValue(expectedFeeCap);
-    assertThat(eip1559Transaction.getGasPrice()).isEqualByComparingTo(Wei.ZERO);
-  }
-
-  @Test
   public void buildEip1559Transaction() {
+    final List<AccessListEntry> accessListEntries =
+        List.of(
+            new AccessListEntry(
+                Address.fromHexString("0x000000000000000000000000000000000000aaaa"),
+                List.of(Bytes32.ZERO)));
     final Transaction tx =
         Transaction.builder()
-            .chainId(BigInteger.valueOf(1559))
-            .nonce(1)
-            .value(Wei.fromEth(3))
-            .gasLimit(21000)
-            .gasPremium(Wei.of(1000000000))
+            .chainId(new BigInteger("133519467574834", 10))
+            .nonce(0)
+            .value(Wei.ZERO)
+            .gasLimit(30000)
+            .gasPremium(Wei.of(2))
             .payload(Bytes.EMPTY.trimLeadingZeros())
-            .feeCap(Wei.of(2000000000))
+            .feeCap(Wei.of(new BigInteger("5000000000", 10)))
             .gasPrice(null)
-            .to(Address.fromHexString("0xb8c3bfFb71F76BeE2B2f81bdBC53Ad4C43e3f58E"))
+            .to(Address.fromHexString("0x000000000000000000000000000000000000aaaa"))
+            .accessList(accessListEntries)
             .guessType()
             .signAndBuild(
                 keyPair("0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     tx.writeTo(out);
     System.out.println(out.encoded().toHexString());
+
+    // final String raw =
+    // "b8a902f8a686796f6c6f7632800285012a05f20082753094000000000000000000000000000000000000aaaa8080f838f794000000000000000000000000000000000000aaaae1a0000000000000000000000000000000000000000000000000000000000000000001a00c1d69648e348fe26155b45de45004f0e4195f6352d8f0935bc93e98a3e2a862a060064e5b9765c0ac74223b0cf49635c59ae0faf82044fd17bcc68a549ade6f95";
+    final String raw = out.encoded().toHexString();
+    final Transaction decoded = Transaction.readFrom(RLP.input(Bytes.fromHexString(raw)));
+    System.out.println(decoded);
+    System.out.println(decoded.getAccessList().orElseThrow().get(0).getAddress().toHexString());
+    System.out.println(decoded.getAccessList().orElseThrow().get(0).getStorageKeys());
   }
 
   private static KeyPair keyPair(final String privateKey) {
     final SignatureAlgorithm signatureAlgorithm = SIGNATURE_ALGORITHM.get();
     return signatureAlgorithm.createKeyPair(
         signatureAlgorithm.createPrivateKey(Bytes32.fromHexString(privateKey)));
-  }
-
-  private void set(final Object object, final String fieldName, final Object fieldValue) {
-    try {
-      final Field field = object.getClass().getDeclaredField(fieldName);
-      field.setAccessible(true);
-      field.set(object, fieldValue);
-    } catch (Exception e) {
-      System.err.println(e.getMessage());
-    }
   }
 }
