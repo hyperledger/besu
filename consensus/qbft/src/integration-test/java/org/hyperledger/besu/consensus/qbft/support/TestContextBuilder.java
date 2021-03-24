@@ -298,7 +298,8 @@ public class TestContextBuilder {
         BftProtocolSchedule.create(
             genesisConfigOptions,
             QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-            BFT_EXTRA_DATA_ENCODER);
+            BFT_EXTRA_DATA_ENCODER,
+            true);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController
