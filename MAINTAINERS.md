@@ -28,14 +28,14 @@
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Danno Ferrin     | shemnon          | shemnon          |
-| Tim Beiko        | timbeiko         | timbeiko         |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 
 ## Emeritus Maintainers
 
-| Name         | Github  | LFID    |
-|--------------|---------|---------|
-| Edward Evans | EdJoJob | EdJoJob |
+| Name             | Github           | LFID             |
+|------------------|------------------|------------------|
+| Edward Evans     | EdJoJob          | EdJoJob          |
+| Tim Beiko        | timbeiko         | timbeiko         |
 
 ## Becoming a Maintainer
 
