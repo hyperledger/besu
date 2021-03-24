@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.ibft.validation;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -25,7 +24,6 @@ import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 
@@ -42,7 +40,7 @@ public class RoundChangeCertificateValidator {
   private final Collection<Address> validators;
   private final MessageValidatorForHeightFactory messageValidatorFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
-  private final ProtocolContext protocolContext;
+  private final BftBlockInterface bftBlockInterface;
   private final long quorum;
   private final long chainHeight;
 
@@ -51,13 +49,13 @@ public class RoundChangeCertificateValidator {
       final MessageValidatorForHeightFactory messageValidatorFactory,
       final long chainHeight,
       final BftExtraDataCodec bftExtraDataCodec,
-      final ProtocolContext protocolContext) {
+      final BftBlockInterface bftBlockInterface) {
     this.validators = validators;
     this.messageValidatorFactory = messageValidatorFactory;
     this.quorum = BftHelpers.calculateRequiredValidatorQuorum(validators.size());
     this.chainHeight = chainHeight;
     this.bftExtraDataCodec = bftExtraDataCodec;
-    this.protocolContext = protocolContext;
+    this.bftBlockInterface = bftBlockInterface;
   }
 
   public boolean validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
@@ -128,8 +126,6 @@ public class RoundChangeCertificateValidator {
 
     // Need to check that if we substitute the LatestPrepareCert round number into the supplied
     // block that we get the SAME hash as PreparedCert.
-    final BftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
     final Block currentBlockWithOldRound =
         bftBlockInterface.replaceRoundInBlock(
             proposedBlock,
