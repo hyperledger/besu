@@ -261,6 +261,11 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
       updatedAccount.getUpdatedStorage().clear();
 
+      if (pendingStorageUpdates.isEmpty()) {
+        storageToUpdate.remove(updatedAddress);
+        System.out.println("TEST-FIX Remove updated address");
+      }
+
       // TODO maybe add address preimage?
     }
   }

@@ -130,6 +130,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
         updater.getStorageToUpdate().entrySet()) {
       if (storageAccountUpdate.getValue().isEmpty()) {
+        System.out.println("TEST-FIX Found empty storage account update updated address");
         continue;
       }
       final Address updatedAddress = storageAccountUpdate.getKey();
