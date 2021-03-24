@@ -49,7 +49,7 @@ public class TransactionEIP1559Test {
                 List.of(Bytes32.ZERO)));
     final Transaction tx =
         Transaction.builder()
-            .chainId(new BigInteger("133519467574834", 10))
+            .chainId(new BigInteger("1559", 10))
             .nonce(0)
             .value(Wei.ZERO)
             .gasLimit(30000)
@@ -65,7 +65,7 @@ public class TransactionEIP1559Test {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     tx.writeTo(out);
     System.out.println(out.encoded().toHexString());
-
+    System.out.println(tx.getUpfrontCost());
     // final String raw =
     // "b8a902f8a686796f6c6f7632800285012a05f20082753094000000000000000000000000000000000000aaaa8080f838f794000000000000000000000000000000000000aaaae1a0000000000000000000000000000000000000000000000000000000000000000001a00c1d69648e348fe26155b45de45004f0e4195f6352d8f0935bc93e98a3e2a862a060064e5b9765c0ac74223b0cf49635c59ae0faf82044fd17bcc68a549ade6f95";
     final String raw = out.encoded().toHexString();

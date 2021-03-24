@@ -32,9 +32,12 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class EthSendRawTransaction implements JsonRpcMethod {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final boolean sendEmptyHashOnInvalidBlock;
 
@@ -70,6 +73,8 @@ public class EthSendRawTransaction implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
+
+    LOG.trace("Received local transaction {}", transaction);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         transactionPool.get().addLocalTransaction(transaction);
