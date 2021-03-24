@@ -70,7 +70,7 @@ public class BftBlockInterface implements BlockInterface {
     return bftExtraData.getValidators();
   }
 
-  public static Block replaceRoundInBlock(
+  public Block replaceRoundInBlock(
       final Block block,
       final int round,
       final BlockHeaderFunctions blockHeaderFunctions,
