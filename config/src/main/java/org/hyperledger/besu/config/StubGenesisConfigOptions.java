@@ -54,6 +54,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
   private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
+  private Optional<String> ecCurve = Optional.empty();
 
   @Override
   public String getConsensusEngine() {
@@ -323,6 +324,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public Optional<String> getEcCurve() {
+    return ecCurve;
+  }
+
+  @Override
   public List<Long> getForks() {
     return Collections.emptyList();
   }
@@ -439,6 +445,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions stackSizeLimit(final int stackSizeLimit) {
     this.stackSizeLimit = OptionalInt.of(stackSizeLimit);
+    return this;
+  }
+
+  public StubGenesisConfigOptions ecCurve(final Optional<String> ecCurve) {
+    this.ecCurve = ecCurve;
     return this;
   }
 }
