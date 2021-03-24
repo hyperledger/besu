@@ -117,7 +117,8 @@ public class MainnetTransactionValidator {
     }
 
     if (chainId.isPresent() && transaction.getChainId().isEmpty() && requireTxReplayProtection) {
-      return ValidationResult.invalid(TransactionInvalidReason.UNPROTECTED_TRANSACTION);
+      return ValidationResult.invalid(
+          TransactionInvalidReason.TRANSACTION_WITHOUT_REPLAY_PROTECTION);
     }
 
     if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {

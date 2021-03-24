@@ -446,7 +446,7 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectUnprotectedTransactionsWithChainIdSet() {
+  public void shouldRejectTransationsWithoutReplayProtectionWithChainIdSet() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, false, Optional.of(BigInteger.ONE), true, true);
@@ -458,7 +458,7 @@ public class MainnetTransactionValidatorTest {
     final ValidationResult<TransactionInvalidReason> result =
         validator.validate(transaction, Optional.empty());
     assertThat(result.getInvalidReason())
-        .isEqualTo(TransactionInvalidReason.UNPROTECTED_TRANSACTION);
+        .isEqualTo(TransactionInvalidReason.TRANSACTION_WITHOUT_REPLAY_PROTECTION);
   }
 
   @Test
@@ -479,7 +479,7 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldAllowUnprotectedTransactionsWhenChainIdNotSet() {
+  public void shouldAllowTransactionsWithoutReplayProtectionWhenChainIdNotSet() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), true, true);
     final Transaction transaction =
@@ -495,7 +495,8 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldAllowUnprotectedTransactionsWhenChainIdNotSetAndReplayProtectionNotSet() {
+  public void
+      shouldAllowTransactionsWithoutReplayProtectionWhenChainIdNotSetAndReplayProtectionNotSet() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), true, false);
     final Transaction transaction =
@@ -511,7 +512,8 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldAllowUnprotectedTransactionsWhenChainIdSetAndReplayProtectionNotSet() {
+  public void
+      shouldAllowTransactionsWithoutReplayProtectionWhenChainIdSetAndReplayProtectionNotSet() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, false, Optional.of(BigInteger.ONE), true, false);

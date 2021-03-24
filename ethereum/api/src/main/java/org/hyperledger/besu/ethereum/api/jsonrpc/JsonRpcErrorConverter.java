@@ -55,8 +55,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.ETH_SEND_TX_ALREADY_KNOWN;
       case TRANSACTION_REPLACEMENT_UNDERPRICED:
         return JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED;
-      case UNPROTECTED_TRANSACTION:
-        return JsonRpcError.ETH_FORBIDDEN_UNPROTECTED_TRANSACTION;
+      case TRANSACTION_WITHOUT_REPLAY_PROTECTION:
+        return JsonRpcError.TRANSACTION_WITHOUT_REPLAY_PROTECTION;
       case GAS_PRICE_MUST_BE_ZERO:
         return JsonRpcError.GAS_PRICE_MUST_BE_ZERO;
       default:

@@ -17,6 +17,7 @@
 
 ### Additions and Improvements
 * Increase node diversity when downloading blocks [\#2033](https://github.com/hyperledger/besu/pull/2033)
+* Allowing forbidding transactions without replay protection (without a chain ID) [\#1975](https://github.com/hyperledger/besu/issues/1975)
 
 ### Bug Fixes
 * Ethereum Node Records are now dynamically recalculated when we pass network upgrade blocks. This allows for better peering through transitions without needing to restart the node. [\#1998](https://github.com/hyperledger/besu/pull/1998)
@@ -81,7 +82,6 @@ This release contains the activation blocks for Berlin across all supported test
 * Distributions and maven artifacts have been moved off of bintray [\#1886](https://github.com/hyperledger/besu/pull/1886)
 * admin_peers json RPC response now includes the remote nodes enode URL
 * add support for keccak mining and a ecip1049_dev network [\#1882](https://github.com/hyperledger/besu/pull/1882)
-* Allowing forbidding unprotected transactions (without a chain ID) [\#1975](https://github.com/hyperledger/besu/issues/1975)
 
 ### Bug Fixes
 * Fixed incorrect `groupId` in published maven pom files.

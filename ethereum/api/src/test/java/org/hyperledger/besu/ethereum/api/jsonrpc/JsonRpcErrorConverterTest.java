@@ -75,8 +75,8 @@ public class JsonRpcErrorConverterTest {
             JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED
           },
           {
-            TransactionInvalidReason.UNPROTECTED_TRANSACTION,
-            JsonRpcError.ETH_FORBIDDEN_UNPROTECTED_TRANSACTION
+            TransactionInvalidReason.TRANSACTION_WITHOUT_REPLAY_PROTECTION,
+            JsonRpcError.TRANSACTION_WITHOUT_REPLAY_PROTECTION
           },
           {TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO, JsonRpcError.GAS_PRICE_MUST_BE_ZERO}
         });
