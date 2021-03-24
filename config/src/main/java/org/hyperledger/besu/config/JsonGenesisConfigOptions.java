@@ -42,8 +42,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String QBFT_CONFIG_KEY = "qbft";
   private static final String CLIQUE_CONFIG_KEY = "clique";
-
+  private static final String EC_CURVE_CONFIG_KEY = "eccurve";
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
+
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   private final TransitionsConfigOptions transitions;
@@ -344,6 +345,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return isEthHash()
         ? PowAlgorithm.ETHASH
         : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
+  }
+
+  @Override
+  public Optional<String> getEcCurve() {
+    return JsonUtil.getString(configRoot, EC_CURVE_CONFIG_KEY);
   }
 
   @Override
