@@ -1686,7 +1686,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .orElse(GasLimitCalculator.constant()))
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
-        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject());
+        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject())
+        .isUnprotectedTransactionsAllowed(unprotectedTransactionsAllowed);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2221,7 +2222,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(priceBump))
         .txFeeCap(txFeeCap)
-        .isUnprotectedTransactionsAllowed(unprotectedTransactionsAllowed)
         .build();
   }
 

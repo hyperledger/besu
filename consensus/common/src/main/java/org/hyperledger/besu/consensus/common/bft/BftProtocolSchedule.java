@@ -40,6 +40,7 @@ public class BftProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
+      final boolean allowUnprotectedTransactions,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec) {
 
@@ -57,19 +58,22 @@ public class BftProtocolSchedule {
                         bftExtraDataCodec)),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            allowUnprotectedTransactions)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
+      final boolean allowUnprotectedTransactions,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
       final BftExtraDataCodec bftExtraDataCodec) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
+        allowUnprotectedTransactions,
         blockHeaderRuleset,
         bftExtraDataCodec);
   }
@@ -77,8 +81,15 @@ public class BftProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final Function<Integer, BlockHeaderValidator.Builder> blockHeaderRuleset,
-      final BftExtraDataCodec bftExtraDataCodec) {
-    return create(config, PrivacyParameters.DEFAULT, false, blockHeaderRuleset, bftExtraDataCodec);
+      final BftExtraDataCodec bftExtraDataCodec,
+      final boolean allowUnprotectedTransactions) {
+    return create(
+        config,
+        PrivacyParameters.DEFAULT,
+        allowUnprotectedTransactions,
+        false,
+        blockHeaderRuleset,
+        bftExtraDataCodec);
   }
 
   private static ProtocolSpecBuilder applyBftChanges(

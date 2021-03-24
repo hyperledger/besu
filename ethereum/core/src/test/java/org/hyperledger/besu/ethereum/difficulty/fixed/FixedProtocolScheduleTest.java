@@ -29,7 +29,8 @@ public class FixedProtocolScheduleTest {
   public void reportedDifficultyForAllBlocksIsAFixedValue() {
 
     final ProtocolSchedule schedule =
-        FixedDifficultyProtocolSchedule.create(GenesisConfigFile.development().getConfigOptions());
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfigFile.development().getConfigOptions(), true);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
@@ -61,7 +62,8 @@ public class FixedProtocolScheduleTest {
   public void reportedDifficultyForAllBlocksIsAFixedValueKeccak() {
 
     final ProtocolSchedule schedule =
-        FixedDifficultyProtocolSchedule.create(GenesisConfigFile.ecip1049dev().getConfigOptions());
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfigFile.ecip1049dev().getConfigOptions(), true);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 

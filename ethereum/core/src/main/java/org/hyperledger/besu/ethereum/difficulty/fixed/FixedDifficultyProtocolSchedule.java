@@ -26,7 +26,8 @@ public class FixedDifficultyProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final boolean allowUnprotectedTransactions) {
     return new ProtocolScheduleBuilder(
             config,
             ProtocolSpecAdapters.create(
@@ -35,16 +36,25 @@ public class FixedDifficultyProtocolSchedule {
                     builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            allowUnprotectedTransactions)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final boolean allowUnprotectedTransactions) {
+    return create(
+        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, allowUnprotectedTransactions);
+  }
+
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config, final boolean allowUnprotectedTransactions) {
+    return create(config, PrivacyParameters.DEFAULT, false, allowUnprotectedTransactions);
   }
 
   public static ProtocolSchedule create(final GenesisConfigOptions config) {
-    return create(config, PrivacyParameters.DEFAULT, false);
+    return create(config, true);
   }
 }

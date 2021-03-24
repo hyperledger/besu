@@ -84,7 +84,8 @@ public class BftBlockCreatorTest {
         IbftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
-            false);
+            false,
+            true);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,

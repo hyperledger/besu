@@ -229,6 +229,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
+        allowUnprotectedTransactions,
         IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
         bftExtraDataCodec);
   }

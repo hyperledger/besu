@@ -26,6 +26,7 @@ public class MainnetProtocolSpecFactory {
   private final OptionalInt evmStackSize;
   private final boolean isRevertReasonEnabled;
   private final boolean quorumCompatibilityMode;
+  private final boolean acceptUnprotectedTransactions;
   private final OptionalLong ecip1017EraRounds;
 
   public MainnetProtocolSpecFactory(
@@ -34,12 +35,14 @@ public class MainnetProtocolSpecFactory {
       final OptionalInt evmStackSize,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions,
       final OptionalLong ecip1017EraRounds) {
     this.chainId = chainId;
     this.contractSizeLimit = contractSizeLimit;
     this.evmStackSize = evmStackSize;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
+    this.acceptUnprotectedTransactions = acceptUnprotectedTransactions;
     this.ecip1017EraRounds = ecip1017EraRounds;
   }
 
@@ -70,37 +73,71 @@ public class MainnetProtocolSpecFactory {
 
   public ProtocolSpecBuilder spuriousDragonDefinition() {
     return MainnetProtocolSpecs.spuriousDragonDefinition(
-        chainId, contractSizeLimit, evmStackSize, quorumCompatibilityMode);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public ProtocolSpecBuilder byzantiumDefinition() {
     return MainnetProtocolSpecs.byzantiumDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public ProtocolSpecBuilder constantinopleDefinition() {
     return MainnetProtocolSpecs.constantinopleDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public ProtocolSpecBuilder petersburgDefinition() {
     return MainnetProtocolSpecs.petersburgDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public ProtocolSpecBuilder istanbulDefinition() {
     return MainnetProtocolSpecs.istanbulDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public ProtocolSpecBuilder muirGlacierDefinition() {
     return MainnetProtocolSpecs.muirGlacierDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public ProtocolSpecBuilder berlinDefinition() {
     return MainnetProtocolSpecs.berlinDefinition(
-        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +155,12 @@ public class MainnetProtocolSpecFactory {
 
   public ProtocolSpecBuilder defuseDifficultyBombDefinition() {
     return ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-        chainId, contractSizeLimit, evmStackSize, ecip1017EraRounds, quorumCompatibilityMode);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        ecip1017EraRounds,
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public ProtocolSpecBuilder atlantisDefinition() {

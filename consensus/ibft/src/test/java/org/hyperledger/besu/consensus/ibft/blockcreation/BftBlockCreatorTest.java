@@ -80,7 +80,8 @@ public class BftBlockCreatorTest {
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
             IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-            bftExtraDataEncoder);
+            bftExtraDataEncoder,
+            true);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,

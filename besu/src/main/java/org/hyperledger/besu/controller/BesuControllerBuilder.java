@@ -106,6 +106,7 @@ public abstract class BesuControllerBuilder {
   private long reorgLoggingThreshold;
   private DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
+  protected boolean allowUnprotectedTransactions;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -172,6 +173,12 @@ public abstract class BesuControllerBuilder {
 
   public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
     this.isRevertReasonEnabled = isRevertReasonEnabled;
+    return this;
+  }
+
+  public BesuControllerBuilder isUnprotectedTransactionsAllowed(
+      final boolean allowUnprotectedTransactions) {
+    this.allowUnprotectedTransactions = allowUnprotectedTransactions;
     return this;
   }
 

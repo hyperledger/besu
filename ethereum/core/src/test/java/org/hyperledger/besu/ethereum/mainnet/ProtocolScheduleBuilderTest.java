@@ -55,6 +55,7 @@ public class ProtocolScheduleBuilderTest {
             ProtocolSpecAdapters.create(2, modifier),
             new PrivacyParameters(),
             false,
+            false,
             false);
 
     final MutableProtocolSchedule schedule =
@@ -83,6 +84,7 @@ public class ProtocolScheduleBuilderTest {
             ProtocolSpecAdapters.create(2, modifier),
             new PrivacyParameters(),
             false,
+            false,
             false);
 
     final MutableProtocolSchedule schedule =
@@ -110,6 +112,7 @@ public class ProtocolScheduleBuilderTest {
             BigInteger.ONE,
             ProtocolSpecAdapters.create(5, modifier),
             new PrivacyParameters(),
+            false,
             false,
             false);
 

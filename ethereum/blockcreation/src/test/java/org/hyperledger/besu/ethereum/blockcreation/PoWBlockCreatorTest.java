@@ -75,7 +75,8 @@ public class PoWBlockCreatorTest {
                         ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum())
+                        genesisConfigOptions.isQuorum(),
+                        true)
                     .createProtocolSchedule())
             .build();
 
@@ -134,7 +135,8 @@ public class PoWBlockCreatorTest {
                         ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum())
+                        genesisConfigOptions.isQuorum(),
+                        true)
                     .createProtocolSchedule())
             .build();
 
@@ -188,7 +190,8 @@ public class PoWBlockCreatorTest {
                         ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum())
+                        genesisConfigOptions.isQuorum(),
+                        true)
                     .createProtocolSchedule())
             .build();
 
@@ -258,7 +261,8 @@ public class PoWBlockCreatorTest {
                         ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum())
+                        genesisConfigOptions.isQuorum(),
+                        true)
                     .createProtocolSchedule())
             .build();
 

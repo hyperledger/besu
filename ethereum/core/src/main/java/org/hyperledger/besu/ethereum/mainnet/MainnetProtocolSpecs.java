@@ -106,7 +106,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, false, Optional.empty(), goQuorumMode))
+                    gasCalculator, false, Optional.empty(), goQuorumMode, true))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -209,7 +209,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, Optional.empty(), quorumCompatibilityMode))
+                    gasCalculator, true, Optional.empty(), quorumCompatibilityMode, true))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -263,7 +263,8 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
@@ -290,7 +291,11 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode))
+                    gasCalculator,
+                    true,
+                    chainId,
+                    quorumCompatibilityMode,
+                    acceptUnprotectedTransactions))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -314,10 +319,15 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return spuriousDragonDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, quorumCompatibilityMode)
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            quorumCompatibilityMode,
+            acceptUnprotectedTransactions)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -351,13 +361,15 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     return byzantiumDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode)
+            quorumCompatibilityMode,
+            acceptUnprotectedTransactions)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
@@ -370,13 +382,15 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     return constantinopleDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode)
+            quorumCompatibilityMode,
+            acceptUnprotectedTransactions)
         .gasCalculator(PetersburgGasCalculator::new)
         .name("Petersburg");
   }
@@ -386,7 +400,8 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return petersburgDefinition(
@@ -394,7 +409,8 @@ public abstract class MainnetProtocolSpecs {
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode)
+            quorumCompatibilityMode,
+            acceptUnprotectedTransactions)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
@@ -417,13 +433,15 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     return istanbulDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode)
+            quorumCompatibilityMode,
+            acceptUnprotectedTransactions)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
   }
@@ -433,13 +451,15 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode)
+            quorumCompatibilityMode,
+            acceptUnprotectedTransactions)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             gasCalculator ->
@@ -448,7 +468,8 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
-                    quorumCompatibilityMode))
+                    quorumCompatibilityMode,
+                    acceptUnprotectedTransactions))
         .transactionReceiptFactory(
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
@@ -464,7 +485,8 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
@@ -473,7 +495,8 @@ public abstract class MainnetProtocolSpecs {
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode)
+            quorumCompatibilityMode,
+            acceptUnprotectedTransactions)
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
@@ -482,7 +505,8 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-                    genesisConfigOptions.isQuorum()))
+                    genesisConfigOptions.isQuorum(),
+                    acceptUnprotectedTransactions))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,

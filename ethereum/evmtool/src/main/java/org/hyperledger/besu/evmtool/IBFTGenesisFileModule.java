@@ -39,7 +39,8 @@ class IBFTGenesisFileModule extends GenesisFileModule {
     return BftProtocolSchedule.create(
         configOptions,
         IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-        bftExtraDataEncoder);
+        bftExtraDataEncoder,
+        true);
   }
 
   @Override

@@ -70,6 +70,7 @@ public class ProtocolScheduleBuilder {
   private final boolean isRevertReasonEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
   private final boolean quorumCompatibilityMode;
+  private final boolean acceptUnprotectedTransactions;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -77,14 +78,16 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode);
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   private Optional<BuilderMapEntry> create(
@@ -102,14 +105,16 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     this(
         config,
         Optional.empty(),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode);
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   private ProtocolScheduleBuilder(
@@ -118,13 +123,15 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
+    this.acceptUnprotectedTransactions = acceptUnprotectedTransactions;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -139,6 +146,7 @@ public class ProtocolScheduleBuilder {
             config.getEvmStackSize(),
             isRevertReasonEnabled,
             quorumCompatibilityMode,
+            acceptUnprotectedTransactions,
             config.getEcip1017EraRounds());
 
     validateForkOrdering();
@@ -260,7 +268,8 @@ public class ProtocolScheduleBuilder {
                   config.getEvmStackSize(),
                   isRevertReasonEnabled,
                   config,
-                  quorumCompatibilityMode),
+                  quorumCompatibilityMode,
+                  acceptUnprotectedTransactions),
               protocolSpecAdapters.getModifierForBlock(eip1559Block)));
     }
 

@@ -34,15 +34,18 @@ public class MainnetProtocolSchedule {
    *     starting points
    * @param privacyParameters the parameters set for private transactions
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
+   * @param allowUnprotectedTransactions whether unprotected (no EIP-155 chain Id present) are
+   *     allowed
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled) {
+      final boolean isRevertReasonEnabled,
+      final boolean allowUnprotectedTransactions) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
-          config, privacyParameters, isRevertReasonEnabled);
+          config, privacyParameters, isRevertReasonEnabled, allowUnprotectedTransactions);
     }
     return new ProtocolScheduleBuilder(
             config,
@@ -50,7 +53,8 @@ public class MainnetProtocolSchedule {
             ProtocolSpecAdapters.create(0, Function.identity()),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum())
+            config.isQuorum(),
+            allowUnprotectedTransactions)
         .createProtocolSchedule();
   }
 
@@ -60,11 +64,30 @@ public class MainnetProtocolSchedule {
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
+   * @param allowUnprotectedTransactions whether unprotected (no EIP-155 chain Id present) are
+   *     allowed
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config, final boolean isRevertReasonEnabled) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled);
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final boolean allowUnprotectedTransactions) {
+    return fromConfig(
+        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, allowUnprotectedTransactions);
+  }
+
+  /**
+   * Create a Mainnet protocol schedule from a config object
+   *
+   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   *     starting points
+   * @param allowUnprotectedTransactions whether unprotected (no EIP-155 chain Id present) are
+   *     allowed
+   * @return A configured mainnet protocol schedule
+   */
+  public static ProtocolSchedule fromConfig(
+      final GenesisConfigOptions config, final boolean allowUnprotectedTransactions) {
+    return fromConfig(config, PrivacyParameters.DEFAULT, false, allowUnprotectedTransactions);
   }
 
   /**
@@ -75,6 +98,6 @@ public class MainnetProtocolSchedule {
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(final GenesisConfigOptions config) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, false);
+    return fromConfig(config, true);
   }
 }

@@ -48,18 +48,21 @@ public class MainnetTransactionValidator {
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
   private final boolean goQuorumCompatibilityMode;
+  private final boolean acceptUnprotectedTransactions;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
-      final boolean goQuorumCompatibilityMode) {
+      final boolean goQuorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     this(
         gasCalculator,
         checkSignatureMalleability,
         chainId,
         Set.of(TransactionType.FRONTIER),
-        goQuorumCompatibilityMode);
+        goQuorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public MainnetTransactionValidator(
@@ -67,14 +70,16 @@ public class MainnetTransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
-      final boolean quorumCompatibilityMode) {
+      final boolean quorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     this(
         gasCalculator,
         Optional.of(TransactionPriceCalculator.frontier()),
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        quorumCompatibilityMode);
+        quorumCompatibilityMode,
+        acceptUnprotectedTransactions);
   }
 
   public MainnetTransactionValidator(
@@ -83,13 +88,15 @@ public class MainnetTransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
-      final boolean goQuorumCompatibilityMode) {
+      final boolean goQuorumCompatibilityMode,
+      final boolean acceptUnprotectedTransactions) {
     this.gasCalculator = gasCalculator;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
     this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
+    this.acceptUnprotectedTransactions = acceptUnprotectedTransactions;
   }
 
   /**
@@ -107,6 +114,10 @@ public class MainnetTransactionValidator {
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
+    }
+
+    if (transaction.getChainId().isEmpty() && !acceptUnprotectedTransactions) {
+      return ValidationResult.invalid(TransactionInvalidReason.UNPROTECTED_TRANSACTION);
     }
 
     if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {

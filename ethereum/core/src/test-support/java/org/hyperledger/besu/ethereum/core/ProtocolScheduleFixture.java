@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ProtocolScheduleFixture {
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
-          getMainnetConfigOptions(), PrivacyParameters.DEFAULT, false);
+          getMainnetConfigOptions(), PrivacyParameters.DEFAULT, true, false);
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     // this method avoids reading all the alloc accounts when all we want is the "config" section
