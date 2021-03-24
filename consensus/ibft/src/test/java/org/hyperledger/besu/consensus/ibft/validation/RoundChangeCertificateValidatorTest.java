@@ -21,6 +21,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
@@ -33,10 +35,13 @@ import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Collections;
 import java.util.List;
@@ -58,6 +63,7 @@ public class RoundChangeCertificateValidatorTest {
   private final ConsensusRoundIdentifier roundIdentifier =
       new ConsensusRoundIdentifier(chainHeight, 4);
   private RoundChangeCertificateValidator validator;
+  private ProtocolContext protocolContext;
 
   private final MessageValidatorForHeightFactory validatorFactory =
       mock(MessageValidatorForHeightFactory.class);
@@ -75,8 +81,15 @@ public class RoundChangeCertificateValidatorTest {
     proposedBlock =
         ProposedBlockHelpers.createProposalBlock(validators, roundIdentifier, bftExtraDataEncoder);
 
+    final BftContext bftContext = mock(BftContext.class);
+    when(bftContext.getBlockInterface()).thenReturn(new BftBlockInterface(bftExtraDataEncoder));
+    protocolContext =
+        new ProtocolContext(
+            mock(MutableBlockchain.class), mock(WorldStateArchive.class), bftContext);
+
     validator =
-        new RoundChangeCertificateValidator(validators, validatorFactory, 5, bftExtraDataEncoder);
+        new RoundChangeCertificateValidator(
+            validators, validatorFactory, 5, bftExtraDataEncoder, protocolContext);
   }
 
   @Test

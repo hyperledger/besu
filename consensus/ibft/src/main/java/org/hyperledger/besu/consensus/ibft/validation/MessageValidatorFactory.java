@@ -78,7 +78,8 @@ public class MessageValidatorFactory {
             validators,
             (ri) -> createSignedDataValidator(ri, parentHeader),
             roundIdentifier.getSequenceNumber(),
-            bftExtraDataCodec));
+            bftExtraDataCodec,
+            protocolContext));
   }
 
   public RoundChangeMessageValidator createRoundChangeMessageValidator(
