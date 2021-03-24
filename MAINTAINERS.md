@@ -25,7 +25,6 @@
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Danno Ferrin     | shemnon          | shemnon          |
-| Tim Beiko        | timbeiko         | timbeiko         |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 
 ## Emeritus Maintainers
@@ -36,6 +35,7 @@
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Rob Dawson       | rojotek          | RobDawson        |
+| Tim Beiko        | timbeiko         | timbeiko         |
 
 ## Becoming a Maintainer
 
