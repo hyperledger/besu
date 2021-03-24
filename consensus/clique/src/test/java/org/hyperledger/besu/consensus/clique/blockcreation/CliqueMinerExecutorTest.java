@@ -94,7 +94,7 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, true),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, false),
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
@@ -134,7 +134,7 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, true),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, false),
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
@@ -174,7 +174,7 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, true),
+            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, false),
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,

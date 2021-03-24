@@ -39,7 +39,7 @@ public class IbftProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean allowUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     final IbftLegacyConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
@@ -54,16 +54,16 @@ public class IbftProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            allowUnprotectedTransactions)
+            requireTxReplayProtection)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final boolean allowUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return create(
-        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, allowUnprotectedTransactions);
+        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, requireTxReplayProtection);
   }
 
   private static ProtocolSpecBuilder applyIbftChanges(

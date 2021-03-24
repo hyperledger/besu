@@ -106,7 +106,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, false, Optional.empty(), goQuorumMode, true))
+                    gasCalculator, false, Optional.empty(), goQuorumMode, false))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -209,7 +209,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, Optional.empty(), quorumCompatibilityMode, true))
+                    gasCalculator, true, Optional.empty(), quorumCompatibilityMode, false))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -264,7 +264,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
@@ -295,7 +295,7 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     chainId,
                     quorumCompatibilityMode,
-                    acceptUnprotectedTransactions))
+                    requireTxReplayProtection))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -320,14 +320,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return spuriousDragonDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             quorumCompatibilityMode,
-            acceptUnprotectedTransactions)
+            requireTxReplayProtection)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -362,14 +362,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return byzantiumDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            acceptUnprotectedTransactions)
+            requireTxReplayProtection)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEvmRegistries::constantinople)
@@ -383,14 +383,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return constantinopleDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            acceptUnprotectedTransactions)
+            requireTxReplayProtection)
         .gasCalculator(PetersburgGasCalculator::new)
         .name("Petersburg");
   }
@@ -401,7 +401,7 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return petersburgDefinition(
@@ -410,7 +410,7 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            acceptUnprotectedTransactions)
+            requireTxReplayProtection)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             gasCalculator ->
@@ -434,14 +434,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return istanbulDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            acceptUnprotectedTransactions)
+            requireTxReplayProtection)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
   }
@@ -452,14 +452,14 @@ public abstract class MainnetProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return muirGlacierDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            acceptUnprotectedTransactions)
+            requireTxReplayProtection)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             gasCalculator ->
@@ -469,7 +469,7 @@ public abstract class MainnetProtocolSpecs {
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
                     quorumCompatibilityMode,
-                    acceptUnprotectedTransactions))
+                    requireTxReplayProtection))
         .transactionReceiptFactory(
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
@@ -486,7 +486,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
@@ -496,7 +496,7 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode,
-            acceptUnprotectedTransactions)
+            requireTxReplayProtection)
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
@@ -506,7 +506,7 @@ public abstract class MainnetProtocolSpecs {
                     chainId,
                     Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
                     genesisConfigOptions.isQuorum(),
-                    acceptUnprotectedTransactions))
+                    requireTxReplayProtection))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,

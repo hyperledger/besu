@@ -81,7 +81,7 @@ public class BftBlockCreatorTest {
                 .getConfigOptions(),
             IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
             bftExtraDataEncoder,
-            true);
+            false);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,

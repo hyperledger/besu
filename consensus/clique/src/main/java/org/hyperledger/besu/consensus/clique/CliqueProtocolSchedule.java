@@ -46,7 +46,7 @@ public class CliqueProtocolSchedule {
       final NodeKey nodeKey,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -79,7 +79,7 @@ public class CliqueProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            acceptUnprotectedTransactions)
+            requireTxReplayProtection)
         .createProtocolSchedule();
   }
 
@@ -87,13 +87,13 @@ public class CliqueProtocolSchedule {
       final GenesisConfigOptions config,
       final NodeKey nodeKey,
       final boolean isRevertReasonEnabled,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return create(
         config,
         nodeKey,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

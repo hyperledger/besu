@@ -299,7 +299,7 @@ public class TestContextBuilder {
             genesisConfigOptions,
             QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
             BFT_EXTRA_DATA_ENCODER,
-            true);
+            false);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

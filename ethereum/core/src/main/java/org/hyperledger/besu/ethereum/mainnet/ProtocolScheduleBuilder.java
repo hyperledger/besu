@@ -70,7 +70,7 @@ public class ProtocolScheduleBuilder {
   private final boolean isRevertReasonEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
   private final boolean quorumCompatibilityMode;
-  private final boolean acceptUnprotectedTransactions;
+  private final boolean requireTxReplayProtection;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -79,7 +79,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     this(
         config,
         Optional.of(defaultChainId),
@@ -87,7 +87,7 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   private Optional<BuilderMapEntry> create(
@@ -106,7 +106,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     this(
         config,
         Optional.empty(),
@@ -114,7 +114,7 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   private ProtocolScheduleBuilder(
@@ -124,14 +124,14 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
-    this.acceptUnprotectedTransactions = acceptUnprotectedTransactions;
+    this.requireTxReplayProtection = requireTxReplayProtection;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -146,7 +146,7 @@ public class ProtocolScheduleBuilder {
             config.getEvmStackSize(),
             isRevertReasonEnabled,
             quorumCompatibilityMode,
-            acceptUnprotectedTransactions,
+            requireTxReplayProtection,
             config.getEcip1017EraRounds());
 
     validateForkOrdering();
@@ -269,7 +269,7 @@ public class ProtocolScheduleBuilder {
                   isRevertReasonEnabled,
                   config,
                   quorumCompatibilityMode,
-                  acceptUnprotectedTransactions),
+                  requireTxReplayProtection),
               protocolSpecAdapters.getModifierForBlock(eip1559Block)));
     }
 

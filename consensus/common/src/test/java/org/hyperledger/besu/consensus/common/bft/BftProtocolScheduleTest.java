@@ -59,7 +59,7 @@ public class BftProtocolScheduleTest {
             genesisConfig,
             BftProtocolScheduleTest::arbitraryRulesetBuilder,
             bftExtraDataCodec,
-            true);
+            false);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     spec.getBlockReward();
@@ -84,7 +84,7 @@ public class BftProtocolScheduleTest {
                     genesisConfig,
                     BftProtocolScheduleTest::arbitraryRulesetBuilder,
                     bftExtraDataCodec,
-                    true))
+                    false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Mining beneficiary in config is not a valid ethereum address");
   }
@@ -103,7 +103,7 @@ public class BftProtocolScheduleTest {
             genesisConfig,
             BftProtocolScheduleTest::arbitraryRulesetBuilder,
             bftExtraDataCodec,
-            true);
+            false);
     final ProtocolSpec spec = schedule.getByBlockNumber(1);
 
     final Address headerCoinbase = Address.fromHexString("0x123");
@@ -130,7 +130,7 @@ public class BftProtocolScheduleTest {
                     genesisConfig,
                     BftProtocolScheduleTest::arbitraryRulesetBuilder,
                     bftExtraDataCodec,
-                    true))
+                    false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Bft Block reward in config cannot be negative");
   }
@@ -150,7 +150,7 @@ public class BftProtocolScheduleTest {
                     genesisConfig,
                     BftProtocolScheduleTest::arbitraryRulesetBuilder,
                     bftExtraDataCodec,
-                    true))
+                    false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -170,7 +170,7 @@ public class BftProtocolScheduleTest {
                     genesisConfig,
                     BftProtocolScheduleTest::arbitraryRulesetBuilder,
                     bftExtraDataCodec,
-                    true))
+                    false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }

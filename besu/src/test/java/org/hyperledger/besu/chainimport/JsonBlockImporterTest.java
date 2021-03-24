@@ -426,7 +426,7 @@ public abstract class JsonBlockImporterTest {
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)
         .dataDirectory(dataDir)
-        .isUnprotectedTransactionsAllowed(true)
+        .isTxReplayProtectionRequired(false)
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())

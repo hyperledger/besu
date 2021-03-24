@@ -27,7 +27,7 @@ public class FixedDifficultyProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean allowUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return new ProtocolScheduleBuilder(
             config,
             ProtocolSpecAdapters.create(
@@ -37,24 +37,24 @@ public class FixedDifficultyProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             config.isQuorum(),
-            allowUnprotectedTransactions)
+            requireTxReplayProtection)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final boolean allowUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return create(
-        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, allowUnprotectedTransactions);
+        config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, requireTxReplayProtection);
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final boolean allowUnprotectedTransactions) {
-    return create(config, PrivacyParameters.DEFAULT, false, allowUnprotectedTransactions);
+      final GenesisConfigOptions config, final boolean requireTxReplayProtection) {
+    return create(config, PrivacyParameters.DEFAULT, false, requireTxReplayProtection);
   }
 
   public static ProtocolSchedule create(final GenesisConfigOptions config) {
-    return create(config, true);
+    return create(config, false);
   }
 }

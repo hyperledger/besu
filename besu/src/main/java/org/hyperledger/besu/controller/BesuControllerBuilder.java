@@ -106,7 +106,7 @@ public abstract class BesuControllerBuilder {
   private long reorgLoggingThreshold;
   private DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
-  protected boolean allowUnprotectedTransactions;
+  protected boolean requireTxReplayProtection;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -176,9 +176,9 @@ public abstract class BesuControllerBuilder {
     return this;
   }
 
-  public BesuControllerBuilder isUnprotectedTransactionsAllowed(
-      final boolean allowUnprotectedTransactions) {
-    this.allowUnprotectedTransactions = allowUnprotectedTransactions;
+  public BesuControllerBuilder isTxReplayProtectionRequired(
+      final boolean requireTxReplayProtection) {
+    this.requireTxReplayProtection = requireTxReplayProtection;
     return this;
   }
 

@@ -229,7 +229,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        allowUnprotectedTransactions,
+        requireTxReplayProtection,
         QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
         bftExtraDataCodec);
   }

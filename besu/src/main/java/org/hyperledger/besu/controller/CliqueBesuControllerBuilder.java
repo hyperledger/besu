@@ -113,7 +113,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         nodeKey,
         privacyParameters,
         isRevertReasonEnabled,
-        allowUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   @Override

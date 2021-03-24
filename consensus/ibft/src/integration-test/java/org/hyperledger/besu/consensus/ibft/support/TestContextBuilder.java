@@ -298,7 +298,7 @@ public class TestContextBuilder {
             genesisConfigOptions,
             IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
             IBFT_EXTRA_DATA_ENCODER,
-            true);
+            false);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

@@ -70,7 +70,7 @@ public class MainnetTransactionValidatorTest {
           .createTransaction(senderKeys);
 
   private final boolean defaultGoQuorumCompatibilityMode = false;
-  private final boolean defaultAllowUnprotectedTransactions = true;
+  private final boolean defaultRequireTxReplayProtection = false;
 
   @After
   public void reset() {
@@ -85,7 +85,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.empty(),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     final Transaction transaction =
         new TransactionTestFixture()
             .gasLimit(10)
@@ -107,7 +107,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.empty(),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     assertThat(validator.validate(basicTransaction, Optional.empty()))
         .isEqualTo(
             ValidationResult.invalid(
@@ -122,7 +122,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.valueOf(2)),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     assertThat(validator.validate(basicTransaction, Optional.empty()))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.WRONG_CHAIN_ID));
   }
@@ -135,7 +135,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     assertThat(validator.validateForSender(basicTransaction, null, false))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE));
   }
@@ -148,7 +148,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
 
     final Account account = accountWithNonce(basicTransaction.getNonce() + 1);
     assertThat(validator.validateForSender(basicTransaction, account, false))
@@ -164,7 +164,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, false))
@@ -180,7 +180,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, true))
@@ -195,7 +195,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
 
     final Transaction transaction =
         new TransactionTestFixture().nonce(11).createTransaction(senderKeys);
@@ -213,7 +213,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.ONE),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
     final KeyPair senderKeyPair = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -232,7 +232,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.empty(),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     validator.setTransactionFilter(transactionFilter(false));
 
     assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), true))
@@ -247,7 +247,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.empty(),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     validator.setTransactionFilter(transactionFilter(true));
 
     assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), true))
@@ -273,7 +273,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.empty(),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     validator.setTransactionFilter(transactionFilter);
 
     final TransactionValidationParams validationParams =
@@ -295,7 +295,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.empty(),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     validator.setTransactionFilter(transactionFilter);
 
     final TransactionValidationParams validationParams =
@@ -324,7 +324,7 @@ public class MainnetTransactionValidatorTest {
             Optional.empty(),
             Set.of(TransactionType.FRONTIER),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
 
     final MainnetTransactionValidator eip1559Validator =
         new MainnetTransactionValidator(
@@ -334,7 +334,7 @@ public class MainnetTransactionValidatorTest {
             Optional.empty(),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
 
     final Transaction transaction =
         new TransactionTestFixture()
@@ -370,7 +370,7 @@ public class MainnetTransactionValidatorTest {
             Optional.empty(),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
@@ -396,7 +396,7 @@ public class MainnetTransactionValidatorTest {
             Optional.empty(),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode,
-            defaultAllowUnprotectedTransactions);
+            defaultRequireTxReplayProtection);
     final Transaction transaction =
         new TransactionTestFixture()
             .gasPremium(Optional.of(Wei.of(1)))
@@ -416,7 +416,7 @@ public class MainnetTransactionValidatorTest {
   public void goQuorumCompatibilityModeRejectNonZeroGasPrice() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
-            gasCalculator, false, Optional.empty(), true, defaultAllowUnprotectedTransactions);
+            gasCalculator, false, Optional.empty(), true, defaultRequireTxReplayProtection);
     final Transaction transaction =
         new TransactionTestFixture()
             .gasPrice(Wei.ONE)
@@ -432,7 +432,7 @@ public class MainnetTransactionValidatorTest {
   public void goQuorumCompatibilityModeSuccessZeroGasPrice() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
-            gasCalculator, false, Optional.empty(), true, defaultAllowUnprotectedTransactions);
+            gasCalculator, false, Optional.empty(), true, defaultRequireTxReplayProtection);
     final Transaction transaction =
         new TransactionTestFixture()
             .gasPrice(Wei.ZERO)
@@ -446,9 +446,10 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectUnprotectedTransactions() {
+  public void shouldRejectUnprotectedTransactionsWithChainIdSet() {
     final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), true, false);
+        new MainnetTransactionValidator(
+            gasCalculator, false, Optional.of(BigInteger.ONE), true, true);
     final Transaction transaction =
         new TransactionTestFixture()
             .gasPrice(Wei.ZERO)
@@ -458,6 +459,72 @@ public class MainnetTransactionValidatorTest {
         validator.validate(transaction, Optional.empty());
     assertThat(result.getInvalidReason())
         .isEqualTo(TransactionInvalidReason.UNPROTECTED_TRANSACTION);
+  }
+
+  @Test
+  public void shouldAllowProtectedTransactionsWithChainIdSet() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator, false, Optional.of(BigInteger.ONE), true, true);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasPrice(Wei.ZERO)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(0)));
+    final ValidationResult<TransactionInvalidReason> result =
+        validator.validate(transaction, Optional.empty());
+    assertThat(result.isValid()).isTrue();
+  }
+
+  @Test
+  public void shouldAllowUnprotectedTransactionsWhenChainIdNotSet() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), true, true);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasPrice(Wei.ZERO)
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(0)));
+    final ValidationResult<TransactionInvalidReason> result =
+        validator.validate(transaction, Optional.empty());
+    assertThat(result.isValid()).isTrue();
+  }
+
+  @Test
+  public void shouldAllowUnprotectedTransactionsWhenChainIdNotSetAndReplayProtectionNotSet() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(gasCalculator, false, Optional.empty(), true, false);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasPrice(Wei.ZERO)
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(0)));
+    final ValidationResult<TransactionInvalidReason> result =
+        validator.validate(transaction, Optional.empty());
+    assertThat(result.isValid()).isTrue();
+  }
+
+  @Test
+  public void shouldAllowUnprotectedTransactionsWhenChainIdSetAndReplayProtectionNotSet() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator, false, Optional.of(BigInteger.ONE), true, false);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .gasPrice(Wei.ZERO)
+            .chainId(Optional.empty())
+            .createTransaction(senderKeys);
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(0)));
+    final ValidationResult<TransactionInvalidReason> result =
+        validator.validate(transaction, Optional.empty());
+    assertThat(result.isValid()).isTrue();
   }
 
   private Account accountWithNonce(final long nonce) {

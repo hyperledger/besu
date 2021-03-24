@@ -48,7 +48,7 @@ public class CliqueProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        CliqueProtocolSchedule.create(config, NODE_KEY, false, true);
+        CliqueProtocolSchedule.create(config, NODE_KEY, false, false);
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
@@ -64,7 +64,7 @@ public class CliqueProtocolScheduleTest {
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec homestead =
         CliqueProtocolSchedule.create(
-                GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEY, false, true)
+                GenesisConfigFile.DEFAULT.getConfigOptions(), NODE_KEY, false, false)
             .getByBlockNumber(0);
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
@@ -79,7 +79,7 @@ public class CliqueProtocolScheduleTest {
     when(cliqueOptions.getEpochLength()).thenReturn(0L);
     when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
 
-    assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false, true))
+    assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false, false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -90,7 +90,7 @@ public class CliqueProtocolScheduleTest {
     when(cliqueOptions.getEpochLength()).thenReturn(-3000L);
     when(genesisConfig.getCliqueConfigOptions()).thenReturn(cliqueOptions);
 
-    assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false, true))
+    assertThatThrownBy(() -> CliqueProtocolSchedule.create(genesisConfig, NODE_KEY, false, false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }

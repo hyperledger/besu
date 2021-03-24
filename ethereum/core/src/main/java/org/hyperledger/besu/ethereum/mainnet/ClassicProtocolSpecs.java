@@ -58,7 +58,7 @@ public class ClassicProtocolSpecs {
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(
-                    gasCalculator, true, chainId, quorumCompatibilityMode, true))
+                    gasCalculator, true, chainId, quorumCompatibilityMode, false))
         .name("ClassicTangerineWhistle");
   }
 
@@ -108,7 +108,7 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final OptionalLong ecip1017EraRounds,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     return gothamDefinition(
             chainId,
             contractSizeLimit,
@@ -123,7 +123,7 @@ public class ClassicProtocolSpecs {
                     true,
                     chainId,
                     quorumCompatibilityMode,
-                    acceptUnprotectedTransactions))
+                    requireTxReplayProtection))
         .name("DefuseDifficultyBomb");
   }
 

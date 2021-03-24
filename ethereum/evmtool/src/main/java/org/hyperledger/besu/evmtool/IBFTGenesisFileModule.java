@@ -40,7 +40,7 @@ class IBFTGenesisFileModule extends GenesisFileModule {
         configOptions,
         IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
         bftExtraDataEncoder,
-        true);
+        false);
   }
 
   @Override

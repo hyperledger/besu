@@ -26,7 +26,7 @@ public class MainnetProtocolSpecFactory {
   private final OptionalInt evmStackSize;
   private final boolean isRevertReasonEnabled;
   private final boolean quorumCompatibilityMode;
-  private final boolean acceptUnprotectedTransactions;
+  private final boolean requireTxReplayProtection;
   private final OptionalLong ecip1017EraRounds;
 
   public MainnetProtocolSpecFactory(
@@ -35,14 +35,14 @@ public class MainnetProtocolSpecFactory {
       final OptionalInt evmStackSize,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions,
+      final boolean requireTxReplayProtection,
       final OptionalLong ecip1017EraRounds) {
     this.chainId = chainId;
     this.contractSizeLimit = contractSizeLimit;
     this.evmStackSize = evmStackSize;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
-    this.acceptUnprotectedTransactions = acceptUnprotectedTransactions;
+    this.requireTxReplayProtection = requireTxReplayProtection;
     this.ecip1017EraRounds = ecip1017EraRounds;
   }
 
@@ -77,7 +77,7 @@ public class MainnetProtocolSpecFactory {
         contractSizeLimit,
         evmStackSize,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public ProtocolSpecBuilder byzantiumDefinition() {
@@ -87,7 +87,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public ProtocolSpecBuilder constantinopleDefinition() {
@@ -97,7 +97,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public ProtocolSpecBuilder petersburgDefinition() {
@@ -107,7 +107,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public ProtocolSpecBuilder istanbulDefinition() {
@@ -117,7 +117,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public ProtocolSpecBuilder muirGlacierDefinition() {
@@ -127,7 +127,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public ProtocolSpecBuilder berlinDefinition() {
@@ -137,7 +137,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,7 +160,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         ecip1017EraRounds,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public ProtocolSpecBuilder atlantisDefinition() {

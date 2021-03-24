@@ -76,7 +76,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        true)
+                        false)
                     .createProtocolSchedule())
             .build();
 
@@ -136,7 +136,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        true)
+                        false)
                     .createProtocolSchedule())
             .build();
 
@@ -191,7 +191,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        true)
+                        false)
                     .createProtocolSchedule())
             .build();
 
@@ -262,7 +262,7 @@ public class PoWBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         genesisConfigOptions.isQuorum(),
-                        true)
+                        false)
                     .createProtocolSchedule())
             .build();
 

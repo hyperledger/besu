@@ -48,21 +48,21 @@ public class MainnetTransactionValidator {
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
   private final boolean goQuorumCompatibilityMode;
-  private final boolean acceptUnprotectedTransactions;
+  private final boolean requireTxReplayProtection;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final boolean goQuorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     this(
         gasCalculator,
         checkSignatureMalleability,
         chainId,
         Set.of(TransactionType.FRONTIER),
         goQuorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public MainnetTransactionValidator(
@@ -71,7 +71,7 @@ public class MainnetTransactionValidator {
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
       final boolean quorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     this(
         gasCalculator,
         Optional.of(TransactionPriceCalculator.frontier()),
@@ -79,7 +79,7 @@ public class MainnetTransactionValidator {
         chainId,
         acceptedTransactionTypes,
         quorumCompatibilityMode,
-        acceptUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   public MainnetTransactionValidator(
@@ -89,14 +89,14 @@ public class MainnetTransactionValidator {
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
       final boolean goQuorumCompatibilityMode,
-      final boolean acceptUnprotectedTransactions) {
+      final boolean requireTxReplayProtection) {
     this.gasCalculator = gasCalculator;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
     this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
-    this.acceptUnprotectedTransactions = acceptUnprotectedTransactions;
+    this.requireTxReplayProtection = requireTxReplayProtection;
   }
 
   /**
@@ -116,7 +116,7 @@ public class MainnetTransactionValidator {
       return signatureResult;
     }
 
-    if (transaction.getChainId().isEmpty() && !acceptUnprotectedTransactions) {
+    if (chainId.isPresent() && transaction.getChainId().isEmpty() && requireTxReplayProtection) {
       return ValidationResult.invalid(TransactionInvalidReason.UNPROTECTED_TRANSACTION);
     }
 

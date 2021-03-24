@@ -89,7 +89,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        allowUnprotectedTransactions);
+        requireTxReplayProtection);
   }
 
   @Override

@@ -121,7 +121,7 @@ public class ExecutionContextTestFixture {
                     new PrivacyParameters(),
                     false,
                     genesisConfigFile.getConfigOptions().isQuorum(),
-                    true)
+                    false)
                 .createProtocolSchedule();
       }
       if (keyValueStorage == null) {

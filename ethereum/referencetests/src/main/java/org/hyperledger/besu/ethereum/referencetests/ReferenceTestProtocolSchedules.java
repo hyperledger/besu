@@ -85,7 +85,7 @@ public class ReferenceTestProtocolSchedules {
             PrivacyParameters.DEFAULT,
             false,
             options.isQuorum(),
-            true)
+            false)
         .createProtocolSchedule();
   }
 

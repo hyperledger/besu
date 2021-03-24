@@ -832,12 +832,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
 
   @Option(
-      names = {"--rpc-require-chainid-in-txs"},
+      names = {"--require-tx-replay-protection"},
       description =
-          "Allow for unprotected (non EIP155 signed) transactions to be submitted via RPC (default: ${DEFAULT-VALUE})",
+          "Requires transactions to be EIP-155 to be submitted via RPC (default: ${DEFAULT-VALUE})",
       arity = "1")
-  // TODO: set default to false for next major release
-  private final Boolean unprotectedTransactionsAllowed = true;
+  // TODO: set default to true for next major release
+  private final Boolean requireTxReplayProtection = false;
 
   @Option(
       names = {"--min-block-occupancy-ratio"},
@@ -1687,7 +1687,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject())
-        .isUnprotectedTransactionsAllowed(unprotectedTransactionsAllowed);
+        .isTxReplayProtectionRequired(requireTxReplayProtection);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
