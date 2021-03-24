@@ -69,6 +69,9 @@ public class MessageValidatorFactory {
         protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
     final Collection<Address> validators = getValidatorsAfterBlock(parentHeader);
 
+    final BftBlockInterface bftBlockInterface =
+        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+
     return new MessageValidator(
         createSignedDataValidator(roundIdentifier, parentHeader),
         new ProposalBlockConsistencyValidator(),
@@ -78,7 +81,8 @@ public class MessageValidatorFactory {
             validators,
             (ri) -> createSignedDataValidator(ri, parentHeader),
             roundIdentifier.getSequenceNumber(),
-            bftExtraDataCodec));
+            bftExtraDataCodec,
+            bftBlockInterface));
   }
 
   public RoundChangeMessageValidator createRoundChangeMessageValidator(

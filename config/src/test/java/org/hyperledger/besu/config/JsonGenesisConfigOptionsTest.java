@@ -197,4 +197,26 @@ public class JsonGenesisConfigOptionsTest {
 
     assertThat(configOptions.getBftConfigOptions().getBlockRewardWei()).isEqualTo(12);
   }
+
+  @Test
+  public void configWithoutEcCurveReturnsEmptyOptional() {
+    final ObjectNode configNode = loadCompleteDataSet();
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    assertThat(configOptions.getEcCurve().isEmpty()).isTrue();
+  }
+
+  @Test
+  public void configWithEcCurveIsCorrectlySet() {
+    final ObjectNode configNode = loadCompleteDataSet();
+    configNode.put("eccurve", "secp256k1");
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    assertThat(configOptions.getEcCurve().isPresent()).isTrue();
+    assertThat(configOptions.getEcCurve().get()).isEqualTo("secp256k1");
+  }
 }
