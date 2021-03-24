@@ -19,6 +19,7 @@
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
 | Karim Taam       | matkt            | matkt            |
+| Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Stefan Pingel    | pinges           | pinges           |
 | Trent Mohay      | rain-on          | trent.mohay      |
@@ -34,7 +35,6 @@
 | Chris Hare       | CjHare           | cjhare           |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
-| Meredith Baxter  | mbaxter          | mbaxter          |
 | Rob Dawson       | rojotek          | RobDawson        |
 
 ## Becoming a Maintainer
