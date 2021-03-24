@@ -64,7 +64,7 @@ public class ProposalBlockConsistencyValidatorTest {
 
     final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
     final Block misMatchedBlock =
-        BftBlockInterface.replaceRoundInBlock(
+        bftBlockInterface.replaceRoundInBlock(
             block,
             roundIdentifier.getRoundNumber() + 1,
             BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),

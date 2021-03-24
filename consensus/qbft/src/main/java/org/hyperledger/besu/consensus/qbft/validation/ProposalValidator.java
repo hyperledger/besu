@@ -19,6 +19,7 @@ import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHel
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
@@ -121,8 +122,10 @@ public class ProposalValidator {
         // to create a block with the old round in it, then re-calc expected hash
         // Need to check that if we substitute the LatestPrepareCert round number into the supplied
         // block that we get the SAME hash as PreparedCert.
+        final BftBlockInterface bftBlockInterface =
+            protocolContext.getConsensusState(BftContext.class).getBlockInterface();
         final Block currentBlockWithOldRound =
-            BftBlockInterface.replaceRoundInBlock(
+            bftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(),
                 metadata.getPreparedRound(),
                 BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
