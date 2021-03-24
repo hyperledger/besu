@@ -46,22 +46,22 @@ public class KeccakMiningAcceptanceTest extends AcceptanceTestBase {
   public void shouldMineTransactions() {
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
-    minerNode.execute(accountTransactions.createTransfer(sender, 50, 2021));
+    minerNode.execute(accountTransactions.createTransfer(sender, 50));
     cluster.verify(sender.balanceEquals(50));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1, 2021));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
     cluster.verify(receiver.balanceEquals(1));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2, 2021));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
     cluster.verify(receiver.balanceEquals(3));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 3, 2021));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 3));
     cluster.verify(receiver.balanceEquals(6));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 4, 2021));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 4));
     cluster.verify(receiver.balanceEquals(10));
 
-    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 5, 2021));
+    minerNode.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 5));
     cluster.verify(receiver.balanceEquals(15));
   }
 }

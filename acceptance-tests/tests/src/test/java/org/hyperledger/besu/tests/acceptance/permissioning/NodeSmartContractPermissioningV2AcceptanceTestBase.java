@@ -37,7 +37,6 @@ class NodeSmartContractPermissioningV2AcceptanceTestBase extends AcceptanceTestB
   protected static final String CONTRACT_ADDRESS = "0x0000000000000000000000000000000000009999";
   protected static final String GENESIS_FILE =
       "/permissioning/simple_permissioning_v2_genesis.json";
-  protected static final long chainId = 999L;
 
   protected final Cluster permissionedCluster;
 
@@ -108,11 +107,11 @@ class NodeSmartContractPermissioningV2AcceptanceTestBase extends AcceptanceTestB
   }
 
   protected Transaction<Hash> allowNode(final Node node) {
-    return smartContractNodePermissioningV2.allowNode(CONTRACT_ADDRESS, node, chainId);
+    return smartContractNodePermissioningV2.allowNode(CONTRACT_ADDRESS, node);
   }
 
   protected Transaction<Hash> forbidNode(final Node node) {
-    return smartContractNodePermissioningV2.forbidNode(CONTRACT_ADDRESS, node, chainId);
+    return smartContractNodePermissioningV2.forbidNode(CONTRACT_ADDRESS, node);
   }
 
   protected Condition connectionIsForbidden(final Node node) {

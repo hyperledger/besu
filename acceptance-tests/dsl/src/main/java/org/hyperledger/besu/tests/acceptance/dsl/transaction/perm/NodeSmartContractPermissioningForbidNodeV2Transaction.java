@@ -41,14 +41,12 @@ public class NodeSmartContractPermissioningForbidNodeV2Transaction implements Tr
   private final Account sender;
   private final Address contractAddress;
   private final Node node;
-  private final long chainId;
 
   public NodeSmartContractPermissioningForbidNodeV2Transaction(
-      final Account sender, final Address contractAddress, final Node node, final long chainId) {
+      final Account sender, final Address contractAddress, final Node node) {
     this.sender = sender;
     this.contractAddress = contractAddress;
     this.node = node;
-    this.chainId = chainId;
   }
 
   @Override
@@ -76,7 +74,7 @@ public class NodeSmartContractPermissioningForbidNodeV2Transaction implements Tr
             payload.toString());
 
     return toHexString(
-        TransactionEncoder.signMessage(transaction, chainId, sender.web3jCredentialsOrThrow()));
+        TransactionEncoder.signMessage(transaction, sender.web3jCredentialsOrThrow()));
   }
 
   private Bytes createPayload(final EnodeURL enodeUrl) {

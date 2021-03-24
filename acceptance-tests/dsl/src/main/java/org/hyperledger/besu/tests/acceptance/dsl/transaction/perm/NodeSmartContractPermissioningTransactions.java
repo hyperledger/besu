@@ -30,12 +30,12 @@ public class NodeSmartContractPermissioningTransactions {
 
   public Transaction<Hash> allowNode(final String contractAddress, final Node node) {
     return new NodeSmartContractPermissioningAllowNodeTransaction(
-        accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node, 999);
+        accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node);
   }
 
   public Transaction<Hash> forbidNode(final String contractAddress, final Node node) {
     return new NodeSmartContractPermissioningForbidNodeTransaction(
-        accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node, 999);
+        accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node);
   }
 
   public Transaction<Boolean> isNodeAllowed(final String contractAddress, final Node node) {

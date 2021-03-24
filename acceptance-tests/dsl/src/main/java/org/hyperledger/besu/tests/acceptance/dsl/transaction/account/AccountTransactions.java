@@ -31,71 +31,48 @@ public class AccountTransactions {
   }
 
   public TransferTransaction createTransfer(final Account recipient, final int amount) {
-    return createTransfer(recipient, amount, 2018L);
-  }
-
-  public TransferTransaction createTransfer(
-      final Account recipient, final int amount, final long chainId) {
-    return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount, chainId);
+    return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount);
   }
 
   public TransferTransaction createTransfer(final Account recipient, final Amount amount) {
-    return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount, 2018L);
+    return createTransfer(accounts.getPrimaryBenefactor(), recipient, amount);
   }
 
   public TransferTransaction createTransfer(
-      final Account sender, final Account recipient, final int amount, final long chainId) {
+      final Account sender, final Account recipient, final int amount) {
     return new TransferTransactionBuilder()
         .sender(sender)
         .recipient(recipient)
         .amount(Amount.ether(amount))
-        .chainId(chainId)
         .build();
   }
 
   public TransferTransaction createTransfer(
-      final Account sender, final Account recipient, final Amount amount, final long chainId) {
+      final Account sender, final Account recipient, final Amount amount) {
     return new TransferTransactionBuilder()
         .sender(sender)
         .recipient(recipient)
         .amount(amount)
-        .chainId(chainId)
         .build();
   }
 
   public TransferTransaction createTransfer(
       final Account sender, final Account recipient, final int amount, final BigInteger nonce) {
-    return createTransfer(sender, recipient, amount, nonce, 2018L);
-  }
-
-  public TransferTransaction createTransfer(
-      final Account sender,
-      final Account recipient,
-      final int amount,
-      final BigInteger nonce,
-      final long chainId) {
     return new TransferTransactionBuilder()
         .sender(sender)
         .recipient(recipient)
         .amount(Amount.ether(amount))
         .nonce(nonce)
-        .chainId(chainId)
         .build();
   }
 
   public TransferTransactionSet createIncrementalTransfers(
       final Account sender, final Account recipient, final int etherAmount) {
-    return createIncrementalTransfers(sender, recipient, etherAmount, 2018L);
-  }
-
-  public TransferTransactionSet createIncrementalTransfers(
-      final Account sender, final Account recipient, final int etherAmount, final long chainId) {
     final List<TransferTransaction> transfers = new ArrayList<>();
     final TransferTransactionBuilder transferOneEther =
         new TransferTransactionBuilder()
             .sender(sender)
             .recipient(recipient)
-            .chainId(chainId)
             .amount(Amount.ether(1));
 
     for (int i = 1; i <= etherAmount; i++) {

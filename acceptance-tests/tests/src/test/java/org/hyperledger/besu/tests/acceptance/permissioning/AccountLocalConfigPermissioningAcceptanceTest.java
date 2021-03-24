@@ -49,10 +49,10 @@ public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTes
   public void onlyAllowedAccountCanSubmitTransactions() {
     Account beneficiary = accounts.createAccount("beneficiary");
 
-    node.execute(accountTransactions.createTransfer(senderA, beneficiary, 1, 2018L));
+    node.execute(accountTransactions.createTransfer(senderA, beneficiary, 1));
     node.verify(beneficiary.balanceEquals(1));
 
-    verifyTransferForbidden(senderB, beneficiary, 2018L);
+    verifyTransferForbidden(senderB, beneficiary);
   }
 
   @Test
@@ -60,24 +60,23 @@ public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTes
     Account beneficiary = accounts.createAccount("beneficiary");
     node.verify(beneficiary.balanceEquals(0));
 
-    verifyTransferForbidden(senderB, beneficiary, 2018L);
+    verifyTransferForbidden(senderB, beneficiary);
 
     node.execute(permissioningTransactions.addAccountsToAllowlist(senderB.getAddress()));
     node.verify(perm.expectAccountsAllowlist(senderA.getAddress(), senderB.getAddress()));
 
-    node.execute(accountTransactions.createTransfer(senderB, beneficiary, 1, 2018L));
+    node.execute(accountTransactions.createTransfer(senderB, beneficiary, 1));
     node.verify(beneficiary.balanceEquals(1));
 
     node.execute(permissioningTransactions.removeAccountsFromAllowlist(senderB.getAddress()));
     node.verify(perm.expectAccountsAllowlist(senderA.getAddress()));
-    verifyTransferForbidden(senderB, beneficiary, 2018L);
+    verifyTransferForbidden(senderB, beneficiary);
   }
 
-  private void verifyTransferForbidden(
-      final Account sender, final Account beneficiary, final long chainId) {
+  private void verifyTransferForbidden(final Account sender, final Account beneficiary) {
     BigInteger nonce = node.execute(ethTransactions.getTransactionCount(sender.getAddress()));
     TransferTransaction transfer =
-        accountTransactions.createTransfer(sender, beneficiary, 1, nonce, chainId);
+        accountTransactions.createTransfer(sender, beneficiary, 1, nonce);
     node.verify(
         eth.sendRawTransactionExceptional(
             transfer.signedTransactionData(),

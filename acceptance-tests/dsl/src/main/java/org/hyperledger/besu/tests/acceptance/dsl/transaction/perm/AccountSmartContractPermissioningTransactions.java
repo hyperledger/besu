@@ -28,22 +28,18 @@ public class AccountSmartContractPermissioningTransactions {
     this.accounts = accounts;
   }
 
-  public Transaction<Hash> allowAccount(
-      final String contractAddress, final Account account, final long chainId) {
+  public Transaction<Hash> allowAccount(final String contractAddress, final Account account) {
     return new AccountSmartContractPermissioningAllowAccountTransaction(
         accounts.getPrimaryBenefactor(),
         Address.fromHexString(contractAddress),
-        Address.fromHexString(account.getAddress()),
-        chainId);
+        Address.fromHexString(account.getAddress()));
   }
 
-  public Transaction<Hash> forbidAccount(
-      final String contractAddress, final Account account, final long chainId) {
+  public Transaction<Hash> forbidAccount(final String contractAddress, final Account account) {
     return new AccountSmartContractPermissioningForbidAccountTransaction(
         accounts.getPrimaryBenefactor(),
         Address.fromHexString(contractAddress),
-        Address.fromHexString(account.getAddress()),
-        chainId);
+        Address.fromHexString(account.getAddress()));
   }
 
   public Transaction<Boolean> isAccountAllowed(

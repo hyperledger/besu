@@ -28,16 +28,14 @@ public class NodeSmartContractPermissioningV2Transactions {
     this.accounts = accounts;
   }
 
-  public Transaction<Hash> allowNode(
-      final String contractAddress, final Node node, final long chainId) {
+  public Transaction<Hash> allowNode(final String contractAddress, final Node node) {
     return new NodeSmartContractPermissioningAllowNodeV2Transaction(
-        accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node, chainId);
+        accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node);
   }
 
-  public Transaction<Hash> forbidNode(
-      final String contractAddress, final Node node, final long chainId) {
+  public Transaction<Hash> forbidNode(final String contractAddress, final Node node) {
     return new NodeSmartContractPermissioningForbidNodeV2Transaction(
-        accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node, chainId);
+        accounts.getPrimaryBenefactor(), Address.fromHexString(contractAddress), node);
   }
 
   public Transaction<Boolean> isConnectionAllowed(final String contractAddress, final Node node) {

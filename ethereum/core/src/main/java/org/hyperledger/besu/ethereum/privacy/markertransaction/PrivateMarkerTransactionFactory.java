@@ -46,17 +46,14 @@ public abstract class PrivateMarkerTransactionFactory {
       final long nonce,
       final KeyPair signingKey,
       final Address precompileAddress) {
-    Transaction.Builder builder =
-        Transaction.builder()
-            .type(TransactionType.FRONTIER)
-            .nonce(nonce)
-            .gasPrice(privateTransaction.getGasPrice())
-            .gasLimit(privateTransaction.getGasLimit())
-            .to(precompileAddress)
-            .value(privateTransaction.getValue())
-            .payload(Bytes.fromBase64String(privateTransactionLookupId));
-    privateTransaction.getChainId().ifPresent(builder::chainId);
-
-    return builder.signAndBuild(signingKey);
+    return Transaction.builder()
+        .type(TransactionType.FRONTIER)
+        .nonce(nonce)
+        .gasPrice(privateTransaction.getGasPrice())
+        .gasLimit(privateTransaction.getGasLimit())
+        .to(precompileAddress)
+        .value(privateTransaction.getValue())
+        .payload(Bytes.fromBase64String(privateTransactionLookupId))
+        .signAndBuild(signingKey);
   }
 }

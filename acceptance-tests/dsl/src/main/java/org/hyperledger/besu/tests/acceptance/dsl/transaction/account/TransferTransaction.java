@@ -46,22 +46,19 @@ public class TransferTransaction implements Transaction<Hash> {
   private final Unit transferUnit;
   private final BigInteger gasPrice;
   private final BigInteger nonce;
-  private final Long chainId;
 
   public TransferTransaction(
       final Account sender,
       final Account recipient,
       final Amount transferAmount,
       final Amount gasPrice,
-      final BigInteger nonce,
-      final Long chainId) {
+      final BigInteger nonce) {
     this.sender = sender;
     this.recipient = recipient;
     this.transferAmount = transferAmount.getValue();
     this.transferUnit = transferAmount.getUnit();
     this.gasPrice = gasPrice == null ? MINIMUM_GAS_PRICE : convertGasPriceToWei(gasPrice);
     this.nonce = nonce;
-    this.chainId = chainId;
   }
 
   @Override
@@ -91,7 +88,7 @@ public class TransferTransaction implements Transaction<Hash> {
             Convert.toWei(transferAmount, transferUnit).toBigIntegerExact());
 
     return toHexString(
-        TransactionEncoder.signMessage(transaction, chainId, sender.web3jCredentialsOrThrow()));
+        TransactionEncoder.signMessage(transaction, sender.web3jCredentialsOrThrow()));
   }
 
   private Optional<BigInteger> getNonce() {

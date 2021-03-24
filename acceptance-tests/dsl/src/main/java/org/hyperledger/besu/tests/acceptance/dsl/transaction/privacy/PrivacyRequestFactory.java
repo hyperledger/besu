@@ -159,8 +159,7 @@ public class PrivacyRequestFactory {
 
     return besuClient
         .eeaSendRawTransaction(
-            Numeric.toHexString(
-                PrivateTransactionEncoder.signMessage(privateTransaction, 2018L, signer)))
+            Numeric.toHexString(PrivateTransactionEncoder.signMessage(privateTransaction, signer)))
         .send()
         .getTransactionHash();
   }
@@ -193,8 +192,7 @@ public class PrivacyRequestFactory {
 
     return besuClient
         .eeaSendRawTransaction(
-            Numeric.toHexString(
-                PrivateTransactionEncoder.signMessage(privateTransaction, 2018L, signer)))
+            Numeric.toHexString(PrivateTransactionEncoder.signMessage(privateTransaction, signer)))
         .send()
         .getTransactionHash();
   }
@@ -227,7 +225,7 @@ public class PrivacyRequestFactory {
         besuClient
             .eeaSendRawTransaction(
                 Numeric.toHexString(
-                    PrivateTransactionEncoder.signMessage(privateTransaction, 2018L, signer)))
+                    PrivateTransactionEncoder.signMessage(privateTransaction, signer)))
             .send()
             .getTransactionHash();
 
@@ -267,9 +265,7 @@ public class PrivacyRequestFactory {
         besuClient.eeaSendRawTransaction(
             Numeric.toHexString(
                 PrivateTransactionEncoder.signMessage(
-                    privateTransaction,
-                    2018L,
-                    Credentials.create(creator.getTransactionSigningKey()))));
+                    privateTransaction, Credentials.create(creator.getTransactionSigningKey()))));
     final String transactionHash = ethSendTransactionRequest.send().getTransactionHash();
     return new PrivxCreatePrivacyGroupResponse(privacyGroupId.toBase64String(), transactionHash);
   }
