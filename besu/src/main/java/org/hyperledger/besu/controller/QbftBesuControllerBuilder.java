@@ -110,7 +110,10 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         .withSubProtocol(
             Istanbul100SubProtocol.get(),
             new BftProtocolManager(
-                bftEventQueue, peers, Istanbul100SubProtocol.ISTANBUL_100, Istanbul100SubProtocol.get().getName()));
+                bftEventQueue,
+                peers,
+                Istanbul100SubProtocol.ISTANBUL_100,
+                Istanbul100SubProtocol.get().getName()));
   }
 
   @Override
