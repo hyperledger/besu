@@ -263,7 +263,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
       if (pendingStorageUpdates.isEmpty()) {
         storageToUpdate.remove(updatedAddress);
-        System.out.println("TEST-FIX Remove updated address");
       }
 
       // TODO maybe add address preimage?
@@ -302,11 +301,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     final Optional<UInt256> valueUInt =
         wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
     valueUInt.ifPresent(
-        v -> {
-          storageToUpdate
-              .computeIfAbsent(address, key -> new HashMap<>())
-              .put(slotHash, new BonsaiValue<>(v, v));
-        });
+        v ->
+            storageToUpdate
+                .computeIfAbsent(address, key -> new HashMap<>())
+                .put(slotHash, new BonsaiValue<>(v, v)));
     return valueUInt;
   }
 
