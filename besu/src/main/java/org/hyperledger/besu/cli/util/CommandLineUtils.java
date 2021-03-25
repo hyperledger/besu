@@ -73,8 +73,8 @@ public class CommandLineUtils {
    * @param commandLine the command line containing the options we want to check
    * @param mainOptions the names of the main options to test dependency against. Only used for
    *     display.
-   * @param isMainOptionCondition the conditions to test the options dependencies, if true will test
-   *     if not won't
+   * @param isMainOptionCondition the conditions to test dependent options against. If all
+   *     conditions are true, dependent options will be checked.
    * @param dependentOptionsNames a list of option names that can't be used if condition is met.
    *     Example: if --miner-coinbase is in the list and condition is that --miner-enabled should
    *     not be false, we log a warning.
