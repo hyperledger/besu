@@ -400,7 +400,6 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.EIP1559)
         .nonce(positiveLong())
-        .gasPrice(Wei.ZERO)
         .gasPremium(Wei.wrap(bytes32()))
         .feeCap(Wei.wrap(bytes32()))
         .gasLimit(positiveLong())
