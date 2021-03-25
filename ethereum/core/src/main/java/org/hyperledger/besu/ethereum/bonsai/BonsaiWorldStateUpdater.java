@@ -301,7 +301,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     }
     final Optional<UInt256> valueUInt =
         wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
-    valueUInt.ifPresent(v -> localAccountStorage.put(slotHash, new BonsaiValue<>(v, v)));
+    valueUInt.ifPresent(
+        v -> {
+          storageToUpdate
+              .computeIfAbsent(address, key -> new HashMap<>())
+              .put(slotHash, new BonsaiValue<>(v, v));
+        });
     return valueUInt;
   }
 
