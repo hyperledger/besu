@@ -1508,12 +1508,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !isMiningEnabled,
         asList(
             "--miner-coinbase",
-            "--min-gas-price",
             "--min-block-occupancy-ratio",
             "--miner-extra-data",
             "--miner-stratum-enabled",
             "--Xminer-remote-sealers-limit",
             "--Xminer-remote-sealers-hashrate-ttl"));
+
+    CommandLineUtils.checkMultiOptionDependencies(
+        logger,
+        commandLine,
+        List.of("--miner-enabled", "--goquorum-compatibility-enabled"),
+        List.of(!isMiningEnabled, !isGoQuorumCompatibilityMode),
+        singletonList("--min-gas-price"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -2053,11 +2059,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         commandLine,
         "--privacy-enabled",
         !isPrivacyEnabled,
-        asList(
-            "--privacy-url",
-            "--privacy-public-key-file",
-            "--privacy-multi-tenancy-enabled",
-            "--privacy-tls-enabled"));
+        asList("--privacy-multi-tenancy-enabled", "--privacy-tls-enabled"));
+
+    CommandLineUtils.checkMultiOptionDependencies(
+        logger,
+        commandLine,
+        List.of("--privacy-enabled", "--goquorum-compatibility-enabled"),
+        List.of(!isPrivacyEnabled, !isGoQuorumCompatibilityMode),
+        List.of("--privacy-url", "--privacy-public-key-file"));
 
     checkPrivacyTlsOptionsDependencies();
 
