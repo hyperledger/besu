@@ -31,7 +31,7 @@ public class CallParameter {
 
   private final long gasLimit;
 
-  private final Optional<Wei> gasPremium;
+  private final Optional<Wei> minerFee;
 
   private final Optional<Wei> feeCap;
 
@@ -51,7 +51,7 @@ public class CallParameter {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
-    this.gasPremium = Optional.empty();
+    this.minerFee = Optional.empty();
     this.feeCap = Optional.empty();
     this.gasPrice = gasPrice;
     this.value = value;
@@ -63,14 +63,14 @@ public class CallParameter {
       final Address to,
       final long gasLimit,
       final Wei gasPrice,
-      final Optional<Wei> gasPremium,
+      final Optional<Wei> minerFee,
       final Optional<Wei> feeCap,
       final Wei value,
       final Bytes payload) {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
-    this.gasPremium = gasPremium;
+    this.minerFee = minerFee;
     this.feeCap = feeCap;
     this.gasPrice = gasPrice;
     this.value = value;
@@ -93,8 +93,8 @@ public class CallParameter {
     return gasPrice;
   }
 
-  public Optional<Wei> getGasPremium() {
-    return gasPremium;
+  public Optional<Wei> getMinerFee() {
+    return minerFee;
   }
 
   public Optional<Wei> getFeeCap() {
@@ -122,7 +122,7 @@ public class CallParameter {
         && Objects.equals(from, that.from)
         && Objects.equals(to, that.to)
         && Objects.equals(gasPrice, that.gasPrice)
-        && Objects.equals(gasPremium, that.gasPremium)
+        && Objects.equals(minerFee, that.minerFee)
         && Objects.equals(feeCap, that.feeCap)
         && Objects.equals(value, that.value)
         && Objects.equals(payload, that.payload);
@@ -130,6 +130,6 @@ public class CallParameter {
 
   @Override
   public int hashCode() {
-    return Objects.hash(from, to, gasLimit, gasPrice, gasPremium, feeCap, value, payload);
+    return Objects.hash(from, to, gasLimit, gasPrice, minerFee, feeCap, value, payload);
   }
 }

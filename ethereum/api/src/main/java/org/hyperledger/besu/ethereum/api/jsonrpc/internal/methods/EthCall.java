@@ -129,7 +129,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
     }
     if (callParams.getGasPrice() != null
-        && (callParams.getFeeCap().isPresent() || callParams.getGasPremium().isPresent())) {
+        && (callParams.getFeeCap().isPresent() || callParams.getMinerFee().isPresent())) {
       throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or feeCap");
     }
     return callParams;

@@ -102,7 +102,7 @@ public class EthEstimateGas implements JsonRpcMethod {
         callParams.getTo(),
         gasLimit,
         Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
-        callParams.getGasPremium(),
+        callParams.getMinerFee(),
         callParams.getFeeCap(),
         callParams.getValue(),
         callParams.getPayload());
@@ -167,7 +167,7 @@ public class EthEstimateGas implements JsonRpcMethod {
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getGasPrice() != null
-        && (callParams.getFeeCap().isPresent() || callParams.getGasPremium().isPresent())) {
+        && (callParams.getFeeCap().isPresent() || callParams.getMinerFee().isPresent())) {
       throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or feeCap");
     }
     return callParams;

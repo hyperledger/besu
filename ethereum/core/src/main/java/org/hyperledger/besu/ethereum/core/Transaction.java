@@ -62,7 +62,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private final Wei gasPrice;
 
-  private final Wei gasPremium;
+  private final Wei minerFee;
 
   private final Wei feeCap;
 
@@ -111,7 +111,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param transactionType the transaction type
    * @param nonce the nonce
    * @param gasPrice the gas price
-   * @param gasPremium the gas premium
+   * @param minerFee the miner fee
    * @param feeCap the fee cap
    * @param gasLimit the gas limit
    * @param to the transaction recipient
@@ -134,7 +134,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final TransactionType transactionType,
       final long nonce,
       final Wei gasPrice,
-      final Wei gasPremium,
+      final Wei minerFee,
       final Wei feeCap,
       final long gasLimit,
       final Optional<Address> to,
@@ -160,7 +160,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this.transactionType = transactionType;
     this.nonce = nonce;
     this.gasPrice = gasPrice;
-    this.gasPremium = gasPremium;
+    this.minerFee = minerFee;
     this.feeCap = feeCap;
     this.gasLimit = gasLimit;
     this.to = to;
@@ -176,7 +176,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   public Transaction(
       final long nonce,
       final Wei gasPrice,
-      final Wei gasPremium,
+      final Wei minerFee,
       final Wei feeCap,
       final long gasLimit,
       final Optional<Address> to,
@@ -190,7 +190,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         TransactionType.FRONTIER,
         nonce,
         gasPrice,
-        gasPremium,
+        minerFee,
         feeCap,
         gasLimit,
         to,
@@ -297,13 +297,13 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   /**
-   * Return the transaction gas premium.
+   * Return the transaction miner fee.
    *
-   * @return the transaction gas premium
+   * @return the transaction miner fee.
    */
   @Override
-  public Optional<Quantity> getGasPremium() {
-    return Optional.ofNullable(gasPremium);
+  public Optional<Quantity> getMinerFee() {
+    return Optional.ofNullable(minerFee);
   }
 
   /**
@@ -443,7 +443,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               transactionType,
               nonce,
               gasPrice,
-              gasPremium,
+              minerFee,
               feeCap,
               gasLimit,
               to,
@@ -566,7 +566,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final TransactionType transactionType,
       final long nonce,
       final Wei gasPrice,
-      final Wei gasPremium,
+      final Wei minerFee,
       final Wei feeCap,
       final long gasLimit,
       final Optional<Address> to,
@@ -582,7 +582,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       case EIP1559:
         preimage =
             eip1559Preimage(
-                nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
+                nonce, gasPrice, minerFee, feeCap, gasLimit, to, value, payload, chainId);
         break;
       case ACCESS_LIST:
         preimage =
@@ -635,7 +635,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   private static Bytes eip1559Preimage(
       final long nonce,
       final Wei gasPrice,
-      final Wei gasPremium,
+      final Wei minerFee,
       final Wei feeCap,
       final long gasLimit,
       final Optional<Address> to,
@@ -651,7 +651,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
           rlpOutput.writeUInt256Scalar(value);
           rlpOutput.writeBytes(payload);
-          rlpOutput.writeUInt256Scalar(gasPremium);
+          rlpOutput.writeUInt256Scalar(minerFee);
           rlpOutput.writeUInt256Scalar(feeCap);
           if (chainId.isPresent()) {
             rlpOutput.writeBigIntegerScalar(chainId.get());
@@ -691,7 +691,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return Objects.equals(this.chainId, that.chainId)
         && Objects.equals(this.gasLimit, that.gasLimit)
         && Objects.equals(this.gasPrice, that.gasPrice)
-        && Objects.equals(this.gasPremium, that.gasPremium)
+        && Objects.equals(this.minerFee, that.minerFee)
         && Objects.equals(this.feeCap, that.feeCap)
         && Objects.equals(this.nonce, that.nonce)
         && Objects.equals(this.payload, that.payload)
@@ -704,7 +704,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public int hashCode() {
     return Objects.hash(
-        nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, signature, chainId, v);
+        nonce, gasPrice, minerFee, feeCap, gasLimit, to, value, payload, signature, chainId, v);
   }
 
   @Override
@@ -714,8 +714,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append("type=").append(getType()).append(", ");
     sb.append("nonce=").append(getNonce()).append(", ");
     sb.append("gasPrice=").append(getGasPrice()).append(", ");
-    if (getGasPremium().isPresent() && getFeeCap().isPresent()) {
-      sb.append("gasPremium=").append(getGasPremium()).append(", ");
+    if (getMinerFee().isPresent() && getFeeCap().isPresent()) {
+      sb.append("minerFee=").append(getMinerFee()).append(", ");
       sb.append("feeCap=").append(getFeeCap()).append(", ");
     }
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
@@ -746,7 +746,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     protected Wei gasPrice;
 
-    protected Wei gasPremium;
+    protected Wei minerFee;
 
     protected Wei feeCap;
 
@@ -788,8 +788,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return this;
     }
 
-    public Builder gasPremium(final Wei gasPremium) {
-      this.gasPremium = gasPremium;
+    public Builder minerFee(final Wei minerFee) {
+      this.minerFee = minerFee;
       return this;
     }
 
@@ -841,7 +841,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     public Builder guessType() {
       if (accessList.isPresent()) {
         transactionType = TransactionType.ACCESS_LIST;
-      } else if (gasPremium != null || feeCap != null) {
+      } else if (minerFee != null || feeCap != null) {
         transactionType = TransactionType.EIP1559;
       } else {
         transactionType = TransactionType.FRONTIER;
@@ -854,7 +854,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           transactionType,
           nonce,
           gasPrice,
-          gasPremium,
+          minerFee,
           feeCap,
           gasLimit,
           to,
@@ -882,7 +882,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                   transactionType,
                   nonce,
                   gasPrice,
-                  gasPremium,
+                  minerFee,
                   feeCap,
                   gasLimit,
                   to,

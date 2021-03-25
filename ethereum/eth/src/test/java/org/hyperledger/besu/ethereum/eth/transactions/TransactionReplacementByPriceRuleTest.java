@@ -109,11 +109,11 @@ public class TransactionReplacementByPriceRuleTest {
     return transactionInfo;
   }
 
-  private static TransactionInfo eip1559Tx(final long gasPremium, final long feeCap) {
+  private static TransactionInfo eip1559Tx(final long minerFee, final long feeCap) {
     final TransactionInfo transactionInfo = mock(TransactionInfo.class);
     final Transaction transaction = mock(Transaction.class);
     when(transaction.getType()).thenReturn(TransactionType.EIP1559);
-    when(transaction.getGasPremium()).thenReturn(Optional.of(Wei.of(gasPremium)));
+    when(transaction.getMinerFee()).thenReturn(Optional.of(Wei.of(minerFee)));
     when(transaction.getFeeCap()).thenReturn(Optional.of(Wei.of(feeCap)));
     when(transactionInfo.getTransaction()).thenReturn(transaction);
     return transactionInfo;

@@ -41,7 +41,7 @@ public class TransactionPriceCalculatorTest {
 
   private final TransactionPriceCalculator transactionPriceCalculator;
   private final Wei gasPrice;
-  private final Wei gasPremium;
+  private final Wei minerFee;
   private final Wei feeCap;
   private final Optional<Long> baseFee;
   private final Wei expectedPrice;
@@ -49,13 +49,13 @@ public class TransactionPriceCalculatorTest {
   public TransactionPriceCalculatorTest(
       final TransactionPriceCalculator transactionPriceCalculator,
       final Wei gasPrice,
-      final Wei gasPremium,
+      final Wei minerFee,
       final Wei feeCap,
       final Optional<Long> baseFee,
       final Wei expectedPrice) {
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.gasPrice = gasPrice;
-    this.gasPremium = gasPremium;
+    this.minerFee = minerFee;
     this.feeCap = feeCap;
     this.baseFee = baseFee;
     this.expectedPrice = expectedPrice;
@@ -67,7 +67,7 @@ public class TransactionPriceCalculatorTest {
         new Object[][] {
           // legacy transaction must return gas price
           {FRONTIER_CALCULATOR, Wei.of(578L), null, null, Optional.empty(), Wei.of(578L)},
-          // EIP-1559 must return gas premium + base fee
+          // EIP-1559 must return miner fee + base fee
           {EIP_1559_CALCULATOR, null, Wei.of(100L), Wei.of(300L), Optional.of(150L), Wei.of(250L)},
           // EIP-1559 must return fee cap
           {EIP_1559_CALCULATOR, null, Wei.of(100L), Wei.of(300L), Optional.of(250L), Wei.of(300L)}
@@ -81,7 +81,7 @@ public class TransactionPriceCalculatorTest {
                 Transaction.builder()
                     .type(TransactionType.EIP1559)
                     .gasPrice(gasPrice)
-                    .gasPremium(gasPremium)
+                    .minerFee(minerFee)
                     .feeCap(feeCap)
                     .build(),
                 baseFee))

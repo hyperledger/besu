@@ -40,7 +40,7 @@ public class JsonCallParameter extends CallParameter {
       @JsonProperty("to") final Address to,
       @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
       @JsonProperty("gasPrice") final Wei gasPrice,
-      @JsonProperty("gasPremium") final Wei gasPremium,
+      @JsonProperty("minerFee") final Wei minerFee,
       @JsonProperty("feeCap") final Wei feeCap,
       @JsonProperty("value") final Wei value,
       @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
@@ -51,7 +51,7 @@ public class JsonCallParameter extends CallParameter {
         to,
         gasLimit != null ? gasLimit.toLong() : -1,
         gasPrice,
-        Optional.ofNullable(gasPremium),
+        Optional.ofNullable(minerFee),
         Optional.ofNullable(feeCap),
         value,
         payload);

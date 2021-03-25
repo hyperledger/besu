@@ -178,7 +178,7 @@ public class TransactionDecoder {
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes())
-            .gasPremium(Wei.wrap(input.readBytes()))
+            .minerFee(Wei.wrap(input.readBytes()))
             .feeCap(Wei.wrap(input.readBytes()));
 
     final BigInteger v = input.readBytes().toBigInteger();

@@ -398,7 +398,7 @@ public class TransactionSimulatorTest {
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())
             .feeCap(callParameter.getFeeCap().orElseThrow())
-            .gasPremium(callParameter.getGasPremium().orElseThrow())
+            .minerFee(callParameter.getMinerFee().orElseThrow())
             .to(callParameter.getTo())
             .sender(callParameter.getFrom())
             .value(callParameter.getValue())

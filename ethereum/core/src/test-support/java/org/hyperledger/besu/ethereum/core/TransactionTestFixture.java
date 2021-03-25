@@ -41,7 +41,7 @@ public class TransactionTestFixture {
 
   private Optional<BigInteger> chainId = Optional.of(BigInteger.valueOf(2018));
 
-  private Optional<Wei> gasPremium = Optional.empty();
+  private Optional<Wei> minerFee = Optional.empty();
   private Optional<Wei> feeCap = Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
@@ -58,7 +58,7 @@ public class TransactionTestFixture {
     to.ifPresent(builder::to);
     chainId.ifPresent(builder::chainId);
 
-    gasPremium.ifPresent(builder::gasPremium);
+    minerFee.ifPresent(builder::minerFee);
     feeCap.ifPresent(builder::feeCap);
 
     return builder.signAndBuild(keys);
@@ -109,8 +109,8 @@ public class TransactionTestFixture {
     return this;
   }
 
-  public TransactionTestFixture gasPremium(final Optional<Wei> gasPremium) {
-    this.gasPremium = gasPremium;
+  public TransactionTestFixture minerFee(final Optional<Wei> minerFee) {
+    this.minerFee = minerFee;
     return this;
   }
 

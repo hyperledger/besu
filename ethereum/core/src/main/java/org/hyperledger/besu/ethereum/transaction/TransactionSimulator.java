@@ -174,7 +174,7 @@ public class TransactionSimulator {
             .value(value)
             .payload(payload)
             .signature(FAKE_SIGNATURE);
-    callParams.getGasPremium().ifPresent(transactionBuilder::gasPremium);
+    callParams.getMinerFee().ifPresent(transactionBuilder::minerFee);
     callParams.getFeeCap().ifPresent(transactionBuilder::feeCap);
 
     final Transaction transaction = transactionBuilder.build();

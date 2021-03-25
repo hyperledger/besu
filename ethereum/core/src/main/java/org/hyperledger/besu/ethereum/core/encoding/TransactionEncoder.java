@@ -170,7 +170,7 @@ public class TransactionEncoder {
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
     out.writeUInt256Scalar(
-        transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+        transaction.getMinerFee().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
     out.writeUInt256Scalar(
         transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
     writeSignatureAndRecoveryId(transaction, out);

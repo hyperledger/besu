@@ -59,10 +59,10 @@ public interface Transaction {
    * A scalar value equal to the number of Wei to be paid on top of base fee, as specified in
    * EIP-1559.
    *
-   * @return the quantity of Wei for gas premium.
+   * @return the quantity of Wei for miner fee.
    */
   @Unstable
-  default Optional<Quantity> getGasPremium() {
+  default Optional<Quantity> getMinerFee() {
     return Optional.empty();
   }
 

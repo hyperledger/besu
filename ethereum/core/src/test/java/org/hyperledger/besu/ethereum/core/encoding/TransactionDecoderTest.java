@@ -56,7 +56,7 @@ public class TransactionDecoderTest {
         TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPrice()).isEqualByComparingTo(Wei.of(50L));
-    assertThat(transaction.getGasPremium()).isEmpty();
+    assertThat(transaction.getMinerFee()).isEmpty();
     assertThat(transaction.getFeeCap()).isEmpty();
   }
 
@@ -65,7 +65,7 @@ public class TransactionDecoderTest {
     final Transaction transaction =
         TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
-    assertThat(transaction.getGasPremium()).hasValue(Wei.of(527L));
+    assertThat(transaction.getMinerFee()).hasValue(Wei.of(527L));
     assertThat(transaction.getFeeCap()).hasValue(Wei.of(369L));
     ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }

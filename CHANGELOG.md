@@ -3,6 +3,8 @@
 ## 21.1.4
 
 ### Additions and Improvements
+* Rename 1559 gasPremium to minerFee [\#2080](https://github.com/hyperledger/besu/pull/2080)
+
 
 ### Bug Fixes
 
