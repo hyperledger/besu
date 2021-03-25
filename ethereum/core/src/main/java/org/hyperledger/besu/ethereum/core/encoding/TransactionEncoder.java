@@ -148,17 +148,7 @@ public class TransactionEncoder {
         []
       ]
     ] */
-    rlpOutput.writeList(
-        accessList,
-        (accessListEntry, accessListEntryRLPOutput) -> {
-          accessListEntryRLPOutput.startList();
-          rlpOutput.writeBytes(accessListEntry.getAddress());
-          rlpOutput.writeList(
-              accessListEntry.getStorageKeys(),
-              (storageKeyBytes, storageKeyBytesRLPOutput) ->
-                  storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
-          accessListEntryRLPOutput.endList();
-        });
+    writeAccessList(rlpOutput, Optional.of(accessList));
   }
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
@@ -178,11 +168,18 @@ public class TransactionEncoder {
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
-    if (transaction.getAccessList().isEmpty()) {
+    writeAccessList(out, transaction.getAccessList());
+    writeSignatureAndRecoveryId(transaction, out);
+    out.endList();
+  }
+
+  private static void writeAccessList(
+      final RLPOutput out, final Optional<List<AccessListEntry>> accessListEntries) {
+    if (accessListEntries.isEmpty()) {
       out.writeEmptyList();
     } else {
       out.writeList(
-          transaction.getAccessList().get(),
+          accessListEntries.get(),
           (accessListEntry, accessListEntryRLPOutput) -> {
             accessListEntryRLPOutput.startList();
             out.writeBytes(accessListEntry.getAddress());
@@ -193,8 +190,6 @@ public class TransactionEncoder {
             accessListEntryRLPOutput.endList();
           });
     }
-    writeSignatureAndRecoveryId(transaction, out);
-    out.endList();
   }
 
   private static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
