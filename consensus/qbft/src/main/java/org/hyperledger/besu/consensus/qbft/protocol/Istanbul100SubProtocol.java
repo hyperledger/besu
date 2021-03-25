@@ -18,14 +18,14 @@ import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
-public class QbftSubProtocol implements SubProtocol {
+public class Istanbul100SubProtocol implements SubProtocol {
 
-  public static String NAME = "QBF";
-  public static final Capability QBFV1 = Capability.create(NAME, 1);
+  public static String NAME = "istanbul";
+  public static final Capability ISTANBUL_100 = Capability.create(NAME, 100);
 
-  private static final QbftSubProtocol INSTANCE = new QbftSubProtocol();
+  private static final Istanbul100SubProtocol INSTANCE = new Istanbul100SubProtocol();
 
-  public static QbftSubProtocol get() {
+  public static Istanbul100SubProtocol get() {
     return INSTANCE;
   }
 
