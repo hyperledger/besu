@@ -83,7 +83,7 @@ public class TransactionEncoder {
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
-    writeSignatureAndRecoveryId(transaction, out);
+    writeSignatureAndV(transaction, out);
     out.endList();
   }
 
@@ -195,6 +195,11 @@ public class TransactionEncoder {
     }
     writeSignatureAndRecoveryId(transaction, out);
     out.endList();
+  }
+
+  private static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
+    out.writeBigIntegerScalar(transaction.getV());
+    writeSignature(transaction, out);
   }
 
   private static void writeSignatureAndRecoveryId(
