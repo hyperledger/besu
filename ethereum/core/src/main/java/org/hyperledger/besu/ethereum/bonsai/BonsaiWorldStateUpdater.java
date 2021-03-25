@@ -295,17 +295,14 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
-    final Map<Hash, BonsaiValue<UInt256>> localAccountStorage =
-        storageToUpdate.computeIfAbsent(address, key -> new HashMap<>());
-    final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
-    if (value != null) {
-      return Optional.ofNullable(value.getUpdated());
-    } else {
-      final Optional<UInt256> valueUInt =
-          wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
-      valueUInt.ifPresent(v -> localAccountStorage.put(slotHash, new BonsaiValue<>(v, v)));
-      return valueUInt;
+    final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
+    if (localAccountStorage != null && localAccountStorage.containsKey(slotHash)) {
+      return Optional.ofNullable(localAccountStorage.get(slotHash).getUpdated());
     }
+    final Optional<UInt256> valueUInt =
+        wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
+    valueUInt.ifPresent(v -> localAccountStorage.put(slotHash, new BonsaiValue<>(v, v)));
+    return valueUInt;
   }
 
   @Override
@@ -314,11 +311,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     if (storageToClear.contains(address)) {
       return UInt256.ZERO;
     }
-    final Map<Hash, BonsaiValue<UInt256>> localAccountStorage =
-        storageToUpdate.computeIfAbsent(address, key -> new HashMap<>());
-    final Hash slotHashBytes = Hash.hash(storageKey.toBytes());
-    final BonsaiValue<UInt256> value = localAccountStorage.get(slotHashBytes);
-    if (value != null) {
+    final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
+    final Hash slotHash = Hash.hash(storageKey.toBytes());
+    if (localAccountStorage != null && localAccountStorage.containsKey(slotHash)) {
+      final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
       final UInt256 updated = value.getUpdated();
       if (updated != null) {
         return updated;
