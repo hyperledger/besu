@@ -6,6 +6,8 @@
 
 ### Bug Fixes
 
+- Fixed issue in discv5 where nonce was incorrectly reused.
+
 ### Early Access Features
 
 #### Previously identified known issues
