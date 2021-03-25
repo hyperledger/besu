@@ -37,8 +37,7 @@ public interface TransactionPriceCalculator {
       if (transaction.getType().equals(TransactionType.FRONTIER)) {
         return transaction.getGasPrice();
       }
-      final Wei minerFee =
-          Wei.of((BigInteger) transaction.getMinerFee().orElseThrow().getValue());
+      final Wei minerFee = Wei.of((BigInteger) transaction.getMinerFee().orElseThrow().getValue());
       final Wei feeCap = Wei.of((BigInteger) transaction.getFeeCap().orElseThrow().getValue());
       Wei price = minerFee.add(baseFee);
       if (price.compareTo(feeCap) > 0) {
