@@ -76,8 +76,8 @@ public class CommandLineUtils {
    * @param isMainOptionCondition the conditions to test dependent options against. If all
    *     conditions are true, dependent options will be checked.
    * @param dependentOptionsNames a list of option names that can't be used if condition is met.
-   *     Example: if --miner-coinbase is in the list and condition is that --miner-enabled should
-   *     not be false, we log a warning.
+   *     Example: if --min-gas-price is in the list and condition is that either --miner-enabled or
+   *     --goquorum-compatibility-enabled should not be false, we log a warning.
    */
   public static void checkMultiOptionDependencies(
       final Logger logger,
