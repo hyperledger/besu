@@ -14,11 +14,45 @@
  */
 package org.hyperledger.besu.crypto;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class SignatureAlgorithmFactory {
+  private static SignatureAlgorithm instance = null;
 
-  private static final SignatureAlgorithm instance = new SECP256K1();
+  private SignatureAlgorithmFactory() {}
 
+  public static void setDefaultInstance() {
+    instance = SignatureAlgorithmType.createDefault().getInstance();
+  }
+
+  public static void setInstance(final SignatureAlgorithmType signatureAlgorithmType)
+      throws IllegalStateException {
+    if (instance != null) {
+      throw new IllegalStateException(
+          "Instance of SignatureAlgorithmFactory can only be set once.");
+    }
+
+    instance = signatureAlgorithmType.getInstance();
+  }
+
+  /**
+   * getInstance will always return a valid SignatureAlgorithm and never null. This is necessary in
+   * the unit tests be able to use the factory without having to call setInstance first.
+   *
+   * @return SignatureAlgorithm
+   */
   public static SignatureAlgorithm getInstance() {
-    return instance;
+    return instance != null
+        ? instance
+        : SignatureAlgorithmType.DEFAULT_SIGNATURE_ALGORITHM_TYPE.get();
+  }
+
+  public static boolean isInstanceSet() {
+    return instance != null;
+  }
+
+  @VisibleForTesting
+  public static void resetInstance() {
+    instance = null;
   }
 }
