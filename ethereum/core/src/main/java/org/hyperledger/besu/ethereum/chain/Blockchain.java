@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -230,4 +231,22 @@ public interface Blockchain {
    * @return {@code true} if the observer was removed; otherwise {@code false}
    */
   boolean removeChainReorgObserver(long observerId);
+
+  /**
+   * Gets the current fork choice rule. When presented with two block headers indicate which chain
+   * is more preferred. Less than zero: the first chain, greater than zero: the second chain, or
+   * zero: no preference.
+   *
+   * @return The preferred block header
+   */
+  Comparator<BlockHeader> getForkChoiceRule();
+
+  /**
+   * Sets the current fork choice rule. When presented with two block headers indicate which chain
+   * is more preferred. Less than zero: the first chain, greater than zero: the second chain, or
+   * zero: no preference.
+   *
+   * @param forkChoiceRule The new fork choice rule.
+   */
+  void setForkChoiceRule(Comparator<BlockHeader> forkChoiceRule);
 }
