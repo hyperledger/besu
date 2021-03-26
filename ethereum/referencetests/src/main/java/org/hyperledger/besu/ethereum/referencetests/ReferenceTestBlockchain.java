@@ -169,7 +169,7 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
-  public Comparator<BlockHeader> getForkChoiceRule() {
+  public Comparator<BlockHeader> getBlockChoiceRule() {
     return (a, b) -> {
       throw new NonDeterministicOperationException(
           "ReferenceTestBlockchian for VMTest Chains do not support fork choice rules");
@@ -177,5 +177,5 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
-  public void setForkChoiceRule(final Comparator<BlockHeader> forkChoiceRule) {}
+  public void setBlockChoiceRule(final Comparator<BlockHeader> blockChoiceRule) {}
 }

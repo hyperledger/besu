@@ -18,7 +18,7 @@ package org.hyperledger.besu.consensus.clique;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.clique.CliqueHelpers.distanceFromInTurn;
-import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueForkChoiceRule;
+import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.Util.publicKeyToAddress;
 
@@ -46,7 +46,7 @@ import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
-public class CliqueForkChoiceTests {
+public class CliqueBlockChoiceTests {
   private List<KeyPair> keyPairs;
   private List<Address> addresses;
   private BlockHeaderTestFixture headerBuilder;
@@ -87,7 +87,7 @@ public class CliqueForkChoiceTests {
             epochManager,
             blockInterface);
 
-    installCliqueForkChoiceRule(blockchain, cliqueContext);
+    installCliqueBlockChoiceRule(blockchain, cliqueContext);
     for (int i = 1; i < keyPairs.size(); i++) {
       headerBuilder.number(i);
       headerBuilder.parentHash(blockchain.getChainHeadHash());
@@ -109,9 +109,9 @@ public class CliqueForkChoiceTests {
 
     // No prior fork choices to verify are equal
 
-    final Comparator<BlockHeader> forkChoiceRule = blockchain.getForkChoiceRule();
-    assertThat(forkChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
-    assertThat(forkChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
+    final Comparator<BlockHeader> blockChoiceRule = blockchain.getBlockChoiceRule();
+    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
+    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
   }
 
   @Test
@@ -132,14 +132,14 @@ public class CliqueForkChoiceTests {
     final Block worseBlock = createEmptyBlock(keyPairs.get(2));
     final BlockHeader worseHeader = worseBlock.getHeader();
 
-    final Comparator<BlockHeader> forkChoiceRule = blockchain.getForkChoiceRule();
+    final Comparator<BlockHeader> blockChoiceRule = blockchain.getBlockChoiceRule();
 
     // verify total difficulty is equal
     assertThat(blockchain.getTotalDifficultyByHash(worseHeader.getHash()))
         .isEqualTo(blockchain.getTotalDifficultyByHash(betterHeader.getHash()));
 
-    assertThat(forkChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
-    assertThat(forkChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
+    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
+    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
   }
 
   @Test
@@ -160,9 +160,9 @@ public class CliqueForkChoiceTests {
     // verify chains are same length
     assertThat(worseHeader.getNumber()).isEqualTo(betterHeader.getNumber());
 
-    final Comparator<BlockHeader> forkChoiceRule = blockchain.getForkChoiceRule();
-    assertThat(forkChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
-    assertThat(forkChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
+    final Comparator<BlockHeader> blockChoiceRule = blockchain.getBlockChoiceRule();
+    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
+    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
   }
 
   @Test
@@ -196,9 +196,9 @@ public class CliqueForkChoiceTests {
     assertThat(distanceFromInTurn(worseHeader, cliqueContext))
         .isEqualTo(distanceFromInTurn(betterHeader, cliqueContext));
 
-    final Comparator<BlockHeader> forkChoiceRule = blockchain.getForkChoiceRule();
-    assertThat(forkChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
-    assertThat(forkChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
+    final Comparator<BlockHeader> blockChoiceRule = blockchain.getBlockChoiceRule();
+    assertThat(blockChoiceRule.compare(worseHeader, betterHeader)).isLessThan(0);
+    assertThat(blockChoiceRule.compare(betterHeader, worseHeader)).isGreaterThan(0);
   }
 
   @Test
@@ -208,10 +208,10 @@ public class CliqueForkChoiceTests {
     headerBuilder.difficulty(Difficulty.of(1));
     final Block block = createEmptyBlock(keyPairs.get(1));
 
-    final Comparator<BlockHeader> forkChoiceRule = blockchain.getForkChoiceRule();
+    final Comparator<BlockHeader> blockChoiceRule = blockchain.getBlockChoiceRule();
 
     // the only way to get a tie is to test the same block header
     //noinspection EqualsWithItself
-    assertThat(forkChoiceRule.compare(block.getHeader(), block.getHeader())).isZero();
+    assertThat(blockChoiceRule.compare(block.getHeader(), block.getHeader())).isZero();
   }
 }

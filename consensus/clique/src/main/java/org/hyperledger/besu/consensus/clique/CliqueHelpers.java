@@ -96,16 +96,19 @@ public class CliqueHelpers {
     return signerLimit - 1;
   }
 
-  public static void installCliqueForkChoiceRule(
+  public static void installCliqueBlockChoiceRule(
       final Blockchain blockchain, final CliqueContext cliqueContext) {
-    blockchain.setForkChoiceRule(
+    blockchain.setBlockChoiceRule(
         blockchain
             // most total difficulty
-            .getForkChoiceRule()
+            .getBlockChoiceRule()
             // shortest chain
             .thenComparing(Comparator.comparing(ProcessableBlockHeader::getNumber).reversed())
             // proposer with most recent in-turn block
-            .thenComparing(header -> distanceFromInTurn(header, cliqueContext))
+            .thenComparing(
+                Comparator.comparing(
+                        (BlockHeader header) -> distanceFromInTurn(header, cliqueContext))
+                    .reversed())
             // last resort: blockhash as uint256.
             .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
   }
@@ -127,5 +130,4 @@ public class CliqueHelpers {
 
     return (int) (header.getNumber() - index) % validators.size();
   }
-
 }

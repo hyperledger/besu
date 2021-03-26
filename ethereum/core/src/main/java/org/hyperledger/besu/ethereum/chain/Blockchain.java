@@ -233,20 +233,20 @@ public interface Blockchain {
   boolean removeChainReorgObserver(long observerId);
 
   /**
-   * Gets the current fork choice rule. When presented with two block headers indicate which chain
-   * is more preferred. Less than zero: the first chain, greater than zero: the second chain, or
-   * zero: no preference.
+   * Gets the current block choice rule. When presented with two block headers indicate which chain
+   * is more preferred. greater than zero: the first chain is more preferred, less than zero: the
+   * second chain is more preferred, or zero: no preference.
    *
    * @return The preferred block header
    */
-  Comparator<BlockHeader> getForkChoiceRule();
+  Comparator<BlockHeader> getBlockChoiceRule();
 
   /**
    * Sets the current fork choice rule. When presented with two block headers indicate which chain
-   * is more preferred. Less than zero: the first chain, greater than zero: the second chain, or
-   * zero: no preference.
+   * is more preferred. greater than zero: the first chain is more preferred, less than zero: the
+   * second chain is more preferred, or zero: no preference.
    *
-   * @param forkChoiceRule The new fork choice rule.
+   * @param blockChoiceRule The new fork choice rule.
    */
-  void setForkChoiceRule(Comparator<BlockHeader> forkChoiceRule);
+  void setBlockChoiceRule(Comparator<BlockHeader> blockChoiceRule);
 }

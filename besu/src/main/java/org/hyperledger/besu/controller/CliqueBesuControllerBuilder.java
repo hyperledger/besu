@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
-import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueForkChoiceRule;
+import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
@@ -144,7 +144,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             new VoteProposer(),
             epochManager,
             blockInterface);
-    installCliqueForkChoiceRule(blockchain, cliqueContext);
+    installCliqueBlockChoiceRule(blockchain, cliqueContext);
 
     return cliqueContext;
   }

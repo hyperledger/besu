@@ -56,7 +56,7 @@ import org.apache.logging.log4j.Logger;
 public class DefaultBlockchain implements MutableBlockchain {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final Comparator<BlockHeader> heaviestChainForkChoiceRule =
+  private final Comparator<BlockHeader> heaviestChainBlockChoiceRule =
       Comparator.comparing(this::calculateTotalDifficulty);
 
   protected final BlockchainStorage blockchainStorage;
@@ -70,7 +70,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private volatile int chainHeadTransactionCount;
   private volatile int chainHeadOmmerCount;
 
-  private Comparator<BlockHeader> forkChoiceRule;
+  private Comparator<BlockHeader> blockChoiceRule;
 
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
@@ -133,7 +133,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         () -> chainHeadOmmerCount);
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
-    this.forkChoiceRule = heaviestChainForkChoiceRule;
+    this.blockChoiceRule = heaviestChainBlockChoiceRule;
   }
 
   public static MutableBlockchain createMutable(
@@ -237,13 +237,13 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public Comparator<BlockHeader> getForkChoiceRule() {
-    return forkChoiceRule;
+  public Comparator<BlockHeader> getBlockChoiceRule() {
+    return blockChoiceRule;
   }
 
   @Override
-  public void setForkChoiceRule(final Comparator<BlockHeader> forkChoiceRule) {
-    this.forkChoiceRule = forkChoiceRule;
+  public void setBlockChoiceRule(final Comparator<BlockHeader> blockChoiceRule) {
+    this.blockChoiceRule = blockChoiceRule;
   }
 
   @Override
@@ -318,7 +318,7 @@ public class DefaultBlockchain implements MutableBlockchain {
             LogWithMetadata.generate(
                 blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false),
             blockWithReceipts.getReceipts());
-      } else if (forkChoiceRule.compare(chainHeader, newBlock.getHeader()) > 0) {
+      } else if (blockChoiceRule.compare(newBlock.getHeader(), chainHeader) > 0) {
         // New block represents a chain reorganization
         return handleChainReorg(updater, blockWithReceipts);
       } else {
