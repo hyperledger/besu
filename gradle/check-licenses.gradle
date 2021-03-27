@@ -60,8 +60,8 @@ downloadLicenses {
   excludeDependencies = [
     // only used for static analysis, not actually shipped
     'com.google.code.findbugs:jFormatString:3.0.0',
-    'com.google.errorprone:javac:9+181-r4173-1',
-    'org.checkerframework:dataflow-shaded:.3.1.2',
+    'com.google.errorprone:javac:.*',
+    'org.checkerframework:dataflow-shaded:3.1.2',
   ]
 
   ext.apache = license('Apache License, Version 2.0', 'http://opensource.org/licenses/Apache-2.0')
