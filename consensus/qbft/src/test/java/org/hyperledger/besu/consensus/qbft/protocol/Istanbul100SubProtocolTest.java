@@ -18,18 +18,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
-public class QbftSubProtocolTest {
+public class Istanbul100SubProtocolTest {
 
   @Test
   public void messageSpaceReportsCorrectly() {
-    final QbftSubProtocol subProt = new QbftSubProtocol();
+    final Istanbul100SubProtocol subProt = new Istanbul100SubProtocol();
 
     assertThat(subProt.messageSpace(1)).isEqualTo(0x16);
   }
 
   @Test
   public void allIbftMessageTypesAreRecognisedAsValidByTheSubProtocol() {
-    final QbftSubProtocol subProt = new QbftSubProtocol();
+    final Istanbul100SubProtocol subProt = new Istanbul100SubProtocol();
 
     assertThat(subProt.isValidMessageCode(1, 0x12)).isTrue();
     assertThat(subProt.isValidMessageCode(1, 0x13)).isTrue();
@@ -39,7 +39,7 @@ public class QbftSubProtocolTest {
 
   @Test
   public void invalidMessageTypesAreNotAcceptedByTheSubprotocol() {
-    final QbftSubProtocol subProt = new QbftSubProtocol();
+    final Istanbul100SubProtocol subProt = new Istanbul100SubProtocol();
 
     assertThat(subProt.isValidMessageCode(1, 0x16)).isFalse();
   }
