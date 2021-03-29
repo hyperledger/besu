@@ -1091,7 +1091,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
-      names = { "--dns-discovery-url" }
+      names = { "--dns-discovery-url" },
+      description = "Specifies the URL to use for DNS discovery"
   )
   private String dnsDiscoveryUrl = null;
 
