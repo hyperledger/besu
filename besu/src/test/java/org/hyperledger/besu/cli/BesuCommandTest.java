@@ -735,6 +735,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
   }
 
+  // TODO: tests in this class?
+
   @Test
   public void tomlThatConfiguresEverythingExceptPermissioningToml() throws IOException {
     // Load a TOML that configures literally everything (except permissioning TOML config)
