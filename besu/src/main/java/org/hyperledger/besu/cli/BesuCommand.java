@@ -2412,9 +2412,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         builder.setBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
-    }
-
-    if (dnsDiscoveryUrl != null) {
+    } else if (dnsDiscoveryUrl != null) {
+      // TODO: Add validation that this should always be null when genesis file is specified?
+      // Is that the desired behavior?
       builder.setDnsDiscoveryUrl(dnsDiscoveryUrl);
     }
 
