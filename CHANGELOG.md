@@ -117,6 +117,7 @@ Features added between 20.10.0 to 21.1.0 include:
 * Miner Data JSON-RPC: The `eth_getMinerDataByBlockHash` and `eth_getMinerDataByBlockNumber` endpoints return miner rewards and coinbase address for a given block. 
 * EIP-1898 support: [The EIP](https://eips.ethereum.org/EIPS/eip-1898) adds `blockHash` to JSON-RPC methods which accept a default block parameter.
 
+
 ### Early Access Features
 * Bonsai Tries: A new database format which reduces storage requirements and improves performance for access to recent state. _Note: only full sync is currently supported._
 * QBFT: A new consensus algorithm to support interoperability with other Enterprise Ethereum Alliance compatible clients.
@@ -139,7 +140,7 @@ Features added between 20.10.0 to 21.1.0 include:
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
 
 ### Download link
-sha256: `e4c8fe4007e3e5f7f2528cbf1eeb5457caf06536c974a6ff4305035ff5724476`
+sha256: `c22a80a54e9fed864734b9fbd69a0a46840fd27ca5211648a3eaf8a955417218 `
 
 ## 21.1.0-RC2
 ### Additions and Improvements
