@@ -44,6 +44,7 @@ random-peer-priority-enabled=false
 host-whitelist=["all"]
 host-allowlist=["all"]
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
+dns-discovery-url="test123"
 
 # chain
 network="MAINNET"

@@ -4,6 +4,8 @@
 
 ### Additions and Improvements
 
+- Adds `--dns-discovery-url` CLI command
+
 ### Bug Fixes
 
 - Fixed issue in discv5 where nonce was incorrectly reused.
