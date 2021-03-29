@@ -989,6 +989,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void testDnsDiscoveryUrlEthConfig() throws Exception {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+            ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--dns-discovery-url", "test123");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getDnsDiscoveryUrl()).isEqualTo("test123");
+  }
+
+  @Test
   public void defaultNetworkIdAndBootnodesForCustomNetworkOptions() throws Exception {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
 
