@@ -31,9 +31,11 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
   private Node minerNode;
   private Node fullNode;
 
+  protected static final String GENESIS_FILE = "/crypto/secp256r1.json";
+
   @Before
   public void setUp() throws Exception {
-    minerNode = besu.createMinerNode("node1");
+    minerNode = besu.createCustomGenesisNode("node1", GENESIS_FILE, true);
     fullNode = besu.createArchiveNode("node2");
     cluster.start(minerNode, fullNode);
   }
