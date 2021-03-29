@@ -735,8 +735,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
   }
 
-  // TODO: tests in this class?
-
   @Test
   public void tomlThatConfiguresEverythingExceptPermissioningToml() throws IOException {
     // Load a TOML that configures literally everything (except permissioning TOML config)
@@ -927,6 +925,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getBootNodes()).isEmpty();
     assertThat(config.getDnsDiscoveryUrl()).isNull();
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(3141592));
+  }
+
+  @Test
+  public void testDnsDiscoveryUrlEthConfig() throws Exception {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+            ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--dns-discovery-url", "test123");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getDnsDiscoveryUrl()).isEqualTo("test123");
   }
 
   @Test
