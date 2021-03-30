@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -66,8 +66,7 @@ public class TransactionSmartContractPermissioningControllerTest {
         GenesisState.fromConfig(GenesisConfigFile.fromConfig(emptyContractFile), protocolSchedule);
 
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    final WorldStateArchive worldArchive =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
 
     genesisState.writeStateTo(worldArchive.getMutable());
 

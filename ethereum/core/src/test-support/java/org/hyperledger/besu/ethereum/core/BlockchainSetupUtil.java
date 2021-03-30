@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.util.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -158,8 +160,8 @@ public class BlockchainSetupUtil {
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
       final WorldStateArchive worldArchive =
           storageFormat == DataStorageFormat.BONSAI
-              ? InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain)
-              : InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+              ? createBonsaiInMemoryWorldStateArchive(blockchain)
+              : createInMemoryWorldStateArchive();
       final TransactionPool transactionPool = mock(TransactionPool.class);
 
       genesisState.writeStateTo(worldArchive.getMutable());

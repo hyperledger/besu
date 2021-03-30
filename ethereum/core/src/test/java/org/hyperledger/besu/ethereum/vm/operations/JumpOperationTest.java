@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -22,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -67,8 +67,7 @@ public class JumpOperationTest {
 
     address = Address.fromHexString("0x18675309");
 
-    final WorldStateArchive worldStateArchive =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     worldStateUpdater = worldStateArchive.getMutable().updater();
     worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));

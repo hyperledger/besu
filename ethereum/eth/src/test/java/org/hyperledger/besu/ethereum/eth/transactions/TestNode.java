@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.util.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -112,8 +113,7 @@ public class TestNode implements Closeable {
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     final MutableBlockchain blockchain =
         createInMemoryBlockchain(genesisState.getBlock(), blockHeaderFunctions);
-    final WorldStateArchive worldStateArchive =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext protocolContext =
         new ProtocolContext(blockchain, worldStateArchive, null);

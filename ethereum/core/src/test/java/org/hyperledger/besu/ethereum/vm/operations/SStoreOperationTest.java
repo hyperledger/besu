@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason.INSUFFICIENT_GAS;
 import static org.mockito.Mockito.mock;
 
@@ -23,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
@@ -94,8 +94,7 @@ public class SStoreOperationTest {
       final Address address, final Gas initialGas, final Gas remainingGas) {
     final Blockchain blockchain = mock(Blockchain.class);
 
-    final WorldStateArchive worldStateArchive =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     final WorldUpdater worldStateUpdater = worldStateArchive.getMutable().updater();
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     final MessageFrame frame =

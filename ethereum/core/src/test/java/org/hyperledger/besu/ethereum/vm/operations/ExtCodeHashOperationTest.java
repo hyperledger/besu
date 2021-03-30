@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -48,8 +48,7 @@ public class ExtCodeHashOperationTest {
 
   private final Blockchain blockchain = mock(Blockchain.class);
 
-  private final WorldStateArchive worldStateArchive =
-      InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+  private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
   private final WorldUpdater worldStateUpdater = worldStateArchive.getMutable().updater();
 
   private final ExtCodeHashOperation operation =
