@@ -26,6 +26,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.MULTI_DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -73,6 +74,7 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.util.StringUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -2904,16 +2906,23 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--miner-stratum-enabled");
 
     verifyOptionsConstraintLoggerCall(
-        "--miner-enabled",
-        "--miner-coinbase",
-        "--min-gas-price",
-        "--miner-extra-data",
-        "--miner-stratum-enabled");
+        "--miner-enabled", "--miner-coinbase", "--miner-extra-data", "--miner-stratum-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .startsWith(
             "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+  }
+
+  @Test
+  public void minGasPriceRequiresMainOption() {
+    parseCommand("--min-gas-price", "0");
+
+    verifyMultiOptionsConstraintLoggerCall(
+        List.of("--miner-enabled", "--goquorum-compatibility-enabled"), "--min-gas-price");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
@@ -3239,8 +3248,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
-    verifyOptionsConstraintLoggerCall(
-        "--privacy-enabled", "--privacy-url", "--privacy-public-key-file");
+    verifyMultiOptionsConstraintLoggerCall(
+        List.of("--privacy-enabled", "--goquorum-compatibility-enabled"),
+        "--privacy-url",
+        "--privacy-public-key-file");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3448,6 +3459,33 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
   }
 
+  /**
+   * Check logger calls
+   *
+   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
+   * logger itself but the fact that we call it.
+   *
+   * @param dependentOptions the string representing the list of dependent options names
+   * @param mainOptions the main option names
+   */
+  private void verifyMultiOptionsConstraintLoggerCall(
+      final List<String> mainOptions, final String... dependentOptions) {
+    verify(mockLogger, atLeast(1))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(MULTI_DEPENDENCY_WARNING_MSG);
+
+    for (final String option : dependentOptions) {
+      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
+    }
+
+    final String joinedOptions =
+        StringUtils.joiningWithLastDelimiter(", ", " or ").apply(mainOptions);
+    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(joinedOptions);
+  }
+
   @Test
   public void privacyWithFastSyncMustError() {
     parseCommand("--sync-mode=FAST", "--privacy-enabled");
@@ -3478,6 +3516,17 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString())
         .contains("GoQuorum mode cannot be enabled with privacy.");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void goQuorumGenesisFileWithoutGoQuorumCompatibilityMustError() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand("--genesis-file", genesisFile.toString());
+
+    assertThat(commandErrorOutput.toString())
+        .contains("Cannot use GoQuorum genesis file without GoQuorum privacy enabled");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -4030,8 +4079,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void quorumInteropDisabledDoesNotEnforceZeroGasPrice() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     parseCommand(
         "--goquorum-compatibility-enabled=false", "--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -4107,6 +4155,13 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsIfGenesisFileNotSet() {
+    parseCommand("--goquorum-compatibility-enabled");
+    assertThat(commandErrorOutput.toString())
+        .contains("--genesis-file must be specified if GoQuorum compatibility mode is enabled.");
   }
 
   @Test
