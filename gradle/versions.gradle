@@ -164,6 +164,6 @@ dependencyManagement {
       entry 'signing-secp256k1-impl'
     }
 
-    dependency 'org.testcontainers:testcontainers:1.15.1'
+    dependency 'org.testcontainers:testcontainers:1.15.2'
   }
 }
