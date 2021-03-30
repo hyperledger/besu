@@ -56,11 +56,11 @@ public class FullImportBlockStep implements Consumer<Block> {
             blockHash.substring(blockHash.length() - 4, blockHash.length()));
     final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockNumber).getBlockImporter();
-    final long beg = Instant.now().toEpochMilli();
+    final double beg = Instant.now().toEpochMilli();
     if (!importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED)) {
       throw new InvalidBlockException("Failed to import block", blockNumber, block.getHash());
     }
-    final long end = Instant.now().toEpochMilli() - beg;
+    final double end = Instant.now().toEpochMilli() - beg;
     if (blockNumber == 11953816) {
       LOG.info(
           String.format(
