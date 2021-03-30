@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -91,6 +92,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   private Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
     // first clear storage
+    final Map<Bytes, Optional<Bytes>> storageNodeCache = new HashMap<>();
+
     for (final Address address : updater.getStorageToClear()) {
       // because we are clearing persisted values we need the account root as persisted
       final BonsaiAccount oldAccount =
@@ -106,7 +109,14 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Hash addressHash = Hash.hash(address);
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, key) -> getStorageTrieNode(addressHash, location, key),
+              (location, key) -> {
+                final Bytes hashKey = Bytes.concatenate(addressHash, location);
+                if (storageNodeCache.containsKey(hashKey)) {
+                  return storageNodeCache.get(hashKey);
+                }
+                return storageNodeCache.computeIfAbsent(
+                    hashKey, __ -> getStorageTrieNode(addressHash, location, key));
+              },
               oldAccount.getStorageRoot(),
               Function.identity(),
               Function.identity());
@@ -141,7 +151,14 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
           (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
+              (location, key) -> {
+                final Bytes hashKey = Bytes.concatenate(updatedAddressHash, location);
+                if (storageNodeCache.containsKey(hashKey)) {
+                  return storageNodeCache.get(hashKey);
+                }
+                return storageNodeCache.computeIfAbsent(
+                    hashKey, __ -> getStorageTrieNode(updatedAddressHash, location, key));
+              },
               storageRoot,
               Function.identity(),
               Function.identity());
