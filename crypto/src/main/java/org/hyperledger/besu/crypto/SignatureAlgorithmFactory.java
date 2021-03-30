@@ -21,6 +21,10 @@ public class SignatureAlgorithmFactory {
 
   private SignatureAlgorithmFactory() {}
 
+  public static void setDefaultInstance() {
+    instance = SignatureAlgorithmType.createDefault().getInstance();
+  }
+
   public static void setInstance(final SignatureAlgorithmType signatureAlgorithmType)
       throws IllegalStateException {
     if (instance != null) {

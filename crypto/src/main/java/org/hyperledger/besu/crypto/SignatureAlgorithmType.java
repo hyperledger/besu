@@ -47,6 +47,10 @@ public class SignatureAlgorithmType {
     return new SignatureAlgorithmType(SUPPORTED_ALGORITHMS.get(ecCurve));
   }
 
+  public static SignatureAlgorithmType createDefault() {
+    return new SignatureAlgorithmType(DEFAULT_SIGNATURE_ALGORITHM_TYPE);
+  }
+
   public SignatureAlgorithm getInstance() {
     return instantiator.get();
   }

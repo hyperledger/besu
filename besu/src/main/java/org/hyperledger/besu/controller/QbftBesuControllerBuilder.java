@@ -49,7 +49,7 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.protocol.QbftSubProtocol;
+import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
@@ -108,9 +108,12 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     return new SubProtocolConfiguration()
         .withSubProtocol(EthProtocol.get(), ethProtocolManager)
         .withSubProtocol(
-            QbftSubProtocol.get(),
+            Istanbul100SubProtocol.get(),
             new BftProtocolManager(
-                bftEventQueue, peers, QbftSubProtocol.QBFV1, QbftSubProtocol.get().getName()));
+                bftEventQueue,
+                peers,
+                Istanbul100SubProtocol.ISTANBUL_100,
+                Istanbul100SubProtocol.get().getName()));
   }
 
   @Override
@@ -144,7 +147,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
-    peers = new ValidatorPeers(voteTallyCache, QbftSubProtocol.NAME);
+    peers = new ValidatorPeers(voteTallyCache, Istanbul100SubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
