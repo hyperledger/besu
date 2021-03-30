@@ -202,7 +202,6 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
-      - setup_remote_docker
       - run:
           name: Container Tests
           no_output_timeout: 10m
