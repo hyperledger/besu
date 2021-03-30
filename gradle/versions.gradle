@@ -146,7 +146,9 @@ dependencyManagement {
 
     dependency 'org.web3j:abi:4.5.15'
     dependency 'org.web3j:besu:4.5.15'
-    dependency 'org.web3j:core:4.5.15'
+    dependency('org.web3j:core:4.5.15') {
+      exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
+    }
     dependency 'org.web3j:crypto:4.5.15'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.2'
