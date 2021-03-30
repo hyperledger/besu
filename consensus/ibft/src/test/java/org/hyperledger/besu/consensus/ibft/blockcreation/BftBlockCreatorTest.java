@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -84,7 +84,7 @@ public class BftBlockCreatorTest {
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
-            createBonsaiInMemoryWorldStateArchive(),
+            InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive(),
             setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder));
 
     final PendingTransactions pendingTransactions =

@@ -146,7 +146,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                     Instant.ofEpochSecond(Integer.MAX_VALUE))));
 
     final WorldStateArchive stateArchive =
-        InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive();
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());
 
     final MutableBlockchain blockchain =

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.mock;
 
@@ -30,6 +29,7 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -69,7 +69,8 @@ public class JsonRpcTestMethodsFactory {
   }
 
   public Map<String, JsonRpcMethod> methods() {
-    final WorldStateArchive stateArchive = createBonsaiInMemoryWorldStateArchive();
+    final WorldStateArchive stateArchive =
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
 
     importer.getGenesisState().writeStateTo(stateArchive.getMutable());
 

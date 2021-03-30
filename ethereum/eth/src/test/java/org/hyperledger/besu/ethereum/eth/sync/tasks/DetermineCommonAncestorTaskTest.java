@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.tasks;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -33,6 +32,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -76,7 +76,8 @@ public class DetermineCommonAncestorTaskTest {
   public void setup() {
     localGenesisBlock = blockDataGenerator.genesisBlock();
     localBlockchain = createInMemoryBlockchain(localGenesisBlock);
-    final WorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive =
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             localBlockchain,

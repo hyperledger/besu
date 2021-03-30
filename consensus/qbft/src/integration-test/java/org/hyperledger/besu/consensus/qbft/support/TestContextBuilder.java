@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.support;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.mock;
 
@@ -70,6 +69,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -282,7 +282,8 @@ public class TestContextBuilder {
       final Gossiper gossiper,
       final SynchronizerUpdater synchronizerUpdater) {
 
-    final WorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive =
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
 
     final MiningParameters miningParams =
         new MiningParameters(

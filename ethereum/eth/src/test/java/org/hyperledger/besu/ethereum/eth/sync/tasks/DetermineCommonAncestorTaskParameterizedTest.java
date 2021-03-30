@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.tasks;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.mock;
 
@@ -26,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -141,7 +141,8 @@ public class DetermineCommonAncestorTaskParameterizedTest {
       remoteBlockchain.appendBlock(remoteBlock, remoteReceipts);
     }
 
-    final WorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive =
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     final EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             localBlockchain,

@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -543,7 +543,8 @@ public class BlockchainQueriesTest {
       final int blocksToAdd, final List<Address> accountsToSetup, final List<UInt256> storageKeys) {
     checkArgument(blocksToAdd >= 1, "Must add at least one block to the queries");
 
-    final WorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive =
+        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
 
     // Generate some queries data
     final List<BlockData> blockData = new ArrayList<>(blocksToAdd);

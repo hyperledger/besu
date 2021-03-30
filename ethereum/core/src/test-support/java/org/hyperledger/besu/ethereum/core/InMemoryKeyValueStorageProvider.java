@@ -55,7 +55,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         0);
   }
 
-  public static DefaultWorldStateArchive createBonsaiInMemoryWorldStateArchive() {
+  public static DefaultWorldStateArchive createInMemoryWorldStateArchive() {
     return new DefaultWorldStateArchive(
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));

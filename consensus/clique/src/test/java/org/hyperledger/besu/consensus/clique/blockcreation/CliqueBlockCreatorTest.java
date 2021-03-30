@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -44,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -72,7 +72,8 @@ public class CliqueBlockCreatorTest {
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   private ProtocolSchedule protocolSchedule;
-  private final WorldStateArchive stateArchive = createBonsaiInMemoryWorldStateArchive();
+  private final WorldStateArchive stateArchive =
+      InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
 
   private MutableBlockchain blockchain;
   private ProtocolContext protocolContext;
