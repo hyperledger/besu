@@ -588,7 +588,7 @@ public class EIP2124Test {
     LOG.info("Running test case {}", name);
     final ForkIdManager forkIdManager =
         new ForkIdManager(mockBlockchain(network.hash, head), network.forks, false);
-    wantForkId.ifPresent(forkId -> assertThat(forkIdManager.computeForkId()).isEqualTo(forkId));
+    wantForkId.ifPresent(forkId -> assertThat(forkIdManager.getForkIdForChainHead()).isEqualTo(forkId));
     wantForkIds.ifPresent(
         forkIds ->
             assertThat(forkIdManager.getForkIds()).containsExactlyElementsOf(forkIds));

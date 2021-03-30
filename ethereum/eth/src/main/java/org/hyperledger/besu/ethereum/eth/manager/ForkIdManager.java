@@ -64,7 +64,7 @@ public class ForkIdManager {
         !forkBlockNumbers.isEmpty() ? forkBlockNumbers.get(forkBlockNumbers.size() - 1) : 0L;
   }
 
-  public ForkId computeForkId() {
+  public ForkId getForkIdForChainHead() {
     if (legacyEth64) {
       return forkIds.isEmpty() ? null : forkIds.get(forkIds.size() - 1);
     }
