@@ -591,7 +591,7 @@ public class EIP2124Test {
     wantForkId.ifPresent(forkId -> assertThat(forkIdManager.computeForkId()).isEqualTo(forkId));
     wantForkIds.ifPresent(
         forkIds ->
-            assertThat(forkIdManager.getForkAndHashList()).containsExactlyElementsOf(forkIds));
+            assertThat(forkIdManager.getForkIds()).containsExactlyElementsOf(forkIds));
     wantPeerCheckCase.ifPresent(
         peerCheckCase ->
             assertThat(
