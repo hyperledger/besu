@@ -97,7 +97,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
         return;
       }
 
-      LOG.debug("Sending framed hello");
+      LOG.trace("Sending framed hello");
 
       // Exchange keys done
       final Framer framer = new Framer(handshaker.secrets());
@@ -121,7 +121,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
           .addListener(
               ff -> {
                 if (ff.isSuccess()) {
-                  LOG.debug("Successfully wrote hello message");
+                  LOG.trace("Successfully wrote hello message");
                 }
               });
       msg.retain();
