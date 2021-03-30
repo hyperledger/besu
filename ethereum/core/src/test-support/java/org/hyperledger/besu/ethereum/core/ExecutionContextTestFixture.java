@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -58,7 +58,7 @@ public class ExecutionContextTestFixture {
                 keyValueStorage, new MainnetBlockHeaderFunctions()),
             new NoOpMetricsSystem(),
             0);
-    this.stateArchive = createInMemoryWorldStateArchive();
+    this.stateArchive = createBonsaiInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = new ProtocolContext(blockchain, stateArchive, null);
     genesisState.writeStateTo(stateArchive.getMutable());

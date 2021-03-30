@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockheaders;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
@@ -71,7 +71,7 @@ public class NewBlockHeadersSubscriptionServiceTest {
 
   @Spy
   private final BlockchainQueries blockchainQueriesSpy =
-      Mockito.spy(new BlockchainQueries(blockchain, createInMemoryWorldStateArchive()));
+      Mockito.spy(new BlockchainQueries(blockchain, createBonsaiInMemoryWorldStateArchive()));
 
   @Before
   public void before() {

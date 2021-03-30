@@ -38,7 +38,7 @@ public class EntriesFromIntegrationTest {
   @SuppressWarnings("MathAbsoluteRandom")
   public void shouldCollectStateEntries() {
     final MutableWorldState worldState =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive().getMutable();
+        InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive().getMutable();
     final WorldUpdater updater = worldState.updater();
     MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56")).getMutable();
     final Map<Bytes32, AccountStorageEntry> expectedValues = new TreeMap<>();

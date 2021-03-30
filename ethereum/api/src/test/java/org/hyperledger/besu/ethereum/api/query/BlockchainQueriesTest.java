@@ -18,8 +18,8 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -543,7 +543,7 @@ public class BlockchainQueriesTest {
       final int blocksToAdd, final List<Address> accountsToSetup, final List<UInt256> storageKeys) {
     checkArgument(blocksToAdd >= 1, "Must add at least one block to the queries");
 
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive();
 
     // Generate some queries data
     final List<BlockData> blockData = new ArrayList<>(blocksToAdd);

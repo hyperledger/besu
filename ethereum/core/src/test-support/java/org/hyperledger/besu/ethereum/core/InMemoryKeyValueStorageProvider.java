@@ -55,13 +55,13 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         0);
   }
 
-  public static DefaultWorldStateArchive createInMemoryWorldStateArchive() {
+  public static DefaultWorldStateArchive createBonsaiInMemoryWorldStateArchive() {
     return new DefaultWorldStateArchive(
         new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
   }
 
-  public static BonsaiWorldStateArchive createInMemoryWorldStateArchive(
+  public static BonsaiWorldStateArchive createBonsaiInMemoryWorldStateArchive(
       final Blockchain blockchain) {
     return new BonsaiWorldStateArchive(new InMemoryKeyValueStorageProvider(), blockchain);
   }

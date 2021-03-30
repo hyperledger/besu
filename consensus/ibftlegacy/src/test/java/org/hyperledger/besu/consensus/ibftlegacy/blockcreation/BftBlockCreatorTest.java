@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.ibftlegacy.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyContextBuilder.setupContextWithValidators;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -88,7 +88,7 @@ public class BftBlockCreatorTest {
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
-            createInMemoryWorldStateArchive(),
+            createBonsaiInMemoryWorldStateArchive(),
             setupContextWithValidators(initialValidatorList));
 
     final IbftBlockCreator blockCreator =

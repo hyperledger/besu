@@ -194,13 +194,13 @@ public class BlockDataGenerator {
 
   public List<Block> blockSequence(final int count) {
     final WorldStateArchive worldState =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+        InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive();
     return blockSequence(count, worldState, Collections.emptyList(), Collections.emptyList());
   }
 
   public List<Block> blockSequence(final Block previousBlock, final int count) {
     final WorldStateArchive worldState =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+        InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive();
     final Hash parentHash = previousBlock.getHeader().getHash();
     final long blockNumber = previousBlock.getHeader().getNumber() + 1;
     return blockSequence(

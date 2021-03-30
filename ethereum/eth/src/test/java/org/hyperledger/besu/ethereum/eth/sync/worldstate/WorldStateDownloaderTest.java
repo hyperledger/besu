@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -185,7 +185,7 @@ public class WorldStateDownloaderTest {
   @Test
   public void downloadAlreadyAvailableWorldState() {
     // Setup existing state
-    final DefaultWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+    final DefaultWorldStateArchive worldStateArchive = createBonsaiInMemoryWorldStateArchive();
     final MutableWorldState worldState = worldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -230,7 +230,7 @@ public class WorldStateDownloaderTest {
     serviceExecutor.setAutoRun(false);
 
     // Setup "remote" state
-    final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
+    final WorldStateArchive remoteWorldStateArchive = createBonsaiInMemoryWorldStateArchive();
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -280,7 +280,7 @@ public class WorldStateDownloaderTest {
   @Test
   public void doesNotRequestKnownCodeFromNetwork() {
     // Setup "remote" state
-    final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
+    final WorldStateArchive remoteWorldStateArchive = createBonsaiInMemoryWorldStateArchive();
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
@@ -361,7 +361,7 @@ public class WorldStateDownloaderTest {
     serviceExecutor.setAutoRun(false);
 
     // Setup "remote" state
-    final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
+    final WorldStateArchive remoteWorldStateArchive = createBonsaiInMemoryWorldStateArchive();
     final MutableWorldState remoteWorldState = remoteWorldStateArchive.getMutable();
 
     // Generate accounts and save corresponding state root
