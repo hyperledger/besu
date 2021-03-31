@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
@@ -193,14 +194,12 @@ public class BlockDataGenerator {
   }
 
   public List<Block> blockSequence(final int count) {
-    final WorldStateArchive worldState =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive worldState = createInMemoryWorldStateArchive();
     return blockSequence(count, worldState, Collections.emptyList(), Collections.emptyList());
   }
 
   public List<Block> blockSequence(final Block previousBlock, final int count) {
-    final WorldStateArchive worldState =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive worldState = createInMemoryWorldStateArchive();
     final Hash parentHash = previousBlock.getHeader().getHash();
     final long blockNumber = previousBlock.getHeader().getNumber() + 1;
     return blockSequence(
