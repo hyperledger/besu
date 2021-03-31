@@ -295,6 +295,7 @@ workflows:
       - containerTests:
           requires:
             - assemble
+            - buildDocker
           context:
             - besu-dockerhub-ro
       - buildDocker:
