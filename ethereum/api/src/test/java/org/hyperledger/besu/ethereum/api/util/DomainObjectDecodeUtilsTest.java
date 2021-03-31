@@ -1,7 +1,5 @@
 package org.hyperledger.besu.ethereum.api.util;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.assertj.core.api.Assertions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.AccessListEntry;
@@ -11,10 +9,13 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 public class DomainObjectDecodeUtilsTest {
 
@@ -43,7 +44,8 @@ public class DomainObjectDecodeUtilsTest {
   public void testAccessListRLPSerDes() {
     final BytesValueRLPOutput encoded = new BytesValueRLPOutput();
     TransactionEncoder.encodeForWire(accessListTxn, encoded);
-    Transaction decoded = DomainObjectDecodeUtils.decodeRawTransaction(encoded.encoded().toHexString());
+    Transaction decoded =
+        DomainObjectDecodeUtils.decodeRawTransaction(encoded.encoded().toHexString());
     Assertions.assertThat(decoded.getAccessList().isPresent()).isTrue();
     Assertions.assertThat(decoded.getAccessList().map(List::size).get()).isEqualTo(1);
   }
