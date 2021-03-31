@@ -311,6 +311,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
+            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker
@@ -326,6 +327,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
+            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker

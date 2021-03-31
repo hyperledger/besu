@@ -26,6 +26,8 @@ dependencies {
   testImplementation 'org.web3j:quorum'
 }
 
+test.enabled = false
+
 task containerTests(type: Test) {
   description = 'Runs GoQuorum <> Besu container tests.'
 }
