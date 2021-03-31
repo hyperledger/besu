@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -145,8 +147,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                     true,
                     Instant.ofEpochSecond(Integer.MAX_VALUE))));
 
-    final WorldStateArchive stateArchive =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());
 
     final MutableBlockchain blockchain =

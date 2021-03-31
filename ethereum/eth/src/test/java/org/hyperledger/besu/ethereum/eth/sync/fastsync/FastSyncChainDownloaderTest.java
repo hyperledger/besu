@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.CompletableFuture;
@@ -61,9 +62,10 @@ public class FastSyncChainDownloaderTest {
   @Before
   public void setup() {
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT_SKIP_DETACHED);
-    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil localBlockchainSetup =
+        BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     localBlockchain = localBlockchainSetup.getBlockchain();
-    otherBlockchainSetup = BlockchainSetupUtil.forTesting();
+    otherBlockchainSetup = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     otherBlockchain = otherBlockchainSetup.getBlockchain();
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
@@ -143,7 +145,8 @@ public class FastSyncChainDownloaderTest {
 
   @Test
   public void recoversFromSyncTargetDisconnect() {
-    final BlockchainSetupUtil shorterChainUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil shorterChainUtil =
+        BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     final MutableBlockchain shorterChain = shorterChainUtil.getBlockchain();
 
     otherBlockchainSetup.importFirstBlocks(30);

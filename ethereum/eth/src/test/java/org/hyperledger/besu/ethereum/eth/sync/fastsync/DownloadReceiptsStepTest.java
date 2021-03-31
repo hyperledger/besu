@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
@@ -49,7 +50,7 @@ public class DownloadReceiptsStepTest {
 
   @BeforeClass
   public static void setUpClass() {
-    final BlockchainSetupUtil setupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil setupUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     setupUtil.importFirstBlocks(20);
     protocolContext = setupUtil.getProtocolContext();
     blockchain = setupUtil.getBlockchain();
