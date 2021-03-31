@@ -6,6 +6,7 @@
 
 ### Bug Fixes
 
+- Fixed an issue with access list transactions which were RLP encoded (non EIP-2718)
 - Fixed issue in discv5 where nonce was incorrectly reused.
 
 ### Early Access Features
