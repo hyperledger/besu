@@ -468,7 +468,7 @@ public abstract class MainnetProtocolSpecs {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
-    return muirGlacierDefinition(
+    return berlinDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
@@ -481,7 +481,10 @@ public abstract class MainnetProtocolSpecs {
                     transactionPriceCalculator,
                     true,
                     chainId,
-                    Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
                     genesisConfigOptions.isQuorum()))
         .transactionProcessorBuilder(
             (gasCalculator,
