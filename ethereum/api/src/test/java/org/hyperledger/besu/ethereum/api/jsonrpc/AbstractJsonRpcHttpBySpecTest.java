@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -51,7 +52,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private final URL specURL;
 
-  AbstractJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
+  protected AbstractJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
     this.specURL = specURL;
   }
 
@@ -68,7 +69,8 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
    * @return Parameters for this test which will contain the name of the test and the url of the
    *     spec file to run.
    */
-  static Object[][] findSpecFiles(final String... subDirectoryPaths) {
+  public static Object[][] findSpecFiles(
+      final String[] subDirectoryPaths, final String... exceptions) {
     final List<Object[]> specFiles = new ArrayList<>();
     for (final String path : subDirectoryPaths) {
       final URL url = AbstractJsonRpcHttpBySpecTest.class.getResource(path);
@@ -83,6 +85,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
         s.map(Path::toFile)
             .filter(f -> f.getPath().endsWith(".json"))
             .filter(f -> !f.getPath().contains("genesis"))
+            .filter(f -> Arrays.stream(exceptions).noneMatch(f.getPath()::contains))
             .map(AbstractJsonRpcHttpBySpecTest::fileToParams)
             .forEach(specFiles::add);
       } catch (final IOException e) {

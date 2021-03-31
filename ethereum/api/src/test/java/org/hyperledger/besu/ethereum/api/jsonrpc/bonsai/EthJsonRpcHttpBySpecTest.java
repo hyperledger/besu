@@ -12,7 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
+package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
+
+import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 
 import java.net.URL;
 
@@ -29,12 +31,13 @@ public class EthJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Override
   public void setup() throws Exception {
-    super.setup();
+    setupBonsaiBlockchain();
     startService();
   }
 
   @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
-    return findSpecFiles("eth");
+    return findSpecFiles(
+        new String[] {"eth"}, "getProof"); // getProof is not working with bonsai trie
   }
 }
