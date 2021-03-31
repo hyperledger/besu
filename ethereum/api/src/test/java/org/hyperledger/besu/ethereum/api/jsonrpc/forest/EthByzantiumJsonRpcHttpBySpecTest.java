@@ -12,7 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
+package org.hyperledger.besu.ethereum.api.jsonrpc.forest;
+
+import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
+import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
 import java.net.URL;
 
@@ -21,20 +25,26 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class DebugJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
+public class EthByzantiumJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
-  public DebugJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
+  public EthByzantiumJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
     super(specName, specURL);
   }
 
   @Override
   public void setup() throws Exception {
-    super.setup();
+    setupBlockchain();
     startService();
+  }
+
+  @Override
+  protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
+    return createBlockchainSetupUtil(
+        "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin", storageFormat);
   }
 
   @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
-    return findSpecFiles("debug");
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles(new String[] {"eth_latest"});
   }
 }
