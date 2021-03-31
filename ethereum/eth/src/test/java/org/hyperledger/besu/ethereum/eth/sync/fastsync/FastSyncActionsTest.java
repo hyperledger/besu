@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
@@ -50,7 +51,8 @@ import org.junit.Test;
 
 public class FastSyncActionsTest {
 
-  private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+  private final BlockchainSetupUtil blockchainSetupUtil =
+      BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
   private final SynchronizerConfiguration.Builder syncConfigBuilder =
       new SynchronizerConfiguration.Builder().syncMode(SyncMode.FAST).fastSyncPivotDistance(1000);
 

@@ -12,9 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
+package org.hyperledger.besu.ethereum.api.jsonrpc.forest;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
 import java.net.URL;
 
@@ -23,26 +25,35 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class EthByzantiumJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
+public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
-  public EthByzantiumJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
+  public TraceJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
     super(specName, specURL);
   }
 
   @Override
   public void setup() throws Exception {
-    super.setup();
+    setupBlockchain();
     startService();
   }
 
   @Override
-  protected BlockchainSetupUtil getBlockchainSetupUtil() {
+  protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
     return createBlockchainSetupUtil(
-        "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin");
+        "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin", storageFormat);
   }
 
   @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
-    return AbstractJsonRpcHttpBySpecTest.findSpecFiles("eth_latest");
+    return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
+        new String[] {
+          "trace/specs/trace-block",
+          "trace/specs/trace-transaction",
+          "trace/specs/replay-trace-transaction/flat",
+          "trace/specs/replay-trace-transaction/vm-trace",
+          "trace/specs/replay-trace-transaction/statediff",
+          "trace/specs/replay-trace-transaction/all",
+          "trace/specs/replay-trace-transaction/halt-cases"
+        });
   }
 }
