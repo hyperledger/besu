@@ -144,12 +144,13 @@ dependencyManagement {
 
     dependency 'org.springframework.security:spring-security-crypto:5.4.2'
 
-    dependency 'org.web3j:abi:4.6.0'
+    // changing this back but adding a comment to force build
+    dependency 'org.web3j:abi:4.5.15'
     dependency 'org.web3j:besu:4.5.15'
-    dependency('org.web3j:core:4.6.0') {
+    dependency('org.web3j:core:4.5.15') {
       exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
     }
-    dependency 'org.web3j:crypto:4.6.0'
+    dependency 'org.web3j:crypto:4.5.15'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.2'
 
