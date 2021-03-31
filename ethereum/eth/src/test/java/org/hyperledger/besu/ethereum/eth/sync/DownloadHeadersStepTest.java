@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class DownloadHeadersStepTest {
 
   @BeforeClass
   public static void setUpClass() {
-    final BlockchainSetupUtil setupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil setupUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     setupUtil.importFirstBlocks(20);
     protocolSchedule = setupUtil.getProtocolSchedule();
     protocolContext = setupUtil.getProtocolContext();
