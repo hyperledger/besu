@@ -30,7 +30,7 @@ test.enabled = false
 
 task containerTests(type: Test) {
   description = 'Runs GoQuorum <> Besu container tests.'
-  dependsOn(rootProject.installDist)
+  dependsOn(rootProject.distDocker)
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "hyperledger/besu"
   def image = "${imageName}:${dockerBuildVersion}"
