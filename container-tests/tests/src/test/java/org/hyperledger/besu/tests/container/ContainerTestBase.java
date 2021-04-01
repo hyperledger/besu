@@ -42,7 +42,7 @@ import org.web3j.quorum.Quorum;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ContainerTestBase {
-  private final String besuVersion = "develop";
+  private final String besuImage = System.getProperty("containertest.imagename");
   private final String goQuorumVersion = "21.1.0";
   private final String tesseraVersion = "21.1.0";
 
@@ -151,7 +151,7 @@ public class ContainerTestBase {
   }
 
   private GenericContainer buildBesuContainer() {
-    return new GenericContainer("hyperledger/besu:" + besuVersion)
+    return new GenericContainer(besuImage)
         .withNetwork(containerNetwork)
         .withNetworkAliases(besuNetworkAlias)
         .withExposedPorts(besuRpcPort, besuP2pPort)
