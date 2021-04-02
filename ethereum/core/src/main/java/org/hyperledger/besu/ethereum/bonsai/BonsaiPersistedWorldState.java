@@ -75,7 +75,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public MutableWorldState copy() {
-    return new BonsaiPersistedWorldState(
+    return new BonsaiInMemoryWorldState(
         archive,
         new BonsaiInMemoryWorldStateKeyValueStorage(
             worldStateStorage.accountStorage,
@@ -95,7 +95,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     worldStateRootHash = blockHeader.getStateRoot();
   }
 
-  private Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
+  protected Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
     // first clear storage
     for (final Address address : updater.getStorageToClear()) {
       // because we are clearing persisted values we need the account root as persisted
@@ -293,9 +293,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Hash rootHash() {
-    final BonsaiWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
-    worldStateRootHash = calculateRootHash(updater);
-    updater.rollback();
     return Hash.wrap(worldStateRootHash);
   }
 
