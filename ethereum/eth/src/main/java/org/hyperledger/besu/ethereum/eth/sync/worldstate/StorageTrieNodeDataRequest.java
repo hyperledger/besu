@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -63,12 +64,17 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Bytes path,
       final Bytes value) {
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putStorageValueBySlotHash(
-              accountHash.get(),
-              getSlotHash(location, path),
-              Bytes32.leftPad(RLP.decodeValue(value)))
-          .commit();
+      final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
+          (BonsaiWorldStateKeyValueStorage) worldStateStorage;
+      final BonsaiWorldStateKeyValueStorage.Updater updater =
+          (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
+      final List<Bytes32> allSlotsByAccount =
+          bonsaiWorldStateKeyValueStorage.getSlotListByAccount(accountHash.get());
+      final Hash slotHash = getSlotHash(location, path);
+      allSlotsByAccount.add(slotHash);
+      updater.putStorageValueBySlotHash(
+          accountHash.get(), slotHash, Bytes32.leftPad(RLP.decodeValue(value)));
+      updater.updateSlotListByAccount(accountHash.get(), allSlotsByAccount).commit();
     }
 
     return Stream.empty();

@@ -33,6 +33,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -106,33 +107,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         // block.  A not-uncommon DeFi bot pattern.
         continue;
       }
+
       final Hash addressHash = Hash.hash(address);
-      final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-          new StoredMerklePatriciaTrie<>(
-              (location, key) -> {
-                final Bytes hashKey = Bytes.concatenate(addressHash, location);
-                if (storageNodeCache.containsKey(hashKey)) {
-                  return storageNodeCache.get(hashKey);
-                }
-                return storageNodeCache.computeIfAbsent(
-                    hashKey, __ -> getStorageTrieNode(addressHash, location, key));
-              },
-              oldAccount.getStorageRoot(),
-              Function.identity(),
-              Function.identity());
-      Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-      while (!entriesToDelete.isEmpty()) {
-        entriesToDelete
-            .keySet()
-            .forEach(
-                k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
-        if (entriesToDelete.size() == 256) {
-          entriesToDelete.keySet().forEach(storageTrie::remove);
-          entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-        } else {
-          break;
-        }
-      }
+      stateUpdater.removeStorageValuesBySlotHash(
+          addressHash, worldStateStorage.getSlotListByAccount(addressHash));
     }
 
     // second update account storage state.  This must be done before updating the accounts so
@@ -161,20 +139,24 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
               Function.identity());
 
       // for manicured tries and composting, collect branches here (not implemented)
-
+      final List<Bytes32> allSlotsByAccount =
+          worldStateStorage.getSlotListByAccount(updatedAddressHash);
       for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
           storageAccountUpdate.getValue().entrySet()) {
         final Hash keyHash = storageUpdate.getKey();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+          allSlotsByAccount.remove(keyHash);
           stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
           storageTrie.remove(keyHash);
         } else {
+          allSlotsByAccount.add(keyHash);
           final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
           stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorageBytes);
           storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
         }
       }
+      stateUpdater.updateSlotListByAccount(updatedAddressHash, allSlotsByAccount);
 
       final BonsaiAccount accountUpdated = accountValue.getUpdated();
       if (accountUpdated != null) {
@@ -321,6 +303,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         }
 
         @Override
+        public void remove(final byte[][] keys) {
+          // no-op
+        }
+
+        @Override
         public void commit() throws StorageException {
           // no-op
         }
@@ -334,7 +321,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   @Override
   public Hash frontierRootHash() {
     return calculateRootHash(
-        new BonsaiWorldStateKeyValueStorage.Updater(noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
+        new BonsaiWorldStateKeyValueStorage.Updater(
+            noOpTx, noOpTx, noOpTx, noOpTx, noOpTx, noOpTx));
   }
 
   public Hash blockHash() {

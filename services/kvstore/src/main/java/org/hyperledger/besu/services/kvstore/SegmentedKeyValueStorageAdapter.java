@@ -86,6 +86,11 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
       }
 
       @Override
+      public void remove(final byte[][] keys) {
+        Stream.of(keys).forEach(this::remove);
+      }
+
+      @Override
       public void commit() throws StorageException {
         transaction.commit();
       }

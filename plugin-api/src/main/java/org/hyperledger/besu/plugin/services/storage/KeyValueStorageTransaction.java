@@ -40,6 +40,13 @@ public interface KeyValueStorageTransaction {
   void remove(byte[] key);
 
   /**
+   * When the given keys are present, the keys and mapped values will be removed from storage.
+   *
+   * @param keys the keys and mapped values that will be removed.
+   */
+  void remove(byte[][] keys);
+
+  /**
    * Performs an atomic commit of all the operations queued in the transaction.
    *
    * @throws StorageException problem was encountered preventing the commit

@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -23,6 +27,8 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -39,6 +45,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   private final KeyValueStorage accountStorage;
   private final KeyValueStorage codeStorage;
   private final KeyValueStorage storageStorage;
+  private final KeyValueStorage slotListByAccountStorage;
   private final KeyValueStorage trieBranchStorage;
   private final KeyValueStorage trieLogStorage;
 
@@ -48,6 +55,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
     storageStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
+    slotListByAccountStorage =
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.SLOT_LIST_BY_ACCOUNT);
     trieBranchStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     trieLogStorage =
@@ -58,11 +67,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       final KeyValueStorage accountStorage,
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
+      final KeyValueStorage slotListByAccountStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
+    this.slotListByAccountStorage = slotListByAccountStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
   }
@@ -125,6 +136,22 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         .map(Bytes::wrap);
   }
 
+  public List<Bytes32> getSlotListByAccount(final Hash accountHash) {
+    final Optional<byte[]> foundSlotList =
+        slotListByAccountStorage.get(accountHash.toArrayUnsafe());
+    final List<Bytes32> formattedSlotList = new ArrayList<>();
+    foundSlotList.ifPresent(
+        bytes -> {
+          final RLPInput input = new BytesValueRLPInput(Bytes.of(foundSlotList.get()), false);
+          input.enterList();
+          while (!input.isEndOfCurrentList()) {
+            formattedSlotList.add(input.readBytes32());
+          }
+          input.leaveList();
+        });
+    return formattedSlotList;
+  }
+
   @Override
   public Optional<Bytes> getNodeData(final Bytes location, final Bytes32 hash) {
     return Optional.empty();
@@ -146,6 +173,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         accountStorage.startTransaction(),
         codeStorage.startTransaction(),
         storageStorage.startTransaction(),
+        slotListByAccountStorage.startTransaction(),
         trieBranchStorage.startTransaction(),
         trieLogStorage.startTransaction());
   }
@@ -170,6 +198,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     private final KeyValueStorageTransaction accountStorageTransaction;
     private final KeyValueStorageTransaction codeStorageTransaction;
     private final KeyValueStorageTransaction storageStorageTransaction;
+    private final KeyValueStorageTransaction slotListByAccountStorageTransaction;
     private final KeyValueStorageTransaction trieBranchStorageTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
 
@@ -177,12 +206,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         final KeyValueStorageTransaction accountStorageTransaction,
         final KeyValueStorageTransaction codeStorageTransaction,
         final KeyValueStorageTransaction storageStorageTransaction,
+        final KeyValueStorageTransaction slotListByAccountStorageTransaction,
         final KeyValueStorageTransaction trieBranchStorageTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction) {
 
       this.accountStorageTransaction = accountStorageTransaction;
       this.codeStorageTransaction = codeStorageTransaction;
       this.storageStorageTransaction = storageStorageTransaction;
+      this.slotListByAccountStorageTransaction = slotListByAccountStorageTransaction;
       this.trieBranchStorageTransaction = trieBranchStorageTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
     }
@@ -255,8 +286,38 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     public Updater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
+          Bytes.concatenate(Hash.hash(Address.ZERO), slotHash).toArrayUnsafe(),
+          storage.toArrayUnsafe());
+      storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
       return this;
+    }
+
+    public Updater updateSlotListByAccount(final Hash accountHash, final List<Bytes32> slotList) {
+      final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+      rlp.startList();
+      for (Bytes32 slot : slotList) {
+        rlp.writeBytes(slot);
+      }
+      rlp.endList();
+      slotListByAccountStorageTransaction.put(
+          accountHash.toArrayUnsafe(), rlp.encoded().toArrayUnsafe());
+      return this;
+    }
+
+    public Updater cleanSlotListByAccount(final Hash accountHash) {
+      slotListByAccountStorageTransaction.remove(accountHash.toArrayUnsafe());
+      return this;
+    }
+
+    public void removeStorageValuesBySlotHash(
+        final Hash accountHash, final List<Bytes32> slotList) {
+      final byte[][] keys =
+          slotList.stream()
+              .map(slot -> Bytes.concatenate(accountHash, slot))
+              .map(Bytes::toArrayUnsafe)
+              .toArray(byte[][]::new);
+      storageStorageTransaction.remove(keys);
     }
 
     public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
@@ -276,6 +337,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       accountStorageTransaction.commit();
       codeStorageTransaction.commit();
       storageStorageTransaction.commit();
+      slotListByAccountStorageTransaction.commit();
       trieBranchStorageTransaction.commit();
       trieLogStorageTransaction.commit();
     }
@@ -285,6 +347,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       accountStorageTransaction.rollback();
       codeStorageTransaction.rollback();
       storageStorageTransaction.rollback();
+      slotListByAccountStorageTransaction.rollback();
       trieBranchStorageTransaction.rollback();
       trieLogStorageTransaction.rollback();
     }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -129,6 +131,13 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
     public void remove(final byte[] key) {
       removedKeys.add(Bytes.wrap(key));
       updatedValues.remove(Bytes.wrap(key));
+    }
+
+    @Override
+    public void remove(final byte[][] keys) {
+      final List<Bytes> allKeys = Stream.of(keys).map(Bytes::wrap).collect(toList());
+      removedKeys.addAll(allKeys);
+      allKeys.forEach(updatedValues::remove);
     }
 
     @Override

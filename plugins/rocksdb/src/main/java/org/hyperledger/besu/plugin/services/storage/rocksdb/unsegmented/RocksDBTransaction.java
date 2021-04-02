@@ -67,6 +67,19 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
   }
 
   @Override
+  public void remove(final byte[][] keys) {
+    try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
+      innerTx.delete(keys);
+    } catch (final RocksDBException e) {
+      if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
+        logger.error(e.getMessage());
+        System.exit(0);
+      }
+      throw new StorageException(e);
+    }
+  }
+
+  @Override
   public void commit() throws StorageException {
     try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
       innerTx.commit();

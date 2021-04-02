@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.util.stream.Stream;
+
 public class KeyValueStorageTransactionTransitionValidatorDecorator
     implements KeyValueStorageTransaction {
 
@@ -40,6 +42,11 @@ public class KeyValueStorageTransactionTransitionValidatorDecorator
   public void remove(final byte[] key) {
     checkState(active, "Cannot invoke remove() on a completed transaction.");
     transaction.remove(key);
+  }
+
+  @Override
+  public void remove(final byte[][] keys) {
+    Stream.of(keys).forEach(this::remove);
   }
 
   @Override
