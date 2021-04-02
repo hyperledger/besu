@@ -45,6 +45,9 @@ public class RollingImport {
     final InMemoryKeyValueStorage codeStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
+    final InMemoryKeyValueStorage listSlotStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.SLOT_LIST_BY_ACCOUNT);
     final InMemoryKeyValueStorage storageStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(
@@ -59,7 +62,12 @@ public class RollingImport {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                listSlotStorage,
+                trieBranchStorage,
+                trieLogStorage));
 
     int count = 0;
     while (!reader.isDone()) {

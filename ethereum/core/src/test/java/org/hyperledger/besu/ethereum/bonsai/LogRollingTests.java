@@ -49,6 +49,7 @@ public class LogRollingTests {
   private BonsaiWorldStateArchive archive;
   private InMemoryKeyValueStorage accountStorage;
   private InMemoryKeyValueStorage codeStorage;
+  private InMemoryKeyValueStorage listSlotStorage;
   private InMemoryKeyValueStorage storageStorage;
   private InMemoryKeyValueStorage trieBranchStorage;
   private InMemoryKeyValueStorage trieLogStorage;
@@ -56,6 +57,7 @@ public class LogRollingTests {
   private BonsaiWorldStateArchive secondArchive;
   private InMemoryKeyValueStorage secondAccountStorage;
   private InMemoryKeyValueStorage secondCodeStorage;
+  private InMemoryKeyValueStorage secondListSlotStorage;
   private InMemoryKeyValueStorage secondStorageStorage;
   private InMemoryKeyValueStorage secondTrieBranchStorage;
   private InMemoryKeyValueStorage secondTrieLogStorage;
@@ -117,6 +119,9 @@ public class LogRollingTests {
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
+    listSlotStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.SLOT_LIST_BY_ACCOUNT);
     trieBranchStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
@@ -137,6 +142,9 @@ public class LogRollingTests {
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
+    secondListSlotStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.SLOT_LIST_BY_ACCOUNT);
     secondTrieBranchStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(
@@ -154,7 +162,12 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                listSlotStorage,
+                trieBranchStorage,
+                trieLogStorage));
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -171,6 +184,7 @@ public class LogRollingTests {
                 secondAccountStorage,
                 secondCodeStorage,
                 secondStorageStorage,
+                secondListSlotStorage,
                 secondTrieBranchStorage,
                 secondTrieLogStorage));
     final BonsaiWorldStateUpdater secondUpdater =
@@ -203,7 +217,12 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                listSlotStorage,
+                trieBranchStorage,
+                trieLogStorage));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -228,6 +247,7 @@ public class LogRollingTests {
                 secondAccountStorage,
                 secondCodeStorage,
                 secondStorageStorage,
+                secondListSlotStorage,
                 secondTrieBranchStorage,
                 secondTrieLogStorage));
     final BonsaiWorldStateUpdater secondUpdater =
@@ -261,7 +281,12 @@ public class LogRollingTests {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                listSlotStorage,
+                trieBranchStorage,
+                trieLogStorage));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -293,6 +318,7 @@ public class LogRollingTests {
                 secondAccountStorage,
                 secondCodeStorage,
                 secondStorageStorage,
+                secondListSlotStorage,
                 secondTrieBranchStorage,
                 secondTrieLogStorage));
 
