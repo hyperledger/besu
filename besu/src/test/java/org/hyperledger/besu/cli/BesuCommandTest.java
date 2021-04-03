@@ -993,13 +993,13 @@ public class BesuCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
             ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    parseCommand("--dns-discovery-url", "test123");
+    parseCommand("--dns-discovery-url", "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getDnsDiscoveryUrl()).isEqualTo("test123");
+    assertThat(config.getDnsDiscoveryUrl()).isEqualTo("enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
   }
 
   @Test

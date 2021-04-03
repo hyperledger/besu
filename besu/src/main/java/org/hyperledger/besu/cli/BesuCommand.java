@@ -1088,10 +1088,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
-          names = { "--dns-discovery-url" },
+          names = { "--discovery-dns-url" },
           description = "Specifies the URL to use for DNS discovery"
   )
-  private String dnsDiscoveryUrl = null;
+  private String discoveryDnsUrl = null;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -2409,10 +2409,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         builder.setBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
-    } else if (dnsDiscoveryUrl != null) {
-      // TODO: Add validation that this should always be null when genesis file is specified?
-      // Is that the desired behavior?
-      builder.setDnsDiscoveryUrl(dnsDiscoveryUrl);
+    }
+
+    if (discoveryDnsUrl != null) {
+      builder.setDnsDiscoveryUrl(discoveryDnsUrl);
     }
 
     if (networkId != null) {

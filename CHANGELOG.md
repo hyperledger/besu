@@ -4,7 +4,7 @@
 
 ### Additions and Improvements
 
-- Adds `--dns-discovery-url` CLI command
+- Adds `--discovery-dns-url` CLI command
 
 ### Bug Fixes
 
