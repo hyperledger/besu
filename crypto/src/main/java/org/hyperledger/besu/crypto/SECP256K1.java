@@ -59,9 +59,9 @@ public class SECP256K1 extends AbstractSECP256 {
   }
 
   @Override
-  public SECPSignature sign(final Bytes dataHash, final KeyPair keyPair) {
+  public SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair) {
     if (useNative) {
-      return signNative((Bytes32) dataHash, keyPair);
+      return signNative(dataHash, keyPair);
     } else {
       return super.sign(dataHash, keyPair);
     }

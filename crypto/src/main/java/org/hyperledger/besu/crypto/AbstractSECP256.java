@@ -83,7 +83,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
       final BigInteger nativeR,
       final BigInteger nativeS,
       final SECPPublicKey publicKey,
-      final Bytes dataHash) {
+      final Bytes32 dataHash) {
 
     BigInteger s = nativeS;
     // Automatically adjust the S component to be less than or equal to half the curve
@@ -231,7 +231,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
    * @return An ECKey containing only the public part, or null if recovery wasn't possible.
    */
   protected BigInteger recoverFromSignature(
-      final int recId, final BigInteger r, final BigInteger s, final Bytes dataHash) {
+      final int recId, final BigInteger r, final BigInteger s, final Bytes32 dataHash) {
     assert (recId >= 0);
     assert (r.signum() >= 0);
     assert (s.signum() >= 0);
@@ -293,7 +293,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
   }
 
   @Override
-  public SECPSignature sign(final Bytes dataHash, final KeyPair keyPair) {
+  public SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair) {
     final ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
 
     final ECPrivateKeyParameters privKey =
