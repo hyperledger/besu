@@ -146,14 +146,16 @@ dependencyManagement {
 
     dependency 'org.web3j:abi:4.5.15'
     dependency 'org.web3j:besu:4.5.15'
-    dependency 'org.web3j:core:4.5.15'
+    dependency('org.web3j:core:4.5.15') {
+      exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
+    }
     dependency 'org.web3j:crypto:4.5.15'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.2'
 
     dependency 'org.yaml:snakeyaml:1.26'
 
-    dependency 'tech.pegasys.discovery:discovery:0.4.3'
+    dependency 'tech.pegasys.discovery:discovery:0.4.5'
 
     dependency 'tech.pegasys.ethsigner.internal:ethsigner-core:21.3.0'
     dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.16') {

@@ -122,6 +122,7 @@ public class ForkIdBackwardCompatibilityTest {
         legacyEth64
             ? new LegacyForkIdManager(mockBlockchain(genesisHash, head), forks).getLatestForkId()
             : null;
-    assertThat(forkIdManager.computeForkId()).isEqualTo(legacyEth64 ? legacyForkId : wantForkId);
+    assertThat(forkIdManager.getForkIdForChainHead())
+        .isEqualTo(legacyEth64 ? legacyForkId : wantForkId);
   }
 }

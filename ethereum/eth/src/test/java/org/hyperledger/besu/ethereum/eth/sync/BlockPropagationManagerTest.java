@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -88,12 +89,12 @@ public class BlockPropagationManagerTest {
 
   @BeforeClass
   public static void setupSuite() {
-    fullBlockchain = BlockchainSetupUtil.forTesting().importAllBlocks();
+    fullBlockchain = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST).importAllBlocks();
   }
 
   @Before
   public void setup() {
-    blockchainUtil = BlockchainSetupUtil.forTesting();
+    blockchainUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     blockchain = blockchainUtil.getBlockchain();
     protocolSchedule = blockchainUtil.getProtocolSchedule();
     final ProtocolContext tempProtocolContext = blockchainUtil.getProtocolContext();
