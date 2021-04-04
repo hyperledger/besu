@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +111,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
       final Hash addressHash = Hash.hash(address);
       stateUpdater.removeStorageValuesBySlotHash(
-          addressHash, worldStateStorage.getSlotListByAccount(addressHash));
+          addressHash, worldStateStorage.getRawSlotListByAccount(addressHash).orElse(Bytes.EMPTY));
+      stateUpdater.cleanSlotListByAccount(addressHash);
     }
 
     // second update account storage state.  This must be done before updating the accounts so
@@ -139,24 +141,40 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
               Function.identity());
 
       // for manicured tries and composting, collect branches here (not implemented)
-      final List<Bytes32> allSlotsByAccount =
-          worldStateStorage.getSlotListByAccount(updatedAddressHash);
+      final List<Bytes32> allUpdatedStorage = new ArrayList<>();
+      final List<Bytes32> allRemovedStorage = new ArrayList<>();
       for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
           storageAccountUpdate.getValue().entrySet()) {
         final Hash keyHash = storageUpdate.getKey();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-          allSlotsByAccount.remove(keyHash);
+          allRemovedStorage.add(keyHash);
           stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
           storageTrie.remove(keyHash);
         } else {
-          allSlotsByAccount.add(keyHash);
+          allUpdatedStorage.add(keyHash);
           final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
           stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorageBytes);
           storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
         }
       }
-      stateUpdater.updateSlotListByAccount(updatedAddressHash, allSlotsByAccount);
+
+      if (!storageAccountUpdate.getValue().isEmpty()) {
+        final Bytes foundSlotListByAccount =
+            worldStateStorage.getRawSlotListByAccount(updatedAddressHash).orElse(Bytes.EMPTY);
+        Bytes allSlotToStore = Bytes.EMPTY;
+        for (int i = 0; i < foundSlotListByAccount.size(); i += Bytes32.SIZE) {
+          final Bytes32 slot = Bytes32.wrap(foundSlotListByAccount, i);
+          if (!allRemovedStorage.contains(slot)) {
+            allSlotToStore = Bytes.concatenate(allSlotToStore, slot);
+          }
+          allUpdatedStorage.remove(slot);
+        }
+        for (Bytes32 slot : allUpdatedStorage) {
+          allSlotToStore = Bytes.concatenate(allSlotToStore, slot);
+        }
+        stateUpdater.updateSlotListByAccount(updatedAddressHash, allSlotToStore);
+      }
 
       final BonsaiAccount accountUpdated = accountValue.getUpdated();
       if (accountUpdated != null) {

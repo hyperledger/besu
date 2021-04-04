@@ -14,11 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
@@ -27,8 +23,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -136,20 +130,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         .map(Bytes::wrap);
   }
 
-  public List<Bytes32> getSlotListByAccount(final Hash accountHash) {
-    final Optional<byte[]> foundSlotList =
-        slotListByAccountStorage.get(accountHash.toArrayUnsafe());
-    final List<Bytes32> formattedSlotList = new ArrayList<>();
-    foundSlotList.ifPresent(
-        bytes -> {
-          final RLPInput input = new BytesValueRLPInput(Bytes.of(foundSlotList.get()), false);
-          input.enterList();
-          while (!input.isEndOfCurrentList()) {
-            formattedSlotList.add(input.readBytes32());
-          }
-          input.leaveList();
-        });
-    return formattedSlotList;
+  public Optional<Bytes> getRawSlotListByAccount(final Hash accountHash) {
+    return slotListByAccountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
@@ -286,22 +268,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     public Updater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
-          Bytes.concatenate(Hash.hash(Address.ZERO), slotHash).toArrayUnsafe(),
-          storage.toArrayUnsafe());
-      storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
       return this;
     }
 
-    public Updater updateSlotListByAccount(final Hash accountHash, final List<Bytes32> slotList) {
-      final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-      rlp.startList();
-      for (Bytes32 slot : slotList) {
-        rlp.writeBytes(slot);
-      }
-      rlp.endList();
+    public Updater updateSlotListByAccount(final Hash accountHash, final Bytes slotList) {
       slotListByAccountStorageTransaction.put(
-          accountHash.toArrayUnsafe(), rlp.encoded().toArrayUnsafe());
+          accountHash.toArrayUnsafe(), slotList.toArrayUnsafe());
       return this;
     }
 
@@ -310,14 +283,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       return this;
     }
 
-    public void removeStorageValuesBySlotHash(
-        final Hash accountHash, final List<Bytes32> slotList) {
-      final byte[][] keys =
-          slotList.stream()
-              .map(slot -> Bytes.concatenate(accountHash, slot))
-              .map(Bytes::toArrayUnsafe)
-              .toArray(byte[][]::new);
-      storageStorageTransaction.remove(keys);
+    public void removeStorageValuesBySlotHash(final Hash accountHash, final Bytes slotList) {
+      if (!slotList.isEmpty()) {
+        final byte[][] keys = new byte[slotList.size() / Bytes32.SIZE][];
+        for (int i = 0; i < keys.length; i++) {
+          keys[i] =
+              Bytes.concatenate(accountHash, Bytes32.wrap(slotList, i * Bytes32.SIZE))
+                  .toArrayUnsafe();
+        }
+        storageStorageTransaction.remove(keys);
+      }
     }
 
     public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
