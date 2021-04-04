@@ -34,8 +34,8 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    minerNode = besu.createCustomGenesisNode("node1", GENESIS_FILE, true);
-    fullNode = besu.createArchiveNode("node2");
+    minerNode = besu.createCustomGenesisNode("node1", GENESIS_FILE, true, true);
+    fullNode = besu.createCustomGenesisNode("node2", GENESIS_FILE, false);
     cluster.start(minerNode, fullNode);
   }
 
