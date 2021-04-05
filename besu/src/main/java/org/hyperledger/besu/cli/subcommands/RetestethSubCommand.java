@@ -19,6 +19,7 @@ import static org.hyperledger.besu.cli.subcommands.RetestethSubCommand.COMMAND_N
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethService;
@@ -56,6 +57,12 @@ public class RetestethSubCommand implements Runnable {
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
   private final Path dataPath = DefaultCommandValues.getDefaultBesuDataPath(this);
+
+  @CommandLine.Option(
+      names = {"--enable-1559"},
+      paramLabel = "<Boolean>",
+      description = "Enable 1559 for retesteth, default false")
+  private final Boolean enable1559 = false;
 
   @Option(
       names = {"--logging", "-l"},
@@ -115,6 +122,7 @@ public class RetestethSubCommand implements Runnable {
   public void run() {
     prepareLogging();
 
+    ExperimentalEIPs.eip1559Enabled = enable1559;
     final RetestethConfiguration retestethConfiguration = new RetestethConfiguration(dataPath);
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setHost(rpcHttpHost);
