@@ -49,11 +49,6 @@ public class FullImportBlockStep implements Consumer<Block> {
   public void accept(final Block block) {
     final long blockNumber = block.getHeader().getNumber();
     final String blockHash = block.getHash().toHexString();
-    final String shortHash =
-        String.format(
-            "%s..%s",
-            blockHash.substring(0, 6),
-            blockHash.substring(blockHash.length() - 4, blockHash.length()));
     final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockNumber).getBlockImporter();
     if (!importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED)) {
@@ -74,7 +69,7 @@ public class FullImportBlockStep implements Consumer<Block> {
       LOG.info(
           "Import reached block {} ({}), {} Mg/s, Peers: {}",
           blockNumber,
-          shortHash,
+          blockHash,
           mgps,
           peerCount);
       lastReportMillis = nowMilli;
