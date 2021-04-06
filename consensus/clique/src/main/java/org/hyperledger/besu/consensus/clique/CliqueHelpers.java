@@ -104,11 +104,10 @@ public class CliqueHelpers {
             .getBlockChoiceRule()
             // shortest chain
             .thenComparing(Comparator.comparing(ProcessableBlockHeader::getNumber).reversed())
-            // proposer with most recent in-turn block
+            // proposer with least recent in-turn block
             .thenComparing(
                 Comparator.comparing(
-                        (BlockHeader header) -> distanceFromInTurn(header, cliqueContext))
-                    .reversed())
+                    (BlockHeader header) -> distanceFromInTurn(header, cliqueContext)))
             // last resort: blockhash as uint256.
             .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
   }

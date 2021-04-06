@@ -143,7 +143,7 @@ public class CliqueBlockChoiceTests {
   }
 
   @Test
-  public void closestToInTurnIsPreferred() {
+  public void leastRecentInTurnIsPreferred() {
     headerBuilder.number(8);
 
     headerBuilder.difficulty(Difficulty.of(1));
