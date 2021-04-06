@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -53,7 +54,7 @@ public class PersistBlockTaskTest {
 
   @Before
   public void setup() {
-    blockchainUtil = BlockchainSetupUtil.forTesting();
+    blockchainUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     protocolSchedule = blockchainUtil.getProtocolSchedule();
     protocolContext = blockchainUtil.getProtocolContext();
     blockchain = blockchainUtil.getBlockchain();

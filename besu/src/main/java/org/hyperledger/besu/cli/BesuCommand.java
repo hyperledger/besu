@@ -1060,19 +1060,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @CommandLine.Option(
       names = {"--api-gas-price-blocks"},
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "Number of blocks to consider for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Long apiGasPriceBlocks = 100L;
 
   @CommandLine.Option(
       names = {"--api-gas-price-percentile"},
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "Percentile value to measure for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Double apiGasPricePercentile = 50.0;
 
   @CommandLine.Option(
       names = {"--api-gas-price-max"},
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "Maximum gas price for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Long apiGasPriceMax = 500_000_000_000L;
 
@@ -1542,9 +1539,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     : SyncMode.FULL);
 
     ethNetworkConfig = updateNetworkConfig(getNetwork());
-    if (isGoQuorumCompatibilityMode) {
-      checkGoQuorumCompatibilityConfig(ethNetworkConfig);
-    }
+
+    checkGoQuorumGenesisConfig();
+    checkGoQuorumCompatibilityConfig(ethNetworkConfig);
+
     jsonRpcConfiguration = jsonRpcConfiguration();
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
@@ -2575,9 +2573,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  private void checkGoQuorumGenesisConfig() {
+    if (genesisFile != null) {
+      if (readGenesisConfigOptions().isQuorum() && !isGoQuorumCompatibilityMode) {
+        throw new IllegalStateException(
+            "Cannot use GoQuorum genesis file without GoQuorum privacy enabled");
+      }
+    }
+  }
+
   private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
     if (isGoQuorumCompatibilityMode) {
+      if (genesisFile == null) {
+        throw new ParameterException(
+            this.commandLine,
+            "--genesis-file must be specified if GoQuorum compatibility mode is enabled.");
+      }
+
       final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+
       // this static flag is read by the RLP decoder
       GoQuorumOptions.goQuorumCompatibilityMode = true;
 
@@ -2585,33 +2599,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new IllegalStateException(
             "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
       }
-      genesisConfigOptions
-          .getChainId()
-          .ifPresent(
-              chainId ->
-                  ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
-                      chainId, isGoQuorumCompatibilityMode));
 
-      if (genesisFile != null
-          && getGenesisConfigFile().getConfigOptions().isQuorum()
-          && !minTransactionGasPrice.isZero()) {
+      if (!minTransactionGasPrice.isZero()) {
         throw new ParameterException(
             this.commandLine,
             "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
       }
-      if (ethNetworkConfig.getNetworkId().equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
+
+      if (ensureGoQuorumCompatibilityModeNotUsedOnMainnet(genesisConfigOptions, ethNetworkConfig)) {
         throw new ParameterException(
             this.commandLine, "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
       }
     }
   }
 
-  private void ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
-      final BigInteger chainId, final boolean isGoQuorumCompatibilityMode) {
-    if (isGoQuorumCompatibilityMode && chainId.equals(EthNetworkConfig.MAINNET_NETWORK_ID)) {
-      throw new IllegalStateException(
-          "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
-    }
+  private static boolean ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
+      final GenesisConfigOptions genesisConfigOptions, final EthNetworkConfig ethNetworkConfig) {
+    return ethNetworkConfig.getNetworkId().equals(EthNetworkConfig.MAINNET_NETWORK_ID)
+        || genesisConfigOptions
+            .getChainId()
+            .map(chainId -> chainId.equals(EthNetworkConfig.MAINNET_NETWORK_ID))
+            .orElse(false);
   }
 
   @VisibleForTesting
