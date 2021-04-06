@@ -34,9 +34,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ForkIdManager {
 
   private final Hash genesisHash;
-  private final List<ForkId> forkAndHashList;
+  private final List<ForkId> forkIds;
 
-  private final List<Long> forks;
+  private final List<Long> forkBlockNumbers;
   private final LongSupplier chainHeadSupplier;
   private final long forkNext;
   private final boolean onlyZerosForkBlocks;
@@ -50,9 +50,9 @@ public class ForkIdManager {
     checkNotNull(nonFilteredForks);
     this.chainHeadSupplier = blockchain::getChainHeadBlockNumber;
     this.genesisHash = blockchain.getGenesisBlock().getHash();
-    this.forkAndHashList = new ArrayList<>();
+    this.forkIds = new ArrayList<>();
     this.legacyEth64 = legacyEth64;
-    this.forks =
+    this.forkBlockNumbers =
         nonFilteredForks.stream()
             .filter(fork -> fork > 0L)
             .distinct()
@@ -60,27 +60,26 @@ public class ForkIdManager {
             .collect(Collectors.toUnmodifiableList());
     this.onlyZerosForkBlocks = nonFilteredForks.stream().allMatch(value -> 0L == value);
     this.forkNext = createForkIds();
-    this.highestKnownFork = !forks.isEmpty() ? forks.get(forks.size() - 1) : 0L;
+    this.highestKnownFork =
+        !forkBlockNumbers.isEmpty() ? forkBlockNumbers.get(forkBlockNumbers.size() - 1) : 0L;
   }
 
-  public ForkId computeForkId() {
+  public ForkId getForkIdForChainHead() {
     if (legacyEth64) {
-      return forkAndHashList.isEmpty() ? null : forkAndHashList.get(forkAndHashList.size() - 1);
+      return forkIds.isEmpty() ? null : forkIds.get(forkIds.size() - 1);
     }
     final long head = chainHeadSupplier.getAsLong();
-    for (final ForkId forkId : forkAndHashList) {
+    for (final ForkId forkId : forkIds) {
       if (head < forkId.getNext()) {
         return forkId;
       }
     }
-    return forkAndHashList.isEmpty()
-        ? new ForkId(genesisHashCrc, 0)
-        : forkAndHashList.get(forkAndHashList.size() - 1);
+    return forkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : forkIds.get(forkIds.size() - 1);
   }
 
   @VisibleForTesting
-  List<ForkId> getForkAndHashList() {
-    return this.forkAndHashList;
+  List<ForkId> getForkIds() {
+    return this.forkIds;
   }
 
   public static ForkId readFrom(final RLPInput in) {
@@ -136,16 +135,16 @@ public class ForkIdManager {
   }
 
   private boolean isHashKnown(final Bytes forkHash) {
-    return forkAndHashList.stream().map(ForkId::getHash).anyMatch(hash -> hash.equals(forkHash));
+    return forkIds.stream().map(ForkId::getHash).anyMatch(hash -> hash.equals(forkHash));
   }
 
   private boolean isForkKnown(final Long nextFork) {
     return highestKnownFork < nextFork
-        || forkAndHashList.stream().map(ForkId::getNext).anyMatch(fork -> fork.equals(nextFork));
+        || forkIds.stream().map(ForkId::getNext).anyMatch(fork -> fork.equals(nextFork));
   }
 
   private boolean isRemoteAwareOfPresent(final Bytes forkHash, final Long nextFork) {
-    for (final ForkId j : forkAndHashList) {
+    for (final ForkId j : forkIds) {
       if (forkHash.equals(j.getHash())) {
         if (nextFork.equals(j.getNext())) {
           return true;
@@ -164,20 +163,20 @@ public class ForkIdManager {
     crc.update(genesisHash.toArray());
     genesisHashCrc = getCurrentCrcHash(crc);
     final List<Bytes> forkHashes = new ArrayList<>(List.of(genesisHashCrc));
-    forks.forEach(
+    forkBlockNumbers.forEach(
         fork -> {
           updateCrc(crc, fork);
           forkHashes.add(getCurrentCrcHash(crc));
         });
 
     // This loop is for all the fork hashes that have an associated "next fork"
-    for (int i = 0; i < forks.size(); i++) {
-      forkAndHashList.add(new ForkId(forkHashes.get(i), forks.get(i)));
+    for (int i = 0; i < forkBlockNumbers.size(); i++) {
+      forkIds.add(new ForkId(forkHashes.get(i), forkBlockNumbers.get(i)));
     }
     long forkNext = 0;
-    if (!forks.isEmpty()) {
-      forkNext = forkAndHashList.get(forkAndHashList.size() - 1).getNext();
-      forkAndHashList.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
+    if (!forkBlockNumbers.isEmpty()) {
+      forkNext = forkIds.get(forkIds.size() - 1).getNext();
+      forkIds.add(new ForkId(forkHashes.get(forkHashes.size() - 1), 0));
     }
     return forkNext;
   }

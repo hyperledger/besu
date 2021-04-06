@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import org.assertj.core.api.Assertions;
@@ -35,7 +36,8 @@ import org.junit.Test;
 
 public class ChainHeadTrackerTest {
 
-  private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+  private final BlockchainSetupUtil blockchainSetupUtil =
+      BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
   private final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
   private final EthProtocolManager ethProtocolManager =
       EthProtocolManagerTestUtil.create(blockchain);
