@@ -126,9 +126,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       if (layeredWorldStatesByHash.containsKey(blockHash)) {
         return Optional.of(layeredWorldStatesByHash.get(blockHash));
       } else {
+        final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
+        final BlockHeader currentHeader = blockchain.getChainHeadHeader();
+        if ((currentHeader.getNumber() - header.getNumber()) >= RETAINED_LAYERS) {
+          throw new RuntimeException("Exceeded the limit of back layers that can be loaded");
+        }
         final Optional<TrieLogLayer> trieLogLayer = getTrieLogLayer(blockHash);
         if (trieLogLayer.isPresent()) {
-          final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
           return Optional.of(
               new BonsaiLayeredWorldState(
                   blockchain,

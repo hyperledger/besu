@@ -95,7 +95,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
   }
 
   protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
-    return BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
+    return BlockchainSetupUtil.forTesting(storageFormat);
   }
 
   protected BlockchainSetupUtil createBlockchainSetupUtil(
