@@ -6,7 +6,7 @@
 
 ### Bug Fixes
 
-- Fixed issue in discv5 where nonce was incorrectly reused.
+- Fixed issue in discv5 where nonce was incorrectly reused. [\#2075](https://github.com/hyperledger/besu/pull/2075)
 
 ### Early Access Features
 
