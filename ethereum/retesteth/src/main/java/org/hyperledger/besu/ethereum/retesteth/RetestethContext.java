@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
@@ -47,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -68,13 +70,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class RetestethContext {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final PoWHasher NO_WORK_HASHER =
       (final long nonce, final long number, EpochCalculator epochCalc, final Bytes headerHash) ->
-          null;
+          new PoWSolution(nonce, Hash.ZERO, UInt256.ZERO.toBytes(), Hash.ZERO);
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
