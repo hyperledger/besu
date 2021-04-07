@@ -29,7 +29,7 @@ public class SECP256R1 extends AbstractSECP256 {
 
   @Override
   public void enableNative() {
-    LOG.info("Native secp256r1 requested but not available");
+    LOG.warn("Native secp256r1 requested but not available");
   }
 
   @Override
