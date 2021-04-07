@@ -1,3 +1,18 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,15 +70,15 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(Optional.of(chainHead.getStateRoot().toArrayUnsafe()));
     when(keyValueStorage.get(WORLD_BLOCK_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
-    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain);
+    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain, 1);
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, chainHead.getHash(), true))
         .containsInstanceOf(BonsaiPersistedWorldState.class);
   }
 
   @Test
-  public void testGetMutableThrowWhenLoadMoreThan512LayersBack() {
-    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain);
+  public void testGetMutableThrowWhenLoadMoreThanLimitLayersBack() {
+    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain, 512);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -75,8 +90,8 @@ public class BonsaiWorldStateArchiveTest {
   }
 
   @Test
-  public void testGetMutableNotThrowWhenLoadLessThan512LayersBack() {
-    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain);
+  public void testGetMutableNotThrowWhenLoadLessThanLimitLayersBack() {
+    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain, 512);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
 

@@ -42,20 +42,27 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
+  private static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
 
   private final Blockchain blockchain;
 
   private final BonsaiPersistedWorldState persistedState;
   private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  private final long maxLayeredToLoad;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
+    this(provider, blockchain, RETAINED_LAYERS);
+  }
+
+  public BonsaiWorldStateArchive(
+      final StorageProvider provider, final Blockchain blockchain, final long maxLayeredToLoad) {
     this.blockchain = blockchain;
 
     worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     layeredWorldStatesByHash = new HashMap<>();
+    this.maxLayeredToLoad = maxLayeredToLoad;
   }
 
   @Override
@@ -128,8 +135,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       } else {
         final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
         final BlockHeader currentHeader = blockchain.getChainHeadHeader();
-        if ((currentHeader.getNumber() - header.getNumber()) >= RETAINED_LAYERS) {
-          throw new RuntimeException("Exceeded the limit of back layers that can be loaded");
+        if ((currentHeader.getNumber() - header.getNumber()) >= maxLayeredToLoad) {
+          LOG.warn("Exceeded the limit of back layers that can be loaded ({})", maxLayeredToLoad);
+          return Optional.empty();
         }
         final Optional<TrieLogLayer> trieLogLayer = getTrieLogLayer(blockHash);
         if (trieLogLayer.isPresent()) {
