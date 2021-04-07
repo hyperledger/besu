@@ -14,12 +14,6 @@
       "period": 2,
       "epoch": 30000
     },
-    "maxCodeSizeConfig": [
-      {
-        "block": 0,
-        "size": 35
-      }
-    ],
     "isQuorum": true
   },
   "coinbase":"0x0000000000000000000000000000000000000000",

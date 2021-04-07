@@ -46,8 +46,6 @@ public class ContainerTestBase {
   private final String goQuorumVersion = "21.1.0";
   private final String tesseraVersion = "21.1.0";
 
-  protected final int defaultWait = 10;
-
   protected final String goQuorumTesseraPubKey = "3XGBIf+x8IdVQOVfIsbRnHwTYOJP/Fx84G8gMmy8qDM=";
   protected final String besuTesseraPubKey = "8JJLEAbq6o9m4Kqm++v0Y1n9Z2ryAFtZTyhnxSKWgws=";
 
@@ -169,7 +167,7 @@ public class ContainerTestBase {
             "--rpc-http-port",
             besuRpcPort.toString(),
             "--rpc-http-api",
-            "ADMIN,ETH,NET,WEB3,PRIV,GOQUORUM",
+            "ADMIN,ETH,NET,WEB3,GOQUORUM",
             "--goquorum-compatibility-enabled",
             "--min-gas-price",
             "0",
