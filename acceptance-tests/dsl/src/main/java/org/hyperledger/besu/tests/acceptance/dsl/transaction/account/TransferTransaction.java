@@ -14,30 +14,22 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.account;
 
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.SignUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.TransactionWithSignatureAlgorithm;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
-import org.web3j.crypto.Sign;
 import org.web3j.crypto.TransactionEncoder;
-import org.web3j.rlp.RlpEncoder;
-import org.web3j.rlp.RlpList;
-import org.web3j.rlp.RlpType;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Convert.Unit;
 import org.web3j.utils.Numeric;
@@ -98,33 +90,7 @@ public class TransferTransaction
 
   private String signedTransactionDataWithSignatureAlgorithm(
       final SignatureAlgorithm signatureAlgorithm) {
-    final RawTransaction transaction = createRawTransaction();
-
-    byte[] encodedTransaction = TransactionEncoder.encode(transaction);
-
-    Credentials credentials = sender.web3jCredentialsOrThrow();
-    SECPPrivateKey privateKey =
-        signatureAlgorithm.createPrivateKey(credentials.getEcKeyPair().getPrivateKey());
-
-    byte[] transactionHash = org.web3j.crypto.Hash.sha3(encodedTransaction);
-
-    SECPSignature secpSignature =
-        signatureAlgorithm.sign(
-            Bytes32.wrap(transactionHash), signatureAlgorithm.createKeyPair(privateKey));
-
-    Sign.SignatureData signature =
-        new Sign.SignatureData(
-            // In Ethereum transaction 27 is added to recId (v)
-            // See https://ethereum.github.io/yellowpaper/paper.pdf
-            //     Appendix F. Signing Transactions (281)
-            (byte) (secpSignature.getRecId() + 27),
-            secpSignature.getR().toByteArray(),
-            secpSignature.getS().toByteArray());
-    List<RlpType> values = TransactionEncoder.asRlpValues(transaction, signature);
-    RlpList rlpList = new RlpList(values);
-    final byte[] encodedSignedTransaction = RlpEncoder.encode(rlpList);
-
-    return Numeric.toHexString(encodedSignedTransaction);
+    return SignUtil.signTransaction(createRawTransaction(), sender, signatureAlgorithm);
   }
 
   private Hash sendRawTransaction(final NodeRequests node, final String signedTransactionData) {
