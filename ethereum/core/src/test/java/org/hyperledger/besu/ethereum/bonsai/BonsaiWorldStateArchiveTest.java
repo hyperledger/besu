@@ -32,7 +32,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.util.Optional;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,20 +76,17 @@ public class BonsaiWorldStateArchiveTest {
   }
 
   @Test
-  public void testGetMutableThrowWhenLoadMoreThanLimitLayersBack() {
+  public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain, 512);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
-    Assertions.assertThatThrownBy(
-            () -> bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash(), false))
-        .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Exceeded the limit of back layers that can be loaded");
+    assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash(), false)).isEmpty();
   }
 
   @Test
-  public void testGetMutableNotThrowWhenLoadLessThanLimitLayersBack() {
+  public void testGetMutableWhenLoadLessThanLimitLayersBack() {
     bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain, 512);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
