@@ -44,7 +44,6 @@ public class SECP256K1Test {
         LocalDateTime.now(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
     suiteName(SECP256K1Test.class);
-    ;
   }
 
   @Before
