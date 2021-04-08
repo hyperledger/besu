@@ -311,6 +311,11 @@ workflows:
             - assemble
           context:
             - besu-dockerhub-ro
+      - acceptanceTestsGoQuorum:
+          requires:
+            - assemble
+          context:
+            - besu-dockerhub-ro
       - buildDocker:
           requires:
             - unitTests
