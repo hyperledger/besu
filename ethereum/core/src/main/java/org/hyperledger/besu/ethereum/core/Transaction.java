@@ -152,7 +152,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     if (maybeAccessList.isPresent()) {
       checkState(
-          TransactionType.supportAccessList(transactionType),
+          transactionType.supportAccessList(),
           "Must not specify access list for transaction not supporting it");
     }
 

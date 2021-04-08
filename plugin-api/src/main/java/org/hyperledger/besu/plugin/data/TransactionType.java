@@ -48,4 +48,8 @@ public enum TransactionType {
   public static boolean supportAccessList(final TransactionType transactionType) {
     return ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES.contains(transactionType);
   }
+
+  public boolean supportAccessList() {
+    return supportAccessList(this);
+  }
 }
