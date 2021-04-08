@@ -25,6 +25,16 @@ executors:
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
+  docker_executor_xl: # 8cpu, 16G ram
+    docker:
+      - image: circleci/openjdk:11.0.8-jdk-buster
+        auth:
+          username: $DOCKER_USER_RO
+          password: $DOCKER_PASSWORD_RO
+    resource_class: xlarge
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
 notify:
   webhooks:
@@ -99,7 +109,7 @@ jobs:
             - ./
       - store_artifacts:
           name: Distribution artifacts
-          path:  build/distributions
+          path: build/distributions
           destination: distributions
           when: always
   testWindows:
@@ -190,6 +200,32 @@ jobs:
             ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
+  acceptanceTestsGoQuorum:
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: build image
+          command: |
+            ./gradlew --no-daemon distDocker
+      - run:
+          name: GoQuorum Acceptance Tests
+          no_output_timeout: 40m
+          command: |
+            docker run \
+              --name acctests-run  \
+              quorumengineering/acctests:latest test \
+              -PgaugeFailSafe \
+              -Pauto \
+              -Dtags="(basic || basic-istanbul || networks/typical-besu::ibft2)" \
+              -v ~/project/qogtestsoutput:~/project/qogtestsoutput \
+              -Dauto.outputDir=~/project/qogtestsoutput \
+              -Dnetwork.forceDestroy=true
+#            docker run --rm --network host -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/acctests:/tmp/acctests \
+#                    quorumengineering/acctests:latest test -Pauto -Dtags="basic || networks/typical::raft" \
+#                    -Dauto.outputDir=~/project/qogtestsoutput -Dnetwork.forceDestroy=true
 
   buildDocker:
     executor: besu_executor_med
@@ -264,22 +300,22 @@ workflows:
           requires:
             - assemble
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
       - integrationTests:
           requires:
             - assemble
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
       - acceptanceTests:
           requires:
             - assemble
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
       - buildDocker:
           requires:
             - unitTests
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
       - publish:
           filters:
             branches:
