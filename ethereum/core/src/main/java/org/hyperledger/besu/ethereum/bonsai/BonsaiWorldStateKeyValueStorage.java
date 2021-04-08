@@ -132,6 +132,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
+    System.out.println(trieLogStorage.containsKey(blockHash.toArrayUnsafe()));
     return trieBranchStorage
             .get(WORLD_ROOT_HASH_KEY)
             .map(Bytes32::wrap)
