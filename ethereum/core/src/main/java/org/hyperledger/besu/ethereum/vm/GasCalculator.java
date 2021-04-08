@@ -156,6 +156,13 @@ public interface GasCalculator {
   // Call/Create Operation Calculations
 
   /**
+   * Returns the base gas cost to execute a call operation.
+   *
+   * @return the base gas cost to execute a call operation
+   */
+  Gas callOperationBaseGasCost();
+
+  /**
    * Returns the gas cost for one of the various CALL operations.
    *
    * @param frame The current frame

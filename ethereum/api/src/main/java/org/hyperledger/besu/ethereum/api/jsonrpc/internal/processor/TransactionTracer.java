@@ -18,6 +18,7 @@ import static java.util.function.Predicate.isEqual;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -97,9 +98,10 @@ public class TransactionTracer {
         .performActionWithBlock(
             blockHash,
             (body, header, blockchain, worldState, transactionProcessor) -> {
-              final WorldUpdater worldUpdater = worldState.updater();
+              WorldUpdater stackedUpdater = worldState.updater().updater();
               final List<String> traces = new ArrayList<>();
               for (int i = 0; i < body.getTransactions().size(); i++) {
+                ((AbstractWorldUpdater.StackedUpdater) stackedUpdater).markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);
                 if (selectedHash.isEmpty()
                     || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
@@ -110,7 +112,7 @@ public class TransactionTracer {
                         processTransaction(
                             header,
                             blockchain,
-                            worldUpdater,
+                            stackedUpdater,
                             transaction,
                             transactionProcessor,
                             new StandardJsonTracer(out, showMemory));
@@ -126,7 +128,7 @@ public class TransactionTracer {
                   processTransaction(
                       header,
                       blockchain,
-                      worldUpdater,
+                      stackedUpdater,
                       transaction,
                       transactionProcessor,
                       OperationTracer.NO_TRACING);
