@@ -15,11 +15,15 @@
 package org.hyperledger.besu.plugin.data;
 
 import java.util.Arrays;
+import java.util.Set;
 
 public enum TransactionType {
   FRONTIER(0xf8 /* doesn't end up being used as we don't serialize legacy txs with their type */),
   ACCESS_LIST(0x01),
   EIP1559(0x02);
+
+  private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
+      Set.of(ACCESS_LIST, EIP1559);
 
   private final int typeValue;
 
@@ -39,5 +43,9 @@ public enum TransactionType {
             () ->
                 new IllegalArgumentException(
                     String.format("Unsupported transaction type %x", serializedTypeValue)));
+  }
+
+  public static boolean supportAccessList(final TransactionType transactionType) {
+    return ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES.contains(transactionType);
   }
 }

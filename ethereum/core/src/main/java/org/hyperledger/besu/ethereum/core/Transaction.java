@@ -149,14 +149,18 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       throw new IllegalStateException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
     }
+
+    if (maybeAccessList.isPresent()) {
+      checkState(
+          TransactionType.supportAccessList(transactionType),
+          "Must not specify access list for transaction not supporting it");
+    }
+
     if (Objects.equals(transactionType, TransactionType.ACCESS_LIST)) {
       checkState(
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
-    } else if (!Objects.equals(transactionType, TransactionType.EIP1559)) {
-      checkState(
-          maybeAccessList.isEmpty(),
-          "Must not specify access list for non-access list transaction");
     }
+
     this.transactionType = transactionType;
     this.nonce = nonce;
     this.gasPrice = gasPrice;
