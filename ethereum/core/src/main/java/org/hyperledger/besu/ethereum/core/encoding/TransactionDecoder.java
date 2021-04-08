@@ -168,37 +168,42 @@ public class TransactionDecoder {
 
   static Transaction decodeEIP1559(final RLPInput input) {
     input.enterList();
-
+    final BigInteger chainId = input.readBigIntegerScalar();
     final Transaction.Builder builder =
         Transaction.builder()
             .type(TransactionType.EIP1559)
+            .chainId(chainId)
             .nonce(input.readLongScalar())
-            .gasPrice(Wei.of(input.readUInt256Scalar()))
+            .gasPremium(Wei.wrap(input.readBytes()))
+            .feeCap(Wei.wrap(input.readBytes()))
             .gasLimit(input.readLongScalar())
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes())
-            .gasPremium(Wei.wrap(input.readBytes()))
-            .feeCap(Wei.wrap(input.readBytes()));
-
-    final BigInteger v = input.readBytes().toBigInteger();
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final byte recId;
-    Optional<BigInteger> chainId = Optional.empty();
-    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-    } else {
-      throw new RuntimeException(
-          String.format("An unsupported encoded `v` value of %s was found", v));
-    }
-    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
+            .accessList(
+                input.readList(
+                    accessListEntryRLPInput -> {
+                      accessListEntryRLPInput.enterList();
+                      final AccessListEntry accessListEntry =
+                          new AccessListEntry(
+                              Address.wrap(accessListEntryRLPInput.readBytes()),
+                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
+                      accessListEntryRLPInput.leaveList();
+                      return accessListEntry;
+                    }));
+    final byte recId = (byte) input.readIntScalar();
+    final Transaction transaction =
+        builder
+            .signature(
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createSignature(
+                        input.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        input.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        recId))
+            .build();
     input.leaveList();
-    chainId.ifPresent(builder::chainId);
-    return builder.signature(signature).build();
+    return transaction;
   }
 
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {
