@@ -991,30 +991,38 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void testDnsDiscoveryUrlEthConfig() throws Exception {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
-            ArgumentCaptor.forClass(EthNetworkConfig.class);
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
 
-    parseCommand("--discovery-dns-url", "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
+    parseCommand(
+        "--discovery-dns-url",
+        "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getDnsDiscoveryUrl()).isEqualTo("enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
+    assertThat(config.getDnsDiscoveryUrl())
+        .isEqualTo(
+            "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
   }
 
   @Test
   public void testDnsDiscoveryUrlOverridesNetworkEthConfig() throws Exception {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
-            ArgumentCaptor.forClass(EthNetworkConfig.class);
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     parseCommand("--network", "dev");
-    parseCommand("--discovery-dns-url", "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
+    parseCommand(
+        "--discovery-dns-url",
+        "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getDnsDiscoveryUrl()).isEqualTo("enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
+    assertThat(config.getDnsDiscoveryUrl())
+        .isEqualTo(
+            "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
   }
 
   @Test
