@@ -4,6 +4,8 @@
 
 ### Additions and Improvements
 
+- Adds `--discovery-dns-url` CLI command [\#2088](https://github.com/hyperledger/besu/pull/2088)
+
 ### Bug Fixes
 
 - Fixed issue in discv5 where nonce was incorrectly reused.
