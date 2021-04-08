@@ -657,21 +657,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
               rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
               rlpOutput.writeUInt256Scalar(value);
               rlpOutput.writeBytes(payload);
-              if (accessList.isPresent()) {
-                rlpOutput.writeList(
-                    accessList.get(),
-                    (accessListEntry, accessListEntryRLPOutput) -> {
-                      accessListEntryRLPOutput.startList();
-                      rlpOutput.writeBytes(accessListEntry.getAddress());
-                      rlpOutput.writeList(
-                          accessListEntry.getStorageKeys(),
-                          (storageKeyBytes, storageKeyBytesRLPOutput) ->
-                              storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
-                      accessListEntryRLPOutput.endList();
-                    });
-              } else {
-                rlpOutput.writeEmptyList();
-              }
+              TransactionEncoder.writeAccessList(rlpOutput, accessList);
               rlpOutput.endList();
             });
     return Bytes.concatenate(Bytes.of(TransactionType.EIP1559.getSerializedType()), encoded);

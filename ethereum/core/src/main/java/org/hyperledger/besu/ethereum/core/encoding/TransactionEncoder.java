@@ -173,7 +173,7 @@ public class TransactionEncoder {
     out.endList();
   }
 
-  private static void writeAccessList(
+  public static void writeAccessList(
       final RLPOutput out, final Optional<List<AccessListEntry>> accessListEntries) {
     if (accessListEntries.isEmpty()) {
       out.writeEmptyList();
