@@ -19,9 +19,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -46,8 +48,11 @@ public class WorldDownloadStateTest {
   private static final int MAX_REQUESTS_WITHOUT_PROGRESS = 10;
   private static final long MIN_MILLIS_BEFORE_STALLING = 50_000;
 
-  private final WorldStateStorage worldStateStorage =
+  private final WorldStateStorage forestWorldStateStorage =
       new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+
+  private final WorldStateStorage bonsaiWorldStateStorage =
+      new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
 
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
@@ -70,36 +75,76 @@ public class WorldDownloadStateTest {
   }
 
   @Test
-  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemain() {
-    downloadState.checkCompletion(worldStateStorage, header);
+  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemainWithForest() {
+    downloadState.checkCompletion(forestWorldStateStorage, header);
 
     assertThat(future).isCompleted();
     assertThat(downloadState.isDownloading()).isFalse();
   }
 
   @Test
-  public void shouldStoreRootNodeBeforeReturnedFutureCompletes() {
+  public void shouldStoreRootNodeBeforeReturnedFutureCompletesWithForest() {
     final CompletableFuture<Void> postFutureChecks =
         future.thenAccept(
             result ->
-                assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+                assertThat(
+                        forestWorldStateStorage.getAccountStateTrieNode(
+                            Bytes.EMPTY, ROOT_NODE_HASH))
                     .contains(ROOT_NODE_DATA));
 
-    downloadState.checkCompletion(worldStateStorage, header);
+    downloadState.checkCompletion(forestWorldStateStorage, header);
 
     assertThat(future).isCompleted();
     assertThat(postFutureChecks).isCompleted();
   }
 
   @Test
-  public void shouldNotCompleteWhenThereArePendingTasks() {
+  public void shouldNotCompleteWhenThereArePendingTasksWithForest() {
     pendingRequests.add(
         NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
 
-    downloadState.checkCompletion(worldStateStorage, header);
+    downloadState.checkCompletion(forestWorldStateStorage, header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(forestWorldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
+    assertThat(downloadState.isDownloading()).isTrue();
+  }
+
+  @Test
+  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemainWithBonsai() {
+    downloadState.checkCompletion(bonsaiWorldStateStorage, header);
+
+    assertThat(future).isCompleted();
+    assertThat(downloadState.isDownloading()).isFalse();
+  }
+
+  @Test
+  public void shouldStoreRootNodeBeforeReturnedFutureCompletesWithBonsai() {
+    final CompletableFuture<Void> postFutureChecks =
+        future.thenAccept(
+            result ->
+                assertThat(
+                        bonsaiWorldStateStorage.getAccountStateTrieNode(
+                            Bytes.EMPTY, ROOT_NODE_HASH))
+                    .contains(ROOT_NODE_DATA));
+
+    downloadState.checkCompletion(bonsaiWorldStateStorage, header);
+
+    assertThat(future).isCompleted();
+    assertThat(postFutureChecks).isCompleted();
+  }
+
+  @Test
+  public void shouldNotCompleteWhenThereArePendingTasksWithBonsai() {
+    pendingRequests.add(
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
+
+    downloadState.checkCompletion(bonsaiWorldStateStorage, header);
+
+    assertThat(future).isNotDone();
+    assertThat(bonsaiWorldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -182,8 +227,21 @@ public class WorldDownloadStateTest {
   }
 
   @Test
-  public void shouldNotAddRequestsAfterDownloadIsCompleted() {
-    downloadState.checkCompletion(worldStateStorage, header);
+  public void shouldNotAddRequestsAfterDownloadIsCompletedWithForest() {
+    downloadState.checkCompletion(forestWorldStateStorage, header);
+
+    downloadState.enqueueRequests(
+        Stream.of(
+            NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty())));
+    downloadState.enqueueRequest(
+        NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
+
+    assertThat(pendingRequests.isEmpty()).isTrue();
+  }
+
+  @Test
+  public void shouldNotAddRequestsAfterDownloadIsCompletedWithBonsai() {
+    downloadState.checkCompletion(bonsaiWorldStateStorage, header);
 
     downloadState.enqueueRequests(
         Stream.of(
