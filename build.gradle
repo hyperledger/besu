@@ -654,6 +654,8 @@ task testDocker {
 task acceptanceTestsGoQuorum {
   dependsOn distDocker
 
+  def tags = "(basic || basic-istanbul || networks/typical-besu::ibft2)"
+
   doLast {
     // TODO ricardolyn: do we need multiple variants for GoQ AT?
     exec {
@@ -666,7 +668,7 @@ task acceptanceTestsGoQuorum {
 
       def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
       executable "sh"
-      args "-c", "TF_besu_docker_image=${image}-${variant} docker run --network host -v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"((basic || basic-istanbul) && estimategas || networks/typical-besu::ibft2)\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
+      args "-c", "TF_besu_docker_image=${image}-${variant} docker run --network host -v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"${tags}\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
     }
   }
 }
