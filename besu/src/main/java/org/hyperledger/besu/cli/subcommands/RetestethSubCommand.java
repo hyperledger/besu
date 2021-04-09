@@ -31,14 +31,15 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(
     name = COMMAND_NAME,
     description = "Run a Retesteth compatible server for reference tests.",
     mixinStandardHelpOptions = true)
+@SuppressWarnings("unused")
 public class RetestethSubCommand implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
@@ -52,17 +53,13 @@ public class RetestethSubCommand implements Runnable {
    */
   public static final int RETESTETH_PORT = 47710;
 
-  @CommandLine.Option(
+  @Mixin private final ExperimentalEIPs experimentalEIPs = new ExperimentalEIPs();
+
+  @Option(
       names = {"--data-path"},
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
   private final Path dataPath = DefaultCommandValues.getDefaultBesuDataPath(this);
-
-  @CommandLine.Option(
-      names = {"--enable-1559"},
-      paramLabel = "<Boolean>",
-      description = "Enable 1559 for retesteth, default false")
-  private final Boolean enable1559 = false;
 
   @Option(
       names = {"--logging", "-l"},
@@ -122,7 +119,6 @@ public class RetestethSubCommand implements Runnable {
   public void run() {
     prepareLogging();
 
-    ExperimentalEIPs.eip1559Enabled = enable1559;
     final RetestethConfiguration retestethConfiguration = new RetestethConfiguration(dataPath);
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
     jsonRpcConfiguration.setHost(rpcHttpHost);
