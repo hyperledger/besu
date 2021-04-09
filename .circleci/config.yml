@@ -36,6 +36,10 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
+  acceptance_tests_executor:
+    machine:
+      image: ubuntu-2004:202101-01
+
 notify:
   webhooks:
     - url: $HUBOT_URL
@@ -200,33 +204,24 @@ jobs:
             ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
+
   acceptanceTestsGoQuorum:
-    executor: besu_executor_xl
+    parallelism: 1
+    executor: acceptance_tests_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
-      - setup_remote_docker
-      - run:
-          name: build image
-          command: |
-            ./gradlew --no-daemon distDocker
       - run:
           name: GoQuorum Acceptance Tests
           no_output_timeout: 40m
           command: |
-            docker run \
-              --name acctests-run  \
-              quorumengineering/acctests:latest test \
-              -PgaugeFailSafe \
-              -Pauto \
-              -Dtags="(basic || basic-istanbul || networks/typical-besu::ibft2)" \
-              -v ~/project/qogtestsoutput:~/project/qogtestsoutput \
-              -Dauto.outputDir=~/project/qogtestsoutput \
-              -Dnetwork.forceDestroy=true
-#            docker run --rm --network host -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/acctests:/tmp/acctests \
-#                    quorumengineering/acctests:latest test -Pauto -Dtags="basic || networks/typical::raft" \
-#                    -Dauto.outputDir=~/project/qogtestsoutput -Dnetwork.forceDestroy=true
+            ./gradlew --no-daemon acceptanceTestsGoQuorum
+      - store_artifacts:
+          path: build/goquorum-at
+          destination: goquorum-at-artifacts
+      - store_test_results:
+          path: build/goquorum-at/openjdk-latest/reports/xml-report
 
   buildDocker:
     executor: besu_executor_med
@@ -315,6 +310,7 @@ workflows:
       - acceptanceTestsGoQuorum:
           requires:
             - assemble
+            - buildDocker
           context:
             - besu-dockerhub-ro
       - buildDocker:

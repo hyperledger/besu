@@ -651,6 +651,26 @@ task testDocker {
   }
 }
 
+task acceptanceTestsGoQuorum {
+  dependsOn distDocker
+
+  doLast {
+    // TODO ricardolyn: do we need multiple variants for GoQ AT?
+    exec {
+      def variant = "openjdk-latest"
+      def variantDirectory = "${buildDir}/goquorum-at/${variant}"
+      def dataDirectory = "${variantDirectory}/data"
+      def reportsDirectory = "${variantDirectory}/reports"
+      new File(dataDirectory).mkdirs()
+      new File(reportsDirectory).mkdirs()
+
+      def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+      executable "sh"
+      args "-c", "TF_besu_docker_image=${image}-${variant} docker run --network host -v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"((basic || basic-istanbul) && estimategas || networks/typical-besu::ibft2)\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
+    }
+  }
+}
+
 task dockerUpload {
   dependsOn distDocker
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
