@@ -299,7 +299,6 @@ workflows:
             - besu-dockerhub-ro
       - acceptanceTestsGoQuorum:
           requires:
-            - assemble
             - buildDocker
           context:
             - besu-dockerhub-ro
