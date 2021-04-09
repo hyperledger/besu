@@ -29,6 +29,7 @@ executors:
   acceptance_tests_executor:
     machine:
       image: ubuntu-2004:202101-01
+    resource_class: xlarge
 
 notify:
   webhooks:
