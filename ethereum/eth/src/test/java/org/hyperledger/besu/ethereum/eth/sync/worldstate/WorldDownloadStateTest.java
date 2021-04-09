@@ -19,17 +19,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -38,7 +43,10 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class WorldDownloadStateTest {
 
   private static final Bytes ROOT_NODE_DATA = Bytes.of(1, 2, 3, 4);
@@ -46,8 +54,7 @@ public class WorldDownloadStateTest {
   private static final int MAX_REQUESTS_WITHOUT_PROGRESS = 10;
   private static final long MIN_MILLIS_BEFORE_STALLING = 50_000;
 
-  private final WorldStateStorage worldStateStorage =
-      new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  private WorldStateStorage worldStateStorage;
 
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
@@ -63,10 +70,27 @@ public class WorldDownloadStateTest {
 
   private final CompletableFuture<Void> future = downloadState.getDownloadFuture();
 
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  }
+
+  private final DataStorageFormat storageFormat;
+
+  public WorldDownloadStateTest(final DataStorageFormat storageFormat) {
+    this.storageFormat = storageFormat;
+  }
+
   @Before
   public void setUp() {
     downloadState.setRootNodeData(ROOT_NODE_DATA);
     assertThat(downloadState.isDownloading()).isTrue();
+    if (storageFormat == DataStorageFormat.BONSAI) {
+      worldStateStorage =
+          new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+    } else {
+      worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    }
   }
 
   @Test
