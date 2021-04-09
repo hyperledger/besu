@@ -206,6 +206,7 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
+      - setup_remote_docker
       - run:
           name: build image
           command: |
