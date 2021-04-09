@@ -252,7 +252,6 @@ public class MainnetTransactionProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater) {
     try {
       LOG.trace("Starting execution of {}", transaction);
-
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(transaction, blockHeader.getBaseFee());
       // Make sure the transaction is intrinsically valid before trying to
