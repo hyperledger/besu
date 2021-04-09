@@ -253,7 +253,7 @@ public class ProtocolScheduleBuilder {
           eip1559Block,
           new BuilderMapEntry(
               eip1559Block,
-              MainnetProtocolSpecs.eip1559Definition(
+              MainnetProtocolSpecs.londonDefinition(
                   chainId,
                   transactionPriceCalculator,
                   config.getContractSizeLimit(),
