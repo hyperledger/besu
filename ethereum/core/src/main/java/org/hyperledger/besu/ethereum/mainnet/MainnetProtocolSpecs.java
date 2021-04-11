@@ -456,8 +456,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Berlin");
   }
 
-  // TODO EIP-1559 change for the actual fork name when known
-  static ProtocolSpecBuilder eip1559Definition(
+  static ProtocolSpecBuilder londonDefinition(
       final Optional<BigInteger> chainId,
       final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final OptionalInt contractSizeLimit,
@@ -501,7 +500,10 @@ public abstract class MainnetProtocolSpecs {
                     Account.DEFAULT_VERSION,
                     transactionPriceCalculator.orElseThrow(),
                     CoinbaseFeePriceCalculator.eip1559()))
-        .name("EIP-1559")
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .name("London")
         .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
         .eip1559(Optional.of(eip1559))
         .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
