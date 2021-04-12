@@ -105,31 +105,6 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldIgnoreNonceWhenNonStrict() {
-    final JsonRpcRequestContext request = ethEstimateGasRequestWithNonce(88, false);
-    when(transactionSimulator.process(
-            eq(modifiedLegacyTransactionCallParameter(Wei.ZERO)),
-            any(TransactionValidationParams.class),
-            any(OperationTracer.class),
-            eq(1L)))
-        .thenReturn(Optional.empty());
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
-
-    Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
-  }
-
-  @Test
-  public void shouldThrowInvalidParamWithNonceWhenStrict() {
-
-    Assertions.assertThatThrownBy(() -> ethEstimateGasRequestWithNonce(88, true))
-        .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("nonce cannot be specified when strict is enforced");
-  }
-
-  @Test
   public void shouldReturnErrorWhenTransientEip1559TransactionProcessorReturnsEmpty() {
     final JsonRpcRequestContext request = ethEstimateGasRequest(eip1559TransactionCallParameter());
     when(transactionSimulator.process(
@@ -363,31 +338,11 @@ public class EthEstimateGasTest {
     return legacyTransactionCallParameter(gasPrice, false);
   }
 
-  private JsonCallParameter defaultLegacyTransactionCallParameterWithNonce(
-      final Wei gasPrice, final boolean isStrict, final int nonce) {
-    return legacyTransactionCallParameterWithNonce(gasPrice, isStrict, nonce);
-  }
-
   private JsonCallParameter legacyTransactionCallParameter(
       final Wei gasPrice, final boolean isStrict) {
     return new JsonCallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
-        Gas.ZERO,
-        gasPrice,
-        null,
-        null,
-        Wei.ZERO,
-        Bytes.EMPTY,
-        isStrict);
-  }
-
-  private JsonCallParameter legacyTransactionCallParameterWithNonce(
-      final Wei gasPrice, final boolean isStrict, final int nonce) {
-    return new JsonCallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        nonce,
         Gas.ZERO,
         gasPrice,
         null,
@@ -439,14 +394,6 @@ public class EthEstimateGasTest {
   }
 
   private JsonRpcRequestContext ethEstimateGasRequest(final CallParameter callParameter) {
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "eth_estimateGas", new Object[] {callParameter}));
-  }
-
-  private JsonRpcRequestContext ethEstimateGasRequestWithNonce(
-      final int nonce, final boolean isStrict) {
-    final CallParameter callParameter =
-        defaultLegacyTransactionCallParameterWithNonce(Wei.ZERO, isStrict, nonce);
     return new JsonRpcRequestContext(
         new JsonRpcRequest("2.0", "eth_estimateGas", new Object[] {callParameter}));
   }
