@@ -32,9 +32,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -132,7 +130,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
         LOG.info("load trie address done" + address);
       }
-      final List<byte[]> allSlotDetected = new ArrayList<>();
       Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
       while (!entriesToDelete.isEmpty()) {
         entriesToDelete
