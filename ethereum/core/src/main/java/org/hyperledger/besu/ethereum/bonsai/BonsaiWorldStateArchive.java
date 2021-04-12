@@ -56,11 +56,23 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     layeredWorldStatesByHash = new HashMap<>();
+    blockchain.observeChainReorg(
+        (blockWithReceipts, blckchain) ->
+            layeredWorldStatesByHash.computeIfPresent(
+                blockWithReceipts.getHeader().getParentHash(),
+                (hash, bonsaiLayeredWorldState) -> {
+                  System.out.println("Reorg detected " + blockWithReceipts.getHeader());
+                  if (layeredWorldStatesByHash.containsKey(blockWithReceipts.getHash())) {
+                    bonsaiLayeredWorldState.setNextWorldView(
+                        Optional.of(layeredWorldStatesByHash.get(blockWithReceipts.getHash())));
+                  }
+                  return bonsaiLayeredWorldState;
+                }));
   }
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    if (layeredWorldStatesByHash.containsKey(rootHash)) {
+    if (layeredWorldStatesByHash.containsKey(blockHash)) {
       return Optional.of(layeredWorldStatesByHash.get(blockHash));
     } else if (rootHash.equals(persistedState.blockHash())) {
       return Optional.of(persistedState);
@@ -86,6 +98,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     if (blockHeader.getNumber() > 0) {
       final Optional<BlockHeader> blockHeaderParent =
           blockchain.getBlockHeader(blockHeader.getParentHash());
+      System.out.println("Layered new detected " + blockHeader.getHash());
       blockHeaderParent.ifPresent(
           header ->
               getMutable(null, header.getHash(), false)
