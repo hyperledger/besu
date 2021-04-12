@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static java.lang.Boolean.FALSE;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -38,6 +39,7 @@ public class JsonCallParameter extends CallParameter {
   public JsonCallParameter(
       @JsonProperty("from") final Address from,
       @JsonProperty("to") final Address to,
+      //      @JsonProperty("nonce") final int nonce,
       @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
       @JsonProperty("gasPrice") final Wei gasPrice,
       @JsonProperty("gasPremium") final Wei gasPremium,
@@ -56,6 +58,34 @@ public class JsonCallParameter extends CallParameter {
         value,
         payload);
     this.strict = Optional.ofNullable(strict).orElse(FALSE);
+  }
+
+  @JsonCreator
+  public JsonCallParameter(
+      @JsonProperty("from") final Address from,
+      @JsonProperty("to") final Address to,
+      @JsonProperty("nonce") final int nonce,
+      @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
+      @JsonProperty("gasPrice") final Wei gasPrice,
+      @JsonProperty("gasPremium") final Wei gasPremium,
+      @JsonProperty("feeCap") final Wei feeCap,
+      @JsonProperty("value") final Wei value,
+      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
+          final Bytes payload,
+      @JsonProperty("strict") final Boolean strict) {
+    super(
+        from,
+        to,
+        gasLimit != null ? gasLimit.toLong() : -1,
+        gasPrice,
+        Optional.ofNullable(gasPremium),
+        Optional.ofNullable(feeCap),
+        value,
+        payload);
+    this.strict = Optional.ofNullable(strict).orElse(FALSE);
+    if (strict) {
+      throw new InvalidJsonRpcParameters("nonce cannot be specified when strict is enforced");
+    }
   }
 
   public boolean isStrict() {
