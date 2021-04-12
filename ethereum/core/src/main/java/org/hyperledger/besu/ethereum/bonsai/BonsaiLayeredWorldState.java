@@ -63,6 +63,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   public Optional<BonsaiWorldView> getNextWorldView() {
     if (nextWorldView.isEmpty()) {
+      System.out.println("Next layered not found");
       final Optional<Hash> blockHashByNumber = blockchain.getBlockHashByNumber(height + 1);
       nextWorldView =
           blockHashByNumber
