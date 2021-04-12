@@ -71,7 +71,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   public void addLayeredWorldState(
       final BonsaiWorldView persistedWorldState,
-      final long blockNumber,
+      final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog) {
     final BonsaiLayeredWorldState bonsaiLayeredWorldState =
@@ -79,18 +79,22 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             blockchain,
             this,
             Optional.of(persistedWorldState),
-            blockNumber,
+            blockHeader.getNumber(),
             worldStateRootHash,
             trieLog);
     layeredWorldStatesByHash.put(bonsaiLayeredWorldState.blockHash(), bonsaiLayeredWorldState);
-    if (blockNumber > 0) {
-      final Optional<Hash> blockHashByNumber = blockchain.getBlockHashByNumber(blockNumber - 1);
-      if (blockHashByNumber.isPresent()
-          && layeredWorldStatesByHash.containsKey(blockHashByNumber.get())) {
-        layeredWorldStatesByHash
-            .get(blockHashByNumber.get())
-            .setNextWorldView(Optional.of(bonsaiLayeredWorldState));
-      }
+    if (blockHeader.getNumber() > 0) {
+      final Optional<BlockHeader> blockHeaderParent =
+          blockchain.getBlockHeader(blockHeader.getParentHash());
+      blockHeaderParent.ifPresent(
+          header ->
+              getMutable(null, header.getHash(), false)
+                  .map(BonsaiLayeredWorldState.class::cast)
+                  .ifPresent(
+                      worldState -> {
+                        worldState.setNextWorldView(Optional.of(bonsaiLayeredWorldState));
+                        layeredWorldStatesByHash.put(header.getHash(), worldState);
+                      }));
     }
   }
 
