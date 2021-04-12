@@ -56,8 +56,23 @@ public class FullImportBlockStep implements Consumer<Block> {
             blockHash.substring(blockHash.length() - 4, blockHash.length()));
     final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockNumber).getBlockImporter();
+    final double beg = Instant.now().toEpochMilli();
     if (!importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED)) {
       throw new InvalidBlockException("Failed to import block", blockNumber, block.getHash());
+    }
+    final double end = Instant.now().toEpochMilli() - beg;
+    if (blockNumber == 11953816) {
+      LOG.info(
+          String.format(
+              "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
+              block.getHeader().getNumber(),
+              block.getBody().getTransactions().size(),
+              block.getBody().getOmmers().size(),
+              block.getHeader().getGasUsed(),
+              (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+              block.getHash().toHexString(),
+              end,
+              ethContext.getEthPeers().peerCount()));
     }
     gasAccumulator += block.getHeader().getGasUsed();
     int peerCount = -1; // ethContext is not available in tests
