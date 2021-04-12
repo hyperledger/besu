@@ -236,6 +236,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return Optional.empty();
   }
 
+  public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
+    return worldStateStorage;
+  }
+
   @Override
   public Optional<WorldStateProof> getAccountProof(
       final Hash worldStateRoot,
