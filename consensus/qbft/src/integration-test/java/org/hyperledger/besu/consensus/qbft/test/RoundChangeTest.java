@@ -20,6 +20,7 @@ import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -74,6 +75,7 @@ public class RoundChangeTest {
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
     final RoundChange expectedTxRoundChange =
         localNodeMessageFactory.createRoundChange(targetRound, empty());
+    context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
     context.getController().handleRoundExpiry(new RoundExpiry(roundId));
     peers.verifyMessagesReceived(expectedTxRoundChange);
   }
