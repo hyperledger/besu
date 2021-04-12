@@ -56,18 +56,22 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     layeredWorldStatesByHash = new HashMap<>();
-    blockchain.observeChainReorg(
-        (blockWithReceipts, blckchain) ->
+
+    blockchain.observeBlockAdded(
+        event -> {
+          if (event.isNewCanonicalHead()) {
+            final BlockHeader eventBlockHeader = event.getBlock().getHeader();
             layeredWorldStatesByHash.computeIfPresent(
-                blockWithReceipts.getHeader().getParentHash(),
+                eventBlockHeader.getParentHash(),
                 (hash, bonsaiLayeredWorldState) -> {
-                  System.out.println("Reorg detected " + blockWithReceipts.getHeader());
-                  if (layeredWorldStatesByHash.containsKey(blockWithReceipts.getHash())) {
+                  if (layeredWorldStatesByHash.containsKey(eventBlockHeader.getHash())) {
                     bonsaiLayeredWorldState.setNextWorldView(
-                        Optional.of(layeredWorldStatesByHash.get(blockWithReceipts.getHash())));
+                        Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getHash())));
                   }
                   return bonsaiLayeredWorldState;
-                }));
+                });
+          }
+        });
   }
 
   @Override
@@ -95,20 +99,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             worldStateRootHash,
             trieLog);
     layeredWorldStatesByHash.put(bonsaiLayeredWorldState.blockHash(), bonsaiLayeredWorldState);
-    if (blockHeader.getNumber() > 0) {
-      final Optional<BlockHeader> blockHeaderParent =
-          blockchain.getBlockHeader(blockHeader.getParentHash());
-      System.out.println("Layered new detected " + blockHeader.getHash());
-      blockHeaderParent.ifPresent(
-          header ->
-              getMutable(null, header.getHash(), false)
-                  .map(BonsaiLayeredWorldState.class::cast)
-                  .ifPresent(
-                      worldState -> {
-                        worldState.setNextWorldView(Optional.of(bonsaiLayeredWorldState));
-                        layeredWorldStatesByHash.put(header.getHash(), worldState);
-                      }));
-    }
   }
 
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
