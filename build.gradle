@@ -653,8 +653,7 @@ task testDocker {
 
 task acceptanceTestsGoQuorum {
   dependsOn distDocker
-
-  def tags = "(basic || basic-istanbul || networks/typical-besu::ibft2)"
+  def tags = "((basic || basic-istanbul) && !privacy-enhancements-disabled) || networks/typical-besu::ibft2"
 
   doLast {
     // TODO ricardolyn: do we need multiple variants for GoQ AT?
