@@ -265,11 +265,11 @@ public class MainnetTransactionProcessor {
       final Address senderAddress = transaction.getSender();
 
       final EvmAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
+
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
       if (!validationResult.isValid()) {
         LOG.debug("Invalid transaction: {}", validationResult.getErrorMessage());
-        worldState.deleteAccount(senderAddress);
         return TransactionProcessingResult.invalid(validationResult);
       }
 
