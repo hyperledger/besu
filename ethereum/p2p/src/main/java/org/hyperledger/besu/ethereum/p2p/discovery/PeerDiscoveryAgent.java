@@ -186,7 +186,7 @@ public abstract class PeerDiscoveryAgent {
             .map(Bytes::of)
             .map(nodeRecordFactory::fromBytes);
 
-    if (existingNodeRecord.isEmpty() && !config.isActive()) {
+    if (!config.isActive()) {
       return;
     }
 
