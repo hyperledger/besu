@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
-import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
@@ -57,7 +56,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private final QbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
   private final BlockHeader parentHeader;
-  private final BlockTimer blockTimer;
   private final QbftMessageTransmitter transmitter;
   private final MessageFactory messageFactory;
   private final Map<Integer, RoundState> futureRoundStateBuffer = Maps.newHashMap();
@@ -67,7 +65,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private final BftFinalState finalState;
 
   private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
-
   private Optional<QbftRound> currentRound = Optional.empty();
 
   public QbftBlockHeightManager(
@@ -80,7 +77,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final MessageFactory messageFactory) {
     this.parentHeader = parentHeader;
     this.roundFactory = qbftRoundFactory;
-    this.blockTimer = finalState.getBlockTimer();
     this.transmitter =
         new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
     this.messageFactory = messageFactory;
@@ -99,15 +95,16 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
                 finalState.getQuorum(),
                 messageValidatorFactory.createMessageValidator(roundIdentifier, parentHeader));
 
-    long nextBlockHeight = parentHeader.getNumber() + 1;
+    final long nextBlockHeight = parentHeader.getNumber() + 1;
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(nextBlockHeight, 0);
-    blockTimer.startTimer(roundIdentifier, parentHeader);
+
+    finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader);
   }
 
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
-    currentRound = Optional.of(roundFactory.createNewRound(parentHeader, 0));
+    startNewRound(0);
     final QbftRound qbftRound = currentRound.get();
 
     if (!finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier())) {
