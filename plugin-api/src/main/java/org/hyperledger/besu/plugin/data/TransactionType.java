@@ -35,6 +35,10 @@ public enum TransactionType {
     return (byte) this.typeValue;
   }
 
+  public int compareTo(final Byte b) {
+    return Byte.valueOf(getSerializedType()).compareTo(b);
+  }
+
   public static TransactionType of(final int serializedTypeValue) {
     return Arrays.stream(TransactionType.values())
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
