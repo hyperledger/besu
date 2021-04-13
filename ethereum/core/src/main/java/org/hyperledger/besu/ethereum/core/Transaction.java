@@ -149,14 +149,18 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       throw new IllegalStateException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
     }
+
+    if (maybeAccessList.isPresent()) {
+      checkState(
+          transactionType.supportAccessList(),
+          "Must not specify access list for transaction not supporting it");
+    }
+
     if (Objects.equals(transactionType, TransactionType.ACCESS_LIST)) {
       checkState(
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
-    } else {
-      checkState(
-          maybeAccessList.isEmpty(),
-          "Must not specify access list for non-access list transaction");
     }
+
     this.transactionType = transactionType;
     this.nonce = nonce;
     this.gasPrice = gasPrice;
@@ -526,6 +530,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost(final Wei gasPrice) {
+    if (gasPrice == null || gasPrice.isZero()) {
+      return Wei.ZERO;
+    }
     return Wei.of(getGasLimit()).multiply(gasPrice);
   }
 
@@ -582,7 +589,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       case EIP1559:
         preimage =
             eip1559Preimage(
-                nonce, gasPrice, gasPremium, feeCap, gasLimit, to, value, payload, chainId);
+                nonce, gasPremium, feeCap, gasLimit, to, value, payload, chainId, accessList);
         break;
       case ACCESS_LIST:
         preimage =
@@ -634,32 +641,30 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   private static Bytes eip1559Preimage(
       final long nonce,
-      final Wei gasPrice,
       final Wei gasPremium,
       final Wei feeCap,
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
       final Bytes payload,
-      final Optional<BigInteger> chainId) {
-    return RLP.encode(
-        rlpOutput -> {
-          rlpOutput.startList();
-          rlpOutput.writeLongScalar(nonce);
-          rlpOutput.writeUInt256Scalar(gasPrice);
-          rlpOutput.writeLongScalar(gasLimit);
-          rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
-          rlpOutput.writeUInt256Scalar(value);
-          rlpOutput.writeBytes(payload);
-          rlpOutput.writeUInt256Scalar(gasPremium);
-          rlpOutput.writeUInt256Scalar(feeCap);
-          if (chainId.isPresent()) {
-            rlpOutput.writeBigIntegerScalar(chainId.get());
-            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
-            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
-          }
-          rlpOutput.endList();
-        });
+      final Optional<BigInteger> chainId,
+      final Optional<List<AccessListEntry>> accessList) {
+    final Bytes encoded =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
+              rlpOutput.writeLongScalar(nonce);
+              rlpOutput.writeUInt256Scalar(gasPremium);
+              rlpOutput.writeUInt256Scalar(feeCap);
+              rlpOutput.writeLongScalar(gasLimit);
+              rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+              rlpOutput.writeUInt256Scalar(value);
+              rlpOutput.writeBytes(payload);
+              TransactionEncoder.writeAccessList(rlpOutput, accessList);
+              rlpOutput.endList();
+            });
+    return Bytes.concatenate(Bytes.of(TransactionType.EIP1559.getSerializedType()), encoded);
   }
 
   private static Bytes accessListPreimage(
@@ -839,10 +844,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     public Builder guessType() {
-      if (accessList.isPresent()) {
-        transactionType = TransactionType.ACCESS_LIST;
-      } else if (gasPremium != null || feeCap != null) {
+      if (gasPremium != null || feeCap != null) {
         transactionType = TransactionType.EIP1559;
+      } else if (accessList.isPresent()) {
+        transactionType = TransactionType.ACCESS_LIST;
       } else {
         transactionType = TransactionType.FRONTIER;
       }
