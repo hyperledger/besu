@@ -259,8 +259,6 @@ public class QbftBlockHeightManagerTest {
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
   }
 
-  // messages are buffered until round is created
-
   @Test
   public void onRoundChangeReceptionRoundChangeManagerIsInvokedAndNewRoundStarted() {
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
