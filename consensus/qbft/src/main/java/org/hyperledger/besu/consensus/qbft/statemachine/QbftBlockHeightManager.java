@@ -246,7 +246,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
 
       if (finalState.isLocalNodeProposerForRound(targetRound)) {
-        // TODO can this be cleaned up?
         if (currentRound.isEmpty()) {
           startNewRound(0);
         }
