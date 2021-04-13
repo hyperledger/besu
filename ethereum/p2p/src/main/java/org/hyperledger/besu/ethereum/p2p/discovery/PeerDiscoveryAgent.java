@@ -176,7 +176,7 @@ public abstract class PeerDiscoveryAgent {
     }
   }
 
-  public NodeRecord updateNodeRecord() {
+  public void updateNodeRecord() {
     final KeyValueStorage keyValueStorage =
         storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
     final NodeRecordFactory nodeRecordFactory = NodeRecordFactory.DEFAULT;
@@ -185,6 +185,10 @@ public abstract class PeerDiscoveryAgent {
             .get(Bytes.of(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray())
             .map(Bytes::of)
             .map(nodeRecordFactory::fromBytes);
+
+    if (existingNodeRecord.isEmpty() && !config.isActive()) {
+      return;
+    }
 
     final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
     final Optional<EnodeURL> maybeEnodeURL = localNode.map(DiscoveryPeer::getEnodeURL);
@@ -232,7 +236,6 @@ public abstract class PeerDiscoveryAgent {
     localNode
         .orElseThrow(() -> new IllegalStateException("Local node should be set here"))
         .setNodeRecord(newNodeRecord);
-    return newNodeRecord;
   }
 
   public void addPeerRequirement(final PeerRequirement peerRequirement) {
