@@ -1060,19 +1060,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @CommandLine.Option(
       names = {"--api-gas-price-blocks"},
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "Number of blocks to consider for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Long apiGasPriceBlocks = 100L;
 
   @CommandLine.Option(
       names = {"--api-gas-price-percentile"},
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "Percentile value to measure for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Double apiGasPricePercentile = 50.0;
 
   @CommandLine.Option(
       names = {"--api-gas-price-max"},
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "Maximum gas price for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Long apiGasPriceMax = 500_000_000_000L;
 
@@ -1088,6 +1085,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Specifies the static node file containing the static nodes for this node to connect to")
   private final Path staticNodesFile = null;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--discovery-dns-url"},
+      description = "Specifies the URL to use for DNS discovery")
+  private String discoveryDnsUrl = null;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -2405,6 +2408,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         builder.setBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
+    }
+
+    if (discoveryDnsUrl != null) {
+      builder.setDnsDiscoveryUrl(discoveryDnsUrl);
     }
 
     if (networkId != null) {

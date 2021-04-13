@@ -142,7 +142,6 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
     if (disconnected.compareAndSet(false, true)) {
-      LOG.debug("Disconnected ({}) from {}", reason, peerInfo);
       connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
     }
     // Always ensure the context gets closed immediately even if we previously sent a disconnect
@@ -157,7 +156,6 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
-      LOG.debug("Disconnecting ({}) from {}", reason, peerInfo);
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
       closeConnection();

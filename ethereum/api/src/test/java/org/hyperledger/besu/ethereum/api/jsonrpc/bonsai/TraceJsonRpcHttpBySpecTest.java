@@ -12,9 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
+package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
 import java.net.URL;
 
@@ -31,25 +33,27 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Override
   public void setup() throws Exception {
-    super.setup();
+    setupBonsaiBlockchain();
     startService();
   }
 
   @Override
-  protected BlockchainSetupUtil getBlockchainSetupUtil() {
+  protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
     return createBlockchainSetupUtil(
-        "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin");
+        "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin", storageFormat);
   }
 
   @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
     return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
-        "trace/specs/trace-block",
-        "trace/specs/trace-transaction",
-        "trace/specs/replay-trace-transaction/flat",
-        "trace/specs/replay-trace-transaction/vm-trace",
-        "trace/specs/replay-trace-transaction/statediff",
-        "trace/specs/replay-trace-transaction/all",
-        "trace/specs/replay-trace-transaction/halt-cases");
+        new String[] {
+          "trace/specs/trace-block",
+          "trace/specs/trace-transaction",
+          "trace/specs/replay-trace-transaction/flat",
+          "trace/specs/replay-trace-transaction/vm-trace",
+          "trace/specs/replay-trace-transaction/statediff",
+          "trace/specs/replay-trace-transaction/all",
+          "trace/specs/replay-trace-transaction/halt-cases"
+        });
   }
 }

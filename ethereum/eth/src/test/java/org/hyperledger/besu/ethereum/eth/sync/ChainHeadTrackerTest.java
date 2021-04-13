@@ -28,35 +28,63 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import java.util.Arrays;
+import java.util.Collection;
 
+import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+@RunWith(Parameterized.class)
 public class ChainHeadTrackerTest {
 
-  private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
-  private final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
-  private final EthProtocolManager ethProtocolManager =
-      EthProtocolManagerTestUtil.create(blockchain);
-  private final RespondingEthPeer respondingPeer =
-      RespondingEthPeer.builder()
-          .ethProtocolManager(ethProtocolManager)
-          .chainHeadHash(blockchain.getChainHeadHash())
-          .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
-          .estimatedHeight(0)
-          .build();
+  private BlockchainSetupUtil blockchainSetupUtil;
+  private MutableBlockchain blockchain;
+  private EthProtocolManager ethProtocolManager;
+  private RespondingEthPeer respondingPeer;
+  private ChainHeadTracker chainHeadTracker;
+
   private final ProtocolSchedule protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
           GenesisConfigFile.development().getConfigOptions(), false);
 
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
-  private final ChainHeadTracker chainHeadTracker =
-      new ChainHeadTracker(
-          ethProtocolManager.ethContext(),
-          protocolSchedule,
-          trailingPeerLimiter,
-          new NoOpMetricsSystem());
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  }
+
+  private final DataStorageFormat storageFormat;
+
+  public ChainHeadTrackerTest(final DataStorageFormat storageFormat) {
+    this.storageFormat = storageFormat;
+  }
+
+  @Before
+  public void setup() {
+    blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
+    blockchain = blockchainSetupUtil.getBlockchain();
+    ethProtocolManager = EthProtocolManagerTestUtil.create(blockchain);
+    respondingPeer =
+        RespondingEthPeer.builder()
+            .ethProtocolManager(ethProtocolManager)
+            .chainHeadHash(blockchain.getChainHeadHash())
+            .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
+            .estimatedHeight(0)
+            .build();
+    chainHeadTracker =
+        new ChainHeadTracker(
+            ethProtocolManager.ethContext(),
+            protocolSchedule,
+            trailingPeerLimiter,
+            new NoOpMetricsSystem());
+  }
 
   @Test
   public void shouldRequestHeaderChainHeadWhenNewPeerConnects() {

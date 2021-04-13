@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.cli.options.unstable;
 
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -29,6 +31,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   private static final String DATA_STORAGE_FORMAT = "--Xdata-storage-format";
 
+  private static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
+      "--Xbonsai-maximum-back-layers-to-load";
+
   // Use Bonsai DB
   @Option(
       names = {DATA_STORAGE_FORMAT},
@@ -38,17 +43,32 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       arity = "1")
   private final DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
 
+  @Option(
+      names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD},
+      hidden = true,
+      description =
+          "Limit of back layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
+      arity = "1")
+  private final Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+
   public static DataStorageOptions create() {
     return new DataStorageOptions();
   }
 
   @Override
   public DataStorageConfiguration toDomainObject() {
-    return ImmutableDataStorageConfiguration.builder().dataStorageFormat(dataStorageFormat).build();
+    return ImmutableDataStorageConfiguration.builder()
+        .dataStorageFormat(dataStorageFormat)
+        .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
+        .build();
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return List.of(DATA_STORAGE_FORMAT, dataStorageFormat.toString());
+    return List.of(
+        DATA_STORAGE_FORMAT,
+        dataStorageFormat.toString(),
+        BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
+        bonsaiMaxLayersToLoad.toString());
   }
 }

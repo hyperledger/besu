@@ -127,13 +127,9 @@ public class PoWSolver {
   }
 
   private Optional<PoWSolution> testNonce(final PoWSolverInputs inputs, final long nonce) {
-    PoWSolution solution =
-        poWHasher.hash(nonce, inputs.getBlockNumber(), epochCalculator, inputs.getPrePowHash());
-    final UInt256 x = UInt256.fromBytes(solution.getSolution());
-    if (x.compareTo(inputs.getTarget()) <= 0) {
-      return Optional.of(solution);
-    }
-    return Optional.empty();
+    return Optional.ofNullable(
+            poWHasher.hash(nonce, inputs.getBlockNumber(), epochCalculator, inputs.getPrePowHash()))
+        .filter(sol -> UInt256.fromBytes(sol.getSolution()).compareTo(inputs.getTarget()) <= 0);
   }
 
   public void cancel() {

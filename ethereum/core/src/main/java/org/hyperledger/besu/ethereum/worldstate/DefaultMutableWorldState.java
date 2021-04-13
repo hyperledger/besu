@@ -310,11 +310,10 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     @Override
     public UInt256 getStorageValue(final UInt256 key) {
-      final Optional<Bytes> val = storageTrie().get(Hash.hash(key.toBytes()));
-      if (val.isEmpty()) {
-        return UInt256.ZERO;
-      }
-      return convertToUInt256(val.get());
+      return storageTrie()
+          .get(Hash.hash(key.toBytes()))
+          .map(DefaultMutableWorldState::convertToUInt256)
+          .orElse(UInt256.ZERO);
     }
 
     @Override
