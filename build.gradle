@@ -662,7 +662,7 @@ task acceptanceTestsGoQuorum {
    *
    * Not available features in Besu: privacy-enhancements-disabled, extension
    * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
-    */
+   */
   def tags = "((basic || basic-istanbul) && !privacy-enhancements-disabled && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
