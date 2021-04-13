@@ -340,6 +340,8 @@ public class QbftBlockHeightManagerTest {
 
   @Test
   public void messagesForFutureRoundsAreBufferedAndUsedToPreloadNewRoundWhenItIsStarted() {
+    when(finalState.getQuorum()).thenReturn(1);
+
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
 
     final QbftBlockHeightManager manager =
@@ -375,9 +377,46 @@ public class QbftBlockHeightManagerTest {
 
     manager.handleProposalPayload(futureRoundProposal);
 
-    // Final state sets the Quorum Size to 3, so should send a Prepare and also a commit
     verify(messageTransmitter, times(1)).multicastPrepare(eq(futureRoundIdentifier), any());
-    verify(messageTransmitter, times(1)).multicastPrepare(eq(futureRoundIdentifier), any());
+    verify(messageTransmitter, times(1)).multicastCommit(eq(futureRoundIdentifier), any(), any());
+  }
+
+  @Test
+  public void messagesForCurrentRoundAreBufferedAndUsedToPreloadRoundWhenItIsStarted() {
+    when(finalState.getQuorum()).thenReturn(1);
+    when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
+
+    final QbftBlockHeightManager manager =
+        new QbftBlockHeightManager(
+            headerTestFixture.buildHeader(),
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            clock,
+            messageValidatorFactory,
+            messageFactory);
+
+    final Prepare prepare =
+        validatorMessageFactory
+            .get(0)
+            .createPrepare(roundIdentifier, Hash.fromHexStringLenient("0"));
+    final Commit commit =
+        validatorMessageFactory
+            .get(1)
+            .createCommit(
+                roundIdentifier,
+                Hash.fromHexStringLenient("0"),
+                SignatureAlgorithmFactory.getInstance()
+                    .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
+
+    manager.handlePreparePayload(prepare);
+    manager.handleCommitPayload(commit);
+
+    // Since we are also a proposer this will also send a proposal
+    manager.handleBlockTimerExpiry(roundIdentifier);
+
+    verify(messageTransmitter, times(1)).multicastPrepare(eq(roundIdentifier), any());
+    verify(messageTransmitter, times(1)).multicastCommit(eq(roundIdentifier), any(), any());
   }
 
   @Test
