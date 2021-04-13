@@ -653,7 +653,17 @@ task testDocker {
 
 task acceptanceTestsGoQuorum {
   dependsOn distDocker
-  def tags = "((basic || basic-istanbul) && !privacy-enhancements-disabled) || networks/typical-besu::ibft2"
+  /**
+   * Tags Description
+   *
+   * Basic tests for private and public tx: basic
+   * Basic tests for Istanbul/IBFT consensus like testing the fault tolerancy: besu-istanbul
+   * Start a Besu/EthSigner/Tessera network with IBFT2: networks/typical-besu::ibft2
+   *
+   * Not available features in Besu: privacy-enhancements-disabled, extension
+   * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
+    */
+  def tags = "((basic || basic-istanbul) && !privacy-enhancements-disabled && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
     // TODO ricardolyn: do we need multiple variants for GoQ AT?
