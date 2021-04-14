@@ -64,7 +64,7 @@ public class SpuriousBehaviourTest {
   private final RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
 
   private final Block proposedBlock =
-      context.createBlockForProposalFromChainHead(0, 30, peers.getProposer().getNodeAddress());
+      context.createBlockForProposalFromChainHead(30, peers.getProposer().getNodeAddress());
   private Prepare expectedPrepare;
   private Commit expectedCommit;
 

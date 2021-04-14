@@ -118,8 +118,7 @@ public class IbftRound {
           bftBlockInterface.replaceRoundInBlock(
               bestBlockFromRoundChange.get(),
               getRoundIdentifier().getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
-              bftExtraDataCodec);
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     }
 
     updateStateWithProposalAndTransmit(blockToPublish, Optional.of(roundChangeCertificate));
@@ -243,7 +242,10 @@ public class IbftRound {
   private void importBlockToChain() {
     final Block blockToImport =
         BftHelpers.createSealedBlock(
-            bftExtraDataCodec, roundState.getProposedBlock().get(), roundState.getCommitSeals());
+            bftExtraDataCodec,
+            roundState.getProposedBlock().get(),
+            roundState.getRoundIdentifier().getRoundNumber(),
+            roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
     final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());

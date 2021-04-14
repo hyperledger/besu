@@ -67,8 +67,7 @@ public class ProposalBlockConsistencyValidatorTest {
         bftBlockInterface.replaceRoundInBlock(
             block,
             roundIdentifier.getRoundNumber() + 1,
-            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder),
-            bftExtraDataEncoder);
+            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataEncoder));
 
     assertThat(
             consistencyChecker.validateProposalMatchesBlock(

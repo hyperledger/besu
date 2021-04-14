@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -92,14 +94,15 @@ public class TestContext {
     return messageFactory;
   }
 
-  public Block createBlockForProposalFromChainHead(final int round, final long timestamp) {
-    return createBlockForProposalFromChainHead(round, timestamp, finalState.getLocalAddress());
+  public Block createBlockForProposalFromChainHead(final long timestamp) {
+    return createBlockForProposalFromChainHead(timestamp, finalState.getLocalAddress());
   }
 
   public Block createBlockForProposal(
-      final BlockHeader parent, final int round, final long timestamp, final Address proposer) {
+      final BlockHeader parent, final long timestamp, final Address proposer) {
+    // proposal block always has a round 0, the round is populated when the block is finalised
     final Block block =
-        finalState.getBlockCreatorFactory().create(parent, round).createBlock(timestamp);
+        finalState.getBlockCreatorFactory().create(parent, 0).createBlock(timestamp);
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
@@ -110,10 +113,16 @@ public class TestContext {
     return new Block(newHeader, block.getBody());
   }
 
-  public Block createBlockForProposalFromChainHead(
-      final int round, final long timestamp, final Address proposer) {
+  public Block createBlockForProposalFromChainHead(final long timestamp, final Address proposer) {
     // this implies that EVERY block will have this node as the proposer :/
-    return createBlockForProposal(blockchain.getChainHeadHeader(), round, timestamp, proposer);
+    return createBlockForProposal(blockchain.getChainHeadHeader(), timestamp, proposer);
+  }
+
+  public Block createCommitBlockFromProposalBlock(final Block proposalBlock, final int round) {
+    final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+    final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
+    return bftBlockInterface.replaceRoundInBlock(
+        proposalBlock, round, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 
   public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {

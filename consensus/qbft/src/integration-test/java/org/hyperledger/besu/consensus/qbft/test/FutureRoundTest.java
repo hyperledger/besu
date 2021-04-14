@@ -63,24 +63,26 @@ public class FutureRoundTest {
   @Test
   public void messagesForFutureRoundAreNotActionedUntilRoundIsActive() {
     final Block futureBlock =
-        context.createBlockForProposalFromChainHead(
-            futureRoundId.getRoundNumber(), 60, peers.getProposer().getNodeAddress());
+        context.createBlockForProposalFromChainHead(60, peers.getProposer().getNodeAddress());
     final int quorum = BftHelpers.calculateRequiredValidatorQuorum(NETWORK_SIZE);
     final ConsensusRoundIdentifier subsequentRoundId = new ConsensusRoundIdentifier(1, 6);
     final RoundSpecificPeers subsequentRoles = context.roundSpecificPeers(subsequentRoundId);
+    final Block commitBlock =
+        context.createCommitBlockFromProposalBlock(futureBlock, futureRoundId.getRoundNumber());
 
     for (int i = 0; i < quorum - 2; i++) {
       futurePeers.getNonProposing(i).injectPrepare(futureRoundId, futureBlock.getHash());
     }
 
     for (int i = 0; i < quorum - 2; i++) {
-      futurePeers.getNonProposing(i).injectCommit(futureRoundId, futureBlock.getHash());
+      futurePeers.getNonProposing(i).injectCommit(futureRoundId, commitBlock.getHash());
     }
 
     // inject a prepare and a commit from a subsequent round, and ensure no transmissions are
     // created
+
     subsequentRoles.getNonProposing(1).injectPrepare(subsequentRoundId, futureBlock.getHash());
-    subsequentRoles.getNonProposing(1).injectCommit(subsequentRoundId, futureBlock.getHash());
+    subsequentRoles.getNonProposing(1).injectCommit(subsequentRoundId, commitBlock.getHash());
 
     peers.verifyNoMessagesReceived();
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
@@ -105,12 +107,12 @@ public class FutureRoundTest {
     final Commit expectedCommit =
         localNodeMessageFactory.createCommit(
             futureRoundId,
-            futureBlock.getHash(),
-            context.getLocalNodeParams().getNodeKey().sign(futureBlock.getHash()));
+            commitBlock.getHash(),
+            context.getLocalNodeParams().getNodeKey().sign(commitBlock.getHash()));
     peers.verifyMessagesReceived(expectedCommit);
 
     // requires 1 more commit and the blockchain will progress
-    futurePeers.getNonProposing(quorum - 2).injectCommit(futureRoundId, futureBlock.getHash());
+    futurePeers.getNonProposing(quorum - 2).injectCommit(futureRoundId, commitBlock.getHash());
 
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
   }
@@ -118,11 +120,9 @@ public class FutureRoundTest {
   @Test
   public void priorRoundsCannotBeCompletedAfterReceptionOfNewRound() {
     final Block initialBlock =
-        context.createBlockForProposalFromChainHead(
-            roundId.getRoundNumber(), 30, peers.getProposer().getNodeAddress());
+        context.createBlockForProposalFromChainHead(30, peers.getProposer().getNodeAddress());
     final Block futureBlock =
-        context.createBlockForProposalFromChainHead(
-            futureRoundId.getRoundNumber(), 60, peers.getProposer().getNodeAddress());
+        context.createBlockForProposalFromChainHead(60, peers.getProposer().getNodeAddress());
 
     peers.getProposer().injectProposal(roundId, initialBlock);
 

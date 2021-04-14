@@ -59,12 +59,20 @@ public class CommitValidator {
     final CommitPayload payload = signedPayload.getPayload();
 
     if (!payload.getRoundIdentifier().equals(targetRound)) {
-      LOG.info("{}: did not target expected round", ERROR_PREFIX);
+      LOG.info(
+          "{}: did not target expected round {} was {}",
+          ERROR_PREFIX,
+          targetRound,
+          payload.getRoundIdentifier());
       return false;
     }
 
     if (!payload.getDigest().equals(expectedDigest)) {
-      LOG.info("{}: did not contain expected digest", ERROR_PREFIX);
+      LOG.info(
+          "{}: did not contain expected digest {} was {}",
+          ERROR_PREFIX,
+          expectedDigest,
+          payload.getDigest());
       return false;
     }
 
@@ -72,7 +80,11 @@ public class CommitValidator {
         Util.signatureToAddress(payload.getCommitSeal(), expectedDigest);
 
     if (!commitSealCreator.equals(signedPayload.getAuthor())) {
-      LOG.info("{}: Seal was not created by the message transmitter.", ERROR_PREFIX);
+      LOG.info(
+          "{}: Seal was not created by the message transmitter {} was {}",
+          ERROR_PREFIX,
+          commitSealCreator,
+          signedPayload.getAuthor());
       return false;
     }
 

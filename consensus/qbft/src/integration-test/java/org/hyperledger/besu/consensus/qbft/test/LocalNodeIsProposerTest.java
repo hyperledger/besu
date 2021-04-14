@@ -69,7 +69,7 @@ public class LocalNodeIsProposerTest {
 
   @Before
   public void setup() {
-    expectedProposedBlock = context.createBlockForProposalFromChainHead(0, blockTimeStamp);
+    expectedProposedBlock = context.createBlockForProposalFromChainHead(blockTimeStamp);
     expectedTxProposal =
         localNodeMessageFactory.createProposal(
             roundId, expectedProposedBlock, Collections.emptyList(), Collections.emptyList());
