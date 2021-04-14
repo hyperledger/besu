@@ -86,16 +86,12 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
                             new JsonRpcErrorResponse(
                                 request.getRequest().getId(),
                                 JsonRpcErrorConverter.convertTransactionInvalidReason(reason))))
-        .orElse(validRequestBlockNotFound(request));
+        .orElse(errorResponse(request, BLOCK_NOT_FOUND));
   }
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return (JsonRpcResponse) handleParamTypes(requestContext);
-  }
-
-  private JsonRpcSuccessResponse validRequestBlockNotFound(final JsonRpcRequestContext request) {
-    return new JsonRpcSuccessResponse(request.getRequest().getId(), BLOCK_NOT_FOUND);
   }
 
   private JsonRpcErrorResponse errorResponse(

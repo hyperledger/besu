@@ -63,8 +63,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
@@ -748,12 +746,7 @@ public class JsonRpcHttpService {
 
   private Optional<JsonRpcError> validateMethodAvailability(final JsonRpcRequest request) {
     final String name = request.getMethod();
-    final ObjectMapper objectMapper = new ObjectMapper();
-    try {
-      LOG.debug("JSON-RPC request -> {}", objectMapper.writeValueAsString(request));
-    } catch (JsonProcessingException e) {
-      // no op
-    }
+    LOG.debug("JSON-RPC request -> {}", name);
 
     final JsonRpcMethod method = rpcMethods.get(name);
 
