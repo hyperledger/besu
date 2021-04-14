@@ -213,7 +213,7 @@ jobs:
           command: ./gradlew --no-daemon containerTests -i
       - capture_test_results
 
-  acceptanceTestsGoQuorum:
+  acceptanceTestsQuorum:
     parallelism: 1
     executor: acceptance_tests_executor
     steps:
@@ -221,14 +221,14 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: GoQuorum Acceptance Tests (failures ignored)
+          name: Quorum Acceptance Tests (failures ignored)
           no_output_timeout: 40m
-          command: ./gradlew --no-daemon acceptanceTestsGoQuorum || true # ignore result of job for now, until all issues are fixed
+          command: ./gradlew --no-daemon acceptanceTestsQuorum || true # ignore result of job for now, until all issues are fixed
       - store_artifacts:
-          path: build/goquorum-at
-          destination: goquorum-at-artifacts
+          path: build/quorum-at
+          destination: quorum-at-artifacts
       - store_test_results:
-          path: build/goquorum-at/openjdk-latest/reports/xml-report
+          path: build/quorum-at/openjdk-latest/reports/xml-report
 
   buildDocker:
     executor: besu_executor_med
@@ -314,7 +314,7 @@ workflows:
             - assemble
           context:
             - besu-dockerhub-ro
-      - acceptanceTestsGoQuorum:
+      - acceptanceTestsQuorum:
           requires:
             - buildDocker
           context:

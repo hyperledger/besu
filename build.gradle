@@ -651,7 +651,7 @@ task testDocker {
   }
 }
 
-task acceptanceTestsGoQuorum {
+task acceptanceTestsQuorum {
   dependsOn distDocker
   /**
    * Tags Description
@@ -665,10 +665,9 @@ task acceptanceTestsGoQuorum {
   def tags = "(basic && !privacy-enhancements-disabled && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
-    // TODO ricardolyn: do we need multiple variants for GoQ AT?
     exec {
       def variant = "openjdk-latest"
-      def variantDirectory = "${buildDir}/goquorum-at/${variant}"
+      def variantDirectory = "${buildDir}/quorum-at/${variant}"
       def dataDirectory = "${variantDirectory}/data"
       def reportsDirectory = "${variantDirectory}/reports"
       new File(dataDirectory).mkdirs()
