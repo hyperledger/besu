@@ -26,6 +26,10 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
+  machine_executor:
+    machine:
+      image: ubuntu-2004:202010-01
+
   acceptance_tests_executor:
     machine:
       image: ubuntu-2004:202101-01
@@ -196,6 +200,19 @@ jobs:
       - capture_test_results
       - capture_test_logs
 
+  containerTests:
+    parallelism: 1
+    executor: machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Container Tests
+          no_output_timeout: 10m
+          command: ./gradlew --no-daemon containerTests -i
+      - capture_test_results
+
   acceptanceTestsGoQuorum:
     parallelism: 1
     executor: acceptance_tests_executor
@@ -302,6 +319,11 @@ workflows:
             - buildDocker
           context:
             - besu-dockerhub-ro
+      - containerTests:
+          requires:
+            - assemble
+          context:
+            - besu-dockerhub-ro
       - buildDocker:
           requires:
             - unitTests
@@ -316,6 +338,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
+            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker
@@ -331,6 +354,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
+            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker
