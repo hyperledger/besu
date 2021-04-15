@@ -150,6 +150,7 @@ dependencyManagement {
       exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
     }
     dependency 'org.web3j:crypto:4.5.15'
+    dependency 'org.web3j:quorum:4.5.15'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.2'
 
@@ -162,5 +163,7 @@ dependencyManagement {
       entry 'signing-secp256k1-api'
       entry 'signing-secp256k1-impl'
     }
+
+    dependency 'org.testcontainers:testcontainers:1.15.2'
   }
 }
