@@ -213,7 +213,7 @@ public abstract class PeerDiscoveryAgent {
                           sequenceNumber,
                           new EnrField(EnrField.ID, IdentitySchema.V4),
                           new EnrField(
-                              EnrField.PKEY_SECP256K1,
+                              SIGNATURE_ALGORITHM.get().getCurveName(),
                               SIGNATURE_ALGORITHM
                                   .get()
                                   .compressPublicKey(
