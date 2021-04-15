@@ -105,7 +105,9 @@ public class MainnetBlockValidator implements BlockValidator {
     }
     final MutableWorldState worldState = maybeWorldState.get();
 
+    LOG.info("processBlock start");
     final Result result = processBlock(context, worldState, block);
+    LOG.info("processBlock end");
     if (result.isFailed()) {
       badBlockManager.addBadBlock(block);
       return Optional.empty();

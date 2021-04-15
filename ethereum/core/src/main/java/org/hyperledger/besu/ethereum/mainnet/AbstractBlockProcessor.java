@@ -157,6 +157,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Span globalProcessBlock =
         tracer.spanBuilder("processBlock").setSpanKind(Span.Kind.INTERNAL).startSpan();
     try {
+      LOG.info("processBlock in start");
       final List<TransactionReceipt> receipts = new ArrayList<>();
       long currentGasUsed = 0;
       for (final Transaction transaction : transactions) {
@@ -169,6 +170,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final Address miningBeneficiary =
             miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
+        LOG.info("process transaction start");
         final TransactionProcessingResult result =
             transactionProcessor.processTransaction(
                 blockchain,
@@ -181,6 +183,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 true,
                 TransactionValidationParams.processingBlock(),
                 privateMetadataUpdater);
+        LOG.info("process transaction end");
         if (result.isInvalid()) {
           LOG.info(
               "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
@@ -190,8 +193,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           return AbstractBlockProcessor.Result.failed();
         }
 
+        LOG.info("process commit");
         worldStateUpdater.commit();
-
+        LOG.info("process commit end");
         currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
 
         final TransactionReceipt transactionReceipt =
@@ -205,7 +209,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return AbstractBlockProcessor.Result.failed();
       }
 
+      LOG.info("processBlock before persist");
       worldState.persist(blockHeader);
+      LOG.info("processBlock end persist");
       return AbstractBlockProcessor.Result.successful(receipts);
     } finally {
       globalProcessBlock.end();

@@ -57,6 +57,7 @@ public class FullImportBlockStep implements Consumer<Block> {
     final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockNumber).getBlockImporter();
     final double beg = Instant.now().toEpochMilli();
+    LOG.info("Start import");
     if (!importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED)) {
       throw new InvalidBlockException("Failed to import block", blockNumber, block.getHash());
     }
