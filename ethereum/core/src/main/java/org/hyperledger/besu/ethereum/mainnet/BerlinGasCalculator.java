@@ -136,7 +136,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  protected Gas callOperationBaseGasCost() {
+  public Gas callOperationBaseGasCost() {
     return Gas.ZERO;
   }
 

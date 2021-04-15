@@ -40,6 +40,7 @@ public class RoundChangeCertificateValidator {
   private final Collection<Address> validators;
   private final MessageValidatorForHeightFactory messageValidatorFactory;
   private final BftExtraDataCodec bftExtraDataCodec;
+  private final BftBlockInterface bftBlockInterface;
   private final long quorum;
   private final long chainHeight;
 
@@ -47,12 +48,14 @@ public class RoundChangeCertificateValidator {
       final Collection<Address> validators,
       final MessageValidatorForHeightFactory messageValidatorFactory,
       final long chainHeight,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final BftBlockInterface bftBlockInterface) {
     this.validators = validators;
     this.messageValidatorFactory = messageValidatorFactory;
     this.quorum = BftHelpers.calculateRequiredValidatorQuorum(validators.size());
     this.chainHeight = chainHeight;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.bftBlockInterface = bftBlockInterface;
   }
 
   public boolean validateRoundChangeMessagesAndEnsureTargetRoundMatchesRoot(
@@ -124,7 +127,7 @@ public class RoundChangeCertificateValidator {
     // Need to check that if we substitute the LatestPrepareCert round number into the supplied
     // block that we get the SAME hash as PreparedCert.
     final Block currentBlockWithOldRound =
-        BftBlockInterface.replaceRoundInBlock(
+        bftBlockInterface.replaceRoundInBlock(
             proposedBlock,
             latestPreparedCertificate
                 .get()

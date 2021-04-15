@@ -26,6 +26,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.MULTI_DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -36,6 +37,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MA
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -50,6 +52,7 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -68,10 +71,12 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.util.StringUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -132,6 +137,10 @@ public class BesuCommandTest extends CommandTestAbstract {
               new JsonObject().put("isquorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET =
       (new JsonObject()).put("config", new JsonObject().put("isquorum", true));
+  private static final JsonObject INVALID_GENESIS_EC_CURVE =
+      (new JsonObject()).put("config", new JsonObject().put("ecCurve", "abcd"));
+  private static final JsonObject VALID_GENESIS_EC_CURVE =
+      (new JsonObject()).put("config", new JsonObject().put("ecCurve", "secp256k1"));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
 
@@ -982,6 +991,44 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void testDnsDiscoveryUrlEthConfig() throws Exception {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand(
+        "--discovery-dns-url",
+        "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getDnsDiscoveryUrl())
+        .isEqualTo(
+            "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
+  }
+
+  @Test
+  public void testDnsDiscoveryUrlOverridesNetworkEthConfig() throws Exception {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand(
+        "--network",
+        "dev",
+        "--discovery-dns-url",
+        "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getDnsDiscoveryUrl())
+        .isEqualTo(
+            "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org");
+  }
+
+  @Test
   public void defaultNetworkIdAndBootnodesForCustomNetworkOptions() throws Exception {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
 
@@ -1514,6 +1561,33 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact or provide an url (via --Xethstats=nodename:secret@host:port)");
+  }
+
+  @Test
+  public void parsesValidBonsaiTrieLimitBackLayersOption() {
+    parseCommand("--Xdata-storage-format", "BONSAI", "--Xbonsai-maximum-back-layers-to-load", "11");
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(11);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidBonsaiTrieLimitBackLayersOption() {
+
+    parseCommand(
+        "--Xdata-storage-format", "BONSAI", "--Xbonsai-maximum-back-layers-to-load", "ten");
+
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Invalid value for option '--Xbonsai-maximum-back-layers-to-load': 'ten' is not a long");
   }
 
   @Test
@@ -2899,16 +2973,23 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--miner-stratum-enabled");
 
     verifyOptionsConstraintLoggerCall(
-        "--miner-enabled",
-        "--miner-coinbase",
-        "--min-gas-price",
-        "--miner-extra-data",
-        "--miner-stratum-enabled");
+        "--miner-enabled", "--miner-coinbase", "--miner-extra-data", "--miner-stratum-enabled");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .startsWith(
             "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+  }
+
+  @Test
+  public void minGasPriceRequiresMainOption() {
+    parseCommand("--min-gas-price", "0");
+
+    verifyMultiOptionsConstraintLoggerCall(
+        List.of("--miner-enabled", "--goquorum-compatibility-enabled"), "--min-gas-price");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
@@ -3234,8 +3315,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
-    verifyOptionsConstraintLoggerCall(
-        "--privacy-enabled", "--privacy-url", "--privacy-public-key-file");
+    verifyMultiOptionsConstraintLoggerCall(
+        List.of("--privacy-enabled", "--goquorum-compatibility-enabled"),
+        "--privacy-url",
+        "--privacy-public-key-file");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3443,6 +3526,33 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
   }
 
+  /**
+   * Check logger calls
+   *
+   * <p>Here we check the calls to logger and not the result of the log line as we don't test the
+   * logger itself but the fact that we call it.
+   *
+   * @param dependentOptions the string representing the list of dependent options names
+   * @param mainOptions the main option names
+   */
+  private void verifyMultiOptionsConstraintLoggerCall(
+      final List<String> mainOptions, final String... dependentOptions) {
+    verify(mockLogger, atLeast(1))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(MULTI_DEPENDENCY_WARNING_MSG);
+
+    for (final String option : dependentOptions) {
+      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
+    }
+
+    final String joinedOptions =
+        StringUtils.joiningWithLastDelimiter(", ", " or ").apply(mainOptions);
+    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(joinedOptions);
+  }
+
   @Test
   public void privacyWithFastSyncMustError() {
     parseCommand("--sync-mode=FAST", "--privacy-enabled");
@@ -3473,6 +3583,17 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString())
         .contains("GoQuorum mode cannot be enabled with privacy.");
+    assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void goQuorumGenesisFileWithoutGoQuorumCompatibilityMustError() throws IOException {
+    final Path genesisFile =
+        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    parseCommand("--genesis-file", genesisFile.toString());
+
+    assertThat(commandErrorOutput.toString())
+        .contains("Cannot use GoQuorum genesis file without GoQuorum privacy enabled");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -4025,8 +4146,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void quorumInteropDisabledDoesNotEnforceZeroGasPrice() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
+    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
     parseCommand(
         "--goquorum-compatibility-enabled=false", "--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -4102,6 +4222,13 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString())
         .contains(
             "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
+  }
+
+  @Test
+  public void quorumInteropEnabledFailsIfGenesisFileNotSet() {
+    parseCommand("--goquorum-compatibility-enabled");
+    assertThat(commandErrorOutput.toString())
+        .contains("--genesis-file must be specified if GoQuorum compatibility mode is enabled.");
   }
 
   @Test
@@ -4189,6 +4316,28 @@ public class BesuCommandTest extends CommandTestAbstract {
                 + "e7e6cd2fcef6@192.168.1.25:30303\"\n]");
     parseCommand("--static-nodes-file", staticNodeTempFile.toString());
     assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void invalidEcCurveFailsWithErrorMessage() throws IOException {
+    SignatureAlgorithmFactory.resetInstance();
+    final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_EC_CURVE);
+
+    parseCommand("--genesis-file", genesisFile.toString());
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "Invalid genesis file configuration. "
+                + "Elliptic curve (ecCurve) abcd is not in the list of valid elliptic curves [secp256k1]");
+  }
+
+  @Test
+  public void validEcCurveSucceeds() throws IOException {
+    SignatureAlgorithmFactory.resetInstance();
+    final Path genesisFile = createFakeGenesisFile(VALID_GENESIS_EC_CURVE);
+
+    parseCommand("--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 }

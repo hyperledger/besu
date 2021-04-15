@@ -30,22 +30,23 @@
  * The lists of the license we accept.
  */
 ext.acceptedLicenses = [
-    'BSD License',
-    'BSD 3-Clause',
-    'Eclipse Public License - v 1.0',
-    'Eclipse Public License - v 2.0',
-    'Eclipse Public License 1.0',
-    'MIT License',
-    'Apache License, Version 2.0',
-    'Bouncy Castle Licence',
-    'Public Domain',
-    'Mozilla Public License 1.0',
-    'Mozilla Public License Version 1.1',
-    'Mozilla Public License Version 2.0',
-    'CC0 1.0 Universal License',
-    'Common Development and Distribution License 1.0',
-    'Unicode/ICU License',
-    'Public Domain (CC0) License 1.0'
+  'Apache License, Version 2.0',
+  'BSD 3-Clause',
+  'BSD License',
+  'Bouncy Castle Licence',
+  'CC0 1.0 Universal License',
+  'Common Development and Distribution License 1.0',
+  'Eclipse Public License 1.0',
+  'Eclipse Public License - v 2.0',
+  'MIT License',
+  'Mozilla Public License 1.0',
+  'Mozilla Public License Version 1.1',
+  'Mozilla Public License Version 2.0',
+  'Oracle Free Use Terms and Conditions (FUTC)',
+  'Public Domain (CC0) License 1.0',
+  'Public Domain',
+  'Unicode/ICU License',
+  'New BSD License'
 ]*.toLowerCase()
 
 /**
@@ -53,81 +54,113 @@ ext.acceptedLicenses = [
  * This plugin generates a list of dependencies.
  */
 downloadLicenses {
-  includeProjectDependencies = true
+  includeProjectDependencies = false
   reportByDependency = false
   reportByLicenseType = true
-  dependencyConfiguration = 'testCompile'
-
-  ext.epl1 = license('Eclipse Public License 1.0', 'https://www.eclipse.org/legal/epl-v10.html')
-  ext.apache = license('Apache License, Version 2.0', 'http://opensource.org/licenses/Apache-2.0')
-  ext.mit = license('MIT License', 'http://www.opensource.org/licenses/mit-license.php')
-  ext.bsd = license('BSD License', 'http://www.opensource.org/licenses/bsd-license.php')
-  ext.bsd3Clause = license('BSD 3-Clause', 'http://opensource.org/licenses/BSD-3-Clause')
-  ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
-  ext.cc0 =  license('Public Domain (CC0) License 1.0', 'https://creativecommons.org/publicdomain/zero/1.0')
-  aliases = [
-      (epl1) : [
-          'Eclipse Public License - v 1.0',
-          'Eclipse Public License 1.0',
-      ],
-      (apache)    : [
-          'The Apache Software License, Version 2.0',
-          'The Apache Software License, version 2.0',
-          'The Apache License, Version 2.0',
-          'Apache 2',
-          'Apache 2.0',
-          'Apache License 2.0',
-      ],
-      (mit)       : [
-          'MIT',
-          'The MIT License',
-      ],
-      (bsd)       : [
-          'BSD',
-          'The BSD License',
-      ],
-      (bsd3Clause): [
-          'BSD 3-Clause',
-          'BSD 3-Clause "New" or "Revised" License (BSD-3-Clause)',
-          '3-Clause BSD License',
-          license('BSD 3-clause', 'http://opensource.org/licenses/BSD-3-Clause'),
-          license('BSD 3-Clause', 'http://www.scala-lang.org/license.html')
-      ],
-      (cddl): [
-          'CDDL 1.0',
-      ],
-      (cc0): [
-          'CC0'
-      ]
+  dependencyConfiguration = 'runtimeClasspath'
+  excludeDependencies = [
+    // only used for static analysis, not actually shipped
+    'com.google.code.findbugs:jFormatString:3.0.0',
+    'com.google.errorprone:javac:.*',
+    'org.checkerframework:dataflow-shaded:3.1.2',
   ]
 
+  ext.apache = license('Apache License, Version 2.0', 'http://opensource.org/licenses/Apache-2.0')
+  ext.bsd = license('BSD License', 'http://www.opensource.org/licenses/bsd-license.php')
+  ext.bsd3Clause = license('BSD 3-Clause', 'http://opensource.org/licenses/BSD-3-Clause')
+  ext.cc0 = license('Public Domain (CC0) License 1.0', 'https://creativecommons.org/publicdomain/zero/1.0')
+  ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
+  ext.epl1 = license('Eclipse Public License 1.0', 'https://www.eclipse.org/legal/epl-v10.html')
+  ext.mit = license('MIT License', 'http://www.opensource.org/licenses/mit-license.php')
+  aliases = [
+    (apache) : [
+      'Apache 2',
+      'Apache 2.0',
+      'Apache License 2.0',
+      'Apache Software License - Version 2.0',
+      'Apache Software License 2.0',
+      'Apache v2',
+      'Apache-2.0',
+      'The Apache License, Version 2.0',
+      'The Apache Software License, Version 2.0',
+      'The Apache Software License, version 2.0',
+      license('', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+    ],
+    (bsd) : [
+      'BSD',
+      'BSD-2-Clause',
+      'The BSD License',
+    ],
+    (bsd3Clause) : [
+      '3-Clause BSD License',
+      'BSD 3-Clause "New" or "Revised" License (BSD-3-Clause)',
+      'BSD 3-Clause',
+      'BSD Licence 3',
+      'Eclipse Distribution License - v 1.0',
+      'EDL 1.0',
+      'New BSD License',
+      'The BSD 3-Clause License',
+      license('', 'http://asm.ow2.org/license.html'),
+      license('BSD 3-Clause', 'http://www.scala-lang.org/license.html'),
+      license('BSD 3-clause', 'http://opensource.org/licenses/BSD-3-Clause'),
+    ],
+    (cc0) : [
+      'CC0'
+    ],
+    (cddl) : [
+      'CDDL 1.0',
+      'CDDL 1.1',
+      'Common Development and Distribution License (CDDL) v1.0',
+    ],
+    (epl1) : [
+      'Eclipse Public License - Version 1.0',
+      'Eclipse Public License - v 1.0',
+      'Eclipse Public License 1.0 ',
+    ],
+    (mit) : [
+      'MIT',
+      'The MIT License',
+      'The MIT License (MIT)',
+    ],
+  ]
   licenses = [
-      (group('besu'))             : apache,
-      (group('besu.ethereum.api')): apache,
-      (group('besu.consensus'))   : apache,
-      (group('besu.ethereum'))    : apache,
-      (group('besu.metrics'))     : apache,
-      (group('besu.plugins'))     : apache,
-      (group('besu.services'))    : apache,
+    (group('besu')) : apache,
+    (group('besu.ethereum.api')) : apache,
+    (group('besu.consensus')) : apache,
+    (group('besu.ethereum')) : apache,
+    (group('besu.metrics')) : apache,
+    (group('besu.plugins')) : apache,
+    (group('besu.services')) : apache,
 
-      // JNA is dual licensed under Apache v2.0 or LGPL 2 licenses
-      // Explicitly declare that we are using the Apache v2.0 license
-      (group('net.java.dev.jna'))      : apache,
+    // JNA is dual licensed under Apache v2.0 or LGPL 2 licenses
+    // Explicitly declare that we are using the Apache v2.0 license
+    (group('net.java.dev.jna')) : apache,
 
-      // RocksDB is dual licensed under Apache v2.0 or GPL 2 licenses
-      // Explicitly declare that we are using the Apache v2.0 license
-      (group('org.rocksdb'))      : apache,
+    // RocksDB is dual licensed under Apache v2.0 or GPL 2 licenses
+    // Explicitly declare that we are using the Apache v2.0 license
+    (group('org.rocksdb')) : apache,
 
-      // Logback is dual licensed under EPL v1.0 or LGPL v2.1
-      // Explicitly declare that we are using the EPL v1.0 license
-      (group('ch.qos.logback'))   : epl1,
+    // Logback is dual licensed under EPL v1.0 or LGPL v2.1
+    // Explicitly declare that we are using the EPL v1.0 license
+    (group('ch.qos.logback')) : epl1,
+
+    // JavaMail, JAXB and Java Servlet is dual licensed under CDDL 1.1 or GPL 2 w/ Classpath Exception
+    // Explicitly declare that we are using the CDDL 1.1 license
+    (group('com.sun.mail')) : cddl,
+    (group('javax.servlet')) : cddl,
+    (group('javax.xml.bind')) : cddl,
   ]
 }
 
+task lazyDownloadLicenses() {
+  if (!file("$rootProject.buildDir/reports/license/license-dependency.xml").exists()) {
+    dependsOn ':downloadLicenses'
+  }
+}
 
 task checkLicenses {
-  description "Verify that all dependencies use white-listed licenses."
-  dependsOn ':downloadLicenses'
+  description "Verify that all dependencies use accepted licenses."
+  dependsOn ':lazyDownloadLicenses'
 
   def bads = ""
   doLast {
@@ -141,12 +174,11 @@ task checkLicenses {
     }
     if (bads != "") {
       throw new GradleException("Some 3rd parties are using licenses not in our accepted licenses list:\n" +
-          bads +
-          "If it's a license acceptable for us, add it in the file check-licenses.gradle\n"+
-          "Be careful, some 3rd parties may accept multiple licenses.\n" +
-          "In this case, select the one you want to use by changing downloadLicenses.licenses\n"
+        bads +
+        "If it's a license acceptable for us, add it in the file check-licenses.gradle\n" +
+        "Be careful, some 3rd parties may accept multiple licenses.\n" +
+        "In this case, select the one you want to use by changing downloadLicenses.licenses\n"
       )
     }
   }
 }
-check.dependsOn checkLicenses
