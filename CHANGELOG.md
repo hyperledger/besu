@@ -6,6 +6,8 @@
 
 ### Bug Fixes
 
+- Reduced logging level of public key decoding failure of malformed packets. [\#2143](https://github.com/hyperledger/besu/pull/2143)
+
 ### Early Access Features
 
 #### Previously identified known issues
