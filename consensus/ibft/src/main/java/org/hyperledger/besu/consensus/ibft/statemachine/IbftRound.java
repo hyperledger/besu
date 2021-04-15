@@ -118,8 +118,7 @@ public class IbftRound {
           bftBlockInterface.replaceRoundInBlock(
               bestBlockFromRoundChange.get(),
               getRoundIdentifier().getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
-              bftExtraDataCodec);
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     }
 
     updateStateWithProposalAndTransmit(blockToPublish, Optional.of(roundChangeCertificate));

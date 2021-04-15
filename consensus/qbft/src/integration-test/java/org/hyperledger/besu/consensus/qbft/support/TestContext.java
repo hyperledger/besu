@@ -124,10 +124,7 @@ public class TestContext {
     final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
     final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
     return bftBlockInterface.replaceRoundInBlock(
-        proposalBlock,
-        round,
-        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
-        bftExtraDataCodec);
+        proposalBlock, round, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 
   public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {

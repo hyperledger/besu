@@ -296,8 +296,7 @@ public class QbftRound {
     return bftBlockInterface.replaceRoundInBlock(
         block,
         getRoundIdentifier().getRoundNumber(),
-        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
-        bftExtraDataCodec);
+        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 
   private void notifyNewBlockListeners(final Block block) {

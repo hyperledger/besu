@@ -44,13 +44,11 @@ public class MessageValidator {
         final ConsensusRoundIdentifier targetRound,
         final Block proposalBlock,
         final BftBlockInterface blockInterface) {
-      final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
       final Block commitBlock =
           blockInterface.replaceRoundInBlock(
               proposalBlock,
               targetRound.getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
-              bftExtraDataCodec);
+              BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataCodec()));
       prepareValidator = new PrepareValidator(validators, targetRound, proposalBlock.getHash());
       commitValidator =
           new CommitValidator(
