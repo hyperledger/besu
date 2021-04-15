@@ -74,7 +74,8 @@ public class ValidatorPeer extends DefaultValidatorPeer {
         bftBlockInterface.replaceRoundInBlock(
             block,
             rId.getRoundNumber(),
-            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
+            bftExtraDataCodec);
     final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
     System.out.println(
         "injectCommit with nodeKey = "

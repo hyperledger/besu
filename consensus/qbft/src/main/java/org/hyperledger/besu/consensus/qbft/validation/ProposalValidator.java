@@ -128,7 +128,8 @@ public class ProposalValidator {
             bftBlockInterface.replaceRoundInBlock(
                 proposal.getBlock(),
                 metadata.getPreparedRound(),
-                BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+                BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
+                bftExtraDataCodec);
 
         final Hash expectedPriorBlockHash = currentBlockWithOldRound.getHash();
 
