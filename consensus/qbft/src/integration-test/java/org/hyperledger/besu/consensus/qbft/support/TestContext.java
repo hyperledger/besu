@@ -118,7 +118,9 @@ public class TestContext {
     return createBlockForProposal(blockchain.getChainHeadHeader(), timestamp, proposer);
   }
 
-  public Block createCommitBlockFromProposalBlock(final Block proposalBlock, final int round) {
+  // TODO JF find a new home for this
+  public static Block createCommitBlockFromProposalBlock(
+      final Block proposalBlock, final int round) {
     final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
     final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
     return bftBlockInterface.replaceRoundInBlock(

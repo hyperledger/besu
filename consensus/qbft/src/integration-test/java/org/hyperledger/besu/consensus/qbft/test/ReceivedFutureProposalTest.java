@@ -205,14 +205,12 @@ public class ReceivedFutureProposalTest {
 
   @Test
   public void receiveRoundStateIsNotLostIfASecondProposalMessageIsReceivedForCurrentRound() {
-    final Block initialBlock =
-        context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
-    final Block reproposedBlock =
+    final Block block =
         context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
     final ConsensusRoundIdentifier nextRoundId = new ConsensusRoundIdentifier(1, 1);
 
     final PreparedCertificate preparedRoundArtifacts =
-        createValidPreparedCertificate(context, roundId, initialBlock);
+        createValidPreparedCertificate(context, roundId, block);
 
     final List<SignedData<RoundChangePayload>> roundChanges =
         peers.createSignedRoundChangePayload(nextRoundId, preparedRoundArtifacts);
@@ -221,26 +219,26 @@ public class ReceivedFutureProposalTest {
     final ValidatorPeer nextProposer = nextRoles.getProposer();
 
     nextProposer.injectProposalForFutureRound(
-        nextRoundId, roundChanges, preparedRoundArtifacts.getPrepares(), reproposedBlock);
+        nextRoundId, roundChanges, preparedRoundArtifacts.getPrepares(), block);
 
     peers.verifyMessagesReceived(
-        localNodeMessageFactory.createPrepare(nextRoundId, reproposedBlock.getHash()));
+        localNodeMessageFactory.createPrepare(nextRoundId, block.getHash()));
 
     // Inject a prepare, then re-inject the proposal - then ensure only a single prepare is enough
     // to trigger a Commit transmission from the local node
-    nextRoles.getNonProposing(0).injectPrepare(nextRoundId, reproposedBlock.getHash());
+    nextRoles.getNonProposing(0).injectPrepare(nextRoundId, block.getHash());
 
     nextProposer.injectProposalForFutureRound(
-        nextRoundId, roundChanges, preparedRoundArtifacts.getPrepares(), reproposedBlock);
-    nextProposer.injectPrepare(nextRoundId, reproposedBlock.getHash());
+        nextRoundId, roundChanges, preparedRoundArtifacts.getPrepares(), block);
+    nextProposer.injectPrepare(nextRoundId, block.getHash());
     peers.verifyNoMessagesReceived();
 
-    nextRoles.getNonProposing(1).injectPrepare(nextRoundId, reproposedBlock.getHash());
+    nextRoles.getNonProposing(1).injectPrepare(nextRoundId, block.getHash());
 
     final Commit expectedCommit =
         new Commit(
             IntegrationTestHelpers.createSignedCommitPayload(
-                nextRoundId, reproposedBlock, context.getLocalNodeParams().getNodeKey()));
+                nextRoundId, block, context.getLocalNodeParams().getNodeKey()));
 
     peers.verifyMessagesReceived(expectedCommit);
   }

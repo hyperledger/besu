@@ -186,11 +186,9 @@ public class QbftRound {
 
     if (blockAccepted) {
       final Block block = roundState.getProposedBlock().get();
-      final Block commitBlock = createCommitBlock(block);
-
       final SECPSignature commitSeal;
       try {
-        commitSeal = createCommitSeal(commitBlock);
+        commitSeal = createCommitSeal(block);
       } catch (final SecurityModuleException e) {
         LOG.warn("Failed to construct commit seal; {}", e.getMessage());
         return blockAccepted;
@@ -201,8 +199,8 @@ public class QbftRound {
         LOG.info(
             "Sending commit message. round={} commitBlockHash={}",
             roundState.getRoundIdentifier(),
-            commitBlock.getHash());
-        transmitter.multicastCommit(getRoundIdentifier(), commitBlock.getHash(), commitSeal);
+            block.getHash());
+        transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), commitSeal);
       }
 
       // can automatically add _our_ commit message to the roundState
@@ -211,7 +209,7 @@ public class QbftRound {
       try {
         final Commit localCommitMessage =
             messageFactory.createCommit(
-                roundState.getRoundIdentifier(), commitBlock.getHash(), commitSeal);
+                roundState.getRoundIdentifier(), block.getHash(), commitSeal);
         roundState.addCommitMessage(localCommitMessage);
       } catch (final SecurityModuleException e) {
         LOG.warn("Failed to create signed Commit message; {}", e.getMessage());
@@ -227,15 +225,6 @@ public class QbftRound {
     return blockAccepted;
   }
 
-  private Block createCommitBlock(final Block block) {
-    final BftBlockInterface bftBlockInterface =
-        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
-    return bftBlockInterface.replaceRoundInBlock(
-        block,
-        getRoundIdentifier().getRoundNumber(),
-        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
-  }
-
   private void peerIsPrepared(final Prepare msg) {
     final boolean wasPrepared = roundState.isPrepared();
     roundState.addPrepareMessage(msg);
@@ -243,9 +232,8 @@ public class QbftRound {
       LOG.debug("Sending commit message. round={}", roundState.getRoundIdentifier());
       final Block block = roundState.getProposedBlock().get();
       try {
-        final Block commitBlock = createCommitBlock(block);
-        final SECPSignature commitSeal = createCommitSeal(commitBlock);
-        transmitter.multicastCommit(getRoundIdentifier(), commitBlock.getHash(), commitSeal);
+        final SECPSignature commitSeal = createCommitSeal(block);
+        transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), commitSeal);
         // Note: the local-node's commit message was added to RoundState on block acceptance
         // and thus does not need to be done again here.
       } catch (final SecurityModuleException e) {
@@ -293,12 +281,22 @@ public class QbftRound {
   }
 
   private SECPSignature createCommitSeal(final Block block) {
-    final BlockHeader proposedHeader = block.getHeader();
+    final Block commitBlock = createCommitBlock(block);
+    final BlockHeader proposedHeader = commitBlock.getHeader();
     final BftExtraData extraData = bftExtraDataCodec.decode(proposedHeader);
     final Hash commitHash =
         new BftBlockHashing(bftExtraDataCodec)
             .calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
+  }
+
+  private Block createCommitBlock(final Block block) {
+    final BftBlockInterface bftBlockInterface =
+        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+    return bftBlockInterface.replaceRoundInBlock(
+        block,
+        getRoundIdentifier().getRoundNumber(),
+        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 
   private void notifyNewBlockListeners(final Block block) {

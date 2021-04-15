@@ -91,6 +91,7 @@ public class MessageValidatorFactory {
             roundIdentifier,
             proposerSelector.selectProposerForRound(roundIdentifier),
             bftExtraDataCodec);
+
     final BftBlockInterface blockInterface =
         protocolContext.getConsensusState(BftContext.class).getBlockInterface();
     return new MessageValidator(

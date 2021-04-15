@@ -36,14 +36,17 @@ public class CommitValidator {
   private final Collection<Address> validators;
   private final ConsensusRoundIdentifier targetRound;
   private final Hash expectedDigest;
+  private final Hash expectedCommitDigest;
 
   public CommitValidator(
       final Collection<Address> validators,
       final ConsensusRoundIdentifier targetRound,
-      final Hash expectedDigest) {
+      final Hash expectedDigest,
+      final Hash expectedCommitDigest) {
     this.validators = validators;
     this.targetRound = targetRound;
     this.expectedDigest = expectedDigest;
+    this.expectedCommitDigest = expectedCommitDigest;
   }
 
   public boolean validate(final Commit msg) {
@@ -77,7 +80,7 @@ public class CommitValidator {
     }
 
     final Address commitSealCreator =
-        Util.signatureToAddress(payload.getCommitSeal(), expectedDigest);
+        Util.signatureToAddress(payload.getCommitSeal(), expectedCommitDigest);
 
     if (!commitSealCreator.equals(signedPayload.getAuthor())) {
       LOG.info(

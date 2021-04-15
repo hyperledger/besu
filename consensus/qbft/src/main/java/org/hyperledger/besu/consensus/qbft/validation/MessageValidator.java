@@ -50,7 +50,9 @@ public class MessageValidator {
               targetRound.getRoundNumber(),
               BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataCodec()));
       prepareValidator = new PrepareValidator(validators, targetRound, proposalBlock.getHash());
-      commitValidator = new CommitValidator(validators, targetRound, commitBlock.getHash());
+      commitValidator =
+          new CommitValidator(
+              validators, targetRound, proposalBlock.getHash(), commitBlock.getHash());
     }
 
     public boolean validate(final Prepare msg) {
@@ -86,6 +88,7 @@ public class MessageValidator {
     }
 
     final boolean result = proposalValidator.validate(msg);
+    // TODO JF can no longer use the same expected hash for the commit and proposal
     if (result) {
       subsequentMessageValidator =
           Optional.of(subsequentMessageValidatorFactory.create(msg.getBlock()));

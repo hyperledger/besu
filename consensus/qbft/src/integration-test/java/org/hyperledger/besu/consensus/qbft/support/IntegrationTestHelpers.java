@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
@@ -32,12 +31,13 @@ public class IntegrationTestHelpers {
       final ConsensusRoundIdentifier roundId, final Block block, final NodeKey nodeKey) {
 
     final QbftExtraDataCodec ibftExtraDataEncoder = new QbftExtraDataCodec();
-    final BftExtraData extraData = ibftExtraDataEncoder.decode(block.getHeader());
 
+    final Block commitBlock =
+        TestContext.createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
     final SECPSignature commitSeal =
         nodeKey.sign(
             new BftBlockHashing(ibftExtraDataEncoder)
-                .calculateDataHashForCommittedSeal(block.getHeader(), extraData));
+                .calculateDataHashForCommittedSeal(commitBlock.getHeader()));
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 

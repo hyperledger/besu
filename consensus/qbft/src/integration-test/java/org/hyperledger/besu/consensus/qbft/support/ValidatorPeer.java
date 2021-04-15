@@ -14,11 +14,14 @@
  */
 package org.hyperledger.besu.consensus.qbft.support;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
@@ -34,6 +37,7 @@ import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +67,25 @@ public class ValidatorPeer extends DefaultValidatorPeer {
     return payload;
   }
 
+  public Commit injectCommit(final ConsensusRoundIdentifier rId, final Block block) {
+    final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+    final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
+    final Block commitBlock =
+        bftBlockInterface.replaceRoundInBlock(
+            block,
+            rId.getRoundNumber(),
+            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+    final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
+    System.out.println(
+        "injectCommit with nodeKey = "
+            + Util.publicKeyToAddress(nodeKey.getPublicKey())
+            + " commitSeal = "
+            + commitSeal);
+    return injectCommit(rId, block.getHash(), commitSeal);
+  }
+
+  // TODO JF remove this
+  @Deprecated
   public Commit injectCommit(final ConsensusRoundIdentifier rId, final Hash digest) {
     final SECPSignature commitSeal = nodeKey.sign(digest);
 
