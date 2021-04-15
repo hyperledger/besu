@@ -46,8 +46,8 @@ public class PreparedRoundMetadata {
    * @return A PreparedRoundMetadata as extracted from the supplied RLP input
    */
   public static PreparedRoundMetadata readFrom(final RLPInput in) {
-    final Hash preparedBlockHash = Hash.wrap(in.readBytes32());
     final int preparedRound = in.readIntScalar();
+    final Hash preparedBlockHash = Hash.wrap(in.readBytes32());
     return new PreparedRoundMetadata(preparedBlockHash, preparedRound);
   }
 
@@ -57,8 +57,8 @@ public class PreparedRoundMetadata {
    * @param out The RLP buffer to add to
    */
   public void writeTo(final RLPOutput out) {
-    out.writeBytes(preparedBlockHash);
     out.writeIntScalar(preparedRound);
+    out.writeBytes(preparedBlockHash);
   }
 
   @Override
