@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -104,6 +105,25 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
+
+    LOG.info("Read trie log");
+    Optional<byte[]> trieLog =
+        worldStateStorage.getTrieLog(
+            Hash.fromHexString(
+                "0x5f4ba732ab24b4c9328712d77533b3846416231859061016408c35a78d534569"));
+    LOG.info("End Read trie log " + trieLog.isPresent());
+    if (trieLog.isPresent()) {
+      LOG.debug("Start test");
+      final Optional<TrieLogLayer> trieLogLayer = trieLog.map(TrieLogLayer::fromBytes);
+      if (trieLogLayer.isPresent()) {
+        LOG.info("Start write test");
+        final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
+        trieLogLayer.get().writeTo(rlpLog);
+        LOG.info("End write test");
+      }
+      LOG.debug("End start test");
+    }
+
     return layeredWorldStatesByHash.containsKey(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
