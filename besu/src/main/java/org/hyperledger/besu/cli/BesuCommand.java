@@ -1180,6 +1180,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     try {
       configureLogging(true);
+      instantiateSignatureAlgorithmFactory();
       configureNativeLibs();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
@@ -1384,12 +1385,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.ofNullable(colorEnabled);
   }
 
-  private void configureNativeLibs() {
+  @VisibleForTesting
+  public void configureNativeLibs() {
     if (unstableNativeLibraryOptions.getNativeAltbn128()) {
       AbstractAltBnPrecompiledContract.enableNative();
+    } else {
+      logger.info("Using the Java implementation of alt bn128");
     }
+
     if (unstableNativeLibraryOptions.getNativeSecp256k1()) {
       SignatureAlgorithmFactory.getInstance().enableNative();
+    } else {
+      logger.info("Using the Java implementation of secp256k1");
     }
   }
 
@@ -1579,7 +1586,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricsConfiguration = metricsConfiguration();
 
     logger.info("Security Module: {}", securityModuleName);
-    instantiateSignatureAlgorithmFactory();
     return this;
   }
 

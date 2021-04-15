@@ -28,6 +28,8 @@ public interface SignatureAlgorithm {
 
   void enableNative();
 
+  boolean isNative();
+
   SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair);
 
   boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub);

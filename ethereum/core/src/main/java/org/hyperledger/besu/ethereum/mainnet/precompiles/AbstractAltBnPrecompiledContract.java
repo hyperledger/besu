@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.sun.jna.ptr.IntByReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LogManager.getLogger();
-  static boolean useNative = true;
+  static boolean useNative = false;
 
   public static void enableNative() {
     useNative = LibEthPairings.ENABLED;
@@ -38,6 +39,15 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
         useNative
             ? "Using LibEthPairings native alt bn128"
             : "Native alt bn128 requested but not available");
+  }
+
+  @VisibleForTesting
+  public static void resetNative() {
+    useNative = false;
+  }
+
+  public static boolean isNative() {
+    return useNative;
   }
 
   private final byte operationId;

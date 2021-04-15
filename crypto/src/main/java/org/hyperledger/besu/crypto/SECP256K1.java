@@ -66,7 +66,7 @@ public class SECP256K1 implements SignatureAlgorithm {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private boolean useNative = true;
+  private boolean useNative = false;
 
   public static final String CURVE_NAME = "secp256k1";
   public static final String PROVIDER = "BC";
@@ -101,6 +101,11 @@ public class SECP256K1 implements SignatureAlgorithm {
   public void enableNative() {
     useNative = LibSecp256k1.CONTEXT != null;
     LOG.info(useNative ? "Using native secp256k1" : "Native secp256k1 requested but not available");
+  }
+
+  @Override
+  public boolean isNative() {
+    return useNative;
   }
 
   @Override
