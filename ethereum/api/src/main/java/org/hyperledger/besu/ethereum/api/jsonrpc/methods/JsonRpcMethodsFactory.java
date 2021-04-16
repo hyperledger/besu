@@ -89,6 +89,7 @@ public class JsonRpcMethodsFactory {
                   namedPlugins,
                   natService,
                   ethPeers),
+              new ConsensusJsonRpcMethods(),
               new DebugJsonRpcMethods(
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(

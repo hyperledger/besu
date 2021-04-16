@@ -77,6 +77,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.experimental.RayonismMerge;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
@@ -1203,6 +1204,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void enableExperimentalEIPs() {
     // Usage of static command line flags is strictly reserved for experimental EIPs
     commandLine.addMixin("experimentalEIPs", ExperimentalEIPs.class);
+    commandLine.addMixin("experimentalMerge", RayonismMerge.class);
   }
 
   private void addSubCommands(
