@@ -26,10 +26,12 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 
+@JsonIgnoreProperties("nonce")
 public class JsonCallParameter extends CallParameter {
 
   private final boolean strict;
