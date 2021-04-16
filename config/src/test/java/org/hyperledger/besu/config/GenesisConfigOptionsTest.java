@@ -191,7 +191,7 @@ public class GenesisConfigOptionsTest {
   public void shouldGetEIP1559BlockNumber() {
     try {
       ExperimentalEIPs.eip1559Enabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("eip1559block", 1000));
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 1000));
       assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
     } finally {
       ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;

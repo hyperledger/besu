@@ -59,15 +59,30 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final StorageProvider provider, final Blockchain blockchain, final long maxLayersToLoad) {
     this.blockchain = blockchain;
 
-    worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
-    persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
-    layeredWorldStatesByHash = new HashMap<>();
+    this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
+    this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
+    this.layeredWorldStatesByHash = new HashMap<>();
     this.maxLayersToLoad = maxLayersToLoad;
+    blockchain.observeBlockAdded(
+        event -> {
+          if (event.isNewCanonicalHead()) {
+            final BlockHeader eventBlockHeader = event.getBlock().getHeader();
+            layeredWorldStatesByHash.computeIfPresent(
+                eventBlockHeader.getParentHash(),
+                (hash, bonsaiLayeredWorldState) -> {
+                  if (layeredWorldStatesByHash.containsKey(eventBlockHeader.getHash())) {
+                    bonsaiLayeredWorldState.setNextWorldView(
+                        Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getHash())));
+                  }
+                  return bonsaiLayeredWorldState;
+                });
+          }
+        });
   }
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    if (layeredWorldStatesByHash.containsKey(rootHash)) {
+    if (layeredWorldStatesByHash.containsKey(blockHash)) {
       return Optional.of(layeredWorldStatesByHash.get(blockHash));
     } else if (rootHash.equals(persistedState.blockHash())) {
       return Optional.of(persistedState);
@@ -78,7 +93,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   public void addLayeredWorldState(
       final BonsaiWorldView persistedWorldState,
-      final long blockNumber,
+      final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog) {
     final BonsaiLayeredWorldState bonsaiLayeredWorldState =
@@ -86,19 +101,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             blockchain,
             this,
             Optional.of(persistedWorldState),
-            blockNumber,
+            blockHeader.getNumber(),
             worldStateRootHash,
             trieLog);
     layeredWorldStatesByHash.put(bonsaiLayeredWorldState.blockHash(), bonsaiLayeredWorldState);
-    if (blockNumber > 0) {
-      final Optional<Hash> blockHashByNumber = blockchain.getBlockHashByNumber(blockNumber - 1);
-      if (blockHashByNumber.isPresent()
-          && layeredWorldStatesByHash.containsKey(blockHashByNumber.get())) {
-        layeredWorldStatesByHash
-            .get(blockHashByNumber.get())
-            .setNextWorldView(Optional.of(bonsaiLayeredWorldState));
-      }
-    }
   }
 
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
@@ -234,10 +240,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
     return Optional.empty();
-  }
-
-  public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
-    return worldStateStorage;
   }
 
   @Override
