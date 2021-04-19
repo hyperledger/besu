@@ -1186,11 +1186,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
-      final BesuCommand controller = validateOptions().configure().controller();
+      validateOptions()
+          .configure()
+          .initController()
+          .startPlugins()
+          .preSynchronization()
+          .startSynchronization();
 
-      preSynchronizationTaskRunner.runTasks(controller.besuController);
-
-      controller.startPlugins().startSynchronization();
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
@@ -1333,6 +1335,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
     }
+  }
+
+  private BesuCommand preSynchronization() {
+    preSynchronizationTaskRunner.runTasks(besuController);
+    return this;
   }
 
   private void startSynchronization() {
@@ -1639,7 +1646,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private BesuCommand controller() {
+  private BesuCommand initController() {
     besuController = buildController();
     return this;
   }
