@@ -88,7 +88,6 @@ public class MessageValidator {
     }
 
     final boolean result = proposalValidator.validate(msg);
-    // TODO JF can no longer use the same expected hash for the commit and proposal
     if (result) {
       subsequentMessageValidator =
           Optional.of(subsequentMessageValidatorFactory.create(msg.getBlock()));

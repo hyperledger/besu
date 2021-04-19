@@ -98,7 +98,6 @@ public class TestContext {
 
   public Block createBlockForProposal(
       final BlockHeader parent, final long timestamp, final Address proposer) {
-    // proposal block always has a round 0, the round is populated when the block is finalised
     final Block block =
         finalState.getBlockCreatorFactory().create(parent, 0).createBlock(timestamp);
 

@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.consensus.qbft.support;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers.createCommitBlockFromProposalBlock;
+
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
@@ -67,13 +66,7 @@ public class ValidatorPeer extends DefaultValidatorPeer {
   }
 
   public Commit injectCommit(final ConsensusRoundIdentifier rId, final Block block) {
-    final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
-    final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
-    final Block commitBlock =
-        bftBlockInterface.replaceRoundInBlock(
-            block,
-            rId.getRoundNumber(),
-            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
+    final Block commitBlock = createCommitBlockFromProposalBlock(block, rId.getRoundNumber());
     final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
     return injectCommit(rId, block.getHash(), commitSeal);
   }

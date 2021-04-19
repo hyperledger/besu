@@ -196,10 +196,7 @@ public class QbftRound {
 
       // There are times handling a proposed block is enough to enter prepared.
       if (wasPrepared != roundState.isPrepared()) {
-        LOG.info(
-            "Sending commit message. round={} commitBlockHash={}",
-            roundState.getRoundIdentifier(),
-            block.getHash());
+        LOG.debug("Sending commit message. round={}", roundState.getRoundIdentifier());
         transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), commitSeal);
       }
 
@@ -209,7 +206,7 @@ public class QbftRound {
       try {
         final Commit localCommitMessage =
             messageFactory.createCommit(
-                roundState.getRoundIdentifier(), block.getHash(), commitSeal);
+                roundState.getRoundIdentifier(), msg.getBlock().getHash(), commitSeal);
         roundState.addCommitMessage(localCommitMessage);
       } catch (final SecurityModuleException e) {
         LOG.warn("Failed to create signed Commit message; {}", e.getMessage());
@@ -232,8 +229,7 @@ public class QbftRound {
       LOG.debug("Sending commit message. round={}", roundState.getRoundIdentifier());
       final Block block = roundState.getProposedBlock().get();
       try {
-        final SECPSignature commitSeal = createCommitSeal(block);
-        transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), commitSeal);
+        transmitter.multicastCommit(getRoundIdentifier(), block.getHash(), createCommitSeal(block));
         // Note: the local-node's commit message was added to RoundState on block acceptance
         // and thus does not need to be done again here.
       } catch (final SecurityModuleException e) {
