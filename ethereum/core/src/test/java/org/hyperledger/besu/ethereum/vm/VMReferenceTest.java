@@ -36,6 +36,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.stream.Stream;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -46,20 +47,22 @@ import org.junit.runners.Parameterized.Parameters;
 public class VMReferenceTest extends AbstractRetryingTest {
 
   /** The path where all of the VM test configuration files live. */
-  private static final String[] TEST_CONFIG_FILE_DIR_PATHS = {
-    "VMTests/vmArithmeticTest",
-    "VMTests/vmBitwiseLogicOperation",
-    "VMTests/vmBlockInfoTest",
-    "VMTests/vmEnvironmentalInfo",
-    "VMTests/vmIOandFlowOperations",
-    "VMTests/vmLogTest",
-    //    "VMTests/vmPerformance",
-    "VMTests/vmPushDupSwapTest",
-    "VMTests/vmRandomTest",
-    "VMTests/vmSha3Test",
-    "VMTests/vmTests",
-    "VMTests/vmSystemOperations"
-  };
+  private static final String[] TEST_CONFIG_FILE_DIR_PATHS =
+      Stream.of(
+              "vmArithmeticTest",
+              "vmBitwiseLogicOperation",
+              "vmBlockInfoTest",
+              "vmEnvironmentalInfo",
+              "vmIOandFlowOperations",
+              "vmLogTest",
+              // "vmPerformance",
+              "vmPushDupSwapTest",
+              "vmRandomTest",
+              "vmSha3Test",
+              "vmTests",
+              "vmSystemOperations")
+          .map(testFileName -> "LegacyTests/Constantinople/VMTests/" + testFileName)
+          .toArray(String[]::new);
 
   // The ignored test cases fall into two categories:
   //
