@@ -663,21 +663,25 @@ task acceptanceTestsQuorum {
    * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
    *
    * Ignored for now (privacy-polishing): graphql,
+   *
+   * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
    */
   def tags = "(basic && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
     exec {
       def variant = "openjdk-latest"
-      def variantDirectory = "${buildDir}/quorum-at/${variant}"
+      def variantDirectory = "${buildDir}/quorum-at/${variant}-${org.apache.commons.lang.RandomStringUtils.random(9, true, true)}"
       def dataDirectory = "${variantDirectory}/data"
       def reportsDirectory = "${variantDirectory}/reports"
       new File(dataDirectory).mkdirs()
       new File(reportsDirectory).mkdirs()
 
       def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+      def dockerEnv = "--env LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG --env TF_VAR_besu_docker_image='{name=\"${image}-${variant}\",local=true}'"
+      def dockerVolumes = "-v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory}"
       executable "sh"
-      args "-c", "TF_besu_docker_image=${image}-${variant} docker run --network host -v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"${tags}\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
+      args "-c", "docker run ${dockerEnv} --rm --network host ${dockerVolumes} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"${tags}\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
     }
   }
 }
