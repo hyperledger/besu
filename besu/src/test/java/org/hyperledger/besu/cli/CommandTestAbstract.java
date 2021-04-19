@@ -164,7 +164,8 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<DataStorageConfiguration> dataStorageConfigurationArgumentCaptor;
 
   @Captor
-  protected ArgumentCaptor<PermissioningConfiguration> permissioningConfigurationArgumentCaptor;
+  protected ArgumentCaptor<Optional<PermissioningConfiguration>>
+      permissioningConfigurationArgumentCaptor;
 
   @Captor protected ArgumentCaptor<TransactionPoolConfiguration> transactionPoolConfigCaptor;
 
