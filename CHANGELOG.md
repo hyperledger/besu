@@ -1,5 +1,17 @@
 # Changelog
 
+## 21.1.5
+
+### Additions and Improvements
+
+### Bug Fixes
+
+- Fixed `NullPointerException` when crossing network upgrade blocks when peer discovery is disabled. [\#2140](https://github.com/hyperledger/besu/pull/2140)
+
+### Early Access Features
+
+#### Previously identified known issues
+
 ## 21.1.4
 
 ### Additions and Improvements
