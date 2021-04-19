@@ -36,7 +36,6 @@ sourceSets {
     }
     resources {
       srcDir file('src/reference-test/resources')
-      exclude "src/reference-test/resources/docker_interop/**"
     }
   }
 }
