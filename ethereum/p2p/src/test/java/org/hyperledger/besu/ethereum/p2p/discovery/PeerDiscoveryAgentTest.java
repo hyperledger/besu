@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -135,6 +136,28 @@ public class PeerDiscoveryAgentTest {
     agent.updateNodeRecord();
     final NodeRecord post = agent.getLocalNode().get().getNodeRecord().get();
     assertThat(pre).isNotEqualTo(post);
+  }
+
+  @Test
+  public void testNodeRecordNotUpdatedIfNoPeerDiscovery() {
+    KeyPair keyPair =
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createPrivateKey(
+                        Bytes32.fromHexString(
+                            "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
+    final MockPeerDiscoveryAgent agent =
+        helper.startDiscoveryAgent(
+            helper
+                .agentBuilder()
+                .nodeKey(NodeKeyUtils.createFrom(keyPair))
+                .advertisedHost("127.0.0.1")
+                .bindPort(30303)
+                .active(false));
+    assertThatCode(agent::updateNodeRecord).doesNotThrowAnyException();
   }
 
   @Test
