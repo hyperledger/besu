@@ -35,6 +35,10 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.math.BigInteger;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -44,6 +48,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class DebugFaucet implements JsonRpcMethod {
   private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final long FAUCET_ACCESS_INTERVAL_SECONDS = TimeUnit.HOURS.toSeconds(6);
 
   private final Supplier<BlockchainQueries> blockchainQueries;
   private final Supplier<TransactionPool> transactionPool;
@@ -51,6 +56,7 @@ public class DebugFaucet implements JsonRpcMethod {
   private final KeyPair faucetKeyPair;
   private final Address faucetAddress;
   final Wei faucetAmount;
+  private final Map<String, Instant> access = new HashMap<>();
 
   public DebugFaucet(
       final BlockchainQueries blockchainQueries,
@@ -79,6 +85,11 @@ public class DebugFaucet implements JsonRpcMethod {
     }
     final String recipientAddress = requestContext.getRequiredParameter(0, String.class);
 
+    if (!allowed(recipientAddress)) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.UNAUTHORIZED);
+    }
+
     final Transaction transaction;
     try {
       final long nonce = this.blockchainQueries.get().getTransactionCount(faucetAddress);
@@ -101,13 +112,23 @@ public class DebugFaucet implements JsonRpcMethod {
     final ValidationResult<TransactionInvalidReason> validationResult =
         transactionPool.get().addLocalTransaction(transaction);
     return validationResult.either(
-        () ->
-            new JsonRpcSuccessResponse(
-                requestContext.getRequest().getId(), transaction.getHash().toString()),
+        () -> {
+          access.put(recipientAddress, Instant.now());
+          return new JsonRpcSuccessResponse(
+              requestContext.getRequest().getId(), transaction.getHash().toString());
+        },
         errorReason ->
             new JsonRpcErrorResponse(
                 requestContext.getRequest().getId(),
                 JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
+  }
+
+  private boolean allowed(final String address) {
+    if (!access.containsKey(address)) {
+      return true;
+    }
+    final Instant lastSeen = access.get(address);
+    return lastSeen.plusSeconds(FAUCET_ACCESS_INTERVAL_SECONDS).compareTo(Instant.now()) <= 0;
   }
 
   private static KeyPair keyPair(final String privateKey) {
