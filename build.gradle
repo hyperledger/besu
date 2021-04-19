@@ -124,6 +124,7 @@ allprojects {
         exclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
         exclude '**/blockchain/BlockchainReferenceTest*.java'
         exclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
+        exclude '**/reference-test/resources/docker_interop/**'
         exclude '**/.gradle/**'
       }
       removeUnusedImports()
