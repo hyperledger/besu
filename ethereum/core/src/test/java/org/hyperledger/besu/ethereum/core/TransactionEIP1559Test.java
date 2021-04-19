@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.math.BigInteger;
-import java.util.List;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -35,7 +34,8 @@ public class TransactionEIP1559Test {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  private static final String PRIVATE_KEY = "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3";
+  private static final String PRIVATE_KEY =
+      "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3";
 
   @After
   public void reset() {
@@ -45,10 +45,10 @@ public class TransactionEIP1559Test {
   @Test
   public void buildEip1559Transaction() {
     /*final List<AccessListEntry> accessListEntries =
-        List.of(
-            new AccessListEntry(
-                Address.fromHexString("0x000000000000000000000000000000000000aaaa"),
-                List.of(Bytes32.ZERO)));*/
+    List.of(
+        new AccessListEntry(
+            Address.fromHexString("0x000000000000000000000000000000000000aaaa"),
+            List.of(Bytes32.ZERO)));*/
     final Transaction tx =
         Transaction.builder()
             .chainId(new BigInteger("7822", 10))
@@ -58,11 +58,10 @@ public class TransactionEIP1559Test {
             .gasPremium(Wei.of(1000000000))
             .payload(Bytes.EMPTY.trimLeadingZeros())
             .feeCap(Wei.of(new BigInteger("5000000000", 10)))
-            //.gasPrice(Wei.of(1000000000))
+            // .gasPrice(Wei.of(1000000000))
             .to(Address.fromHexString("0xC3298C6341f82468309302611e24D3003Bc79B46"))
             .guessType()
-            .signAndBuild(
-                keyPair(PRIVATE_KEY));
+            .signAndBuild(keyPair(PRIVATE_KEY));
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     tx.writeTo(out);
     System.out.println(out.encoded().toHexString());

@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.config.experimental.ExperimentalFeatures;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountRange;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugBatchSendRawTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugFaucet;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetBadBlocks;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugStandardTraceBadBlockToFile;
@@ -33,6 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -77,25 +80,40 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
             blockchainQueries.getBlockchain(),
             blockchainQueries.getWorldStateArchive());
 
-    return mapOf(
-        new DebugTraceTransaction(blockchainQueries, new TransactionTracer(blockReplay)),
-        new DebugAccountRange(blockchainQueries),
-        new DebugStorageRangeAt(blockchainQueries, blockReplay),
-        new DebugMetrics(metricsSystem),
-        new DebugTraceBlock(
-            () -> new BlockTracer(blockReplay),
-            ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
-            blockchainQueries),
-        new DebugTraceBlockByNumber(() -> new BlockTracer(blockReplay), blockchainQueries),
-        new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay)),
-        new DebugBatchSendRawTransaction(transactionPool),
-        new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult),
-        new DebugStandardTraceBlockToFile(
-            () -> new TransactionTracer(blockReplay), blockchainQueries, dataDir),
-        new DebugStandardTraceBadBlockToFile(
-            () -> new TransactionTracer(blockReplay),
-            blockchainQueries,
-            protocolSchedule,
-            dataDir));
+    final Map<String, JsonRpcMethod> debugJsonRpcMethods =
+        mapOf(
+            new DebugTraceTransaction(blockchainQueries, new TransactionTracer(blockReplay)),
+            new DebugAccountRange(blockchainQueries),
+            new DebugStorageRangeAt(blockchainQueries, blockReplay),
+            new DebugMetrics(metricsSystem),
+            new DebugTraceBlock(
+                () -> new BlockTracer(blockReplay),
+                ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
+                blockchainQueries),
+            new DebugTraceBlockByNumber(() -> new BlockTracer(blockReplay), blockchainQueries),
+            new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay)),
+            new DebugBatchSendRawTransaction(transactionPool),
+            new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult),
+            new DebugStandardTraceBlockToFile(
+                () -> new TransactionTracer(blockReplay), blockchainQueries, dataDir),
+            new DebugStandardTraceBadBlockToFile(
+                () -> new TransactionTracer(blockReplay),
+                blockchainQueries,
+                protocolSchedule,
+                dataDir));
+    protocolSchedule
+        .getChainId()
+        .ifPresent(
+            chainId -> {
+              final DebugFaucet debugFaucet =
+                  new DebugFaucet(
+                      blockchainQueries,
+                      transactionPool,
+                      chainId,
+                      ExperimentalFeatures.faucetPrivateKey,
+                      Wei.fromEth(ExperimentalFeatures.faucetValue));
+              debugJsonRpcMethods.put(debugFaucet.getName(), debugFaucet);
+            });
+    return debugJsonRpcMethods;
   }
 }
