@@ -661,8 +661,10 @@ task acceptanceTestsQuorum {
    *
    * Not available features in Besu: privacy-enhancements-disabled, extension
    * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
+   *
+   * Ignored for now (privacy-polishing): graphql,
    */
-  def tags = "(basic && !privacy-enhancements-disabled && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
+  def tags = "(basic && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
     exec {
