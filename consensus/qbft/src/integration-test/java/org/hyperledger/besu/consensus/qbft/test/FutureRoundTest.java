@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft.test;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers.createCommitBlockFromProposalBlock;
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -104,7 +105,7 @@ public class FutureRoundTest {
     futurePeers.getNonProposing(quorum - 2).injectPrepare(futureRoundId, futureBlock.getHash());
 
     final Block commitBlock =
-        TestContext.createCommitBlockFromProposalBlock(futureBlock, futureRoundId.getRoundNumber());
+        createCommitBlockFromProposalBlock(futureBlock, futureRoundId.getRoundNumber());
     final SECPSignature commitSeal =
         context.getLocalNodeParams().getNodeKey().sign(commitBlock.getHash());
     final Commit expectedCommit =

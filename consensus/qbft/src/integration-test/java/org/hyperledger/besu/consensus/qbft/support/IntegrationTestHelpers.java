@@ -15,6 +15,8 @@
 package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
@@ -32,8 +34,7 @@ public class IntegrationTestHelpers {
 
     final QbftExtraDataCodec ibftExtraDataEncoder = new QbftExtraDataCodec();
 
-    final Block commitBlock =
-        TestContext.createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
+    final Block commitBlock = createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
     final SECPSignature commitSeal =
         nodeKey.sign(
             new BftBlockHashing(ibftExtraDataEncoder)
@@ -52,5 +53,13 @@ public class IntegrationTestHelpers {
         block,
         peers.createSignedPreparePayloadOfAllPeers(preparedRound, block.getHash()),
         preparedRound.getRoundNumber());
+  }
+
+  public static Block createCommitBlockFromProposalBlock(
+      final Block proposalBlock, final int round) {
+    final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+    final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
+    return bftBlockInterface.replaceRoundInBlock(
+        proposalBlock, round, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 }

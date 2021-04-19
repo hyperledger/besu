@@ -86,7 +86,7 @@ public class FutureHeightTest {
         peer ->
             peer.verifyEstimatedChainHeightEquals(futureHeightBlock.getHeader().getNumber() - 1));
 
-    peers.commitForNonProposing(futureHeightRoundId, futureHeightBlock.getHash());
+    peers.commitForNonProposing(futureHeightRoundId, futureHeightBlock);
 
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
@@ -136,7 +136,7 @@ public class FutureHeightTest {
     // Inject prepares and commits from all peers for the 'previous' round (i.e. the height
     // from before the block arrived).
     peers.prepareForNonProposing(roundId, currentHeightBlock.getHash());
-    peers.commitForNonProposing(roundId, currentHeightBlock.getHash());
+    peers.commitForNonProposing(roundId, currentHeightBlock);
 
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
@@ -190,7 +190,7 @@ public class FutureHeightTest {
 
     // Inject prepares and commits from all peers into FutureHeight (2 height time)
     peers.prepareForNonProposing(futureHeightRoundId, futureHeightBlock.getHash());
-    peers.commitForNonProposing(futureHeightRoundId, futureHeightBlock.getHash());
+    peers.commitForNonProposing(futureHeightRoundId, futureHeightBlock);
 
     // Add the "interim" block to chain, and notify system of its arrival.
     context.getBlockchain().appendBlock(signedCurrentHeightBlock, emptyList());

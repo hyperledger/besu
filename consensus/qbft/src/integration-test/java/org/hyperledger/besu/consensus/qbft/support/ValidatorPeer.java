@@ -37,7 +37,6 @@ import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collections;
 import java.util.List;
@@ -76,20 +75,7 @@ public class ValidatorPeer extends DefaultValidatorPeer {
             rId.getRoundNumber(),
             BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
-    System.out.println(
-        "injectCommit with nodeKey = "
-            + Util.publicKeyToAddress(nodeKey.getPublicKey())
-            + " commitSeal = "
-            + commitSeal);
     return injectCommit(rId, block.getHash(), commitSeal);
-  }
-
-  // TODO JF remove this
-  @Deprecated
-  public Commit injectCommit(final ConsensusRoundIdentifier rId, final Hash digest) {
-    final SECPSignature commitSeal = nodeKey.sign(digest);
-
-    return injectCommit(rId, digest, commitSeal);
   }
 
   public Commit injectCommit(

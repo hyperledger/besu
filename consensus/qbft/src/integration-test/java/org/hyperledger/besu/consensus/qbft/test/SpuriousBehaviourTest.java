@@ -129,7 +129,7 @@ public class SpuriousBehaviourTest {
     peers.prepareForNonProposing(roundId, Hash.ZERO);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
-    peers.commitForNonProposing(roundId, proposedBlock.getHash());
+    peers.commitForNonProposing(roundId, proposedBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
   }
 
@@ -141,8 +141,8 @@ public class SpuriousBehaviourTest {
     peers.prepareForNonProposing(roundId, proposedBlock.getHash());
 
     // for a network of 5, 4 seals are required (local + 3 remote)
-    peers.getNonProposing(0).injectCommit(roundId, proposedBlock.getHash());
-    peers.getNonProposing(1).injectCommit(roundId, proposedBlock.getHash());
+    peers.getNonProposing(0).injectCommit(roundId, proposedBlock);
+    peers.getNonProposing(1).injectCommit(roundId, proposedBlock);
 
     // nonProposer-2 will generate an invalid seal
     final ValidatorPeer badSealPeer = peers.getNonProposing(2);
@@ -152,7 +152,7 @@ public class SpuriousBehaviourTest {
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
     // Now inject the REAL commit message
-    badSealPeer.injectCommit(roundId, proposedBlock.getHash());
+    badSealPeer.injectCommit(roundId, proposedBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
   }
 }

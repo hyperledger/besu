@@ -86,7 +86,7 @@ public class GossipTest {
     peers.verifyMessagesReceivedNonPropsing(prepare);
     peers.verifyNoMessagesReceivedProposer();
 
-    final Commit commit = sender.injectCommit(roundId, block.getHash());
+    final Commit commit = sender.injectCommit(roundId, block);
     peers.verifyMessagesReceivedNonPropsing(commit);
     peers.verifyNoMessagesReceivedProposer();
 

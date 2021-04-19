@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
@@ -23,7 +22,6 @@ import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -116,15 +114,6 @@ public class TestContext {
   public Block createBlockForProposalFromChainHead(final long timestamp, final Address proposer) {
     // this implies that EVERY block will have this node as the proposer :/
     return createBlockForProposal(blockchain.getChainHeadHeader(), timestamp, proposer);
-  }
-
-  // TODO JF find a new home for this
-  public static Block createCommitBlockFromProposalBlock(
-      final Block proposalBlock, final int round) {
-    final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
-    final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
-    return bftBlockInterface.replaceRoundInBlock(
-        proposalBlock, round, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 
   public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {
