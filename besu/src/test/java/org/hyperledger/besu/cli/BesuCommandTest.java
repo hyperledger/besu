@@ -442,7 +442,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    final PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
+    final PermissioningConfiguration config =
+        permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(config.getSmartContractConfig().get())
         .isEqualToComparingFieldByField(smartContractPermissioningConfiguration);
 
@@ -468,7 +469,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    final PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
+    final PermissioningConfiguration config =
+        permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(config.getSmartContractConfig().get())
         .isEqualToComparingFieldByField(expectedConfig);
 
@@ -496,7 +498,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    final PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
+    final PermissioningConfiguration config =
+        permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(config.getSmartContractConfig().get())
         .isEqualToComparingFieldByField(expectedConfig);
 
@@ -570,7 +573,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
     final PermissioningConfiguration permissioningConfiguration =
-        permissioningConfigurationArgumentCaptor.getValue();
+        permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(permissioningConfiguration.getSmartContractConfig()).isPresent();
 
     final SmartContractPermissioningConfiguration effectiveSmartContractConfig =
@@ -697,7 +700,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    final PermissioningConfiguration config = permissioningConfigurationArgumentCaptor.getValue();
+    final PermissioningConfiguration config =
+        permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(config.getLocalConfig().get())
         .isEqualToComparingFieldByField(localPermissioningConfiguration);
 
@@ -724,7 +728,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .permissioningConfiguration(permissioningConfigurationArgumentCaptor.capture());
     final PermissioningConfiguration permissioningConfiguration =
-        permissioningConfigurationArgumentCaptor.getValue();
+        permissioningConfigurationArgumentCaptor.getValue().get();
     assertThat(permissioningConfiguration.getLocalConfig()).isPresent();
 
     final LocalPermissioningConfiguration effectiveLocalPermissioningConfig =
