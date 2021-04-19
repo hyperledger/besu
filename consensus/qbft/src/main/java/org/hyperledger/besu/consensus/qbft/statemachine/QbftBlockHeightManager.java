@@ -129,7 +129,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       return;
     }
 
-    final QbftRound qbftRound = currentRound.get();
+    QbftRound qbftRound = currentRound.get();
     if (!expire.getView().equals(qbftRound.getRoundIdentifier())) {
       LOG.trace(
           "Ignoring Round timer expired which does not match current round. round={}, timerRound={}",
@@ -149,11 +149,12 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     }
 
     startNewRound(qbftRound.getRoundIdentifier().getRoundNumber() + 1);
+    qbftRound = currentRound.get();
 
     try {
       final RoundChange localRoundChange =
           messageFactory.createRoundChange(
-              currentRound.get().getRoundIdentifier(), latestPreparedCertificate);
+              qbftRound.getRoundIdentifier(), latestPreparedCertificate);
 
       // Its possible the locally created RoundChange triggers the transmission of a NewRound
       // message - so it must be handled accordingly.
@@ -162,8 +163,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       LOG.warn("Failed to create signed RoundChange message.", e);
     }
 
-    transmitter.multicastRoundChange(
-        currentRound.get().getRoundIdentifier(), latestPreparedCertificate);
+    transmitter.multicastRoundChange(qbftRound.getRoundIdentifier(), latestPreparedCertificate);
   }
 
   @Override
