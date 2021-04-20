@@ -114,14 +114,7 @@ public class QbftRound {
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
-      final BftBlockInterface bftBlockInterface =
-          protocolContext.getConsensusState(BftContext.class).getBlockInterface();
-      blockToPublish =
-          bftBlockInterface.replaceRoundInBlock(
-              bestPreparedCertificate.get().getBlock(),
-              getRoundIdentifier().getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
-              bftExtraDataCodec);
+      blockToPublish = bestPreparedCertificate.get().getBlock();
     }
 
     updateStateWithProposalAndTransmit(
@@ -154,7 +147,6 @@ public class QbftRound {
   public void handleProposalMessage(final Proposal msg) {
     LOG.debug("Received a proposal message. round={}", roundState.getRoundIdentifier());
     final Block block = msg.getSignedPayload().getPayload().getProposedBlock();
-
     if (updateStateWithProposedBlock(msg)) {
       sendPrepare(block);
     }
@@ -194,7 +186,6 @@ public class QbftRound {
 
     if (blockAccepted) {
       final Block block = roundState.getProposedBlock().get();
-
       final SECPSignature commitSeal;
       try {
         commitSeal = createCommitSeal(block);
@@ -259,7 +250,10 @@ public class QbftRound {
 
     final Block blockToImport =
         BftHelpers.createSealedBlock(
-            bftExtraDataCodec, roundState.getProposedBlock().get(), roundState.getCommitSeals());
+            bftExtraDataCodec,
+            roundState.getProposedBlock().get(),
+            roundState.getRoundIdentifier().getRoundNumber(),
+            roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
     final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
@@ -283,12 +277,22 @@ public class QbftRound {
   }
 
   private SECPSignature createCommitSeal(final Block block) {
-    final BlockHeader proposedHeader = block.getHeader();
+    final Block commitBlock = createCommitBlock(block);
+    final BlockHeader proposedHeader = commitBlock.getHeader();
     final BftExtraData extraData = bftExtraDataCodec.decode(proposedHeader);
     final Hash commitHash =
         new BftBlockHashing(bftExtraDataCodec)
             .calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
+  }
+
+  private Block createCommitBlock(final Block block) {
+    final BftBlockInterface bftBlockInterface =
+        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+    return bftBlockInterface.replaceRoundInBlock(
+        block,
+        getRoundIdentifier().getRoundNumber(),
+        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 
   private void notifyNewBlockListeners(final Block block) {
