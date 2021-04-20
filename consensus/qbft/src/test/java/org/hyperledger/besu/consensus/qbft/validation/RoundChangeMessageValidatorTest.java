@@ -129,6 +129,35 @@ public class RoundChangeMessageValidatorTest {
   }
 
   @Test
+  public void roundChangeWithBlockRoundMismatchingPreparesIsValid() {
+    when(blockValidator.validateAndProcessBlock(
+            any(), any(), eq(HeaderValidationMode.LIGHT), eq(HeaderValidationMode.FULL)))
+        .thenReturn(Optional.of(new BlockProcessingOutputs(null, null)));
+    when(payloadValidator.validate(any())).thenReturn(true);
+    messageValidator =
+        new RoundChangeMessageValidator(
+            payloadValidator,
+            BftHelpers.calculateRequiredValidatorQuorum(VALIDATOR_COUNT),
+            CHAIN_HEIGHT,
+            validators.getNodeAddresses(),
+            blockValidator,
+            protocolContext);
+
+    final Block block =
+        ProposedBlockHelpers.createProposalBlock(
+            Collections.emptyList(), roundIdentifier, bftExtraDataEncoder);
+    final PreparedCertificate prepCert =
+        createPreparedCertificate(
+            block,
+            ConsensusRoundHelpers.createFrom(roundIdentifier, 0, +1),
+            toArray(validators.getNodes(), QbftNode.class));
+
+    final RoundChange message =
+        validators.getMessageFactory(0).createRoundChange(targetRound, Optional.of(prepCert));
+    assertThat(messageValidator.validate(message)).isTrue();
+  }
+
+  @Test
   public void blockIsInvalidFailsValidation() {
     when(blockValidator.validateAndProcessBlock(
             any(), any(), eq(HeaderValidationMode.LIGHT), eq(HeaderValidationMode.FULL)))
