@@ -244,7 +244,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
-    return context.getStorageValue(address, key);
+    return context.getPriorStorageValue(address, key);
   }
 
   @Override
