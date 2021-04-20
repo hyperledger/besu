@@ -327,6 +327,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         return original;
       }
     }
+    if (storageToClear.contains(address)) {
+      return UInt256.ZERO;
+    }
     return getStorageValue(address, storageKey);
   }
 
