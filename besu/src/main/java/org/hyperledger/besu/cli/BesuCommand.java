@@ -1385,8 +1385,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.ofNullable(colorEnabled);
   }
 
-  @VisibleForTesting
-  public void configureNativeLibs() {
+  private void configureNativeLibs() {
     if (unstableNativeLibraryOptions.getNativeAltbn128()) {
       AbstractAltBnPrecompiledContract.enableNative();
     } else {

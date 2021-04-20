@@ -3877,7 +3877,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--rpc-http-enabled", "--rpc-http-authentication-enabled");
 
     verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty/*final TestBesuCommand besuCommand = */ ();
+    assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
             "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
