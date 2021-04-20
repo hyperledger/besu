@@ -124,6 +124,7 @@ allprojects {
         exclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
         exclude '**/blockchain/BlockchainReferenceTest*.java'
         exclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
+        exclude '**/reference-test/resources/docker_interop/**'
         exclude '**/.gradle/**'
       }
       removeUnusedImports()
@@ -647,6 +648,41 @@ task testDocker {
         executable "sh"
         args "-c", "bash ../test.sh ${image}-${variant}"
       }
+    }
+  }
+}
+
+task acceptanceTestsQuorum {
+  dependsOn distDocker
+  /**
+   * Tags Description
+   *
+   * Basic tests for private and public tx: basic
+   * Start a Besu/EthSigner/Tessera network with IBFT2: networks/typical-besu::ibft2
+   *
+   * Not available features in Besu: privacy-enhancements-disabled, extension
+   * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
+   *
+   * Ignored for now (privacy-polishing): graphql, eth-api-signed, (estimategas && public)
+   *
+   * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
+   */
+  def tags = "(basic && !(estimategas && public) && !eth-api-signed && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
+
+  doLast {
+    exec {
+      def variant = "openjdk-latest"
+      def variantDirectory = "${buildDir}/quorum-at/${variant}"
+      def dataDirectory = "${variantDirectory}/data"
+      def reportsDirectory = "${variantDirectory}/reports"
+      new File(dataDirectory).mkdirs()
+      new File(reportsDirectory).mkdirs()
+
+      def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+      def dockerEnv = "--env LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG --env TF_VAR_besu_docker_image='{name=\"${image}-${variant}\",local=true}'"
+      def dockerVolumes = "-v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory}"
+      executable "sh"
+      args "-c", "docker run ${dockerEnv} --rm --network host ${dockerVolumes} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"${tags}\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
     }
   }
 }

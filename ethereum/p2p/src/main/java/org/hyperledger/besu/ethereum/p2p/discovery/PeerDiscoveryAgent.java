@@ -176,7 +176,11 @@ public abstract class PeerDiscoveryAgent {
     }
   }
 
-  public NodeRecord updateNodeRecord() {
+  public void updateNodeRecord() {
+    if (!config.isActive()) {
+      return;
+    }
+
     final KeyValueStorage keyValueStorage =
         storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
     final NodeRecordFactory nodeRecordFactory = NodeRecordFactory.DEFAULT;
@@ -232,7 +236,6 @@ public abstract class PeerDiscoveryAgent {
     localNode
         .orElseThrow(() -> new IllegalStateException("Local node should be set here"))
         .setNodeRecord(newNodeRecord);
-    return newNodeRecord;
   }
 
   public void addPeerRequirement(final PeerRequirement peerRequirement) {

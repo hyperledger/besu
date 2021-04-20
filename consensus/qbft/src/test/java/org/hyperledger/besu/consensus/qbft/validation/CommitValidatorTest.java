@@ -31,8 +31,9 @@ public class CommitValidatorTest {
   private final QbftNodeList validators = QbftNodeList.createNodes(VALIDATOR_COUNT);
   final ConsensusRoundIdentifier round = new ConsensusRoundIdentifier(1, 0);
   final Hash expectedHash = Hash.fromHexStringLenient("0x1");
+  final Hash expectedCommitHash = Hash.fromHexStringLenient("0x1");
   final CommitValidator validator =
-      new CommitValidator(validators.getNodeAddresses(), round, expectedHash);
+      new CommitValidator(validators.getNodeAddresses(), round, expectedHash, expectedCommitHash);
 
   @Test
   public void commitIsValidIfItMatchesExpectedValues() {
