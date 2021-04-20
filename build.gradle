@@ -671,7 +671,7 @@ task acceptanceTestsQuorum {
   doLast {
     exec {
       def variant = "openjdk-latest"
-      def variantDirectory = "${buildDir}/quorum-at/${variant}-${org.apache.commons.lang.RandomStringUtils.random(9, true, true)}"
+      def variantDirectory = "${buildDir}/quorum-at/${variant}"
       def dataDirectory = "${variantDirectory}/data"
       def reportsDirectory = "${variantDirectory}/reports"
       new File(dataDirectory).mkdirs()
