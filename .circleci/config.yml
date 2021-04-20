@@ -299,7 +299,7 @@ workflows:
             - besu-dockerhub-ro
       - buildDocker:
           requires:
-            - unitTests
+            - assemble
           context:
             - besu-dockerhub-ro            
       - publish:
@@ -314,7 +314,6 @@ workflows:
             - containerTests
             - acceptanceTests
             - referenceTests
-            - buildDocker
             - buildDocker
           context:
             - besu-dockerhub-ro
