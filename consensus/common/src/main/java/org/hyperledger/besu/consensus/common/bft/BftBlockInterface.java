@@ -71,10 +71,7 @@ public class BftBlockInterface implements BlockInterface {
   }
 
   public Block replaceRoundInBlock(
-      final Block block,
-      final int round,
-      final BlockHeaderFunctions blockHeaderFunctions,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final Block block, final int round, final BlockHeaderFunctions blockHeaderFunctions) {
     final BftExtraData prevExtraData = bftExtraDataCodec.decode(block.getHeader());
     final BftExtraData substituteExtraData =
         new BftExtraData(
