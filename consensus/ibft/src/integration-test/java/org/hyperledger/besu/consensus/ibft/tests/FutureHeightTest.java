@@ -66,7 +66,7 @@ public class FutureHeightTest {
     final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataCodec, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
+            bftExtraDataCodec, currentHeightBlock, 0, peers.sign(currentHeightBlock.getHash()));
 
     final Block futureHeightBlock =
         context.createBlockForProposal(signedCurrentHeightBlock.getHeader(), 0, 60);
@@ -114,7 +114,7 @@ public class FutureHeightTest {
     final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataCodec, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
+            bftExtraDataCodec, currentHeightBlock, 0, peers.sign(currentHeightBlock.getHash()));
 
     peers.getProposer().injectProposal(roundId, currentHeightBlock);
     peers.getNonProposing(0).injectPrepare(roundId, currentHeightBlock.getHash());
@@ -169,13 +169,13 @@ public class FutureHeightTest {
     final Block currentHeightBlock = context.createBlockForProposalFromChainHead(0, 30);
     final Block signedCurrentHeightBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataCodec, currentHeightBlock, peers.sign(currentHeightBlock.getHash()));
+            bftExtraDataCodec, currentHeightBlock, 0, peers.sign(currentHeightBlock.getHash()));
 
     final Block nextHeightBlock =
         context.createBlockForProposal(signedCurrentHeightBlock.getHeader(), 0, 60);
     final Block signedNextHeightBlock =
         BftHelpers.createSealedBlock(
-            bftExtraDataCodec, nextHeightBlock, peers.sign(nextHeightBlock.getHash()));
+            bftExtraDataCodec, nextHeightBlock, 0, peers.sign(nextHeightBlock.getHash()));
 
     final Block futureHeightBlock =
         context.createBlockForProposal(signedNextHeightBlock.getHeader(), 0, 90);
