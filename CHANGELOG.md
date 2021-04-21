@@ -1,8 +1,11 @@
 # Changelog
 
-## 21.1.5
+# 21.1.5
 
 ### Additions and Improvements
+
+- Ignore `nonce` when supplied to eth_estimateGas or eth_call. [\#2133](https://github.com/hyperledger/besu/pull/2133)
+- Ignore `privateFor` for tx estimation. [\#2160](https://github.com/hyperledger/besu/pull/2160)
 
 ### Bug Fixes
 
