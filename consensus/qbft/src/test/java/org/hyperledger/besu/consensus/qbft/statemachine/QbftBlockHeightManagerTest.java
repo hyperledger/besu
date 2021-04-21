@@ -263,8 +263,6 @@ public class QbftBlockHeightManagerTest {
 
   @Test
   public void onBlockTimerExpiryDoNothingIfExistingRoundAlreadyStarted() {
-    when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
-
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
             headerTestFixture.buildHeader(),
@@ -281,6 +279,7 @@ public class QbftBlockHeightManagerTest {
         messageFactory.createProposal(
             futureRoundIdentifier, createdBlock, emptyList(), emptyList());
     manager.handleProposalPayload(futureRoundProposal);
+    verify(roundTimer, times(1)).startTimer(futureRoundIdentifier);
 
     // Nothing should happen for the block timer expiry as we have already created a new round due
     // to the proposal
@@ -288,8 +287,7 @@ public class QbftBlockHeightManagerTest {
 
     verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
     verify(messageTransmitter, never()).multicastPrepare(eq(roundIdentifier), any());
-    verify(roundTimer, times(1)).startTimer(roundIdentifier);
-    verify(finalState).isLocalNodeProposerForRound(eq(new ConsensusRoundIdentifier(1, 0)));
+    verify(finalState, never()).isLocalNodeProposerForRound(any());
   }
 
   @Test
