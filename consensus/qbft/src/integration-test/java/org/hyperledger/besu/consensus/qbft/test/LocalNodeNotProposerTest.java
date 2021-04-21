@@ -46,7 +46,7 @@ public class LocalNodeNotProposerTest {
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
   private final Block blockToPropose =
-      context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+      context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
 
   private Prepare expectedTxPrepare;
   private Commit expectedTxCommit;
@@ -81,17 +81,17 @@ public class LocalNodeNotProposerTest {
     peers.verifyNoMessagesReceived();
 
     // Inject a commit, ensure blockChain is not updated, and no message are sent (not quorum yet)
-    peers.getNonProposing(0).injectCommit(roundId, blockToPropose.getHash());
+    peers.getNonProposing(0).injectCommit(roundId, blockToPropose);
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
     // A second commit message means quorum is reached, and blockchain should be updated.
-    peers.getNonProposing(1).injectCommit(roundId, blockToPropose.getHash());
+    peers.getNonProposing(1).injectCommit(roundId, blockToPropose);
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
 
     // ensure any further commit messages do not affect the system
-    peers.getProposer().injectCommit(roundId, blockToPropose.getHash());
+    peers.getProposer().injectCommit(roundId, blockToPropose);
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
   }
@@ -101,7 +101,7 @@ public class LocalNodeNotProposerTest {
     // All peers send a commit, then all non-proposing peers send a prepare, when then Proposal
     // arrives last, the chain is updated, and a prepare and commit message are transmitted.
     peers.clearReceivedMessages();
-    peers.commit(roundId, blockToPropose.getHash());
+    peers.commit(roundId, blockToPropose);
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
@@ -119,7 +119,7 @@ public class LocalNodeNotProposerTest {
   @Test
   public void
       canImportABlockIfSufficientCommitsReceivedWithoutPreparesAndThatNoPacketsSentAfterImport() {
-    peers.commit(roundId, blockToPropose.getHash());
+    peers.commit(roundId, blockToPropose);
     peers.verifyNoMessagesReceived();
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
