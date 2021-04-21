@@ -236,7 +236,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         pendingCode.setUpdated(updatedAccount.getCode());
       }
 
-      LogManager.getLogger().info("pendingStorageUpdates");
+      // LogManager.getLogger().info("pendingStorageUpdates");
       final Map<Hash, BonsaiValue<UInt256>> pendingStorageUpdates =
           storageToUpdate.computeIfAbsent(updatedAddress, __ -> new HashMap<>());
       if (tracked.getStorageWasCleared()) {
@@ -250,7 +250,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));
       entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
-      LogManager.getLogger().info("storageUpdate");
+      // LogManager.getLogger().info("storageUpdate");
       for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
         final UInt256 keyUInt = storageUpdate.getKey();
         final Hash slotHash = Hash.hash(keyUInt.toBytes());
