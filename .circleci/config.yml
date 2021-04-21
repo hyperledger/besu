@@ -26,6 +26,15 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
+  machine_executor:
+    machine:
+      image: ubuntu-2004:202010-01
+
+  acceptance_tests_executor:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: xlarge
+
 notify:
   webhooks:
     - url: $HUBOT_URL
@@ -99,7 +108,7 @@ jobs:
             - ./
       - store_artifacts:
           name: Distribution artifacts
-          path:  build/distributions
+          path: build/distributions
           destination: distributions
           when: always
   testWindows:
@@ -191,6 +200,36 @@ jobs:
       - capture_test_results
       - capture_test_logs
 
+  containerTests:
+    parallelism: 1
+    executor: machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Container Tests
+          no_output_timeout: 10m
+          command: ./gradlew --no-daemon containerTests -i
+      - capture_test_results
+
+  acceptanceTestsQuorum:
+    parallelism: 1
+    executor: acceptance_tests_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Quorum Acceptance Tests (failures ignored)
+          no_output_timeout: 40m
+          command: ./gradlew --no-daemon acceptanceTestsQuorum || true # ignore result of job for now, until all issues are fixed
+      - store_artifacts:
+          path: build/quorum-at
+          destination: quorum-at-artifacts
+      - store_test_results:
+          path: build/quorum-at/openjdk-latest/reports/xml-report
+
   buildDocker:
     executor: besu_executor_med
     steps:
@@ -264,22 +303,32 @@ workflows:
           requires:
             - assemble
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
       - integrationTests:
           requires:
             - assemble
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
       - acceptanceTests:
           requires:
             - assemble
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
+      - acceptanceTestsQuorum:
+          requires:
+            - buildDocker
+          context:
+            - besu-dockerhub-ro
+      - containerTests:
+          requires:
+            - assemble
+          context:
+            - besu-dockerhub-ro
       - buildDocker:
           requires:
-            - unitTests
+            - assemble
           context:
-            - besu-dockerhub-ro            
+            - besu-dockerhub-ro
       - publish:
           filters:
             branches:
@@ -289,9 +338,9 @@ workflows:
           requires:
             - integrationTests
             - unitTests
+            - containerTests
             - acceptanceTests
             - referenceTests
-            - buildDocker
             - buildDocker
           context:
             - besu-dockerhub-ro
@@ -304,6 +353,7 @@ workflows:
           requires:
             - integrationTests
             - unitTests
+            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker

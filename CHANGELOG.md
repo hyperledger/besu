@@ -1,12 +1,27 @@
 # Changelog
 
-## 21.1.4
+## 21.1.5
 
 ### Additions and Improvements
 
 ### Bug Fixes
 
-- Fixed issue in discv5 where nonce was incorrectly reused.
+- Fixed `NullPointerException` when crossing network upgrade blocks when peer discovery is disabled. [\#2140](https://github.com/hyperledger/besu/pull/2140)
+
+### Early Access Features
+
+#### Previously identified known issues
+
+## 21.1.4
+
+### Additions and Improvements
+
+- Adds `--discovery-dns-url` CLI command [\#2088](https://github.com/hyperledger/besu/pull/2088)
+
+### Bug Fixes
+
+- Fixed issue in discv5 where nonce was incorrectly reused. [\#2075](https://github.com/hyperledger/besu/pull/2075)
+- Fixed issues in debug_standardTraceBadBlockToFile and debug_standardTraceBlockToFile. [\#2120](https://github.com/hyperledger/besu/pull/2120)
 
 ### Early Access Features
 
@@ -14,6 +29,10 @@
 
 - [Fast sync when running Besu on cloud providers](KNOWN_ISSUES.md#fast-sync-when-running-besu-on-cloud-providers)
 - [Privacy users with private transactions created using v1.3.4 or earlier](KNOWN_ISSUES.md#privacy-users-with-private-transactions-created-using-v134-or-earlier)
+
+## Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.4/besu-21.1.4.zip
+58ae55b492680d92aeccfbed477e8b9c25ccc1a97cca71895e27448d754a7d8b
 
 ## 21.1.3
 

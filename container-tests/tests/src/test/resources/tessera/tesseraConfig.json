@@ -1,0 +1,47 @@
+{
+  "useWhiteList": false,
+  "jdbc": {
+    "username": "sa",
+    "password": "",
+    "url": "jdbc:h2:/tmp/tessera;LOCK_TIMEOUT=20000",
+    "autoCreateTables": true
+  },
+  "serverConfigs":[
+    {
+      "app":"ThirdParty",
+      "enabled": true,
+      "serverAddress": "http://localhost:9081",
+      "communicationType" : "REST"
+    },
+    {
+      "app":"Q2T",
+      "enabled": true,
+      "serverAddress": "unix:/tmp/test.ipc",
+      "communicationType" : "REST"
+    },
+    {
+      "app":"P2P",
+      "enabled": true,
+      "serverAddress":"http://localhost:9001",
+      "sslConfig": {
+        "tls": "OFF"
+      },
+      "communicationType" : "REST"
+    }
+  ],
+  "peer": [
+    {
+      "url": "http://localhost:9001"
+    }
+  ],
+  "keys": {
+    "passwords": [],
+    "keyData": [
+      {
+        "privateKeyPath": "myKey.key",
+        "publicKeyPath": "myKey.pub"
+      }
+    ]
+  },
+  "alwaysSendTo": []
+}

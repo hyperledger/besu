@@ -46,6 +46,7 @@ ext.acceptedLicenses = [
   'Public Domain (CC0) License 1.0',
   'Public Domain',
   'Unicode/ICU License',
+  'New BSD License'
 ]*.toLowerCase()
 
 /**

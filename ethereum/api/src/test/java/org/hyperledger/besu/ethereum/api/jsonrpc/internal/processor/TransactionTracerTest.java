@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ImmutableTransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -226,6 +227,8 @@ public class TransactionTracerTest {
     when(blockBody.getTransactions()).thenReturn(transactions);
     when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
 
+    final WorldUpdater updater = mock(WorldUpdater.class);
+    when(mutableWorldState.updater()).thenReturn(updater);
     final List<String> transactionTraces =
         transactionTracer.traceTransactionToFile(
             blockHash,
@@ -251,11 +254,14 @@ public class TransactionTracerTest {
     when(blockBody.getTransactions()).thenReturn(Collections.singletonList(transaction));
     when(blockchain.getBlockBody(blockHash)).thenReturn(Optional.of(blockBody));
 
-    final WorldUpdater updater = mutableWorldState.updater();
+    final WorldUpdater updater = mock(WorldUpdater.class);
+    when(mutableWorldState.updater()).thenReturn(updater);
+    final WorldUpdater stackedUpdater = mock(AbstractWorldUpdater.StackedUpdater.class);
+    when(updater.updater()).thenReturn(stackedUpdater);
     final Address coinbase = blockHeader.getCoinbase();
     when(transactionProcessor.processTransaction(
             eq(blockchain),
-            eq(updater),
+            eq(stackedUpdater),
             eq(blockHeader),
             eq(transaction),
             eq(coinbase),
