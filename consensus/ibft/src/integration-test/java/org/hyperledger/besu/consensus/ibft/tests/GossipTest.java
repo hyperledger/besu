@@ -159,7 +159,8 @@ public class GossipTest {
   @Test
   public void futureMessageGetGossipedLater() {
     final Block signedCurrentHeightBlock =
-        BftHelpers.createSealedBlock(new IbftExtraDataCodec(), block, peers.sign(block.getHash()));
+        BftHelpers.createSealedBlock(
+            new IbftExtraDataCodec(), block, 0, peers.sign(block.getHash()));
 
     ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
     Prepare futurePrepare = sender.injectPrepare(futureRoundId, block.getHash());

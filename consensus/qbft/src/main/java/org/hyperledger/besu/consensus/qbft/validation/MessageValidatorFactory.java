@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
@@ -91,9 +92,12 @@ public class MessageValidatorFactory {
             proposerSelector.selectProposerForRound(roundIdentifier),
             bftExtraDataCodec);
 
+    final BftBlockInterface blockInterface =
+        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
     return new MessageValidator(
-        expectedDigest ->
-            new SubsequentMessageValidator(validatorsForHeight, roundIdentifier, expectedDigest),
+        block ->
+            new SubsequentMessageValidator(
+                validatorsForHeight, roundIdentifier, block, blockInterface),
         proposalValidator);
   }
 
