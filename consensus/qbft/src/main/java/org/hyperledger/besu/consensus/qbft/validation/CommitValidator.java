@@ -36,14 +36,17 @@ public class CommitValidator {
   private final Collection<Address> validators;
   private final ConsensusRoundIdentifier targetRound;
   private final Hash expectedDigest;
+  private final Hash expectedCommitDigest;
 
   public CommitValidator(
       final Collection<Address> validators,
       final ConsensusRoundIdentifier targetRound,
-      final Hash expectedDigest) {
+      final Hash expectedDigest,
+      final Hash expectedCommitDigest) {
     this.validators = validators;
     this.targetRound = targetRound;
     this.expectedDigest = expectedDigest;
+    this.expectedCommitDigest = expectedCommitDigest;
   }
 
   public boolean validate(final Commit msg) {
@@ -59,20 +62,32 @@ public class CommitValidator {
     final CommitPayload payload = signedPayload.getPayload();
 
     if (!payload.getRoundIdentifier().equals(targetRound)) {
-      LOG.info("{}: did not target expected round", ERROR_PREFIX);
+      LOG.info(
+          "{}: did not target expected round {} was {}",
+          ERROR_PREFIX,
+          targetRound,
+          payload.getRoundIdentifier());
       return false;
     }
 
     if (!payload.getDigest().equals(expectedDigest)) {
-      LOG.info("{}: did not contain expected digest", ERROR_PREFIX);
+      LOG.info(
+          "{}: did not contain expected digest {} was {}",
+          ERROR_PREFIX,
+          expectedDigest,
+          payload.getDigest());
       return false;
     }
 
     final Address commitSealCreator =
-        Util.signatureToAddress(payload.getCommitSeal(), expectedDigest);
+        Util.signatureToAddress(payload.getCommitSeal(), expectedCommitDigest);
 
     if (!commitSealCreator.equals(signedPayload.getAuthor())) {
-      LOG.info("{}: Seal was not created by the message transmitter.", ERROR_PREFIX);
+      LOG.info(
+          "{}: Seal was not created by the message transmitter {} was {}",
+          ERROR_PREFIX,
+          commitSealCreator,
+          signedPayload.getAuthor());
       return false;
     }
 

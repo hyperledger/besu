@@ -69,7 +69,7 @@ public class LocalNodeIsProposerTest {
 
   @Before
   public void setup() {
-    expectedProposedBlock = context.createBlockForProposalFromChainHead(0, blockTimeStamp);
+    expectedProposedBlock = context.createBlockForProposalFromChainHead(blockTimeStamp);
     expectedTxProposal =
         localNodeMessageFactory.createProposal(
             roundId, expectedProposedBlock, Collections.emptyList(), Collections.emptyList());
@@ -97,11 +97,11 @@ public class LocalNodeIsProposerTest {
     peers.getNonProposing(1).injectPrepare(roundId, expectedProposedBlock.getHash());
     peers.verifyMessagesReceived(expectedTxCommit);
 
-    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
+    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
     peers.verifyNoMessagesReceived();
 
-    peers.getNonProposing(2).injectCommit(roundId, expectedProposedBlock.getHash());
+    peers.getNonProposing(2).injectCommit(roundId, expectedProposedBlock);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
     peers.verifyNoMessagesReceived();
   }
@@ -110,11 +110,11 @@ public class LocalNodeIsProposerTest {
   public void importsToChainWithoutReceivingPrepareMessages() {
     peers.verifyMessagesReceived(expectedTxProposal, expectedTxPrepare);
 
-    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
+    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
     peers.verifyNoMessagesReceived();
 
-    peers.getNonProposing(2).injectCommit(roundId, expectedProposedBlock.getHash());
+    peers.getNonProposing(2).injectCommit(roundId, expectedProposedBlock);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
     peers.verifyNoMessagesReceived();
   }
@@ -122,11 +122,11 @@ public class LocalNodeIsProposerTest {
   @Test
   public void nodeDoesNotSendRoundChangeIfRoundTimesOutAfterBlockImportButBeforeNewBlock() {
     peers.verifyMessagesReceived(expectedTxProposal, expectedTxPrepare);
-    peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock.getHash());
+    peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
     peers.verifyNoMessagesReceived();
 
-    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
+    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
     peers.verifyNoMessagesReceived();
 
@@ -142,11 +142,11 @@ public class LocalNodeIsProposerTest {
   @Test
   public void nodeDoesNotSendCommitMessageAfterBlockIsImportedAndBeforeNewBlockEvent() {
     peers.verifyMessagesReceived(expectedTxProposal, expectedTxPrepare);
-    peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock.getHash());
+    peers.getNonProposing(0).injectCommit(roundId, expectedProposedBlock);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(0);
     peers.verifyNoMessagesReceived();
 
-    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock.getHash());
+    peers.getNonProposing(1).injectCommit(roundId, expectedProposedBlock);
     assertThat(context.getBlockchain().getChainHeadBlockNumber()).isEqualTo(1);
     peers.verifyNoMessagesReceived();
 

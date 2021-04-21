@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.qbft.statemachine;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers.createFrom;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -146,7 +146,9 @@ public class QbftBlockHeightManagerTest {
         .thenReturn(futureRoundProposalMessageValidator);
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
-    protocolContext = new ProtocolContext(null, null, setupContextWithValidators(validators));
+    protocolContext =
+        new ProtocolContext(
+            null, null, setupContextWithBftExtraDataEncoder(validators, new QbftExtraDataCodec()));
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))
