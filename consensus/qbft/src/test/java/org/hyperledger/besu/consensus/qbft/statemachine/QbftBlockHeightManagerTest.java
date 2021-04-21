@@ -236,6 +236,7 @@ public class QbftBlockHeightManagerTest {
         .multicastProposal(eq(roundIdentifier), any(), any(), any());
     verify(messageTransmitter, atLeastOnce()).multicastPrepare(eq(roundIdentifier), any());
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
+    verify(finalState).isLocalNodeProposerForRound(eq(new ConsensusRoundIdentifier(1, 0)));
   }
 
   @Test
@@ -257,6 +258,38 @@ public class QbftBlockHeightManagerTest {
     verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
     verify(messageTransmitter, never()).multicastPrepare(eq(roundIdentifier), any());
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
+    verify(finalState).isLocalNodeProposerForRound(eq(new ConsensusRoundIdentifier(1, 0)));
+  }
+
+  @Test
+  public void onBlockTimerExpiryDoNothingIfExistingRoundAlreadyStarted() {
+    when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
+
+    final QbftBlockHeightManager manager =
+        new QbftBlockHeightManager(
+            headerTestFixture.buildHeader(),
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            clock,
+            messageValidatorFactory,
+            messageFactory);
+
+    // Force a new round to be started at new round number.
+    final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
+    final Proposal futureRoundProposal =
+        messageFactory.createProposal(
+            futureRoundIdentifier, createdBlock, emptyList(), emptyList());
+    manager.handleProposalPayload(futureRoundProposal);
+
+    // Nothing should happen for the block timer expiry as we have already created a new round due
+    // to the proposal
+    manager.handleBlockTimerExpiry(roundIdentifier);
+
+    verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
+    verify(messageTransmitter, never()).multicastPrepare(eq(roundIdentifier), any());
+    verify(roundTimer, times(1)).startTimer(roundIdentifier);
+    verify(finalState).isLocalNodeProposerForRound(eq(new ConsensusRoundIdentifier(1, 0)));
   }
 
   @Test

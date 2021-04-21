@@ -104,28 +104,38 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
-    startNewRound(0);
-    final QbftRound qbftRound = currentRound.get();
-
-    if (!finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier())) {
+    if (currentRound.isPresent()) {
+      LOG.warn(
+          "Block timer expired for round ({}) after round has already started on round ({})",
+          roundIdentifier,
+          currentRound.get());
       return;
     }
 
-    if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
-      qbftRound.createAndSendProposalMessage(clock.millis() / 1000L);
-    } else {
-      LOG.trace(
-          "Block timer expired for a round ({}) other than current ({})",
-          roundIdentifier,
-          qbftRound.getRoundIdentifier());
+    startNewRound(0);
+
+    final QbftRound qbftRound = currentRound.get();
+    // mining will be checked against round 0 as the current round is initialised to 0 above
+    final boolean isProposer =
+        finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
+
+    if (isProposer) {
+      if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
+        qbftRound.createAndSendProposalMessage(clock.millis() / 1000L);
+      } else {
+        LOG.trace(
+            "Block timer expired for a round ({}) other than current ({})",
+            roundIdentifier,
+            qbftRound.getRoundIdentifier());
+      }
     }
   }
 
   @Override
   public void roundExpired(final RoundExpiry expire) {
     if (currentRound.isEmpty()) {
-      LOG.trace(
-          "Ignoring Round timer expired before round is created timerRound={}", expire.getView());
+      LOG.error(
+          "Received Round timer expiry before round is created timerRound={}", expire.getView());
       return;
     }
 
@@ -258,6 +268,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private void startNewRound(final int roundNumber) {
     LOG.debug("Starting new round {}", roundNumber);
+    // validate the current round
     if (futureRoundStateBuffer.containsKey(roundNumber)) {
       currentRound =
           Optional.of(
