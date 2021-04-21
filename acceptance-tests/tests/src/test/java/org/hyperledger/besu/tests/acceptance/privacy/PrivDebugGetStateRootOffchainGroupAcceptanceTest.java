@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
@@ -32,7 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.containers.Network;
 
-public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends ParameterizedTestBase {
+public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
   public PrivDebugGetStateRootOffchainGroupAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);
   }

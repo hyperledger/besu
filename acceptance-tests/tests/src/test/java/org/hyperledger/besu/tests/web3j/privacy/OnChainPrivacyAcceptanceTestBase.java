@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.ExpectValidOnChainPrivacyGroupCreated;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateOnChainPrivacyGroupTransaction;
@@ -27,21 +27,32 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequ
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.utils.Base64String;
 
-public class OnChainPrivacyAcceptanceTestBase extends ParameterizedTestBase {
+@RunWith(Parameterized.class)
+public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase {
+
+  protected final EnclaveType enclaveType;
 
   public OnChainPrivacyAcceptanceTestBase(final EnclaveType enclaveType) {
-    super(enclaveType);
+    this.enclaveType = enclaveType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.asList(EnclaveType.values());
   }
 
   protected String createOnChainPrivacyGroup(final PrivacyNode... members) {

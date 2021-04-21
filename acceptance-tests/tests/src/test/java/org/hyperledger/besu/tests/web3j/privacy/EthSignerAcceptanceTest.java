@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.web3j.privacy;
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.EthSignerClient;
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarness;
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarnessFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -34,7 +34,7 @@ import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 
-public class EthSignerAcceptanceTest extends ParameterizedTestBase {
+public class EthSignerAcceptanceTest extends ParameterizedEnclaveTestBase {
   public EthSignerAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);
   }

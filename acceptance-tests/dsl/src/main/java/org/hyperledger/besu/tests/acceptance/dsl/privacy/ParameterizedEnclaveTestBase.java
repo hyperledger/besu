@@ -23,10 +23,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class ParameterizedTestBase extends PrivacyAcceptanceTestBase {
+public class ParameterizedEnclaveTestBase extends PrivacyAcceptanceTestBase {
   protected final EnclaveType enclaveType;
 
-  public ParameterizedTestBase(final EnclaveType enclaveType) {
+  public ParameterizedEnclaveTestBase(final EnclaveType enclaveType) {
     this.enclaveType = enclaveType;
   }
 

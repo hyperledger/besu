@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
-public class EnclaveErrorAcceptanceTest extends ParameterizedTestBase {
+public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
   public EnclaveErrorAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);
   }

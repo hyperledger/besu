@@ -20,7 +20,7 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -46,7 +46,7 @@ import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
 import org.web3j.utils.Restriction;
 
-public class PrivacyClusterAcceptanceTest extends ParameterizedTestBase {
+public class PrivacyClusterAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   public PrivacyClusterAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);

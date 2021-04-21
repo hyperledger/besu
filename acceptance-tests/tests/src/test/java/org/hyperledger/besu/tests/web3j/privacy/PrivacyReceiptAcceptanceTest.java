@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
@@ -33,7 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PrivacyReceiptAcceptanceTest extends ParameterizedTestBase {
+public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
   public PrivacyReceiptAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);
   }

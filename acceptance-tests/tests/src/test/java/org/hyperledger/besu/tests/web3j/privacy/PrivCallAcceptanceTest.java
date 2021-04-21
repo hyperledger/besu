@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.web3j.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -45,7 +45,7 @@ import org.web3j.protocol.exceptions.ClientConnectionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 
-public class PrivCallAcceptanceTest extends ParameterizedTestBase {
+public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   public PrivCallAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);
   }

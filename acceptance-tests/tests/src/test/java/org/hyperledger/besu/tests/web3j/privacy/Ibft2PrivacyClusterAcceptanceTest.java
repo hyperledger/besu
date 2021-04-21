@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.web3j.privacy;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -27,7 +27,7 @@ import org.junit.Test;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
-public class Ibft2PrivacyClusterAcceptanceTest extends ParameterizedTestBase {
+public class Ibft2PrivacyClusterAcceptanceTest extends ParameterizedEnclaveTestBase {
   public Ibft2PrivacyClusterAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);
   }

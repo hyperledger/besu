@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.web3j.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -30,7 +30,7 @@ import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.utils.Base64String;
 
-public class PrivGetCodeAcceptanceTest extends ParameterizedTestBase {
+public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
   public PrivGetCodeAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);
   }

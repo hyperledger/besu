@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
@@ -32,7 +32,7 @@ import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 
 @SuppressWarnings("rawtypes")
-public class PrivGetLogsAcceptanceTest extends ParameterizedTestBase {
+public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
   public PrivGetLogsAcceptanceTest(final EnclaveType enclaveType) {
     super(enclaveType);
   }
