@@ -60,14 +60,18 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
-import org.hyperledger.orion.testutil.OrionTestHarness;
-import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
+import org.hyperledger.enclave.testutil.EnclaveTestHarness;
+import org.hyperledger.enclave.testutil.EnclaveType;
+import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -78,13 +82,29 @@ import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @SuppressWarnings("rawtypes")
+@RunWith(Parameterized.class)
 public class PrivacyReorgTest {
+
+  private final EnclaveType enclaveType;
+
+  public PrivacyReorgTest(final EnclaveType enclaveType) {
+    this.enclaveType = enclaveType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection enclaveTypes() {
+    return Arrays.asList(EnclaveType.values());
+  }
+
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -133,18 +153,14 @@ public class PrivacyReorgTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private BesuController besuController;
-  private OrionTestHarness enclave;
+  private EnclaveTestHarness enclave;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
   private DefaultPrivacyController privacyController;
 
   @Before
   public void setUp() throws IOException {
-    // Start Enclave
-    enclave =
-        OrionTestHarnessFactory.create(
-            folder.newFolder().toPath(),
-            new OrionKeyConfiguration("enclavePublicKey", "enclavePrivateKey"));
+    enclave = getEnclave(enclaveType, folder);
     enclave.start();
 
     // Create Storage
@@ -182,6 +198,11 @@ public class PrivacyReorgTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
+  }
+
+  @After
+  public void tearDown() {
+    enclave.stop();
   }
 
   @Test
@@ -529,5 +550,15 @@ public class PrivacyReorgTest {
         .setParentHash(parentBlock.getHash())
         .hasOmmers(false)
         .setLogsBloom(LogsBloomFilter.empty());
+  }
+
+  private EnclaveTestHarness getEnclave(final EnclaveType enclaveType, final TemporaryFolder folder)
+      throws IOException {
+    final Path tempDir = folder.newFolder().toPath();
+    final EnclaveKeyConfiguration enclaveConfig =
+        new EnclaveKeyConfiguration("enclavePublicKey", "enclavePrivateKey");
+    return enclaveType == EnclaveType.TESSERA
+        ? TesseraTestHarnessFactory.create("tessera", tempDir, enclaveConfig, Optional.empty())
+        : OrionTestHarnessFactory.create("orion", tempDir, enclaveConfig);
   }
 }

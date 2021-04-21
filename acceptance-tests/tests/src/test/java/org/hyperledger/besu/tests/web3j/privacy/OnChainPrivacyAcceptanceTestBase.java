@@ -19,11 +19,12 @@ import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.ExpectValidOnChainPrivacyGroupCreated;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateOnChainPrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +38,11 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 import org.web3j.utils.Base64String;
 
-public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase {
+public class OnChainPrivacyAcceptanceTestBase extends ParameterizedTestBase {
+
+  public OnChainPrivacyAcceptanceTestBase(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
 
   protected String createOnChainPrivacyGroup(final PrivacyNode... members) {
     final List<String> addresses =

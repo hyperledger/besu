@@ -246,7 +246,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     params.add("--Xsecp256k1-native-enabled=" + node.isSecp256k1Native());
-    params.add("--Xaltbn128-native-enabled=" + node.isAltbn128Native());
+    params.add("--Xaltbn128-native-enabled=false" + node.isAltbn128Native());
 
     node.getPermissioningConfiguration()
         .flatMap(PermissioningConfiguration::getLocalConfig)

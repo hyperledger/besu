@@ -53,7 +53,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.orion.testutil.OrionKeyUtils;
+import org.hyperledger.enclave.testutil.EnclaveKeyUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -162,7 +162,7 @@ public class DefaultPrivacyControllerTest {
 
     privateWorldStateReader = mock(PrivateWorldStateReader.class);
 
-    enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
+    enclavePublicKey = EnclaveKeyUtils.loadKey("orion_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
     enclave = mockEnclave();
 

@@ -12,21 +12,26 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.enclave;
+package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
-public class EnclaveClientException extends RuntimeException {
-  private int statusCode;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
-  public EnclaveClientException(final int statusCode, final String message) {
-    super(message);
-    this.statusCode = statusCode;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+@RunWith(Parameterized.class)
+public class ParameterizedTestBase extends PrivacyAcceptanceTestBase {
+  protected final EnclaveType enclaveType;
+
+  public ParameterizedTestBase(final EnclaveType enclaveType) {
+    this.enclaveType = enclaveType;
   }
 
-  public EnclaveClientException(final String message, final Throwable cause) {
-    super(message, cause);
-  }
-
-  public int getStatusCode() {
-    return statusCode;
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.asList(EnclaveType.values());
   }
 }

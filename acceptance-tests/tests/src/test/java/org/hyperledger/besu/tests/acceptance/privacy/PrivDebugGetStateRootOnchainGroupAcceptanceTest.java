@@ -22,28 +22,48 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.containers.Network;
 
 public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
     extends OnChainPrivacyAcceptanceTestBase {
+
+  public PrivDebugGetStateRootOnchainGroupAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+    ;
+  }
 
   private PrivacyNode aliceNode;
   private PrivacyNode bobNode;
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
+    final Network containerNetwork = Network.newNetwork();
+
     aliceNode =
         privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
-            "alice-node", PrivacyAccountResolver.ALICE, Address.PRIVACY, false);
+            "alice-node",
+            PrivacyAccountResolver.ALICE,
+            Address.PRIVACY,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork));
     bobNode =
         privacyBesu.createOnChainPrivacyGroupEnabledNode(
-            "bob-node", PrivacyAccountResolver.BOB, Address.PRIVACY, false);
+            "bob-node",
+            PrivacyAccountResolver.BOB,
+            Address.PRIVACY,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork));
     privacyCluster.start(aliceNode, bobNode);
   }
 

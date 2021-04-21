@@ -53,6 +53,8 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
+
+  testImplementation 'org.testcontainers:testcontainers'
 }
 
 test.enabled = false

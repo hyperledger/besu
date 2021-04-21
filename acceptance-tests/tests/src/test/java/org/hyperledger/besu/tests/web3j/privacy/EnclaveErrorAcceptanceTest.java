@@ -18,20 +18,26 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
 import java.util.Base64;
+import java.util.Optional;
 
 import org.apache.tuweni.crypto.sodium.Box;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
-public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class EnclaveErrorAcceptanceTest extends ParameterizedTestBase {
+  public EnclaveErrorAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
 
   private static final long IBFT2_CHAIN_ID = 4;
 
@@ -41,8 +47,14 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    alice = privacyBesu.createIbft2NodePrivacyEnabled("node1", privacyAccountResolver.resolve(0));
-    bob = privacyBesu.createIbft2NodePrivacyEnabled("node2", privacyAccountResolver.resolve(1));
+    final Network containerNetwork = Network.newNetwork();
+
+    alice =
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.of(containerNetwork));
+    bob =
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "node2", privacyAccountResolver.resolve(1), enclaveType, Optional.of(containerNetwork));
     privacyCluster.start(alice, bob);
 
     wrongPublicKey =
@@ -116,7 +128,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
         privateTransactionVerifier.validPrivateTransactionReceipt(
             transactionHash, receiptBeforeEnclaveLosesConnection));
 
-    alice.getOrion().stop();
+    alice.getEnclave().stop();
 
     alice.verify(
         privateTransactionVerifier.internalErrorPrivateTransactionReceipt(transactionHash));
@@ -141,7 +153,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
         .validPrivateContractDeployed(contractAddress, alice.getAddress().toString())
         .verify(eventEmitter);
 
-    bob.getOrion().stop();
+    bob.getEnclave().stop();
 
     final Throwable throwable =
         catchThrowable(

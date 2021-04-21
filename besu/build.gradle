@@ -89,6 +89,7 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.testcontainers:testcontainers'
 }
 
 task testJar(type: Jar) {

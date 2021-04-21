@@ -168,7 +168,7 @@ public class Enclave {
       final int statusCode, final byte[] body, final Class<T> responseType) {
     try {
       return objectMapper.readValue(body, responseType);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       final String utf8EncodedBody = new String(body, StandardCharsets.UTF_8);
       throw new EnclaveClientException(statusCode, utf8EncodedBody);
     }
