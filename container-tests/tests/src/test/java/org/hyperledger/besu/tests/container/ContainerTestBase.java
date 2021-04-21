@@ -121,7 +121,7 @@ public class ContainerTestBase {
             goQuorumContainer.getContainerIpAddress(),
             goQuorumContainer.getMappedPort(goQuorumRpcPort));
 
-    waitFor(10, () -> assertClientVersion(besuWeb3j, "dev"));
+    waitFor(10, () -> assertClientVersion(besuWeb3j, "besu"));
     waitFor(10, () -> assertClientVersion(goQuorumWeb3j, goQuorumVersion));
 
     // Tell GoQuorum to peer to Besu
