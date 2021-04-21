@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
-import org.hyperledger.besu.consensus.common.bft.BftContext;
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
@@ -73,18 +71,6 @@ public class ProposalPayloadValidator {
 
     if (block.getHeader().getNumber() != payload.getRoundIdentifier().getSequenceNumber()) {
       LOG.info("{}: block number does not match sequence number", ERROR_PREFIX);
-      return false;
-    }
-
-    final BftExtraData extraData =
-        protocolContext
-            .getConsensusState(BftContext.class)
-            .getBlockInterface()
-            .getExtraData(block.getHeader());
-    if (payload.getRoundIdentifier().getRoundNumber() != extraData.getRound()) {
-      LOG.info(
-          "{}: Proposal round contains a different round to that in the supplied block",
-          ERROR_PREFIX);
       return false;
     }
 
