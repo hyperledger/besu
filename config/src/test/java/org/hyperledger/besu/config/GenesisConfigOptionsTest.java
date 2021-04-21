@@ -193,7 +193,7 @@ public class GenesisConfigOptionsTest {
       ExperimentalEIPs.eip1559Enabled = true;
       final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 1000));
       assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
-      assertThat(config.getGenesisBaseFee()).isNull();
+      assertThat(config.getGenesisBaseFee()).isEmpty();
     } finally {
       ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
     }
@@ -207,7 +207,7 @@ public class GenesisConfigOptionsTest {
       final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 0));
       assertThat(config.getEIP1559BlockNumber()).hasValue(0);
       assertThat(config.getGenesisBaseFee())
-          .isEqualTo(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+          .hasValue(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
     } finally {
       ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
     }
