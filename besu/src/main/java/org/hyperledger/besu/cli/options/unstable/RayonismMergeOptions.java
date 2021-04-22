@@ -13,6 +13,7 @@ public class RayonismMergeOptions implements Options {
       names = {"--Xmerge-support"},
       description = "Enable experimental support for eth1/eth2 merge (default: ${DEFAULT-VALUE})",
       arity = "1")
+  @SuppressWarnings("FieldCanBeFinal")
   private static boolean mergeEnabled = MERGE_ENABLED_DEFAULT_VALUE;
 
   public static RayonismMergeOptions create() {
