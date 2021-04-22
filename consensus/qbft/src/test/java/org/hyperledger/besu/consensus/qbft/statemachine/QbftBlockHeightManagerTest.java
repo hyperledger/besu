@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -190,9 +190,7 @@ public class QbftBlockHeightManagerTest {
   }
 
   @Test
-  public void startsABlockTimerOnStartIfLocalNodeIsTheProoserForRound() {
-    when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
-
+  public void startsABlockTimerOnStart() {
     new QbftBlockHeightManager(
         headerTestFixture.buildHeader(),
         finalState,
@@ -203,10 +201,28 @@ public class QbftBlockHeightManagerTest {
         messageFactory);
 
     verify(blockTimer, times(1)).startTimer(any(), any());
+    verify(finalState, never()).isLocalNodeProposerForRound(any());
   }
 
   @Test
-  public void onBlockTimerExpiryProposalMessageIsTransmitted() {
+  public void doesNotStartRoundTimerOnStart() {
+    new QbftBlockHeightManager(
+        headerTestFixture.buildHeader(),
+        finalState,
+        roundChangeManager,
+        roundFactory,
+        clock,
+        messageValidatorFactory,
+        messageFactory);
+
+    verify(roundTimer, never()).startTimer(any());
+    verify(finalState, never()).isLocalNodeProposerForRound(any());
+  }
+
+  @Test
+  public void onBlockTimerExpiryRoundTimerIsStartedAndProposalMessageIsTransmitted() {
+    when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
+
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
             headerTestFixture.buildHeader(),
@@ -218,9 +234,62 @@ public class QbftBlockHeightManagerTest {
             messageFactory);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(messageTransmitter, atMostOnce())
+    verify(messageTransmitter, atLeastOnce())
         .multicastProposal(eq(roundIdentifier), any(), any(), any());
-    verify(messageTransmitter, atMostOnce()).multicastPrepare(eq(roundIdentifier), any());
+    verify(messageTransmitter, atLeastOnce()).multicastPrepare(eq(roundIdentifier), any());
+    verify(roundTimer, times(1)).startTimer(roundIdentifier);
+    verify(finalState).isLocalNodeProposerForRound(eq(new ConsensusRoundIdentifier(1, 0)));
+  }
+
+  @Test
+  public void
+      onBlockTimerExpiryForNonProposerRoundTimerIsStartedAndNoProposalMessageIsTransmitted() {
+    when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(false);
+
+    final QbftBlockHeightManager manager =
+        new QbftBlockHeightManager(
+            headerTestFixture.buildHeader(),
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            clock,
+            messageValidatorFactory,
+            messageFactory);
+
+    manager.handleBlockTimerExpiry(roundIdentifier);
+    verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
+    verify(messageTransmitter, never()).multicastPrepare(eq(roundIdentifier), any());
+    verify(roundTimer, times(1)).startTimer(roundIdentifier);
+    verify(finalState).isLocalNodeProposerForRound(eq(new ConsensusRoundIdentifier(1, 0)));
+  }
+
+  @Test
+  public void onBlockTimerExpiryDoNothingIfExistingRoundAlreadyStarted() {
+    final QbftBlockHeightManager manager =
+        new QbftBlockHeightManager(
+            headerTestFixture.buildHeader(),
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            clock,
+            messageValidatorFactory,
+            messageFactory);
+
+    // Force a new round to be started at new round number.
+    final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
+    final Proposal futureRoundProposal =
+        messageFactory.createProposal(
+            futureRoundIdentifier, createdBlock, emptyList(), emptyList());
+    manager.handleProposalPayload(futureRoundProposal);
+    verify(roundTimer, times(1)).startTimer(futureRoundIdentifier);
+
+    // Nothing should happen for the block timer expiry as we have already created a new round due
+    // to the proposal
+    manager.handleBlockTimerExpiry(roundIdentifier);
+
+    verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
+    verify(messageTransmitter, never()).multicastPrepare(eq(roundIdentifier), any());
+    verify(finalState, never()).isLocalNodeProposerForRound(any());
   }
 
   @Test
@@ -241,6 +310,7 @@ public class QbftBlockHeightManagerTest {
             clock,
             messageValidatorFactory,
             messageFactory);
+    manager.handleBlockTimerExpiry(roundIdentifier);
     verify(roundFactory).createNewRound(any(), eq(0));
 
     manager.handleRoundChangePayload(roundChange);
@@ -261,6 +331,7 @@ public class QbftBlockHeightManagerTest {
             clock,
             messageValidatorFactory,
             messageFactory);
+    manager.handleBlockTimerExpiry(roundIdentifier);
     verify(roundFactory).createNewRound(any(), eq(0));
 
     manager.roundExpired(new RoundExpiry(roundIdentifier));
@@ -302,6 +373,8 @@ public class QbftBlockHeightManagerTest {
 
   @Test
   public void messagesForFutureRoundsAreBufferedAndUsedToPreloadNewRoundWhenItIsStarted() {
+    when(finalState.getQuorum()).thenReturn(1);
+
     final ConsensusRoundIdentifier futureRoundIdentifier = createFrom(roundIdentifier, 0, +2);
 
     final QbftBlockHeightManager manager =
@@ -337,13 +410,52 @@ public class QbftBlockHeightManagerTest {
 
     manager.handleProposalPayload(futureRoundProposal);
 
-    // Final state sets the Quorum Size to 3, so should send a Prepare and also a commit
     verify(messageTransmitter, times(1)).multicastPrepare(eq(futureRoundIdentifier), any());
-    verify(messageTransmitter, times(1)).multicastPrepare(eq(futureRoundIdentifier), any());
+    verify(messageTransmitter, times(1)).multicastCommit(eq(futureRoundIdentifier), any(), any());
+  }
+
+  @Test
+  public void messagesForCurrentRoundAreBufferedAndUsedToPreloadRoundWhenItIsStarted() {
+    when(finalState.getQuorum()).thenReturn(1);
+    when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
+
+    final QbftBlockHeightManager manager =
+        new QbftBlockHeightManager(
+            headerTestFixture.buildHeader(),
+            finalState,
+            roundChangeManager,
+            roundFactory,
+            clock,
+            messageValidatorFactory,
+            messageFactory);
+
+    final Prepare prepare =
+        validatorMessageFactory
+            .get(0)
+            .createPrepare(roundIdentifier, Hash.fromHexStringLenient("0"));
+    final Commit commit =
+        validatorMessageFactory
+            .get(1)
+            .createCommit(
+                roundIdentifier,
+                Hash.fromHexStringLenient("0"),
+                SignatureAlgorithmFactory.getInstance()
+                    .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
+
+    manager.handlePreparePayload(prepare);
+    manager.handleCommitPayload(commit);
+
+    // Since we are also a proposer this will also send a proposal
+    manager.handleBlockTimerExpiry(roundIdentifier);
+
+    verify(messageTransmitter, times(1)).multicastPrepare(eq(roundIdentifier), any());
+    verify(messageTransmitter, times(1)).multicastCommit(eq(roundIdentifier), any(), any());
   }
 
   @Test
   public void preparedCertificateIncludedInRoundChangeMessageOnRoundTimeoutExpired() {
+    when(finalState.isLocalNodeProposerForRound(any())).thenReturn(true);
+
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
             headerTestFixture.buildHeader(),
