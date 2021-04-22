@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.Optional;
 
 import org.apache.tuweni.crypto.sodium.Box;
+import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -92,7 +93,11 @@ public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
                         alice.getEnclaveKey(),
                         wrongPublicKey)));
 
-    assertThat(throwable).hasMessageContaining(JsonRpcError.NODE_MISSING_PEER_URL.getMessage());
+    final String orionMessage = JsonRpcError.NODE_MISSING_PEER_URL.getMessage();
+    final String tesseraMessage = JsonRpcError.TESSERA_NODE_MISSING_PEER_URL.getMessage();
+
+    assertThat(throwable.getMessage())
+        .has(matchOrionOrTesseraMessage(orionMessage, tesseraMessage));
   }
 
   @Test
@@ -174,7 +179,17 @@ public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
   public void createPrivacyGroupReturnsCorrectError() {
     final Throwable throwable =
         catchThrowable(() -> alice.execute(privacyTransactions.createPrivacyGroup(null, null)));
+    final String orionMessage = JsonRpcError.CREATE_GROUP_INCLUDE_SELF.getMessage();
+    final String tesseraMessage = JsonRpcError.TESSERA_CREATE_GROUP_INCLUDE_SELF.getMessage();
 
-    assertThat(throwable).hasMessageContaining(JsonRpcError.CREATE_GROUP_INCLUDE_SELF.getMessage());
+    assertThat(throwable.getMessage())
+        .has(matchOrionOrTesseraMessage(orionMessage, tesseraMessage));
+  }
+
+  private Condition<String> matchOrionOrTesseraMessage(
+      final String orionMessage, final String tesseraMessage) {
+    return new Condition<>(
+        message -> message.contains(orionMessage) || message.contains(tesseraMessage),
+        "Message did not match either Orion or Tessera expected output");
   }
 }

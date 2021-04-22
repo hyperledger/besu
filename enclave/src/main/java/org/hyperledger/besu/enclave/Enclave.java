@@ -170,8 +170,49 @@ public class Enclave {
       return objectMapper.readValue(body, responseType);
     } catch (final IOException e) {
       final String utf8EncodedBody = new String(body, StandardCharsets.UTF_8);
-      throw new EnclaveClientException(statusCode, utf8EncodedBody);
+      // Check if it's a Tessera error message
+      try {
+        return objectMapper.readValue(
+            processTesseraError(utf8EncodedBody, responseType), responseType);
+      } catch (final IOException ex) {
+        throw new EnclaveClientException(statusCode, utf8EncodedBody);
+      }
     }
+  }
+
+  private <T> byte[] processTesseraError(final String errorMsg, final Class<T> responseType) {
+    if (responseType == SendResponse.class) {
+      final String base64Key =
+          errorMsg.substring(errorMsg.substring(0, errorMsg.indexOf('=')).lastIndexOf(' '));
+      return jsonByteArrayFromString("key", base64Key);
+    } else if (responseType == ErrorResponse.class) {
+      // Remove dynamic values
+      return jsonByteArrayFromString("error", removeBase64(errorMsg));
+    } else {
+      throw new RuntimeException("Unhandled response type.");
+    }
+  }
+
+  private String removeBase64(final String input) {
+    if (input.contains("=")) {
+      final String start =
+          input.substring(0, input.indexOf('=')).substring(0, input.lastIndexOf(" "));
+      final String end = input.substring(input.indexOf("="));
+      if (end.length() > 1) {
+        // Base64 in middle
+        return start + end.substring(2);
+      } else {
+        // Base64 at end
+        return start;
+      }
+    } else {
+      return input;
+    }
+  }
+
+  private byte[] jsonByteArrayFromString(final String key, final String value) {
+    String format = String.format("{\"%s\":\"%s\"}", key, value);
+    return format.getBytes(StandardCharsets.UTF_8);
   }
 
   private boolean clientError(final int statusCode) {
