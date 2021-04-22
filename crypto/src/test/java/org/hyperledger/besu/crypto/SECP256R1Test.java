@@ -43,7 +43,7 @@ public class SECP256R1Test {
     suiteStartTime =
         LocalDateTime.now(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-    suiteName(SECP256K1Test.class);
+    suiteName(SECP256R1Test.class);
   }
 
   @Before
