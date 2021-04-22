@@ -63,7 +63,9 @@ public class NodeSmartContractPermissioningController
   }
 
   @Override
-  boolean checkSmartContractRules(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  boolean checkSmartContractRules(
+      final org.hyperledger.besu.plugin.data.EnodeURL sourceEnode,
+      final org.hyperledger.besu.plugin.data.EnodeURL destinationEnode) {
     final Bytes payload = createPayload(sourceEnode, destinationEnode);
     final CallParameter callParams = buildCallParameters(payload);
 
@@ -105,13 +107,17 @@ public class NodeSmartContractPermissioningController
   }
 
   // Assemble the bytevalue payload to call the contract
-  private static Bytes createPayload(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  private static Bytes createPayload(
+      final org.hyperledger.besu.plugin.data.EnodeURL sourceEnode,
+      final org.hyperledger.besu.plugin.data.EnodeURL destinationEnode) {
     return createPayload(FUNCTION_SIGNATURE_HASH, sourceEnode, destinationEnode);
   }
 
   @VisibleForTesting
   public static Bytes createPayload(
-      final Bytes signature, final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+      final Bytes signature,
+      final org.hyperledger.besu.plugin.data.EnodeURL sourceEnode,
+      final org.hyperledger.besu.plugin.data.EnodeURL destinationEnode) {
     return Bytes.concatenate(
         signature, encodeEnodeUrl(sourceEnode), encodeEnodeUrl(destinationEnode));
   }
@@ -121,7 +127,7 @@ public class NodeSmartContractPermissioningController
     return Bytes.concatenate(signature, encodeEnodeUrl(enodeURL));
   }
 
-  private static Bytes encodeEnodeUrl(final EnodeURL enode) {
+  private static Bytes encodeEnodeUrl(final org.hyperledger.besu.plugin.data.EnodeURL enode) {
     return Bytes.concatenate(
         enode.getNodeId(), encodeIp(enode.getIp()), encodePort(enode.getListeningPortOrZero()));
   }

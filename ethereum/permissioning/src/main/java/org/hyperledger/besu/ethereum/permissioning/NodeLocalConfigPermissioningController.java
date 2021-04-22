@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.permissioning;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.ethereum.permissioning.node.NodeAllowlistUpdatedEvent;
-import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.IOException;
@@ -235,7 +235,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
     return isPermitted(EnodeURLImpl.fromString(enodeURL, configuration.getEnodeDnsConfiguration()));
   }
 
-  public boolean isPermitted(final EnodeURL node) {
+  public boolean isPermitted(final org.hyperledger.besu.plugin.data.EnodeURL node) {
     if (Objects.equals(localNodeId, node.getNodeId())) {
       return true;
     }
@@ -329,7 +329,9 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   @Override
-  public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  public boolean isPermitted(
+      final org.hyperledger.besu.plugin.data.EnodeURL sourceEnode,
+      final org.hyperledger.besu.plugin.data.EnodeURL destinationEnode) {
     this.checkCounter.inc();
     if (isPermitted(sourceEnode) && isPermitted(destinationEnode)) {
       this.checkCounterPermitted.inc();

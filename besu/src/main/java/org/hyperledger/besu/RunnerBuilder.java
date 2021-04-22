@@ -108,6 +108,7 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
@@ -164,6 +165,7 @@ public class RunnerBuilder {
   private Optional<Path> pidPath = Optional.empty();
   private MetricsConfiguration metricsConfiguration;
   private ObservableMetricsSystem metricsSystem;
+  private PermissioningServiceImpl permissioningService;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
   private Optional<String> identityString = Optional.empty();
@@ -315,6 +317,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
+    return this;
+  }
+
+  public RunnerBuilder permissioningService(final PermissioningServiceImpl permissioningService) {
+    this.permissioningService = permissioningService;
     return this;
   }
 
@@ -708,7 +715,8 @@ public class RunnerBuilder {
                   localNodeId,
                   transactionSimulator,
                   metricsSystem,
-                  blockchain);
+                  blockchain,
+                  permissioningService.getProviders());
 
       return Optional.of(nodePermissioningController);
     } else {

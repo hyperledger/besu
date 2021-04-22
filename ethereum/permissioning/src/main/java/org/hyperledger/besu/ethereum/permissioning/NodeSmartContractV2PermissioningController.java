@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
@@ -48,18 +47,20 @@ public class NodeSmartContractV2PermissioningController
   }
 
   @Override
-  boolean checkSmartContractRules(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  boolean checkSmartContractRules(
+      final org.hyperledger.besu.plugin.data.EnodeURL sourceEnode,
+      final org.hyperledger.besu.plugin.data.EnodeURL destinationEnode) {
     return isPermitted(sourceEnode) && isPermitted(destinationEnode);
   }
 
-  private boolean isPermitted(final EnodeURL enode) {
+  private boolean isPermitted(final org.hyperledger.besu.plugin.data.EnodeURL enode) {
     final Bytes payload = createPayload(enode);
     final CallParameter callParams = buildCallParameters(payload);
 
     return transactionSimulator.processAtHead(callParams).map(this::parseResult).orElse(false);
   }
 
-  private Bytes createPayload(final EnodeURL enodeUrl) {
+  private Bytes createPayload(final org.hyperledger.besu.plugin.data.EnodeURL enodeUrl) {
     try {
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
       final String address = enodeUrl.getIp().getHostAddress();

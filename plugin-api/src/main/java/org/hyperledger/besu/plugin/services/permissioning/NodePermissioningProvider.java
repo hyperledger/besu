@@ -12,22 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.metrics;
+package org.hyperledger.besu.plugin.services.permissioning;
 
-import org.hyperledger.besu.plugin.services.BesuService;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
-/**
- * Allow registration of {@link MetricCategory} instances so they are recognised by the metrics
- * system and can be enabled.
- *
- * <p>Categories must be registered during plugin initialisation.
- */
-public interface MetricCategoryRegistry extends BesuService {
-
-  /**
-   * Registers a {@link MetricCategory}.
-   *
-   * @param newMetricCategory The {@link MetricCategory} that is being registered.
-   */
-  public void addMetricCategory(final MetricCategory newMetricCategory);
+@FunctionalInterface
+public interface NodePermissioningProvider {
+  boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode);
 }
