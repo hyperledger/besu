@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.support;
 
+import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers.createCommitBlockFromProposalBlock;
+
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
 import org.hyperledger.besu.consensus.common.bft.inttest.DefaultValidatorPeer;
@@ -63,10 +65,10 @@ public class ValidatorPeer extends DefaultValidatorPeer {
     return payload;
   }
 
-  public Commit injectCommit(final ConsensusRoundIdentifier rId, final Hash digest) {
-    final SECPSignature commitSeal = nodeKey.sign(digest);
-
-    return injectCommit(rId, digest, commitSeal);
+  public Commit injectCommit(final ConsensusRoundIdentifier rId, final Block block) {
+    final Block commitBlock = createCommitBlockFromProposalBlock(block, rId.getRoundNumber());
+    final SECPSignature commitSeal = nodeKey.sign(commitBlock.getHash());
+    return injectCommit(rId, block.getHash(), commitSeal);
   }
 
   public Commit injectCommit(

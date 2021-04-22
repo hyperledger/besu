@@ -135,8 +135,7 @@ public class RoundChangeCertificateValidator {
                 .getPayload()
                 .getRoundIdentifier()
                 .getRoundNumber(),
-            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec),
-            bftExtraDataCodec);
+            BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
 
     if (!currentBlockWithOldRound
         .getHash()
