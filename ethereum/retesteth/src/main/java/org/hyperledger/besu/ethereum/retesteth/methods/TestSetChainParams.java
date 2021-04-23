@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -123,6 +124,7 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMoveToNumber(params, "muirGlacierForkBlock", config, "muirGlacierBlock");
     maybeMoveToNumber(params, "berlinForkBlock", config, "berlinBlock");
     maybeMoveToNumber(params, "chainID", config, "chainId", 1);
+
     maybeMove(genesis, "author", chainParamsJson, "coinbase");
     maybeMove(genesis, "difficulty", chainParamsJson, "difficulty");
     maybeMove(genesis, "extraData", chainParamsJson, "extraData");
@@ -131,6 +133,19 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMove(genesis, "nonce", chainParamsJson, "nonce");
     maybeMove(genesis, "timestamp", chainParamsJson, "timestamp");
     maybeMove(chainParamsJson, "accounts", chainParamsJson, "alloc");
+
+    if (ExperimentalEIPs.eip1559Enabled) {
+      // TODO EIP-1559 change for the actual fork name when known
+      maybeMoveToNumber(params, "londonForkBlock", config, "aleutBlock");
+      ExperimentalEIPs.initialBasefee =
+          Optional.ofNullable(
+                  chainParamsJson
+                      .getJsonObject("genesis", new JsonObject())
+                      .getString("baseFeePerGas"))
+              .map(Long::decode)
+              .orElse(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+      maybeMove(genesis, "gasTarget", chainParamsJson, "gasLimit");
+    }
 
     // strip out precompiles with zero balance
     final JsonObject alloc = chainParamsJson.getJsonObject("alloc");
