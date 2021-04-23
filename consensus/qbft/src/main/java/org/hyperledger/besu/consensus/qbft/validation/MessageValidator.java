@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -39,9 +42,17 @@ public class MessageValidator {
     public SubsequentMessageValidator(
         final Collection<Address> validators,
         final ConsensusRoundIdentifier targetRound,
-        final Hash expectedDigest) {
-      prepareValidator = new PrepareValidator(validators, targetRound, expectedDigest);
-      commitValidator = new CommitValidator(validators, targetRound, expectedDigest);
+        final Block proposalBlock,
+        final BftBlockInterface blockInterface) {
+      final Block commitBlock =
+          blockInterface.replaceRoundInBlock(
+              proposalBlock,
+              targetRound.getRoundNumber(),
+              BftBlockHeaderFunctions.forCommittedSeal(new QbftExtraDataCodec()));
+      prepareValidator = new PrepareValidator(validators, targetRound, proposalBlock.getHash());
+      commitValidator =
+          new CommitValidator(
+              validators, targetRound, proposalBlock.getHash(), commitBlock.getHash());
     }
 
     public boolean validate(final Prepare msg) {
@@ -55,7 +66,7 @@ public class MessageValidator {
 
   @FunctionalInterface
   public interface SubsequentMessageValidatorFactory {
-    SubsequentMessageValidator create(Hash expectedDigest);
+    SubsequentMessageValidator create(Block proposalBlock);
   }
 
   private final SubsequentMessageValidatorFactory subsequentMessageValidatorFactory;
@@ -79,7 +90,7 @@ public class MessageValidator {
     final boolean result = proposalValidator.validate(msg);
     if (result) {
       subsequentMessageValidator =
-          Optional.of(subsequentMessageValidatorFactory.create(msg.getBlock().getHash()));
+          Optional.of(subsequentMessageValidatorFactory.create(msg.getBlock()));
     }
 
     return result;
