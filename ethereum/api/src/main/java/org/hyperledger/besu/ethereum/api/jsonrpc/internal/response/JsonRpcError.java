@@ -181,6 +181,7 @@ public enum JsonRpcError {
   TESSERA_NODE_MISSING_PEER_URL(-50200, "Recipient not found for key:"),
   TESSERA_CREATE_GROUP_INCLUDE_SELF(
       -50200, "The list of members in a privacy group should include self"),
+  // TESS(-50200, "Public key not found when searching for private key");
 
   /** Storing privacy group issue */
   ENCLAVE_UNABLE_STORE_PRIVACY_GROUP(-50200, "PrivacyGroupNotStored"),

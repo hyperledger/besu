@@ -195,15 +195,15 @@ public class Enclave {
 
   private String removeBase64(final String input) {
     if (input.contains("=")) {
-      final String start =
-          input.substring(0, input.indexOf('=')).substring(0, input.lastIndexOf(" "));
+      final String startInclBase64 = input.substring(0, input.indexOf('='));
+      final String startTrimmed = startInclBase64.substring(0, startInclBase64.lastIndexOf(" "));
       final String end = input.substring(input.indexOf("="));
       if (end.length() > 1) {
         // Base64 in middle
-        return start + end.substring(2);
+        return startTrimmed + end.substring(1);
       } else {
         // Base64 at end
-        return start;
+        return startTrimmed;
       }
     } else {
       return input;
