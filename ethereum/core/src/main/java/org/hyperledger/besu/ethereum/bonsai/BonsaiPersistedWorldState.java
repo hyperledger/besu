@@ -95,6 +95,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     worldStateRootHash = blockHeader.getStateRoot();
   }
 
+  public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
+    return worldStateStorage;
+  }
+
   protected Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
     // first clear storage
     for (final Address address : updater.getStorageToClear()) {
