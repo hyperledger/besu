@@ -444,7 +444,7 @@ public class PrivacyReorgTest {
   private Transaction buildMarkerTransaction(final Bytes payload) {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .gasLimit(60000)
         .gasPrice(Wei.of(1000))
         .nonce(0)
