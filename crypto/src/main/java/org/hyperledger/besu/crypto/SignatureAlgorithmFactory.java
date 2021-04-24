@@ -15,8 +15,13 @@
 package org.hyperledger.besu.crypto;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SignatureAlgorithmFactory {
+
+  private static final Logger LOG = LogManager.getLogger();
+
   private static SignatureAlgorithm instance = null;
 
   private SignatureAlgorithmFactory() {}
@@ -33,6 +38,14 @@ public class SignatureAlgorithmFactory {
     }
 
     instance = signatureAlgorithmType.getInstance();
+
+    if (!SignatureAlgorithmType.isDefault(instance)) {
+      LOG.info(
+          new StringBuilder("The signature algorithm uses the elliptic curve ")
+              .append(instance.getCurveName())
+              .append(". The usage of alternative elliptic curves is still experimental.")
+              .toString());
+    }
   }
 
   /**

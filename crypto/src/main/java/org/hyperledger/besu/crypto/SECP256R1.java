@@ -12,19 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.node;
+package org.hyperledger.besu.crypto;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.TransactionWithSignatureAlgorithm;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 
-public interface Node {
+public class SECP256R1 extends AbstractSECP256 {
 
-  <T> T execute(Transaction<T> transaction);
+  private static final Logger LOG = LogManager.getLogger();
+  public static final String CURVE_NAME = "secp256r1";
 
-  <T> T execute(
-      TransactionWithSignatureAlgorithm<T> transaction, SignatureAlgorithm signatureAlgorithm);
+  public SECP256R1() {
+    super(CURVE_NAME, SecP256R1Curve.q);
+  }
 
-  void verify(final Condition expected);
+  @Override
+  public void enableNative() {
+    LOG.warn("Native secp256r1 requested but not available");
+  }
+
+  @Override
+  public String getCurveName() {
+    return CURVE_NAME;
+  }
 }
