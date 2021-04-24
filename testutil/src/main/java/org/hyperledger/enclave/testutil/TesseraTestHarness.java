@@ -24,11 +24,13 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Charsets;
+import io.vertx.core.json.JsonArray;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.util.Files;
@@ -53,8 +55,7 @@ public class TesseraTestHarness implements EnclaveTestHarness {
   private final int q2TPort = 9082;
   public static final int p2pPort = 9001;
 
-  private final String containerPrivateKeyPath = "/tmp/privateKey";
-  private final String containerPublicKeyPath = "/tmp/publicKey";
+  private final String containerKeyDir = "/tmp/keys/";
 
   @SuppressWarnings("rawtypes")
   private GenericContainer tesseraContainer;
@@ -212,16 +213,9 @@ public class TesseraTestHarness implements EnclaveTestHarness {
             + "    ],\n"
             + "    \"keys\": {\n"
             + "        \"passwords\": [],\n"
-            + "        \"keyData\": [\n"
-            + "            {\n"
-            + "                \"privateKeyPath\": \""
-            + containerPrivateKeyPath
-            + "\",\n"
-            + "                \"publicKeyPath\": \""
-            + containerPublicKeyPath
-            + "\"\n"
-            + "            }\n"
-            + "        ]\n"
+            + "        \"keyData\": "
+            + buildKeyConfig()
+            + "\n"
             + "    },\n"
             + "    \"alwaysSendTo\": []";
 
@@ -253,15 +247,30 @@ public class TesseraTestHarness implements EnclaveTestHarness {
     return configFile.getAbsolutePath();
   }
 
+  private String buildKeyConfig() {
+    final JsonArray keyArray = new JsonArray();
+    final List<Path> pubKeysPaths = Arrays.asList(enclaveConfiguration.getPublicKeys());
+    final List<Path> privKeyPaths = Arrays.asList(enclaveConfiguration.getPrivateKeys());
+
+    for (int count = 0; count < pubKeysPaths.size(); count++) {
+      final HashMap<String, String> stringStringHashMap = new HashMap<>();
+      stringStringHashMap.put(
+          "publicKeyPath", containerKeyDir + pubKeysPaths.get(count).getFileName());
+      stringStringHashMap.put(
+          "privateKeyPath", containerKeyDir + privKeyPaths.get(count).getFileName());
+      keyArray.add(stringStringHashMap);
+    }
+
+    return keyArray.toString();
+  }
+
   @SuppressWarnings("rawtypes")
   private GenericContainer buildTesseraContainer(final String configFilePath) {
     final String containerConfigFilePath = "/tmp/config.json";
-    final String privateKeyPath = enclaveConfiguration.getPrivateKeys()[0].toString();
-    final String publicKeyPath = enclaveConfiguration.getPublicKeys()[0].toString();
+    final String keyDir = enclaveConfiguration.getTempDir().toString();
     return new GenericContainer<>("quorumengineering/tessera:" + tesseraVersion)
         .withCopyFileToContainer(MountableFile.forHostPath(configFilePath), containerConfigFilePath)
-        .withCopyFileToContainer(MountableFile.forHostPath(privateKeyPath), containerPrivateKeyPath)
-        .withCopyFileToContainer(MountableFile.forHostPath(publicKeyPath), containerPublicKeyPath)
+        .withFileSystemBind(keyDir, containerKeyDir)
         .withCommand("--configfile " + containerConfigFilePath)
         .withExposedPorts(p2pPort, q2TPort, thirdPartyPort)
         .waitingFor(Wait.forHttp("/upcheck").withMethod("GET").forStatusCode(200));
