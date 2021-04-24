@@ -41,7 +41,7 @@ import org.web3j.tx.Contract;
 
 public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBase {
 
-  protected static final long POW_CHAIN_ID = 2018;
+  protected static final long POW_CHAIN_ID = 1337;
 
   private PrivacyNode alice;
   private PrivacyNode bob;
