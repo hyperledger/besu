@@ -306,7 +306,7 @@ public class PrivateTransactionTest {
         .value(Wei.ZERO)
         .payload(Bytes.fromHexString("0x"))
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .privacyGroupId(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
         .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
         .privateFor(

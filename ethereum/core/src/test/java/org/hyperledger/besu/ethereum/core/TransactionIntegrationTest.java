@@ -37,7 +37,7 @@ public class TransactionIntegrationTest {
     final Transaction transaction = Transaction.readFrom(input);
     assertThat(transaction).isNotNull();
     assertThat(transaction.isContractCreation()).isTrue();
-    assertThat(transaction.getChainId()).contains(BigInteger.valueOf(2018));
+    assertThat(transaction.getChainId()).contains(BigInteger.valueOf(1337));
     assertThat(transaction.getSender())
         .isEqualTo(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"));
   }
