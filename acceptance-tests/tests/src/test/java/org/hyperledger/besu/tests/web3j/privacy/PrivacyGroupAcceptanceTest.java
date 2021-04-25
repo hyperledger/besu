@@ -135,8 +135,6 @@ public class PrivacyGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
     final String privacyGroupId =
         alice.execute(privacyTransactions.createPrivacyGroup(null, null, alice));
 
-    System.out.println("PrivacyGroup: " + privacyGroupId);
-
     assertThat(privacyGroupId).isNotNull();
 
     final PrivacyGroup expected =
