@@ -26,6 +26,7 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,8 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.testcontainers.containers.Network;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -41,9 +44,18 @@ import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 
+@RunWith(Parameterized.class)
 public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBase {
+
+  private final EnclaveType enclaveType;
+
   public OnChainPrivacyAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
+    this.enclaveType = enclaveType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.asList(EnclaveType.values());
   }
 
   protected static final long POW_CHAIN_ID = 1337;

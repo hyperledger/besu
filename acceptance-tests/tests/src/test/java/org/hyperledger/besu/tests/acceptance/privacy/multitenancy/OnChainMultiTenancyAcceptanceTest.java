@@ -31,6 +31,8 @@ import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,15 +41,25 @@ import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.utils.Base64String;
 
+@RunWith(Parameterized.class)
 public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceTestBase {
 
+  private final EnclaveType enclaveType;
+
   public OnChainMultiTenancyAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
+    this.enclaveType = enclaveType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.asList(EnclaveType.values());
   }
 
   private static final String eventEmitterDeployed =

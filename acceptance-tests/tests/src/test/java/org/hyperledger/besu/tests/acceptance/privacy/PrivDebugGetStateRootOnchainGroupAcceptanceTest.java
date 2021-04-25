@@ -26,19 +26,30 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.testcontainers.containers.Network;
 
+@RunWith(Parameterized.class)
 public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
     extends OnChainPrivacyAcceptanceTestBase {
 
+  private final EnclaveType enclaveType;
+
   public PrivDebugGetStateRootOnchainGroupAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-    ;
+    this.enclaveType = enclaveType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.asList(EnclaveType.values());
   }
 
   private PrivacyNode aliceNode;
