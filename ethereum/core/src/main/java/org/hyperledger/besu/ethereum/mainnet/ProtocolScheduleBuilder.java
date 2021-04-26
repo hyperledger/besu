@@ -245,6 +245,26 @@ public class ProtocolScheduleBuilder {
                     (existing, replacement) -> replacement,
                     TreeMap::new));
 
+    if (ExperimentalEIPs.eip1559Enabled) {
+      final Optional<TransactionPriceCalculator> transactionPriceCalculator =
+          Optional.of(TransactionPriceCalculator.eip1559());
+      // if we do not have a 1559 block number, assume we are running pre-London config:
+      final long eip1559Block = config.getEIP1559BlockNumber().orElse(Long.MAX_VALUE);
+      builders.put(
+          eip1559Block,
+          new BuilderMapEntry(
+              eip1559Block,
+              MainnetProtocolSpecs.londonDefinition(
+                  chainId,
+                  transactionPriceCalculator,
+                  config.getContractSizeLimit(),
+                  config.getEvmStackSize(),
+                  isRevertReasonEnabled,
+                  config,
+                  quorumCompatibilityMode),
+              protocolSpecAdapters.getModifierForBlock(eip1559Block)));
+    }
+
     return builders;
   }
 
