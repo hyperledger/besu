@@ -267,6 +267,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         storageToUpdate.remove(updatedAddress);
       }
 
+      if (tracked.getStorageWasCleared()) {
+        tracked.setStorageWasCleared(false); // storage already cleared for this transaction
+      }
+
       // TODO maybe add address preimage?
     }
   }
@@ -313,13 +317,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
-    if (storageToClear.contains(address)) {
-      return UInt256.ZERO;
-    }
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
     final Hash slotHash = Hash.hash(storageKey.toBytes());
     if (localAccountStorage != null && localAccountStorage.containsKey(slotHash)) {
       final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
+      if (value.isCleared()) {
+        return UInt256.ZERO;
+      }
       final UInt256 updated = value.getUpdated();
       if (updated != null) {
         return updated;
@@ -328,6 +332,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if (original != null) {
         return original;
       }
+    }
+    if (storageToClear.contains(address)) {
+      return UInt256.ZERO;
     }
     return getStorageValue(address, storageKey);
   }
