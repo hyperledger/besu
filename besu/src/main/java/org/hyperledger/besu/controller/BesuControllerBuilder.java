@@ -100,6 +100,7 @@ public abstract class BesuControllerBuilder {
   GasLimitCalculator gasLimitCalculator;
   private StorageProvider storageProvider;
   private boolean isPruningEnabled;
+  private boolean isRayonismMergeEnabled;
   private PrunerConfiguration prunerConfiguration;
   Map<String, String> genesisConfigOverrides;
   private Map<Long, Hash> requiredBlocks = Collections.emptyMap();
@@ -177,6 +178,11 @@ public abstract class BesuControllerBuilder {
 
   public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
     this.isPruningEnabled = isPruningEnabled;
+    return this;
+  }
+
+  public BesuControllerBuilder isRayonismMergeEnabled(final boolean isRayonismMergeEnabled) {
+    this.isRayonismMergeEnabled = isRayonismMergeEnabled;
     return this;
   }
 
@@ -346,7 +352,7 @@ public abstract class BesuControllerBuilder {
         createAdditionalPluginServices(blockchain);
 
     final SubProtocolConfiguration subProtocolConfiguration =
-        createSubProtocolConfiguration(ethProtocolManager);
+        createSubProtocolConfiguration(ethProtocolManager, isRayonismMergeEnabled);
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
@@ -383,8 +389,9 @@ public abstract class BesuControllerBuilder {
   }
 
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager) {
-    return new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
+      final EthProtocolManager ethProtocolManager, final boolean isRayonismMergeEnabled) {
+    return new SubProtocolConfiguration()
+        .withSubProtocol(EthProtocol.get(isRayonismMergeEnabled), ethProtocolManager);
   }
 
   protected abstract MiningCoordinator createMiningCoordinator(
