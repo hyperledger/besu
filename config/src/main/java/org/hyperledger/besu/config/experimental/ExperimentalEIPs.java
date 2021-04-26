@@ -23,6 +23,7 @@ import picocli.CommandLine.Option;
 public class ExperimentalEIPs {
   // To make it easier for tests to reset the value to default
   public static final boolean EIP1559_ENABLED_DEFAULT_VALUE = false;
+  public static final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
 
   @Option(
       hidden = true,
@@ -47,7 +48,7 @@ public class ExperimentalEIPs {
       hidden = true,
       names = {"--Xeip1559-initial-base-fee"},
       arity = "1")
-  public static Long initialBasefee = 1000000000L;
+  public static Long initialBasefee = EIP1559_BASEFEE_DEFAULT_VALUE;
 
   @Option(
       hidden = true,
