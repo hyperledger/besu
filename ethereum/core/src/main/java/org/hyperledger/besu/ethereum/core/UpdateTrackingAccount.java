@@ -263,6 +263,10 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     return storageWasCleared;
   }
 
+  public void setStorageWasCleared(final boolean storageWasCleared) {
+    this.storageWasCleared = storageWasCleared;
+  }
+
   @Override
   public String toString() {
     String storage = updatedStorage.isEmpty() ? "[not updated]" : updatedStorage.toString();
