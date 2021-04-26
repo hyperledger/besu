@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
-import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
@@ -57,7 +56,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private final QbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
   private final BlockHeader parentHeader;
-  private final BlockTimer blockTimer;
   private final QbftMessageTransmitter transmitter;
   private final MessageFactory messageFactory;
   private final Map<Integer, RoundState> futureRoundStateBuffer = Maps.newHashMap();
@@ -67,8 +65,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   private final BftFinalState finalState;
 
   private Optional<PreparedCertificate> latestPreparedCertificate = Optional.empty();
-
-  private QbftRound currentRound;
+  private Optional<QbftRound> currentRound = Optional.empty();
 
   public QbftBlockHeightManager(
       final BlockHeader parentHeader,
@@ -80,7 +77,6 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final MessageFactory messageFactory) {
     this.parentHeader = parentHeader;
     this.roundFactory = qbftRoundFactory;
-    this.blockTimer = finalState.getBlockTimer();
     this.transmitter =
         new QbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
     this.messageFactory = messageFactory;
@@ -99,50 +95,76 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
                 finalState.getQuorum(),
                 messageValidatorFactory.createMessageValidator(roundIdentifier, parentHeader));
 
-    currentRound = roundFactory.createNewRound(parentHeader, 0);
-    if (finalState.isLocalNodeProposerForRound(currentRound.getRoundIdentifier())) {
-      blockTimer.startTimer(currentRound.getRoundIdentifier(), parentHeader);
-    }
+    final long nextBlockHeight = parentHeader.getNumber() + 1;
+    final ConsensusRoundIdentifier roundIdentifier =
+        new ConsensusRoundIdentifier(nextBlockHeight, 0);
+
+    finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader);
   }
 
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
-    if (roundIdentifier.equals(currentRound.getRoundIdentifier())) {
-      currentRound.createAndSendProposalMessage(clock.millis() / 1000L);
-    } else {
-      LOG.trace(
-          "Block timer expired for a round ({}) other than current ({})",
+    if (currentRound.isPresent()) {
+      LOG.warn(
+          "Block timer expired for round ({}) after round has already started on round ({})",
           roundIdentifier,
-          currentRound.getRoundIdentifier());
+          currentRound.get());
+      return;
+    }
+
+    startNewRound(0);
+
+    final QbftRound qbftRound = currentRound.get();
+    // mining will be checked against round 0 as the current round is initialised to 0 above
+    final boolean isProposer =
+        finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
+
+    if (isProposer) {
+      if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
+        qbftRound.createAndSendProposalMessage(clock.millis() / 1000L);
+      } else {
+        LOG.trace(
+            "Block timer expired for a round ({}) other than current ({})",
+            roundIdentifier,
+            qbftRound.getRoundIdentifier());
+      }
     }
   }
 
   @Override
   public void roundExpired(final RoundExpiry expire) {
-    if (!expire.getView().equals(currentRound.getRoundIdentifier())) {
+    if (currentRound.isEmpty()) {
+      LOG.error(
+          "Received Round timer expiry before round is created timerRound={}", expire.getView());
+      return;
+    }
+
+    QbftRound qbftRound = currentRound.get();
+    if (!expire.getView().equals(qbftRound.getRoundIdentifier())) {
       LOG.trace(
           "Ignoring Round timer expired which does not match current round. round={}, timerRound={}",
-          currentRound.getRoundIdentifier(),
+          qbftRound.getRoundIdentifier(),
           expire.getView());
       return;
     }
 
     LOG.debug(
         "Round has expired, creating PreparedCertificate and notifying peers. round={}",
-        currentRound.getRoundIdentifier());
+        qbftRound.getRoundIdentifier());
     final Optional<PreparedCertificate> preparedCertificate =
-        currentRound.constructPreparedCertificate();
+        qbftRound.constructPreparedCertificate();
 
     if (preparedCertificate.isPresent()) {
       latestPreparedCertificate = preparedCertificate;
     }
 
-    startNewRound(currentRound.getRoundIdentifier().getRoundNumber() + 1);
+    startNewRound(qbftRound.getRoundIdentifier().getRoundNumber() + 1);
+    qbftRound = currentRound.get();
 
     try {
       final RoundChange localRoundChange =
           messageFactory.createRoundChange(
-              currentRound.getRoundIdentifier(), latestPreparedCertificate);
+              qbftRound.getRoundIdentifier(), latestPreparedCertificate);
 
       // Its possible the locally created RoundChange triggers the transmission of a NewRound
       // message - so it must be handled accordingly.
@@ -151,7 +173,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       LOG.warn("Failed to create signed RoundChange message.", e);
     }
 
-    transmitter.multicastRoundChange(currentRound.getRoundIdentifier(), latestPreparedCertificate);
+    transmitter.multicastRoundChange(qbftRound.getRoundIdentifier(), latestPreparedCertificate);
   }
 
   @Override
@@ -170,7 +192,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         }
         startNewRound(proposal.getRoundIdentifier().getRoundNumber());
       }
-      currentRound.handleProposalMessage(proposal);
+      currentRound.ifPresent(r -> r.handleProposalMessage(proposal));
     }
   }
 
@@ -178,13 +200,18 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   public void handlePreparePayload(final Prepare prepare) {
     LOG.trace("Received a Prepare Payload.");
     actionOrBufferMessage(
-        prepare, currentRound::handlePrepareMessage, RoundState::addPrepareMessage);
+        prepare,
+        currentRound.isPresent() ? currentRound.get()::handlePrepareMessage : (ignore) -> {},
+        RoundState::addPrepareMessage);
   }
 
   @Override
   public void handleCommitPayload(final Commit commit) {
     LOG.trace("Received a Commit Payload.");
-    actionOrBufferMessage(commit, currentRound::handleCommitMessage, RoundState::addCommitMessage);
+    actionOrBufferMessage(
+        commit,
+        currentRound.isPresent() ? currentRound.get()::handleCommitMessage : (ignore) -> {},
+        RoundState::addCommitMessage);
   }
 
   private <P extends Payload, M extends BftMessage<P>> void actionOrBufferMessage(
@@ -229,24 +256,30 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final RoundChangeArtifacts roundChangeMetadata = RoundChangeArtifacts.create(result.get());
 
       if (finalState.isLocalNodeProposerForRound(targetRound)) {
-        currentRound.startRoundWith(
-            roundChangeMetadata, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
+        if (currentRound.isEmpty()) {
+          startNewRound(0);
+        }
+        currentRound
+            .get()
+            .startRoundWith(roundChangeMetadata, TimeUnit.MILLISECONDS.toSeconds(clock.millis()));
       }
     }
   }
 
   private void startNewRound(final int roundNumber) {
     LOG.debug("Starting new round {}", roundNumber);
+    // validate the current round
     if (futureRoundStateBuffer.containsKey(roundNumber)) {
       currentRound =
-          roundFactory.createNewRoundWithState(
-              parentHeader, futureRoundStateBuffer.get(roundNumber));
+          Optional.of(
+              roundFactory.createNewRoundWithState(
+                  parentHeader, futureRoundStateBuffer.get(roundNumber)));
       futureRoundStateBuffer.keySet().removeIf(k -> k <= roundNumber);
     } else {
-      currentRound = roundFactory.createNewRound(parentHeader, roundNumber);
+      currentRound = Optional.of(roundFactory.createNewRound(parentHeader, roundNumber));
     }
     // discard roundChange messages from the current and previous rounds
-    roundChangeManager.discardRoundsPriorTo(currentRound.getRoundIdentifier());
+    roundChangeManager.discardRoundsPriorTo(currentRound.get().getRoundIdentifier());
   }
 
   @Override
@@ -260,7 +293,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   }
 
   private MessageAge determineAgeOfPayload(final int messageRoundNumber) {
-    final int currentRoundNumber = currentRound.getRoundIdentifier().getRoundNumber();
+    final int currentRoundNumber =
+        currentRound.map(r -> r.getRoundIdentifier().getRoundNumber()).orElse(-1);
     if (messageRoundNumber > currentRoundNumber) {
       return MessageAge.FUTURE_ROUND;
     } else if (messageRoundNumber == currentRoundNumber) {

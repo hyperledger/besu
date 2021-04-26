@@ -11,20 +11,13 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.tests.acceptance.dsl.node;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.TransactionWithSignatureAlgorithm;
 
-public interface Node {
-
-  <T> T execute(Transaction<T> transaction);
-
-  <T> T execute(
-      TransactionWithSignatureAlgorithm<T> transaction, SignatureAlgorithm signatureAlgorithm);
-
-  void verify(final Condition expected);
+@FunctionalInterface
+public interface TransactionWithSignatureAlgorithm<T> {
+  T execute(final NodeRequests node, final SignatureAlgorithm signatureAlgorithm);
 }

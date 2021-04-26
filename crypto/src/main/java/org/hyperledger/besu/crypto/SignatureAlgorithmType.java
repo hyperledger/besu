@@ -18,13 +18,16 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import com.google.common.collect.ImmutableMap;
+
 public class SignatureAlgorithmType {
 
-  private static final Map<String, Supplier<SignatureAlgorithm>> SUPPORTED_ALGORITHMS =
-      Map.of("secp256k1", SECP256K1::new);
+  private static final String DEFAULT_EC_CURVE_NAME = "secp256k1";
+  private static final ImmutableMap<String, Supplier<SignatureAlgorithm>> SUPPORTED_ALGORITHMS =
+      ImmutableMap.of(DEFAULT_EC_CURVE_NAME, SECP256K1::new, "secp256r1", SECP256R1::new);
 
   public static final Supplier<SignatureAlgorithm> DEFAULT_SIGNATURE_ALGORITHM_TYPE =
-      SUPPORTED_ALGORITHMS.get("secp256k1");
+      SUPPORTED_ALGORITHMS.get(DEFAULT_EC_CURVE_NAME);
 
   private final Supplier<SignatureAlgorithm> instantiator;
 
@@ -57,6 +60,10 @@ public class SignatureAlgorithmType {
 
   public static boolean isValidType(final String ecCurve) {
     return SUPPORTED_ALGORITHMS.containsKey(ecCurve);
+  }
+
+  public static boolean isDefault(final SignatureAlgorithm signatureAlgorithm) {
+    return signatureAlgorithm.getCurveName().equals(DEFAULT_EC_CURVE_NAME);
   }
 
   private static String getEcCurvesListAsString() {

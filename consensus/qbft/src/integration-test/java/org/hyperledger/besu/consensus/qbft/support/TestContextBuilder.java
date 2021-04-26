@@ -354,8 +354,8 @@ public class TestContextBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             multicaster,
-            new RoundTimer(bftEventQueue, ROUND_TIMER_SEC * 1000, bftExecutors),
-            new BlockTimer(bftEventQueue, BLOCK_TIMER_SEC * 1000, bftExecutors, TestClock.fixed()),
+            new RoundTimer(bftEventQueue, ROUND_TIMER_SEC, bftExecutors),
+            new BlockTimer(bftEventQueue, BLOCK_TIMER_SEC, bftExecutors, TestClock.fixed()),
             blockCreatorFactory,
             clock);
 
