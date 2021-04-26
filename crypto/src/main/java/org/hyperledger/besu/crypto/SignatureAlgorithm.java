@@ -74,4 +74,6 @@ public interface SignatureAlgorithm {
   SECPSignature createSignature(final BigInteger r, final BigInteger s, final byte recId);
 
   SECPSignature decodeSignature(final Bytes bytes);
+
+  Bytes compressPublicKey(final SECPPublicKey uncompressedKey);
 }
