@@ -73,7 +73,8 @@ public class NodePermissioningControllerTest {
   public void isPermittedShouldDelegateToSyncStatusProvider() {
     controller.isPermitted(enode1, enode2);
 
-    verify(syncStatusNodePermissioningProvider, atLeast(1)).isPermitted(eq(enode1), eq(enode2));
+    verify(syncStatusNodePermissioningProvider, atLeast(1))
+        .isConnectionPermitted(eq(enode1), eq(enode2));
   }
 
   @Test
@@ -85,7 +86,7 @@ public class NodePermissioningControllerTest {
 
     controller.isPermitted(enode1, enode2);
 
-    verify(localConfigNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
+    verify(localConfigNodePermissioningProvider).isConnectionPermitted(eq(enode1), eq(enode2));
   }
 
   @Test
@@ -96,16 +97,18 @@ public class NodePermissioningControllerTest {
         new NodePermissioningController(
             syncStatusNodePermissioningProviderOptional, providers, Optional.empty());
 
-    when(syncStatusNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
+    when(syncStatusNodePermissioningProvider.isConnectionPermitted(eq(enode1), eq(enode2)))
+        .thenReturn(true);
     when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
-    when(localConfigNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
-    when(otherPermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
+    when(localConfigNodePermissioningProvider.isConnectionPermitted(eq(enode1), eq(enode2)))
+        .thenReturn(true);
+    when(otherPermissioningProvider.isConnectionPermitted(eq(enode1), eq(enode2))).thenReturn(true);
 
     assertThat(controller.isPermitted(enode1, enode2)).isTrue();
 
-    verify(syncStatusNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
-    verify(localConfigNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
-    verify(otherPermissioningProvider).isPermitted(eq(enode1), eq(enode2));
+    verify(syncStatusNodePermissioningProvider).isConnectionPermitted(eq(enode1), eq(enode2));
+    verify(localConfigNodePermissioningProvider).isConnectionPermitted(eq(enode1), eq(enode2));
+    verify(otherPermissioningProvider).isConnectionPermitted(eq(enode1), eq(enode2));
   }
 
   private List<NodePermissioningProvider> getNodePermissioningProviders() {
@@ -124,16 +127,19 @@ public class NodePermissioningControllerTest {
         new NodePermissioningController(
             syncStatusNodePermissioningProviderOptional, providers, Optional.empty());
 
-    when(syncStatusNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
+    when(syncStatusNodePermissioningProvider.isConnectionPermitted(eq(enode1), eq(enode2)))
+        .thenReturn(true);
     when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
-    when(localConfigNodePermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(true);
-    when(otherPermissioningProvider.isPermitted(eq(enode1), eq(enode2))).thenReturn(false);
+    when(localConfigNodePermissioningProvider.isConnectionPermitted(eq(enode1), eq(enode2)))
+        .thenReturn(true);
+    when(otherPermissioningProvider.isConnectionPermitted(eq(enode1), eq(enode2)))
+        .thenReturn(false);
 
     assertThat(controller.isPermitted(enode1, enode2)).isFalse();
 
-    verify(syncStatusNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
-    verify(localConfigNodePermissioningProvider).isPermitted(eq(enode1), eq(enode2));
-    verify(otherPermissioningProvider).isPermitted(eq(enode1), eq(enode2));
+    verify(syncStatusNodePermissioningProvider).isConnectionPermitted(eq(enode1), eq(enode2));
+    verify(localConfigNodePermissioningProvider).isConnectionPermitted(eq(enode1), eq(enode2));
+    verify(otherPermissioningProvider).isConnectionPermitted(eq(enode1), eq(enode2));
   }
 
   @Test
@@ -156,7 +162,7 @@ public class NodePermissioningControllerTest {
     assertThat(controller.isPermitted(enode1, enode2)).isTrue();
 
     verify(insufficientPeersPermissioningProvider, times(1)).isPermitted(any(), any());
-    providers.forEach(p -> verify(p, times(0)).isPermitted(any(), any()));
+    providers.forEach(p -> verify(p, times(0)).isConnectionPermitted(any(), any()));
   }
 
   @Test
@@ -170,20 +176,20 @@ public class NodePermissioningControllerTest {
     final ContextualNodePermissioningProvider insufficientPeersPermissioningProvider =
         mock(ContextualNodePermissioningProvider.class);
 
-    when(syncStatusNodePermissioningProvider.isPermitted(any(), any())).thenReturn(true);
+    when(syncStatusNodePermissioningProvider.isConnectionPermitted(any(), any())).thenReturn(true);
     when(syncStatusNodePermissioningProvider.hasReachedSync()).thenReturn(true);
     when(insufficientPeersPermissioningProvider.isPermitted(any(), any()))
         .thenReturn(Optional.empty());
-    when(localConfigNodePermissioningProvider.isPermitted(any(), any())).thenReturn(true);
-    when(otherPermissioningProvider.isPermitted(any(), any())).thenReturn(true);
+    when(localConfigNodePermissioningProvider.isConnectionPermitted(any(), any())).thenReturn(true);
+    when(otherPermissioningProvider.isConnectionPermitted(any(), any())).thenReturn(true);
 
     controller.setInsufficientPeersPermissioningProvider(insufficientPeersPermissioningProvider);
 
     assertThat(controller.isPermitted(enode1, enode2)).isTrue();
 
-    verify(syncStatusNodePermissioningProvider, times(1)).isPermitted(any(), any());
+    verify(syncStatusNodePermissioningProvider, times(1)).isConnectionPermitted(any(), any());
     verify(insufficientPeersPermissioningProvider, times(1)).isPermitted(any(), any());
-    providers.forEach(p -> verify(p, times(1)).isPermitted(any(), any()));
+    providers.forEach(p -> verify(p, times(1)).isConnectionPermitted(any(), any()));
   }
 
   @Test
@@ -194,7 +200,8 @@ public class NodePermissioningControllerTest {
 
     controller.isPermitted(enode1, enode2);
 
-    verify(syncStatusNodePermissioningProvider, atLeast(1)).isPermitted(eq(enode1), eq(enode2));
+    verify(syncStatusNodePermissioningProvider, atLeast(1))
+        .isConnectionPermitted(eq(enode1), eq(enode2));
   }
 
   @Test
@@ -224,6 +231,7 @@ public class NodePermissioningControllerTest {
 
     controller.isPermitted(enode1, enode2);
 
-    verify(syncStatusNodePermissioningProvider, atLeast(1)).isPermitted(eq(enode1), eq(enode2));
+    verify(syncStatusNodePermissioningProvider, atLeast(1))
+        .isConnectionPermitted(eq(enode1), eq(enode2));
   }
 }

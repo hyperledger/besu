@@ -329,7 +329,7 @@ public class NodeLocalConfigPermissioningController implements NodePermissioning
   }
 
   @Override
-  public boolean isPermitted(
+  public boolean isConnectionPermitted(
       final org.hyperledger.besu.plugin.data.EnodeURL sourceEnode,
       final org.hyperledger.besu.plugin.data.EnodeURL destinationEnode) {
     this.checkCounter.inc();

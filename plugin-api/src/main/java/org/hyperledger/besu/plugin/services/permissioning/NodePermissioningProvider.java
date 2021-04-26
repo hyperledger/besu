@@ -18,5 +18,5 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 @FunctionalInterface
 public interface NodePermissioningProvider {
-  boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode);
+  boolean isConnectionPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode);
 }

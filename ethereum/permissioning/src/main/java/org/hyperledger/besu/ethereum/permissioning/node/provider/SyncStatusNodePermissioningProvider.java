@@ -91,7 +91,8 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
    *     otherwise
    */
   @Override
-  public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  public boolean isConnectionPermitted(
+      final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     if (hasReachedSync.get()) {
       return true;
     } else {

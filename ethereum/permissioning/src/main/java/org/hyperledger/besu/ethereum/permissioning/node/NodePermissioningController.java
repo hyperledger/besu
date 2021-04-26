@@ -59,7 +59,7 @@ public class NodePermissioningController {
     LOG.trace("Node permissioning: Checking {} -> {}", sourceEnode, destinationEnode);
 
     if (syncStatusNodePermissioningProvider
-        .map(p -> !p.hasReachedSync() && p.isPermitted(sourceEnode, destinationEnode))
+        .map(p -> !p.hasReachedSync() && p.isConnectionPermitted(sourceEnode, destinationEnode))
         .orElse(false)) {
 
       LOG.trace(
@@ -85,7 +85,9 @@ public class NodePermissioningController {
     }
 
     if (syncStatusNodePermissioningProvider.isPresent()
-        && !syncStatusNodePermissioningProvider.get().isPermitted(sourceEnode, destinationEnode)) {
+        && !syncStatusNodePermissioningProvider
+            .get()
+            .isConnectionPermitted(sourceEnode, destinationEnode)) {
 
       LOG.trace(
           "Node permissioning - Sync Status: Rejected {} -> {}", sourceEnode, destinationEnode);
@@ -93,7 +95,7 @@ public class NodePermissioningController {
       return false;
     } else {
       for (final NodePermissioningProvider provider : providers) {
-        if (!provider.isPermitted(sourceEnode, destinationEnode)) {
+        if (!provider.isConnectionPermitted(sourceEnode, destinationEnode)) {
           LOG.trace(
               "Node permissioning - {}: Rejected {} -> {}",
               provider.getClass().getSimpleName(),

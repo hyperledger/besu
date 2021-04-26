@@ -76,7 +76,8 @@ public abstract class AbstractNodeSmartContractPermissioningController
    * @return boolean of whether or not to permit the connection to occur
    */
   @Override
-  public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  public boolean isConnectionPermitted(
+      final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     this.checkCounter.inc();
 
     if (!isContractDeployed()) {
