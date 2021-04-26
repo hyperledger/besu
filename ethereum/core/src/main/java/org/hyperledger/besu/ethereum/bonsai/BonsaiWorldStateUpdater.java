@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -53,7 +54,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
-  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate = new HashMap<>();
+  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storageToUpdate =
+      new ConcurrentHashMap<>();
 
   BonsaiWorldStateUpdater(final BonsaiWorldView world) {
     super(world);
@@ -265,6 +267,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         storageToUpdate.remove(updatedAddress);
       }
 
+      if (tracked.getStorageWasCleared()) {
+        tracked.setStorageWasCleared(false); // storage already cleared for this transaction
+      }
+
       // TODO maybe add address preimage?
     }
   }
@@ -311,13 +317,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
-    if (storageToClear.contains(address)) {
-      return UInt256.ZERO;
-    }
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
     final Hash slotHash = Hash.hash(storageKey.toBytes());
     if (localAccountStorage != null && localAccountStorage.containsKey(slotHash)) {
       final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
+      if (value.isCleared()) {
+        return UInt256.ZERO;
+      }
       final UInt256 updated = value.getUpdated();
       if (updated != null) {
         return updated;
@@ -326,6 +332,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       if (original != null) {
         return original;
       }
+    }
+    if (storageToClear.contains(address)) {
+      return UInt256.ZERO;
     }
     return getStorageValue(address, storageKey);
   }
