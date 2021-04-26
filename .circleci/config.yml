@@ -43,7 +43,8 @@ commands:
           name: Checking for changes
           command: |
             changes=`git --no-pager diff --name-only master...HEAD`
-            if [ "$changes" = ".circleci/config.yml" ]; then
+            echo $changes
+            if [ "$changes" = "CHANGELOG.md" ]; then
               echo "Only found a CHANGELOG change. Stopping build"
               circleci-agent step halt
             fi
