@@ -31,9 +31,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class SECP256K1Test {
+public class SECP256R1Test {
 
-  protected SECP256K1 secp256K1;
+  protected SECP256R1 secp256R1;
 
   protected static String suiteStartTime = null;
   protected static String suiteName = null;
@@ -43,12 +43,12 @@ public class SECP256K1Test {
     suiteStartTime =
         LocalDateTime.now(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-    suiteName(SECP256K1Test.class);
+    suiteName(SECP256R1Test.class);
   }
 
   @Before
   public void setUp() {
-    secp256K1 = new SECP256K1();
+    secp256R1 = new SECP256R1();
   }
 
   public static void suiteName(final Class<?> clazz) {
@@ -60,59 +60,52 @@ public class SECP256K1Test {
   }
 
   @Test
-  public void keyPairGeneration_PublicKeyRecovery() {
-    final KeyPair keyPair = secp256K1.generateKeyPair();
-    assertThat(secp256K1.createPublicKey(keyPair.getPrivateKey()))
-        .isEqualTo(keyPair.getPublicKey());
-  }
-
-  @Test
   public void recoverPublicKeyFromSignature() {
     final SECPPrivateKey privateKey =
-        secp256K1.createPrivateKey(
+        secp256R1.createPrivateKey(
             new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
-    final KeyPair keyPair = secp256K1.createKeyPair(privateKey);
+    final KeyPair keyPair = secp256R1.createKeyPair(privateKey);
 
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
-    final SECPSignature signature = secp256K1.sign(dataHash, keyPair);
+    final SECPSignature signature = secp256R1.sign(dataHash, keyPair);
 
     final SECPPublicKey recoveredPublicKey =
-        secp256K1.recoverPublicKeyFromSignature(dataHash, signature).get();
+        secp256R1.recoverPublicKeyFromSignature(dataHash, signature).get();
     assertThat(recoveredPublicKey.toString()).isEqualTo(keyPair.getPublicKey().toString());
   }
 
   @Test
   public void signatureGeneration() {
     final SECPPrivateKey privateKey =
-        secp256K1.createPrivateKey(
-            new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
-    final KeyPair keyPair = secp256K1.createKeyPair(privateKey);
+        secp256R1.createPrivateKey(
+            new BigInteger("909753034398cf9371b88871c0a8b3051f1bb55d4f28d3d7261abe7d32adcdde", 16));
+    final KeyPair keyPair = secp256R1.createKeyPair(privateKey);
 
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
     final SECPSignature expectedSignature =
-        secp256K1.createSignature(
-            new BigInteger("d2ce488f4da29e68f22cb05cac1b19b75df170a12b4ad1bdd4531b8e9115c6fb", 16),
-            new BigInteger("75c1fe50a95e8ccffcbb5482a1e42fbbdd6324131dfe75c3b3b7f9a7c721eccb", 16),
+        secp256R1.createSignature(
+            new BigInteger("6ae3ac096d1b69ab1e18a721689cc40f2710ab25c35a4f465b8384c470e7079b", 16),
+            new BigInteger("28a39d61a8812005312b552e022afd6fa3db323754f48033c87f4acf6e9960e6", 16),
             (byte) 1);
 
-    final SECPSignature actualSignature = secp256K1.sign(dataHash, keyPair);
+    final SECPSignature actualSignature = secp256R1.sign(dataHash, keyPair);
     assertThat(actualSignature).isEqualTo(expectedSignature);
   }
 
   @Test
   public void signatureVerification() {
     final SECPPrivateKey privateKey =
-        secp256K1.createPrivateKey(
-            new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
-    final KeyPair keyPair = secp256K1.createKeyPair(privateKey);
+        secp256R1.createPrivateKey(
+            new BigInteger("a7e8b16ad7ffa26fce80be2b0e00008018aadf1b16dea4ecc913b8c1c4f18531", 16));
+    final KeyPair keyPair = secp256R1.createKeyPair(privateKey);
 
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
 
-    final SECPSignature signature = secp256K1.sign(dataHash, keyPair);
-    assertThat(secp256K1.verify(data, signature, keyPair.getPublicKey(), Hash::keccak256)).isTrue();
+    final SECPSignature signature = secp256R1.sign(dataHash, keyPair);
+    assertThat(secp256R1.verify(data, signature, keyPair.getPublicKey(), Hash::keccak256)).isTrue();
   }
 
   @Test(expected = IllegalArgumentException.class)

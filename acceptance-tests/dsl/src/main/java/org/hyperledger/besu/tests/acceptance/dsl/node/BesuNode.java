@@ -21,6 +21,7 @@ import static org.apache.tuweni.io.file.Files.copyResource;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -35,6 +36,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfigur
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.TransactionWithSignatureAlgorithm;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.ConsensusType;
@@ -689,6 +691,13 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public <T> T execute(final Transaction<T> transaction) {
     return transaction.execute(nodeRequests());
+  }
+
+  @Override
+  public <T> T execute(
+      final TransactionWithSignatureAlgorithm<T> transaction,
+      final SignatureAlgorithm signatureAlgorithm) {
+    return transaction.execute(nodeRequests(), signatureAlgorithm);
   }
 
   @Override
