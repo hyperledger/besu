@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.RpcModules;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -89,7 +90,7 @@ public class JsonRpcMethodsFactory {
                   namedPlugins,
                   natService,
                   ethPeers),
-              new ConsensusJsonRpcMethods(),
+              new ConsensusJsonRpcMethods((MutableBlockchain) blockchainQueries.getBlockchain()),
               new DebugJsonRpcMethods(
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(

@@ -455,14 +455,14 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public boolean rewindToBlock(final long blockNumber) {
-    final Optional<Hash> blockHash = blockchainStorage.getBlockHash(blockNumber);
-    if (blockHash.isEmpty()) {
-      return false;
-    }
+    return blockchainStorage.getBlockHash(blockNumber).map(this::rewindToBlock).orElse(false);
+  }
 
+  @Override
+  public boolean rewindToBlock(final Hash blockHash) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();
     try {
-      final BlockHeader oldBlockHeader = blockchainStorage.getBlockHeader(blockHash.get()).get();
+      final BlockHeader oldBlockHeader = blockchainStorage.getBlockHeader(blockHash).get();
       final BlockWithReceipts blockWithReceipts = getBlockWithReceipts(oldBlockHeader).get();
       final Block block = blockWithReceipts.getBlock();
 

@@ -26,8 +26,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import java.util.Map;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 
 public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
+
+  private final MutableBlockchain blockchain;
+
+  ConsensusJsonRpcMethods(final MutableBlockchain blockchain) {
+    this.blockchain = blockchain;
+  }
+
   @Override
   protected RpcApi getApiGroup() {
     return RpcApis.CONSENSUS;
@@ -39,7 +48,7 @@ public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
     return mapOf(
         new ConsensusAssembleBlock(syncVertx),
         new ConsensusFinalizeBlock(syncVertx),
-        new ConsensusNewBlock(syncVertx),
+        new ConsensusNewBlock(syncVertx, blockchain),
         new ConsensusSetHead(syncVertx));
   }
 }
