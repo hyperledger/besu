@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import io.vertx.core.VertxOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusAssembleBlock;
@@ -34,7 +35,7 @@ public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
-    Vertx syncVertx = Vertx.vertx();
+    Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
         new ConsensusAssembleBlock(syncVertx),
         new ConsensusFinalizeBlock(syncVertx),
