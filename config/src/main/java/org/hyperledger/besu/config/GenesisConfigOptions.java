@@ -72,7 +72,7 @@ public interface GenesisConfigOptions {
   // TODO EIP-1559 change for the actual fork name when known
   OptionalLong getEIP1559BlockNumber();
 
-  default Optional<Long> getGenesisBaseFeePerGas() {
+  default Optional<Long> getGenesisBaseFee() {
     return getEIP1559BlockNumber().stream()
         .boxed()
         .filter(g -> g.equals(0L))
