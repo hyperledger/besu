@@ -91,8 +91,7 @@ public class FastSyncDownloader {
     if (ExceptionUtils.rootCause(error) instanceof FastSyncException) {
       return CompletableFuture.failedFuture(error);
     } else if (ExceptionUtils.rootCause(error) instanceof StalledDownloadException) {
-      LOG.warn(
-          "Fast sync was unable to download the world state. Retrying with a new pivot block.");
+      LOG.info("Re-pivoting to newer block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
       LOG.error(
