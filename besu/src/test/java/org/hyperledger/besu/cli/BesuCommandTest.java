@@ -4329,8 +4329,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "Invalid genesis file configuration. "
-                + "Elliptic curve (ecCurve) abcd is not in the list of valid elliptic curves [secp256k1]");
+            "Invalid genesis file configuration for ecCurve. "
+                + "abcd is not in the list of valid elliptic curves [secp256k1, secp256r1]");
   }
 
   @Test
