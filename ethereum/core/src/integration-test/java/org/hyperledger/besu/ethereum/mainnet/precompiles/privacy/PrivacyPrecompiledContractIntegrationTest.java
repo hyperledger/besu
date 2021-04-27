@@ -120,7 +120,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
         OrionTestHarnessFactory.create(
             "enclave",
             folder.newFolder().toPath(),
-            new EnclaveKeyConfiguration("orion_key_0.pub", "orion_key_1.key"));
+            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_1.key"));
 
     testHarness.start();
 

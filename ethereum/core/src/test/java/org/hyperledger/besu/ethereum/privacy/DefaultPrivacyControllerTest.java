@@ -162,7 +162,7 @@ public class DefaultPrivacyControllerTest {
 
     privateWorldStateReader = mock(PrivateWorldStateReader.class);
 
-    enclavePublicKey = EnclaveKeyUtils.loadKey("orion_key_0.pub");
+    enclavePublicKey = EnclaveKeyUtils.loadKey("enclave_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
     enclave = mockEnclave();
 

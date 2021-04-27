@@ -61,7 +61,7 @@ public class EnclaveTest {
         OrionTestHarnessFactory.create(
             "enclave",
             folder.newFolder().toPath(),
-            new EnclaveKeyConfiguration("orion_key_0.pub", "orion_key_0.key"));
+            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_0.key"));
 
     testHarness.start();
 

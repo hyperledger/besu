@@ -44,7 +44,7 @@ public class SECP256K1 extends AbstractSECP256 {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private boolean useNative = false;
+  private boolean useNative = true;
 
   public static final String CURVE_NAME = "secp256k1";
 

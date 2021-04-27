@@ -79,8 +79,7 @@ public class DeployPrivateSmartContractTransaction<T extends Contract> implement
               privateTransactionManager,
               GAS_PROVIDER);
 
-      final T send = cast(invoked).send();
-      return send;
+      return cast(invoked).send();
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }

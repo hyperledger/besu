@@ -22,33 +22,33 @@ public class PrivacyAccountResolver {
   public static final PrivacyAccount ALICE =
       PrivacyAccount.create(
           resolveResource("key"),
-          resolveResource("orion_key_0.pub"),
-          resolveResource("orion_key_0.key"));
+          resolveResource("enclave_key_0.pub"),
+          resolveResource("enclave_key_0.key"));
 
   public static final PrivacyAccount BOB =
       PrivacyAccount.create(
           resolveResource("key1"),
-          resolveResource("orion_key_1.pub"),
-          resolveResource("orion_key_1.key"));
+          resolveResource("enclave_key_1.pub"),
+          resolveResource("enclave_key_1.key"));
 
   public static final PrivacyAccount CHARLIE =
       PrivacyAccount.create(
           resolveResource("key2"),
-          resolveResource("orion_key_2.pub"),
-          resolveResource("orion_key_2.key"));
+          resolveResource("enclave_key_2.pub"),
+          resolveResource("enclave_key_2.key"));
 
   public static final PrivacyAccount MULTI_TENANCY =
       PrivacyAccount.create(
           resolveResource("key"),
           new URL[] {
-            resolveResource("orion_key_0.pub"),
-            resolveResource("orion_key_1.pub"),
-            resolveResource("orion_key_2.pub")
+            resolveResource("enclave_key_0.pub"),
+            resolveResource("enclave_key_1.pub"),
+            resolveResource("enclave_key_2.pub")
           },
           new URL[] {
-            resolveResource("orion_key_0.key"),
-            resolveResource("orion_key_1.key"),
-            resolveResource("orion_key_2.key")
+            resolveResource("enclave_key_0.key"),
+            resolveResource("enclave_key_1.key"),
+            resolveResource("enclave_key_2.key")
           });
 
   private static URL resolveResource(final String resource) {
