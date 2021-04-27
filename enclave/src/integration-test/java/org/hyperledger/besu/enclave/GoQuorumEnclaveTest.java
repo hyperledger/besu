@@ -60,7 +60,7 @@ public class GoQuorumEnclaveTest {
 
   @Test
   public void receiveThrowsWhenPayloadDoesNotExist() {
-    when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/receive"), any()))
+    when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/transaction"), any()))
         .thenThrow(
             new EnclaveClientException(404, "Message with hash " + MOCK_KEY + " was not found"));
 
@@ -72,7 +72,7 @@ public class GoQuorumEnclaveTest {
   @Test
   public void sendAndReceive() {
     when(vertxTransmitter.post(any(), any(), any(), any())).thenReturn(new SendResponse(KEY));
-    when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/receive"), any()))
+    when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/transaction"), any()))
         .thenReturn(new GoQuorumReceiveResponse(PAYLOAD, 0, null, null));
 
     final List<String> publicKeys = Arrays.asList("/+UuD63zItL1EbjxkKUljMgG8Z1w0AJ8pNOR4iq2yQc=");
