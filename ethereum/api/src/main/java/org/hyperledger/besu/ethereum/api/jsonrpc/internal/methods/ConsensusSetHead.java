@@ -16,10 +16,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 public class ConsensusSetHead extends SyncJsonRpcMethod {
   public ConsensusSetHead(final Vertx vertx) {
@@ -33,7 +36,12 @@ public class ConsensusSetHead extends SyncJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    // For now, just return success.
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Boolean.TRUE);
+    final Object id = requestContext.getRequest().getId();
+    try {
+      return new JsonRpcSuccessResponse(
+              id, blockchain.rewindToBlock(requestContext.getRequiredParameter(0, Hash.class)));
+    } catch (final IllegalStateException __) {
+      return new JsonRpcErrorResponse(id, JsonRpcError.INTERNAL_ERROR);
+    }
   }
 }

@@ -40,12 +40,7 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final Object id = requestContext.getRequest().getId();
-    try {
-      return new JsonRpcSuccessResponse(
-          id, blockchain.rewindToBlock(requestContext.getRequiredParameter(0, Hash.class)));
-    } catch (final IllegalStateException __) {
-      return new JsonRpcErrorResponse(id, JsonRpcError.INTERNAL_ERROR);
-    }
+    // For now, just return success.
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Boolean.TRUE);
   }
 }
