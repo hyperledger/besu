@@ -35,7 +35,7 @@ public class EthProtocol implements SubProtocol {
   public static final Capability ETH64 = Capability.create(NAME, EthVersion.V64);
   public static final Capability ETH65 = Capability.create(NAME, EthVersion.V65);
 
-  private static final EthProtocol INSTANCE = new EthProtocol();
+  private static EthProtocol INSTANCE;
 
   private static final List<Integer> eth62Messages =
       Arrays.asList(
@@ -58,12 +58,21 @@ public class EthProtocol implements SubProtocol {
 
   private static final List<Integer> eth65Messages = new ArrayList<>(eth63Messages);
 
+  private static final List<Integer> mergeSupportExcludedMessages =
+      Arrays.asList(EthPV62.NEW_BLOCK_HASHES, EthPV62.NEW_BLOCK);
+
   static {
     eth65Messages.addAll(
         Arrays.asList(
             EthPV65.NEW_POOLED_TRANSACTION_HASHES,
             EthPV65.GET_POOLED_TRANSACTIONS,
             EthPV65.POOLED_TRANSACTIONS));
+  }
+
+  private final List<Integer> disabledProtocolMessages;
+
+  public EthProtocol(final List<Integer> disabledProtocolMessages) {
+    this.disabledProtocolMessages = disabledProtocolMessages;
   }
 
   @Override
@@ -89,6 +98,9 @@ public class EthProtocol implements SubProtocol {
 
   @Override
   public boolean isValidMessageCode(final int protocolVersion, final int code) {
+    if (disabledProtocolMessages.contains(code)) {
+      return false;
+    }
     switch (protocolVersion) {
       case EthVersion.V62:
         return eth62Messages.contains(code);
@@ -140,8 +152,17 @@ public class EthProtocol implements SubProtocol {
     }
   }
 
-  public static EthProtocol get() {
+  public static EthProtocol get(final boolean isRayonismMergeEnabled) {
+    if (INSTANCE == null) {
+      INSTANCE =
+          new EthProtocol(
+              isRayonismMergeEnabled ? mergeSupportExcludedMessages : new ArrayList<>());
+    }
     return INSTANCE;
+  }
+
+  public static EthProtocol get() {
+    return get(false);
   }
 
   public static class EthVersion {

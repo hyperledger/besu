@@ -104,9 +104,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager) {
+      final EthProtocolManager ethProtocolManager, final boolean isRayonismMergeEnabled) {
     return new SubProtocolConfiguration()
-        .withSubProtocol(EthProtocol.get(), ethProtocolManager)
+        .withSubProtocol(EthProtocol.get(isRayonismMergeEnabled), ethProtocolManager)
         .withSubProtocol(
             IbftSubProtocol.get(),
             new BftProtocolManager(
