@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import io.vertx.core.VertxOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusAssembleBlock;
@@ -22,12 +21,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusFinal
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusNewBlock;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusSetHead;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 
 import java.util.Map;
 
 import io.vertx.core.Vertx;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import io.vertx.core.VertxOptions;
 
 public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
