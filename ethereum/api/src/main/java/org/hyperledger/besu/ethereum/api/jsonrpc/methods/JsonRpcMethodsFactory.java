@@ -90,7 +90,8 @@ public class JsonRpcMethodsFactory {
                   namedPlugins,
                   natService,
                   ethPeers),
-              new ConsensusJsonRpcMethods((MutableBlockchain) blockchainQueries.getBlockchain()),
+              new ConsensusJsonRpcMethods(
+                  (MutableBlockchain) blockchainQueries.getBlockchain(), miningCoordinator),
               new DebugJsonRpcMethods(
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(
