@@ -142,16 +142,18 @@ public class GenesisConfigFile {
     return getFirstRequiredString(key);
   }
 
-  private String getFirstRequiredString(final String ... keys) {
+  private String getFirstRequiredString(final String... keys) {
     List<String> keysList = Arrays.asList(keys);
     return keysList.stream()
         .filter(key -> configRoot.has(key))
         .findFirst()
         .map(key -> configRoot.get(key).asText())
-        .orElseThrow(() -> new IllegalArgumentException(
-            String.format(
-                "Invalid genesis block configuration, missing value for one of '%s'",
-                keysList)));
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Invalid genesis block configuration, missing value for one of '%s'",
+                        keysList)));
   }
 
   private long parseLong(final String name, final String value) {
