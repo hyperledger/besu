@@ -48,19 +48,27 @@ import com.fasterxml.jackson.databind.JsonNode;
 })
 public class ConsensusBlockResult extends BlockResult {
 
+  private final List<String> opaqueTransactions;
+
   public ConsensusBlockResult(
       final BlockHeader header,
-      final List<TransactionResult> transactions,
+      final List<String> transactions,
       final List<JsonNode> ommers,
       final Difficulty totalDifficulty,
       final int size,
       final boolean includeCoinbase) {
-    super(header, transactions, ommers, totalDifficulty, size, includeCoinbase);
+    super(header, null, ommers, totalDifficulty, size, includeCoinbase);
+    this.opaqueTransactions = transactions;
   }
 
   @Override
   @JsonGetter(value = "blockHash")
   public String getHash() {
     return hash;
+  }
+
+  @JsonGetter(value = "transactions")
+  public List<String> getOpaqueTransactions() {
+    return opaqueTransactions;
   }
 }
