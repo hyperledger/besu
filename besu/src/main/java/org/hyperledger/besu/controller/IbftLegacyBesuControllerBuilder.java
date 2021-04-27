@@ -56,7 +56,7 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager, final boolean isRayonismMergeEnabled) {
+      final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration()
         .withSubProtocol(Istanbul99Protocol.get(), ethProtocolManager);
   }

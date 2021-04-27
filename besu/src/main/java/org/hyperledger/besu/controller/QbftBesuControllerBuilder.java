@@ -104,9 +104,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected SubProtocolConfiguration createSubProtocolConfiguration(
-      final EthProtocolManager ethProtocolManager, final boolean isRayonismMergeEnabled) {
+      final EthProtocolManager ethProtocolManager) {
     return new SubProtocolConfiguration()
-        .withSubProtocol(EthProtocol.get(isRayonismMergeEnabled), ethProtocolManager)
+        .withSubProtocol(EthProtocol.get(), ethProtocolManager)
         .withSubProtocol(
             Istanbul100SubProtocol.get(),
             new BftProtocolManager(

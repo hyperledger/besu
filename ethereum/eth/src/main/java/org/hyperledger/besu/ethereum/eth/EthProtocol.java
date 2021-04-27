@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -152,17 +153,13 @@ public class EthProtocol implements SubProtocol {
     }
   }
 
-  public static EthProtocol get(final boolean isRayonismMergeEnabled) {
+  public static EthProtocol get() {
     if (INSTANCE == null) {
       INSTANCE =
           new EthProtocol(
-              isRayonismMergeEnabled ? mergeSupportExcludedMessages : new ArrayList<>());
+              RayonismOptions.isMergeEnabled() ? mergeSupportExcludedMessages : new ArrayList<>());
     }
     return INSTANCE;
-  }
-
-  public static EthProtocol get() {
-    return get(false);
   }
 
   public static class EthVersion {
