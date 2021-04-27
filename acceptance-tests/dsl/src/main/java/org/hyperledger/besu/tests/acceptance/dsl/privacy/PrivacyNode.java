@@ -122,7 +122,7 @@ public class PrivacyNode implements AutoCloseable {
   }
 
   public void testEnclaveConnection(final List<PrivacyNode> otherNodes) {
-    LOG.info(
+    LOG.debug(
         String.format(
             "Testing Enclave connectivity between %s (%s) and %s (%s)",
             besu.getName(),
@@ -141,7 +141,7 @@ public class PrivacyNode implements AutoCloseable {
         .until(
             () -> {
               try {
-                LOG.info("sending from: " + enclave.getDefaultPublicKey() + " to: " + to.get(0));
+                LOG.debug("sending from: " + enclave.getDefaultPublicKey() + " to: " + to.get(0));
                 enclaveClient.send(payload, enclave.getDefaultPublicKey(), to);
                 return true;
               } catch (final EnclaveClientException
