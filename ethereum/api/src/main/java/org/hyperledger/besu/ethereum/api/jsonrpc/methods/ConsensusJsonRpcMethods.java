@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusFinal
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusNewBlock;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusSetHead;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 
 import java.util.Map;
@@ -30,10 +32,15 @@ import io.vertx.core.VertxOptions;
 
 public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
-  private final MutableBlockchain blockchain;
+  private final BlockResultFactory blockResultFactory = new BlockResultFactory();
 
-  ConsensusJsonRpcMethods(final MutableBlockchain blockchain) {
+  private final MutableBlockchain blockchain;
+  private final MiningCoordinator miningCoordinator;
+
+  ConsensusJsonRpcMethods(
+      final MutableBlockchain blockchain, final MiningCoordinator miningCoordinator) {
     this.blockchain = blockchain;
+    this.miningCoordinator = miningCoordinator;
   }
 
   @Override
@@ -45,7 +52,7 @@ public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
-        new ConsensusAssembleBlock(syncVertx),
+        new ConsensusAssembleBlock(syncVertx, blockResultFactory, blockchain, miningCoordinator),
         new ConsensusFinalizeBlock(syncVertx),
         new ConsensusNewBlock(syncVertx, blockchain),
         new ConsensusSetHead(syncVertx));

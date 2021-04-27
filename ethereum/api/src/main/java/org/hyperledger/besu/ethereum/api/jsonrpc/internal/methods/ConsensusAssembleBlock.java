@@ -16,14 +16,36 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
+
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
 public class ConsensusAssembleBlock extends SyncJsonRpcMethod {
-  public ConsensusAssembleBlock(final Vertx vertx) {
+
+  private final BlockResultFactory blockResultFactory;
+  private final MiningCoordinator miningCoordinator;
+  private final Blockchain blockchain;
+
+  public ConsensusAssembleBlock(
+      final Vertx vertx,
+      final BlockResultFactory blockResultFactory,
+      final Blockchain blockchain,
+      final MiningCoordinator miningCoordinator) {
     super(vertx);
+    this.blockResultFactory = blockResultFactory;
+    this.miningCoordinator = miningCoordinator;
+    this.blockchain = blockchain;
   }
 
   @Override
@@ -32,8 +54,21 @@ public class ConsensusAssembleBlock extends SyncJsonRpcMethod {
   }
 
   @Override
-  public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    // For now, just return success.
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Boolean.TRUE);
+  public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
+
+    final Hash hash = request.getRequiredParameter(0, Hash.class);
+    final Long timestamp = request.getRequiredParameter(1, Long.class);
+
+    final Optional<BlockHeader> parentBlockHeader = blockchain.getBlockHeader(hash);
+    if (parentBlockHeader.isPresent()) {
+      final Optional<Block> block =
+          miningCoordinator.createBlock(parentBlockHeader.get(), timestamp);
+      if (block.isPresent()) {
+        return new JsonRpcSuccessResponse(
+            request.getRequest().getId(),
+            blockResultFactory.opaqueTransactionComplete(block.get()));
+      }
+    }
+    return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND);
   }
 }
