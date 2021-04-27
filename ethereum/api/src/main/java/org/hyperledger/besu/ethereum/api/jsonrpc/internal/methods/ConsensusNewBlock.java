@@ -42,6 +42,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class ConsensusNewBlock extends SyncJsonRpcMethod {
   private final MutableBlockchain blockchain;
   private static final List<BlockHeader> OMMERS_CONSTANT = Collections.emptyList();
@@ -94,6 +96,9 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
                 0,
                 new MainnetBlockHeaderFunctions()),
             new BlockBody(transactions, OMMERS_CONSTANT));
+
+    checkState(
+        newBlock.getHash().equals(blockHash), "Supplied block hash was invalid given other fields");
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Boolean.TRUE);
     // true if block is valid, false otherwise
