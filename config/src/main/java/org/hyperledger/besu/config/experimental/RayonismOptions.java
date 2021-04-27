@@ -8,7 +8,7 @@ import java.util.Optional;
  * option.
  */
 public class RayonismOptions {
-  private static Optional<Boolean> mergeEnabled;
+  private static Optional<Boolean> mergeEnabled = Optional.empty();
 
   public static void setMergeEnabled(final boolean bool) {
     if (!mergeEnabled.isPresent()) {
