@@ -19,10 +19,10 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -85,15 +85,11 @@ public class BlockResultFactory {
   }
 
   public BlockResult opaqueTransactionComplete(final Block block) {
-    final Set<String> txs =
+    final List<String> txs =
         block.getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    Bytes.concatenate(
-                        Bytes.of(transaction.getType().getSerializedType()),
-                        transaction.getPayload()))
+            .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toList());
 
     final List<JsonNode> ommers =
         block.getBody().getOmmers().stream()
@@ -103,7 +99,7 @@ public class BlockResultFactory {
             .collect(Collectors.toList());
     return new ConsensusBlockResult(
         block.getHeader(),
-        List.of(new OpaqueTransactionsResult(txs)),
+        txs,
         ommers,
         block.getHeader().getDifficulty(),
         block.calculateSize(),

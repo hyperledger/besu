@@ -113,9 +113,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
   }
 
   /**
-   * Create a block with the given transactions and ommers. The list of transactions are validated
-   * as they are processed, and are not guaranteed to be included in the final block. If
-   * transactions must match exactly, the caller must verify they were all able to be included.
+   * Create a block with the given timestamp.
    *
    * @param parentHeader The header of the parent of the block to be produced
    * @param timestamp unix timestamp of the new block.
