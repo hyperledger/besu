@@ -35,15 +35,22 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
+@RunWith(Parameterized.class)
 public class FastSyncChainDownloaderTest {
 
   private final FastSyncValidationPolicy validationPolicy = mock(FastSyncValidationPolicy.class);
@@ -58,12 +65,23 @@ public class FastSyncChainDownloaderTest {
   private BlockchainSetupUtil otherBlockchainSetup;
   protected Blockchain otherBlockchain;
 
+  @Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  }
+
+  private final DataStorageFormat storageFormat;
+
+  public FastSyncChainDownloaderTest(final DataStorageFormat storageFormat) {
+    this.storageFormat = storageFormat;
+  }
+
   @Before
   public void setup() {
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT_SKIP_DETACHED);
-    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
-    otherBlockchainSetup = BlockchainSetupUtil.forTesting();
+    otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     otherBlockchain = otherBlockchainSetup.getBlockchain();
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
@@ -143,7 +161,7 @@ public class FastSyncChainDownloaderTest {
 
   @Test
   public void recoversFromSyncTargetDisconnect() {
-    final BlockchainSetupUtil shorterChainUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil shorterChainUtil = BlockchainSetupUtil.forTesting(storageFormat);
     final MutableBlockchain shorterChain = shorterChainUtil.getBlockchain();
 
     otherBlockchainSetup.importFirstBlocks(30);

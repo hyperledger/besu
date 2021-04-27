@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldState;
+import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -142,7 +142,7 @@ public class TransactionSimulator {
       return Optional.empty();
     }
     final MutableWorldState publicWorldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
 
     if (publicWorldState == null) {
       return Optional.empty();
@@ -206,7 +206,8 @@ public class TransactionSimulator {
         && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
 
       final MutableWorldState privateWorldState =
-          getPrivateWorldState(maybePrivacyParameters.get().getGoQuorumPrivacyParameters(), header);
+          getPrivateWorldStateAtBlock(
+              maybePrivacyParameters.get().getGoQuorumPrivacyParameters(), header);
       return new GoQuorumMutablePrivateAndPublicWorldStateUpdater(
           publicWorldState.updater(), privateWorldState.updater());
     }
@@ -216,7 +217,7 @@ public class TransactionSimulator {
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
     final BlockHeader header = blockchain.getChainHeadHeader();
     final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
 
     return doesAddressExist(worldState, address, header);
   }

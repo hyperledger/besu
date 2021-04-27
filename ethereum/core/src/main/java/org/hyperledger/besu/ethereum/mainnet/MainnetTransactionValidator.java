@@ -70,7 +70,7 @@ public class MainnetTransactionValidator {
       final boolean quorumCompatibilityMode) {
     this(
         gasCalculator,
-        Optional.empty(),
+        Optional.of(TransactionPriceCalculator.frontier()),
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
@@ -124,12 +124,12 @@ public class MainnetTransactionValidator {
               transactionType, acceptedTransactionTypes.toString()));
     }
 
-    if (transactionType.equals(TransactionType.EIP1559)) {
+    if (baseFee.isPresent()) {
       final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
       if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            String.format("gasPrice is less than the current BaseFee"));
+            "gasPrice is less than the current BaseFee");
       }
     }
 

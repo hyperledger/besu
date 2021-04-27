@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.qbft.validation;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasDuplicateAuthors;
 import static org.hyperledger.besu.consensus.common.bft.validation.ValidationHelpers.hasSufficientEntries;
 
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
@@ -108,14 +107,6 @@ public class RoundChangeMessageValidator {
 
     if (!metadata.getPreparedBlockHash().equals(block.getHash())) {
       LOG.info("{}: Prepared metadata hash does not match supplied block", ERROR_PREFIX);
-      return false;
-    }
-
-    final BftExtraData extraData = BftExtraData.decode(block.getHeader());
-    if (metadata.getPreparedRound() != extraData.getRound()) {
-      LOG.info(
-          "{}: Prepared metadata contains a different round to that in the supplied block",
-          ERROR_PREFIX);
       return false;
     }
 

@@ -21,9 +21,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
@@ -61,6 +63,8 @@ public class RoundChangeCertificateValidatorTest {
   private final MessageValidatorForHeightFactory validatorFactory =
       mock(MessageValidatorForHeightFactory.class);
   private final SignedDataValidator signedDataValidator = mock(SignedDataValidator.class);
+  final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+  final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataEncoder);
 
   private Block proposedBlock;
 
@@ -70,9 +74,12 @@ public class RoundChangeCertificateValidatorTest {
     validators.add(Util.publicKeyToAddress(validatorKey.getPublicKey()));
     validators.add(Util.publicKeyToAddress(otherValidatorKey.getPublicKey()));
 
-    proposedBlock = ProposedBlockHelpers.createProposalBlock(validators, roundIdentifier);
+    proposedBlock =
+        ProposedBlockHelpers.createProposalBlock(validators, roundIdentifier, bftExtraDataEncoder);
 
-    validator = new RoundChangeCertificateValidator(validators, validatorFactory, 5);
+    validator =
+        new RoundChangeCertificateValidator(
+            validators, validatorFactory, 5, bftExtraDataEncoder, bftBlockInterface);
   }
 
   @Test
@@ -135,7 +142,8 @@ public class RoundChangeCertificateValidatorTest {
     // identical
     // to the proposedBlock in the new proposal (so should fail).
     final Block prevProposedBlock =
-        ProposedBlockHelpers.createProposalBlock(validators.subList(0, 1), preparedRound);
+        ProposedBlockHelpers.createProposalBlock(
+            validators.subList(0, 1), preparedRound, bftExtraDataEncoder);
 
     final PreparedRoundArtifacts mismatchedRoundArtefacts =
         new PreparedRoundArtifacts(
@@ -161,7 +169,8 @@ public class RoundChangeCertificateValidatorTest {
     final ConsensusRoundIdentifier latterPrepareRound =
         ConsensusRoundHelpers.createFrom(roundIdentifier, 0, -1);
     final Block latterBlock =
-        ProposedBlockHelpers.createProposalBlock(validators, latterPrepareRound);
+        ProposedBlockHelpers.createProposalBlock(
+            validators, latterPrepareRound, bftExtraDataEncoder);
     final Proposal latterProposal =
         proposerMessageFactory.createProposal(latterPrepareRound, latterBlock, empty());
     final Optional<PreparedRoundArtifacts> latterTerminatedRoundArtefacts =
@@ -178,7 +187,8 @@ public class RoundChangeCertificateValidatorTest {
         new ConsensusRoundIdentifier(
             roundIdentifier.getSequenceNumber(), roundIdentifier.getRoundNumber() - 2);
     final Block earlierBlock =
-        ProposedBlockHelpers.createProposalBlock(validators.subList(0, 1), earlierPreparedRound);
+        ProposedBlockHelpers.createProposalBlock(
+            validators.subList(0, 1), earlierPreparedRound, bftExtraDataEncoder);
     final Proposal earlierProposal =
         proposerMessageFactory.createProposal(earlierPreparedRound, earlierBlock, empty());
     final Optional<PreparedRoundArtifacts> earlierTerminatedRoundArtefacts =

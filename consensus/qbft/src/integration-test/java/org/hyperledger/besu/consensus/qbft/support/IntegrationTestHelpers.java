@@ -15,9 +15,11 @@
 package org.hyperledger.besu.consensus.qbft.support;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
-import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
@@ -30,11 +32,13 @@ public class IntegrationTestHelpers {
   public static SignedData<CommitPayload> createSignedCommitPayload(
       final ConsensusRoundIdentifier roundId, final Block block, final NodeKey nodeKey) {
 
-    final BftExtraData extraData = BftExtraData.decode(block.getHeader());
+    final QbftExtraDataCodec ibftExtraDataEncoder = new QbftExtraDataCodec();
 
+    final Block commitBlock = createCommitBlockFromProposalBlock(block, roundId.getRoundNumber());
     final SECPSignature commitSeal =
         nodeKey.sign(
-            BftBlockHashing.calculateDataHashForCommittedSeal(block.getHeader(), extraData));
+            new BftBlockHashing(ibftExtraDataEncoder)
+                .calculateDataHashForCommittedSeal(commitBlock.getHeader()));
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
@@ -49,5 +53,13 @@ public class IntegrationTestHelpers {
         block,
         peers.createSignedPreparePayloadOfAllPeers(preparedRound, block.getHash()),
         preparedRound.getRoundNumber());
+  }
+
+  public static Block createCommitBlockFromProposalBlock(
+      final Block proposalBlock, final int round) {
+    final QbftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+    final BftBlockInterface bftBlockInterface = new BftBlockInterface(bftExtraDataCodec);
+    return bftBlockInterface.replaceRoundInBlock(
+        proposalBlock, round, BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 }

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +71,14 @@ public interface GenesisConfigOptions {
 
   // TODO EIP-1559 change for the actual fork name when known
   OptionalLong getEIP1559BlockNumber();
+
+  default Optional<Long> getGenesisBaseFee() {
+    return getEIP1559BlockNumber().stream()
+        .boxed()
+        .filter(g -> g.equals(0L))
+        .map(g -> ExperimentalEIPs.initialBasefee)
+        .findAny();
+  }
 
   List<Long> getForks();
 
@@ -230,4 +240,11 @@ public interface GenesisConfigOptions {
    * @return the PoW algorithm in use.
    */
   PowAlgorithm getPowAlgorithm();
+
+  /**
+   * The elliptic curve which should be used in SignatureAlgorithm.
+   *
+   * @return the name of the elliptic curve.
+   */
+  Optional<String> getEcCurve();
 }

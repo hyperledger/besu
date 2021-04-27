@@ -42,8 +42,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String QBFT_CONFIG_KEY = "qbft";
   private static final String CLIQUE_CONFIG_KEY = "clique";
-
+  private static final String EC_CURVE_CONFIG_KEY = "eccurve";
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
+
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   private final TransitionsConfigOptions transitions;
@@ -256,7 +257,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   // TODO EIP-1559 change for the actual fork name when known
   public OptionalLong getEIP1559BlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? getOptionalLong("eip1559block") : OptionalLong.empty();
+    return ExperimentalEIPs.eip1559Enabled ? getOptionalLong("aleutblock") : OptionalLong.empty();
   }
 
   @Override
@@ -347,6 +348,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public Optional<String> getEcCurve() {
+    return JsonUtil.getString(configRoot, EC_CURVE_CONFIG_KEY);
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -387,7 +393,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
-    getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
+    getEIP1559BlockNumber().ifPresent(l -> builder.put("aleutblock", l));
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));

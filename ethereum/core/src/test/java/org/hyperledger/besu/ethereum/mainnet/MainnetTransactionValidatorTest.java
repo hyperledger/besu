@@ -271,7 +271,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
-            Optional.empty(),
+            Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER),
             defaultGoQuorumCompatibilityMode);
 
@@ -280,7 +280,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
-            Optional.empty(),
+            Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode);
 
@@ -290,7 +290,7 @@ public class MainnetTransactionValidatorTest {
             .gasPremium(Optional.of(Wei.of(3)))
             .feeCap(Optional.of(Wei.of(6)))
             .gasLimit(21000)
-            .chainId(Optional.empty())
+            .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
 
     when(transactionPriceCalculator.price(eq(transaction), any())).thenReturn(Wei.of(160000L));
@@ -315,7 +315,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
-            Optional.empty(),
+            Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode);
     final Transaction transaction =
@@ -323,7 +323,7 @@ public class MainnetTransactionValidatorTest {
             .type(TransactionType.EIP1559)
             .gasPremium(Optional.of(Wei.of(1)))
             .feeCap(Optional.of(Wei.of(1)))
-            .chainId(Optional.empty())
+            .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(1));
@@ -352,6 +352,7 @@ public class MainnetTransactionValidatorTest {
     final Optional<Long> basefee = Optional.of(150000L);
     when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
         .thenReturn(new GasAndAccessedState(Gas.of(50)));
+    when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(150001L));
 
     assertThat(validator.validate(transaction, basefee)).isEqualTo(ValidationResult.valid());
     ExperimentalEIPs.eip1559Enabled = false;

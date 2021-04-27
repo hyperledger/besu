@@ -168,7 +168,7 @@ public class ForkIdsTest {
             .map(
                 block -> {
                   blockNumber.set(block);
-                  return forkIdManager.computeForkId();
+                  return forkIdManager.getForkIdForChainHead();
                 })
             .collect(Collectors.toList());
 

@@ -77,7 +77,7 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   // requires ethsigner jar > 0.3.0
-  // https://bintray.com/consensys/pegasys-repo/ethsigner
+  // https://cloudsmith.io/~consensys/repos/ethsigner/packages/
   @Test
   @Ignore
   public void privateSmartContractMustDeployNoNonce() throws IOException {

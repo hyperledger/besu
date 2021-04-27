@@ -20,6 +20,7 @@ import static org.hyperledger.besu.consensus.qbft.support.IntegrationTestHelpers
 
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -65,7 +66,7 @@ public class RoundChangeTest {
   private final MessageFactory localNodeMessageFactory = context.getLocalNodeMessageFactory();
 
   private final Block blockToPropose =
-      context.createBlockForProposalFromChainHead(0, 15, peers.getProposer().getNodeAddress());
+      context.createBlockForProposalFromChainHead(15, peers.getProposer().getNodeAddress());
 
   @Test
   public void onRoundChangeTimerExpiryEventRoundChangeMessageIsSent() {
@@ -74,6 +75,7 @@ public class RoundChangeTest {
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 1);
     final RoundChange expectedTxRoundChange =
         localNodeMessageFactory.createRoundChange(targetRound, empty());
+    context.getController().handleBlockTimerExpiry(new BlockTimerExpiry(roundId));
     context.getController().handleRoundExpiry(new RoundExpiry(roundId));
     peers.verifyMessagesReceived(expectedTxRoundChange);
   }
@@ -142,8 +144,7 @@ public class RoundChangeTest {
   public void whenSufficientRoundChangeMessagesAreReceivedForNewRoundLocalNodeCreatesProposalMsg() {
     // Note: Round-4 is the next round for which the local node is Proposer
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 4);
-    final Block locallyProposedBlock =
-        context.createBlockForProposalFromChainHead(targetRound.getRoundNumber(), blockTimeStamp);
+    final Block locallyProposedBlock = context.createBlockForProposalFromChainHead(blockTimeStamp);
 
     final RoundChange rc1 = peers.getNonProposing(0).injectRoundChange(targetRound, empty());
     final RoundChange rc2 = peers.getNonProposing(1).injectRoundChange(targetRound, empty());
@@ -176,14 +177,14 @@ public class RoundChangeTest {
             context,
             new ConsensusRoundIdentifier(1, 1),
             context.createBlockForProposalFromChainHead(
-                1, ARBITRARY_BLOCKTIME / 2, peers.getProposer().getNodeAddress()));
+                ARBITRARY_BLOCKTIME / 2, peers.getProposer().getNodeAddress()));
 
     final PreparedCertificate bestPrepCert =
         createValidPreparedCertificate(
             context,
             new ConsensusRoundIdentifier(1, 2),
             context.createBlockForProposalFromChainHead(
-                2, ARBITRARY_BLOCKTIME, peers.getProposer().getNodeAddress()));
+                ARBITRARY_BLOCKTIME, peers.getProposer().getNodeAddress()));
 
     final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(1, 4);
 
@@ -205,9 +206,7 @@ public class RoundChangeTest {
     // round number.
     final Block expectedBlockToPropose =
         context.createBlockForProposalFromChainHead(
-            targetRound.getRoundNumber(),
-            ARBITRARY_BLOCKTIME,
-            peers.getProposer().getNodeAddress());
+            ARBITRARY_BLOCKTIME, peers.getProposer().getNodeAddress());
 
     final Proposal expectedProposal =
         localNodeMessageFactory.createProposal(
@@ -235,8 +234,7 @@ public class RoundChangeTest {
     final ConsensusRoundIdentifier priorRound = new ConsensusRoundIdentifier(1, 4);
     peers.roundChange(priorRound);
 
-    final Block locallyProposedBlock =
-        context.createBlockForProposalFromChainHead(futureRound.getRoundNumber(), blockTimeStamp);
+    final Block locallyProposedBlock = context.createBlockForProposalFromChainHead(blockTimeStamp);
 
     final Proposal expectedProposal =
         localNodeMessageFactory.createProposal(
@@ -273,7 +271,7 @@ public class RoundChangeTest {
             context,
             new ConsensusRoundIdentifier(1, 2),
             context.createBlockForProposalFromChainHead(
-                2, ARBITRARY_BLOCKTIME, peers.getProposer().getNodeAddress()));
+                ARBITRARY_BLOCKTIME, peers.getProposer().getNodeAddress()));
 
     final List<SignedData<RoundChangePayload>> roundChangeMessages = Lists.newArrayList();
     // Create a roundChange containing a PreparedCertificate
@@ -290,9 +288,7 @@ public class RoundChangeTest {
 
     final Block expectedBlockToPropose =
         context.createBlockForProposalFromChainHead(
-            targetRound.getRoundNumber(),
-            ARBITRARY_BLOCKTIME,
-            peers.getProposer().getNodeAddress());
+            ARBITRARY_BLOCKTIME, peers.getProposer().getNodeAddress());
 
     final Proposal expectedProposal =
         localNodeMessageFactory.createProposal(

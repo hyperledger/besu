@@ -47,7 +47,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   @Override
-  protected Gas callOperationBaseGasCost() {
+  public Gas callOperationBaseGasCost() {
     return CALL_OPERATION_BASE_GAS_COST;
   }
 

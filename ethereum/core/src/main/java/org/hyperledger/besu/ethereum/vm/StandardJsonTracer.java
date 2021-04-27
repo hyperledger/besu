@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -33,6 +32,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class StandardJsonTracer implements OperationTracer {
+
+  private static final int EIP_150_DIVISOR = 64;
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -80,11 +81,6 @@ public class StandardJsonTracer implements OperationTracer {
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add(shortBytes(messageFrame.getStackItem(i)));
     }
-    final ArrayNode returnStack = traceLine.putArray("returnStack");
-    final ReturnStack rs = messageFrame.getReturnStack();
-    for (int i = rs.size() - 1; i >= 0; i--) {
-      returnStack.add("0x" + Integer.toHexString(rs.get(i) - 1));
-    }
     Bytes returnData = messageFrame.getReturnData();
     traceLine.put("returnData", returnData.size() > 0 ? returnData.toHexString() : null);
     traceLine.put("depth", messageFrame.getMessageStackDepth() + 1);
@@ -92,8 +88,19 @@ public class StandardJsonTracer implements OperationTracer {
     final OperationResult executeResult = executeOperation.execute();
 
     traceLine.put("refund", messageFrame.getGasRefund().toLong());
-    traceLine.put(
-        "gasCost", executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""));
+
+    if (AbstractCallOperation.class.isAssignableFrom(
+        messageFrame.getCurrentOperation().getClass())) {
+      final AbstractCallOperation callOperation =
+          (AbstractCallOperation) messageFrame.getCurrentOperation();
+      traceLine.put(
+          "gasCost", shortNumber((computeCallGas(callOperation, messageFrame).asUInt256())));
+    } else {
+      traceLine.put(
+          "gasCost",
+          executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""));
+    }
+
     if (showMemory) {
       traceLine.put(
           "memory",
@@ -117,6 +124,18 @@ public class StandardJsonTracer implements OperationTracer {
     traceLine.put("opName", currentOp.getName());
     traceLine.put("error", error);
     out.println(traceLine.toString());
+  }
+
+  private Gas computeCallGas(
+      final AbstractCallOperation callOperation, final MessageFrame messageFrame) {
+    final GasCalculator gasCalculator = callOperation.gasCalculator();
+    // as part of EIP 150 the returned costGas is gas - base * 63 / 64.
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-150.md
+    final Gas callCost = callOperation.gas(messageFrame);
+    final Gas gasAvailable = callCost.minus(messageFrame.getGasCost().orElse(Gas.ZERO));
+    final Gas gas = gasAvailable.minus(gasAvailable.dividedBy(EIP_150_DIVISOR));
+    final Gas baseCost = gasCalculator.callOperationBaseGasCost();
+    return ((gas.compareTo(callCost) < 0) ? gas : callCost).plus(baseCost);
   }
 
   @Override

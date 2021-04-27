@@ -54,6 +54,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
   private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
+  private Optional<String> ecCurve = Optional.empty();
 
   @Override
   public String getConsensusEngine() {
@@ -266,7 +267,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     // TODO EIP-1559 change for the actual fork name when known
-    getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
+    getEIP1559BlockNumber().ifPresent(l -> builder.put("aleutblock", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
@@ -320,6 +321,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return isEthHash()
         ? PowAlgorithm.ETHASH
         : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
+  }
+
+  @Override
+  public Optional<String> getEcCurve() {
+    return ecCurve;
   }
 
   @Override
@@ -439,6 +445,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions stackSizeLimit(final int stackSizeLimit) {
     this.stackSizeLimit = OptionalInt.of(stackSizeLimit);
+    return this;
+  }
+
+  public StubGenesisConfigOptions ecCurve(final Optional<String> ecCurve) {
+    this.ecCurve = ecCurve;
     return this;
   }
 }

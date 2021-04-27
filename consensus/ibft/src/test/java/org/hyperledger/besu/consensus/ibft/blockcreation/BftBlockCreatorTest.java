@@ -15,8 +15,8 @@
 package org.hyperledger.besu.consensus.ibft.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -73,16 +74,18 @@ public class BftBlockCreatorTest {
       initialValidatorList.add(AddressHelpers.ofValue(i));
     }
 
+    final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
             GenesisConfigFile.fromConfig("{\"config\": {\"spuriousDragonBlock\":0}}")
                 .getConfigOptions(),
-            IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
+            IbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+            bftExtraDataEncoder);
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
             createInMemoryWorldStateArchive(),
-            setupContextWithValidators(initialValidatorList));
+            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder));
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -98,13 +101,13 @@ public class BftBlockCreatorTest {
         new BftBlockCreator(
             initialValidatorList.get(0),
             parent ->
-                new BftExtraData(
+                bftExtraDataEncoder.encode(
+                    new BftExtraData(
                         Bytes.wrap(new byte[32]),
                         Collections.emptyList(),
                         Optional.empty(),
                         0,
-                        initialValidatorList)
-                    .encode(),
+                        initialValidatorList)),
             pendingTransactions,
             protContext,
             protocolSchedule,
@@ -112,7 +115,8 @@ public class BftBlockCreatorTest {
             Wei.ZERO,
             0.8,
             parentHeader,
-            initialValidatorList.get(0));
+            initialValidatorList.get(0),
+            bftExtraDataEncoder);
 
     final int secondsBetweenBlocks = 1;
     final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
@@ -128,8 +132,10 @@ public class BftBlockCreatorTest {
     assertThat(validationResult).isTrue();
 
     final BlockHeader header = block.getHeader();
-    final BftExtraData extraData = BftExtraData.decode(header);
+    final BftExtraData extraData = bftExtraDataEncoder.decode(header);
     assertThat(block.getHash())
-        .isEqualTo(BftBlockHashing.calculateDataHashForCommittedSeal(header, extraData));
+        .isEqualTo(
+            new BftBlockHashing(bftExtraDataEncoder)
+                .calculateDataHashForCommittedSeal(header, extraData));
   }
 }

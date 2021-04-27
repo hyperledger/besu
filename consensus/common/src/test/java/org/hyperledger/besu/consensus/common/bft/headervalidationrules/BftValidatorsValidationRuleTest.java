@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraData;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -32,6 +34,8 @@ public class BftValidatorsValidationRuleTest {
 
   private final BftValidatorsValidationRule validatorsValidationRule =
       new BftValidatorsValidationRule();
+  private final BftExtraData bftExtraData = mock(BftExtraData.class);
+  private final BlockHeader blockHeader = mock(BlockHeader.class);
 
   @Test
   public void correctlyConstructedHeaderPassesValidation() {
@@ -40,12 +44,10 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+        new ProtocolContext(null, null, setupContextWithBftExtraData(validators, bftExtraData));
+    when(bftExtraData.getValidators()).thenReturn(validators);
 
-    final BlockHeader header =
-        HeaderValidationTestHelpers.createProposedBlockHeader(validators, emptyList(), false);
-
-    assertThat(validatorsValidationRule.validate(header, null, context)).isTrue();
+    assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isTrue();
   }
 
   @Test
@@ -56,13 +58,10 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+        new ProtocolContext(null, null, setupContextWithBftExtraData(validators, bftExtraData));
+    when(bftExtraData.getValidators()).thenReturn(Lists.reverse(validators));
 
-    final BlockHeader header =
-        HeaderValidationTestHelpers.createProposedBlockHeader(
-            Lists.reverse(validators), emptyList(), false);
-
-    assertThat(validatorsValidationRule.validate(header, null, context)).isFalse();
+    assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();
   }
 
   @Test
@@ -76,12 +75,10 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(2), AddressHelpers.ofValue(3), AddressHelpers.ofValue(4));
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(storedValidators));
+        new ProtocolContext(
+            null, null, setupContextWithBftExtraData(storedValidators, bftExtraData));
+    when(bftExtraData.getValidators()).thenReturn(Lists.reverse(reportedValidators));
 
-    final BlockHeader header =
-        HeaderValidationTestHelpers.createProposedBlockHeader(
-            reportedValidators, emptyList(), false);
-
-    assertThat(validatorsValidationRule.validate(header, null, context)).isFalse();
+    assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();
   }
 }

@@ -37,9 +37,12 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
@@ -47,10 +50,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class FastSyncActionsTest {
 
-  private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
   private final SynchronizerConfiguration.Builder syncConfigBuilder =
       new SynchronizerConfiguration.Builder().syncMode(SyncMode.FAST).fastSyncPivotDistance(1000);
 
@@ -60,9 +65,22 @@ public class FastSyncActionsTest {
   private FastSyncActions fastSyncActions;
   private EthProtocolManager ethProtocolManager;
   private MutableBlockchain blockchain;
+  private BlockchainSetupUtil blockchainSetupUtil;
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  }
+
+  private final DataStorageFormat storageFormat;
+
+  public FastSyncActionsTest(final DataStorageFormat storageFormat) {
+    this.storageFormat = storageFormat;
+  }
 
   @Before
   public void setUp() {
+    blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     ethProtocolManager =

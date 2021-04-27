@@ -29,10 +29,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -40,8 +42,11 @@ import java.util.concurrent.CompletableFuture;
 import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
 
+@RunWith(Parameterized.class)
 public class PersistBlockTaskTest {
 
   private BlockchainSetupUtil blockchainUtil;
@@ -51,9 +56,20 @@ public class PersistBlockTaskTest {
   private MutableBlockchain blockchain;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  }
+
+  private final DataStorageFormat storageFormat;
+
+  public PersistBlockTaskTest(final DataStorageFormat storageFormat) {
+    this.storageFormat = storageFormat;
+  }
+
   @Before
   public void setup() {
-    blockchainUtil = BlockchainSetupUtil.forTesting();
+    blockchainUtil = BlockchainSetupUtil.forTesting(storageFormat);
     protocolSchedule = blockchainUtil.getProtocolSchedule();
     protocolContext = blockchainUtil.getProtocolContext();
     blockchain = blockchainUtil.getBlockchain();

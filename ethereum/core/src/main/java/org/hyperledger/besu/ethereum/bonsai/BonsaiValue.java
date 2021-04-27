@@ -22,27 +22,30 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class BonsaiValue<T> {
-  private T original;
+  private T prior;
   private T updated;
+  private boolean cleared;
 
-  BonsaiValue(final T original, final T updated) {
-    this.original = original;
+  BonsaiValue(final T prior, final T updated) {
+    this.prior = prior;
     this.updated = updated;
+    this.cleared = false;
   }
 
-  public T getOriginal() {
-    return original;
+  public T getPrior() {
+    return prior;
   }
 
   public T getUpdated() {
     return updated;
   }
 
-  public void setOriginal(final T original) {
-    this.original = original;
+  public void setPrior(final T prior) {
+    this.prior = prior;
   }
 
   public void setUpdated(final T updated) {
+    this.cleared = updated == null;
     this.updated = updated;
   }
 
@@ -53,10 +56,10 @@ public class BonsaiValue<T> {
   }
 
   void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
-    if (original == null) {
+    if (prior == null) {
       output.writeNull();
     } else {
-      writer.accept(output, original);
+      writer.accept(output, prior);
     }
     if (updated == null) {
       output.writeNull();
@@ -66,11 +69,22 @@ public class BonsaiValue<T> {
   }
 
   boolean isUnchanged() {
-    return Objects.equals(updated, original);
+    return Objects.equals(updated, prior);
+  }
+
+  public boolean isCleared() {
+    return cleared;
   }
 
   @Override
   public String toString() {
-    return "BonsaiValue{" + "original=" + original + ", updated=" + updated + '}';
+    return "BonsaiValue{"
+        + "prior="
+        + prior
+        + ", updated="
+        + updated
+        + ", cleared="
+        + cleared
+        + '}';
   }
 }

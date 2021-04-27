@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.vm.operations.AddOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AddressOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AndOperation;
 import org.hyperledger.besu.ethereum.vm.operations.BalanceOperation;
-import org.hyperledger.besu.ethereum.vm.operations.BeginSubOperation;
+import org.hyperledger.besu.ethereum.vm.operations.BaseFeeOperation;
 import org.hyperledger.besu.ethereum.vm.operations.BlockHashOperation;
 import org.hyperledger.besu.ethereum.vm.operations.ByteOperation;
 import org.hyperledger.besu.ethereum.vm.operations.CallCodeOperation;
@@ -56,7 +56,6 @@ import org.hyperledger.besu.ethereum.vm.operations.InvalidOperation;
 import org.hyperledger.besu.ethereum.vm.operations.IsZeroOperation;
 import org.hyperledger.besu.ethereum.vm.operations.JumpDestOperation;
 import org.hyperledger.besu.ethereum.vm.operations.JumpOperation;
-import org.hyperledger.besu.ethereum.vm.operations.JumpSubOperation;
 import org.hyperledger.besu.ethereum.vm.operations.JumpiOperation;
 import org.hyperledger.besu.ethereum.vm.operations.LogOperation;
 import org.hyperledger.besu.ethereum.vm.operations.LtOperation;
@@ -77,7 +76,6 @@ import org.hyperledger.besu.ethereum.vm.operations.PushOperation;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnDataCopyOperation;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnDataSizeOperation;
 import org.hyperledger.besu.ethereum.vm.operations.ReturnOperation;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnSubOperation;
 import org.hyperledger.besu.ethereum.vm.operations.RevertOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SDivOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SGtOperation;
@@ -147,10 +145,10 @@ abstract class MainnetEvmRegistries {
     return new EVM(registry, gasCalculator);
   }
 
-  static EVM berlin(final GasCalculator gasCalculator, final BigInteger chainId) {
+  static EVM london(final GasCalculator gasCalculator, final BigInteger chainId) {
     final OperationRegistry registry = new OperationRegistry();
 
-    registerBerlinOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
+    registerLondonOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
 
     return new EVM(registry, gasCalculator);
   }
@@ -290,14 +288,12 @@ abstract class MainnetEvmRegistries {
         Account.DEFAULT_VERSION);
   }
 
-  private static void registerBerlinOpcodes(
+  private static void registerLondonOpcodes(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final int accountVersion,
       final BigInteger chainId) {
     registerIstanbulOpcodes(registry, gasCalculator, accountVersion, chainId);
-    registry.put(new BeginSubOperation(gasCalculator), accountVersion);
-    registry.put(new JumpSubOperation(gasCalculator), accountVersion);
-    registry.put(new ReturnSubOperation(gasCalculator), accountVersion);
+    registry.put(new BaseFeeOperation(gasCalculator), Account.DEFAULT_VERSION);
   }
 }

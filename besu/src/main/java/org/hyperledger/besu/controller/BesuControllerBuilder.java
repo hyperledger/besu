@@ -435,7 +435,8 @@ public abstract class BesuControllerBuilder {
       final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
-        return new BonsaiWorldStateArchive(storageProvider, blockchain);
+        return new BonsaiWorldStateArchive(
+            storageProvider, blockchain, dataStorageConfiguration.getBonsaiMaxLayersToLoad());
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
@@ -65,9 +66,7 @@ public class GossipTest {
 
   @Before
   public void setup() {
-    block =
-        context.createBlockForProposalFromChainHead(
-            roundId.getRoundNumber(), 30, peers.getProposer().getNodeAddress());
+    block = context.createBlockForProposalFromChainHead(30, peers.getProposer().getNodeAddress());
     sender = peers.getProposer();
     msgFactory = sender.getMessageFactory();
   }
@@ -87,7 +86,7 @@ public class GossipTest {
     peers.verifyMessagesReceivedNonPropsing(prepare);
     peers.verifyNoMessagesReceivedProposer();
 
-    final Commit commit = sender.injectCommit(roundId, block.getHash());
+    final Commit commit = sender.injectCommit(roundId, block);
     peers.verifyMessagesReceivedNonPropsing(commit);
     peers.verifyNoMessagesReceivedProposer();
 
@@ -161,7 +160,8 @@ public class GossipTest {
   @Test
   public void futureMessageGetGossipedLater() {
     final Block signedCurrentHeightBlock =
-        BftHelpers.createSealedBlock(block, peers.sign(block.getHash()));
+        BftHelpers.createSealedBlock(
+            new QbftExtraDataCodec(), block, 0, peers.sign(block.getHash()));
 
     final ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
     final Prepare futurePrepare = sender.injectPrepare(futureRoundId, block.getHash());
