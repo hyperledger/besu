@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
@@ -26,6 +27,7 @@ import io.vertx.core.http.HttpMethod;
 
 public class VertxRequestTransmitter implements RequestTransmitter {
 
+  private static final String APPLICATION_JSON = "application/json";
   private final HttpClient client;
   private static final long REQUEST_TIMEOUT_MS = 5000L;
 
@@ -71,7 +73,11 @@ public class VertxRequestTransmitter implements RequestTransmitter {
               .handler(response -> handleResponse(response, responseHandler, result))
               .setTimeout(REQUEST_TIMEOUT_MS)
               .exceptionHandler(result::completeExceptionally)
-              .setChunked(false);
+              .setChunked(false)
+              .putHeader(
+                  HttpHeaderNames.ACCEPT,
+                  APPLICATION_JSON); // necessary for using /transaction/{hash} with Tessera, as
+      // this is not unique without this
       contentType.ifPresent(ct -> request.putHeader(HttpHeaders.CONTENT_TYPE, ct));
       if (content.isPresent()) {
         request.end(content.get());
