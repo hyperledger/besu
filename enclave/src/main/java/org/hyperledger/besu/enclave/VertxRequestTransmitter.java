@@ -42,7 +42,12 @@ public class VertxRequestTransmitter implements RequestTransmitter {
       final String endpoint,
       final ResponseBodyHandler<T> responseHandler) {
     return sendRequest(
-        HttpMethod.POST, Optional.of(contentType), Optional.of(content), endpoint, responseHandler);
+        HttpMethod.POST,
+        Optional.of(contentType),
+        Optional.of(content),
+        endpoint,
+        responseHandler,
+        false);
   }
 
   @Override
@@ -50,13 +55,15 @@ public class VertxRequestTransmitter implements RequestTransmitter {
       final String contentType,
       final String content,
       final String endpoint,
-      final ResponseBodyHandler<T> responseHandler) {
+      final ResponseBodyHandler<T> responseHandler,
+      final boolean withAcceptJsonHeader) {
     return sendRequest(
         HttpMethod.GET,
         Optional.ofNullable(contentType),
         Optional.ofNullable(content),
         endpoint,
-        responseHandler);
+        responseHandler,
+        withAcceptJsonHeader);
   }
 
   protected <T> T sendRequest(
@@ -64,7 +71,8 @@ public class VertxRequestTransmitter implements RequestTransmitter {
       final Optional<String> contentType,
       final Optional<String> content,
       final String endpoint,
-      final ResponseBodyHandler<T> responseHandler) {
+      final ResponseBodyHandler<T> responseHandler,
+      final boolean withAcceptJsonHeader) {
     try {
       final CompletableFuture<T> result = new CompletableFuture<>();
       final HttpClientRequest request =
@@ -73,11 +81,11 @@ public class VertxRequestTransmitter implements RequestTransmitter {
               .handler(response -> handleResponse(response, responseHandler, result))
               .setTimeout(REQUEST_TIMEOUT_MS)
               .exceptionHandler(result::completeExceptionally)
-              .setChunked(false)
-              .putHeader(
-                  HttpHeaderNames.ACCEPT,
-                  APPLICATION_JSON); // necessary for using /transaction/{hash} with Tessera, as
-      // this is not unique without this
+              .setChunked(false);
+      if (withAcceptJsonHeader) {
+        // this is needed when using Tessera GET /transaction/{hash} to choose the right RPC
+        request.putHeader(HttpHeaderNames.ACCEPT, APPLICATION_JSON);
+      }
       contentType.ifPresent(ct -> request.putHeader(HttpHeaders.CONTENT_TYPE, ct));
       if (content.isPresent()) {
         request.end(content.get());
