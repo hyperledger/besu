@@ -94,16 +94,16 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Optional<BlockHeader> blockHeader,
       final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
     // first clear storage
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("calculateRootHash begin");
     }
     Map<Hash, StoredMerklePatriciaTrie<Bytes, Bytes>> storageTries = new HashMap<>();
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("getStorageToClear begin");
     }
     for (final Address address : updater.getStorageToClear()) {
       // because we are clearing persisted values we need the account root as persisted
-      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
         LOG.info("continue address in progress" + address);
       }
       final BonsaiAccount oldAccount =
@@ -116,7 +116,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         // block.  A not-uncommon DeFi bot pattern.
         continue;
       }
-      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
         LOG.info("continue address " + address);
       }
       final Hash addressHash = Hash.hash(address);
@@ -127,7 +127,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
               Function.identity(),
               Function.identity());
       storageTries.putIfAbsent(addressHash, storageTrie);
-      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
         LOG.info("load trie address done" + address);
       }
       Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
@@ -143,15 +143,15 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         } else {
           break;
         }
-        if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+        if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
           LOG.info("detect trie slot done" + address);
         }
       }
-      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
         LOG.info("remove trie slot done" + address);
       }
     }
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("getStorageToClear ended");
     }
     // second update account storage state.  This must be done before updating the accounts so
@@ -162,7 +162,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final Address updatedAddress = storageAccountUpdate.getKey();
       final Hash updatedAddressHash = Hash.hash(updatedAddress);
 
-      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
         LOG.info("getStorageToUpdate in progress" + updatedAddress);
       }
 
@@ -178,7 +178,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
               Function.identity(),
               Function.identity());
 
-      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
         LOG.info("load trie address done " + updatedAddress);
       }
       // for manicured tries and composting, collect branches here (not implemented)
@@ -188,7 +188,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         final Hash keyHash = storageUpdate.getKey();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
 
-        if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+        if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
           LOG.info("storage slot update in progress " + updatedAddress);
         }
 
@@ -201,7 +201,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
           storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
         }
       }
-      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
         LOG.info("storage slot update done " + updatedAddress);
       }
       final BonsaiAccount accountUpdated = accountValue.getUpdated();
@@ -212,13 +212,13 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
         accountUpdated.setStorageRoot(newStorageRoot);
       }
-      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+      if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
         LOG.info("commit trie " + updatedAddress);
       }
       // for manicured tries and composting, trim and compost here
     }
 
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("getCodeToUpdate begin ");
     }
     // Third update the code.  This has the side effect of ensuring a code hash is calculated.
@@ -232,7 +232,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         stateUpdater.putCode(accountHash, null, updatedCode);
       }
     }
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("getCodeToUpdate ended ");
     }
     // next walk the account trie
@@ -242,7 +242,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateRootHash,
             Function.identity(),
             Function.identity());
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("load account trie done ");
     }
     // for manicured tries and composting, collect branches here (not implemented)
@@ -255,14 +255,14 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       if (updatedAccount == null) {
         final Hash addressHash = Hash.hash(accountKey);
-        if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+        if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
           LOG.info("getAccountsToUpdate 1 in progress " + addressHash);
         }
         accountTrie.remove(addressHash);
         stateUpdater.removeAccountInfoState(addressHash);
       } else {
         final Hash addressHash = updatedAccount.getAddressHash();
-        if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+        if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
           LOG.info("getAccountsToUpdate 2 in progress " + addressHash);
         }
         final Bytes accountValue = updatedAccount.serializeAccount();
@@ -270,7 +270,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         accountTrie.put(addressHash, accountValue);
       }
     }
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("getAccountsToUpdate ended ");
     }
     // TODO write to a cache and then generate a layer update from that and the
@@ -278,11 +278,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     accountTrie.commit(
         (location, hash, value) ->
             writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("account trie commit commit ");
     }
     final Bytes32 rootHash = accountTrie.getRootHash();
-    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 11953816) {
+    if (blockHeader.isPresent() && blockHeader.get().getNumber() == 12326940) {
       LOG.info("getRootHash done");
     }
     return Hash.wrap(rootHash);
@@ -336,13 +336,13 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       success = true;
     } finally {
       if (success) {
-        if (blockHeader.getNumber() == 11953816) {
+        if (blockHeader.getNumber() == 12326940) {
           LOG.info("commit begin");
         } else {
           stateUpdater.commit();
         }
 
-        if (blockHeader.getNumber() == 11953816) {
+        if (blockHeader.getNumber() == 12326940) {
           LOG.info("commit done");
         } else {
           updater.reset();

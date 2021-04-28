@@ -62,7 +62,7 @@ public class FullImportBlockStep implements Consumer<Block> {
       throw new InvalidBlockException("Failed to import block", blockNumber, block.getHash());
     }
     final double end = Instant.now().toEpochMilli() - beg;
-    if (blockNumber == 11953816) {
+    if (blockNumber == 12326940) {
       LOG.info(
           String.format(
               "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
