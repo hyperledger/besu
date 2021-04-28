@@ -1386,15 +1386,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void configureNativeLibs() {
-    if (unstableNativeLibraryOptions.getNativeAltbn128()) {
-      AbstractAltBnPrecompiledContract.enableNative();
+    if (unstableNativeLibraryOptions.getNativeAltbn128()
+        && AbstractAltBnPrecompiledContract.isNative()) {
+      logger.info("Using LibEthPairings native alt bn128");
     } else {
+      AbstractAltBnPrecompiledContract.disableNative();
       logger.info("Using the Java implementation of alt bn128");
     }
 
-    if (unstableNativeLibraryOptions.getNativeSecp256k1()) {
-      SignatureAlgorithmFactory.getInstance().enableNative();
+    if (unstableNativeLibraryOptions.getNativeSecp256k1()
+        && SignatureAlgorithmFactory.getInstance().isNative()) {
+      logger.info("Using native secp256k1");
     } else {
+      SignatureAlgorithmFactory.getInstance().disableNative();
       logger.info("Using the Java implementation of secp256k1");
     }
   }

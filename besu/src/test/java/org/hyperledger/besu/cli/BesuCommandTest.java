@@ -4355,7 +4355,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void nativeAltBn128IsDisabled() {
     // it is necessary to reset it, because the tested variable
     // is static and it will stay true if it has been set in another test
-    AbstractAltBnPrecompiledContract.resetNative();
+    // AbstractAltBnPrecompiledContract.resetNative();
 
     parseCommand("--Xaltbn128-native-enabled", "false");
 
@@ -4368,6 +4368,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
 
     assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isTrue();
+    verify(mockLogger).info("Using native secp256k1");
+
     assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
+    verify(mockLogger).info("Using LibEthPairings native alt bn128");
   }
 }
