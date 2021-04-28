@@ -338,11 +338,14 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (success) {
         if (blockHeader.getNumber() == 11953816) {
           LOG.info("commit begin");
+        } else {
+          stateUpdater.commit();
         }
-        stateUpdater.commit();
-        updater.reset();
+
         if (blockHeader.getNumber() == 11953816) {
           LOG.info("commit done");
+        } else {
+          updater.reset();
         }
       } else {
         stateUpdater.rollback();
