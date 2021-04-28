@@ -22,11 +22,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 public class ConsensusSetHead extends SyncJsonRpcMethod {
-  public ConsensusSetHead(final Vertx vertx) {
+  private final MutableBlockchain blockchain;
+
+  public ConsensusSetHead(final Vertx vertx, final MutableBlockchain blockchain) {
     super(vertx);
+    this.blockchain = blockchain;
   }
 
   @Override
@@ -39,7 +43,7 @@ public class ConsensusSetHead extends SyncJsonRpcMethod {
     final Object id = requestContext.getRequest().getId();
     try {
       return new JsonRpcSuccessResponse(
-              id, blockchain.rewindToBlock(requestContext.getRequiredParameter(0, Hash.class)));
+          id, blockchain.rewindToBlock(requestContext.getRequiredParameter(0, Hash.class)));
     } catch (final IllegalStateException __) {
       return new JsonRpcErrorResponse(id, JsonRpcError.INTERNAL_ERROR);
     }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -57,6 +58,7 @@ public class JsonRpcMethodsFactory {
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
       final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
@@ -91,7 +93,10 @@ public class JsonRpcMethodsFactory {
                   natService,
                   ethPeers),
               new ConsensusJsonRpcMethods(
-                  (MutableBlockchain) blockchainQueries.getBlockchain(), miningCoordinator),
+                  (MutableBlockchain) blockchainQueries.getBlockchain(),
+                  miningCoordinator,
+                  protocolSchedule,
+                  protocolContext),
               new DebugJsonRpcMethods(
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(

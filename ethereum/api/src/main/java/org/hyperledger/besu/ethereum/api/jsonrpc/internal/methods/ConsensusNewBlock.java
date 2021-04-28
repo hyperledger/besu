@@ -14,17 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import com.sun.tools.javac.Main;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -36,7 +32,9 @@ import io.vertx.core.Vertx;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,13 +43,18 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkState;
 
 public class ConsensusNewBlock extends SyncJsonRpcMethod {
-  private final MutableBlockchain blockchain;
   private static final List<BlockHeader> OMMERS_CONSTANT = Collections.emptyList();
   private static final Hash OMMERS_HASH_CONSTANT = BodyValidation.ommersHash(OMMERS_CONSTANT);
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
 
-  public ConsensusNewBlock(final Vertx vertx, final MutableBlockchain blockchain) {
+  public ConsensusNewBlock(
+      final Vertx vertx,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext) {
     super(vertx);
-    this.blockchain = blockchain;
+    this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
   }
 
   @Override
@@ -65,10 +68,14 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
     final Hash parentHash = requestContext.getRequiredParameter(1, Hash.class);
     final Address miner = requestContext.getRequiredParameter(2, Address.class);
     final Hash stateRoot = requestContext.getRequiredParameter(3, Hash.class);
-    final Long number = requestContext.getRequiredParameter(4, Long.class);
-    final Long gasLimit = requestContext.getRequiredParameter(5, Long.class);
-    final Long gasUsed = requestContext.getRequiredParameter(6, Long.class);
-    final Long timestamp = requestContext.getRequiredParameter(7, Long.class);
+    final long number =
+        requestContext.getRequiredParameter(4, UnsignedLongParameter.class).getValue();
+    final long gasLimit =
+        requestContext.getRequiredParameter(5, UnsignedLongParameter.class).getValue();
+    final long gasUsed =
+        requestContext.getRequiredParameter(6, UnsignedLongParameter.class).getValue();
+    final long timestamp =
+        requestContext.getRequiredParameter(7, UnsignedLongParameter.class).getValue();
     final Hash receiptsRoot = requestContext.getRequiredParameter(8, Hash.class);
     final LogsBloomFilter logsBloom =
         new LogsBloomFilter(requestContext.getRequiredParameter(9, Hash.class));
@@ -97,10 +104,11 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
                 new MainnetBlockHeaderFunctions()),
             new BlockBody(transactions, OMMERS_CONSTANT));
 
-    checkState(
-        newBlock.getHash().equals(blockHash), "Supplied block hash was invalid given other fields");
-
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Boolean.TRUE);
-    // true if block is valid, false otherwise
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(),
+        protocolSchedule
+            .getByBlockNumber(number)
+            .getBlockImporter()
+            .importBlock(protocolContext, newBlock, HeaderValidationMode.FULL));
   }
 }

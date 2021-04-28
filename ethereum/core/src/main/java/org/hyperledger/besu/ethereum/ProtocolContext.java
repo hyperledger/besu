@@ -41,7 +41,7 @@ public class ProtocolContext {
   }
 
   public static ProtocolContext init(
-      final MutableBlockchain blockchain,
+          final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final GenesisState genesisState,
       final BiFunction<Blockchain, WorldStateArchive, Object> consensusContextFactory) {

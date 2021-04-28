@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ConsensusAssembleBlock;
@@ -29,6 +30,7 @@ import java.util.Map;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -36,11 +38,18 @@ public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final MutableBlockchain blockchain;
   private final MiningCoordinator miningCoordinator;
+  private final ProtocolSchedule protocolSchedule;
+  private final ProtocolContext protocolContext;
 
   ConsensusJsonRpcMethods(
-      final MutableBlockchain blockchain, final MiningCoordinator miningCoordinator) {
+      final MutableBlockchain blockchain,
+      final MiningCoordinator miningCoordinator,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext) {
     this.blockchain = blockchain;
     this.miningCoordinator = miningCoordinator;
+    this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
   }
 
   @Override
@@ -54,7 +63,7 @@ public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
     return mapOf(
         new ConsensusAssembleBlock(syncVertx, blockResultFactory, blockchain, miningCoordinator),
         new ConsensusFinalizeBlock(syncVertx),
-        new ConsensusNewBlock(syncVertx, blockchain),
-        new ConsensusSetHead(syncVertx));
+        new ConsensusNewBlock(syncVertx, protocolSchedule, protocolContext),
+        new ConsensusSetHead(syncVertx, blockchain));
   }
 }
