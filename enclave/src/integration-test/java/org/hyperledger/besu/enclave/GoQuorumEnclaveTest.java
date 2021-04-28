@@ -17,6 +17,7 @@ package org.hyperledger.besu.enclave;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -52,7 +53,8 @@ public class GoQuorumEnclaveTest {
 
   @Test
   public void upCheck() {
-    when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/upcheck"), any()))
+    when(vertxTransmitter.get(
+            any(), any(), ArgumentMatchers.contains("/upcheck"), any(), anyBoolean()))
         .thenReturn("I'm up!");
 
     assertThat(enclave.upCheck()).isTrue();
@@ -60,7 +62,8 @@ public class GoQuorumEnclaveTest {
 
   @Test
   public void receiveThrowsWhenPayloadDoesNotExist() {
-    when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/receive"), any()))
+    when(vertxTransmitter.get(
+            any(), any(), ArgumentMatchers.contains("/transaction"), any(), anyBoolean()))
         .thenThrow(
             new EnclaveClientException(404, "Message with hash " + MOCK_KEY + " was not found"));
 
@@ -72,7 +75,8 @@ public class GoQuorumEnclaveTest {
   @Test
   public void sendAndReceive() {
     when(vertxTransmitter.post(any(), any(), any(), any())).thenReturn(new SendResponse(KEY));
-    when(vertxTransmitter.get(any(), any(), ArgumentMatchers.contains("/receive"), any()))
+    when(vertxTransmitter.get(
+            any(), any(), ArgumentMatchers.contains("/transaction"), any(), anyBoolean()))
         .thenReturn(new GoQuorumReceiveResponse(PAYLOAD, 0, null, null));
 
     final List<String> publicKeys = Arrays.asList("/+UuD63zItL1EbjxkKUljMgG8Z1w0AJ8pNOR4iq2yQc=");
