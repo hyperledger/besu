@@ -31,6 +31,9 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LogManager.getLogger();
+
+  // even though useNative is initialized to false, the default behavior is
+  // to use the native library, because it will be enabled by default in BesuCommand
   static boolean useNative = false;
 
   public static void enableNative() {
