@@ -153,7 +153,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
                   this,
                   Optional.empty(),
                   header.getNumber(),
-                  blockHash,
+                  header.getStateRoot(),
                   trieLogLayer.get()));
         }
       }
