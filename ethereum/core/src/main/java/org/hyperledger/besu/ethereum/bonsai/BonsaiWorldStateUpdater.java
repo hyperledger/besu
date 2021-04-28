@@ -183,22 +183,24 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         }
       }
 
-      final BonsaiAccount originalValue = accountValue.getPrior();
-      if (originalValue != null) {
-        // Enumerate and delete addresses not updated
-        wrappedWorldView()
-            .getAllAccountStorage(deletedAddress, originalValue.getStorageRoot())
-            .forEach(
-                (keyHash, entryValue) -> {
-                  final Hash slotHash = Hash.wrap(keyHash);
-                  if (!deletedStorageUpdates.containsKey(slotHash)) {
-                    final UInt256 value = UInt256.fromBytes(RLP.decodeOne(entryValue));
-                    deletedStorageUpdates.put(slotHash, new BonsaiValue<>(value, null));
-                  }
-                });
-      }
       if (deletedStorageUpdates.isEmpty()) {
-        storageToUpdate.remove(deletedAddress);
+        final BonsaiAccount originalValue = accountValue.getPrior();
+        if (originalValue != null) {
+          // Enumerate and delete addresses not updated
+          wrappedWorldView()
+              .getAllAccountStorage(deletedAddress, originalValue.getStorageRoot())
+              .forEach(
+                  (keyHash, entryValue) -> {
+                    final Hash slotHash = Hash.wrap(keyHash);
+                    if (!deletedStorageUpdates.containsKey(slotHash)) {
+                      final UInt256 value = UInt256.fromBytes(RLP.decodeOne(entryValue));
+                      deletedStorageUpdates.put(slotHash, new BonsaiValue<>(value, null));
+                    }
+                  });
+        }
+        if (deletedStorageUpdates.isEmpty()) {
+          storageToUpdate.remove(deletedAddress);
+        }
       }
       accountValue.setUpdated(null);
     }
