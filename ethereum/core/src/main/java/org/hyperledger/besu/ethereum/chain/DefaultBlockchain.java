@@ -20,6 +20,7 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -133,7 +134,12 @@ public class DefaultBlockchain implements MutableBlockchain {
         () -> chainHeadOmmerCount);
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
-    this.blockChoiceRule = heaviestChainBlockChoiceRule;
+    this.blockChoiceRule =
+        RayonismOptions.isMergeEnabled()
+            ? // always regard the new block as "worse" because we don't reorg anymore; the
+            // consensus node tells us what the head is through `setHead`
+            (newBlockHeader, currentBlockHeader) -> -1
+            : heaviestChainBlockChoiceRule;
   }
 
   public static MutableBlockchain createMutable(
@@ -308,7 +314,9 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final Hash newBlockHash = newBlock.getHash();
     try {
-      if (chainHead == null || newBlock.getHeader().getParentHash().equals(chainHead)) {
+      if (chainHead == null
+          || newBlock.getHeader().getParentHash().equals(chainHead)
+              && !RayonismOptions.isMergeEnabled()) {
         // This block advances the chain, update the chain head
         updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
         updater.setChainHead(newBlockHash);
