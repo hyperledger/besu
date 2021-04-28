@@ -58,6 +58,10 @@ public class BigIntegerModularExponentiationPrecompiledContract
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);
     final BigInteger modulusLength = modulusLength(input);
+
+    if (baseLength.equals(BigInteger.ZERO) && modulusLength.equals(BigInteger.ZERO)) {
+      return Bytes.EMPTY;
+    }
     final BigInteger exponentOffset = BASE_OFFSET.add(baseLength);
     final BigInteger modulusOffset = exponentOffset.add(exponentLength);
     final BigInteger base = extractParameter(input, BASE_OFFSET, baseLength.intValue());

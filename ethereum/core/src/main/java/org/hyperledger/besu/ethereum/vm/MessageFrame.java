@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -237,9 +236,6 @@ public class MessageFrame {
   private final PrivateMetadataUpdater privateMetadataUpdater;
   private Optional<Bytes> revertReason;
 
-  // as defined on https://eips.ethereum.org/EIPS/eip-2315
-  private final ReturnStack returnStack;
-
   // Privacy Execution Environment fields.
   private final Hash transactionHash;
 
@@ -259,7 +255,6 @@ public class MessageFrame {
       final Type type,
       final Blockchain blockchain,
       final Deque<MessageFrame> messageFrameStack,
-      final ReturnStack returnStack,
       final WorldUpdater worldState,
       final Gas initialGas,
       final Address recipient,
@@ -288,7 +283,6 @@ public class MessageFrame {
     this.type = type;
     this.blockchain = blockchain;
     this.messageFrameStack = messageFrameStack;
-    this.returnStack = returnStack;
     this.worldState = worldState;
     this.gasRemaining = initialGas;
     this.blockHashLookup = blockHashLookup;
@@ -508,53 +502,6 @@ public class MessageFrame {
    */
   public int stackSize() {
     return stack.size();
-  }
-
-  /**
-   * Tests if the return stack is full
-   *
-   * @return true is the return stack is full, else false
-   */
-  public boolean isReturnStackFull() {
-    return returnStack.isFull();
-  }
-
-  /**
-   * Tests if the return stack is empty
-   *
-   * @return true is the return stack is empty, else false
-   */
-  public boolean isReturnStackEmpty() {
-    return returnStack.isEmpty();
-  }
-
-  /**
-   * Removes the item at the top of the return stack.
-   *
-   * @return the item at the top of the return stack
-   * @throws IllegalStateException if the return stack is empty
-   */
-  public int popReturnStackItem() {
-    return returnStack.pop();
-  }
-
-  /**
-   * Return the return stack.
-   *
-   * @return the return stack
-   */
-  public ReturnStack getReturnStack() {
-    return returnStack;
-  }
-
-  /**
-   * Pushes the corresponding item onto the top of the return stack
-   *
-   * @param value The value to push onto the return stack.
-   * @throws IllegalStateException if the stack is full
-   */
-  public void pushReturnStackItem(final int value) {
-    returnStack.push(value);
   }
 
   /**
@@ -1162,17 +1109,11 @@ public class MessageFrame {
     private PrivateMetadataUpdater privateMetadataUpdater = null;
     private Hash transactionHash;
     private Optional<Bytes> reason = Optional.empty();
-    private ReturnStack returnStack = new ReturnStack();
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     public Builder type(final Type type) {
       this.type = type;
-      return this;
-    }
-
-    public Builder returnStack(final ReturnStack returnStack) {
-      this.returnStack = returnStack;
       return this;
     }
 
@@ -1316,7 +1257,6 @@ public class MessageFrame {
       checkState(type != null, "Missing message frame type");
       checkState(blockchain != null, "Missing message frame blockchain");
       checkState(messageFrameStack != null, "Missing message frame message frame stack");
-      checkState(returnStack != null, "Missing return stack");
       checkState(worldState != null, "Missing message frame world state");
       checkState(initialGas != null, "Missing message frame initial getGasRemaining");
       checkState(address != null, "Missing message frame recipient");
@@ -1344,7 +1284,6 @@ public class MessageFrame {
           type,
           blockchain,
           messageFrameStack,
-          returnStack,
           worldState,
           initialGas,
           address,

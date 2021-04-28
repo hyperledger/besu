@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 
 import java.util.ArrayDeque;
@@ -131,7 +130,6 @@ public class PrivateTransactionProcessor {
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
-              .returnStack(new ReturnStack())
               .blockchain(blockchain)
               .worldState(mutablePrivateWorldStateUpdater)
               .initialGas(Gas.MAX_VALUE)

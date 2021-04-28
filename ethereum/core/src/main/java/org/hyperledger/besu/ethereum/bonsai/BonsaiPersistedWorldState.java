@@ -154,42 +154,44 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
         updater.getStorageToUpdate().entrySet()) {
       final Address updatedAddress = storageAccountUpdate.getKey();
-      final BonsaiValue<BonsaiAccount> accountValue =
-          updater.getAccountsToUpdate().get(updatedAddress);
-      final BonsaiAccount accountOriginal = accountValue.getOriginal();
-      final Hash storageRoot =
-          (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
-      final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-          new StoredMerklePatriciaTrie<>(
-              (location, key) -> getStorageTrieNode(updatedAddress, location, key),
-              storageRoot,
-              Function.identity(),
-              Function.identity());
+      if (updater.getAccountsToUpdate().containsKey(updatedAddress)) {
+        final BonsaiValue<BonsaiAccount> accountValue =
+            updater.getAccountsToUpdate().get(updatedAddress);
+        final BonsaiAccount accountOriginal = accountValue.getOriginal();
+        final Hash storageRoot =
+            (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
+        final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+            new StoredMerklePatriciaTrie<>(
+                (location, key) -> getStorageTrieNode(updatedAddress, location, key),
+                storageRoot,
+                Function.identity(),
+                Function.identity());
 
-      // for manicured tries and composting, collect branches here (not implemented)
+        // for manicured tries and composting, collect branches here (not implemented)
 
-      for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
-          storageAccountUpdate.getValue().entrySet()) {
-        final Hash keyHash = storageUpdate.getKey();
-        final byte[] writeAddress = Bytes.concatenate(updatedAddress, keyHash).toArrayUnsafe();
-        final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
-        if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-          storageTx.remove(writeAddress);
-          storageTrie.remove(keyHash);
-        } else {
-          final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
-          storageTx.put(writeAddress, updatedStorageBytes.toArrayUnsafe());
-          storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
+        for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
+            storageAccountUpdate.getValue().entrySet()) {
+          final Hash keyHash = storageUpdate.getKey();
+          final byte[] writeAddress = Bytes.concatenate(updatedAddress, keyHash).toArrayUnsafe();
+          final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
+          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+            storageTx.remove(writeAddress);
+            storageTrie.remove(keyHash);
+          } else {
+            final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
+            storageTx.put(writeAddress, updatedStorageBytes.toArrayUnsafe());
+            storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
+          }
         }
-      }
 
-      final BonsaiAccount accountUpdated = accountValue.getUpdated();
-      if (accountUpdated != null) {
-        storageTrie.commit(
-            (location, key, value) ->
-                writeStorageTrieNode(trieBranchTx, updatedAddress, location, value));
-        final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
-        accountUpdated.setStorageRoot(newStorageRoot);
+        final BonsaiAccount accountUpdated = accountValue.getUpdated();
+        if (accountUpdated != null) {
+          storageTrie.commit(
+              (location, key, value) ->
+                  writeStorageTrieNode(trieBranchTx, updatedAddress, location, value));
+          final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
+          accountUpdated.setStorageRoot(newStorageRoot);
+        }
       }
       // for manicured tries and composting, trim and compost here
     }

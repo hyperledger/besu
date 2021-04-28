@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.referencetests.EnvironmentInformation;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.VMReferenceTestCaseSpec;
-import org.hyperledger.besu.ethereum.vm.operations.ReturnStack;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
