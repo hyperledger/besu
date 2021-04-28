@@ -64,7 +64,8 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final Hash blockHash = requestContext.getRequiredParameter(0, Hash.class);
+    // todo: see if we really need this. It seems like we get the validation already in importBlock
+    //    final Hash blockHash = requestContext.getRequiredParameter(0, Hash.class);
     final Hash parentHash = requestContext.getRequiredParameter(1, Hash.class);
     final Address miner = requestContext.getRequiredParameter(2, Address.class);
     final Hash stateRoot = requestContext.getRequiredParameter(3, Hash.class);
