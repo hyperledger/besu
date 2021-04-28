@@ -32,8 +32,7 @@ import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningCon
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.BesuContext;
-import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -140,10 +139,10 @@ public class NodePermissioningControllerFactoryTest {
             blockchain,
             Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
 
-    NodePermissioningProvider p1 = providers.get(0);
+    NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeLocalConfigPermissioningController.class);
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
@@ -177,10 +176,10 @@ public class NodePermissioningControllerFactoryTest {
             blockchain,
             Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
 
-    NodePermissioningProvider p1 = providers.get(0);
+    NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeLocalConfigPermissioningController.class);
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
@@ -213,11 +212,11 @@ public class NodePermissioningControllerFactoryTest {
             blockchain,
             Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(2);
 
-    NodePermissioningProvider p1 = providers.get(0);
-    NodePermissioningProvider p2 = providers.get(1);
+    NodeConnectionPermissioningProvider p1 = providers.get(0);
+    NodeConnectionPermissioningProvider p2 = providers.get(1);
     if (p1.getClass() == NodeLocalConfigPermissioningController.class) {
       assertThat(p2).isInstanceOf(NodeSmartContractPermissioningController.class);
     } else {

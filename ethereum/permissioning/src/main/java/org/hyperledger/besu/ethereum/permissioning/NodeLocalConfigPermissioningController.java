@@ -21,7 +21,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.IOException;
@@ -40,7 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class NodeLocalConfigPermissioningController implements NodePermissioningProvider {
+public class NodeLocalConfigPermissioningController implements NodeConnectionPermissioningProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 

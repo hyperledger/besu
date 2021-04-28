@@ -716,7 +716,7 @@ public class RunnerBuilder {
                   transactionSimulator,
                   metricsSystem,
                   blockchain,
-                  permissioningService.getProviders());
+                  permissioningService.getConnectionPermissioningProviders());
 
       return Optional.of(nodePermissioningController);
     } else {

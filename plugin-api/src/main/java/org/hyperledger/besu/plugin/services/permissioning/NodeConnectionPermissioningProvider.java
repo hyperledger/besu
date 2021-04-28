@@ -12,13 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services;
+package org.hyperledger.besu.plugin.services.permissioning;
 
-import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
-import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
-public interface PermissioningService extends BesuService {
-  void registerNodePermissioningProvider(NodeConnectionPermissioningProvider provider);
-
-  void registerNodeMessagePermissioningProvider(NodeMessagePermissioningProvider provider);
+@FunctionalInterface
+public interface NodeConnectionPermissioningProvider {
+  /**
+   * Can be used to intercept the initial connection to a peer. Note that once a connection is
+   * established it's by-directional.
+   *
+   * @param sourceEnode the originators enode
+   * @param destinationEnode the enode you are about to send to
+   * @return if you can connect
+   */
+  boolean isConnectionPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode);
 }

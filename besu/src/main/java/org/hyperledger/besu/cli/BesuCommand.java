@@ -1686,6 +1686,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
+        .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters(storageProvider))
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)

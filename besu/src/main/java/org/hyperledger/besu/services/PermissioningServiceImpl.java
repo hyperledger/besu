@@ -16,21 +16,38 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.PermissioningService;
-import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
-import java.util.Collections;
 import java.util.List;
+
+import com.google.common.collect.Lists;
 
 public class PermissioningServiceImpl implements PermissioningService {
 
-  private final List<NodePermissioningProvider> providers = Collections.emptyList();
+  private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =
+      Lists.newArrayList();
 
   @Override
-  public void registerNodePermissioningProvider(final NodePermissioningProvider provider) {
-    providers.add(provider);
+  public void registerNodePermissioningProvider(
+      final NodeConnectionPermissioningProvider provider) {
+    connectionPermissioningProviders.add(provider);
   }
 
-  public List<NodePermissioningProvider> getProviders() {
-    return providers;
+  public List<NodeConnectionPermissioningProvider> getConnectionPermissioningProviders() {
+    return connectionPermissioningProviders;
+  }
+
+  private final List<NodeMessagePermissioningProvider> messagePermissioningProviders =
+      Lists.newArrayList();
+
+  @Override
+  public void registerNodeMessagePermissioningProvider(
+      final NodeMessagePermissioningProvider provider) {
+    messagePermissioningProviders.add(provider);
+  }
+
+  public List<NodeMessagePermissioningProvider> getMessagePermissioningProviders() {
+    return messagePermissioningProviders;
   }
 }

@@ -28,8 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
-import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,7 +54,7 @@ public class NodePermissioningControllerTest {
   @Mock private SyncStatusNodePermissioningProvider syncStatusNodePermissioningProvider;
   Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProviderOptional;
   @Mock private NodeLocalConfigPermissioningController localConfigNodePermissioningProvider;
-  @Mock private NodePermissioningProvider otherPermissioningProvider;
+  @Mock private NodeConnectionPermissioningProvider otherPermissioningProvider;
   @Mock private GoQuorumQip714Gate goQuorumQip714Gate;
 
   private NodePermissioningController controller;
@@ -63,7 +62,7 @@ public class NodePermissioningControllerTest {
   @Before
   public void before() {
     syncStatusNodePermissioningProviderOptional = Optional.of(syncStatusNodePermissioningProvider);
-    List<NodePermissioningProvider> emptyProviders = new ArrayList<>();
+    List<NodeConnectionPermissioningProvider> emptyProviders = new ArrayList<>();
     this.controller =
         new NodePermissioningController(
             syncStatusNodePermissioningProviderOptional, emptyProviders, Optional.empty());
@@ -79,7 +78,7 @@ public class NodePermissioningControllerTest {
 
   @Test
   public void whenNoSyncStatusProviderWeShouldDelegateToLocalConfigNodePermissioningProvider() {
-    List<NodePermissioningProvider> providers = new ArrayList<>();
+    List<NodeConnectionPermissioningProvider> providers = new ArrayList<>();
     providers.add(localConfigNodePermissioningProvider);
     this.controller =
         new NodePermissioningController(Optional.empty(), providers, Optional.empty());
@@ -92,7 +91,7 @@ public class NodePermissioningControllerTest {
   @Test
   public void
       whenInSyncWeShouldDelegateToAnyOtherNodePermissioningProviderAndIsPermittedIfAllPermitted() {
-    List<NodePermissioningProvider> providers = getNodePermissioningProviders();
+    List<NodeConnectionPermissioningProvider> providers = getNodePermissioningProviders();
     this.controller =
         new NodePermissioningController(
             syncStatusNodePermissioningProviderOptional, providers, Optional.empty());
@@ -111,8 +110,8 @@ public class NodePermissioningControllerTest {
     verify(otherPermissioningProvider).isConnectionPermitted(eq(enode1), eq(enode2));
   }
 
-  private List<NodePermissioningProvider> getNodePermissioningProviders() {
-    List<NodePermissioningProvider> providers = new ArrayList<>();
+  private List<NodeConnectionPermissioningProvider> getNodePermissioningProviders() {
+    List<NodeConnectionPermissioningProvider> providers = new ArrayList<>();
     providers.add(localConfigNodePermissioningProvider);
     providers.add(otherPermissioningProvider);
     return providers;
@@ -121,7 +120,7 @@ public class NodePermissioningControllerTest {
   @Test
   public void
       whenInSyncWeShouldDelegateToAnyOtherNodePermissioningProviderAndIsNotPermittedIfAnyNotPermitted() {
-    List<NodePermissioningProvider> providers = getNodePermissioningProviders();
+    List<NodeConnectionPermissioningProvider> providers = getNodePermissioningProviders();
 
     this.controller =
         new NodePermissioningController(
@@ -144,7 +143,7 @@ public class NodePermissioningControllerTest {
 
   @Test
   public void shouldStopAtInsufficientPeersWhenInsufficientAndBootnode() {
-    final List<NodePermissioningProvider> providers = getNodePermissioningProviders();
+    final List<NodeConnectionPermissioningProvider> providers = getNodePermissioningProviders();
 
     this.controller =
         new NodePermissioningController(
@@ -167,7 +166,7 @@ public class NodePermissioningControllerTest {
 
   @Test
   public void doesntStopAtInsufficientPeersWhenNoAnswer() {
-    final List<NodePermissioningProvider> providers = getNodePermissioningProviders();
+    final List<NodeConnectionPermissioningProvider> providers = getNodePermissioningProviders();
 
     this.controller =
         new NodePermissioningController(

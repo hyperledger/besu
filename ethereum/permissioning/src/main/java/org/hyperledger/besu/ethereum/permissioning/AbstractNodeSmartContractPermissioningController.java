@@ -21,14 +21,14 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractNodeSmartContractPermissioningController
-    implements NodePermissioningProvider {
+    implements NodeConnectionPermissioningProvider {
 
   protected final Address contractAddress;
   protected final TransactionSimulator transactionSimulator;

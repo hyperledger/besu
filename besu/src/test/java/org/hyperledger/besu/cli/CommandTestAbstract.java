@@ -186,6 +186,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.miningParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.nodeKey(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.messagePermissioningProviders(any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isRevertReasonEnabled(false)).thenReturn(mockControllerBuilder);

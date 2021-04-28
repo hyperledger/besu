@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodeP
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,7 +46,7 @@ public class NodePermissioningControllerFactory {
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem,
       final Blockchain blockchain,
-      final List<NodePermissioningProvider> providers) {
+      final List<NodeConnectionPermissioningProvider> providers) {
 
     final Optional<SyncStatusNodePermissioningProvider> syncStatusProviderOptional;
 
@@ -118,13 +118,13 @@ public class NodePermissioningControllerFactory {
       final PermissioningConfiguration permissioningConfiguration,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem,
-      final List<NodePermissioningProvider> providers) {
+      final List<NodeConnectionPermissioningProvider> providers) {
     final SmartContractPermissioningConfiguration smartContractPermissioningConfig =
         permissioningConfiguration.getSmartContractConfig().get();
     final Address nodePermissioningSmartContractAddress =
         smartContractPermissioningConfig.getNodeSmartContractAddress();
 
-    final NodePermissioningProvider smartContractProvider;
+    final NodeConnectionPermissioningProvider smartContractProvider;
     switch (smartContractPermissioningConfig.getNodeSmartContractInterfaceVersion()) {
       case 1:
         {

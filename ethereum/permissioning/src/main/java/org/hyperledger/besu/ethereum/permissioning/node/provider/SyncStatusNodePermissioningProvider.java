@@ -21,7 +21,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.net.URI;
 import java.util.Collection;
@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class SyncStatusNodePermissioningProvider implements NodePermissioningProvider {
+public class SyncStatusNodePermissioningProvider implements NodeConnectionPermissioningProvider {
 
   private final Synchronizer synchronizer;
   private final Set<URI> fixedNodes;
