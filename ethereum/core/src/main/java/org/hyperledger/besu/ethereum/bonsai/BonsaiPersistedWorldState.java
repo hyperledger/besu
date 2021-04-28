@@ -48,7 +48,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  protected final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   private final BonsaiWorldStateArchive archive;
   private final BonsaiWorldStateUpdater updater;
@@ -75,8 +75,14 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public MutableWorldState copy() {
-    throw new UnsupportedOperationException(
-        "Bonsai Tries does not support direct duplication of the persisted tries.");
+    return new BonsaiInMemoryWorldState(
+        archive,
+        new BonsaiInMemoryWorldStateKeyValueStorage(
+            worldStateStorage.accountStorage,
+            worldStateStorage.codeStorage,
+            worldStateStorage.storageStorage,
+            worldStateStorage.trieBranchStorage,
+            worldStateStorage.trieLogStorage));
   }
 
   @Override
@@ -89,7 +95,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     worldStateRootHash = blockHeader.getStateRoot();
   }
 
-  private Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
+  public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
+    return worldStateStorage;
+  }
+
+  protected Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
     // first clear storage
     for (final Address address : updater.getStorageToClear()) {
       // because we are clearing persisted values we need the account root as persisted
