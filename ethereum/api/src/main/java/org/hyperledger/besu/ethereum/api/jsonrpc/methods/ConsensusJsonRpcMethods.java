@@ -25,12 +25,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Map;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 public class ConsensusJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
