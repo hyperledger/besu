@@ -44,7 +44,7 @@ import org.web3j.quorum.Quorum;
 public class ContainerTestBase {
   private final String besuImage = System.getProperty("containertest.imagename");
   private final String goQuorumVersion = "21.1.0";
-  private final String tesseraVersion = "21.1.0";
+  private final String tesseraVersion = "21.1.1";
 
   protected final String goQuorumTesseraPubKey = "3XGBIf+x8IdVQOVfIsbRnHwTYOJP/Fx84G8gMmy8qDM=";
   protected final String besuTesseraPubKey = "8JJLEAbq6o9m4Kqm++v0Y1n9Z2ryAFtZTyhnxSKWgws=";
@@ -121,7 +121,7 @@ public class ContainerTestBase {
             goQuorumContainer.getContainerIpAddress(),
             goQuorumContainer.getMappedPort(goQuorumRpcPort));
 
-    waitFor(10, () -> assertClientVersion(besuWeb3j, "dev"));
+    waitFor(10, () -> assertClientVersion(besuWeb3j, "besu"));
     waitFor(10, () -> assertClientVersion(goQuorumWeb3j, goQuorumVersion));
 
     // Tell GoQuorum to peer to Besu

@@ -21,6 +21,8 @@ import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
@@ -53,6 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Suppliers;
 import com.google.common.net.InetAddresses;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,7 +65,6 @@ import org.ethereum.beacon.discovery.schema.EnrField;
 import org.ethereum.beacon.discovery.schema.IdentitySchema;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
-import org.ethereum.beacon.discovery.util.Functions;
 
 /**
  * The peer discovery agent is the network component that sends and receives peer discovery messages
@@ -71,6 +73,8 @@ import org.ethereum.beacon.discovery.util.Functions;
 public abstract class PeerDiscoveryAgent {
   private static final Logger LOG = LogManager.getLogger();
   private static final String SEQ_NO_STORE_KEY = "local-enr-seqno";
+  private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   // The devp2p specification says only accept packets up to 1280, but some
   // clients ignore that, so we add in a little extra padding.
@@ -212,7 +216,12 @@ public abstract class PeerDiscoveryAgent {
                       nodeRecordFactory.createFromValues(
                           sequenceNumber,
                           new EnrField(EnrField.ID, IdentitySchema.V4),
-                          new EnrField(EnrField.PKEY_SECP256K1, Functions.compressPublicKey(id)),
+                          new EnrField(
+                              SIGNATURE_ALGORITHM.get().getCurveName(),
+                              SIGNATURE_ALGORITHM
+                                  .get()
+                                  .compressPublicKey(
+                                      SIGNATURE_ALGORITHM.get().createPublicKey(id))),
                           new EnrField(EnrField.IP_V4, addressBytes),
                           new EnrField(EnrField.TCP, listeningPort),
                           new EnrField(EnrField.UDP, discoveryPort),

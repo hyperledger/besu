@@ -19,11 +19,11 @@ import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.enclave.types.GoQuorumSendRequest;
 import org.hyperledger.besu.enclave.types.GoQuorumSendSignedRequest;
 import org.hyperledger.besu.enclave.types.GoQuorumStoreRawRequest;
-import org.hyperledger.besu.enclave.types.ReceiveRequest;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.enclave.types.StoreRawResponse;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -44,7 +44,7 @@ public class GoQuorumEnclave {
   public boolean upCheck() {
     try {
       final String upcheckResponse =
-          requestTransmitter.get(null, null, "/upcheck", this::handleRawResponse);
+          requestTransmitter.get(null, null, "/upcheck", this::handleRawResponse, false);
       return upcheckResponse.equals("I'm up!");
     } catch (final Exception e) {
       return false;
@@ -81,11 +81,9 @@ public class GoQuorumEnclave {
   }
 
   public GoQuorumReceiveResponse receive(final String payloadKey) {
-    final ReceiveRequest request = new ReceiveRequest(payloadKey);
     return get(
         JSON,
-        request,
-        "/receive",
+        "/transaction/" + URLEncoder.encode(payloadKey, StandardCharsets.UTF_8),
         (statusCode, body) ->
             handleJsonResponse(statusCode, body, GoQuorumReceiveResponse.class, 200));
   }
@@ -101,23 +99,14 @@ public class GoQuorumEnclave {
     } catch (final JsonProcessingException e) {
       throw new EnclaveClientException(400, "Unable to serialize request.");
     }
-
     return requestTransmitter.post(mediaType, bodyText, endpoint, responseBodyHandler);
   }
 
   private <T> T get(
       final String mediaType,
-      final Object content,
       final String endpoint,
       final ResponseBodyHandler<T> responseBodyHandler) {
-    final String bodyText;
-    try {
-      bodyText = objectMapper.writeValueAsString(content);
-    } catch (final JsonProcessingException e) {
-      throw new EnclaveClientException(400, "Unable to serialize request.");
-    }
-
-    final T t = requestTransmitter.get(mediaType, bodyText, endpoint, responseBodyHandler);
+    final T t = requestTransmitter.get(mediaType, null, endpoint, responseBodyHandler, true);
     return t;
   }
 
