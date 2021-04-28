@@ -53,7 +53,6 @@ public class MessageFrameTestFixture {
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private int depth = 0;
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
-  private ReturnStack returnStack = new ReturnStack();
   private ExecutionContextTestFixture executionContextTestFixture;
 
   public MessageFrameTestFixture type(final MessageFrame.Type type) {
@@ -157,11 +156,6 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture returnStack(final ReturnStack returnStack) {
-    this.returnStack = returnStack;
-    return this;
-  }
-
   public MessageFrame build() {
     final Blockchain blockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
     final BlockHeader blockHeader =
@@ -190,7 +184,6 @@ public class MessageFrameTestFixture {
             .blockHashLookup(
                 blockHashLookup.orElseGet(() -> new BlockHashLookup(blockHeader, blockchain)))
             .maxStackSize(maxStackSize)
-            .returnStack(returnStack)
             .build();
     stackItems.forEach(frame::pushStackItem);
     return frame;

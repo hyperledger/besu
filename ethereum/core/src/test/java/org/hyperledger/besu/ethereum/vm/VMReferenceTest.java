@@ -103,8 +103,6 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .badBlocksManager(new BadBlockManager())
             .build(new MutableProtocolSchedule(CHAIN_ID));
 
-    final ReturnStack returnStack = new ReturnStack();
-
     final ReferenceTestBlockchain blockchain =
         new ReferenceTestBlockchain(execEnv.getBlockHeader().getNumber());
     final MessageFrame frame =
@@ -130,7 +128,6 @@ public class VMReferenceTest extends AbstractRetryingTest {
             .miningBeneficiary(execEnv.getBlockHeader().getCoinbase())
             .blockHashLookup(new BlockHashLookup(execEnv.getBlockHeader(), blockchain))
             .maxStackSize(MessageFrame.DEFAULT_MAX_STACK_SIZE)
-            .returnStack(returnStack)
             .build();
 
     // This is normally set inside the containing message executing the code.
