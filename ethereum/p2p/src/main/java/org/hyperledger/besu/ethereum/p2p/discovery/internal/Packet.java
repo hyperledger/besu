@@ -119,11 +119,13 @@ public class Packet {
     final PacketData packetData;
     try {
       packetData = deserializer.deserialize(RLP.input(message, PACKET_DATA_INDEX));
+      return new Packet(packetType, packetData, Bytes.wrapBuffer(message));
     } catch (final RLPException e) {
       throw new PeerDiscoveryPacketDecodingException("Malformed packet of type: " + packetType, e);
+    } catch (final IllegalArgumentException e) {
+      throw new PeerDiscoveryPacketDecodingException(
+          "Failed decoding packet of type: " + packetType, e);
     }
-
-    return new Packet(packetType, packetData, Bytes.wrapBuffer(message));
   }
 
   public Buffer encode() {
