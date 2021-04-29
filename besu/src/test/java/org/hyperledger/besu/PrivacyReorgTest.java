@@ -62,16 +62,12 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.EnclaveTestHarness;
-import org.hyperledger.enclave.testutil.EnclaveType;
 import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
-import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -87,23 +83,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 @SuppressWarnings("rawtypes")
-@RunWith(Parameterized.class)
 public class PrivacyReorgTest {
-
-  private final EnclaveType enclaveType;
-
-  public PrivacyReorgTest(final EnclaveType enclaveType) {
-    this.enclaveType = enclaveType;
-  }
-
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection enclaveTypes() {
-    return Arrays.asList(EnclaveType.values());
-  }
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
@@ -160,7 +142,11 @@ public class PrivacyReorgTest {
 
   @Before
   public void setUp() throws IOException {
-    enclave = getEnclave(enclaveType, folder);
+    enclave =
+        OrionTestHarnessFactory.create(
+            "orion",
+            folder.newFolder().toPath(),
+            new EnclaveKeyConfiguration("enclavePublicKey", "enclavePrivateKey"));
     enclave.start();
 
     // Create Storage
@@ -550,15 +536,5 @@ public class PrivacyReorgTest {
         .setParentHash(parentBlock.getHash())
         .hasOmmers(false)
         .setLogsBloom(LogsBloomFilter.empty());
-  }
-
-  private EnclaveTestHarness getEnclave(final EnclaveType enclaveType, final TemporaryFolder folder)
-      throws IOException {
-    final Path tempDir = folder.newFolder().toPath();
-    final EnclaveKeyConfiguration enclaveConfig =
-        new EnclaveKeyConfiguration("enclavePublicKey", "enclavePrivateKey");
-    return enclaveType == EnclaveType.TESSERA
-        ? TesseraTestHarnessFactory.create("tessera", tempDir, enclaveConfig, Optional.empty())
-        : OrionTestHarnessFactory.create("orion", tempDir, enclaveConfig);
   }
 }
