@@ -322,7 +322,7 @@ public class PrivateStorageMigrationTest {
         .value(Wei.ZERO)
         .payload(Bytes.EMPTY)
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .signAndBuild(SignatureAlgorithmFactory.getInstance().generateKeyPair());
   }
 }
