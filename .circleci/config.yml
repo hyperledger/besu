@@ -194,19 +194,6 @@ jobs:
       - capture_test_results
       - capture_test_logs
 
-  containerTests:
-    parallelism: 1
-    executor: machine_executor
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Container Tests
-          no_output_timeout: 10m
-          command: ./gradlew --no-daemon containerTests -i
-      - capture_test_results
-
   acceptanceTestsQuorum:
     parallelism: 1
     executor: acceptance_tests_executor
@@ -303,9 +290,6 @@ workflows:
       - acceptanceTestsQuorum:
           requires:
             - buildDocker
-      - containerTests:
-          requires:
-            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -318,7 +302,6 @@ workflows:
           requires:
             - integrationTests
             - unitTests
-            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker
@@ -331,7 +314,6 @@ workflows:
           requires:
             - integrationTests
             - unitTests
-            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker

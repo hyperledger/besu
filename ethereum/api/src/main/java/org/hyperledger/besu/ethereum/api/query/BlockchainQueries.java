@@ -802,7 +802,7 @@ public class BlockchainQueries {
     final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
     return header.flatMap(
         blockHeader ->
-            worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getHash()));
+            worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getHash(), false));
   }
 
   public Optional<Long> gasPrice() {

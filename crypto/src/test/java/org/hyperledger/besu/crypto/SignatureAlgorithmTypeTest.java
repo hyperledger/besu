@@ -31,8 +31,6 @@ public class SignatureAlgorithmTypeTest {
   @Test
   public void shouldThrowExceptionWhenInvalidParameterIsGiven() {
     assertThatThrownBy(() -> SignatureAlgorithmType.create("abcd"))
-        .hasMessage(
-            "Invalid genesis file configuration. Elliptic curve (ecCurve) abcd is not in the list"
-                + " of valid elliptic curves [secp256k1, secp256r1]");
+        .hasMessage("abcd is not in the list of valid elliptic curves [secp256k1, secp256r1]");
   }
 }
