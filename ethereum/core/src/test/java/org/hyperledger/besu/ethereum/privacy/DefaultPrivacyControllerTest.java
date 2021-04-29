@@ -124,7 +124,7 @@ public class DefaultPrivacyControllerTest {
           .value(Wei.ZERO)
           .payload(Base64.decode(TRANSACTION_KEY))
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-          .chainId(BigInteger.valueOf(2018))
+          .chainId(BigInteger.valueOf(1337))
           .signAndBuild(KEY_PAIR);
 
   private Enclave mockEnclave() {
@@ -528,7 +528,7 @@ public class DefaultPrivacyControllerTest {
         .value(Wei.ZERO)
         .payload(Bytes.fromHexString("0x"))
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .restriction(Restriction.RESTRICTED);
   }
 }

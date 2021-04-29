@@ -326,7 +326,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
         .value(Wei.ZERO)
         .payload(Bytes.wrap(new byte[] {}))
         .sender(senderAddress)
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .privateFrom(Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY0))
         .restriction(Restriction.RESTRICTED)
         .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
