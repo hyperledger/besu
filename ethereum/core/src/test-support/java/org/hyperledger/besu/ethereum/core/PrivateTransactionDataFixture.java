@@ -48,7 +48,7 @@ public class PrivateTransactionDataFixture {
   public static final Wei DEFAULT_VALUE = Wei.of(0);
   public static final Address DEFAULT_SENDER =
       Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
-  public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(2018);
+  public static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(1337);
 
   public static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);

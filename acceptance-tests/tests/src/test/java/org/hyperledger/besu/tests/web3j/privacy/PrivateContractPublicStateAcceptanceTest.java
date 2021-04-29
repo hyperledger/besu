@@ -30,7 +30,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.exceptions.ContractCallException;
 
 public class PrivateContractPublicStateAcceptanceTest extends PrivacyAcceptanceTestBase {
-  private static final long POW_CHAIN_ID = 2018;
+  private static final long POW_CHAIN_ID = 1337;
 
   private PrivacyNode minerNode;
   private PrivacyNode transactionNode;

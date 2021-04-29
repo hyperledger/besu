@@ -51,7 +51,7 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
             privacy.newFolder().toPath(),
             "ethSignerKey--fe3b557e8fb62b89f4916b721be55ceb828dbd73.json",
             minerNode.getBesu().getJsonRpcSocketPort().orElseThrow(),
-            2018);
+            1337);
 
     ethSignerClient = new EthSignerClient(ethSigner.getHttpListeningUrl());
   }
