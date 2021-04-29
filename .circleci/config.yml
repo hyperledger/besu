@@ -127,7 +127,7 @@ jobs:
             build\distributions\besu\bin\besu.bat --version
 
   unitTests:
-    executor: machine_executor
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
