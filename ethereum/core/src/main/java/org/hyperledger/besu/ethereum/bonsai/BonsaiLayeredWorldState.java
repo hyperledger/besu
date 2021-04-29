@@ -258,8 +258,16 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public MutableWorldState copy() {
-    throw new UnsupportedOperationException(
-        "Bonsai Tries does not support direct duplication of the persisted tries.");
+    final BonsaiPersistedWorldState bonsaiPersistedWorldState =
+        ((BonsaiPersistedWorldState) archive.getMutable());
+    return new BonsaiInMemoryWorldState(
+        archive,
+        new BonsaiInMemoryWorldStateKeyValueStorage(
+            bonsaiPersistedWorldState.getWorldStateStorage().accountStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage));
   }
 
   @Override
