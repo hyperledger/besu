@@ -49,7 +49,7 @@ public class Enclave {
   public boolean upCheck() {
     try {
       final String upcheckResponse =
-          requestTransmitter.get(null, null, "/upcheck", this::handleRawResponse);
+          requestTransmitter.get(null, null, "/upcheck", this::handleRawResponse, false);
       return upcheckResponse.equals("I'm up!");
     } catch (final Exception e) {
       return false;

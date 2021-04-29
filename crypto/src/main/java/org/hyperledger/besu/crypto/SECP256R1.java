@@ -12,25 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.enclave;
+package org.hyperledger.besu.crypto;
 
-public interface RequestTransmitter {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 
-  @FunctionalInterface
-  interface ResponseBodyHandler<T> {
-    T convertResponse(final int statusCode, final byte[] body);
+public class SECP256R1 extends AbstractSECP256 {
+
+  private static final Logger LOG = LogManager.getLogger();
+  public static final String CURVE_NAME = "secp256r1";
+
+  public SECP256R1() {
+    super(CURVE_NAME, SecP256R1Curve.q);
   }
 
-  <T> T post(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler);
+  @Override
+  public void enableNative() {
+    LOG.warn("Native secp256r1 requested but not available");
+  }
 
-  <T> T get(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler,
-      final boolean withAcceptJsonHeader);
+  @Override
+  public String getCurveName() {
+    return CURVE_NAME;
+  }
 }

@@ -78,13 +78,6 @@ public class CompleteTaskStepTest {
     verify(downloadState).checkCompletion(worldStateStorage, blockHeader);
   }
 
-  @Test
-  public void shouldComputeWorldStateProgress() {
-    completeTaskStep.markAsCompleteOrFailed(blockHeader, downloadState, validTask());
-    // One task has been completed and there are 2 pending requests, progress should be 1/4 (25%)
-    assertThat(completeTaskStep.computeWorldStateSyncProgress()).isEqualTo(1.0 / 4.0);
-  }
-
   private StubTask validTask() {
     final Hash hash =
         Hash.fromHexString("0x601a7b0d0267209790cf4c4d9e0cab11b26c537e2ade006412f48b070010e847");

@@ -11,26 +11,13 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.enclave;
+package org.hyperledger.besu.tests.acceptance.dsl.transaction;
 
-public interface RequestTransmitter {
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 
-  @FunctionalInterface
-  interface ResponseBodyHandler<T> {
-    T convertResponse(final int statusCode, final byte[] body);
-  }
-
-  <T> T post(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler);
-
-  <T> T get(
-      String mediaType,
-      String content,
-      String endpoint,
-      ResponseBodyHandler<T> responseBodyHandler,
-      final boolean withAcceptJsonHeader);
+@FunctionalInterface
+public interface TransactionWithSignatureAlgorithm<T> {
+  T execute(final NodeRequests node, final SignatureAlgorithm signatureAlgorithm);
 }
