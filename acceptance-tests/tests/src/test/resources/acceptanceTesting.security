@@ -2,5 +2,6 @@
 ### FOR ACCEPTANCE TESTING ONLY ###
 # Disable OS provided entropy
 securerandom.source=
+java.security.egd=
 ### FOR ACCEPTANCE TESTING ONLY ###
 ##### NOT FOR PRODUCTION USE ######
