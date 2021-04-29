@@ -36,11 +36,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
-  private final KeyValueStorage accountStorage;
-  private final KeyValueStorage codeStorage;
-  private final KeyValueStorage storageStorage;
-  private final KeyValueStorage trieBranchStorage;
-  private final KeyValueStorage trieLogStorage;
+  protected final KeyValueStorage accountStorage;
+  protected final KeyValueStorage codeStorage;
+  protected final KeyValueStorage storageStorage;
+  protected final KeyValueStorage trieBranchStorage;
+  protected final KeyValueStorage trieLogStorage;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     accountStorage =
