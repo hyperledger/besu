@@ -704,12 +704,28 @@ public class RunnerBuilder {
       final Blockchain blockchain) {
     final Collection<EnodeURL> fixedNodes = getFixedNodes(bootnodesAsEnodeURLs, staticNodes);
 
+    // TODO: extract the different types of permissioning into their own plugin
     if (permissioningConfiguration.isPresent()) {
       final PermissioningConfiguration configuration = this.permissioningConfiguration.get();
       final NodePermissioningController nodePermissioningController =
           new NodePermissioningControllerFactory()
               .create(
                   configuration,
+                  synchronizer,
+                  fixedNodes,
+                  localNodeId,
+                  transactionSimulator,
+                  metricsSystem,
+                  blockchain,
+                  permissioningService.getConnectionPermissioningProviders());
+
+      return Optional.of(nodePermissioningController);
+    } else if (permissioningService.getConnectionPermissioningProviders().size() > 0) {
+      final NodePermissioningController nodePermissioningController =
+          new NodePermissioningControllerFactory()
+              .create(
+                  new PermissioningConfiguration(
+                      Optional.empty(), Optional.empty(), Optional.empty()),
                   synchronizer,
                   fixedNodes,
                   localNodeId,

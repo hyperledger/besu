@@ -20,7 +20,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 public interface NodeConnectionPermissioningProvider {
   /**
    * Can be used to intercept the initial connection to a peer. Note that once a connection is
-   * established it's by-directional.
+   * established it's bidirectional.
    *
    * @param sourceEnode the originators enode
    * @param destinationEnode the enode you are about to send to

@@ -107,7 +107,8 @@ public abstract class BesuControllerBuilder {
   private long reorgLoggingThreshold;
   private DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
-  private List<NodeMessagePermissioningProvider> messagePermissioningProviders;
+  private List<NodeMessagePermissioningProvider> messagePermissioningProviders =
+      Collections.emptyList();
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
