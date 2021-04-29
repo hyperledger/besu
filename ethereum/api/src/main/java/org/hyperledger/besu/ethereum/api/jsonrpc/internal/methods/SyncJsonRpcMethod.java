@@ -23,10 +23,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class SyncJsonRpcMethod implements JsonRpcMethod {
 
   private final Vertx syncVertx;
+  private static final Logger LOG = LogManager.getLogger();
 
   protected SyncJsonRpcMethod(final Vertx vertx) {
     this.syncVertx = vertx;
@@ -43,8 +46,11 @@ public abstract class SyncJsonRpcMethod implements JsonRpcMethod {
         resp ->
             cf.complete(
                 resp.otherwise(
-                        new JsonRpcErrorResponse(
-                            request.getRequest().getId(), JsonRpcError.INVALID_REQUEST))
+                        t -> {
+                          LOG.error("failed to exec consensus method " + this.getName(), t);
+                          return new JsonRpcErrorResponse(
+                              request.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
+                        })
                     .result()));
 
     try {

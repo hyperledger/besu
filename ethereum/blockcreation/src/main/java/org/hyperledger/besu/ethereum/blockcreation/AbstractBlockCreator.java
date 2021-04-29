@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -158,12 +160,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
 
-      if (!rewardBeneficiary(
-          disposableWorldState,
-          processableBlockHeader,
-          ommers,
-          protocolSpec.getBlockReward(),
-          protocolSpec.isSkipZeroBlockRewards())) {
+      if (!RayonismOptions.isMergeEnabled()
+          && !rewardBeneficiary(
+              disposableWorldState,
+              processableBlockHeader,
+              ommers,
+              protocolSpec.getBlockReward(),
+              protocolSpec.isSkipZeroBlockRewards())) {
         LOG.trace("Failed to apply mining reward, exiting.");
         throw new RuntimeException("Failed to apply mining reward.");
       }
@@ -173,14 +176,19 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
-              .ommersHash(BodyValidation.ommersHash(ommers))
+              .ommersHash(
+                  BodyValidation.ommersHash(
+                      RayonismOptions.isMergeEnabled() ? Collections.emptyList() : ommers))
               .stateRoot(disposableWorldState.rootHash())
               .transactionsRoot(
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
               .gasUsed(transactionResults.getTotalCumulativeGasUsed())
-              .extraData(extraDataCalculator.get(parentHeader))
+              .extraData(
+                  RayonismOptions.isMergeEnabled()
+                      ? Bytes.EMPTY
+                      : extraDataCalculator.get(parentHeader))
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsensusAssembleBlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -25,17 +26,19 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ConsensusAssembleBlock extends SyncJsonRpcMethod {
 
   private final BlockResultFactory blockResultFactory;
   private final MiningCoordinator miningCoordinator;
   private final Blockchain blockchain;
+  private static final Logger LOG = LogManager.getLogger();
 
   public ConsensusAssembleBlock(
       final Vertx vertx,
@@ -56,14 +59,16 @@ public class ConsensusAssembleBlock extends SyncJsonRpcMethod {
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
 
-    final Hash hash = request.getRequiredParameter(0, Hash.class);
-    final Long timestamp = request.getRequiredParameter(1, Long.class);
+    final ConsensusAssembleBlockParameter blockParams =
+        request.getRequiredParameter(0, ConsensusAssembleBlockParameter.class);
 
-    final Optional<BlockHeader> parentBlockHeader = blockchain.getBlockHeader(hash);
+    final Optional<BlockHeader> parentBlockHeader =
+        blockchain.getBlockHeader(blockParams.getParentHash());
     if (parentBlockHeader.isPresent()) {
       final Optional<Block> block =
-          miningCoordinator.createBlock(parentBlockHeader.get(), timestamp);
+          miningCoordinator.createBlock(parentBlockHeader.get(), blockParams.getTimestamp());
       if (block.isPresent()) {
+        LOG.trace("assembledBlock " + block.map(b -> b.toString()).orElse(""));
         return new JsonRpcSuccessResponse(
             request.getRequest().getId(),
             blockResultFactory.opaqueTransactionComplete(block.get()));

@@ -17,27 +17,28 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsensusNewBlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class ConsensusNewBlock extends SyncJsonRpcMethod {
@@ -45,6 +46,8 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
   private static final Hash OMMERS_HASH_CONSTANT = BodyValidation.ommersHash(OMMERS_CONSTANT);
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
+  private static final Logger LOG = LogManager.getLogger();
+  private static final ObjectMapper om = new ObjectMapper();
 
   public ConsensusNewBlock(
       final Vertx vertx,
@@ -61,53 +64,52 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
   }
 
   @Override
+  @SuppressWarnings("CatchAndPrintStackTrace")
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    // todo: see if we really need this. It seems like we get the validation already in importBlock
-    //    final Hash blockHash = requestContext.getRequiredParameter(0, Hash.class);
-    final Hash parentHash = requestContext.getRequiredParameter(1, Hash.class);
-    final Address miner = requestContext.getRequiredParameter(2, Address.class);
-    final Hash stateRoot = requestContext.getRequiredParameter(3, Hash.class);
-    final long number =
-        requestContext.getRequiredParameter(4, UnsignedLongParameter.class).getValue();
-    final long gasLimit =
-        requestContext.getRequiredParameter(5, UnsignedLongParameter.class).getValue();
-    final long gasUsed =
-        requestContext.getRequiredParameter(6, UnsignedLongParameter.class).getValue();
-    final long timestamp =
-        requestContext.getRequiredParameter(7, UnsignedLongParameter.class).getValue();
-    final Hash receiptsRoot = requestContext.getRequiredParameter(8, Hash.class);
-    final LogsBloomFilter logsBloom =
-        new LogsBloomFilter(requestContext.getRequiredParameter(9, Hash.class));
-    final List<Transaction> transactions =
-        Arrays.asList(requestContext.getRequiredParameter(10, Transaction[].class));
+    final ConsensusNewBlockParameter blockParam =
+        requestContext.getRequiredParameter(0, ConsensusNewBlockParameter.class);
 
-    final Block newBlock =
-        new Block(
-            new BlockHeader(
-                parentHash,
-                OMMERS_HASH_CONSTANT,
-                miner,
-                stateRoot,
-                BodyValidation.transactionsRoot(transactions),
-                receiptsRoot,
-                logsBloom,
-                Difficulty.ONE,
-                number,
-                gasLimit,
-                gasUsed,
-                timestamp,
-                Bytes.EMPTY,
-                null,
-                Hash.ZERO,
-                0,
-                new MainnetBlockHeaderFunctions()),
-            new BlockBody(transactions, OMMERS_CONSTANT));
+    try {
+      LOG.trace("blockparam: " + om.writeValueAsString(blockParam));
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+    }
+    final BlockHeader newBlockHeader =
+        new BlockHeader(
+            blockParam.getParentHash(),
+            OMMERS_HASH_CONSTANT,
+            blockParam.getMiner(),
+            blockParam.getStateRoot(),
+            BodyValidation.transactionsRoot(blockParam.getTransactions()),
+            blockParam.getReceiptsRoot(),
+            blockParam.getLogsBloom(),
+            Difficulty.ONE,
+            blockParam.getNumber(),
+            blockParam.getGasLimit(),
+            blockParam.getGasUsed(),
+            blockParam.getTimestamp(),
+            Bytes.EMPTY,
+            null,
+            Hash.ZERO,
+            0,
+            new MainnetBlockHeaderFunctions());
+
+    LOG.trace("newBlockHeader " + newBlockHeader);
+
+    boolean blkHashEq = newBlockHeader.getHash().equals(blockParam.getBlockHash());
+    LOG.trace("blkHashEq " + blkHashEq);
+    boolean importSuccess =
+        protocolSchedule
+            .getByBlockNumber(blockParam.getNumber())
+            .getBlockImporter()
+            .importBlock(
+                protocolContext,
+                new Block(
+                    newBlockHeader, new BlockBody(blockParam.getTransactions(), OMMERS_CONSTANT)),
+                HeaderValidationMode.FULL);
+    LOG.trace("importSuccess " + importSuccess);
 
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(),
-        protocolSchedule
-            .getByBlockNumber(number)
-            .getBlockImporter()
-            .importBlock(protocolContext, newBlock, HeaderValidationMode.FULL));
+        requestContext.getRequest().getId(), ImmutableMap.of("valid", blkHashEq && importSuccess));
   }
 }

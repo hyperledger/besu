@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
@@ -49,6 +50,9 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
+    if (RayonismOptions.isMergeEnabled()) {
+      return true;
+    }
     if (includeBaseFee) {
       if (!ExperimentalEIPs.eip1559Enabled) {
         LOG.info("Invalid block header: EIP-1559 feature flag must be enabled --Xeip1559-enabled");

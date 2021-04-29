@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Hash;
 
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
 
 public class ConsensusSetHead extends SyncJsonRpcMethod {
@@ -43,7 +44,10 @@ public class ConsensusSetHead extends SyncJsonRpcMethod {
     final Object id = requestContext.getRequest().getId();
     try {
       return new JsonRpcSuccessResponse(
-          id, blockchain.rewindToBlock(requestContext.getRequiredParameter(0, Hash.class)));
+          id,
+          ImmutableMap.of(
+              "success",
+              blockchain.rewindToBlock(requestContext.getRequiredParameter(0, Hash.class))));
     } catch (final IllegalStateException __) {
       return new JsonRpcErrorResponse(id, JsonRpcError.INTERNAL_ERROR);
     }
