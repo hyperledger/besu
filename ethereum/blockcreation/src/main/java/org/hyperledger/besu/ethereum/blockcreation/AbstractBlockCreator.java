@@ -290,7 +290,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     }
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
-        .coinbase(coinbase)
+        .coinbase(Optional.ofNullable(coinbase)
+            .orElseGet(() ->
+                // supply a ZERO coinbase if unspecified AND merge is enabled:
+                RayonismOptions.isMergeEnabled() ? Address.ZERO : null))
         .difficulty(Difficulty.of(difficulty))
         .number(newBlockNumber)
         .gasLimit(gasLimit)

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.config.experimental.RayonismOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -82,7 +83,9 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
-                coinbase.get(),
+                coinbase.orElseGet(() ->
+                    // supply a ZERO coinbase if unspecified AND merge is enabled:
+                    RayonismOptions.isMergeEnabled() ? Address.ZERO : null),
                 parent -> extraData,
                 pendingTransactions,
                 protocolContext,
