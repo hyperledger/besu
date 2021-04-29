@@ -83,9 +83,10 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
-                coinbase.orElseGet(() ->
-                    // supply a ZERO coinbase if unspecified AND merge is enabled:
-                    RayonismOptions.isMergeEnabled() ? Address.ZERO : null),
+                coinbase.orElseGet(
+                    () ->
+                        // supply a ZERO coinbase if unspecified AND merge is enabled:
+                        RayonismOptions.isMergeEnabled() ? Address.ZERO : null),
                 parent -> extraData,
                 pendingTransactions,
                 protocolContext,

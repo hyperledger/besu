@@ -41,7 +41,10 @@ public abstract class SyncJsonRpcMethod implements JsonRpcMethod {
     final CompletableFuture<JsonRpcResponse> cf = new CompletableFuture<>();
 
     syncVertx.<JsonRpcResponse>executeBlocking(
-        z -> z.tryComplete(syncResponse(request)),
+        z -> {
+          LOG.info("consensus JSON-RPC request {}", this.getName());
+          z.tryComplete(syncResponse(request));
+        },
         true,
         resp ->
             cf.complete(
