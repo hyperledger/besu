@@ -24,7 +24,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -42,6 +44,8 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +56,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainnetTransactionValidatorTest {
 
-  private static final KeyPair senderKeys = KeyPair.generate();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   @Mock private GasCalculator gasCalculator;
 
@@ -176,7 +182,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator, false, Optional.of(BigInteger.ONE), defaultGoQuorumCompatibilityMode);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
-    final KeyPair senderKeyPair = KeyPair.generate();
+    final KeyPair senderKeyPair = SIGNATURE_ALGORITHM.get().generateKeyPair();
     final Address arbitrarySender = Address.fromHexString("1");
     builder.gasPrice(Wei.ZERO).nonce(0).sender(arbitrarySender).value(Wei.ZERO);
 
@@ -265,7 +271,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
-            Optional.empty(),
+            Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER),
             defaultGoQuorumCompatibilityMode);
 
@@ -274,7 +280,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
-            Optional.empty(),
+            Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode);
 
@@ -284,7 +290,7 @@ public class MainnetTransactionValidatorTest {
             .gasPremium(Optional.of(Wei.of(3)))
             .feeCap(Optional.of(Wei.of(6)))
             .gasLimit(21000)
-            .chainId(Optional.empty())
+            .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
 
     when(transactionPriceCalculator.price(eq(transaction), any())).thenReturn(Wei.of(160000L));
@@ -309,7 +315,7 @@ public class MainnetTransactionValidatorTest {
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
-            Optional.empty(),
+            Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode);
     final Transaction transaction =
@@ -317,7 +323,7 @@ public class MainnetTransactionValidatorTest {
             .type(TransactionType.EIP1559)
             .gasPremium(Optional.of(Wei.of(1)))
             .feeCap(Optional.of(Wei.of(1)))
-            .chainId(Optional.empty())
+            .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(1));
@@ -346,6 +352,7 @@ public class MainnetTransactionValidatorTest {
     final Optional<Long> basefee = Optional.of(150000L);
     when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
         .thenReturn(new GasAndAccessedState(Gas.of(50)));
+    when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(150001L));
 
     assertThat(validator.validate(transaction, basefee)).isEqualTo(ValidationResult.valid());
     ExperimentalEIPs.eip1559Enabled = false;

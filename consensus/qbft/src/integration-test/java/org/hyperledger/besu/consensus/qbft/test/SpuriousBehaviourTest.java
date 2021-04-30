@@ -29,7 +29,7 @@ import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.support.ValidatorPeer;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -64,7 +64,7 @@ public class SpuriousBehaviourTest {
   private final RoundSpecificPeers peers = context.roundSpecificPeers(roundId);
 
   private final Block proposedBlock =
-      context.createBlockForProposalFromChainHead(0, 30, peers.getProposer().getNodeAddress());
+      context.createBlockForProposalFromChainHead(30, peers.getProposer().getNodeAddress());
   private Prepare expectedPrepare;
   private Commit expectedCommit;
 
@@ -129,7 +129,7 @@ public class SpuriousBehaviourTest {
     peers.prepareForNonProposing(roundId, Hash.ZERO);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
-    peers.commitForNonProposing(roundId, proposedBlock.getHash());
+    peers.commitForNonProposing(roundId, proposedBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
   }
 
@@ -141,18 +141,18 @@ public class SpuriousBehaviourTest {
     peers.prepareForNonProposing(roundId, proposedBlock.getHash());
 
     // for a network of 5, 4 seals are required (local + 3 remote)
-    peers.getNonProposing(0).injectCommit(roundId, proposedBlock.getHash());
-    peers.getNonProposing(1).injectCommit(roundId, proposedBlock.getHash());
+    peers.getNonProposing(0).injectCommit(roundId, proposedBlock);
+    peers.getNonProposing(1).injectCommit(roundId, proposedBlock);
 
     // nonProposer-2 will generate an invalid seal
     final ValidatorPeer badSealPeer = peers.getNonProposing(2);
-    final Signature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
+    final SECPSignature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
 
     badSealPeer.injectCommit(roundId, proposedBlock.getHash(), illegalSeal);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
     // Now inject the REAL commit message
-    badSealPeer.injectCommit(roundId, proposedBlock.getHash());
+    badSealPeer.injectCommit(roundId, proposedBlock);
     assertThat(context.getCurrentChainHeight()).isEqualTo(1);
   }
 }

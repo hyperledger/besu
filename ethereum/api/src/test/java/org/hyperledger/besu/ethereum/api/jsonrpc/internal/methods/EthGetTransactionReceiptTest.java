@@ -18,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -53,7 +55,9 @@ public class EthGetTransactionReceiptTest {
   private final TransactionReceipt rootReceipt =
       new TransactionReceipt(stateRoot, 12, Collections.emptyList(), Optional.empty());
 
-  private final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 1);
+  private final SECPSignature signature =
+      SignatureAlgorithmFactory.getInstance()
+          .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1);
   private final Address sender =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
   private final Transaction transaction =
@@ -102,7 +106,8 @@ public class EthGetTransactionReceiptTest {
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
           TransactionGasBudgetCalculator.frontier(),
-          null);
+          null,
+          Optional.of(PoWHasher.ETHASH_LIGHT));
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           "status",
@@ -127,7 +132,8 @@ public class EthGetTransactionReceiptTest {
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
           TransactionGasBudgetCalculator.frontier(),
-          null);
+          null,
+          Optional.of(PoWHasher.ETHASH_LIGHT));
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);

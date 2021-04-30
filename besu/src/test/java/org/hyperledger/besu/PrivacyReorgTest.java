@@ -22,8 +22,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -36,8 +38,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -71,6 +73,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -83,11 +87,18 @@ import org.junit.rules.TemporaryFolder;
 public class PrivacyReorgTest {
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
-  private static final SECP256K1.KeyPair KEY_PAIR =
-      SECP256K1.KeyPair.create(
-          SECP256K1.PrivateKey.create(
-              new BigInteger(
-                  "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
+  private static final KeyPair KEY_PAIR =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createKeyPair(
+              SIGNATURE_ALGORITHM
+                  .get()
+                  .createPrivateKey(
+                      new BigInteger(
+                          "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
   private static final Bytes ENCLAVE_PUBLIC_KEY =
       Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
@@ -160,7 +171,7 @@ public class PrivacyReorgTest {
             .fromGenesisConfig(GenesisConfigFile.development())
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .storageProvider(new InMemoryStorageProvider())
+            .storageProvider(new InMemoryKeyValueStorageProvider())
             .networkId(BigInteger.ONE)
             .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
             .nodeKey(NodeKeyUtils.generate())

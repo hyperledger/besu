@@ -199,8 +199,15 @@ public class DiscoveryConfiguration {
 
   public static final List<EnodeURL> YOLO_V3_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
-          Stream.<String>of(
+          Stream.of(
                   "enode://9e1096aa59862a6f164994cb5cb16f5124d6c992cdbf4535ff7dea43ea1512afe5448dca9df1b7ab0726129603f1a3336b631e4d7a1a44c94daddd03241587f9@3.9.20.133:30303")
+              .map(EnodeURL::fromString)
+              .collect(toList()));
+
+  public static final List<EnodeURL> ASTOR_BOOTSTRAP_NODES =
+      Collections.unmodifiableList(
+          Stream.of(
+                  "enode://b638fc3dca6181ae97fac2ea0157e8330f5ac8a20c0d4c63aa6f98dcbac4e35b4e023f656757b58c1da7a7b2be9ffad9342e0f769b8cf0f5e35ff73116ff7dfd@3.16.171.213:30303")
               .map(EnodeURL::fromString)
               .collect(toList()));
 

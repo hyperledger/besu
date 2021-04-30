@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.account;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -30,6 +32,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.crypto.Credentials;
 import org.web3j.utils.Convert.Unit;
@@ -38,10 +42,13 @@ public class Account {
 
   private final EthTransactions eth;
   private final String name;
-  private final Optional<PrivateKey> privateKey;
-  private final Optional<PublicKey> publicKey;
+  private final Optional<SECPPrivateKey> privateKey;
+  private final Optional<SECPPublicKey> publicKey;
   private final Address address;
   private long nonce = 0;
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private Account(
       final EthTransactions eth,
@@ -68,13 +75,18 @@ public class Account {
   }
 
   public static Account create(final EthTransactions eth, final String name) {
-    return new Account(eth, name, KeyPair.generate());
+    return new Account(eth, name, SIGNATURE_ALGORITHM.get().generateKeyPair());
   }
 
   static Account fromPrivateKey(
       final EthTransactions eth, final String name, final String privateKey) {
     return new Account(
-        eth, name, KeyPair.create(PrivateKey.create(Bytes32.fromHexString(privateKey))));
+        eth,
+        name,
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(
+                SIGNATURE_ALGORITHM.get().createPrivateKey(Bytes32.fromHexString(privateKey))));
   }
 
   public Optional<Credentials> web3jCredentials() {

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -30,7 +30,9 @@ import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -45,6 +47,8 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,8 +60,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CliqueMiningCoordinatorTest {
 
-  private final KeyPair proposerKeys = KeyPair.generate();
-  private final KeyPair validatorKeys = KeyPair.generate();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
+  private final KeyPair proposerKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private final KeyPair validatorKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerKeys.getPublicKey());
   private final Address validatorAddress = Util.publicKeyToAddress(validatorKeys.getPublicKey());
 

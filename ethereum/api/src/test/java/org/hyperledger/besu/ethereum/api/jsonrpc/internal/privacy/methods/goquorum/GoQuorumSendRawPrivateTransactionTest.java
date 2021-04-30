@@ -22,7 +22,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -48,6 +50,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +62,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GoQuorumSendRawPrivateTransactionTest {
 
+  static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   static final String INVALID_TRANSACTION_RLP = invalidGQPrivateTransactionRlp();
 
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
@@ -244,11 +250,16 @@ public class GoQuorumSendRawPrivateTransactionTest {
 
   private static String rlpEncodeTransaction(
       final PrivateTransaction.Builder privateTransactionBuilder) {
-    final SECP256K1.KeyPair keyPair =
-        SECP256K1.KeyPair.create(
-            SECP256K1.PrivateKey.create(
-                new BigInteger(
-                    "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
+    final KeyPair keyPair =
+        SIGNATURE_ALGORITHM
+            .get()
+            .createKeyPair(
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createPrivateKey(
+                        new BigInteger(
+                            "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+                            16)));
 
     final PrivateTransaction privateTransaction = privateTransactionBuilder.signAndBuild(keyPair);
     final BytesValueRLPOutput bvrlp = new BytesValueRLPOutput();
@@ -266,12 +277,14 @@ public class GoQuorumSendRawPrivateTransactionTest {
             Optional.of(
                 Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87"))),
             Wei.ZERO,
-            SECP256K1.Signature.create(
-                new BigInteger(
-                    "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
-                new BigInteger(
-                    "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
-                Byte.parseByte("0")),
+            SIGNATURE_ALGORITHM
+                .get()
+                .createSignature(
+                    new BigInteger(
+                        "32886959230931919120748662916110619501838190146643992583529828535682419954515"),
+                    new BigInteger(
+                        "14473701025599600909210599917245952381483216609124029382871721729679842002948"),
+                    Byte.parseByte("0")),
             Bytes.fromHexString("0x01"), // this is the enclave key for the private payload
             Address.wrap(
                 Bytes.fromHexString(

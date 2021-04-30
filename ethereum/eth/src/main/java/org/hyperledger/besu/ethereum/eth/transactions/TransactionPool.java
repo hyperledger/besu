@@ -251,7 +251,7 @@ public class TransactionPool implements BlockAddedObserver {
 
     return protocolContext
         .getWorldStateArchive()
-        .get(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash())
+        .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash())
         .map(
             worldState -> {
               final Account senderAccount = worldState.get(transaction.getSender());

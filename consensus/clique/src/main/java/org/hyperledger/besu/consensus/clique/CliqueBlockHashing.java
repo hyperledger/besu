@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -69,7 +69,7 @@ public class CliqueBlockHashing {
   private static Bytes encodeExtraDataWithoutProposerSeal(final CliqueExtraData cliqueExtraData) {
     final Bytes extraDataBytes = cliqueExtraData.encode();
     // Always trim off final 65 bytes (which maybe zeros)
-    return extraDataBytes.slice(0, extraDataBytes.size() - Signature.BYTES_REQUIRED);
+    return extraDataBytes.slice(0, extraDataBytes.size() - SECPSignature.BYTES_REQUIRED);
   }
 
   private static Bytes serializeHeader(

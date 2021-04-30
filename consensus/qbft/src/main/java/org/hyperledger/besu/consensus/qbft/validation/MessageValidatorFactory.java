@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
@@ -32,14 +34,17 @@ public class MessageValidatorFactory {
   private final ProposerSelector proposerSelector;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public MessageValidatorFactory(
       final ProposerSelector proposerSelector,
       final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.proposerSelector = proposerSelector;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
@@ -84,11 +89,15 @@ public class MessageValidatorFactory {
             BftHelpers.calculateRequiredValidatorQuorum(validatorsForHeight.size()),
             validatorsForHeight,
             roundIdentifier,
-            proposerSelector.selectProposerForRound(roundIdentifier));
+            proposerSelector.selectProposerForRound(roundIdentifier),
+            bftExtraDataCodec);
 
+    final BftBlockInterface blockInterface =
+        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
     return new MessageValidator(
-        expectedDigest ->
-            new SubsequentMessageValidator(validatorsForHeight, roundIdentifier, expectedDigest),
+        block ->
+            new SubsequentMessageValidator(
+                validatorsForHeight, roundIdentifier, block, blockInterface),
         proposalValidator);
   }
 

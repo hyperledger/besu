@@ -351,6 +351,62 @@ public class AdminNodeInfoTest {
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
   }
 
+  @SuppressWarnings("unchecked")
+  @Test
+  public void returnsClassicForkBlocks() {
+    when(p2pNetwork.isP2pEnabled()).thenReturn(true);
+    when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
+    final GenesisConfigOptions genesisClassicConfigOptions =
+        new StubGenesisConfigOptions()
+            .chainId(BigInteger.valueOf(2019))
+            .classicForkBlock(1)
+            .ecip1015(2)
+            .dieHard(3)
+            .gotham(4)
+            .defuseDifficultyBomb(5)
+            .atlantis(6)
+            .agharta(7)
+            .phoenix(8)
+            .thanos(9)
+            .ecip1049(10);
+
+    final AdminNodeInfo methodClassic =
+        new AdminNodeInfo(
+            "testnetClassic/1.0/this/that",
+            BigInteger.valueOf(2018),
+            genesisClassicConfigOptions,
+            p2pNetwork,
+            blockchainQueries,
+            natService);
+
+    final JsonRpcRequestContext request = adminNodeInfo();
+
+    final Map<String, Long> expectedConfig =
+        Map.of(
+            "classicForkBlock", 1L,
+            "ecip1015Block", 2L,
+            "dieHardBlock", 3L,
+            "gothamBlock", 4L,
+            "ecip1041Block", 5L,
+            "atlantisBlock", 6L,
+            "aghartaBlock", 7L,
+            "phoenixBlock", 8L,
+            "thanosBlock", 9L,
+            "ecip1049Block", 10L);
+
+    final JsonRpcResponse response = methodClassic.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    final Object result = ((JsonRpcSuccessResponse) response).getResult();
+    assertThat(result).isInstanceOf(Map.class);
+    final Object protocolsMap = ((Map<?, ?>) result).get("protocols");
+    assertThat(protocolsMap).isInstanceOf(Map.class);
+    final Object ethMap = ((Map<?, ?>) protocolsMap).get("eth");
+    assertThat(ethMap).isInstanceOf(Map.class);
+    final Object configMap = ((Map<?, ?>) ethMap).get("config");
+    assertThat(configMap).isInstanceOf(Map.class);
+    assertThat(((Map<String, Long>) configMap)).containsAllEntriesOf(expectedConfig);
+  }
+
   private JsonRpcRequestContext adminNodeInfo() {
     return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_nodeInfo", new Object[] {}));
   }

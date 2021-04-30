@@ -22,7 +22,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -75,9 +77,11 @@ public class PrivGetPrivateTransactionIntegrationTest {
   private final Address sender =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
 
-  private final SECP256K1.KeyPair KEY_PAIR =
-      SECP256K1.KeyPair.create(
-          SECP256K1.PrivateKey.create(
+  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+  private final KeyPair KEY_PAIR =
+      signatureAlgorithm.createKeyPair(
+          signatureAlgorithm.createPrivateKey(
               new BigInteger(
                   "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
 

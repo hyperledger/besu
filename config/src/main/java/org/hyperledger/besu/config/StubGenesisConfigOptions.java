@@ -40,19 +40,21 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   // TODO EIP-1559 change for the actual fork name when known
   private final OptionalLong eip1559BlockNumber = OptionalLong.empty();
-  private final OptionalLong classicForkBlock = OptionalLong.empty();
-  private final OptionalLong ecip1015BlockNumber = OptionalLong.empty();
-  private final OptionalLong diehardBlockNumber = OptionalLong.empty();
-  private final OptionalLong gothamBlockNumber = OptionalLong.empty();
-  private final OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
-  private final OptionalLong atlantisBlockNumber = OptionalLong.empty();
-  private final OptionalLong aghartaBlockNumber = OptionalLong.empty();
-  private final OptionalLong phoenixBlockNumber = OptionalLong.empty();
-  private final OptionalLong thanosBlockNumber = OptionalLong.empty();
+  private OptionalLong classicForkBlock = OptionalLong.empty();
+  private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
+  private OptionalLong diehardBlockNumber = OptionalLong.empty();
+  private OptionalLong gothamBlockNumber = OptionalLong.empty();
+  private OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
+  private OptionalLong atlantisBlockNumber = OptionalLong.empty();
+  private OptionalLong aghartaBlockNumber = OptionalLong.empty();
+  private OptionalLong phoenixBlockNumber = OptionalLong.empty();
+  private OptionalLong thanosBlockNumber = OptionalLong.empty();
+  private OptionalLong ecip1049BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
   private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
+  private Optional<String> ecCurve = Optional.empty();
 
   @Override
   public String getConsensusEngine() {
@@ -62,6 +64,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isEthHash() {
     return true;
+  }
+
+  @Override
+  public boolean isKeccak256() {
+    return false;
   }
 
   @Override
@@ -85,8 +92,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public BftConfigOptions getIbftLegacyConfigOptions() {
-    return BftConfigOptions.DEFAULT;
+  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
+    return IbftLegacyConfigOptions.DEFAULT;
   }
 
   @Override
@@ -102,6 +109,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
+  }
+
+  @Override
+  public Keccak256ConfigOptions getKeccak256ConfigOptions() {
+    return Keccak256ConfigOptions.DEFAULT;
   }
 
   @Override
@@ -206,6 +218,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getEcip1049BlockNumber() {
+    return ecip1049BlockNumber;
+  }
+
+  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -229,6 +246,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
+
+    // mainnet fork blocks
     getHomesteadBlockNumber().ifPresent(l -> builder.put("homesteadBlock", l));
     getDaoForkBlock()
         .ifPresent(
@@ -248,7 +267,20 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     // TODO EIP-1559 change for the actual fork name when known
-    getEIP1559BlockNumber().ifPresent(l -> builder.put("eip1559Block", l));
+    getEIP1559BlockNumber().ifPresent(l -> builder.put("aleutblock", l));
+
+    // classic fork blocks
+    getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
+    getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
+    getDieHardBlockNumber().ifPresent(l -> builder.put("dieHardBlock", l));
+    getGothamBlockNumber().ifPresent(l -> builder.put("gothamBlock", l));
+    getDefuseDifficultyBombBlockNumber().ifPresent(l -> builder.put("ecip1041Block", l));
+    getAtlantisBlockNumber().ifPresent(l -> builder.put("atlantisBlock", l));
+    getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
+    getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
+    getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+    getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
+
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
     if (isClique()) {
@@ -256,6 +288,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
+    }
+    if (isKeccak256()) {
+      builder.put("keccak256", getKeccak256ConfigOptions().asMap());
     }
     if (isIbftLegacy()) {
       builder.put("ibft", getIbftLegacyConfigOptions().asMap());
@@ -279,6 +314,18 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getQip714BlockNumber() {
     return OptionalLong.empty();
+  }
+
+  @Override
+  public PowAlgorithm getPowAlgorithm() {
+    return isEthHash()
+        ? PowAlgorithm.ETHASH
+        : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
+  }
+
+  @Override
+  public Optional<String> getEcCurve() {
+    return ecCurve;
   }
 
   @Override
@@ -336,6 +383,56 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
+  public StubGenesisConfigOptions classicForkBlock(final long blockNumber) {
+    classicForkBlock = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions ecip1015(final long blockNumber) {
+    ecip1015BlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions dieHard(final long blockNumber) {
+    diehardBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions gotham(final long blockNumber) {
+    gothamBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions defuseDifficultyBomb(final long blockNumber) {
+    defuseDifficultyBombBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions atlantis(final long blockNumber) {
+    atlantisBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions agharta(final long blockNumber) {
+    aghartaBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions phoenix(final long blockNumber) {
+    phoenixBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions thanos(final long blockNumber) {
+    thanosBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions ecip1049(final long blockNumber) {
+    ecip1049BlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
   public StubGenesisConfigOptions chainId(final BigInteger chainId) {
     this.chainId = Optional.ofNullable(chainId);
     return this;
@@ -348,6 +445,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions stackSizeLimit(final int stackSizeLimit) {
     this.stackSizeLimit = OptionalInt.of(stackSizeLimit);
+    return this;
+  }
+
+  public StubGenesisConfigOptions ecCurve(final Optional<String> ecCurve) {
+    this.ecCurve = ecCurve;
     return this;
   }
 }

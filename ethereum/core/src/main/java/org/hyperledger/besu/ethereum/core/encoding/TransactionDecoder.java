@@ -24,8 +24,10 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.core.AccessList;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -34,14 +36,12 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class TransactionDecoder {
 
@@ -57,6 +57,9 @@ public class TransactionDecoder {
               TransactionDecoder::decodeAccessList,
               TransactionType.EIP1559,
               TransactionDecoder::decodeEIP1559);
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static Transaction decodeForWire(final RLPInput rlpInput) {
     if (rlpInput.nextIsList()) {
@@ -115,7 +118,7 @@ public class TransactionDecoder {
     }
     final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
     final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
 
     input.leaveList();
 
@@ -138,25 +141,26 @@ public class TransactionDecoder {
             .value(Wei.of(rlpInput.readUInt256Scalar()))
             .payload(rlpInput.readBytes())
             .accessList(
-                new AccessList(
-                    rlpInput.readList(
-                        accessListEntryRLPInput -> {
-                          accessListEntryRLPInput.enterList();
-                          final Map.Entry<Address, List<Bytes32>> accessListEntry =
-                              new AbstractMap.SimpleEntry<>(
-                                  Address.wrap(accessListEntryRLPInput.readBytes()),
-                                  accessListEntryRLPInput.readList(RLPInput::readBytes32));
-                          accessListEntryRLPInput.leaveList();
-                          return accessListEntry;
-                        })));
+                rlpInput.readList(
+                    accessListEntryRLPInput -> {
+                      accessListEntryRLPInput.enterList();
+                      final AccessListEntry accessListEntry =
+                          new AccessListEntry(
+                              Address.wrap(accessListEntryRLPInput.readBytes()),
+                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
+                      accessListEntryRLPInput.leaveList();
+                      return accessListEntry;
+                    }));
     final byte recId = (byte) rlpInput.readIntScalar();
     final Transaction transaction =
         preSignatureTransactionBuilder
             .signature(
-                SECP256K1.Signature.create(
-                    rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
-                    rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
-                    recId))
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createSignature(
+                        rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        recId))
             .build();
     rlpInput.leaveList();
     return transaction;
@@ -164,37 +168,42 @@ public class TransactionDecoder {
 
   static Transaction decodeEIP1559(final RLPInput input) {
     input.enterList();
-
+    final BigInteger chainId = input.readBigIntegerScalar();
     final Transaction.Builder builder =
         Transaction.builder()
             .type(TransactionType.EIP1559)
+            .chainId(chainId)
             .nonce(input.readLongScalar())
-            .gasPrice(Wei.of(input.readUInt256Scalar()))
+            .gasPremium(Wei.wrap(input.readBytes()))
+            .feeCap(Wei.wrap(input.readBytes()))
             .gasLimit(input.readLongScalar())
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes())
-            .gasPremium(Wei.wrap(input.readBytes()))
-            .feeCap(Wei.wrap(input.readBytes()));
-
-    final BigInteger v = input.readBytes().toBigInteger();
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final byte recId;
-    Optional<BigInteger> chainId = Optional.empty();
-    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-    } else {
-      throw new RuntimeException(
-          String.format("An unsupported encoded `v` value of %s was found", v));
-    }
-    final SECP256K1.Signature signature = SECP256K1.Signature.create(r, s, recId);
+            .accessList(
+                input.readList(
+                    accessListEntryRLPInput -> {
+                      accessListEntryRLPInput.enterList();
+                      final AccessListEntry accessListEntry =
+                          new AccessListEntry(
+                              Address.wrap(accessListEntryRLPInput.readBytes()),
+                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
+                      accessListEntryRLPInput.leaveList();
+                      return accessListEntry;
+                    }));
+    final byte recId = (byte) input.readIntScalar();
+    final Transaction transaction =
+        builder
+            .signature(
+                SIGNATURE_ALGORITHM
+                    .get()
+                    .createSignature(
+                        input.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        input.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        recId))
+            .build();
     input.leaveList();
-    chainId.ifPresent(builder::chainId);
-    return builder.signature(signature).build();
+    return transaction;
   }
 
   private static boolean isGoQuorumPrivateTransaction(final BigInteger v) {

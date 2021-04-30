@@ -17,7 +17,9 @@ package org.hyperledger.besu.consensus.ibft.statemachine;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -29,7 +31,7 @@ import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -58,6 +60,7 @@ public class IbftRound {
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final IbftMessageTransmitter transmitter;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public IbftRound(
       final RoundState roundState,
@@ -68,7 +71,8 @@ public class IbftRound {
       final NodeKey nodeKey,
       final MessageFactory messageFactory,
       final IbftMessageTransmitter transmitter,
-      final RoundTimer roundTimer) {
+      final RoundTimer roundTimer,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -77,7 +81,7 @@ public class IbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
-
+    this.bftExtraDataCodec = bftExtraDataCodec;
     roundTimer.startTimer(getRoundIdentifier());
   }
 
@@ -87,7 +91,7 @@ public class IbftRound {
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     final Block block = blockCreator.createBlock(headerTimeStampSeconds);
-    final BftExtraData extraData = BftExtraData.decode(block.getHeader());
+    final BftExtraData extraData = bftExtraDataCodec.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     LOG.trace(
         "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
@@ -107,11 +111,14 @@ public class IbftRound {
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
+
+      final BftBlockInterface bftBlockInterface =
+          protocolContext.getConsensusState(BftContext.class).getBlockInterface();
       blockToPublish =
-          BftBlockInterface.replaceRoundInBlock(
+          bftBlockInterface.replaceRoundInBlock(
               bestBlockFromRoundChange.get(),
               getRoundIdentifier().getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal());
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     }
 
     updateStateWithProposalAndTransmit(blockToPublish, Optional.of(roundChangeCertificate));
@@ -172,7 +179,7 @@ public class IbftRound {
     if (blockAccepted) {
       final Block block = roundState.getProposedBlock().get();
 
-      final Signature commitSeal;
+      final SECPSignature commitSeal;
       try {
         commitSeal = createCommitSeal(block);
       } catch (final SecurityModuleException e) {
@@ -235,10 +242,13 @@ public class IbftRound {
   private void importBlockToChain() {
     final Block blockToImport =
         BftHelpers.createSealedBlock(
-            roundState.getProposedBlock().get(), roundState.getCommitSeals());
+            bftExtraDataCodec,
+            roundState.getProposedBlock().get(),
+            roundState.getRoundIdentifier().getRoundNumber(),
+            roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
-    final BftExtraData extraData = BftExtraData.decode(blockToImport.getHeader());
+    final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
     LOG.log(
         getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
         "Importing block to chain. round={}, hash={}",
@@ -258,11 +268,12 @@ public class IbftRound {
     }
   }
 
-  private Signature createCommitSeal(final Block block) {
+  private SECPSignature createCommitSeal(final Block block) {
     final BlockHeader proposedHeader = block.getHeader();
-    final BftExtraData extraData = BftExtraData.decode(proposedHeader);
+    final BftExtraData extraData = bftExtraDataCodec.decode(proposedHeader);
     final Hash commitHash =
-        BftBlockHashing.calculateDataHashForCommittedSeal(proposedHeader, extraData);
+        new BftBlockHashing(bftExtraDataCodec)
+            .calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
   }
 

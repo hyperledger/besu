@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
@@ -48,7 +48,7 @@ public class PrivacyParameters {
   private URI enclaveUri;
   private String enclavePublicKey;
   private File enclavePublicKeyFile;
-  private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
+  private Optional<KeyPair> signingKeyPair = Optional.empty();
   private Enclave enclave;
   private PrivacyStorageProvider privateStorageProvider;
   private WorldStateArchive privateWorldStateArchive;
@@ -96,11 +96,11 @@ public class PrivacyParameters {
     this.enclavePublicKeyFile = enclavePublicKeyFile;
   }
 
-  public Optional<SECP256K1.KeyPair> getSigningKeyPair() {
+  public Optional<KeyPair> getSigningKeyPair() {
     return signingKeyPair;
   }
 
-  private void setSigningKeyPair(final SECP256K1.KeyPair signingKeyPair) {
+  private void setSigningKeyPair(final KeyPair signingKeyPair) {
     this.signingKeyPair = Optional.ofNullable(signingKeyPair);
   }
 

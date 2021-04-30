@@ -41,6 +41,10 @@ dependencies {
   testImplementation 'io.opentelemetry:opentelemetry-sdk'
   testImplementation 'io.opentelemetry:opentelemetry-sdk-trace'
   testImplementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+  testImplementation 'io.opentracing.contrib:opentracing-okhttp3'
+  testImplementation 'io.opentracing:opentracing-api'
+  testImplementation 'io.opentracing:opentracing-util'
+  testImplementation 'io.jaegertracing:jaeger-client'
   testImplementation 'junit:junit'
   testImplementation 'net.consensys:orion'
   testImplementation 'org.apache.commons:commons-compress'
@@ -49,8 +53,6 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
-  testImplementation 'tech.pegasys.ethsigner.internal:core'
-  testImplementation 'tech.pegasys.ethsigner.internal:file-based'
 }
 
 test.enabled = false

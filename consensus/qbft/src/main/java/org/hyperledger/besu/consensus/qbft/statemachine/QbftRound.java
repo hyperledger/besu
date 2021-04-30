@@ -19,7 +19,9 @@ import static java.util.Collections.emptyList;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -33,7 +35,7 @@ import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -63,6 +65,7 @@ public class QbftRound {
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public QbftRound(
       final RoundState roundState,
@@ -73,7 +76,8 @@ public class QbftRound {
       final NodeKey nodeKey,
       final MessageFactory messageFactory,
       final QbftMessageTransmitter transmitter,
-      final RoundTimer roundTimer) {
+      final RoundTimer roundTimer,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -82,6 +86,7 @@ public class QbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
+    this.bftExtraDataCodec = bftExtraDataCodec;
 
     roundTimer.startTimer(getRoundIdentifier());
   }
@@ -92,10 +97,8 @@ public class QbftRound {
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     final Block block = blockCreator.createBlock(headerTimeStampSeconds);
-    final BftExtraData extraData = BftExtraData.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    LOG.trace(
-        "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
+    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
@@ -111,11 +114,7 @@ public class QbftRound {
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
-      blockToPublish =
-          BftBlockInterface.replaceRoundInBlock(
-              bestPreparedCertificate.get().getBlock(),
-              getRoundIdentifier().getRoundNumber(),
-              BftBlockHeaderFunctions.forCommittedSeal());
+      blockToPublish = bestPreparedCertificate.get().getBlock();
     }
 
     updateStateWithProposalAndTransmit(
@@ -148,7 +147,6 @@ public class QbftRound {
   public void handleProposalMessage(final Proposal msg) {
     LOG.debug("Received a proposal message. round={}", roundState.getRoundIdentifier());
     final Block block = msg.getSignedPayload().getPayload().getProposedBlock();
-
     if (updateStateWithProposedBlock(msg)) {
       sendPrepare(block);
     }
@@ -188,8 +186,7 @@ public class QbftRound {
 
     if (blockAccepted) {
       final Block block = roundState.getProposedBlock().get();
-
-      final Signature commitSeal;
+      final SECPSignature commitSeal;
       try {
         commitSeal = createCommitSeal(block);
       } catch (final SecurityModuleException e) {
@@ -250,12 +247,16 @@ public class QbftRound {
   }
 
   private void importBlockToChain() {
+
     final Block blockToImport =
         BftHelpers.createSealedBlock(
-            roundState.getProposedBlock().get(), roundState.getCommitSeals());
+            bftExtraDataCodec,
+            roundState.getProposedBlock().get(),
+            roundState.getRoundIdentifier().getRoundNumber(),
+            roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
-    final BftExtraData extraData = BftExtraData.decode(blockToImport.getHeader());
+    final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
     LOG.log(
         getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
         "Importing block to chain. round={}, hash={}",
@@ -275,12 +276,23 @@ public class QbftRound {
     }
   }
 
-  private Signature createCommitSeal(final Block block) {
-    final BlockHeader proposedHeader = block.getHeader();
-    final BftExtraData extraData = BftExtraData.decode(proposedHeader);
+  private SECPSignature createCommitSeal(final Block block) {
+    final Block commitBlock = createCommitBlock(block);
+    final BlockHeader proposedHeader = commitBlock.getHeader();
+    final BftExtraData extraData = bftExtraDataCodec.decode(proposedHeader);
     final Hash commitHash =
-        BftBlockHashing.calculateDataHashForCommittedSeal(proposedHeader, extraData);
+        new BftBlockHashing(bftExtraDataCodec)
+            .calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
+  }
+
+  private Block createCommitBlock(final Block block) {
+    final BftBlockInterface bftBlockInterface =
+        protocolContext.getConsensusState(BftContext.class).getBlockInterface();
+    return bftBlockInterface.replaceRoundInBlock(
+        block,
+        getRoundIdentifier().getRoundNumber(),
+        BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
   }
 
   private void notifyNewBlockListeners(final Block block) {

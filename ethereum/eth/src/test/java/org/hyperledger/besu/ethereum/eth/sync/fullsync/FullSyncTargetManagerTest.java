@@ -34,16 +34,22 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class FullSyncTargetManagerTest {
 
   private EthProtocolManager ethProtocolManager;
@@ -53,13 +59,24 @@ public class FullSyncTargetManagerTest {
   private RespondingEthPeer.Responder responder;
   private FullSyncTargetManager syncTargetManager;
 
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  }
+
+  private final DataStorageFormat storageFormat;
+
+  public FullSyncTargetManagerTest(final DataStorageFormat storageFormat) {
+    this.storageFormat = storageFormat;
+  }
+
   @Before
   public void setup() {
-    final BlockchainSetupUtil otherBlockchainSetup = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     final Blockchain otherBlockchain = otherBlockchainSetup.getBlockchain();
     responder = RespondingEthPeer.blockchainResponder(otherBlockchain);
 
-    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
 
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;

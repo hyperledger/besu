@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.common.bft;
 import static java.util.Collections.emptyList;
 
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -36,9 +36,11 @@ public class BftExtraDataFixture {
       final Bytes vanityData,
       final Optional<Vote> vote,
       final List<Address> validators,
-      final List<NodeKey> committerNodeKeys) {
+      final List<NodeKey> committerNodeKeys,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
-    return createExtraData(header, vanityData, vote, validators, committerNodeKeys, 0);
+    return createExtraData(
+        header, vanityData, vote, validators, committerNodeKeys, 0, bftExtraDataCodec);
   }
 
   public static BftExtraData createExtraData(
@@ -47,10 +49,18 @@ public class BftExtraDataFixture {
       final Optional<Vote> vote,
       final List<Address> validators,
       final List<NodeKey> committerNodeKeys,
-      final int roundNumber) {
+      final int roundNumber,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     return createExtraData(
-        header, vanityData, vote, validators, committerNodeKeys, roundNumber, false);
+        header,
+        vanityData,
+        vote,
+        validators,
+        committerNodeKeys,
+        roundNumber,
+        false,
+        bftExtraDataCodec);
   }
 
   public static BftExtraData createExtraData(
@@ -60,14 +70,15 @@ public class BftExtraDataFixture {
       final List<Address> validators,
       final List<NodeKey> committerNodeKeys,
       final int baseRoundNumber,
-      final boolean useDifferentRoundNumbersForCommittedSeals) {
+      final boolean useDifferentRoundNumbersForCommittedSeals,
+      final BftExtraDataCodec bftExtraDataCodec) {
 
     final BftExtraData bftExtraDataNoCommittedSeals =
         new BftExtraData(vanityData, emptyList(), vote, baseRoundNumber, validators);
 
     // if useDifferentRoundNumbersForCommittedSeals is true then each committed seal will be
     // calculated for an extraData field with a different round number
-    List<Signature> commitSeals =
+    List<SECPSignature> commitSeals =
         IntStream.range(0, committerNodeKeys.size())
             .mapToObj(
                 i -> {
@@ -85,8 +96,9 @@ public class BftExtraDataFixture {
                           bftExtraDataNoCommittedSeals.getValidators());
 
                   final Hash headerHashForCommitters =
-                      BftBlockHashing.calculateDataHashForCommittedSeal(
-                          header, extraDataForCommittedSealCalculation);
+                      new BftBlockHashing(bftExtraDataCodec)
+                          .calculateDataHashForCommittedSeal(
+                              header, extraDataForCommittedSealCalculation);
 
                   return committerNodeKeys.get(i).sign(headerHashForCommitters);
                 })

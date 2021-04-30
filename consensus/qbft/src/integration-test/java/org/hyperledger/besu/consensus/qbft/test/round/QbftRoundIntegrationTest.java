@@ -17,17 +17,19 @@ package org.hyperledger.besu.consensus.qbft.test.round;
 import static java.util.Collections.emptyList;
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreator;
 import org.hyperledger.besu.consensus.common.bft.inttest.StubValidatorMulticaster;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRound;
@@ -35,7 +37,8 @@ import org.hyperledger.besu.consensus.qbft.statemachine.RoundState;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -64,6 +67,7 @@ public class QbftRoundIntegrationTest {
   private final MessageFactory peerMessageFactory = new MessageFactory(NodeKeyUtils.generate());
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
+  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private ProtocolContext protocolContext;
 
   @Mock private MutableBlockchain blockChain;
@@ -80,32 +84,37 @@ public class QbftRoundIntegrationTest {
 
   private Block proposedBlock;
 
-  private final Signature remoteCommitSeal =
-      Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 1);
+  private final SECPSignature remoteCommitSeal =
+      SignatureAlgorithmFactory.getInstance()
+          .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
 
   @Before
   public void setup() {
-    protocolContext =
-        new ProtocolContext(blockChain, worldStateArchive, setupContextWithValidators(emptyList()));
-
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(messageValidator.validateCommit(any())).thenReturn(true);
 
     when(nodeKey.sign(any())).thenThrow(new SecurityModuleException("Hsm Is Down"));
 
+    final QbftExtraDataCodec qbftExtraDataEncoder = new QbftExtraDataCodec();
     throwingMessageFactory = new MessageFactory(nodeKey);
     transmitter = new QbftMessageTransmitter(throwingMessageFactory, multicaster);
 
     final BftExtraData proposedExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
-    headerTestFixture.extraData(proposedExtraData.encode());
+    headerTestFixture.extraData(qbftExtraDataEncoder.encode(proposedExtraData));
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
     proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
 
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(true);
+
+    protocolContext =
+        new ProtocolContext(
+            blockChain,
+            worldStateArchive,
+            setupContextWithBftExtraDataEncoder(emptyList(), qbftExtraDataEncoder));
   }
 
   @Test
@@ -122,7 +131,8 @@ public class QbftRoundIntegrationTest {
             nodeKey,
             throwingMessageFactory,
             transmitter,
-            roundTimer);
+            roundTimer,
+            bftExtraDataCodec);
 
     round.handleProposalMessage(
         peerMessageFactory.createProposal(
@@ -149,7 +159,8 @@ public class QbftRoundIntegrationTest {
             nodeKey,
             throwingMessageFactory,
             transmitter,
-            roundTimer);
+            roundTimer,
+            bftExtraDataCodec);
 
     // inject a block first, then a prepare on it.
     round.handleProposalMessage(

@@ -244,7 +244,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .orElseThrow(
                 () -> {
                   LOG.info("Unable to create block because world state is not available");
-                  return new IllegalStateException(
+                  return new CancellationException(
                       "World state not available for block "
                           + parentHeader.getNumber()
                           + " with state root "

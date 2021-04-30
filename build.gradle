@@ -24,8 +24,7 @@ plugins {
   id 'com.github.ben-manes.versions' version '0.36.0'
   id 'com.github.hierynomus.license' version '0.15.0'
   id 'com.jfrog.artifactory' version '4.20.0'
-  id 'com.jfrog.bintray' version '1.8.5'
-  id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+  id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.5.0' apply false
   id 'net.ltgt.errorprone' version '1.3.0'
   id 'maven-publish'
@@ -73,24 +72,6 @@ def _strListCmdArg(name) {
   return _strListCmdArg(name, null)
 }
 
-apply plugin: 'com.jfrog.bintray'
-
-def bintrayUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-def bintrayKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
-def bintrayPackage = bintray.pkg {
-  repo = 'besu-repo'
-  name = 'besu'
-  userOrg = 'hyperledger-org'
-  licenses = ['Apache-2.0']
-  websiteUrl = 'https://github.com/hyperledger/besu'
-  vcsUrl = 'https://github.com/hyperledger/besu.git'
-
-  version {
-    name = project.version
-    released = new Date()
-  }
-}
-
 allprojects {
   apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
@@ -102,7 +83,7 @@ allprojects {
   version = rootProject.version
 
   jacoco {
-    toolVersion = '0.8.5'
+    toolVersion = '0.8.6'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -125,11 +106,9 @@ allprojects {
     jcenter()
     mavenCentral()
     maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
-    maven { url "https://hyperledger-org.bintray.com/besu-repo" }
-    maven { url "https://consensys.bintray.com/pegasys-repo" }
-    maven { url "https://consensys.bintray.com/consensys" }
+    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
-    maven { url "https://dl.bintray.com/open-telemetry/maven" }
+    maven { url "https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/"}
   }
 
   dependencies { errorprone "com.google.errorprone:error_prone_core" }
@@ -145,6 +124,7 @@ allprojects {
         exclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
         exclude '**/blockchain/BlockchainReferenceTest*.java'
         exclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
+        exclude '**/reference-test/resources/docker_interop/**'
         exclude '**/.gradle/**'
       }
       removeUnusedImports()
@@ -368,7 +348,6 @@ subprojects {
 
   if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
     apply plugin: 'com.jfrog.artifactory'
-    apply plugin: 'com.jfrog.bintray'
     apply plugin: 'maven-publish'
 
     publishing {
@@ -406,18 +385,6 @@ subprojects {
           }
         }
       }
-    }
-
-    bintray {
-      user = bintrayUser
-      key = bintrayKey
-
-      publications = ['mavenJava']
-      override = version.endsWith('SNAPSHOT')
-
-      publish = true
-
-      pkg = bintrayPackage
     }
 
     def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
@@ -685,6 +652,41 @@ task testDocker {
   }
 }
 
+task acceptanceTestsQuorum {
+  dependsOn distDocker
+  /**
+   * Tags Description
+   *
+   * Basic tests for private and public tx: basic
+   * Start a Besu/EthSigner/Tessera network with IBFT2: networks/typical-besu::ibft2
+   *
+   * Not available features in Besu: privacy-enhancements-disabled, extension
+   * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
+   *
+   * Ignored for now (privacy-polishing): graphql, eth-api-signed, (estimategas && public)
+   *
+   * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
+   */
+  def tags = "(basic && !(estimategas && public) && !eth-api-signed && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
+
+  doLast {
+    exec {
+      def variant = "openjdk-latest"
+      def variantDirectory = "${buildDir}/quorum-at/${variant}"
+      def dataDirectory = "${variantDirectory}/data"
+      def reportsDirectory = "${variantDirectory}/reports"
+      new File(dataDirectory).mkdirs()
+      new File(reportsDirectory).mkdirs()
+
+      def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+      def dockerEnv = "--env LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG --env TF_VAR_besu_docker_image='{name=\"${image}-${variant}\",local=true}'"
+      def dockerVolumes = "-v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory}"
+      executable "sh"
+      args "-c", "docker run ${dockerEnv} --rm --network host ${dockerVolumes} quorumengineering/acctests:latest test -PgaugeFailSafe -Pauto -Dtags=\"${tags}\" -Dauto.outputDir=${dataDirectory} -Dnetwork.forceDestroy=true -Dauto.jobid=${variant}"
+    }
+  }
+}
+
 task dockerUpload {
   dependsOn distDocker
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
@@ -856,26 +858,9 @@ distributions {
   }
 }
 
-bintray {
-  user = bintrayUser
-  key = bintrayKey
-
-  filesSpec {
-    from distTar.destinationDirectory
-    from distZip.destinationDirectory
-    from file("plugin-api/build/libs/plugin-api-$version-javadoc.jar")
-    into '.'
-  }
-
-  publish = true
-  override = version.endsWith('SNAPSHOT')
-
-  pkg = bintrayPackage
-}
-
 check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
-bintrayUpload.dependsOn verifyDistributions
-bintrayUpload.mustRunAfter(distTar)
-bintrayUpload.mustRunAfter(distZip)
-bintrayUpload.mustRunAfter(javadocJar)
+artifactoryPublish.dependsOn verifyDistributions
+artifactoryPublish.mustRunAfter(distTar)
+artifactoryPublish.mustRunAfter(distZip)
+artifactoryPublish.mustRunAfter(javadocJar)

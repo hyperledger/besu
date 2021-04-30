@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
 import org.hyperledger.besu.consensus.common.VoteProposer;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProcessor;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
@@ -45,10 +45,11 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.protocol.QbftSubProtocol;
+import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
@@ -86,7 +87,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
-  private final BlockInterface blockInterface = new BftBlockInterface();
+  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
+  private final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataCodec);
 
   @Override
   protected void prepForBuild() {
@@ -106,9 +108,12 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     return new SubProtocolConfiguration()
         .withSubProtocol(EthProtocol.get(), ethProtocolManager)
         .withSubProtocol(
-            QbftSubProtocol.get(),
+            Istanbul100SubProtocol.get(),
             new BftProtocolManager(
-                bftEventQueue, peers, QbftSubProtocol.QBFV1, QbftSubProtocol.get().getName()));
+                bftEventQueue,
+                peers,
+                Istanbul100SubProtocol.ISTANBUL_100,
+                Istanbul100SubProtocol.get().getName()));
   }
 
   @Override
@@ -131,7 +136,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress));
+            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
+            bftExtraDataCodec);
 
     final VoteTallyCache voteTallyCache =
         protocolContext.getConsensusState(BftContext.class).getVoteTallyCache();
@@ -141,7 +147,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
-    peers = new ValidatorPeers(voteTallyCache, QbftSubProtocol.NAME);
+    peers = new ValidatorPeers(voteTallyCache, Istanbul100SubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
@@ -161,7 +167,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             clock);
 
     final MessageValidatorFactory messageValidatorFactory =
-        new MessageValidatorFactory(proposerSelector, protocolSchedule, protocolContext);
+        new MessageValidatorFactory(
+            proposerSelector, protocolSchedule, protocolContext, bftExtraDataCodec);
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
@@ -189,7 +196,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     protocolSchedule,
                     minedBlockObservers,
                     messageValidatorFactory,
-                    messageFactory),
+                    messageFactory,
+                    bftExtraDataCodec),
                 messageValidatorFactory,
                 messageFactory),
             gossiper,
@@ -215,7 +223,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new BftQueryPluginServiceFactory(blockchain, nodeKey, "qbft");
+    return new BftQueryPluginServiceFactory(blockchain, bftExtraDataCodec, nodeKey, "qbft");
   }
 
   @Override
@@ -224,7 +232,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator);
+        QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+        bftExtraDataCodec);
   }
 
   @Override
@@ -250,9 +259,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     return new BftContext(
         new ForkingVoteTallyCache(
             blockchain,
-            new VoteTallyUpdater(epochManager, new BftBlockInterface()),
+            new VoteTallyUpdater(epochManager, blockInterface),
             epochManager,
-            new BftBlockInterface(),
+            blockInterface,
             new BftValidatorOverrides(bftValidatorForkMap)),
         new VoteProposer(),
         epochManager,

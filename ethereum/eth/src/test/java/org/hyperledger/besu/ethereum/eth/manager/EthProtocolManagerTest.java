@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -63,6 +63,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -105,7 +106,8 @@ public final class EthProtocolManagerTest {
   @BeforeClass
   public static void setup() {
     gen = new BlockDataGenerator(0);
-    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil =
+        BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     transactionPool = blockchainSetupUtil.getTransactionPool();

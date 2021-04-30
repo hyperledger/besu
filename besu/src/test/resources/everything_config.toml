@@ -44,6 +44,7 @@ random-peer-priority-enabled=false
 host-whitelist=["all"]
 host-allowlist=["all"]
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
+discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
 
 # chain
 network="MAINNET"
@@ -56,6 +57,7 @@ network-id=303
 rpc-http-enabled=false
 rpc-http-host="5.6.7.8"
 rpc-http-port=5678
+rpc-http-max-active-connections=100
 rpc-http-api=["DEBUG","ETH"]
 rpc-http-apis=["DEBUG","ETH"]
 rpc-http-cors-origins=["none"]
@@ -87,6 +89,7 @@ rpc-ws-api=["DEBUG","ETH"]
 rpc-ws-apis=["DEBUG","ETH"]
 rpc-ws-host="9.10.11.12"
 rpc-ws-port=9101
+rpc-ws-max-active-connections=101
 rpc-ws-authentication-enabled=false
 rpc-ws-authentication-credentials-file="none"
 rpc-ws-authentication-jwt-public-key-file="none"

@@ -15,8 +15,9 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.util.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.BlockTestUtil;
@@ -104,25 +106,27 @@ public class BlockchainSetupUtil {
     return blocks.size();
   }
 
-  public static BlockchainSetupUtil forTesting() {
-    return createForEthashChain(BlockTestUtil.getTestChainResources());
+  public static BlockchainSetupUtil forTesting(final DataStorageFormat storageFormat) {
+    return createForEthashChain(BlockTestUtil.getTestChainResources(), storageFormat);
   }
 
   public static BlockchainSetupUtil forMainnet() {
-    return createForEthashChain(BlockTestUtil.getMainnetResources());
+    return createForEthashChain(BlockTestUtil.getMainnetResources(), DataStorageFormat.FOREST);
   }
 
   public static BlockchainSetupUtil forOutdatedFork() {
-    return createForEthashChain(BlockTestUtil.getOutdatedForkResources());
+    return createForEthashChain(BlockTestUtil.getOutdatedForkResources(), DataStorageFormat.FOREST);
   }
 
   public static BlockchainSetupUtil forUpgradedFork() {
-    return createForEthashChain(BlockTestUtil.getUpgradedForkResources());
+    return createForEthashChain(BlockTestUtil.getUpgradedForkResources(), DataStorageFormat.FOREST);
   }
 
-  public static BlockchainSetupUtil createForEthashChain(final ChainResources chainResources) {
+  public static BlockchainSetupUtil createForEthashChain(
+      final ChainResources chainResources, final DataStorageFormat storageFormat) {
     return create(
         chainResources,
+        storageFormat,
         BlockchainSetupUtil::mainnetProtocolScheduleProvider,
         BlockchainSetupUtil::mainnetProtocolContextProvider,
         new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
@@ -140,6 +144,7 @@ public class BlockchainSetupUtil {
 
   private static BlockchainSetupUtil create(
       final ChainResources chainResources,
+      final DataStorageFormat storageFormat,
       final ProtocolScheduleProvider protocolScheduleProvider,
       final ProtocolContextProvider protocolContextProvider,
       final EthScheduler scheduler) {
@@ -153,7 +158,10 @@ public class BlockchainSetupUtil {
 
       final GenesisState genesisState = GenesisState.fromJson(genesisJson, protocolSchedule);
       final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-      final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();
+      final WorldStateArchive worldArchive =
+          storageFormat == DataStorageFormat.BONSAI
+              ? createBonsaiInMemoryWorldStateArchive(blockchain)
+              : createInMemoryWorldStateArchive();
       final TransactionPool transactionPool = mock(TransactionPool.class);
 
       genesisState.writeStateTo(worldArchive.getMutable());

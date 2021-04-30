@@ -38,9 +38,22 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldUseKeccak256WhenKeccak256InConfig() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("keccak256", emptyMap()));
+    assertThat(config.isKeccak256()).isTrue();
+    assertThat(config.getConsensusEngine()).isEqualTo("keccak256");
+  }
+
+  @Test
   public void shouldNotUseEthHashIfEthHashNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isEthHash()).isFalse();
+  }
+
+  @Test
+  public void shouldNotUseKeccak256IfEthHashNotPresent() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.isKeccak256()).isFalse();
   }
 
   @Test
@@ -55,7 +68,7 @@ public class GenesisConfigOptionsTest {
   public void shouldNotUseIbftLegacyIfIbftNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isIbftLegacy()).isFalse();
-    assertThat(config.getIbftLegacyConfigOptions()).isSameAs(BftConfigOptions.DEFAULT);
+    assertThat(config.getIbftLegacyConfigOptions()).isSameAs(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Test
@@ -178,11 +191,33 @@ public class GenesisConfigOptionsTest {
   public void shouldGetEIP1559BlockNumber() {
     try {
       ExperimentalEIPs.eip1559Enabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("eip1559block", 1000));
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 1000));
       assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+      assertThat(config.getGenesisBaseFee()).isEmpty();
     } finally {
       ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
     }
+  }
+
+  @Test
+  // TODO EIP-1559 change for the actual fork name when known
+  public void shouldGetEIP1559BaseFeeAtGenesis() {
+    try {
+      ExperimentalEIPs.eip1559Enabled = true;
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 0));
+      assertThat(config.getEIP1559BlockNumber()).hasValue(0);
+      assertThat(config.getGenesisBaseFee())
+          .hasValue(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+    } finally {
+      ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+    }
+  }
+
+  @Test
+  // TODO ECIP-1049 change for the actual fork name when known
+  public void shouldGetECIP1049BlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
+    assertThat(config.getEcip1049BlockNumber()).hasValue(1000);
   }
 
   @Test
@@ -198,6 +233,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();
+    assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
   @Test

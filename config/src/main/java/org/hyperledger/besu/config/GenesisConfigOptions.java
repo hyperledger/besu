@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,8 @@ public interface GenesisConfigOptions {
 
   boolean isEthHash();
 
+  boolean isKeccak256();
+
   boolean isIbftLegacy();
 
   boolean isIbft2();
@@ -35,13 +39,15 @@ public interface GenesisConfigOptions {
 
   String getConsensusEngine();
 
-  BftConfigOptions getIbftLegacyConfigOptions();
+  IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
   CliqueConfigOptions getCliqueConfigOptions();
 
   BftConfigOptions getBftConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
+
+  Keccak256ConfigOptions getKeccak256ConfigOptions();
 
   OptionalLong getHomesteadBlockNumber();
 
@@ -65,6 +71,14 @@ public interface GenesisConfigOptions {
 
   // TODO EIP-1559 change for the actual fork name when known
   OptionalLong getEIP1559BlockNumber();
+
+  default Optional<Long> getGenesisBaseFee() {
+    return getEIP1559BlockNumber().stream()
+        .boxed()
+        .filter(g -> g.equals(0L))
+        .map(g -> ExperimentalEIPs.initialBasefee)
+        .findAny();
+  }
 
   List<Long> getForks();
 
@@ -173,6 +187,16 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getThanosBlockNumber();
 
+  /**
+   * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to
+   * keccak-256.
+   *
+   * @return block number of ECIP-1049 fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1049">https://ecips.ethereumclassic.org/ECIPs/ecip-1049</a>
+   */
+  OptionalLong getEcip1049BlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();
@@ -209,4 +233,18 @@ public interface GenesisConfigOptions {
    * @return block number to activate Quorum Permissioning
    */
   OptionalLong getQip714BlockNumber();
+
+  /**
+   * The PoW algorithm associated with the genesis file.
+   *
+   * @return the PoW algorithm in use.
+   */
+  PowAlgorithm getPowAlgorithm();
+
+  /**
+   * The elliptic curve which should be used in SignatureAlgorithm.
+   *
+   * @return the name of the elliptic curve.
+   */
+  Optional<String> getEcCurve();
 }

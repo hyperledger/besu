@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.ethereum.core.AccessList;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
@@ -82,7 +83,7 @@ public class TransactionEncoder {
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
-    writeSignatureAndRecoveryId(transaction, out);
+    writeSignatureAndV(transaction, out);
     out.endList();
   }
 
@@ -96,7 +97,12 @@ public class TransactionEncoder {
         transaction.getTo(),
         transaction.getValue(),
         transaction.getPayload(),
-        transaction.getAccessList(),
+        transaction
+            .getAccessList()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Developer error: access list should be guaranteed to be present")),
         rlpOutput);
     rlpOutput.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, rlpOutput);
@@ -111,7 +117,7 @@ public class TransactionEncoder {
       final Optional<Address> to,
       final Wei value,
       final Bytes payload,
-      final AccessList accessList,
+      final List<AccessListEntry> accessList,
       final RLPOutput rlpOutput) {
     rlpOutput.writeLongScalar(
         chainId
@@ -142,38 +148,58 @@ public class TransactionEncoder {
         []
       ]
     ] */
-    rlpOutput.writeList(
-        accessList,
-        (accessListEntry, accessListEntryRLPOutput) -> {
-          accessListEntryRLPOutput.startList();
-          rlpOutput.writeBytes(accessListEntry.getKey());
-          rlpOutput.writeList(
-              accessListEntry.getValue(),
-              (storageKeyBytes, storageKeyBytesRLPOutput) ->
-                  storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
-          accessListEntryRLPOutput.endList();
-        });
+    writeAccessList(rlpOutput, Optional.of(accessList));
   }
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
     out.startList();
+    out.writeLongScalar(
+        transaction
+            .getChainId()
+            .orElseThrow(
+                () -> new IllegalArgumentException("chainId is required for EIP-1559 transactions"))
+            .longValue());
     out.writeLongScalar(transaction.getNonce());
-    out.writeNull();
-    out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-    out.writeUInt256Scalar(transaction.getValue());
-    out.writeBytes(transaction.getPayload());
     out.writeUInt256Scalar(
         transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
     out.writeUInt256Scalar(
         transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+    out.writeLongScalar(transaction.getGasLimit());
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeUInt256Scalar(transaction.getValue());
+    out.writeBytes(transaction.getPayload());
+    writeAccessList(out, transaction.getAccessList());
     writeSignatureAndRecoveryId(transaction, out);
     out.endList();
   }
 
+  public static void writeAccessList(
+      final RLPOutput out, final Optional<List<AccessListEntry>> accessListEntries) {
+    if (accessListEntries.isEmpty()) {
+      out.writeEmptyList();
+    } else {
+      out.writeList(
+          accessListEntries.get(),
+          (accessListEntry, accessListEntryRLPOutput) -> {
+            accessListEntryRLPOutput.startList();
+            out.writeBytes(accessListEntry.getAddress());
+            out.writeList(
+                accessListEntry.getStorageKeys(),
+                (storageKeyBytes, storageKeyBytesRLPOutput) ->
+                    storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
+            accessListEntryRLPOutput.endList();
+          });
+    }
+  }
+
+  private static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
+    out.writeBigIntegerScalar(transaction.getV());
+    writeSignature(transaction, out);
+  }
+
   private static void writeSignatureAndRecoveryId(
       final Transaction transaction, final RLPOutput out) {
-    out.writeBigIntegerScalar(transaction.getV());
+    out.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, out);
   }
 

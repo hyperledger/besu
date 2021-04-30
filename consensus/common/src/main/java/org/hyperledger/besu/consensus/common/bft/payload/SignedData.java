@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft.payload;
 
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
-
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -31,16 +29,16 @@ import org.apache.tuweni.bytes.Bytes;
 public class SignedData<M extends Payload> implements Authored {
 
   private final Address sender;
-  private final Signature signature;
+  private final SECPSignature signature;
   private final M unsignedPayload;
 
   public static <T extends Payload> SignedData<T> create(
-      final T payload, final Signature signature) {
-    final Hash msgHash = hashForSignature(payload);
+      final T payload, final SECPSignature signature) {
+    final Hash msgHash = payload.hashForSignature();
     return new SignedData<>(payload, Util.signatureToAddress(signature, msgHash), signature);
   }
 
-  private SignedData(final M unsignedPayload, final Address sender, final Signature signature) {
+  private SignedData(final M unsignedPayload, final Address sender, final SECPSignature signature) {
     this.unsignedPayload = unsignedPayload;
     this.sender = sender;
     this.signature = signature;

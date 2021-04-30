@@ -42,7 +42,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
         privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
             "alice-node", PrivacyAccountResolver.ALICE, Address.PRIVACY, false);
     bobNode =
-        privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
+        privacyBesu.createOnChainPrivacyGroupEnabledNode(
             "bob-node", PrivacyAccountResolver.BOB, Address.PRIVACY, false);
     privacyCluster.start(aliceNode, bobNode);
   }

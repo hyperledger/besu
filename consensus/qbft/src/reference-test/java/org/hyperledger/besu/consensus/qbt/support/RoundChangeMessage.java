@@ -19,11 +19,12 @@ import static org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions.
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.PreparedRoundMetadata;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -62,7 +63,8 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
   @Override
   public BftMessage<RoundChangePayload> toBftMessage() {
     final Optional<RLPInput> blockRlp = this.block.map(s -> RLP.input(Bytes.fromHexString(s)));
-    final Optional<Block> block = blockRlp.map(r -> Block.readFrom(r, forCommittedSeal()));
+    final Optional<Block> block =
+        blockRlp.map(r -> Block.readFrom(r, forCommittedSeal(new QbftExtraDataCodec())));
     final List<SignedData<PreparePayload>> signedPrepares =
         prepares.stream().map(PrepareMessage::toSignedPreparePayload).collect(Collectors.toList());
     return new RoundChange(
@@ -115,7 +117,9 @@ public class RoundChangeMessage implements RlpTestCaseMessage {
               new ConsensusRoundIdentifier(unsignedRoundChange.sequence, unsignedRoundChange.round),
               preparedRoundMetadata);
       return SignedData.create(
-          roundChangePayload, Signature.decode(Bytes.fromHexString(signedRoundChange.signature)));
+          roundChangePayload,
+          SignatureAlgorithmFactory.getInstance()
+              .decodeSignature(Bytes.fromHexString(signedRoundChange.signature)));
     }
   }
 }

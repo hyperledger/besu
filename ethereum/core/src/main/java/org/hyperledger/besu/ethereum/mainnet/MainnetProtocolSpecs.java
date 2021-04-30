@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -151,11 +152,32 @@ public abstract class MainnetProtocolSpecs {
         .name("Frontier");
   }
 
+  public static PoWHasher powHasher(final PowAlgorithm powAlgorithm) {
+    if (powAlgorithm == null) {
+      return PoWHasher.UNSUPPORTED;
+    }
+    switch (powAlgorithm) {
+      case ETHASH:
+        return PoWHasher.ETHASH_LIGHT;
+      case KECCAK256:
+        return KeccakHasher.KECCAK256;
+      case UNSUPPORTED:
+      default:
+        return PoWHasher.UNSUPPORTED;
+    }
+  }
+
   public static BlockValidatorBuilder blockValidatorBuilder(final boolean goQuorumMode) {
     if (goQuorumMode) {
       return GoQuorumBlockValidator::new;
     } else {
-      return MainnetBlockValidator::new;
+      return (blockHeaderValidator,
+          blockBodyValidator,
+          blockProcessor,
+          badBlockManager,
+          goQuorumPrivacyParameters) ->
+          new MainnetBlockValidator(
+              blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
     }
   }
 
@@ -434,8 +456,7 @@ public abstract class MainnetProtocolSpecs {
         .name("Berlin");
   }
 
-  // TODO EIP-1559 change for the actual fork name when known
-  static ProtocolSpecBuilder eip1559Definition(
+  static ProtocolSpecBuilder londonDefinition(
       final Optional<BigInteger> chainId,
       final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final OptionalInt contractSizeLimit,
@@ -446,7 +467,7 @@ public abstract class MainnetProtocolSpecs {
     ExperimentalEIPs.eip1559MustBeEnabled();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
-    return muirGlacierDefinition(
+    return berlinDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
@@ -459,7 +480,10 @@ public abstract class MainnetProtocolSpecs {
                     transactionPriceCalculator,
                     true,
                     chainId,
-                    Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
                     genesisConfigOptions.isQuorum()))
         .transactionProcessorBuilder(
             (gasCalculator,
@@ -476,7 +500,10 @@ public abstract class MainnetProtocolSpecs {
                     Account.DEFAULT_VERSION,
                     transactionPriceCalculator.orElseThrow(),
                     CoinbaseFeePriceCalculator.eip1559()))
-        .name("EIP-1559")
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .name("London")
         .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
         .eip1559(Optional.of(eip1559))
         .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))

@@ -128,7 +128,8 @@ public class GeneralStateTestCaseSpec {
     public PostSection(
         @JsonProperty("hash") final String hash,
         @JsonProperty("logs") final String logs,
-        @JsonProperty("indexes") final Indexes indexes) {
+        @JsonProperty("indexes") final Indexes indexes,
+        @JsonProperty("txbytes") final String txbytes) {
       this.rootHash = Hash.fromHexString(hash);
       this.logsHash = Hash.fromHexString(logs);
       this.indexes = indexes;

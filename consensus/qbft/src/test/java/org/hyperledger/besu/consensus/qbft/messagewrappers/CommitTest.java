@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.bft.payload.PayloadHelpers.hashForSignature;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -23,7 +22,7 @@ import org.hyperledger.besu.consensus.qbft.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.payload.CommitPayload;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -43,10 +42,11 @@ public class CommitTest {
         new CommitPayload(
             new ConsensusRoundIdentifier(1, 1),
             Hash.ZERO,
-            Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0));
+            SignatureAlgorithmFactory.getInstance()
+                .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0));
 
     final SignedData<CommitPayload> signedCommitPayload =
-        SignedData.create(commitPayload, nodeKey.sign(hashForSignature(commitPayload)));
+        SignedData.create(commitPayload, nodeKey.sign(commitPayload.hashForSignature()));
 
     final Commit commitMsg = new Commit(signedCommitPayload);
 

@@ -25,6 +25,7 @@ import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MutableProtocolSchedule implements ProtocolSchedule {
 
@@ -73,6 +74,13 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
         .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
         .map(spec -> spec.getSpec().getName() + ": " + spec.getBlock())
         .collect(Collectors.joining(", ", "[", "]"));
+  }
+
+  @Override
+  public Stream<Long> streamMilestoneBlocks() {
+    return protocolSpecs.stream()
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
+        .map(ScheduledProtocolSpec::getBlock);
   }
 
   @Override

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
 
@@ -55,8 +56,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
             original.getBlockHeaderValidator(),
             original.getBlockBodyValidator(),
             noRewardBlockProcessor,
-            original.getBadBlocksManager(),
-            Optional.empty());
+            original.getBadBlocksManager());
     final BlockImporter noRewardBlockImporter = new MainnetBlockImporter(noRewardBlockValidator);
     return new ProtocolSpec(
         original.getName(),
@@ -81,7 +81,13 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getTransactionPriceCalculator(),
         original.getEip1559(),
         original.getGasBudgetCalculator(),
-        original.getBadBlocksManager());
+        original.getBadBlocksManager(),
+        Optional.empty());
+  }
+
+  @Override
+  public Stream<Long> streamMilestoneBlocks() {
+    return delegate.streamMilestoneBlocks();
   }
 
   @Override

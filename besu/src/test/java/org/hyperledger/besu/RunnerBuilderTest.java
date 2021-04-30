@@ -15,6 +15,8 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -24,6 +26,7 @@ import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.ibft.protocol.IbftSubProtocol;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -31,7 +34,11 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -39,16 +46,25 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.nat.NatMethod;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -71,8 +87,8 @@ public final class RunnerBuilderTest {
     final EthProtocolManager ethProtocolManager = mock(EthProtocolManager.class);
     final EthContext ethContext = mock(EthContext.class);
     final ProtocolContext protocolContext = mock(ProtocolContext.class);
-    final NodeKey nodeKey = mock(NodeKey.class);
-    final SECP256K1.PublicKey publicKey = mock(SECP256K1.PublicKey.class);
+    final NodeKey nodeKey =
+        new NodeKey(new KeyPairSecurityModule(new SECP256K1().generateKeyPair()));
 
     when(subProtocolConfiguration.getProtocolManagers())
         .thenReturn(
@@ -86,13 +102,12 @@ public final class RunnerBuilderTest {
     when(ethProtocolManager.ethContext()).thenReturn(ethContext);
     when(subProtocolConfiguration.getSubProtocols())
         .thenReturn(Collections.singletonList(new IbftSubProtocol()));
-    when(protocolContext.getBlockchain()).thenReturn(mock(MutableBlockchain.class));
-    when(publicKey.getEncodedBytes()).thenReturn(Bytes.of(new byte[64]));
-    when(nodeKey.getPublicKey()).thenReturn(publicKey);
+    when(protocolContext.getBlockchain()).thenReturn(mock(DefaultBlockchain.class));
 
     when(besuController.getProtocolManager()).thenReturn(ethProtocolManager);
     when(besuController.getSubProtocolConfiguration()).thenReturn(subProtocolConfiguration);
     when(besuController.getProtocolContext()).thenReturn(protocolContext);
+    when(besuController.getProtocolSchedule()).thenReturn(mock(ProtocolSchedule.class));
     when(besuController.getNodeKey()).thenReturn(nodeKey);
     when(besuController.getMiningParameters()).thenReturn(mock(MiningParameters.class));
     when(besuController.getPrivacyParameters()).thenReturn(mock(PrivacyParameters.class));
@@ -104,11 +119,10 @@ public final class RunnerBuilderTest {
   @Test
   public void enodeUrlShouldHaveAdvertisedHostWhenDiscoveryDisabled() {
     final String p2pAdvertisedHost = "172.0.0.1";
-    final int p2pListenPort = 30301;
+    final int p2pListenPort = 30302;
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
             .p2pListenInterface("0.0.0.0")
             .p2pListenPort(p2pListenPort)
             .p2pAdvertisedHost(p2pAdvertisedHost)
@@ -133,8 +147,59 @@ public final class RunnerBuilderTest {
             .ipAddress(p2pAdvertisedHost)
             .discoveryPort(0)
             .listeningPort(p2pListenPort)
-            .nodeId(new byte[64])
+            .nodeId(besuController.getNodeKey().getPublicKey().getEncoded())
             .build();
     assertThat(runner.getLocalEnode().orElseThrow()).isEqualTo(expectedEodeURL);
+  }
+
+  @Test
+  public void movingAcrossProtocolSpecsUpdatesNodeRecord() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final String p2pAdvertisedHost = "172.0.0.1";
+    final int p2pListenPort = 30301;
+    final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
+    final Block genesisBlock = gen.genesisBlock();
+    final MutableBlockchain blockchain =
+        createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
+    when(besuController.getProtocolContext().getBlockchain()).thenReturn(blockchain);
+    final Runner runner =
+        new RunnerBuilder()
+            .discovery(true)
+            .p2pListenInterface("0.0.0.0")
+            .p2pListenPort(p2pListenPort)
+            .p2pAdvertisedHost(p2pAdvertisedHost)
+            .p2pEnabled(true)
+            .natMethod(NatMethod.NONE)
+            .besuController(besuController)
+            .ethNetworkConfig(mock(EthNetworkConfig.class))
+            .metricsSystem(mock(ObservableMetricsSystem.class))
+            .jsonRpcConfiguration(mock(JsonRpcConfiguration.class))
+            .graphQLConfiguration(mock(GraphQLConfiguration.class))
+            .webSocketConfiguration(mock(WebSocketConfiguration.class))
+            .metricsConfiguration(mock(MetricsConfiguration.class))
+            .vertx(Vertx.vertx())
+            .dataDir(dataDir.getRoot().toPath())
+            .storageProvider(storageProvider)
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .build();
+    runner.start();
+    when(besuController.getProtocolSchedule().streamMilestoneBlocks())
+        .thenAnswer(__ -> Stream.of(1L, 2L));
+    for (int i = 0; i < 2; ++i) {
+      final Block block =
+          gen.block(
+              BlockDataGenerator.BlockOptions.create()
+                  .setBlockNumber(1 + i)
+                  .setParentHash(blockchain.getChainHeadHash()));
+      blockchain.appendBlock(block, gen.receipts(block));
+      assertThat(
+              storageProvider
+                  .getStorageBySegmentIdentifier(BLOCKCHAIN)
+                  .get("local-enr-seqno".getBytes(StandardCharsets.UTF_8))
+                  .map(Bytes::of)
+                  .map(NodeRecordFactory.DEFAULT::fromBytes)
+                  .map(NodeRecord::getSeq))
+          .contains(UInt64.valueOf(2 + i));
+    }
   }
 }

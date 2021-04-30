@@ -111,7 +111,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
     }
     try {
       final MutableAccount sender =
-          frame.getWorldState().getAccount(frame.getSenderAddress()).getMutable();
+          frame.getWorldState().getOrCreate(frame.getSenderAddress()).getMutable();
       sender.decrementBalance(frame.getValue());
 
       final MutableAccount contract =

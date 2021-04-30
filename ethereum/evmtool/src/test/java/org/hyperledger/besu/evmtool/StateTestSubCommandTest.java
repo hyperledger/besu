@@ -41,4 +41,12 @@ public class StateTestSubCommandTest {
     cmd.parseArgs(StateTestSubCommandTest.class.getResource("valid-state-test.json").getPath());
     stateTestSubCommand.run();
   }
+
+  @Test
+  public void shouldWorkWithValidAccessListStateTest() {
+    final StateTestSubCommand stateTestSubCommand = new StateTestSubCommand(new EvmToolCommand());
+    final CommandLine cmd = new CommandLine(stateTestSubCommand);
+    cmd.parseArgs(StateTestSubCommandTest.class.getResource("access-list.json").getPath());
+    stateTestSubCommand.run();
+  }
 }

@@ -54,8 +54,9 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final MutableBlockchain mutableBlockchain = context.getBlockchain();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
-    final VoteProposer voteProposer = context.getConsensusState(BftContext.class).getVoteProposer();
-    final BlockInterface blockInterface = new BftBlockInterface();
+    final BftContext bftContext = context.getConsensusState(BftContext.class);
+    final VoteProposer voteProposer = bftContext.getVoteProposer();
+    final BlockInterface blockInterface = bftContext.getBlockInterface();
 
     final VoteTallyCache voteTallyCache = createVoteTallyCache(context, mutableBlockchain);
 
@@ -70,8 +71,9 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private VoteTallyCache createVoteTallyCache(
       final ProtocolContext context, final MutableBlockchain blockchain) {
-    final EpochManager epochManager = context.getConsensusState(BftContext.class).getEpochManager();
-    final BftBlockInterface bftBlockInterface = new BftBlockInterface();
+    final BftContext bftContext = context.getConsensusState(BftContext.class);
+    final EpochManager epochManager = bftContext.getEpochManager();
+    final BftBlockInterface bftBlockInterface = bftContext.getBlockInterface();
     final VoteTallyUpdater voteTallyUpdater = new VoteTallyUpdater(epochManager, bftBlockInterface);
     return new VoteTallyCache(blockchain, voteTallyUpdater, epochManager, bftBlockInterface);
   }

@@ -17,7 +17,8 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -76,7 +77,7 @@ public class TraceTransactionIntegrationTest {
 
   @Test
   public void shouldTraceSStoreOperation() {
-    final KeyPair keyPair = KeyPair.generate();
+    final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     final Transaction createTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)

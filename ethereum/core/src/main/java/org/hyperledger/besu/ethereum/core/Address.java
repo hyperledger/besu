@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
+import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -101,7 +101,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
     return wrap(hash.slice(12, 20));
   }
 
-  public static Address extract(final PublicKey publicKey) {
+  public static Address extract(final SECPPublicKey publicKey) {
     return Address.extract(Hash.hash(publicKey.getEncodedBytes()));
   }
 
