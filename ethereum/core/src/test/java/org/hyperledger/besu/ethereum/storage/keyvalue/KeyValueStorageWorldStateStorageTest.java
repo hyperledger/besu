@@ -45,8 +45,7 @@ public class KeyValueStorageWorldStateStorageTest {
   public void getAccountStorageTrieNode_returnsEmptyNode() {
     final WorldStateKeyValueStorage storage = emptyStorage();
     assertThat(
-            storage.getAccountStorageTrieNode(
-                 Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
+            storage.getAccountStorageTrieNode(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
   }
 
@@ -117,26 +116,21 @@ public class KeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStorageTrieNode(
-
-            null,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
-        .putAccountStorageTrieNode( null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+            null, Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE), MerklePatriciaTrie.EMPTY_TRIE_NODE)
+        .putAccountStorageTrieNode(null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
     assertThat(
-            storage.getAccountStorageTrieNode(
-                 Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
+            storage.getAccountStorageTrieNode(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerklePatriciaTrie.EMPTY_TRIE_NODE);
-    assertThat(storage.getAccountStorageTrieNode( Bytes.EMPTY, Hash.EMPTY))
-        .contains(Bytes.EMPTY);
+    assertThat(storage.getAccountStorageTrieNode(Bytes.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
   }
 
   @Test
   public void getAccountStorageTrieNode_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final WorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putAccountStorageTrieNode( null, Hash.hash(bytes), bytes).commit();
+    storage.updater().putAccountStorageTrieNode(null, Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Hash.hash(bytes))).contains(bytes);
   }
@@ -147,11 +141,8 @@ public class KeyValueStorageWorldStateStorageTest {
     storage
         .updater()
         .putAccountStorageTrieNode(
-
-            null,
-            Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE),
-            MerklePatriciaTrie.EMPTY_TRIE_NODE)
-        .putAccountStorageTrieNode( null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
+            null, Hash.hash(MerklePatriciaTrie.EMPTY_TRIE_NODE), MerklePatriciaTrie.EMPTY_TRIE_NODE)
+        .putAccountStorageTrieNode(null, Hash.hash(Bytes.EMPTY), Bytes.EMPTY)
         .commit();
 
     assertThat(storage.getNodeData(Bytes.EMPTY, MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH))
@@ -163,7 +154,7 @@ public class KeyValueStorageWorldStateStorageTest {
   public void getNodeData_saveAndGetRegularValue() {
     final Bytes bytes = Bytes.fromHexString("0x123456");
     final WorldStateKeyValueStorage storage = emptyStorage();
-    storage.updater().putAccountStorageTrieNode( null, Hash.hash(bytes), bytes).commit();
+    storage.updater().putAccountStorageTrieNode(null, Hash.hash(bytes), bytes).commit();
 
     assertThat(storage.getNodeData(null, Hash.hash(bytes))).contains(bytes);
   }

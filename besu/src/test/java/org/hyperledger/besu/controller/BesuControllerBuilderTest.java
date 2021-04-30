@@ -116,8 +116,7 @@ public class BesuControllerBuilderTest {
             any(), anyString(), anyString(), anyString()))
         .thenReturn(labels -> null);
 
-    when(storageProvider.createWorldStateStorage())
-        .thenReturn(worldStateStorage);
+    when(storageProvider.createWorldStateStorage()).thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
     when(storageProvider.isWorldStateIterable()).thenReturn(true);
 
