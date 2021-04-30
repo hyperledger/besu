@@ -80,7 +80,7 @@ public class WorldStateProofProviderTest {
     // Save to Storage
     storageTrie.commit(
         (location, hash, value) ->
-            updater.putAccountStorageTrieNode(addressHash, location, hash, value));
+            updater.putAccountStorageTrieNode(location, hash, value));
 
     // Define account value
     final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
@@ -154,7 +154,7 @@ public class WorldStateProofProviderTest {
   private MerklePatriciaTrie<Bytes32, Bytes> emptyWorldStateTrie(final Hash accountHash) {
     return new StoredMerklePatriciaTrie<>(
         (location, hash) ->
-            worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+            worldStateStorage.getAccountStorageTrieNode(accountHash, hash),
         b -> b,
         b -> b);
   }

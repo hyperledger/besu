@@ -263,7 +263,7 @@ public class MarkSweepPrunerTest {
 
   private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(location, hash),
         rootHash,
         Function.identity(),
         Function.identity());

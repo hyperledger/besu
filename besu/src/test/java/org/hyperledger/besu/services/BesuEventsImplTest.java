@@ -132,7 +132,7 @@ public class BesuEventsImplTest {
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(mockWorldStateArchive.getMutable(any(), any(), anyBoolean()))
+    when(mockWorldStateArchive.getMutable(any(), any()))
         .thenReturn(Optional.of(mockWorldState));
 
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
