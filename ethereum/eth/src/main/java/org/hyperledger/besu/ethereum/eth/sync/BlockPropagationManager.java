@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -45,6 +46,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -141,6 +143,20 @@ public class BlockPropagationManager {
               (r, t) -> {
                 if (r != null) {
                   LOG.info("Imported {} pending blocks", r.size());
+                }
+              });
+    } else {
+      pendingBlocksManager
+          .lowestAnnouncedBlock()
+          .map(ProcessableBlockHeader::getNumber)
+          .ifPresent(
+              minAnnouncedBlockNumber -> {
+                long distance =
+                    minAnnouncedBlockNumber
+                        - protocolContext.getBlockchain().getChainHeadBlockNumber();
+                if (distance < config.getBlockPropagationRange().upperEndpoint()
+                    && minAnnouncedBlockNumber > newBlock.getHeader().getNumber()) {
+                  retrieveMissingAnnouncedBlock(newBlock.getHeader().getNumber() + 1);
                 }
               });
     }
@@ -245,11 +261,28 @@ public class BlockPropagationManager {
     }
   }
 
+  @SuppressWarnings("unused")
+  private CompletableFuture<Block> retrieveMissingAnnouncedBlock(final long blockNumber) {
+    final List<EthPeer> peers =
+        ethContext.getEthPeers().streamBestPeers().collect(Collectors.toList());
+    final GetBlockFromPeersTask getBlockTask =
+        GetBlockFromPeersTask.create(
+            peers, protocolSchedule, ethContext, Optional.empty(), blockNumber, metricsSystem);
+    return getBlockTask
+        .run()
+        .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
+  }
+
   private CompletableFuture<Block> processAnnouncedBlock(
       final List<EthPeer> peers, final NewBlockHash newBlock) {
     final GetBlockFromPeersTask getBlockTask =
         GetBlockFromPeersTask.create(
-            peers, protocolSchedule, ethContext, newBlock.hash(), newBlock.number(), metricsSystem);
+            peers,
+            protocolSchedule,
+            ethContext,
+            Optional.of(newBlock.hash()),
+            newBlock.number(),
+            metricsSystem);
     return getBlockTask
         .run()
         .thenCompose((r) -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
