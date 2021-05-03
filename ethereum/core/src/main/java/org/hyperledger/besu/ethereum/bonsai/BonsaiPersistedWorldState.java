@@ -298,6 +298,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         storageTx.rollback();
         trieBranchTx.rollback();
         trieLogTx.rollback();
+        updater.reset();
         worldStateBlockHash = originalBlockHash;
         worldStateRootHash = originalRootHash;
       }
