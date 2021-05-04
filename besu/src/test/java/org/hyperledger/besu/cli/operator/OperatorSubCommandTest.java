@@ -19,6 +19,7 @@ import static java.lang.System.currentTimeMillis;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,31 +28,22 @@ import static org.hyperledger.besu.cli.operator.OperatorSubCommandTest.Cmd.cmd;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.crypto.SECP256R1;
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SECPPublicKey;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.json.JsonObject;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import picocli.CommandLine;
@@ -80,7 +72,6 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
   @Before
   public void init() throws IOException {
-    SignatureAlgorithmFactory.resetInstance();
     tmpOutputDirectoryPath = createTempDirectory(format("output-%d", currentTimeMillis()));
   }
 
@@ -116,8 +107,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         tmpOutputDirectoryPath,
         "genesis.json",
         true,
-        asList("key.pub", "key.priv"),
-        Optional.of(new SECP256K1()));
+        asList("key.pub", "key.priv"));
   }
 
   @Test
@@ -139,8 +129,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         tmpOutputDirectoryPath,
         "option.json",
         true,
-        asList("key.pub", "key.priv"),
-        Optional.of(new SECP256K1()));
+        asList("key.pub", "key.priv"));
   }
 
   @Test
@@ -151,8 +140,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         tmpOutputDirectoryPath,
         "genesis.json",
         true,
-        asList("pub.test", "key.priv"),
-        Optional.of(new SECP256K1()));
+        asList("pub.test", "key.priv"));
   }
 
   @Test
@@ -163,8 +151,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         tmpOutputDirectoryPath,
         "genesis.json",
         true,
-        asList("key.pub", "priv.test"),
-        Optional.of(new SECP256K1()));
+        asList("key.pub", "priv.test"));
   }
 
   @Test
@@ -210,59 +197,6 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         asList("key.pub", "key.priv"));
   }
 
-  @Test
-  public void shouldFailIfInvalidEcCurveIsSet() {
-    assertThatThrownBy(
-            () ->
-                runCmdAndCheckOutput(
-                    cmd(),
-                    "/operator/config_generate_keys_ec_invalid.json",
-                    tmpOutputDirectoryPath,
-                    "genesis.json",
-                    true,
-                    asList("key.pub", "priv.test")))
-        .isInstanceOf(CommandLine.ExecutionException.class);
-  }
-
-  @Test
-  public void shouldGenerateSECP256R1KeysWhenSetAsEcCurve() throws IOException {
-    runCmdAndCheckOutput(
-        cmd(),
-        "/operator/config_generate_keys_secp256r1.json",
-        tmpOutputDirectoryPath,
-        "genesis.json",
-        true,
-        asList("key.pub", "key.priv"),
-        Optional.of(new SECP256R1()));
-  }
-
-  @Test
-  public void shouldFailIfImportedKeysAreFromDifferentEllipticCurve() {
-    assertThatThrownBy(
-            () ->
-                runCmdAndCheckOutput(
-                    cmd(),
-                    "/operator/config_import_keys_secp256r1_invalid_keys.json",
-                    tmpOutputDirectoryPath,
-                    "genesis.json",
-                    true,
-                    asList("key.pub", "key.priv")))
-        .isInstanceOf(CommandLine.ExecutionException.class)
-        .hasMessageEndingWith(
-            "0xb295c4242fb40c6e8ac7b831c916846050f191adc560b8098ba6ad513079571ec1be6e5e1a715857a13a91963097962e048c36c5863014b59e8f67ed3f667680 is not a valid public key for elliptic curve secp256r1");
-  }
-
-  @Test
-  public void shouldImportSecp256R1Keys() throws IOException {
-    runCmdAndCheckOutput(
-        cmd(),
-        "/operator/config_import_keys_secp256r1.json",
-        tmpOutputDirectoryPath,
-        "genesis.json",
-        false,
-        singletonList("key.pub"));
-  }
-
   private void runCmdAndCheckOutput(
       final Cmd cmd,
       final String configFile,
@@ -270,25 +204,6 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
       final String genesisFileName,
       final boolean generate,
       final Collection<String> expectedKeyFiles)
-      throws IOException {
-    runCmdAndCheckOutput(
-        cmd,
-        configFile,
-        outputDirectoryPath,
-        genesisFileName,
-        generate,
-        expectedKeyFiles,
-        Optional.empty());
-  }
-
-  private void runCmdAndCheckOutput(
-      final Cmd cmd,
-      final String configFile,
-      final Path outputDirectoryPath,
-      final String genesisFileName,
-      final boolean generate,
-      final Collection<String> expectedKeyFiles,
-      final Optional<SignatureAlgorithm> signatureAlgorithm)
       throws IOException {
     final URL configFilePath = this.getClass().getResource(configFile);
     parseCommand(
@@ -323,47 +238,10 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
       final int nodeCount = jsonNode.get("blockchain").get("nodes").get("count").asInt();
       assertThat(nodeCount).isEqualTo(nodesKeysFolders.length);
     }
+    final Stream<File> nodesKeysFoldersStream = stream(nodesKeysFolders);
 
-    for (File nodeFolder : nodesKeysFolders) {
-      assertThat(nodeFolder.list()).containsAll(expectedKeyFiles);
-
-      if (signatureAlgorithm.isPresent()) {
-        checkPublicKey(nodeFolder, signatureAlgorithm.get());
-      }
-    }
-  }
-
-  private void checkPublicKey(final File dir, final SignatureAlgorithm signatureAlgorithm)
-      throws IOException {
-    String publicKeyHex = readPubFile(dir);
-    String privateKeyHex = readPrivFile(dir);
-
-    SECPPrivateKey privateKey =
-        signatureAlgorithm.createPrivateKey(Bytes32.fromHexString(privateKeyHex));
-    SECPPublicKey expectedPublicKey = signatureAlgorithm.createPublicKey(privateKey);
-
-    assertThat(publicKeyHex).isEqualTo(expectedPublicKey.getEncodedBytes().toHexString());
-  }
-
-  private String readPubFile(final File dir) throws IOException {
-    FilenameFilter pubFilter = (folder, name) -> name.contains("pub");
-
-    return readFile(dir, pubFilter);
-  }
-
-  private String readPrivFile(final File dir) throws IOException {
-    FilenameFilter privFilter = (folder, name) -> name.contains("priv");
-
-    return readFile(dir, privFilter);
-  }
-
-  private String readFile(final File dir, final FilenameFilter fileFilter) throws IOException {
-    File[] files = dir.listFiles(fileFilter);
-
-    assertThat(files).isNotNull();
-    assertThat(files.length).isEqualTo(1);
-
-    return Files.readString(Path.of(files[0].getAbsolutePath()));
+    nodesKeysFoldersStream.forEach(
+        nodeFolder -> assertThat(nodeFolder.list()).containsAll(expectedKeyFiles));
   }
 
   static class Cmd {

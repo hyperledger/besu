@@ -2673,11 +2673,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
     } catch (IllegalArgumentException e) {
-      throw new CommandLine.InitializationException(
-          new StringBuilder()
-              .append("Invalid genesis file configuration for ecCurve. ")
-              .append(e.getMessage())
-              .toString());
+      throw new CommandLine.InitializationException(e.getMessage());
     }
   }
 
