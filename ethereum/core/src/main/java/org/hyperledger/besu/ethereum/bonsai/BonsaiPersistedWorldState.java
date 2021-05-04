@@ -397,12 +397,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
-    final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-        new StoredMerklePatriciaTrie<>(
-            (location, key) -> getStorageTrieNode(Hash.hash(address), location, key),
-            rootHash,
-            Function.identity(),
-            Function.identity());
-    return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+    return worldStateStorage.getAllAccountStorageTrieNodes(Hash.hash(address));
   }
 }

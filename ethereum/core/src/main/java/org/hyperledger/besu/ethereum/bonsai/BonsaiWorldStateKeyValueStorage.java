@@ -23,7 +23,11 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -101,6 +105,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
           .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
           .map(Bytes::wrap);
     }
+  }
+
+  public Map<Bytes32, Bytes> getAllAccountStorageTrieNodes(final Hash accountHash) {
+    byte[] accountHashArray = Arrays.copyOfRange(accountHash.toArrayUnsafe(), 0, Hash.SIZE);
+    final Set<byte[]> allKeysFromAccount =
+        trieBranchStorage.getAllKeysThat(key -> Arrays.equals(accountHashArray, key));
+    final Map<Bytes32, Bytes> allAccountStorageTrieNodes = new HashMap<>();
+    for (byte[] key : allKeysFromAccount) {
+      trieBranchStorage
+          .get(key)
+          .ifPresent(value -> allAccountStorageTrieNodes.put(Bytes32.wrap(key), Bytes.wrap(value)));
+    }
+    return allAccountStorageTrieNodes;
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
