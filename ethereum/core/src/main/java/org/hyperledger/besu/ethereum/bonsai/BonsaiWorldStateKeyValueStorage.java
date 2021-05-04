@@ -108,9 +108,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Map<Bytes32, Bytes> getAllAccountStorageTrieNodes(final Hash accountHash) {
-    byte[] accountHashArray = Arrays.copyOfRange(accountHash.toArrayUnsafe(), 0, Hash.SIZE);
+    byte[] accountHashArray = accountHash.toArrayUnsafe();
     final Set<byte[]> allKeysFromAccount =
-        trieBranchStorage.getAllKeysThat(key -> Arrays.equals(accountHashArray, key));
+        trieBranchStorage.getAllKeysThat(
+            key -> Arrays.equals(accountHashArray, Arrays.copyOfRange(key, 0, Hash.SIZE)));
     final Map<Bytes32, Bytes> allAccountStorageTrieNodes = new HashMap<>();
     for (byte[] key : allKeysFromAccount) {
       trieBranchStorage
