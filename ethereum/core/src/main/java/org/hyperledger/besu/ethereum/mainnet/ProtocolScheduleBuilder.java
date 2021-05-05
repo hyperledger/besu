@@ -248,7 +248,8 @@ public class ProtocolScheduleBuilder {
     if (ExperimentalEIPs.eip1559Enabled) {
       final Optional<TransactionPriceCalculator> transactionPriceCalculator =
           Optional.of(TransactionPriceCalculator.eip1559());
-      final long eip1559Block = config.getEIP1559BlockNumber().getAsLong();
+      // if we do not have a 1559 block number, assume we are running pre-London config:
+      final long eip1559Block = config.getEIP1559BlockNumber().orElse(Long.MAX_VALUE);
       builders.put(
           eip1559Block,
           new BuilderMapEntry(
