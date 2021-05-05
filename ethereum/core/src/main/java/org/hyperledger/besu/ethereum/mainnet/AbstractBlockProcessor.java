@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdater;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -187,6 +189,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               result.getValidationResult().getInvalidReason(),
               blockHeader.getHash().toHexString(),
               transaction.getHash().toHexString());
+          if (worldState instanceof BonsaiPersistedWorldState) {
+            ((BonsaiWorldStateUpdater) worldStateUpdater).reset();
+          }
           return AbstractBlockProcessor.Result.failed();
         }
 
@@ -202,6 +207,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
         // no need to log, rewardCoinbase logs the error.
+        if (worldState instanceof BonsaiPersistedWorldState) {
+          ((BonsaiWorldStateUpdater) worldState.updater()).reset();
+        }
         return AbstractBlockProcessor.Result.failed();
       }
 
