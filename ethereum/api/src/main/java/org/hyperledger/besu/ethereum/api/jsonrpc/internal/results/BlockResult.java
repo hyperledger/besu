@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
   "number",
   "hash",
@@ -67,6 +68,7 @@ public class BlockResult implements JsonRpcResult {
   private final String baseFee;
   private final String size;
   private final String gasLimit;
+  private final String gasTarget;
   private final String gasUsed;
   private final String timestamp;
   private final List<TransactionResult> transactions;
@@ -105,7 +107,13 @@ public class BlockResult implements JsonRpcResult {
     this.extraData = header.getExtraData().toString();
     this.baseFee = header.getBaseFee().map(Quantity::create).orElse(null);
     this.size = Quantity.create(size);
-    this.gasLimit = Quantity.create(header.getGasLimit());
+    if (header.getBaseFee().isPresent()) {
+      this.gasLimit = null;
+      this.gasTarget = Quantity.create(header.getGasLimit());
+    } else {
+      this.gasLimit = Quantity.create(header.getGasLimit());
+      this.gasTarget = null;
+    }
     this.gasUsed = Quantity.create(header.getGasUsed());
     this.timestamp = Quantity.create(header.getTimestamp());
     this.ommers = ommers;
@@ -196,6 +204,11 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "gasLimit")
   public String getGasLimit() {
     return gasLimit;
+  }
+
+  @JsonGetter(value = "gasTarget")
+  public String getGasTarget() {
+    return gasTarget;
   }
 
   @JsonGetter(value = "gasUsed")

@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
+import static org.hyperledger.besu.plugin.data.TransactionType.FRONTIER;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
@@ -74,12 +75,14 @@ public class TransactionDecoder {
 
   public static Transaction decodeOpaqueBytes(final Bytes input) {
     final TransactionType transactionType;
-    try {
-      transactionType = TransactionType.of(input.get(0));
-    } catch (final IllegalArgumentException __) {
-      return decodeFrontier(RLP.input(input));
-    }
-    return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
+      // is this prefixed by 2930 transaction type byte?
+      if (!input.isEmpty() && FRONTIER.compareTo(input.get(0)) < 0) {
+        transactionType = TransactionType.of(input.get(0));
+        return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
+      } else {
+        // else decode for wire
+        return decodeForWire(RLP.input(input));
+      }
   }
 
   private static Decoder getDecoder(final TransactionType transactionType) {

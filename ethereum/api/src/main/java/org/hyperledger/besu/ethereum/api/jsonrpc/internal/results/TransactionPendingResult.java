@@ -50,7 +50,12 @@ public class TransactionPendingResult implements TransactionResult {
   private final String chainId;
   private final String from;
   private final String gas;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String gasPrice;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String gasPremium;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String feeCap;
   private final String hash;
   private final String input;
   private final String nonce;
@@ -73,6 +78,8 @@ public class TransactionPendingResult implements TransactionResult {
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
     this.gasPrice = Quantity.create(transaction.getGasPrice());
+    this.gasPremium = transaction.getGasPremium().map(q -> q.toHexString()).orElse(null);
+    this.feeCap = transaction.getFeeCap().map(q -> q.toHexString()).orElse(null);
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
@@ -114,6 +121,16 @@ public class TransactionPendingResult implements TransactionResult {
   @JsonGetter(value = "gasPrice")
   public String getGasPrice() {
     return gasPrice;
+  }
+
+  @JsonGetter(value = "gasPremium")
+  public String getGasPremium() {
+    return gasPremium;
+  }
+
+  @JsonGetter(value = "feeCap")
+  public String getFeeCap() {
+    return feeCap;
   }
 
   @JsonGetter(value = "hash")

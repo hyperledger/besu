@@ -59,7 +59,12 @@ public class TransactionCompleteResult implements TransactionResult {
   private final String chainId;
   private final String from;
   private final String gas;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String gasPrice;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String gasPremium;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String feeCap;
   private final String hash;
   private final String input;
   private final String nonce;
@@ -85,6 +90,8 @@ public class TransactionCompleteResult implements TransactionResult {
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
+    this.gasPremium = tx.getTransaction().getGasPremium().map(q -> q.toHexString()).orElse(null);
+    this.feeCap = tx.getTransaction().getFeeCap().map(q -> q.toHexString()).orElse(null);
     this.gasPrice = Quantity.create(transaction.getGasPrice());
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
@@ -131,6 +138,16 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "gas")
   public String getGas() {
     return gas;
+  }
+
+  @JsonGetter(value = "gasPremium")
+  public String getGasPremium() {
+    return gasPremium;
+  }
+
+  @JsonGetter(value = "feeCap")
+  public String getFeeCap() {
+    return feeCap;
   }
 
   @JsonGetter(value = "gasPrice")
