@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -66,6 +68,11 @@ public class ProofOfWorkValidationRuleTest {
           {4400000, 4400001},
           {4400001, 4400002}
         });
+  }
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @Test
@@ -140,47 +147,58 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   @Test
-  public void passesWithEip1559BlockAfterFork() {
-    final ProofOfWorkValidationRule proofOfWorkValidationRule =
-        new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT);
-    final long updatedNonce = blockHeader.getNonce() + 1;
-
-    final BlockHeader header =
-        BlockHeaderBuilder.fromHeader(blockHeader)
-            .nonce(updatedNonce)
-            .baseFee(10L)
-            .blockHeaderFunctions(mainnetBlockHashFunction())
-            .buildBlockHeader();
-    assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
-  }
-
-  @Test
   public void failsWithNonEip1559BlockAfterFork() {
     final ProofOfWorkValidationRule proofOfWorkValidationRule =
         new ProofOfWorkValidationRule(
             new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT);
-    final long updatedNonce = blockHeader.getNonce() + 1;
 
-    final BlockHeader header =
+    final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)
-            .nonce(updatedNonce)
+            .difficulty(Difficulty.ONE)
             .blockHeaderFunctions(mainnetBlockHashFunction())
-            .buildBlockHeader();
+            .timestamp(1);
+    final BlockHeader preHeader = headerBuilder.buildBlockHeader();
+    final Hash headerHash = validationRule.hashHeader(preHeader);
+
+    PoWSolution solution =
+        PoWHasher.ETHASH_LIGHT.hash(
+            preHeader.getNonce(),
+            preHeader.getNumber(),
+            new EpochCalculator.DefaultEpochCalculator(),
+            headerHash);
+
+    final BlockHeader header = headerBuilder.mixHash(solution.getMixHash()).buildBlockHeader();
+
+    ExperimentalEIPs.eip1559Enabled = true;
+
     assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
   }
 
   @Test
   public void failsWithEip1559BlockBeforeFork() {
-    final long updatedNonce = blockHeader.getNonce() + 1;
+    final ProofOfWorkValidationRule proofOfWorkValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.ETHASH_LIGHT);
 
-    final BlockHeader header =
+    final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)
-            .nonce(updatedNonce)
+            .difficulty(Difficulty.ONE)
             .baseFee(10L)
             .blockHeaderFunctions(mainnetBlockHashFunction())
-            .buildBlockHeader();
-    assertThat(validationRule.validate(header, parentHeader)).isFalse();
+            .timestamp(1);
+    final BlockHeader preHeader = headerBuilder.buildBlockHeader();
+    final Hash headerHash = validationRule.hashHeader(preHeader);
+
+    PoWSolution solution =
+        PoWHasher.ETHASH_LIGHT.hash(
+            preHeader.getNonce(),
+            preHeader.getNumber(),
+            new EpochCalculator.DefaultEpochCalculator(),
+            headerHash);
+
+    final BlockHeader header = headerBuilder.mixHash(solution.getMixHash()).buildBlockHeader();
+
+    assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
   }
 
   private BlockHeaderFunctions mainnetBlockHashFunction() {
