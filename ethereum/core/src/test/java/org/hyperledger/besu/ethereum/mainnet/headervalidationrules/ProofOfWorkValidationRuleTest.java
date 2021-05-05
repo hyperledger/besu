@@ -139,6 +139,50 @@ public class ProofOfWorkValidationRuleTest {
     assertThat(validationRule.validate(header, parentHeader)).isFalse();
   }
 
+  @Test
+  public void passesWithEip1559BlockAfterFork() {
+    final ProofOfWorkValidationRule proofOfWorkValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT);
+    final long updatedNonce = blockHeader.getNonce() + 1;
+
+    final BlockHeader header =
+        BlockHeaderBuilder.fromHeader(blockHeader)
+            .nonce(updatedNonce)
+            .baseFee(10L)
+            .blockHeaderFunctions(mainnetBlockHashFunction())
+            .buildBlockHeader();
+    assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
+  }
+
+  @Test
+  public void failsWithNonEip1559BlockAfterFork() {
+    final ProofOfWorkValidationRule proofOfWorkValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT);
+    final long updatedNonce = blockHeader.getNonce() + 1;
+
+    final BlockHeader header =
+        BlockHeaderBuilder.fromHeader(blockHeader)
+            .nonce(updatedNonce)
+            .blockHeaderFunctions(mainnetBlockHashFunction())
+            .buildBlockHeader();
+    assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
+  }
+
+  @Test
+  public void failsWithEip1559BlockBeforeFork() {
+    final long updatedNonce = blockHeader.getNonce() + 1;
+
+    final BlockHeader header =
+        BlockHeaderBuilder.fromHeader(blockHeader)
+            .nonce(updatedNonce)
+            .baseFee(10L)
+            .blockHeaderFunctions(mainnetBlockHashFunction())
+            .buildBlockHeader();
+    assertThat(validationRule.validate(header, parentHeader)).isFalse();
+  }
+
   private BlockHeaderFunctions mainnetBlockHashFunction() {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     return ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
