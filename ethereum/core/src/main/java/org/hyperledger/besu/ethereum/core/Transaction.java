@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -278,6 +279,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v) {
     this(nonce, gasPrice, null, null, gasLimit, to, value, signature, payload, sender, chainId, v);
+  }
+
+  @JsonCreator
+  public Transaction Transaction(final String hexString) {
+    return TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(hexString));
   }
 
   /**

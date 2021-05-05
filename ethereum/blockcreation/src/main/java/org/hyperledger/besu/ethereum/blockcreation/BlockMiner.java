@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -109,6 +110,18 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
     final long timestamp = scheduler.getNextTimestamp(parentHeader).getTimestampForHeader();
     return blockCreator.createBlock(transactions, ommers, timestamp);
+  }
+
+  /**
+   * Create a block with the given timestamp.
+   *
+   * @param parentHeader The header of the parent of the block to be produced
+   * @param timestamp unix timestamp of the new block.
+   * @return the newly created block.
+   */
+  public Block createBlock(final BlockHeader parentHeader, final long timestamp) {
+    final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
+    return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp);
   }
 
   protected boolean mineBlock() throws InterruptedException {
