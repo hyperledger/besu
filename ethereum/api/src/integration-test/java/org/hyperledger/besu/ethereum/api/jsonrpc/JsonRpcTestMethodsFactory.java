@@ -128,6 +128,7 @@ public class JsonRpcTestMethodsFactory {
             blockchainQueries,
             synchronizer,
             ProtocolScheduleFixture.MAINNET,
+            context,
             filterManager,
             transactionPool,
             miningCoordinator,
