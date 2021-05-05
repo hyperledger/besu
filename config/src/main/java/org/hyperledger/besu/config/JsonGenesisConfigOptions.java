@@ -53,7 +53,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return fromJsonObjectWithOverrides(configRoot, emptyMap());
   }
 
-  public static JsonGenesisConfigOptions fromJsonObjectWithOverrides(
+  static JsonGenesisConfigOptions fromJsonObjectWithOverrides(
       final ObjectNode configRoot, final Map<String, String> configOverrides) {
     final TransitionsConfigOptions transitionsConfigOptions;
     try {
