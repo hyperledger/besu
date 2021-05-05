@@ -287,6 +287,9 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
+      - acceptanceTestsQuorum:
+          requires:
+            - unitTests
       - buildDocker:
           requires:
             - assemble
