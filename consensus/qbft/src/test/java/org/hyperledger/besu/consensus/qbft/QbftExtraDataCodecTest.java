@@ -17,15 +17,6 @@ package org.hyperledger.besu.consensus.qbft;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.google.common.base.Suppliers;
-import com.google.common.collect.Lists;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.function.Supplier;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.consensus.common.VoteType;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
@@ -37,6 +28,17 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class QbftExtraDataCodecTest {
