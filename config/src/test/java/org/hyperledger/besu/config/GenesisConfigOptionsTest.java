@@ -225,7 +225,7 @@ public class GenesisConfigOptionsTest {
   public void shouldGetEIP1559BaseFeeAtGenesis() {
     try {
       ExperimentalEIPs.eip1559Enabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 0));
+      final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 0));
       assertThat(config.getEIP1559BlockNumber()).hasValue(0);
       assertThat(config.getGenesisBaseFee())
           .hasValue(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
