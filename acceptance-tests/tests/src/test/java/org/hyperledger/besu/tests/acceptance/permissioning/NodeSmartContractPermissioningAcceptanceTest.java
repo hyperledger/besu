@@ -69,27 +69,15 @@ public class NodeSmartContractPermissioningAcceptanceTest
   }
 
   @Test
-  public void permissionedNodeShouldConnectToNewlyPermittedNode() {
-    permissionedNode.verify(admin.addPeer(bootnode));
-    permissionedNode.verify(admin.addPeer(allowedNode));
-    permissionedNode.verify(net.awaitPeerCount(2));
-
-    permissionedNode.execute(allowNode(forbiddenNode));
-    permissionedNode.verify(connectionIsAllowed(permissionedNode, forbiddenNode));
-    permissionedNode.verify(admin.addPeer(forbiddenNode));
-
-    permissionedNode.verify(net.awaitPeerCount(3));
-  }
-
-  @Test
   public void permissioningUpdatesPropagateThroughNetwork() {
     permissionedNode.verify(admin.addPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
-    // permissioning changes in peer should propagate to permissioned node
+    // connection to newly permitted node is allowed
     allowedNode.execute(allowNode(forbiddenNode));
     allowedNode.verify(connectionIsAllowed(permissionedNode, forbiddenNode));
+    // permissioning changes in peer should propagate to permissioned node
     permissionedNode.verify(connectionIsAllowed(permissionedNode, forbiddenNode));
 
     permissionedNode.verify(admin.addPeer(forbiddenNode));
