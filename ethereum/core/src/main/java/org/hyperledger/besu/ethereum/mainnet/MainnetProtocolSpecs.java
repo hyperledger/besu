@@ -467,7 +467,8 @@ public abstract class MainnetProtocolSpecs {
     final Optional<TransactionPriceCalculator> transactionPriceCalculator =
         Optional.of(TransactionPriceCalculator.eip1559());
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
+    final EIP1559 eip1559 =
+        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE));
     return berlinDefinition(
             chainId,
             contractSizeLimit,

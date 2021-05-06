@@ -141,7 +141,7 @@ public class ProtocolScheduleBuilder {
 
     validateForkOrdering();
 
-    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory, chainId);
+    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
 
     // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
     // inserted _AT_ the modifier block entry.
@@ -204,7 +204,7 @@ public class ProtocolScheduleBuilder {
   }
 
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
-      final MainnetProtocolSpecFactory specFactory, final Optional<BigInteger> chainId) {
+      final MainnetProtocolSpecFactory specFactory) {
     final TreeMap<Long, BuilderMapEntry> builders =
         Lists.newArrayList(
                 create(OptionalLong.of(0), specFactory.frontierDefinition()),
