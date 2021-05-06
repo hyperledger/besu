@@ -434,4 +434,8 @@ public interface GasCalculator {
   default Gas modExpGasCost(final Bytes input) {
     return Gas.ZERO;
   }
+
+  default long getMaxRefundQuotient() {
+    return 2;
+  };
 }

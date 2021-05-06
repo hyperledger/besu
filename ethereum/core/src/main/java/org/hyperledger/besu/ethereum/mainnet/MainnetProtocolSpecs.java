@@ -530,6 +530,7 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             quorumCompatibilityMode)
+        .gasCalculator(LondonGasCalculator::new)
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(

@@ -45,19 +45,20 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   private static final Gas COLD_ACCOUNT_ACCESS_COST = Gas.of(2600);
   private static final Gas WARM_STORAGE_READ_COST = Gas.of(100);
   private static final Gas ACCESS_LIST_ADDRESS_COST = Gas.of(2400);
-  private static final Gas ACCESS_LIST_STORAGE_COST = Gas.of(1900);
+  protected static final Gas ACCESS_LIST_STORAGE_COST = Gas.of(1900);
 
   // redefinitions for EIP-2929
   private static final Gas SLOAD_GAS = WARM_STORAGE_READ_COST;
-  private static final Gas SSTORE_RESET_GAS = Gas.of(5000L).minus(COLD_SLOAD_COST);
+  protected static final Gas SSTORE_RESET_GAS = Gas.of(5000L).minus(COLD_SLOAD_COST);
 
   // unchanged from Istanbul
   private static final Gas SSTORE_SET_GAS = Gas.of(20_000);
   private static final Gas SSTORE_CLEARS_SCHEDULE = Gas.of(15_000);
 
-  private static final Gas SSTORE_SET_GAS_LESS_SLOAD_GAS = SSTORE_SET_GAS.minus(SLOAD_GAS);
-  private static final Gas SSTORE_RESET_GAS_LESS_SLOAD_GAS = SSTORE_RESET_GAS.minus(SLOAD_GAS);
-  private static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE = Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
+  protected static final Gas SSTORE_SET_GAS_LESS_SLOAD_GAS = SSTORE_SET_GAS.minus(SLOAD_GAS);
+  protected static final Gas SSTORE_RESET_GAS_LESS_SLOAD_GAS = SSTORE_RESET_GAS.minus(SLOAD_GAS);
+  protected static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE =
+      Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
 
   // unchanged from Frontier
   private static final Gas COPY_WORD_GAS_COST = Gas.of(3L);
@@ -153,6 +154,10 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   @Override
   public Gas getSloadOperationGasCost() {
     return Gas.ZERO;
+  }
+
+  public static Gas getSstoreSetGasLessSloadGas() {
+    return SSTORE_SET_GAS_LESS_SLOAD_GAS;
   }
 
   // Redefined costs from EIP-2929
