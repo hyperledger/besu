@@ -6,7 +6,7 @@ orbs:
 executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
+      - image: circleci/openjdk:11.0.11-jdk-buster
     resource_class: medium
     working_directory: ~/project
     environment:
