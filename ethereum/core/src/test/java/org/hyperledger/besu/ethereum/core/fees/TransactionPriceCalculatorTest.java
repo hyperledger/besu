@@ -75,15 +75,49 @@ public class TransactionPriceCalculatorTest {
           // legacy transaction must return gas price
           {FRONTIER_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.empty(), Wei.of(578L)},
           // ACCESSLIST transaction must return gas price
-          {FRONTIER_CALCULATOR, ACCESS_LIST, Wei.of(578L), null, null, Optional.empty(), Wei.of(578L)},
+          {
+            FRONTIER_CALCULATOR,
+            ACCESS_LIST,
+            Wei.of(578L),
+            null,
+            null,
+            Optional.empty(),
+            Wei.of(578L)
+          },
           // legacy transaction must return gas price
-          {EIP_1559_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.of(150L), Wei.of(578L)},
+          {
+            EIP_1559_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.of(150L), Wei.of(578L)
+          },
           // ACCESSLIST transaction must return gas price
-          {EIP_1559_CALCULATOR, ACCESS_LIST, Wei.of(578L), null, null, Optional.of(150L), Wei.of(578L)},
+          {
+            EIP_1559_CALCULATOR,
+            ACCESS_LIST,
+            Wei.of(578L),
+            null,
+            null,
+            Optional.of(150L),
+            Wei.of(578L)
+          },
           // EIP-1559 must return gas premium + base fee
-          {EIP_1559_CALCULATOR, EIP1559, null, Wei.of(100L), Wei.of(300L), Optional.of(150L), Wei.of(250L)},
+          {
+            EIP_1559_CALCULATOR,
+            EIP1559,
+            null,
+            Wei.of(100L),
+            Wei.of(300L),
+            Optional.of(150L),
+            Wei.of(250L)
+          },
           // EIP-1559 must return fee cap
-          {EIP_1559_CALCULATOR, EIP1559, null, Wei.of(100L), Wei.of(300L), Optional.of(250L), Wei.of(300L)}
+          {
+            EIP_1559_CALCULATOR,
+            EIP1559,
+            null,
+            Wei.of(100L),
+            Wei.of(300L),
+            Optional.of(250L),
+            Wei.of(300L)
+          }
         });
   }
 
