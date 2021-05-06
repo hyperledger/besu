@@ -12,6 +12,7 @@
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | David Mechler    | davemec          | davemec          |
 | Edward Mack      | edwardmack       | mackcom          | 
+| Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |

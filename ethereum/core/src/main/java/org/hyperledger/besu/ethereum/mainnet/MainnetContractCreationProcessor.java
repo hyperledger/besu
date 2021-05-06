@@ -110,8 +110,8 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
       LOG.trace("Executing contract-creation");
     }
     try {
-      final MutableAccount sender =
-          frame.getWorldState().getOrCreateSenderAccount(frame.getSenderAddress()).getMutable();
+
+      final MutableAccount sender = frame.getWorldState().getSenderAccount(frame).getMutable();
       sender.decrementBalance(frame.getValue());
 
       final MutableAccount contract =

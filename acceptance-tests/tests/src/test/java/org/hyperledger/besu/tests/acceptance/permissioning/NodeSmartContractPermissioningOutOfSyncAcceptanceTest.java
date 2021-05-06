@@ -43,7 +43,7 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
 
   @Test
   public void addNodeToClusterAndVerifyNonBootNodePeerConnectionWorksAfterSync() {
-    final long blockchainHeight = 50L;
+    final long blockchainHeight = 25L;
     waitForBlockHeight(permissionedNodeA, blockchainHeight);
 
     // Add Node B

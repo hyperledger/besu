@@ -39,7 +39,7 @@ public class TransactionTestFixture {
 
   private Bytes payload = Bytes.EMPTY;
 
-  private Optional<BigInteger> chainId = Optional.of(BigInteger.valueOf(2018));
+  private Optional<BigInteger> chainId = Optional.of(BigInteger.valueOf(1337));
 
   private Optional<Wei> gasPremium = Optional.empty();
   private Optional<Wei> feeCap = Optional.empty();

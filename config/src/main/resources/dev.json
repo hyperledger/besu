@@ -1,6 +1,6 @@
 {
   "config": {
-    "chainId": 2018,
+    "chainId": 1337,
     "petersburgBlock": 0,
     "contractSizeLimit": 2147483647,
     "ethash": {
