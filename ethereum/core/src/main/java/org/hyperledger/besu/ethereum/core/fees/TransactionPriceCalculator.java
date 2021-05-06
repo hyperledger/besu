@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -32,7 +31,6 @@ public interface TransactionPriceCalculator {
 
   static TransactionPriceCalculator eip1559() {
     return (transaction, maybeBaseFee) -> {
-      ExperimentalEIPs.eip1559MustBeEnabled();
       final Wei baseFee = Wei.of(maybeBaseFee.orElseThrow());
       if (transaction.getType().equals(TransactionType.FRONTIER)) {
         return transaction.getGasPrice();
