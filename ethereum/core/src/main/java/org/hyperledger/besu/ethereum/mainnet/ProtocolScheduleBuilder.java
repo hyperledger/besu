@@ -15,10 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 
 import java.math.BigInteger;
@@ -223,6 +221,8 @@ public class ProtocolScheduleBuilder {
                 create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
                 create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
                 create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+                create(config.getAleutBlockNumber(), specFactory.aleutDefinition(config)),
+                create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
                 // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
                 create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
@@ -244,25 +244,6 @@ public class ProtocolScheduleBuilder {
                     b -> b,
                     (existing, replacement) -> replacement,
                     TreeMap::new));
-
-    if (ExperimentalEIPs.eip1559Enabled) {
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator =
-          Optional.of(TransactionPriceCalculator.eip1559());
-      final long eip1559Block = config.getEIP1559BlockNumber().getAsLong();
-      builders.put(
-          eip1559Block,
-          new BuilderMapEntry(
-              eip1559Block,
-              MainnetProtocolSpecs.londonDefinition(
-                  chainId,
-                  transactionPriceCalculator,
-                  config.getContractSizeLimit(),
-                  config.getEvmStackSize(),
-                  isRevertReasonEnabled,
-                  config,
-                  quorumCompatibilityMode),
-              protocolSpecAdapters.getModifierForBlock(eip1559Block)));
-    }
 
     return builders;
   }
@@ -327,6 +308,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock =
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("London", config.getLondonBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 

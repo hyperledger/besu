@@ -456,15 +456,16 @@ public abstract class MainnetProtocolSpecs {
         .name("Berlin");
   }
 
-  static ProtocolSpecBuilder londonDefinition(
+  static ProtocolSpecBuilder aleutDefinition(
       final Optional<BigInteger> chainId,
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode) {
     ExperimentalEIPs.eip1559MustBeEnabled();
+    final Optional<TransactionPriceCalculator> transactionPriceCalculator =
+        Optional.of(TransactionPriceCalculator.eip1559());
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
     return berlinDefinition(
@@ -484,7 +485,64 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    genesisConfigOptions.isQuorum()))
+                    quorumCompatibilityMode))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION,
+                    transactionPriceCalculator.orElseThrow(),
+                    CoinbaseFeePriceCalculator.eip1559()))
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .name("Aleut")
+        .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
+        .eip1559(Optional.of(eip1559))
+        .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
+        .ommerHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
+  }
+
+  static ProtocolSpecBuilder londonDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt contractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode) {
+    ExperimentalEIPs.eip1559MustBeEnabled();
+    final Optional<TransactionPriceCalculator> transactionPriceCalculator =
+        Optional.of(TransactionPriceCalculator.eip1559());
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
+    return berlinDefinition(
+            chainId,
+            contractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            quorumCompatibilityMode)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    transactionPriceCalculator,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
+                    quorumCompatibilityMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
