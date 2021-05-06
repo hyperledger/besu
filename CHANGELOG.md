@@ -6,6 +6,7 @@
 
 ### Bug Fixes
 
+- Added ACCESS_LIST transactions to the list of transactions using legacy gas pricing for 1559
 - Reduced logging level of public key decoding failure of malformed packets. [\#2143](https://github.com/hyperledger/besu/pull/2143)
 
 ### Early Access Features
