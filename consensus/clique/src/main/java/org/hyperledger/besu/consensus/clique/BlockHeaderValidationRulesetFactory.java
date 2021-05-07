@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitElasticityValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
@@ -72,7 +73,8 @@ public class BlockHeaderValidationRulesetFactory {
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       builder
           .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559.get())))
-          .addRule(new GasUsageValidationRule(eip1559));
+          .addRule(new GasUsageValidationRule())
+          .addRule(new GasLimitElasticityValidationRule(eip1559.get()));
     } else {
       builder.addRule(new GasUsageValidationRule());
     }
