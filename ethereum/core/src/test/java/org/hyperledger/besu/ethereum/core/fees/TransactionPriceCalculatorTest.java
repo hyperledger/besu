@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.core.fees;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.plugin.data.TransactionType.ACCESS_LIST;
+import static org.hyperledger.besu.plugin.data.TransactionType.EIP1559;
+import static org.hyperledger.besu.plugin.data.TransactionType.FRONTIER;
 
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -23,6 +26,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.After;
@@ -40,6 +44,7 @@ public class TransactionPriceCalculatorTest {
       TransactionPriceCalculator.eip1559();
 
   private final TransactionPriceCalculator transactionPriceCalculator;
+  private final TransactionType transactionType;
   private final Wei gasPrice;
   private final Wei gasPremium;
   private final Wei feeCap;
@@ -48,12 +53,14 @@ public class TransactionPriceCalculatorTest {
 
   public TransactionPriceCalculatorTest(
       final TransactionPriceCalculator transactionPriceCalculator,
+      final TransactionType transactionType,
       final Wei gasPrice,
       final Wei gasPremium,
       final Wei feeCap,
       final Optional<Long> baseFee,
       final Wei expectedPrice) {
     this.transactionPriceCalculator = transactionPriceCalculator;
+    this.transactionType = transactionType;
     this.gasPrice = gasPrice;
     this.gasPremium = gasPremium;
     this.feeCap = feeCap;
@@ -66,11 +73,51 @@ public class TransactionPriceCalculatorTest {
     return Arrays.asList(
         new Object[][] {
           // legacy transaction must return gas price
-          {FRONTIER_CALCULATOR, Wei.of(578L), null, null, Optional.empty(), Wei.of(578L)},
+          {FRONTIER_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.empty(), Wei.of(578L)},
+          // ACCESSLIST transaction must return gas price
+          {
+            FRONTIER_CALCULATOR,
+            ACCESS_LIST,
+            Wei.of(578L),
+            null,
+            null,
+            Optional.empty(),
+            Wei.of(578L)
+          },
+          // legacy transaction must return gas price
+          {
+            EIP_1559_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.of(150L), Wei.of(578L)
+          },
+          // ACCESSLIST transaction must return gas price
+          {
+            EIP_1559_CALCULATOR,
+            ACCESS_LIST,
+            Wei.of(578L),
+            null,
+            null,
+            Optional.of(150L),
+            Wei.of(578L)
+          },
           // EIP-1559 must return gas premium + base fee
-          {EIP_1559_CALCULATOR, null, Wei.of(100L), Wei.of(300L), Optional.of(150L), Wei.of(250L)},
+          {
+            EIP_1559_CALCULATOR,
+            EIP1559,
+            null,
+            Wei.of(100L),
+            Wei.of(300L),
+            Optional.of(150L),
+            Wei.of(250L)
+          },
           // EIP-1559 must return fee cap
-          {EIP_1559_CALCULATOR, null, Wei.of(100L), Wei.of(300L), Optional.of(250L), Wei.of(300L)}
+          {
+            EIP_1559_CALCULATOR,
+            EIP1559,
+            null,
+            Wei.of(100L),
+            Wei.of(300L),
+            Optional.of(250L),
+            Wei.of(300L)
+          }
         });
   }
 
@@ -79,7 +126,8 @@ public class TransactionPriceCalculatorTest {
     assertThat(
             transactionPriceCalculator.price(
                 Transaction.builder()
-                    .type(TransactionType.EIP1559)
+                    .type(transactionType)
+                    .accessList(transactionType == ACCESS_LIST ? Collections.emptyList() : null)
                     .gasPrice(gasPrice)
                     .gasPremium(gasPremium)
                     .feeCap(feeCap)
