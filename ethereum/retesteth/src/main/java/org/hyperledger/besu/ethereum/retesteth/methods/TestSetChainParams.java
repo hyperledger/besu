@@ -137,6 +137,8 @@ public class TestSetChainParams implements JsonRpcMethod {
     if (ExperimentalEIPs.eip1559Enabled) {
       // TODO EIP-1559 change for the actual fork name when known
       maybeMoveToNumber(params, "londonForkBlock", config, "aleutBlock");
+      maybeMoveToNumber(params, "londonForkBlock", config, "baikalBlock");
+      maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");
       ExperimentalEIPs.initialBasefee =
           Optional.ofNullable(
                   chainParamsJson
