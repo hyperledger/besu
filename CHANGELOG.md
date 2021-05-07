@@ -14,7 +14,7 @@
 
 - Fixed issue in discv5 where nonce was incorrectly reused. [\#2075](https://github.com/hyperledger/besu/pull/2075)
 - Fixed issues in debug_standardTraceBadBlockToFile and debug_standardTraceBlockToFile. [\#2120](https://github.com/hyperledger/besu/pull/2120)
-
+- Fixed invalid error code in eth_call [\#2138](https://github.com/hyperledger/besu/pull/2138)
 
 ## 21.1.5
 
