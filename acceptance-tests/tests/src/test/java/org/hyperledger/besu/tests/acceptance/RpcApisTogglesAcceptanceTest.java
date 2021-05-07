@@ -40,21 +40,14 @@ public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void shouldSucceedConnectingToNodeWithJsonRpcEnabled() {
-    rpcEnabledNode.verify(net.netVersion());
-  }
-
-  @Test
   public void shouldFailConnectingToNodeWithJsonRpcDisabled() {
     final String expectedMessage = "Failed to connect to /127.0.0.1:8545";
-
     rpcDisabledNode.verify(net.netVersionExceptional(expectedMessage));
   }
 
   @Test
   public void shouldSucceedConnectingToNodeWithWsRpcEnabled() {
     rpcEnabledNode.useWebSocketsForJsonRpc();
-
     rpcEnabledNode.verify(net.netVersion());
   }
 
@@ -69,13 +62,10 @@ public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void shouldSucceedCallingMethodFromEnabledApiGroup() {
+    final String expectedDisabledMessage = "Method not enabled";
+    rpcEnabledNode.verify(net.netVersion());
     ethApiDisabledNode.verify(net.netVersion());
-  }
-
-  @Test
-  public void shouldFailCallingMethodFromDisabledApiGroup() {
-    final String expectedMessage = "Method not enabled";
-
-    ethApiDisabledNode.verify(eth.accountsExceptional(expectedMessage));
+    // should fail on an RPC call in a disabled API group
+    ethApiDisabledNode.verify(eth.accountsExceptional(expectedDisabledMessage));
   }
 }
