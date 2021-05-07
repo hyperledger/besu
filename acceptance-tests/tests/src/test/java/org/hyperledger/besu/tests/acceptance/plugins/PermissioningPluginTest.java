@@ -29,8 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class PermissioningPluginTest extends AcceptanceTestBase {
-  private BesuNode minerNode;
-
   private BesuNode aliceNode;
   private BesuNode bobNode;
   private BesuNode charlieNode;
@@ -44,8 +42,6 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
             .jsonRpcTxPool()
             .jsonRpcAdmin();
 
-    minerNode = besu.create(builder.name("miner").miningEnabled().build());
-
     aliceNode = besu.create(builder.name("alice").miningEnabled(false).keyFilePath("key").build());
 
     bobNode = besu.create(builder.name("bob").miningEnabled(false).keyFilePath("key1").build());
@@ -53,29 +49,22 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
     charlieNode =
         besu.create(builder.name("charlie").miningEnabled(false).keyFilePath("key2").build());
 
-    cluster.start(minerNode, charlieNode);
-
     cluster.startNode(aliceNode);
-    aliceNode.verify(net.awaitPeerCount(2));
+    aliceNode.verify(net.awaitPeerCount(1));
     cluster.startNode(bobNode);
-    bobNode.verify(net.awaitPeerCount(2));
+    bobNode.verify(net.awaitPeerCount(1));
+    cluster.startNode(charlieNode);
+    charlieNode.verify(net.awaitPeerCount(2));
   }
 
   @Test
   public void blockedConnectionNodeCanOnlyConnectToTransactionNode() {
-    minerNode.verify(admin.hasPeer(aliceNode));
-    minerNode.verify(admin.hasPeer(bobNode));
-    minerNode.verify(admin.hasPeer(charlieNode));
-
-    aliceNode.verify(admin.hasPeer(minerNode));
     aliceNode.verify(admin.doesNotHavePeer(bobNode));
     aliceNode.verify(admin.hasPeer(charlieNode));
 
-    bobNode.verify(admin.hasPeer(minerNode));
     bobNode.verify(admin.doesNotHavePeer(aliceNode));
     bobNode.verify(admin.hasPeer(charlieNode));
 
-    charlieNode.verify(admin.hasPeer(minerNode));
     charlieNode.verify(admin.hasPeer(aliceNode));
     charlieNode.verify(admin.hasPeer(bobNode));
   }
@@ -89,15 +78,8 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
 
     Hash txHash = aliceNode.execute(tx);
 
-    minerNode.execute(minerTransactions.minerStop());
-
-    minerNode.verify(txPoolConditions.inTransactionPool(txHash));
     aliceNode.verify(txPoolConditions.inTransactionPool(txHash));
     bobNode.verify(txPoolConditions.inTransactionPool(txHash));
     charlieNode.verify(txPoolConditions.notInTransactionPool(txHash));
-
-    minerNode.execute(minerTransactions.minerStart());
-
-    cluster.verify(account.balanceEquals(balance));
   }
 }
