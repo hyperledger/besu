@@ -42,7 +42,8 @@ commands:
           name: Install Packages - LibSodium
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged
+            sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -173,7 +174,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 6
+    parallelism: 8
     executor: besu_executor_xl
     steps:
       - prepare
