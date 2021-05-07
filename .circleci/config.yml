@@ -43,6 +43,7 @@ commands:
           command: |
             sudo apt-get update
             sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged
+            sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
