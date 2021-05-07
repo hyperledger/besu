@@ -397,8 +397,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
-    getLondonBlockNumber().ifPresent(l -> builder.put("londonblock", l));
-    getAleutBlockNumber().ifPresent(l -> builder.put("aleutblock", l));
+    getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
+    getAleutBlockNumber().ifPresent(l -> builder.put("aleutBlock", l));
 
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
