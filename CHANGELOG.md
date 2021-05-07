@@ -4,6 +4,10 @@
 
 ### Additions and Improvements
 
+* Added support for the upcoming BAIKAL ephemeral testnet and removed the configuration for the deprecated YOLOv3 ephemeral testnet. [\#2237](https://github.com/hyperledger/besu/pull/2237)
+* Added support for the London Network Upgrade, although the block number must be set manually with `--override-genesis-config=londonBlock=<blocknumber>`. This is because the block numbers haven't been determined yet. The next release will include the number in the genesis file so it will support London with no intervention. [\#2237](https://github.com/hyperledger/besu/pull/2237)
+
+
 ### Bug Fixes
 
 - Added ACCESS_LIST transactions to the list of transactions using legacy gas pricing for 1559 [\#2239](https://github.com/hyperledger/besu/pull/2239)
