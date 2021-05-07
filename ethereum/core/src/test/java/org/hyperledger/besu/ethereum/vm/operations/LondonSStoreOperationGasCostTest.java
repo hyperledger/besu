@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,5 +97,10 @@ public class LondonSStoreOperationGasCostTest {
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
     assertThat(frame.getRemainingGas()).isEqualTo(Gas.of(gasLimit - (expectedGasUsed + 2100)));
     assertThat(frame.getGasRefund()).isEqualTo(Gas.of(expectedGasRefund));
+  }
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 }
