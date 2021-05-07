@@ -38,8 +38,10 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong istanbulBlockNumber = OptionalLong.empty();
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
+  private OptionalLong londonBlockNumber = OptionalLong.empty();
+
   // TODO EIP-1559 change for the actual fork name when known
-  private final OptionalLong eip1559BlockNumber = OptionalLong.empty();
+  private final OptionalLong aleutBlockNumber = OptionalLong.empty();
   private OptionalLong classicForkBlock = OptionalLong.empty();
   private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
   private OptionalLong diehardBlockNumber = OptionalLong.empty();
@@ -167,9 +169,23 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getLondonBlockNumber() {
+    return ExperimentalEIPs.eip1559Enabled ? londonBlockNumber : OptionalLong.empty();
+  }
+
+  @Override
   // TODO EIP-1559 change for the actual fork name when known
+  public OptionalLong getAleutBlockNumber() {
+    return ExperimentalEIPs.eip1559Enabled ? aleutBlockNumber : OptionalLong.empty();
+  }
+
+  @Override
   public OptionalLong getEIP1559BlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? eip1559BlockNumber : OptionalLong.empty();
+    if (getAleutBlockNumber().isPresent()) {
+      return getAleutBlockNumber();
+    } else {
+      return getLondonBlockNumber();
+    }
   }
 
   @Override
@@ -266,9 +282,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getIstanbulBlockNumber().ifPresent(l -> builder.put("istanbulBlock", l));
     getMuirGlacierBlockNumber().ifPresent(l -> builder.put("muirGlacierBlock", l));
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
-    // TODO EIP-1559 change for the actual fork name when known
-    getEIP1559BlockNumber().ifPresent(l -> builder.put("aleutblock", l));
-
+    getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
+    getAleutBlockNumber().ifPresent(l -> builder.put("aleutBlock", l));
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
     getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
@@ -380,6 +395,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions berlinBlock(final long blockNumber) {
     berlinBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions londonBlock(final long blockNumber) {
+    londonBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
