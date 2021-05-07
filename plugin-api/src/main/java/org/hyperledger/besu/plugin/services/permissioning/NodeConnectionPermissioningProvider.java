@@ -22,9 +22,9 @@ public interface NodeConnectionPermissioningProvider {
    * Can be used to intercept the initial connection to a peer. Note that once a connection is
    * established it's bidirectional.
    *
-   * @param sourceEnode the originators enode
-   * @param destinationEnode the enode you are about to send to
-   * @return if you can connect
+   * @param sourceEnode the originator's enode
+   * @param destinationEnode the enode you are attempting to connect to
+   * @return if the connection is permitted
    */
   boolean isConnectionPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode);
 }

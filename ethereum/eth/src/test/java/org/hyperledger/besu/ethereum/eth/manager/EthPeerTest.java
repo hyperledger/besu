@@ -337,7 +337,7 @@ public class EthPeerTest {
     when(trueProvider.isMessagePermitted(any(), anyInt())).thenReturn(true);
     when(falseProvider.isMessagePermitted(any(), anyInt())).thenReturn(false);
 
-    final EthPeer peer = createPeerWithPermissioningProvider(List.of(falseProvider, trueProvider));
+    final EthPeer peer = createPeerWithPermissioningProviders(List.of(falseProvider, trueProvider));
     peer.send(PingMessage.get());
 
     verify(peer.getConnection(), times(0)).sendForProtocol(any(), eq(PingMessage.get()));
@@ -424,7 +424,7 @@ public class EthPeerTest {
     return createPeer(Collections.emptyList(), Collections.emptyList());
   }
 
-  private EthPeer createPeerWithPermissioningProvider(
+  private EthPeer createPeerWithPermissioningProviders(
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     return createPeer(Collections.emptyList(), permissioningProviders);
   }

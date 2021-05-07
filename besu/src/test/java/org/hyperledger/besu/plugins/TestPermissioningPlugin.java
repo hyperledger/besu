@@ -51,7 +51,7 @@ public class TestPermissioningPlugin implements BesuPlugin {
             if (isBobTalkingToAlice) {
               LOG.info("BLOCK CONNECTION from {}, to {}", sourceEnode, destinationEnode);
             } else {
-              LOG.info("ALLOC CONNECTION from {}, to {}", sourceEnode, destinationEnode);
+              LOG.info("ALLOW CONNECTION from {}, to {}", sourceEnode, destinationEnode);
             }
 
             return !isBobTalkingToAlice;
