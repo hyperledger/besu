@@ -128,14 +128,13 @@ public class StandardJsonTracer implements OperationTracer {
 
   private Gas computeCallGas(
       final AbstractCallOperation callOperation, final MessageFrame messageFrame) {
-    final GasCalculator gasCalculator = callOperation.gasCalculator();
     // as part of EIP 150 the returned costGas is gas - base * 63 / 64.
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-150.md
     final Gas callCost = callOperation.gas(messageFrame);
     final Gas gasAvailable = callCost.minus(messageFrame.getGasCost().orElse(Gas.ZERO));
     final Gas gas = gasAvailable.minus(gasAvailable.dividedBy(EIP_150_DIVISOR));
-    final Gas baseCost = gasCalculator.callOperationBaseGasCost();
-    return ((gas.compareTo(callCost) < 0) ? gas : callCost).plus(baseCost);
+    final Gas baseCost = callOperation.cost(messageFrame);
+    return ((gas.toLong() > 0 && gas.compareTo(callCost) < 0) ? gas : callCost).plus(baseCost);
   }
 
   @Override
