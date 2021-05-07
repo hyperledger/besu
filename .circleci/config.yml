@@ -7,9 +7,6 @@ executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -18,9 +15,6 @@ executors:
   besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -29,6 +23,11 @@ executors:
   machine_executor:
     machine:
       image: ubuntu-2004:202010-01
+
+  acceptance_tests_executor:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: xlarge
 
 notify:
   webhooks:
@@ -43,7 +42,8 @@ commands:
           name: Install Packages - LibSodium
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged
+            sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -103,7 +103,7 @@ jobs:
             - ./
       - store_artifacts:
           name: Distribution artifacts
-          path:  build/distributions
+          path: build/distributions
           destination: distributions
           when: always
   testWindows:
@@ -195,18 +195,22 @@ jobs:
       - capture_test_results
       - capture_test_logs
 
-  containerTests:
+  acceptanceTestsQuorum:
     parallelism: 1
-    executor: machine_executor
+    executor: acceptance_tests_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
       - run:
-          name: Container Tests
-          no_output_timeout: 10m
-          command: ./gradlew --no-daemon containerTests -i
-      - capture_test_results
+          name: Quorum Acceptance Tests (failures ignored)
+          no_output_timeout: 40m
+          command: ./gradlew --no-daemon acceptanceTestsQuorum || true # ignore result of job for now, until all issues are fixed
+      - store_artifacts:
+          path: build/quorum-at
+          destination: quorum-at-artifacts
+      - store_test_results:
+          path: build/quorum-at/openjdk-latest/reports/xml-report
 
   buildDocker:
     executor: besu_executor_med
@@ -272,36 +276,24 @@ workflows:
       - unitTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
       - testWindows:
           requires:
             - assemble
       - referenceTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro            
       - integrationTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro            
       - acceptanceTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
-      - containerTests:
+      - acceptanceTestsQuorum:
           requires:
-            - assemble
-          context:
-            - besu-dockerhub-ro
+            - buildDocker
       - buildDocker:
           requires:
-            - unitTests
-          context:
-            - besu-dockerhub-ro            
+            - assemble
       - publish:
           filters:
             branches:
@@ -311,13 +303,9 @@ workflows:
           requires:
             - integrationTests
             - unitTests
-            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker
-            - buildDocker
-          context:
-            - besu-dockerhub-ro
       - publishDocker:
           filters:
             branches:
@@ -327,7 +315,6 @@ workflows:
           requires:
             - integrationTests
             - unitTests
-            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker

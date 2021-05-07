@@ -1180,6 +1180,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     try {
       configureLogging(true);
+      instantiateSignatureAlgorithmFactory();
       configureNativeLibs();
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
@@ -1579,7 +1580,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricsConfiguration = metricsConfiguration();
 
     logger.info("Security Module: {}", securityModuleName);
-    instantiateSignatureAlgorithmFactory();
     return this;
   }
 
@@ -2673,7 +2673,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
     } catch (IllegalArgumentException e) {
-      throw new CommandLine.InitializationException(e.getMessage());
+      throw new CommandLine.InitializationException(
+          new StringBuilder()
+              .append("Invalid genesis file configuration for ecCurve. ")
+              .append(e.getMessage())
+              .toString());
     }
   }
 

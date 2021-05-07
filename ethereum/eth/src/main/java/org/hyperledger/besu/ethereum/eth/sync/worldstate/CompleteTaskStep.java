@@ -22,7 +22,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
-import java.text.DecimalFormat;
 import java.util.function.LongSupplier;
 
 import org.apache.logging.log4j.LogManager;
@@ -35,7 +34,6 @@ public class CompleteTaskStep {
   private final RunnableCounter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
-  private final DecimalFormat doubleFormatter = new DecimalFormat("#.##");
 
   public CompleteTaskStep(
       final WorldStateStorage worldStateStorage,
@@ -78,16 +76,9 @@ public class CompleteTaskStep {
 
   private void displayWorldStateSyncProgress() {
     LOG.info(
-        "Downloaded {} world state nodes. At least {} nodes remaining. Estimated World State completion: {} %.",
+        "Downloaded {} world state nodes. At least {} nodes remaining.",
         getCompletedRequests(),
-        worldStatePendingRequestsCurrentSupplier.getAsLong(),
-        doubleFormatter.format(computeWorldStateSyncProgress() * 100.0));
-  }
-
-  public double computeWorldStateSyncProgress() {
-    final double pendingRequests = getPendingRequests();
-    final double completedRequests = getCompletedRequests();
-    return completedRequests / (completedRequests + pendingRequests);
+        worldStatePendingRequestsCurrentSupplier.getAsLong());
   }
 
   long getCompletedRequests() {

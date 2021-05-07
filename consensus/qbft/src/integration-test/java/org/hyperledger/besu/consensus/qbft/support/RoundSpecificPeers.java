@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.qbft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.qbft.payload.RoundChangePayload;
 import org.hyperledger.besu.consensus.qbft.statemachine.PreparedCertificate;
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -87,8 +88,8 @@ public class RoundSpecificPeers {
         .collect(Collectors.toList());
   }
 
-  public void commit(final ConsensusRoundIdentifier roundId, final Hash hash) {
-    peers.forEach(peer -> peer.injectCommit(roundId, hash));
+  public void commit(final ConsensusRoundIdentifier roundId, final Block block) {
+    peers.forEach(peer -> peer.injectCommit(roundId, block));
   }
 
   public List<SignedData<RoundChangePayload>> roundChange(final ConsensusRoundIdentifier roundId) {
@@ -123,8 +124,8 @@ public class RoundSpecificPeers {
     nonProposingPeers.forEach(peer -> peer.injectPrepare(roundId, hash));
   }
 
-  public void commitForNonProposing(final ConsensusRoundIdentifier roundId, final Hash hash) {
-    nonProposingPeers.forEach(peer -> peer.injectCommit(roundId, hash));
+  public void commitForNonProposing(final ConsensusRoundIdentifier roundId, final Block block) {
+    nonProposingPeers.forEach(peer -> peer.injectCommit(roundId, block));
   }
 
   public void forNonProposing(final Consumer<ValidatorPeer> assertion) {

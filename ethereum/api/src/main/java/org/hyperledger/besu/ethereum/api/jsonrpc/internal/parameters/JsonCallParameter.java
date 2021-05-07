@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 
-@JsonIgnoreProperties("nonce")
+@JsonIgnoreProperties({"nonce", "privateFor"})
 public class JsonCallParameter extends CallParameter {
 
   private final boolean strict;
