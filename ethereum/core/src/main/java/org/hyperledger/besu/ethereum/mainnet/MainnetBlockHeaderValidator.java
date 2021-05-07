@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
@@ -119,7 +118,6 @@ public final class MainnetBlockHeaderValidator {
   }
 
   static BlockHeaderValidator.Builder createEip1559Validator(final EIP1559 eip1559) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
@@ -134,7 +132,6 @@ public final class MainnetBlockHeaderValidator {
   }
 
   static BlockHeaderValidator.Builder createEip1559OmmerValidator(final EIP1559 eip1559) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())

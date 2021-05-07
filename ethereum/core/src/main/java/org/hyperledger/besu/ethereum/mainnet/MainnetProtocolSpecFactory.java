@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
+
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -101,6 +103,26 @@ public class MainnetProtocolSpecFactory {
   public ProtocolSpecBuilder berlinDefinition() {
     return MainnetProtocolSpecs.berlinDefinition(
         chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
+  }
+
+  public ProtocolSpecBuilder aleutDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.aleutDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode);
+  }
+
+  public ProtocolSpecBuilder londonDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.londonDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
