@@ -302,7 +302,7 @@ public class EthPeerTest {
     final List<PeerValidator> validators =
         Stream.generate(() -> mock(PeerValidator.class)).limit(2).collect(Collectors.toList());
 
-    final EthPeer peer = createPeer(validators, Collections.emptyList());
+    final EthPeer peer = createPeer(validators);
 
     assertThat(peer.isFullyValidated()).isFalse();
   }
@@ -312,7 +312,7 @@ public class EthPeerTest {
     final List<PeerValidator> validators =
         Stream.generate(() -> mock(PeerValidator.class)).limit(2).collect(Collectors.toList());
 
-    final EthPeer peer = createPeer(validators, Collections.emptyList());
+    final EthPeer peer = createPeer(validators);
     peer.markValidated(validators.get(0));
 
     assertThat(peer.isFullyValidated()).isFalse();
@@ -323,7 +323,7 @@ public class EthPeerTest {
     final List<PeerValidator> validators =
         Stream.generate(() -> mock(PeerValidator.class)).limit(2).collect(Collectors.toList());
 
-    final EthPeer peer = createPeer(validators, Collections.emptyList());
+    final EthPeer peer = createPeer(validators);
     validators.forEach(peer::markValidated);
 
     assertThat(peer.isFullyValidated()).isTrue();
@@ -337,7 +337,7 @@ public class EthPeerTest {
     when(trueProvider.isMessagePermitted(any(), anyInt())).thenReturn(true);
     when(falseProvider.isMessagePermitted(any(), anyInt())).thenReturn(false);
 
-    final EthPeer peer = createPeerWithPermissioningProviders(List.of(falseProvider, trueProvider));
+    final EthPeer peer = createPeer(Collections.emptyList(), List.of(falseProvider, trueProvider));
     peer.send(PingMessage.get());
 
     verify(peer.getConnection(), times(0)).sendForProtocol(any(), eq(PingMessage.get()));
@@ -424,13 +424,12 @@ public class EthPeerTest {
     return createPeer(Collections.emptyList(), Collections.emptyList());
   }
 
-  private EthPeer createPeerWithPermissioningProviders(
-      final List<NodeMessagePermissioningProvider> permissioningProviders) {
-    return createPeer(Collections.emptyList(), permissioningProviders);
-  }
-
   private EthPeer createPeer(final PeerValidator... peerValidators) {
     return createPeer(Arrays.asList(peerValidators), Collections.emptyList());
+  }
+
+  private EthPeer createPeer(final List<PeerValidator> peerValidators) {
+    return createPeer(peerValidators, Collections.emptyList());
   }
 
   private EthPeer createPeer(
