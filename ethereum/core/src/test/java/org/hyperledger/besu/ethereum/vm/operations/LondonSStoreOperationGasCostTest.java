@@ -41,7 +41,7 @@ public class LondonSStoreOperationGasCostTest {
 
   @Parameters(name = "Code: {0}, Original: {1}")
   public static Object[][] scenarios() {
-    // Tests specified in EIP-1283.
+    // Tests specified in EIP-3539.
     return new Object[][] {
       {"0x60006000556000600055", 0, 212, 0},
       {"0x60006000556001600055", 0, 20112, 0},
@@ -85,7 +85,7 @@ public class LondonSStoreOperationGasCostTest {
   }
 
   @Test
-  public void shouldCalculateGasAccordingToEip1283() {
+  public void shouldCalculateGasAccordingToEip3539() {
     final long gasLimit = 1_000_000;
     final MessageFrame frame =
         codeExecutor.executeCode(
