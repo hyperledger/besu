@@ -35,12 +35,12 @@ public class AdminConditions {
     return new ExpectPeerAdded(admin.addPeer(enodeUrl(addingPeer)));
   }
 
-  public Condition hasPeer(final Node containsPeer) {
-    return new ExpectHasPeer(nodeId(containsPeer), admin.listPeers());
+  public Condition hasPeer(final Node peer) {
+    return new ExpectHasPeer(nodeId(peer), admin.listPeers());
   }
 
-  public Condition doesNotHavePeer(final Node containsPeer) {
-    return new ExpectNotHavePeer(nodeId(containsPeer), admin.listPeers());
+  public Condition doesNotHavePeer(final Node peer) {
+    return new ExpectNotHavePeer(nodeId(peer), admin.listPeers());
   }
 
   private URI enodeUrl(final Node node) {
