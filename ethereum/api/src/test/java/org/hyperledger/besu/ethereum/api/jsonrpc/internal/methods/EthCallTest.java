@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -102,7 +102,7 @@ public class EthCallTest {
   @Test
   public void shouldReturnInternalErrorWhenProcessorReturnsEmpty() {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
-    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, INTERNAL_ERROR);
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, BLOCK_NOT_FOUND);
 
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
@@ -187,6 +187,18 @@ public class EthCallTest {
 
     verify(blockchainQueries).getBlockHeaderByHash(eq(Hash.ZERO));
     verify(transactionSimulator).process(any(), any(), any(), any());
+  }
+
+  @Test
+  public void shouldReturnBlockNotFoundWhenInvalidBlockNumberSpecified() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), Quantity.create(33L));
+    when(blockchainQueries.headBlockNumber()).thenReturn(14L);
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, BLOCK_NOT_FOUND);
+
+    JsonRpcResponse response = method.response(request);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    verify(blockchainQueries).headBlockNumber();
   }
 
   private JsonCallParameter callParameter() {

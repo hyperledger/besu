@@ -13,9 +13,9 @@
     "jsonrpc": "2.0",
     "id": 337,
     "error": {
-      "code": -32602,
-      "message": "Invalid params"
+      "code": -32000,
+      "message": "Block not found"
     }
   },
-  "statusCode": 400
+  "statusCode": 200
 }
