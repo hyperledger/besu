@@ -578,9 +578,12 @@ public class PeerDiscoveryController {
     if (packetData.getExpiration() < Instant.now().getEpochSecond()) {
       return;
     }
-    // TODO: for now return 16 peers. Other implementations calculate how many
-    // peers they can fit in a 1280-byte payload.
-    final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 16);
+    // Each peer is encoded as 16 bytes for address, 4 bytes for port, 4 bytes for tcp port
+    // and 64 bytes for id. This is prepended by 97 bytes of hash, signature and type.
+    // 16 + 4 + 4 + 64 = 88 bytes
+    // 88 * 13 = 1144 bytes
+    // To fit under 1280 bytes, we must return just 13 peers maximum.
+    final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 13);
     final PacketData data = NeighborsPacketData.create(peers);
     sendPacket(sender, PacketType.NEIGHBORS, data);
   }
