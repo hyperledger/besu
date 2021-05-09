@@ -231,6 +231,7 @@ public class PeerDiscoveryAgentTest {
         neighborsPacket.packet.getPacketData(NeighborsPacketData.class).get();
     assertThat(neighbors).isNotNull();
     assertThat(neighbors.getNodes()).hasSize(13);
+    assertThat(neighborsPacket.packet.encode().length()).isLessThanOrEqualTo(1280); // under max MTU
 
     // Assert that after removing those 13 items we're left with either 4 or 5.
     // If we are left with 5, the test peer was returned as an item, assert that this is the case.
