@@ -235,7 +235,7 @@ public class NodeLocalConfigPermissioningController implements NodeConnectionPer
     return isPermitted(EnodeURLImpl.fromString(enodeURL, configuration.getEnodeDnsConfiguration()));
   }
 
-  public boolean isPermitted(final org.hyperledger.besu.plugin.data.EnodeURL node) {
+  public boolean isPermitted(final EnodeURL node) {
     if (Objects.equals(localNodeId, node.getNodeId())) {
       return true;
     }
@@ -330,8 +330,7 @@ public class NodeLocalConfigPermissioningController implements NodeConnectionPer
 
   @Override
   public boolean isConnectionPermitted(
-      final org.hyperledger.besu.plugin.data.EnodeURL sourceEnode,
-      final org.hyperledger.besu.plugin.data.EnodeURL destinationEnode) {
+      final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     this.checkCounter.inc();
     if (isPermitted(sourceEnode) && isPermitted(destinationEnode)) {
       this.checkCounterPermitted.inc();

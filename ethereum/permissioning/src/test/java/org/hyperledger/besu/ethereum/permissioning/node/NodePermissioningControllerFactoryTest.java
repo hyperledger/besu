@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningCon
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.util.Collection;
@@ -81,7 +82,7 @@ public class NodePermissioningControllerFactoryTest {
             blockchain,
             Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(0);
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isNotPresent();
   }
@@ -110,10 +111,10 @@ public class NodePermissioningControllerFactoryTest {
             blockchain,
             Collections.emptyList());
 
-    List<NodePermissioningProvider> providers = controller.getProviders();
+    List<NodeConnectionPermissioningProvider> providers = controller.getProviders();
     assertThat(providers.size()).isEqualTo(1);
 
-    NodePermissioningProvider p1 = providers.get(0);
+    NodeConnectionPermissioningProvider p1 = providers.get(0);
     assertThat(p1).isInstanceOf(NodeSmartContractPermissioningController.class);
     assertThat(controller.getSyncStatusNodePermissioningProvider()).isEmpty();
   }

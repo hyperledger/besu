@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.plugin.services.permissioning.NodePermissioningProvider;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
@@ -34,13 +34,13 @@ public class NodePermissioningController {
   private final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider;
   private Optional<ContextualNodePermissioningProvider> insufficientPeersPermissioningProvider =
       Optional.empty();
-  private final List<NodePermissioningProvider> providers;
+  private final List<NodeConnectionPermissioningProvider> providers;
   private final Optional<GoQuorumQip714Gate> goQuorumQip714Gate;
   private final Subscribers<Runnable> permissioningUpdateSubscribers = Subscribers.create();
 
   public NodePermissioningController(
       final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider,
-      final List<NodePermissioningProvider> providers,
+      final List<NodeConnectionPermissioningProvider> providers,
       final Optional<GoQuorumQip714Gate> goQuorumQip714Gate) {
     this.providers = providers;
     this.syncStatusNodePermissioningProvider = syncStatusNodePermissioningProvider;
@@ -94,7 +94,7 @@ public class NodePermissioningController {
 
       return false;
     } else {
-      for (final NodePermissioningProvider provider : providers) {
+      for (final NodeConnectionPermissioningProvider provider : providers) {
         if (!provider.isConnectionPermitted(sourceEnode, destinationEnode)) {
           LOG.trace(
               "Node permissioning - {}: Rejected {} -> {}",
@@ -124,7 +124,7 @@ public class NodePermissioningController {
     return syncStatusNodePermissioningProvider;
   }
 
-  public List<NodePermissioningProvider> getProviders() {
+  public List<NodeConnectionPermissioningProvider> getProviders() {
     return providers;
   }
 
