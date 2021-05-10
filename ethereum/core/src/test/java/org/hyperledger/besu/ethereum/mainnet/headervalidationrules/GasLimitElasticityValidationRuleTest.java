@@ -88,7 +88,7 @@ public class GasLimitElasticityValidationRuleTest {
     blockHeaderBuilder.gasLimit(headerGasLimit);
     final BlockHeader header = blockHeaderBuilder.buildHeader();
 
-    blockHeaderBuilder.number(headerNumber-1);
+    blockHeaderBuilder.number(headerNumber - 1);
     blockHeaderBuilder.gasLimit(parentGasLimit);
     final BlockHeader parent = blockHeaderBuilder.buildHeader();
 

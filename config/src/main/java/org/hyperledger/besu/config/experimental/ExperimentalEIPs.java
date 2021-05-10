@@ -55,5 +55,4 @@ public class ExperimentalEIPs {
       names = {"--Xeip1559-slack-coefficient"},
       arity = "1")
   public static Long slackCoefficient = 2L;
-
 }

@@ -42,5 +42,4 @@ public class FeeMarketConfig implements FeeMarket {
   public long getSlackCoefficient() {
     return slackCoefficient;
   }
-
 }
