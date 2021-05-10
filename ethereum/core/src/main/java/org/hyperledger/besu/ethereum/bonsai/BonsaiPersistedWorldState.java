@@ -99,6 +99,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     return worldStateStorage;
   }
 
+  protected Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
+    return calculateRootHash(stateUpdater, updater.copy());
+  }
+
   protected Hash calculateRootHash(
       final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater) {
