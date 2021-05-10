@@ -57,6 +57,9 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
         LOG.info("Invalid block header: missing mandatory base fee.");
         return false;
       }
+    } else if (header.getBaseFee().isPresent()) {
+      LOG.info("Invalid block header: presence of basefee in a non-eip1559 block");
+      return false;
     }
 
     final Hash headerHash = hashHeader(header);

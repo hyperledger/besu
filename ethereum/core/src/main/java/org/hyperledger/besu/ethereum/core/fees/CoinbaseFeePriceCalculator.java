@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 
@@ -30,7 +29,6 @@ public interface CoinbaseFeePriceCalculator {
 
   static CoinbaseFeePriceCalculator eip1559() {
     return (coinbaseFee, transactionGasPrice, baseFee) -> {
-      ExperimentalEIPs.eip1559MustBeEnabled();
       return coinbaseFee.priceFor(transactionGasPrice.subtract(Wei.of(baseFee.orElseThrow())));
     };
   }
