@@ -206,7 +206,7 @@ public class StateTestSubCommand implements Runnable {
         if (coinbase != null && coinbase.isEmpty()) {
           worldStateUpdater.deleteAccount(coinbase.getAddress());
         }
-        final Account sender = worldStateUpdater.getOrCreateSenderAccount(transaction.getSender());
+        final Account sender = worldStateUpdater.getAccount(transaction.getSender());
         if (sender != null && sender.isEmpty()) {
           worldStateUpdater.deleteAccount(sender.getAddress());
         }

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -84,7 +86,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
                             new JsonRpcErrorResponse(
                                 request.getRequest().getId(),
                                 JsonRpcErrorConverter.convertTransactionInvalidReason(reason))))
-        .orElse(errorResponse(request, JsonRpcError.INTERNAL_ERROR));
+        .orElse(errorResponse(request, BLOCK_NOT_FOUND));
   }
 
   @Override

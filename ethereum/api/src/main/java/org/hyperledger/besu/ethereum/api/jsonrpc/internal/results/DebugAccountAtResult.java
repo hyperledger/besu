@@ -12,18 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.config;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  BAIKAL,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  ECIP1049_DEV,
-  ASTOR
+import org.immutables.value.Value;
+
+@Value.Immutable
+public abstract class DebugAccountAtResult implements JsonRpcResult {
+  public abstract String getCode();
+
+  public abstract String getNonce();
+
+  public abstract String getBalance();
+
+  public abstract String getCodehash();
 }

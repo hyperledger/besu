@@ -36,6 +36,7 @@ public enum RpcMethod {
   CONSENSUS_FINALIZE_BLOCK("consensus_finalizeBlock"),
   CONSENSUS_NEW_BLOCK("consensus_newBlock"),
   CONSENSUS_SET_HEAD("consensus_setHead"),
+  DEBUG_ACCOUNT_AT("debug_accountAt"),
   DEBUG_METRICS("debug_metrics"),
   DEBUG_STORAGE_RANGE_AT("debug_storageRangeAt"),
   DEBUG_TRACE_BLOCK("debug_traceBlock"),
