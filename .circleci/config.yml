@@ -42,7 +42,8 @@ commands:
           name: Install Packages - LibSodium
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https rng-tools
+            sudo rngd -r /dev/urandom
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
