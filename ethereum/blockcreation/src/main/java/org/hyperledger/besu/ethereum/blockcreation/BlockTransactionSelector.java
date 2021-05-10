@@ -331,6 +331,7 @@ public class BlockTransactionSelector {
         ValidationResult.valid());
   }
 
+  @SuppressWarnings("FallThrough")
   private boolean transactionTooLargeForBlock(
       final long blockNumber, final long gasLimit, final Transaction transaction) {
 
@@ -344,6 +345,7 @@ public class BlockTransactionSelector {
               gasLimit,
               transactionSelectionResult.eip1559CumulativeGasUsed);
         case FRONTIER:
+        case ACCESS_LIST:
           return !transactionGasBudgetCalculator.hasBudget(
               transaction,
               blockNumber,
