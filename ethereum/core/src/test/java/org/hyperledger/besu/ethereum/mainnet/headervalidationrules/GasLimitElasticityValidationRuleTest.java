@@ -46,7 +46,7 @@ public class GasLimitElasticityValidationRuleTest {
   @Parameterized.Parameter(3)
   public boolean expectedResult;
 
-  public GasLimitElasticityValidationRule uut = new GasLimitElasticityValidationRule(eip1559);
+  public GasLimitElasticityValidationRule uut = new GasLimitElasticityValidationRule(eip1559, 5000);
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
@@ -88,7 +88,7 @@ public class GasLimitElasticityValidationRuleTest {
     blockHeaderBuilder.gasLimit(headerGasLimit);
     final BlockHeader header = blockHeaderBuilder.buildHeader();
 
-    blockHeaderBuilder.number(headerNumber);
+    blockHeaderBuilder.number(headerNumber-1);
     blockHeaderBuilder.gasLimit(parentGasLimit);
     final BlockHeader parent = blockHeaderBuilder.buildHeader();
 

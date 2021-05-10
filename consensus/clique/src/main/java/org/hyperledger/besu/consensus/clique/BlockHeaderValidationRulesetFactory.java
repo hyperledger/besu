@@ -38,6 +38,8 @@ import java.util.Optional;
 
 public class BlockHeaderValidationRulesetFactory {
 
+  private static final int MIN_GAS_LIMIT = 5000;
+
   /**
    * Creates a set of rules which when executed will determine if a given block header is valid with
    * respect to its parent (or chain).
@@ -57,7 +59,7 @@ public class BlockHeaderValidationRulesetFactory {
     final BlockHeaderValidator.Builder builder =
         new BlockHeaderValidator.Builder()
             .addRule(new AncestryValidationRule())
-            .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
+            .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, 0x7fffffffffffffffL))
             .addRule(new TimestampBoundedByFutureParameter(10))
             .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
             .addRule(
@@ -74,7 +76,7 @@ public class BlockHeaderValidationRulesetFactory {
       builder
           .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559.get())))
           .addRule(new GasUsageValidationRule())
-          .addRule(new GasLimitElasticityValidationRule(eip1559.get()));
+          .addRule(new GasLimitElasticityValidationRule(eip1559.get(), MIN_GAS_LIMIT));
     } else {
       builder.addRule(new GasUsageValidationRule());
     }

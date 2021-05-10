@@ -56,9 +56,4 @@ public class ExperimentalEIPs {
       arity = "1")
   public static Long slackCoefficient = 2L;
 
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-block-gas-limit"},
-      arity = "1")
-  public static Long blockGasLimit = 5000L;
 }

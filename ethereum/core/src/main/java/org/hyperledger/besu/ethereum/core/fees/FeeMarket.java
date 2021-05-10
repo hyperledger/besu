@@ -24,13 +24,10 @@ public interface FeeMarket {
 
   long getSlackCoefficient();
 
-  long getBlockGasLimit();
-
   static FeeMarket eip1559() {
     return new FeeMarketConfig(
         ExperimentalEIPs.basefeeMaxChangeDenominator,
         ExperimentalEIPs.initialBasefee,
-        ExperimentalEIPs.slackCoefficient,
-        ExperimentalEIPs.blockGasLimit);
+        ExperimentalEIPs.slackCoefficient);
   }
 }

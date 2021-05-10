@@ -29,8 +29,11 @@ public class GasLimitElasticityValidationRule implements DetachedBlockHeaderVali
 
   private final EIP1559 eip1559;
 
-  public GasLimitElasticityValidationRule(final EIP1559 eip1559) {
+  private final long minGasLimit;
+
+  public GasLimitElasticityValidationRule(final EIP1559 eip1559, final long minGasLimit) {
     this.eip1559 = eip1559;
+    this.minGasLimit = minGasLimit;
   }
 
   @Override
@@ -43,7 +46,7 @@ public class GasLimitElasticityValidationRule implements DetachedBlockHeaderVali
     }
 
     // check if the gas limit is at least the minimum gas limit
-    if (header.getGasLimit() < eip1559.getFeeMarket().getBlockGasLimit()) {
+    if (header.getGasLimit() < minGasLimit) {
       LOG.info("Invalid block header: block gas limit is not at least the minimum gas limit");
       return false;
     }
