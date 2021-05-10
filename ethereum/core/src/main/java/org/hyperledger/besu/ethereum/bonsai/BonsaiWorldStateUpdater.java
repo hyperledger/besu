@@ -440,9 +440,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   }
 
   public void rollBack(final TrieLogLayer layer) {
-    System.out.println(layer.streamAccountChanges().count());
-    System.out.println(layer.streamCodeChanges().count());
-    System.out.println(layer.streamStorageChanges().count());
     layer
         .streamAccountChanges()
         .forEach(
