@@ -24,8 +24,7 @@ public class LondonGasCalculator extends BerlinGasCalculator {
   // redefinitions for EIP-3529
   private static final Gas SSTORE_CLEARS_SCHEDULE = SSTORE_RESET_GAS.plus(ACCESS_LIST_STORAGE_COST);
 
-  protected static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE =
-      Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
+  private static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE = Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
 
   // redefinitions for EIP-3529
   private static final int NEW_MAX_REFUND_QUOTIENT = 5;

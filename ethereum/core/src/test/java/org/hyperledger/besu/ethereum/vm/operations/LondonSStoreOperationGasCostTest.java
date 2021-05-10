@@ -86,7 +86,7 @@ public class LondonSStoreOperationGasCostTest {
   }
 
   @Test
-  public void shouldCalculateGasAccordingToEip3539() {
+  public void shouldCalculateGasAccordingToEip3529() {
     final long gasLimit = 1_000_000;
     final MessageFrame frame =
         codeExecutor.executeCode(
