@@ -18,8 +18,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsensusNewBlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -27,17 +25,13 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,28 +74,13 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
     } catch (JsonProcessingException e) {
       e.printStackTrace();
     }
-
-    final List<Transaction> transactions;
-    try {
-      transactions =
-          blockParam.getTransactions().stream()
-              .map(Bytes::fromHexString)
-              .map(TransactionDecoder::decodeOpaqueBytes)
-              .collect(Collectors.toList());
-    } catch (final RLPException | IllegalArgumentException e) {
-      LOG.warn("failed to decode transactions from newBlock RPC");
-      e.printStackTrace();
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
-    }
-
     final BlockHeader newBlockHeader =
         new BlockHeader(
             blockParam.getParentHash(),
             OMMERS_HASH_CONSTANT,
             blockParam.getMiner(),
             blockParam.getStateRoot(),
-            BodyValidation.transactionsRoot(transactions),
+            BodyValidation.transactionsRoot(blockParam.getTransactions()),
             blockParam.getReceiptsRoot(),
             blockParam.getLogsBloom(),
             Difficulty.ONE,
@@ -125,7 +104,8 @@ public class ConsensusNewBlock extends SyncJsonRpcMethod {
             .getBlockImporter()
             .importBlock(
                 protocolContext,
-                new Block(newBlockHeader, new BlockBody(transactions, OMMERS_CONSTANT)),
+                new Block(
+                    newBlockHeader, new BlockBody(blockParam.getTransactions(), OMMERS_CONSTANT)),
                 HeaderValidationMode.FULL);
     LOG.trace("importSuccess " + importSuccess);
 
