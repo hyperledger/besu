@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 
@@ -35,7 +34,7 @@ public class ConsensusNewBlockParameter {
   private final long timestamp;
   private final Hash receiptsRoot;
   private final LogsBloomFilter logsBloom;
-  private final List<Transaction> transactions;
+  private final List<String> transactions;
 
   @JsonCreator
   public ConsensusNewBlockParameter(
@@ -49,7 +48,7 @@ public class ConsensusNewBlockParameter {
       @JsonProperty("timestamp") final UnsignedLongParameter timestamp,
       @JsonProperty("receiptsRoot") final Hash receiptsRoot,
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
-      @JsonProperty("transactions") final List<Transaction> transactions) {
+      @JsonProperty("transactions") final List<String> transactions) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.miner = miner;
@@ -103,7 +102,7 @@ public class ConsensusNewBlockParameter {
     return logsBloom;
   }
 
-  public List<Transaction> getTransactions() {
+  public List<String> getTransactions() {
     return transactions;
   }
 }
