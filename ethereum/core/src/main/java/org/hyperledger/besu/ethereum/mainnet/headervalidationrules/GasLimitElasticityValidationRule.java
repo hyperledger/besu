@@ -41,6 +41,14 @@ public class GasLimitElasticityValidationRule implements DetachedBlockHeaderVali
     } else {
       parentGasTarget = parent.getGasLimit() / eip1559.getFeeMarket().getSlackCoefficient();
     }
+
+    // check if the gas limit is at least the minimum gas limit
+    if (header.getGasLimit() < eip1559.getFeeMarket().getBlockGasLimit()) {
+      LOG.info("Invalid block header: block gas limit is not at least the minimum gas limit");
+      return false;
+    }
+
+    // check if the block changed the gas target too much
     final long gasTarget = header.getGasLimit() / eip1559.getFeeMarket().getSlackCoefficient();
     if (gasTarget > (parentGasTarget + (parentGasTarget / GAS_LIMIT_BOUND_DIVISOR))) {
       LOG.info("Invalid block header: gas target increased too much");

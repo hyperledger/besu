@@ -18,14 +18,17 @@ public class FeeMarketConfig implements FeeMarket {
   private final long basefeeMaxChangeDenominator;
   private final long initialBasefee;
   private final long slackCoefficient;
+  private final long blockGasLimit;
 
   public FeeMarketConfig(
       final long basefeeMaxChangeDenominator,
       final long initialBasefee,
-      final long slackCoefficient) {
+      final long slackCoefficient,
+      final long blockGasLimit) {
     this.basefeeMaxChangeDenominator = basefeeMaxChangeDenominator;
     this.initialBasefee = initialBasefee;
     this.slackCoefficient = slackCoefficient;
+    this.blockGasLimit = blockGasLimit;
   }
 
   @Override
@@ -41,5 +44,10 @@ public class FeeMarketConfig implements FeeMarket {
   @Override
   public long getSlackCoefficient() {
     return slackCoefficient;
+  }
+
+  @Override
+  public long getBlockGasLimit() {
+    return blockGasLimit;
   }
 }

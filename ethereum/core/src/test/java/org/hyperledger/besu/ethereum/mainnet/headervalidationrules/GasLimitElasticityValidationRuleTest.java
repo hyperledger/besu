@@ -52,6 +52,11 @@ public class GasLimitElasticityValidationRuleTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
+          {20000000, 10000000, 10, true},
+          {20019531, 10000000, 10, true},
+          {20019532, 10000000, 10, false},
+          {19980470, 10000000, 10, true},
+          {19980469, 10000000, 10, false},
           {20000000, 20000000, 11, true},
           {20019531, 20000000, 11, true},
           {20019532, 20000000, 11, false},
@@ -60,7 +65,8 @@ public class GasLimitElasticityValidationRuleTest {
           {40039063, 40000000, 11, true},
           {40039064, 40000000, 11, false},
           {39960938, 40000000, 11, true},
-          {39960937, 40000000, 11, false}
+          {39960937, 40000000, 11, false},
+          {4999, 40000000, 11, false}
         });
   }
 
