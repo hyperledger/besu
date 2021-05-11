@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
@@ -165,12 +164,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
-    if (node.getPermissioningConfiguration().isPresent()) {
-      final PermissioningConfiguration permissioningConfiguration =
-          node.getPermissioningConfiguration().get();
-
-      runnerBuilder.permissioningConfiguration(permissioningConfiguration);
-    }
+    runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
 
     besuPluginContext.addService(
         BesuEvents.class,
