@@ -24,7 +24,7 @@ executors:
     machine:
       image: ubuntu-2004:202010-01
 
-  acceptance_tests_executor:
+  goquorum_executor:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: xlarge
@@ -42,7 +42,8 @@ commands:
           name: Install Packages - LibSodium
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged
+            sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -196,7 +197,7 @@ jobs:
 
   acceptanceTestsQuorum:
     parallelism: 1
-    executor: acceptance_tests_executor
+    executor: goquorum_executor
     steps:
       - prepare
       - attach_workspace:
