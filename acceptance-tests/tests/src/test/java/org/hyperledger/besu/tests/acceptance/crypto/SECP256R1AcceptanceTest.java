@@ -24,6 +24,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
@@ -40,12 +41,14 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  @Ignore
   public void shouldConnectToOtherPeer() {
     minerNode.verify(net.awaitPeerCount(1));
     fullNode.verify(net.awaitPeerCount(1));
   }
 
   @Test
+  @Ignore
   public void transactionShouldBeSuccessful() {
     final Account recipient = accounts.createAccount("recipient");
 
