@@ -208,7 +208,7 @@ jobs:
           no_output_timeout: 40m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
-              | grep "/privacy/"
+              | grep "/privacy/" \
               | sed 's@.*/src/test/java/@@' \
               | sed 's@/@.@g' \
               | sed 's/.\{5\}$//' \
@@ -231,7 +231,7 @@ jobs:
           no_output_timeout: 40m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
-              | grep "/permissioning/"
+              | grep "/permissioning/" \
               | sed 's@.*/src/test/java/@@' \
               | sed 's@/@.@g' \
               | sed 's/.\{5\}$//' \
