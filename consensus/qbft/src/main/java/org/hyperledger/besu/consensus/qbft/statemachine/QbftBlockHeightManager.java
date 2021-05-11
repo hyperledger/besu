@@ -28,7 +28,6 @@ import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.time.Clock;
@@ -122,7 +121,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
     if (isProposer) {
       if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
-        final long headerTimeStampSeconds = Util.fastDivCeiling(clock.millis(), 1000L);
+        final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
         qbftRound.createAndSendProposalMessage(headerTimeStampSeconds);
       } else {
         LOG.trace(

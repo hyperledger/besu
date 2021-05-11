@@ -33,7 +33,6 @@ import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.time.Clock;
@@ -113,7 +112,7 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (roundIdentifier.equals(currentRound.getRoundIdentifier())) {
-      final long headerTimeStampSeconds = Util.fastDivCeiling(clock.millis(), 1000L);
+      final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
       currentRound.createAndSendProposalMessage(headerTimeStampSeconds);
     } else {
       LOG.trace(

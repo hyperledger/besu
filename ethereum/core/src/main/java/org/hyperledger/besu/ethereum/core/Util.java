@@ -56,8 +56,4 @@ public class Util {
   public static int fastDivCeiling(final int numerator, final int denominator) {
     return ((numerator - 1) / denominator) + 1;
   }
-
-  public static long fastDivCeiling(final long numerator, final long denominator) {
-    return ((numerator - 1) / denominator) + 1;
-  }
 }
