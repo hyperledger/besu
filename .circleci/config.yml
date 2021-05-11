@@ -185,7 +185,7 @@ jobs:
           no_output_timeout: 40m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
-              | grep -v "/privacy/"
+              | grep -vE "/privacy|permissioning/"
               | sed 's@.*/src/test/java/@@' \
               | sed 's@/@.@g' \
               | sed 's/.\{5\}$//' \
@@ -209,6 +209,29 @@ jobs:
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | grep "/privacy/"
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
+      - capture_test_results
+      - capture_test_logs
+
+  acceptanceTestsPermissioning:
+    parallelism: 8
+    executor: besu_executor_xl
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests
+          no_output_timeout: 40m
+          command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | grep "/permissioning/"
               | sed 's@.*/src/test/java/@@' \
               | sed 's@/@.@g' \
               | sed 's/.\{5\}$//' \
@@ -312,6 +335,12 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
+      - acceptanceTestsPrivacy:
+          requires:
+            - assemble
+      - acceptanceTestsPermissioning:
+          requires:
+            - assemble
       - acceptanceTestsQuorum:
           requires:
             - buildDocker
@@ -328,6 +357,8 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsPrivacy
+            - acceptanceTestsPermissioning
             - referenceTests
             - buildDocker
       - publishDocker:
@@ -340,6 +371,8 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsPrivacy
+            - acceptanceTestsPermissioning
             - referenceTests
             - buildDocker
           context:
