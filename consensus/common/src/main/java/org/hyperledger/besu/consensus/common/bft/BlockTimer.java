@@ -18,8 +18,6 @@ import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -77,20 +75,18 @@ public class BlockTimer {
       final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
     cancelTimer();
 
-    final Instant now = clock.instant();
+    final long now = clock.millis();
 
     // absolute time when the timer is supposed to expire
-    final Instant expiryTime =
-        Instant.ofEpochMilli(
-            chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis);
+    final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
 
-    if (now.isBefore(expiryTime)) {
-      final long delay = Duration.between(now, expiryTime).toNanos();
+    if (expiryTime > now) {
+      final long delay = expiryTime - now;
 
       final Runnable newTimerRunnable = () -> queue.add(new BlockTimerExpiry(round));
 
       final ScheduledFuture<?> newTimerTask =
-          bftExecutors.scheduleTask(newTimerRunnable, delay, TimeUnit.NANOSECONDS);
+          bftExecutors.scheduleTask(newTimerRunnable, delay, TimeUnit.MILLISECONDS);
       currentTimerTask = Optional.of(newTimerTask);
     } else {
       queue.add(new BlockTimerExpiry(round));
