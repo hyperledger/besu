@@ -233,8 +233,8 @@ public class PeerDiscoveryAgentTest {
     assertThat(neighbors.getNodes()).hasSize(13);
     assertThat(neighborsPacket.packet.encode().length()).isLessThanOrEqualTo(1280); // under max MTU
 
-    // Assert that after removing those 13 items we're left with either 4 or 5.
-    // If we are left with 5, the test peer was returned as an item, assert that this is the case.
+    // Assert that after removing those 13 items we're left with either 7 or 8.
+    // If we are left with 8, the test peer was returned as an item, assert that this is the case.
     otherPeers.removeAll(neighbors.getNodes());
     assertThat(otherPeers.size()).isBetween(7, 8);
     if (otherPeers.size() == 8) {
