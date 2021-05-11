@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
 
 public class GasLimitElasticityValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final int GAS_LIMIT_BOUND_DIVISOR = 1024;
+  private static final long GAS_LIMIT_BOUND_DIVISOR = 1024;
 
   private static final Logger LOG = LogManager.getLogger(GasLimitElasticityValidationRule.class);
 

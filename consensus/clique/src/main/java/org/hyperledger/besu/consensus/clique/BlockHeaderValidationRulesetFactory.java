@@ -59,7 +59,6 @@ public class BlockHeaderValidationRulesetFactory {
     final BlockHeaderValidator.Builder builder =
         new BlockHeaderValidator.Builder()
             .addRule(new AncestryValidationRule())
-            .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, 0x7fffffffffffffffL))
             .addRule(new TimestampBoundedByFutureParameter(10))
             .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
             .addRule(
@@ -78,7 +77,9 @@ public class BlockHeaderValidationRulesetFactory {
           .addRule(new GasUsageValidationRule())
           .addRule(new GasLimitElasticityValidationRule(eip1559.get(), MIN_GAS_LIMIT));
     } else {
-      builder.addRule(new GasUsageValidationRule());
+      builder
+          .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, 0x7fffffffffffffffL))
+          .addRule(new GasUsageValidationRule());
     }
     return builder;
   }
