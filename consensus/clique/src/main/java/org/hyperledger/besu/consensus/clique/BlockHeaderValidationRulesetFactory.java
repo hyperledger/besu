@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitElasticityValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
@@ -62,6 +61,9 @@ public class BlockHeaderValidationRulesetFactory {
             .addRule(new TimestampBoundedByFutureParameter(10))
             .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
             .addRule(
+                new GasLimitRangeAndDeltaValidationRule(
+                    MIN_GAS_LIMIT, 0x7fffffffffffffffL, eip1559))
+            .addRule(
                 new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
             .addRule(
                 new ConstantFieldValidationRule<>(
@@ -74,12 +76,10 @@ public class BlockHeaderValidationRulesetFactory {
     if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       builder
           .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559.get())))
-          .addRule(new GasUsageValidationRule())
-          .addRule(new GasLimitElasticityValidationRule(eip1559.get(), MIN_GAS_LIMIT));
-    } else {
-      builder
-          .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, 0x7fffffffffffffffL))
           .addRule(new GasUsageValidationRule());
+
+    } else {
+      builder.addRule(new GasUsageValidationRule());
     }
     return builder;
   }

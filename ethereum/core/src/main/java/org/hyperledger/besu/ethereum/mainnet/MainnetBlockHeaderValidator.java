@@ -21,12 +21,13 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDif
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxLengthValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitElasticityValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -123,7 +124,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
-        .addRule(new GasLimitElasticityValidationRule(eip1559, MIN_GAS_LIMIT))
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(eip1559)))
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
@@ -138,7 +141,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
-        .addRule(new GasLimitElasticityValidationRule(eip1559, MIN_GAS_LIMIT))
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(eip1559)))
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
