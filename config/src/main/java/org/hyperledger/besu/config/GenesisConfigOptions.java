@@ -69,7 +69,11 @@ public interface GenesisConfigOptions {
 
   OptionalLong getBerlinBlockNumber();
 
+  OptionalLong getLondonBlockNumber();
+
   // TODO EIP-1559 change for the actual fork name when known
+  OptionalLong getAleutBlockNumber();
+
   OptionalLong getEIP1559BlockNumber();
 
   default Optional<Long> getGenesisBaseFee() {

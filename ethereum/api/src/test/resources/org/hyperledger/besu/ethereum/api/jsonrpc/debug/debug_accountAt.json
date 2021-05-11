@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "debug_accountAt",
+    "params": [
+      "0xc8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6",
+      0,
+      "0xbcde5374fce5edbc8e2a8697c15331677e6ebf0b"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": {
+      "code": "0x0",
+      "nonce": "0x0",
+      "balance": "0x340aad21b3b70000",
+      "codehash" : "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    }
+  },
+  "statusCode": 200
+}
