@@ -164,7 +164,8 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<DataStorageConfiguration> dataStorageConfigurationArgumentCaptor;
 
   @Captor
-  protected ArgumentCaptor<PermissioningConfiguration> permissioningConfigurationArgumentCaptor;
+  protected ArgumentCaptor<Optional<PermissioningConfiguration>>
+      permissioningConfigurationArgumentCaptor;
 
   @Captor protected ArgumentCaptor<TransactionPoolConfiguration> transactionPoolConfigCaptor;
 
@@ -216,6 +217,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenInterface(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.limitRemoteWireConnectionsEnabled(anyBoolean()))
         .thenReturn(mockRunnerBuilder);

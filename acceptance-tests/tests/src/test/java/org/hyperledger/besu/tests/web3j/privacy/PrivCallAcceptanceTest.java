@@ -45,7 +45,7 @@ import org.web3j.tx.Contract;
 
 public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
 
-  private static final long POW_CHAIN_ID = 2018;
+  private static final long POW_CHAIN_ID = 1337;
   private static final int VALUE = 1024;
 
   private PrivacyNode minerNode;

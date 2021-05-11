@@ -67,6 +67,8 @@ public interface SignatureAlgorithm {
 
   ECPoint publicKeyAsEcPoint(final SECPPublicKey publicKey);
 
+  boolean isValidPublicKey(SECPPublicKey publicKey);
+
   KeyPair createKeyPair(final SECPPrivateKey privateKey);
 
   KeyPair generateKeyPair();
@@ -74,4 +76,6 @@ public interface SignatureAlgorithm {
   SECPSignature createSignature(final BigInteger r, final BigInteger s, final byte recId);
 
   SECPSignature decodeSignature(final Bytes bytes);
+
+  Bytes compressPublicKey(final SECPPublicKey uncompressedKey);
 }

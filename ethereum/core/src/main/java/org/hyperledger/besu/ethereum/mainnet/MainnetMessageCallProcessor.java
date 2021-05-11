@@ -85,8 +85,7 @@ public class MainnetMessageCallProcessor extends AbstractMessageProcessor {
    * of the world state of this executor.
    */
   private void transferValue(final MessageFrame frame) {
-    final MutableAccount senderAccount =
-        frame.getWorldState().getOrCreateSenderAccount(frame.getSenderAddress()).getMutable();
+    final MutableAccount senderAccount = frame.getWorldState().getSenderAccount(frame).getMutable();
     // The yellow paper explicitly states that if the recipient account doesn't exist at this
     // point, it is created.
     final MutableAccount recipientAccount =

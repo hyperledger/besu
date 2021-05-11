@@ -7,9 +7,6 @@ executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -18,9 +15,6 @@ executors:
   besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -30,7 +24,7 @@ executors:
     machine:
       image: ubuntu-2004:202010-01
 
-  acceptance_tests_executor:
+  goquorum_executor:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: xlarge
@@ -48,7 +42,8 @@ commands:
           name: Install Packages - LibSodium
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged
+            sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -179,7 +174,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 8
+    parallelism: 6
     executor: besu_executor_xl
     steps:
       - prepare
@@ -200,22 +195,9 @@ jobs:
       - capture_test_results
       - capture_test_logs
 
-  containerTests:
-    parallelism: 1
-    executor: machine_executor
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Container Tests
-          no_output_timeout: 10m
-          command: ./gradlew --no-daemon containerTests -i
-      - capture_test_results
-
   acceptanceTestsQuorum:
     parallelism: 1
-    executor: acceptance_tests_executor
+    executor: goquorum_executor
     steps:
       - prepare
       - attach_workspace:
@@ -294,41 +276,24 @@ workflows:
       - unitTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
       - testWindows:
           requires:
             - assemble
       - referenceTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
       - integrationTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
       - acceptanceTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
       - acceptanceTestsQuorum:
           requires:
             - buildDocker
-          context:
-            - besu-dockerhub-ro
-      - containerTests:
-          requires:
-            - assemble
-          context:
-            - besu-dockerhub-ro
       - buildDocker:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
       - publish:
           filters:
             branches:
@@ -338,12 +303,9 @@ workflows:
           requires:
             - integrationTests
             - unitTests
-            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker
-          context:
-            - besu-dockerhub-ro
       - publishDocker:
           filters:
             branches:
@@ -353,7 +315,6 @@ workflows:
           requires:
             - integrationTests
             - unitTests
-            - containerTests
             - acceptanceTests
             - referenceTests
             - buildDocker

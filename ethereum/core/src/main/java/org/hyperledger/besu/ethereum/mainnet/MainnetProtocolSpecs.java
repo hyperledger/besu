@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -38,6 +37,7 @@ import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
+import org.hyperledger.besu.ethereum.mainnet.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -456,17 +456,18 @@ public abstract class MainnetProtocolSpecs {
         .name("Berlin");
   }
 
-  static ProtocolSpecBuilder londonDefinition(
+  static ProtocolSpecBuilder aleutDefinition(
       final Optional<BigInteger> chainId,
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
+    final Optional<TransactionPriceCalculator> transactionPriceCalculator =
+        Optional.of(TransactionPriceCalculator.eip1559());
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    final EIP1559 eip1559 = new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(0));
+    final EIP1559 eip1559 =
+        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE));
     return berlinDefinition(
             chainId,
             contractSizeLimit,
@@ -484,7 +485,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    genesisConfigOptions.isQuorum()))
+                    quorumCompatibilityMode))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -503,13 +504,82 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(
             gasCalculator ->
                 MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
-        .name("London")
+        .name("Aleut")
         .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
         .eip1559(Optional.of(eip1559))
         .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
+  }
+
+  static ProtocolSpecBuilder londonDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    final Optional<TransactionPriceCalculator> transactionPriceCalculator =
+        Optional.of(TransactionPriceCalculator.eip1559());
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    final EIP1559 eip1559 =
+        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE));
+    return berlinDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            quorumCompatibilityMode)
+        .gasCalculator(LondonGasCalculator::new)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    transactionPriceCalculator,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
+                    quorumCompatibilityMode))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    stackSizeLimit,
+                    Account.DEFAULT_VERSION,
+                    transactionPriceCalculator.orElseThrow(),
+                    CoinbaseFeePriceCalculator.eip1559()))
+        .contractCreationProcessorBuilder(
+            (gasCalculator, evm) ->
+                new MainnetContractCreationProcessor(
+                    gasCalculator,
+                    evm,
+                    true,
+                    List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
+        .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
+        .eip1559(Optional.of(eip1559))
+        .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
+        .ommerHeaderValidatorBuilder(
+            MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559))
+        .name("London");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

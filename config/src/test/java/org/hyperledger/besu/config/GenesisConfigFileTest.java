@@ -38,7 +38,7 @@ import org.junit.Test;
 public class GenesisConfigFileTest {
 
   private static final BigInteger MAINNET_CHAIN_ID = BigInteger.ONE;
-  private static final BigInteger DEVELOPMENT_CHAIN_ID = BigInteger.valueOf(2018);
+  private static final BigInteger DEVELOPMENT_CHAIN_ID = BigInteger.valueOf(1337);
   private static final GenesisConfigFile EMPTY_CONFIG = fromConfig("{}");
 
   @Test
@@ -100,6 +100,11 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldGetGasLimit() {
     assertThat(configWithProperty("gasLimit", "1000").getGasLimit()).isEqualTo(1000);
+  }
+
+  @Test
+  public void shouldGetGasTarget() {
+    assertThat(configWithProperty("gasTarget", "9999").getGasLimit()).isEqualTo(9999);
   }
 
   @Test
@@ -294,7 +299,7 @@ public class GenesisConfigFileTest {
 
     assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
-    assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(2018));
+    assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(1337));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
     assertThat(config.getConfigOptions().getEcip1017EraRounds()).isNotPresent();
