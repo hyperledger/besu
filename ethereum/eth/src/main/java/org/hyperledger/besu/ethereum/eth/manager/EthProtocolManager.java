@@ -195,6 +195,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     capabilities.add(EthProtocol.ETH63);
     capabilities.add(EthProtocol.ETH64);
     capabilities.add(EthProtocol.ETH65);
+    capabilities.add(EthProtocol.ETH66);
 
     return capabilities.build();
   }
@@ -264,7 +265,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
+    // This will handle responses
     ethPeers.dispatchMessage(peer, ethMessage);
+    // This will handle requests
     ethMessages.dispatch(ethMessage);
   }
 
