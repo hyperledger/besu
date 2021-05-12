@@ -25,10 +25,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * Adapter to convert a typed JSON to an IbftExtraData object This adapter handles the JSON to RLP
- * encoding
- */
+/** Adapter to convert a typed JSON of addresses to a QBFT RLP extra data encoding */
 public class QbftExtraDataCLIAdapter implements JSONToRLP {
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final TypeReference<Collection<String>> TYPE_REF = new TypeReference<>() {};
