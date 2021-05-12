@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV63;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -204,13 +205,6 @@ public class EthPeer {
     return sendRequest(headersRequestManager, message);
   }
 
-  private RequestManager.ResponseStream sendRequest(
-      final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
-    lastRequestTimestamp = clock.millis();
-    return requestManager.dispatchRequest(
-        () -> connection.sendForProtocol(protocolName, messageData));
-  }
-
   public RequestManager.ResponseStream getBodies(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
@@ -233,6 +227,13 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetPooledTransactionsMessage message = GetPooledTransactionsMessage.create(hashes);
     return sendRequest(pooledTransactionsRequestManager, message);
+  }
+
+  private RequestManager.ResponseStream sendRequest(
+      final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
+    lastRequestTimestamp = clock.millis();
+    return requestManager.dispatchRequest(
+        () -> connection.sendForProtocol(protocolName, messageData));
   }
 
   boolean validateReceivedMessage(final EthMessage message) {
