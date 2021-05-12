@@ -627,7 +627,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 "Expected to create slot, but the slot exists. Account=%s SlotHash=%s expectedValue=%s existingValue=%s",
                 address, slotHash, expectedValue, existingSlotValue));
       }
-      if (!Objects.equals(expectedValue, existingSlotValue)) {
+      if (!isSlotEquals(expectedValue, existingSlotValue)) {
         throw new IllegalStateException(
             String.format(
                 "Old value of slot does not match expected value. Account=%s SlotHash=%s Expected=%s Actual=%s",
@@ -647,6 +647,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         slotValue.setUpdated(replacementValue);
       }
     }
+  }
+
+  private boolean isSlotEquals(final UInt256 expectedValue, final UInt256 existingSlotValue) {
+    final UInt256 sanitizedExpectedValue = (expectedValue == null) ? UInt256.ZERO : expectedValue;
+    final UInt256 sanitizedExistingSlotValue =
+        (existingSlotValue == null) ? UInt256.ZERO : existingSlotValue;
+    return Objects.equals(sanitizedExpectedValue, sanitizedExistingSlotValue);
   }
 
   @Override
