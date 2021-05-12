@@ -124,6 +124,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(eip1559)))
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
@@ -141,6 +144,9 @@ public final class MainnetBlockHeaderValidator {
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(eip1559)))
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
