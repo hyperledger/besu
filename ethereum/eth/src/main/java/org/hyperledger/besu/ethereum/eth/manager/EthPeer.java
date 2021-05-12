@@ -281,25 +281,22 @@ public class EthPeer {
    */
   void dispatch(final EthMessage message) {
     checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
-    switch (message.getData().getCode()) {
+    final int messageCode = message.getData().getCode();
+    reputation.resetTimeoutCount(messageCode);
+    switch (messageCode) {
       case EthPV62.BLOCK_HEADERS:
-        reputation.resetTimeoutCount(EthPV62.GET_BLOCK_HEADERS);
         headersRequestManager.dispatchResponse(message);
         break;
       case EthPV62.BLOCK_BODIES:
-        reputation.resetTimeoutCount(EthPV62.GET_BLOCK_BODIES);
         bodiesRequestManager.dispatchResponse(message);
         break;
       case EthPV63.RECEIPTS:
-        reputation.resetTimeoutCount(EthPV63.GET_RECEIPTS);
         receiptsRequestManager.dispatchResponse(message);
         break;
       case EthPV63.NODE_DATA:
-        reputation.resetTimeoutCount(EthPV63.GET_NODE_DATA);
         nodeDataRequestManager.dispatchResponse(message);
         break;
       case EthPV65.POOLED_TRANSACTIONS:
-        reputation.resetTimeoutCount(EthPV65.GET_POOLED_TRANSACTIONS);
         pooledTransactionsRequestManager.dispatchResponse(message);
         break;
       default:
