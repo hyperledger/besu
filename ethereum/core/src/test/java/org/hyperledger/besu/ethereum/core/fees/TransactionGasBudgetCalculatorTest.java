@@ -18,15 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -71,16 +68,6 @@ public class TransactionGasBudgetCalculatorTest {
           {FRONTIER_CALCULATOR, false, 11L, 1L, 10L, 0L, false},
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 6L, false},
         });
-  }
-
-  @BeforeClass
-  public static void initialize() {
-    ExperimentalEIPs.eip1559Enabled = true;
-  }
-
-  @AfterClass
-  public static void tearDown() {
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 
   @Test

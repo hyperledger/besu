@@ -18,7 +18,6 @@ import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -278,7 +277,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   private Wei minTransactionGasPrice(final Transaction transaction) {
     // EIP-1559 enablement guard block
-    if (!ExperimentalEIPs.eip1559Enabled || this.eip1559.isEmpty()) {
+    if (this.eip1559.isEmpty()) {
       return frontierPriceCalculator.price(transaction, Optional.empty());
     }
 

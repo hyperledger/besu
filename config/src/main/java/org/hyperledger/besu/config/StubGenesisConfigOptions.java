@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.config;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -170,13 +168,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getLondonBlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? londonBlockNumber : OptionalLong.empty();
+    return londonBlockNumber;
   }
 
   @Override
   // TODO EIP-1559 change for the actual fork name when known
   public OptionalLong getAleutBlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? aleutBlockNumber : OptionalLong.empty();
+    return aleutBlockNumber;
   }
 
   @Override

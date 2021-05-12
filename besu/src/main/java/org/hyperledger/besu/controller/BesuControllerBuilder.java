@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -288,8 +287,7 @@ public abstract class BesuControllerBuilder {
     final Optional<EIP1559> eip1559;
     final GenesisConfigOptions genesisConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides);
-    if (ExperimentalEIPs.eip1559Enabled
-        && genesisConfigOptions.getEIP1559BlockNumber().isPresent()) {
+    if (genesisConfigOptions.getEIP1559BlockNumber().isPresent()) {
       eip1559 = Optional.of(new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().getAsLong()));
     } else {
       eip1559 = Optional.empty();

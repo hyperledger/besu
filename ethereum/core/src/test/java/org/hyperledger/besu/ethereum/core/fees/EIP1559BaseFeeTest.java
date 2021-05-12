@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.core.fees;
 import static com.google.common.base.Preconditions.checkState;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,8 +25,6 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -80,16 +76,6 @@ public class EIP1559BaseFeeTest {
     this.parentGasUsed = parentGasUsed;
     this.parentTargetGasUsed = parentTargetGasUsed;
     this.expectedBaseFee = expectedBaseFee;
-  }
-
-  @Before
-  public void setUp() {
-    ExperimentalEIPs.eip1559Enabled = true;
-  }
-
-  @After
-  public void reset() {
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 
   @Test

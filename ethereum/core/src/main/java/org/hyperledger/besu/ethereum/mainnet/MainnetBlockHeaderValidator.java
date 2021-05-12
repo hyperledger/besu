@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkVa
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public final class MainnetBlockHeaderValidator {
@@ -127,7 +129,10 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
             new ProofOfWorkValidationRule(
-                new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT))
+                new EpochCalculator.DefaultEpochCalculator(),
+                true,
+                PoWHasher.ETHASH_LIGHT,
+                Optional.of(eip1559)))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 
@@ -140,7 +145,10 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
             new ProofOfWorkValidationRule(
-                new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT))
+                new EpochCalculator.DefaultEpochCalculator(),
+                true,
+                PoWHasher.ETHASH_LIGHT,
+                Optional.of(eip1559)))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

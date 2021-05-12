@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import static java.lang.Math.max;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.math.BigInteger;
@@ -40,7 +39,6 @@ public class EIP1559 {
       final long parentBaseFee,
       final long parentBlockGasUsed,
       final long targetGasUsed) {
-    guardActivation();
     long gasDelta, feeDelta, baseFee;
     if (parentBlockGasUsed == targetGasUsed) {
       return parentBaseFee;
@@ -72,34 +70,23 @@ public class EIP1559 {
   }
 
   public boolean isValidBaseFee(final long parentBaseFee, final long baseFee) {
-    guardActivation();
     return Math.abs(baseFee - parentBaseFee)
         <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
   }
 
   public boolean isEIP1559(final long blockNumber) {
-    guardActivation();
     return blockNumber >= initialForkBlknum;
   }
 
   public boolean isForkBlock(final long blockNumber) {
-    guardActivation();
     return initialForkBlknum == blockNumber;
   }
 
   public long getForkBlock() {
-    guardActivation();
     return initialForkBlknum;
   }
 
-  private void guardActivation() {
-    if (!ExperimentalEIPs.eip1559Enabled) {
-      throw new RuntimeException("EIP-1559 is not enabled");
-    }
-  }
-
   public long targetGasUsed(final BlockHeader header) {
-    guardActivation();
     return header.getGasLimit();
   }
 

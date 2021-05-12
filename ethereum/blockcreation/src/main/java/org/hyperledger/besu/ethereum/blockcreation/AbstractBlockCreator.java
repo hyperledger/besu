@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -266,7 +265,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
     Long baseFee = null;
-    if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
+    if (protocolSpec.isEip1559()) {
       final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
       if (eip1559.isForkBlock(newBlockNumber)) {
         baseFee = eip1559.getFeeMarket().getInitialBasefee();

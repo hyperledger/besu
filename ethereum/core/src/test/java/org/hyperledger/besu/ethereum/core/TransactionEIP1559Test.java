@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -28,17 +27,11 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.After;
 import org.junit.Test;
 
 public class TransactionEIP1559Test {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-
-  @After
-  public void reset() {
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
-  }
 
   @Test
   public void buildEip1559Transaction() {
