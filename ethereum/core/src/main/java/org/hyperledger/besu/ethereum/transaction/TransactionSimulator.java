@@ -71,6 +71,11 @@ public class TransactionSimulator {
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
 
+  // Hex-encoded 64 byte array of "17" values
+  private static final Bytes MAX_PRIVATE_INTRINSIC_DATA_HEX =
+      Bytes.fromHexString(
+          "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
@@ -163,6 +168,75 @@ public class TransactionSimulator {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
     }
 
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+
+    final MainnetTransactionProcessor transactionProcessor =
+        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
+
+    // If GoQuorum privacy enabled, and value = zero, do simulation with max bytes value
+    // It is possible to have a data field that has a lower intrinsic value than the PTM hash
+    // so this checks the tx as if we were to place a PTM hash (with all non-zero values).
+    // This means a potential over-estimate of gas, rather than the exact cost to run right now.
+        if (maybePrivacyParameters.isPresent()
+            && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()
+            && value.isZero()) {
+      // set payload
+
+      Bytes maxPayload = MAX_PRIVATE_INTRINSIC_DATA_HEX;
+      final Transaction transactionPriv =
+          constructTransaction(
+              callParams,
+              senderAddress,
+              nonce,
+              gasLimit,
+              gasPrice,
+              value,
+              MAX_PRIVATE_INTRINSIC_DATA_HEX);
+      final TransactionProcessingResult resultPriv =
+          transactionProcessor.processTransaction(
+              blockchain,
+              updater,
+              header,
+              transactionPriv,
+              protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
+              new BlockHashLookup(header, blockchain),
+              false,
+              transactionValidationParams,
+              operationTracer);
+      System.out.println("transaction with max data " + transactionPriv);
+      System.out.println("result with normal " + resultPriv.getEstimateGasUsedByTransaction());
+        // TODO is the estimate the only field different?
+        return Optional.of(new TransactionSimulatorResult(transactionPriv, resultPriv));
+      } else {
+        final Transaction transactionPub =
+            constructTransaction(callParams, senderAddress, nonce, gasLimit, gasPrice, value, payload);
+
+        final TransactionProcessingResult result =
+            transactionProcessor.processTransaction(
+                blockchain,
+                updater,
+                header,
+                transactionPub,
+                protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
+                new BlockHashLookup(header, blockchain),
+                false,
+                transactionValidationParams,
+                operationTracer);
+
+        System.out.println("transaction as is " + transactionPub);
+        System.out.println("result with max data " + result.getEstimateGasUsedByTransaction());
+        return Optional.of(new TransactionSimulatorResult(transactionPub, result));
+      }
+  }
+
+  private Transaction constructTransaction(
+      CallParameter callParams,
+      Address senderAddress,
+      long nonce,
+      long gasLimit,
+      Wei gasPrice,
+      Wei value,
+      Bytes payload) {
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
@@ -178,24 +252,7 @@ public class TransactionSimulator {
     callParams.getFeeCap().ifPresent(transactionBuilder::feeCap);
 
     final Transaction transaction = transactionBuilder.build();
-
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
-
-    final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
-    final TransactionProcessingResult result =
-        transactionProcessor.processTransaction(
-            blockchain,
-            updater,
-            header,
-            transaction,
-            protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
-            new BlockHashLookup(header, blockchain),
-            false,
-            transactionValidationParams,
-            operationTracer);
-
-    return Optional.of(new TransactionSimulatorResult(transaction, result));
+    return transaction;
   }
 
   // return combined private/public world state updater if GoQuorum mode, otherwise the public state
