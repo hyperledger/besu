@@ -304,7 +304,6 @@ public abstract class BesuControllerBuilder {
             syncState,
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration,
-            ethereumWireProtocolConfiguration.isEth65Enabled(),
             eip1559);
 
     final EthProtocolManager ethProtocolManager =

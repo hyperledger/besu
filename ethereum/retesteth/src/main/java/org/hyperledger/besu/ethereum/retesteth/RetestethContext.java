@@ -203,7 +203,6 @@ public class RetestethContext {
             syncState,
             Wei.ZERO,
             transactionPoolConfiguration,
-            true,
             jsonGenesisConfigOptions.getEIP1559BlockNumber().isPresent()
                 ? Optional.of(
                     new EIP1559(jsonGenesisConfigOptions.getEIP1559BlockNumber().getAsLong()))
