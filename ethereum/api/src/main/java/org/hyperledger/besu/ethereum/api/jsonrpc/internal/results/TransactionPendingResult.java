@@ -50,12 +50,16 @@ public class TransactionPendingResult implements TransactionResult {
   private final String chainId;
   private final String from;
   private final String gas;
+
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String gasPrice;
+
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String gasPremium;
+
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String feeCap;
+
   private final String hash;
   private final String input;
   private final String nonce;
