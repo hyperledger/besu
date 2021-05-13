@@ -146,4 +146,30 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
+
+  @Test
+  public void
+      transactionWithUnrestrictedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
+    final JsonRpcResponse actualResponse =
+        method.response(validUnrestrictedPrivacyGroupTransactionRequest);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void
+      transactionWithUnsupportedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
+    final JsonRpcResponse actualResponse =
+        method.response(validUnsuportedPrivacyGroupTransactionRequest);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
 }

@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -100,5 +102,31 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
         .createPrivacyMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY));
+  }
+
+  @Test
+  public void
+      transactionWithUnrestrictedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
+    final JsonRpcResponse actualResponse =
+        method.response(validUnrestrictedPrivacyGroupTransactionRequest);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void
+      transactionWithUnsupportedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
+    final JsonRpcResponse actualResponse =
+        method.response(validUnsuportedPrivacyGroupTransactionRequest);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }

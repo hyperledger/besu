@@ -72,7 +72,21 @@ public class BaseEeaSendRawTransaction {
           new JsonRpcRequest(
               "2.0",
               "eea_sendRawTransaction",
-              new String[] {validPrivatePrivacyGroupTransaction()}));
+              new String[] {validPrivatePrivacyGroupTransaction(Restriction.RESTRICTED)}));
+
+  final JsonRpcRequestContext validUnrestrictedPrivacyGroupTransactionRequest =
+      new JsonRpcRequestContext(
+          new JsonRpcRequest(
+              "2.0",
+              "eea_sendRawTransaction",
+              new String[] {validPrivatePrivacyGroupTransaction(Restriction.UNRESTRICTED)}));
+
+  final JsonRpcRequestContext validUnsuportedPrivacyGroupTransactionRequest =
+      new JsonRpcRequestContext(
+          new JsonRpcRequest(
+              "2.0",
+              "eea_sendRawTransaction",
+              new String[] {validPrivatePrivacyGroupTransaction(Restriction.UNSUPPORTED)}));
 
   @Mock TransactionPool transactionPool;
   @Mock PrivacyController privacyController;
@@ -96,7 +110,7 @@ public class BaseEeaSendRawTransaction {
     return rlpEncodeTransaction(privateTransactionBuilder);
   }
 
-  private String validPrivatePrivacyGroupTransaction() {
+  private String validPrivatePrivacyGroupTransaction(final Restriction restriction) {
     final PrivateTransaction.Builder privateTransactionBuilder =
         PrivateTransaction.builder()
             .nonce(0)
@@ -108,7 +122,7 @@ public class BaseEeaSendRawTransaction {
             .chainId(BigInteger.ONE)
             .privateFrom(Bytes.fromBase64String("S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXp="))
             .privacyGroupId(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
-            .restriction(Restriction.RESTRICTED);
+            .restriction(restriction);
     return rlpEncodeTransaction(privateTransactionBuilder);
   }
 

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
@@ -49,6 +50,12 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
   @Override
   protected ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user) {
+
+    if (!privateTransaction.getRestriction().equals(Restriction.RESTRICTED)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
+    }
+
     final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(user);
 
     if (!privateTransaction.getPrivateFrom().equals(Bytes.fromBase64String(enclavePublicKey))) {
