@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -27,46 +29,70 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RequestManager {
-  private final AtomicLong responseStreamId = new AtomicLong(0L);
+  private final AtomicLong requestIdCounter = new AtomicLong(0L);
   private final Map<Long, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
+  private final boolean supportsRequestId;
 
   private final AtomicInteger outstandingRequests = new AtomicInteger(0);
 
-  public RequestManager(final EthPeer peer) {
+  public RequestManager(final EthPeer peer, final boolean supportsRequestId) {
     this.peer = peer;
+    this.supportsRequestId = supportsRequestId;
   }
 
   public int outstandingRequests() {
     return outstandingRequests.get();
   }
 
-  public ResponseStream dispatchRequest(final RequestSender sender) throws PeerNotConnected {
+  public ResponseStream dispatchRequest(final RequestSender sender, final MessageData messageData)
+      throws PeerNotConnected {
     outstandingRequests.incrementAndGet();
-    final ResponseStream stream = createStream();
-    sender.send();
+    final long requestId = requestIdCounter.incrementAndGet();
+    final ResponseStream stream = createStream(requestId);
+    sender.send(supportsRequestId ? wrapRequestId(requestId, messageData) : messageData);
     return stream;
   }
 
   public void dispatchResponse(final EthMessage message) {
     final Collection<ResponseStream> streams = new ArrayList<>(responseStreams.values());
     final int count = outstandingRequests.decrementAndGet();
+    if (supportsRequestId) {
+      // If there's a requestId, find the specific stream it belongs to
+      final Map.Entry<Long, EthMessage> requestIdAndEthMessage = unwrapRequestId(message);
+      Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
+          .ifPresent(
+              responseStream ->
+                  responseStream.processMessage(requestIdAndEthMessage.getValue().getData()));
+    } else {
+      // otherwise iterate through all of them
+      streams.forEach(s -> s.processMessage(message.getData()));
+    }
 
-    streams.forEach(s -> s.processMessage(message.getData()));
+    // todo find out if this should go inside the else
     if (count == 0) {
       // No possibility of any remaining outstanding messages
       closeOutstandingStreams(streams);
     }
   }
 
+  private MessageData wrapRequestId(final long requestId, final MessageData messageData) {
+    // todo this
+    return messageData;
+  }
+
+  private Map.Entry<Long, EthMessage> unwrapRequestId(final EthMessage message) {
+    // todo this
+    return new AbstractMap.SimpleImmutableEntry<>(0L, message);
+  }
+
   public void close() {
     closeOutstandingStreams(responseStreams.values());
   }
 
-  private ResponseStream createStream() {
-    final long listenerId = nextStreamId();
-    final ResponseStream stream = new ResponseStream(peer, () -> deregisterStream(listenerId));
-    responseStreams.put(listenerId, stream);
+  private ResponseStream createStream(final long requestId) {
+    final ResponseStream stream = new ResponseStream(peer, () -> deregisterStream(requestId));
+    responseStreams.put(requestId, stream);
     return stream;
   }
 
@@ -79,13 +105,9 @@ public class RequestManager {
     responseStreams.remove(id);
   }
 
-  private long nextStreamId() {
-    return responseStreamId.incrementAndGet();
-  }
-
   @FunctionalInterface
   public interface RequestSender {
-    void send() throws PeerNotConnected;
+    void send(final MessageData messageData) throws PeerNotConnected;
   }
 
   @FunctionalInterface

@@ -40,10 +40,12 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -70,13 +72,15 @@ public class EthPeer {
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
+  private final boolean supportsRequestId;
 
   private volatile long lastRequestTimestamp = 0;
-  private final RequestManager headersRequestManager = new RequestManager(this);
-  private final RequestManager bodiesRequestManager = new RequestManager(this);
-  private final RequestManager receiptsRequestManager = new RequestManager(this);
-  private final RequestManager nodeDataRequestManager = new RequestManager(this);
-  private final RequestManager pooledTransactionsRequestManager = new RequestManager(this);
+  private final AtomicLong requestIdCounter = new AtomicLong(0);
+  private final RequestManager headersRequestManager;
+  private final RequestManager bodiesRequestManager;
+  private final RequestManager receiptsRequestManager;
+  private final RequestManager nodeDataRequestManager;
+  private final RequestManager pooledTransactionsRequestManager;
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
   private final PeerReputation reputation = new PeerReputation();
@@ -109,6 +113,12 @@ public class EthPeer {
       validationStatus.put(peerValidator, false);
     }
     fullyValidated.set(peerValidators.isEmpty());
+    this.supportsRequestId = getAgreedCapabilities().contains(EthProtocol.ETH66);
+    headersRequestManager = new RequestManager(this, supportsRequestId);
+    bodiesRequestManager = new RequestManager(this, supportsRequestId);
+    receiptsRequestManager = new RequestManager(this, supportsRequestId);
+    nodeDataRequestManager = new RequestManager(this, supportsRequestId);
+    pooledTransactionsRequestManager = new RequestManager(this, supportsRequestId);
   }
 
   public void markValidated(final PeerValidator validator) {
@@ -230,10 +240,15 @@ public class EthPeer {
   }
 
   private RequestManager.ResponseStream sendRequest(
-      final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
+      final RequestManager requestManager, final MessageData unwrappedMessageData)
+      throws PeerNotConnected {
     lastRequestTimestamp = clock.millis();
     return requestManager.dispatchRequest(
-        () -> connection.sendForProtocol(protocolName, messageData));
+        messageData -> connection.sendForProtocol(protocolName, messageData), unwrappedMessageData);
+  }
+
+  private Optional<Long> requestIdIfApplicable() {
+    return supportsRequestId ? Optional.of(requestIdCounter.incrementAndGet()) : Optional.empty();
   }
 
   boolean validateReceivedMessage(final EthMessage message) {
