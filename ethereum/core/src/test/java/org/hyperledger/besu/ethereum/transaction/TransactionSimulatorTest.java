@@ -161,7 +161,8 @@ public class TransactionSimulatorTest {
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
-    GoQuorumOptions.goQuorumCompatibilityMode = GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
+    GoQuorumOptions.goQuorumCompatibilityMode =
+        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 
   @Test

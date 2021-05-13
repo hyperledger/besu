@@ -181,22 +181,53 @@ public class TransactionSimulator {
     if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
       // different logic for calculating estimated gas used
       // set payload to MAX
-      return getTransactionSimulatorResult(callParams, transactionValidationParams, operationTracer,
-          header, updater, senderAddress, nonce, gasLimit, gasPrice, value, MAX_PRIVATE_INTRINSIC_DATA_HEX,
-          protocolSpec, transactionProcessor);
-      } else {
-      return getTransactionSimulatorResult(callParams, transactionValidationParams, operationTracer,
-          header, updater, senderAddress, nonce, gasLimit, gasPrice, value, payload, protocolSpec,
+      return getTransactionSimulatorResult(
+          callParams,
+          transactionValidationParams,
+          operationTracer,
+          header,
+          updater,
+          senderAddress,
+          nonce,
+          gasLimit,
+          gasPrice,
+          value,
+          MAX_PRIVATE_INTRINSIC_DATA_HEX,
+          protocolSpec,
+          transactionProcessor);
+    } else {
+      return getTransactionSimulatorResult(
+          callParams,
+          transactionValidationParams,
+          operationTracer,
+          header,
+          updater,
+          senderAddress,
+          nonce,
+          gasLimit,
+          gasPrice,
+          value,
+          payload,
+          protocolSpec,
           transactionProcessor);
     }
   }
 
   private Optional<TransactionSimulatorResult> getTransactionSimulatorResult(
-      CallParameter callParams, TransactionValidationParams transactionValidationParams,
-      OperationTracer operationTracer, BlockHeader header, WorldUpdater updater,
-      Address senderAddress, long nonce, long gasLimit, Wei gasPrice, Wei value, Bytes payload,
-      ProtocolSpec protocolSpec, MainnetTransactionProcessor transactionProcessor) {
-    final Transaction transactionPub =
+      CallParameter callParams,
+      TransactionValidationParams transactionValidationParams,
+      OperationTracer operationTracer,
+      BlockHeader header,
+      WorldUpdater updater,
+      Address senderAddress,
+      long nonce,
+      long gasLimit,
+      Wei gasPrice,
+      Wei value,
+      Bytes payload,
+      ProtocolSpec protocolSpec,
+      MainnetTransactionProcessor transactionProcessor) {
+    final Transaction transaction =
         constructTransaction(callParams, senderAddress, nonce, gasLimit, gasPrice, value, payload);
 
     final TransactionProcessingResult result =
@@ -204,14 +235,14 @@ public class TransactionSimulator {
             blockchain,
             updater,
             header,
-            transactionPub,
+            transaction,
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             new BlockHashLookup(header, blockchain),
             false,
             transactionValidationParams,
             operationTracer);
 
-    return Optional.of(new TransactionSimulatorResult(transactionPub, result));
+    return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
 
   private Transaction constructTransaction(
