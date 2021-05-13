@@ -55,6 +55,7 @@ public class TransactionCompleteResult implements TransactionResult {
 
   private final String blockHash;
   private final String blockNumber;
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String chainId;
   private final String from;
   private final String gas;
