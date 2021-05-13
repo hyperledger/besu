@@ -163,7 +163,15 @@ public class TransactionSimulator {
         callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
     final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
+
+    // If GoQuorum privacy enabled, and value = zero, do simulation with max bytes value.
+    // It is possible to have a data field that has a lower intrinsic value than the PTM hash
+    // so this checks the tx as if we were to place a PTM hash (with all non-zero values).
+    // This means a potential over-estimate of gas, rather than the exact cost to run right now.
+    final Bytes payload =
+        GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()
+            ? MAX_PRIVATE_INTRINSIC_DATA_HEX
+            : (callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY);
 
     if (transactionValidationParams.isAllowExceedingBalance()) {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
@@ -174,85 +182,6 @@ public class TransactionSimulator {
     final MainnetTransactionProcessor transactionProcessor =
         protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
 
-    // If GoQuorum privacy enabled, and value = zero, do simulation with max bytes value.
-    // It is possible to have a data field that has a lower intrinsic value than the PTM hash
-    // so this checks the tx as if we were to place a PTM hash (with all non-zero values).
-    // This means a potential over-estimate of gas, rather than the exact cost to run right now.
-    if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
-      // different logic for calculating estimated gas used
-      // set payload to MAX
-      return getTransactionSimulatorResult(
-          callParams,
-          transactionValidationParams,
-          operationTracer,
-          header,
-          updater,
-          senderAddress,
-          nonce,
-          gasLimit,
-          gasPrice,
-          value,
-          MAX_PRIVATE_INTRINSIC_DATA_HEX,
-          protocolSpec,
-          transactionProcessor);
-    } else {
-      return getTransactionSimulatorResult(
-          callParams,
-          transactionValidationParams,
-          operationTracer,
-          header,
-          updater,
-          senderAddress,
-          nonce,
-          gasLimit,
-          gasPrice,
-          value,
-          payload,
-          protocolSpec,
-          transactionProcessor);
-    }
-  }
-
-  private Optional<TransactionSimulatorResult> getTransactionSimulatorResult(
-      CallParameter callParams,
-      TransactionValidationParams transactionValidationParams,
-      OperationTracer operationTracer,
-      BlockHeader header,
-      WorldUpdater updater,
-      Address senderAddress,
-      long nonce,
-      long gasLimit,
-      Wei gasPrice,
-      Wei value,
-      Bytes payload,
-      ProtocolSpec protocolSpec,
-      MainnetTransactionProcessor transactionProcessor) {
-    final Transaction transaction =
-        constructTransaction(callParams, senderAddress, nonce, gasLimit, gasPrice, value, payload);
-
-    final TransactionProcessingResult result =
-        transactionProcessor.processTransaction(
-            blockchain,
-            updater,
-            header,
-            transaction,
-            protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
-            new BlockHashLookup(header, blockchain),
-            false,
-            transactionValidationParams,
-            operationTracer);
-
-    return Optional.of(new TransactionSimulatorResult(transaction, result));
-  }
-
-  private Transaction constructTransaction(
-      CallParameter callParams,
-      Address senderAddress,
-      long nonce,
-      long gasLimit,
-      Wei gasPrice,
-      Wei value,
-      Bytes payload) {
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
@@ -268,7 +197,20 @@ public class TransactionSimulator {
     callParams.getFeeCap().ifPresent(transactionBuilder::feeCap);
 
     final Transaction transaction = transactionBuilder.build();
-    return transaction;
+
+    final TransactionProcessingResult result =
+        transactionProcessor.processTransaction(
+            blockchain,
+            updater,
+            header,
+            transaction,
+            protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
+            new BlockHashLookup(header, blockchain),
+            false,
+            transactionValidationParams,
+            operationTracer);
+
+    return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
 
   // return combined private/public world state updater if GoQuorum mode, otherwise the public state
