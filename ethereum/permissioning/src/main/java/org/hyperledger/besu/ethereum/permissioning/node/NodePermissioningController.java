@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.node;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
