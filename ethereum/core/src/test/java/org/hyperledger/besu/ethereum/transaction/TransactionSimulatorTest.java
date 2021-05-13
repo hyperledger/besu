@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -75,6 +76,11 @@ public class TransactionSimulatorTest {
   private static final Hash DEFAULT_BLOCK_HEADER_HASH =
       Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
 
+  // Hex-encoded 64 byte array of "17" values
+  private static final Bytes MAX_PRIVATE_INTRINSIC_DATA_HEX =
+      Bytes.fromHexString(
+          "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+
   private TransactionSimulator transactionSimulator;
 
   @Mock private Blockchain blockchain;
@@ -126,6 +132,36 @@ public class TransactionSimulatorTest {
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
+  }
+
+  @Test
+  public void shouldReturnSuccessfulResultWhenProcessingPotentiallyPrivateTxIsSuccessful() {
+    final CallParameter callParameter = legacyTransactionCallParameter();
+
+    GoQuorumOptions.goQuorumCompatibilityMode = true;
+
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+
+    final Transaction expectedTransaction =
+        Transaction.builder()
+            .nonce(1L)
+            .gasPrice(callParameter.getGasPrice())
+            .gasLimit(callParameter.getGasLimit())
+            .to(callParameter.getTo())
+            .sender(callParameter.getFrom())
+            .value(callParameter.getValue())
+            .payload(MAX_PRIVATE_INTRINSIC_DATA_HEX)
+            .signature(FAKE_SIGNATURE)
+            .build();
+    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+
+    final Optional<TransactionSimulatorResult> result =
+        transactionSimulator.process(callParameter, 1L);
+
+    assertThat(result.get().isSuccessful()).isTrue();
+    verifyTransactionWasProcessed(expectedTransaction);
+    GoQuorumOptions.goQuorumCompatibilityMode = GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 
   @Test
