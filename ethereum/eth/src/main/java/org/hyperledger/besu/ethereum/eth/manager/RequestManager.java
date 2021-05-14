@@ -16,6 +16,10 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -27,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class RequestManager {
   private final AtomicLong requestIdCounter = new AtomicLong(0L);
@@ -48,7 +54,7 @@ public class RequestManager {
   public ResponseStream dispatchRequest(final RequestSender sender, final MessageData messageData)
       throws PeerNotConnected {
     outstandingRequests.incrementAndGet();
-    final long requestId = requestIdCounter.incrementAndGet();
+    final long requestId = requestIdCounter.getAndIncrement();
     final ResponseStream stream = createStream(requestId);
     sender.send(supportsRequestId ? wrapRequestId(requestId, messageData) : messageData);
     return stream;
@@ -69,7 +75,6 @@ public class RequestManager {
       streams.forEach(s -> s.processMessage(message.getData()));
     }
 
-    // todo find out if this should go inside the else
     if (count == 0) {
       // No possibility of any remaining outstanding messages
       closeOutstandingStreams(streams);
@@ -77,13 +82,25 @@ public class RequestManager {
   }
 
   private MessageData wrapRequestId(final long requestId, final MessageData messageData) {
-    // todo this
-    return messageData;
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    rlpOutput.startList();
+    rlpOutput.writeLongScalar(requestId);
+    rlpOutput.writeBytes(messageData.getData());
+    rlpOutput.endList();
+    return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
 
   private Map.Entry<Long, EthMessage> unwrapRequestId(final EthMessage message) {
-    // todo this
-    return new AbstractMap.SimpleImmutableEntry<>(0L, message);
+    final RLPInput messageDataRLP = RLP.input(message.getData().getData());
+    messageDataRLP.enterList();
+    final long requestId = messageDataRLP.readLongScalar();
+    final Bytes unwrappedMessageData = messageDataRLP.readBytes();
+    messageDataRLP.leaveList();
+
+    return new AbstractMap.SimpleImmutableEntry<>(
+        requestId,
+        new EthMessage(
+            message.getPeer(), new RawMessage(message.getData().getCode(), unwrappedMessageData)));
   }
 
   public void close() {

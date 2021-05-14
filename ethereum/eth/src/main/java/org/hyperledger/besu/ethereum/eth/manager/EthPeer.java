@@ -240,11 +240,10 @@ public class EthPeer {
   }
 
   private RequestManager.ResponseStream sendRequest(
-      final RequestManager requestManager, final MessageData unwrappedMessageData)
-      throws PeerNotConnected {
+      final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
     lastRequestTimestamp = clock.millis();
     return requestManager.dispatchRequest(
-        messageData -> connection.sendForProtocol(protocolName, messageData), unwrappedMessageData);
+        msgData -> connection.sendForProtocol(protocolName, msgData), messageData);
   }
 
   private Optional<Long> requestIdIfApplicable() {
