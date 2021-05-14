@@ -55,7 +55,7 @@ public class EthServerTest {
         worldStateArchive,
         transactionPool,
         ethMessages,
-        new EthProtocolConfiguration(2, 2, 2, 2, 2, true, false));
+        new EthProtocolConfiguration(2, 2, 2, 2, 2, false));
   }
 
   @Test

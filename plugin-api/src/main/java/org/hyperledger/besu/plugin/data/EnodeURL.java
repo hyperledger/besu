@@ -12,12 +12,34 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.permissioning.node;
+package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.data.EnodeURL;
+import java.net.InetAddress;
+import java.net.URI;
+import java.util.Optional;
 
-@FunctionalInterface
-public interface NodePermissioningProvider {
+import org.apache.tuweni.bytes.Bytes;
 
-  boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode);
+public interface EnodeURL {
+  URI toURIWithoutDiscoveryPort();
+
+  Bytes getNodeId();
+
+  InetAddress getIp();
+
+  Optional<Integer> getListeningPort();
+
+  int getListeningPortOrZero();
+
+  URI toURI();
+
+  Optional<Integer> getDiscoveryPort();
+
+  boolean isListening();
+
+  boolean isRunningDiscovery();
+
+  String getIpAsString();
+
+  int getDiscoveryPortOrZero();
 }
