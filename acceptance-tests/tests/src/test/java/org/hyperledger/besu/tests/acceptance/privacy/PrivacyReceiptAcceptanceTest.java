@@ -12,40 +12,49 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy;
+package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static java.util.Optional.empty;
+import static org.web3j.utils.Restriction.RESTRICTED;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
 import org.junit.Test;
+import org.web3j.utils.Restriction;
 
 public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public PrivacyReceiptAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
-
-  private PrivacyNode alice;
   final MinerTransactions minerTransactions = new MinerTransactions();
 
-  @Before
-  public void setUp() throws Exception {
+  private final PrivacyNode alice;
+
+  public PrivacyReceiptAcceptanceTest(final Restriction restriction, final EnclaveType enclaveType)
+      throws IOException {
+    super(restriction, enclaveType);
+
     alice =
-        privacyBesu.createIbft2NodePrivacyMiningEnabled(
-            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "node1",
+            PrivacyAccountResolver.ALICE,
+            false,
+            enclaveType,
+            Optional.empty(),
+            false,
+            false,
+            restriction == UNRESTRICTED);
     privacyCluster.start(alice);
   }
 
@@ -127,8 +136,14 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
     return bvrlpo;
   }
 
-  private static PrivateTransaction createSignedTransaction(
+  private PrivateTransaction createSignedTransaction(
       final PrivacyNode node, final String privacyGoupId, final Optional<Bytes> payload) {
+
+    org.hyperledger.besu.ethereum.privacy.Restriction besuRestriction =
+        restriction == RESTRICTED
+            ? org.hyperledger.besu.ethereum.privacy.Restriction.RESTRICTED
+            : org.hyperledger.besu.ethereum.privacy.Restriction.UNRESTRICTED;
+
     final Bytes defaultPayload = Bytes.wrap(new byte[] {});
     return PrivateTransaction.builder()
         .nonce(0)
@@ -139,7 +154,7 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
         .payload(payload.orElse(defaultPayload))
         .sender(node.getAddress())
         .privateFrom(Bytes.fromBase64String(node.getEnclaveKey()))
-        .restriction(Restriction.RESTRICTED)
+        .restriction(besuRestriction)
         .privacyGroupId(Bytes.fromBase64String(privacyGoupId))
         .signAndBuild(node.getBesu().getPrivacyParameters().getSigningKeyPair().get());
   }

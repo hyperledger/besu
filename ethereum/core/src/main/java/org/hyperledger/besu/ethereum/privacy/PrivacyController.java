@@ -75,7 +75,7 @@ public interface PrivacyController {
       PrivateTransaction privateTransaction, Bytes32 privacyGroupId, String enclaveKey);
 
   Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
-      String toBase64String, String enclaveKey);
+      String privacyGroupId, String enclaveKey);
 
   Optional<PrivacyGroup> findPrivacyGroupByGroupId(
       final String privacyGroupId, final String enclaveKey);

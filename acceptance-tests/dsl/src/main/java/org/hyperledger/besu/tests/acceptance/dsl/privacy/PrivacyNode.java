@@ -43,6 +43,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivateCondit
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.enclave.testutil.EnclaveTestHarness;
 import org.hyperledger.enclave.testutil.EnclaveType;
+import org.hyperledger.enclave.testutil.NoopEnclaveTestHarness;
 import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
@@ -75,6 +76,7 @@ public class PrivacyNode implements AutoCloseable {
   private final Vertx vertx;
   private final boolean isOnchainPrivacyEnabled;
   private final boolean isMultitenancyEnabled;
+  private final boolean isUnrestrictedEnabled;
 
   public PrivacyNode(
       final PrivacyNodeConfiguration privacyConfiguration,
@@ -92,6 +94,7 @@ public class PrivacyNode implements AutoCloseable {
 
     isOnchainPrivacyEnabled = privacyConfiguration.isOnchainPrivacyGroupEnabled();
     isMultitenancyEnabled = privacyConfiguration.isMultitenancyEnabled();
+    isUnrestrictedEnabled = privacyConfiguration.isUnrestrictedEnabled();
 
     this.besu =
         new BesuNode(
@@ -123,6 +126,11 @@ public class PrivacyNode implements AutoCloseable {
   }
 
   public void testEnclaveConnection(final List<PrivacyNode> otherNodes) {
+    if (this.isUnrestrictedEnabled) {
+      LOG.info("Skipping as node has no enclave (isUnrestrictedEnabled=true)");
+      return;
+    }
+
     if (!otherNodes.isEmpty()) {
       LOG.debug(
           String.format(
@@ -196,9 +204,10 @@ public class PrivacyNode implements AutoCloseable {
               .setEnclaveFactory(new EnclaveFactory(vertx))
               .setOnchainPrivacyGroupsEnabled(isOnchainPrivacyEnabled)
               .setMultiTenancyEnabled(isMultitenancyEnabled)
+              .setUnrestrictedPrivacyEnabled(isUnrestrictedEnabled)
               .build();
     } catch (final IOException e) {
-      throw new RuntimeException();
+      throw new RuntimeException(e);
     }
     besu.setPrivacyParameters(privacyParameters);
     besu.start(runner);
@@ -273,10 +282,16 @@ public class PrivacyNode implements AutoCloseable {
       final BesuNodeConfiguration config,
       final PrivacyNodeConfiguration privacyConfiguration,
       final Optional<Network> containerNetwork) {
-    return enclaveType == EnclaveType.TESSERA
-        ? TesseraTestHarnessFactory.create(
-            config.getName(), tempDir, privacyConfiguration.getKeyConfig(), containerNetwork)
-        : OrionTestHarnessFactory.create(
+
+    switch (enclaveType) {
+      case ORION:
+        return OrionTestHarnessFactory.create(
             config.getName(), tempDir, privacyConfiguration.getKeyConfig());
+      case TESSERA:
+        return TesseraTestHarnessFactory.create(
+            config.getName(), tempDir, privacyConfiguration.getKeyConfig(), containerNetwork);
+      default:
+        return new NoopEnclaveTestHarness(tempDir, privacyConfiguration.getKeyConfig());
+    }
   }
 }

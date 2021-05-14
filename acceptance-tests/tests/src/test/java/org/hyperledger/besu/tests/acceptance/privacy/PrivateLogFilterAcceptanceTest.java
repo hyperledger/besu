@@ -12,39 +12,49 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy;
+package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
+import org.web3j.utils.Restriction;
 
 @SuppressWarnings("rawtypes")
 public class PrivateLogFilterAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public PrivateLogFilterAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
 
-  private PrivacyNode node;
+  private final PrivacyNode node;
 
-  @Before
-  public void setUp() throws Exception {
+  public PrivateLogFilterAcceptanceTest(
+      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
+
+    super(restriction, enclaveType);
+
     node =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
+            restriction + "-node",
+            PrivacyAccountResolver.ALICE,
+            enclaveType,
+            Optional.empty(),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     privacyCluster.start(node);
   }
 
@@ -120,6 +130,7 @@ public class PrivateLogFilterAcceptanceTest extends ParameterizedEnclaveTestBase
                 EventEmitter.class,
                 node.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 node.getEnclaveKey(),
                 privacyGroupId));
 
@@ -140,6 +151,7 @@ public class PrivateLogFilterAcceptanceTest extends ParameterizedEnclaveTestBase
                 eventEmitterContract.store(BigInteger.valueOf(value)).encodeFunctionCall(),
                 node.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 node.getEnclaveKey(),
                 privacyGroupId));
 

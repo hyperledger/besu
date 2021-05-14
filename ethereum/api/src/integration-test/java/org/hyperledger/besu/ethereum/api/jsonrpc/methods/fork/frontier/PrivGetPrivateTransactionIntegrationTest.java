@@ -41,9 +41,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -136,7 +136,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
 
     privacyController =
-        new DefaultPrivacyController(
+        new RestrictedDefaultPrivacyController(
             blockchain, privateStateStorage, enclave, null, null, null, null, null, null);
   }
 

@@ -971,6 +971,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
   @Option(
+      names = {"--privacy-unrestricted-enabled"},
+      description =
+          "Enable unrestricted (stores payload onchain) privacy (default: ${DEFAULT-VALUE})")
+  private final Boolean isUnrestrictedPrivacyEnabled = false;
+
+  @Option(
       names = {"--target-gas-limit"},
       description =
           "Sets target gas limit per block. If set each block's gas limit will approach this setting over time if the current gas limit is different.")
@@ -2123,12 +2129,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
       }
 
+      if (isUnrestrictedPrivacyEnabled && isPrivacyMultiTenancyEnabled) {
+        throw new ParameterException(
+            commandLine,
+            "Privacy unrestricted privacy can not be used in multi-tenant environment");
+      }
+
+      if (isUnrestrictedPrivacyEnabled && isFlexiblePrivacyGroupsEnabled) {
+        throw new ParameterException(
+            commandLine,
+            "Privacy unrestricted privacy can not be used with flexible (onchain) privacy groups");
+      }
+
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
+      privacyParametersBuilder.setUnrestrictedPrivacyEnabled(isUnrestrictedPrivacyEnabled);
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
+
+      if (hasPrivacyPublicKey && isPrivacyMultiTenancyEnabled) {
+        throw new ParameterException(
+            commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
+      }
+
+      if (!hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
+        throw new ParameterException(
+            commandLine, "Please specify Enclave public key file path to enable privacy");
+      }
+
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
         try {
           privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile);
@@ -2139,12 +2169,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           throw new ParameterException(
               commandLine, "Contents of privacy-public-key-file invalid: " + e.getMessage(), e);
         }
-      } else if (hasPrivacyPublicKey) {
-        throw new ParameterException(
-            commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
-      } else if (!isPrivacyMultiTenancyEnabled) {
-        throw new ParameterException(
-            commandLine, "Please specify Enclave public key file path to enable privacy");
       }
 
       if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {

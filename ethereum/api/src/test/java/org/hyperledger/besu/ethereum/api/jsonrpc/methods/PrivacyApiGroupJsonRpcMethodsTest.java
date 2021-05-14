@@ -33,8 +33,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 
 import java.util.Map;
 import java.util.Optional;
@@ -156,7 +156,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     privacyApiGroupJsonRpcMethods.create();
     final PrivacyController privacyController = privacyApiGroupJsonRpcMethods.privacyController;
 
-    assertThat(privacyController).isInstanceOf(MultiTenancyPrivacyController.class);
+    assertThat(privacyController).isInstanceOf(RestrictedMultiTenancyPrivacyController.class);
   }
 
   private User createUser(final String enclavePublicKey) {

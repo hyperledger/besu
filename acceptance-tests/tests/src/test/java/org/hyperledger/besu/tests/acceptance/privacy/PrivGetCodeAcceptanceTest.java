@@ -12,36 +12,44 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy;
+package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
 import org.junit.Test;
-import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
-import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
 public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public PrivGetCodeAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
 
-  private PrivacyNode alice;
+  private final PrivacyNode alice;
 
-  @Before
-  public void setUp() throws Exception {
+  public PrivGetCodeAcceptanceTest(final Restriction restriction, final EnclaveType enclaveType)
+      throws IOException {
+
+    super(restriction, enclaveType);
+
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "alice", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
+            restriction + "-node",
+            PrivacyAccountResolver.ALICE,
+            enclaveType,
+            Optional.empty(),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     privacyCluster.start(alice);
   }
 
@@ -68,6 +76,7 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 alice.getEnclaveKey(),
                 privacyGroupId));
 
@@ -84,16 +93,6 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
             privacyTransactions.createPrivacyGroup("myGroupName", "my group description", alice));
 
     assertThat(privacyGroupId).isNotNull();
-
-    final PrivacyGroup expected =
-        new PrivacyGroup(
-            privacyGroupId,
-            PrivacyGroup.Type.PANTHEON,
-            "myGroupName",
-            "my group description",
-            Base64String.wrapList(alice.getEnclaveKey()));
-
-    alice.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
 
     return privacyGroupId;
   }

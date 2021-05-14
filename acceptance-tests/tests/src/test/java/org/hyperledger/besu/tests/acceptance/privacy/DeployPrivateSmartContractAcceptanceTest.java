@@ -12,33 +12,40 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy;
+package org.hyperledger.besu.tests.acceptance.privacy;
+
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.util.Optional;
 
-import org.junit.Before;
 import org.junit.Test;
+import org.web3j.utils.Restriction;
 
 public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEnclaveTestBase {
 
-  public DeployPrivateSmartContractAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
+  private final PrivacyNode minerNode;
 
-  private static final long POW_CHAIN_ID = 1337;
+  public DeployPrivateSmartContractAcceptanceTest(
+      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
+    super(restriction, enclaveType);
 
-  private PrivacyNode minerNode;
-
-  @Before
-  public void setUp() throws Exception {
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
+            restriction + "-node",
+            PrivacyAccountResolver.ALICE,
+            enclaveType,
+            Optional.empty(),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     privacyCluster.start(minerNode);
   }
 
@@ -52,6 +59,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 minerNode.getEnclaveKey()));
 
     privateContractVerifier

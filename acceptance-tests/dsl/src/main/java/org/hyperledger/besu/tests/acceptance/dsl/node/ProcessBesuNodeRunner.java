@@ -120,19 +120,26 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     if (node.getPrivacyParameters().isEnabled()) {
       params.add("--privacy-enabled");
+
       params.add("--privacy-url");
       params.add(node.getPrivacyParameters().getEnclaveUri().toString());
+
       if (node.getPrivacyParameters().isMultiTenancyEnabled()) {
         params.add("--privacy-multi-tenancy-enabled");
       } else {
         params.add("--privacy-public-key-file");
         params.add(node.getPrivacyParameters().getEnclavePublicKeyFile().getAbsolutePath());
       }
+
       params.add("--privacy-marker-transaction-signing-key-file");
       params.add(node.homeDirectory().resolve("key").toString());
 
       if (node.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
         params.add("--privacy-onchain-groups-enabled");
+      }
+
+      if (node.getPrivacyParameters().isUnrestrictedPrivacyEnabled()) {
+        params.add("--privacy-unrestricted-enabled");
       }
     }
 

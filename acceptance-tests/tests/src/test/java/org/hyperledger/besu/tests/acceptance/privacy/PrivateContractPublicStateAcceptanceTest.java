@@ -12,9 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy;
+package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
@@ -22,49 +23,54 @@ import org.hyperledger.besu.tests.web3j.generated.CrossContractReader;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
+import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.exceptions.ContractCallException;
+import org.web3j.utils.Restriction;
 
 public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public PrivateContractPublicStateAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
 
-  private static final long POW_CHAIN_ID = 1337;
+  private final PrivacyNode transactionNode;
 
-  private PrivacyNode minerNode;
-  private PrivacyNode transactionNode;
-
-  @Before
-  public void setUp() throws Exception {
+  public PrivateContractPublicStateAcceptanceTest(
+      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
+    super(restriction, enclaveType);
     final Network containerNetwork = Network.newNetwork();
 
-    minerNode =
+    final PrivacyNode minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node",
+            restriction + "-miner-node",
             privacyAccountResolver.resolve(0),
             enclaveType,
-            Optional.of(containerNetwork));
+            Optional.of(containerNetwork),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     transactionNode =
         privacyBesu.createPrivateTransactionEnabledNode(
-            "transaction-node",
+            restriction + "-transaction-node",
             privacyAccountResolver.resolve(1),
             enclaveType,
-            Optional.of(containerNetwork));
+            Optional.of(containerNetwork),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     privacyCluster.start(minerNode, transactionNode);
   }
 
   @Test
   public void mustAllowAccessToPublicStateFromPrivateTx() throws Exception {
     final EventEmitter publicEventEmitter =
-        transactionNode.execute((contractTransactions.createSmartContract(EventEmitter.class)));
+        transactionNode.execute(contractTransactions.createSmartContract(EventEmitter.class));
 
     final TransactionReceipt receipt = publicEventEmitter.store(BigInteger.valueOf(12)).send();
     assertThat(receipt).isNotNull();
@@ -75,10 +81,14 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 transactionNode.getEnclaveKey()));
 
-    assertThat(reader.read(publicEventEmitter.getContractAddress()).send())
-        .isEqualTo(BigInteger.valueOf(12));
+    final RemoteFunctionCall<BigInteger> remoteFunctionCall =
+        reader.read(publicEventEmitter.getContractAddress());
+    final BigInteger result = remoteFunctionCall.send();
+
+    assertThat(result).isEqualTo(BigInteger.valueOf(12));
   }
 
   @Test(expected = ContractCallException.class)
@@ -89,6 +99,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
                 EventEmitter.class,
                 transactionNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 transactionNode.getEnclaveKey())));
 
     final TransactionReceipt receipt = privateEventEmitter.store(BigInteger.valueOf(12)).send();
@@ -109,6 +120,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =
@@ -131,6 +143,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =
@@ -152,6 +165,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =

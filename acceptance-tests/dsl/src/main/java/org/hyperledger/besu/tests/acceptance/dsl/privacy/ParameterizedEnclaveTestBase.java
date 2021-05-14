@@ -14,6 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
+import static org.hyperledger.enclave.testutil.EnclaveType.NOOP;
+import static org.hyperledger.enclave.testutil.EnclaveType.ORION;
+import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
+import static org.web3j.utils.Restriction.RESTRICTED;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
+
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.util.Arrays;
@@ -21,17 +27,27 @@ import java.util.Collection;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+import org.web3j.utils.Restriction;
 
 @RunWith(Parameterized.class)
 public abstract class ParameterizedEnclaveTestBase extends PrivacyAcceptanceTestBase {
+  protected final Restriction restriction;
   protected final EnclaveType enclaveType;
 
-  protected ParameterizedEnclaveTestBase(final EnclaveType enclaveType) {
+  protected ParameterizedEnclaveTestBase(
+      final Restriction restriction, final EnclaveType enclaveType) {
+    this.restriction = restriction;
     this.enclaveType = enclaveType;
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.asList(EnclaveType.values());
+  @Parameters(name = "{0} tx with {1} enclave")
+  public static Collection<Object[]> params() {
+    return Arrays.asList(
+        new Object[][] {
+          {RESTRICTED, TESSERA},
+          {RESTRICTED, ORION},
+          {UNRESTRICTED, NOOP}
+        });
   }
 }

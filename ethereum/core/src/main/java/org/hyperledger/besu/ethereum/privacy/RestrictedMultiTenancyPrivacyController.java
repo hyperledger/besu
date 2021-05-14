@@ -35,14 +35,14 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class MultiTenancyPrivacyController implements PrivacyController {
+public class RestrictedMultiTenancyPrivacyController implements PrivacyController {
 
   private final PrivacyController privacyController;
   private final Enclave enclave;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final Optional<OnchainPrivacyGroupContract> onchainPrivacyGroupContract;
 
-  public MultiTenancyPrivacyController(
+  public RestrictedMultiTenancyPrivacyController(
       final PrivacyController privacyController,
       final Optional<BigInteger> chainId,
       final Enclave enclave,
@@ -58,7 +58,7 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @VisibleForTesting
-  MultiTenancyPrivacyController(
+  RestrictedMultiTenancyPrivacyController(
       final PrivacyController privacyController,
       final Optional<BigInteger> chainId,
       final Enclave enclave,

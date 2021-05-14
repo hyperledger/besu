@@ -15,49 +15,80 @@
 package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Restriction.RESTRICTED;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 
-public class PrivacyGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public PrivacyGroupAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
+@RunWith(Parameterized.class)
+public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
+
+  private final PrivacyNode alice;
+  private final PrivacyNode bob;
+  private final PrivacyNode charlie;
+
+  @Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.stream(EnclaveType.values())
+        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
+        .collect(Collectors.toList());
   }
 
-  private PrivacyNode alice;
-  private PrivacyNode bob;
-  private PrivacyNode charlie;
+  public PrivacyGroupAcceptanceTest(final EnclaveType enclaveType) throws IOException {
 
-  @Before
-  public void setUp() throws Exception {
     final Network containerNetwork = Network.newNetwork();
 
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.of(containerNetwork));
+            "node1",
+            privacyAccountResolver.resolve(0),
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            false);
     bob =
         privacyBesu.createPrivateTransactionEnabledNode(
-            "node2", privacyAccountResolver.resolve(1), enclaveType, Optional.of(containerNetwork));
+            "node2",
+            privacyAccountResolver.resolve(1),
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            false);
+
     charlie =
         privacyBesu.createPrivateTransactionEnabledNode(
-            "node3", privacyAccountResolver.resolve(2), enclaveType, Optional.of(containerNetwork));
+            "node3",
+            privacyAccountResolver.resolve(2),
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            false);
     privacyCluster.start(alice, bob, charlie);
   }
 
@@ -170,6 +201,7 @@ public class PrivacyGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
                 firstEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 charlie.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                RESTRICTED,
                 charlie.getEnclaveKey(),
                 privacyGroupIdABC));
 
@@ -206,6 +238,7 @@ public class PrivacyGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
                 secondEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 bob.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                RESTRICTED,
                 bob.getEnclaveKey(),
                 privacyGroupIdAB));
 

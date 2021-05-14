@@ -18,8 +18,22 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.web3j.tx.Contract;
+import org.web3j.utils.Restriction;
 
 public class PrivateContractTransactions {
+
+  public <T extends Contract>
+      DeployPrivateSmartContractWithPrivacyGroupIdTransaction<T>
+          createSmartContractWithPrivacyGroupId(
+              final Class<T> clazz,
+              final String transactionSigningKey,
+              final long chainId,
+              final Restriction restriction,
+              final String privateFrom,
+              final String privacyGroupId) {
+    return new DeployPrivateSmartContractWithPrivacyGroupIdTransaction<>(
+        clazz, transactionSigningKey, chainId, restriction, privateFrom, privacyGroupId);
+  }
 
   public <T extends Contract>
       DeployPrivateSmartContractWithPrivacyGroupIdTransaction<T>
@@ -30,7 +44,7 @@ public class PrivateContractTransactions {
               final String privateFrom,
               final String privacyGroupId) {
     return new DeployPrivateSmartContractWithPrivacyGroupIdTransaction<>(
-        clazz, transactionSigningKey, chainId, privateFrom, privacyGroupId);
+        clazz, transactionSigningKey, chainId, Restriction.RESTRICTED, privateFrom, privacyGroupId);
   }
 
   public <T extends Contract> DeployPrivateSmartContractTransaction<T> createSmartContract(
@@ -40,17 +54,34 @@ public class PrivateContractTransactions {
       final String privateFrom,
       final String... privateFor) {
     return createSmartContract(
-        clazz, transactionSigningKey, chainId, privateFrom, Arrays.asList(privateFor));
+        clazz,
+        transactionSigningKey,
+        chainId,
+        Restriction.RESTRICTED,
+        privateFrom,
+        Arrays.asList(privateFor));
   }
 
   public <T extends Contract> DeployPrivateSmartContractTransaction<T> createSmartContract(
       final Class<T> clazz,
       final String transactionSigningKey,
       final long chainId,
+      final Restriction restriction,
+      final String privateFrom,
+      final String... privateFor) {
+    return createSmartContract(
+        clazz, transactionSigningKey, chainId, restriction, privateFrom, Arrays.asList(privateFor));
+  }
+
+  public <T extends Contract> DeployPrivateSmartContractTransaction<T> createSmartContract(
+      final Class<T> clazz,
+      final String transactionSigningKey,
+      final long chainId,
+      final Restriction restriction,
       final String privateFrom,
       final List<String> privateFor) {
     return new DeployPrivateSmartContractTransaction<>(
-        clazz, transactionSigningKey, chainId, privateFrom, privateFor);
+        clazz, transactionSigningKey, chainId, restriction, privateFrom, privateFor);
   }
 
   public CallPrivateSmartContractFunction callSmartContract(
@@ -58,6 +89,7 @@ public class PrivateContractTransactions {
       final String encodedFunction,
       final String transactionSigningKey,
       final long chainId,
+      final Restriction restriction,
       final String privateFrom,
       final String... privateFor) {
     return callSmartContract(
@@ -65,6 +97,7 @@ public class PrivateContractTransactions {
         encodedFunction,
         transactionSigningKey,
         chainId,
+        restriction,
         privateFrom,
         Arrays.asList(privateFor));
   }
@@ -74,10 +107,17 @@ public class PrivateContractTransactions {
       final String encodedFunction,
       final String transactionSigningKey,
       final long chainId,
+      final Restriction restriction,
       final String privateFrom,
       final List<String> privateFor) {
     return new CallPrivateSmartContractFunction(
-        contractAddress, encodedFunction, transactionSigningKey, chainId, privateFrom, privateFor);
+        contractAddress,
+        encodedFunction,
+        transactionSigningKey,
+        chainId,
+        restriction,
+        privateFrom,
+        privateFor);
   }
 
   public CallPrivateSmartContractFunction callSmartContractWithPrivacyGroupId(
@@ -85,6 +125,7 @@ public class PrivateContractTransactions {
       final String encodedFunction,
       final String transactionSigningKey,
       final long chainId,
+      final Restriction restriction,
       final String privateFrom,
       final String privacyGroupId) {
     return new CallPrivateSmartContractFunction(
@@ -92,6 +133,7 @@ public class PrivateContractTransactions {
         encodedFunction,
         transactionSigningKey,
         chainId,
+        restriction,
         privateFrom,
         privacyGroupId);
   }

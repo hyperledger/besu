@@ -36,8 +36,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -61,7 +61,8 @@ public class PrivDebugGetStateRootTest {
   private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private final PrivacyController privacyController = mock(DefaultPrivacyController.class);
+  private final PrivacyController privacyController =
+      mock(RestrictedDefaultPrivacyController.class);
 
   @Before
   public void setUp() {

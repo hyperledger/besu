@@ -58,7 +58,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class DefaultPrivacyController implements PrivacyController {
+public class RestrictedDefaultPrivacyController implements PrivacyController {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -73,7 +73,7 @@ public class DefaultPrivacyController implements PrivacyController {
   private final PrivateTransactionLocator privateTransactionLocator;
   private final PrivateStateRootResolver privateStateRootResolver;
 
-  public DefaultPrivacyController(
+  public RestrictedDefaultPrivacyController(
       final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
@@ -93,7 +93,7 @@ public class DefaultPrivacyController implements PrivacyController {
         privacyParameters.getPrivateStateRootResolver());
   }
 
-  public DefaultPrivacyController(
+  public RestrictedDefaultPrivacyController(
       final Blockchain blockchain,
       final PrivateStateStorage privateStateStorage,
       final Enclave enclave,

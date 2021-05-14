@@ -12,13 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy;
+package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
@@ -30,7 +32,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
 import org.junit.Test;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
@@ -44,22 +45,29 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.ClientConnectionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
+import org.web3j.utils.Restriction;
 
 public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public PrivCallAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
 
-  private static final long POW_CHAIN_ID = 1337;
   private static final int VALUE = 1024;
 
-  private PrivacyNode minerNode;
+  private final PrivacyNode minerNode;
 
-  @Before
-  public void setUp() throws Exception {
+  public PrivCallAcceptanceTest(final Restriction restriction, final EnclaveType enclaveType)
+      throws IOException {
+
+    super(restriction, enclaveType);
+
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
+            restriction + "-node",
+            PrivacyAccountResolver.ALICE,
+            enclaveType,
+            Optional.empty(),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     privacyCluster.start(minerNode);
   }
 
@@ -77,6 +85,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 minerNode.getEnclaveKey(),
                 privacyGroupId));
 
@@ -115,6 +124,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 minerNode.getEnclaveKey(),
                 privacyGroupId));
 
@@ -146,6 +156,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 minerNode.getEnclaveKey(),
                 privacyGroupId));
 
@@ -175,6 +186,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 minerNode.getEnclaveKey(),
                 privacyGroupId));
 

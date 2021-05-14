@@ -3482,6 +3482,56 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void unrestrictedPrivacyEnabledFlagValueIsSet() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-unrestricted-enabled",
+        "--min-gas-price",
+        "0",
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH);
+
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
+        ArgumentCaptor.forClass(PrivacyParameters.class);
+
+    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    final PrivacyParameters privacyParameters = privacyParametersArgumentCaptor.getValue();
+    assertThat(privacyParameters.isOnchainPrivacyGroupsEnabled()).isEqualTo(false);
+    assertThat(privacyParameters.isUnrestrictedPrivacyEnabled()).isEqualTo(true);
+  }
+
+  @Test
+  public void unrestrictedPrivacyWithMultiTenancyFails() {
+    parseCommand(
+        "--privacy-enabled",
+        "--privacy-multi-tenancy-enabled",
+        "--rpc-http-authentication-enabled",
+        "--rpc-http-authentication-jwt-public-key-file",
+        "/non/existent/file",
+        "--privacy-unrestricted-enabled");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith("Privacy unrestricted privacy can not be used in multi-tenant environment");
+  }
+
+  @Test
+  public void unrestrictedPrivacyWithFlexiblePrivacyGroupsFails() {
+    parseCommand(
+        "--privacy-enabled", "--privacy-flexible-groups-enabled", "--privacy-unrestricted-enabled");
+
+    assertThat(commandErrorOutput.toString())
+        .startsWith(
+            "Privacy unrestricted privacy can not be used with flexible (onchain) privacy groups");
+  }
+
+  @Test
   public void privateMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
     parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
 

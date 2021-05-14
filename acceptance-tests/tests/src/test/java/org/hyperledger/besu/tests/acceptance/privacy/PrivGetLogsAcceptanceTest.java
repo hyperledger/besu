@@ -12,30 +12,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy;
+package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
+import org.web3j.utils.Restriction;
 
 @SuppressWarnings("rawtypes")
 public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public PrivGetLogsAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
 
   /*
    This value is derived from the contract event signature
@@ -43,13 +43,23 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
   private static final String EVENT_EMITTER_EVENT_TOPIC =
       "0xc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5";
 
-  private PrivacyNode node;
+  private final PrivacyNode node;
 
-  @Before
-  public void setUp() throws Exception {
+  public PrivGetLogsAcceptanceTest(final Restriction restriction, final EnclaveType enclaveType)
+      throws IOException {
+
+    super(restriction, enclaveType);
+
     node =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
+            restriction + "-node",
+            PrivacyAccountResolver.ALICE,
+            enclaveType,
+            Optional.empty(),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     privacyCluster.start(node);
   }
 
@@ -129,6 +139,7 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
                 EventEmitter.class,
                 node.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 node.getEnclaveKey(),
                 privacyGroupId));
 
@@ -149,6 +160,7 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
                 eventEmitterContract.store(BigInteger.valueOf(value)).encodeFunctionCall(),
                 node.getTransactionSigningKey(),
                 POW_CHAIN_ID,
+                restriction,
                 node.getEnclaveKey(),
                 privacyGroupId));
 

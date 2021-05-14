@@ -12,44 +12,61 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.web3j.privacy;
+package org.hyperledger.besu.tests.acceptance.privacy;
+
+import static org.web3j.utils.Restriction.RESTRICTED;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.containers.Network;
+import org.web3j.utils.Restriction;
 
 public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclaveTestBase {
 
-  public PrivGetPrivateTransactionAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
+  private final PrivacyNode alice;
+  private final PrivacyNode bob;
 
-  private PrivacyNode alice;
-  private PrivacyNode bob;
+  public PrivGetPrivateTransactionAcceptanceTest(
+      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
 
-  @Before
-  public void setUp() throws Exception {
+    super(restriction, enclaveType);
+
     final Network containerNetwork = Network.newNetwork();
 
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
-            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.of(containerNetwork));
+            "node1",
+            privacyAccountResolver.resolve(0),
+            false,
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            restriction == UNRESTRICTED);
     bob =
         privacyBesu.createIbft2NodePrivacyEnabled(
-            "node2", privacyAccountResolver.resolve(1), enclaveType, Optional.of(containerNetwork));
+            "node2",
+            privacyAccountResolver.resolve(1),
+            false,
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     privacyCluster.start(alice, bob);
   }
 
@@ -95,7 +112,10 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
 
     alice.getBesu().verify(eth.expectSuccessfulTransactionReceipt(transactionHash.toString()));
 
-    bob.getBesu().verify(priv.getPrivateTransactionReturnsNull(transactionHash));
+    // bob will get the transaction and process it in UNRESTRICTED mode.
+    if (restriction != UNRESTRICTED) {
+      bob.getBesu().verify(priv.getPrivateTransactionReturnsNull(transactionHash));
+    }
   }
 
   private BytesValueRLPOutput getRLPOutput(final PrivateTransaction privateTransaction) {
@@ -104,8 +124,14 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
     return bvrlpo;
   }
 
-  private static PrivateTransaction getValidSignedPrivateTransaction(
+  private PrivateTransaction getValidSignedPrivateTransaction(
       final PrivacyNode node, final String privacyGoupId) {
+
+    org.hyperledger.besu.ethereum.privacy.Restriction besuRestriction =
+        restriction == RESTRICTED
+            ? org.hyperledger.besu.ethereum.privacy.Restriction.RESTRICTED
+            : org.hyperledger.besu.ethereum.privacy.Restriction.UNRESTRICTED;
+
     return PrivateTransaction.builder()
         .nonce(0)
         .gasPrice(Wei.of(999999))
@@ -115,7 +141,7 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
         .payload(Bytes.wrap(new byte[] {}))
         .sender(node.getAddress())
         .privateFrom(Bytes.fromBase64String(node.getEnclaveKey()))
-        .restriction(Restriction.RESTRICTED)
+        .restriction(besuRestriction)
         .privacyGroupId(Bytes.fromBase64String(privacyGoupId))
         .signAndBuild(node.getBesu().getPrivacyParameters().getSigningKeyPair().get());
   }

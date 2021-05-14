@@ -47,6 +47,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
 @RunWith(Parameterized.class)
 public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceTestBase {
@@ -59,7 +60,9 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.asList(EnclaveType.values());
+    return Arrays.stream(EnclaveType.values())
+        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
+        .collect(Collectors.toList());
   }
 
   private static final String eventEmitterDeployed =
@@ -76,12 +79,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
   public void setUp() throws Exception {
     alice =
         privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
-            "node1",
-            PrivacyAccountResolver.MULTI_TENANCY,
-            Address.PRIVACY,
-            true,
-            enclaveType,
-            Optional.empty());
+            "node1", PrivacyAccountResolver.MULTI_TENANCY, true, enclaveType, Optional.empty());
     final BesuNode aliceBesu = alice.getBesu();
     privacyCluster.startNodes(alice);
     final String alice1Token =
@@ -204,6 +202,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             privacyNode.getTransactionSigningKey(),
             POW_CHAIN_ID,
+            Restriction.RESTRICTED,
             tenant,
             privacyGroupId);
     final String storeTransactionHash = privacyNode.execute(storeTransaction);
@@ -365,6 +364,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             groupCreatingPrivacyNode.getTransactionSigningKey(),
             POW_CHAIN_ID,
+            Restriction.RESTRICTED,
             groupCreatingTenant,
             privacyGroupId);
     final String storeTransactionHash = groupCreatingPrivacyNode.execute(storeTransaction);
@@ -389,6 +389,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             groupCreatingPrivacyNode.getTransactionSigningKey(),
             POW_CHAIN_ID,
+            Restriction.RESTRICTED,
             groupCreatingTenant,
             privacyGroupId);
     final String store2TransactionHash = groupCreatingPrivacyNode.execute(store2Transaction);

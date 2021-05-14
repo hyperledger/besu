@@ -49,9 +49,9 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -138,7 +138,7 @@ public class PrivacyReorgTest {
   private EnclaveTestHarness enclave;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
-  private DefaultPrivacyController privacyController;
+  private RestrictedDefaultPrivacyController privacyController;
 
   @Before
   public void setUp() throws IOException {
@@ -161,7 +161,7 @@ public class PrivacyReorgTest {
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .build();
     privacyParameters.setEnclavePublicKey(ENCLAVE_PUBLIC_KEY.toBase64String());
-    privacyController = mock(DefaultPrivacyController.class);
+    privacyController = mock(RestrictedDefaultPrivacyController.class);
     when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
         .thenReturn(Optional.of(new PrivacyGroup()));
 

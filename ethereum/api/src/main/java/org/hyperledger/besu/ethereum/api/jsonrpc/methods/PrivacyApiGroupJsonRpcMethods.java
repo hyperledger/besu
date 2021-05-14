@@ -28,11 +28,12 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.UnrestrictedPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
@@ -111,8 +112,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final BlockchainQueries blockchainQueries,
       final PendingTransactions pendingTransactions) {
 
-    final Address privateContractAddress =
-        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
+    final Address privateContractAddress = privacyParameters.getPrivacyAddress();
 
     if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
@@ -126,22 +126,35 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   private PrivacyController createPrivacyController(
       final PrivateMarkerTransactionFactory markerTransactionFactory) {
     final Optional<BigInteger> chainId = protocolSchedule.getChainId();
-    final DefaultPrivacyController defaultPrivacyController =
-        new DefaultPrivacyController(
-            getBlockchainQueries().getBlockchain(),
-            privacyParameters,
-            chainId,
-            markerTransactionFactory,
-            createPrivateTransactionSimulator(),
-            privateNonceProvider,
-            privacyParameters.getPrivateWorldStateReader());
-    return privacyParameters.isMultiTenancyEnabled()
-        ? new MultiTenancyPrivacyController(
-            defaultPrivacyController,
-            chainId,
-            privacyParameters.getEnclave(),
-            privacyParameters.isOnchainPrivacyGroupsEnabled())
-        : defaultPrivacyController;
+
+    if (privacyParameters.isUnrestrictedPrivacyEnabled()) {
+      return new UnrestrictedPrivacyController(
+          getBlockchainQueries().getBlockchain(),
+          privacyParameters,
+          chainId,
+          markerTransactionFactory,
+          createPrivateTransactionSimulator(),
+          privateNonceProvider,
+          privacyParameters.getPrivateWorldStateReader());
+    } else {
+      final RestrictedDefaultPrivacyController restrictedDefaultPrivacyController =
+          new RestrictedDefaultPrivacyController(
+              getBlockchainQueries().getBlockchain(),
+              privacyParameters,
+              chainId,
+              markerTransactionFactory,
+              createPrivateTransactionSimulator(),
+              privateNonceProvider,
+              privacyParameters.getPrivateWorldStateReader());
+
+      return privacyParameters.isMultiTenancyEnabled()
+          ? new RestrictedMultiTenancyPrivacyController(
+              restrictedDefaultPrivacyController,
+              chainId,
+              privacyParameters.getEnclave(),
+              privacyParameters.isOnchainPrivacyGroupsEnabled())
+          : restrictedDefaultPrivacyController;
+    }
   }
 
   PrivacyQueries getPrivacyQueries() {

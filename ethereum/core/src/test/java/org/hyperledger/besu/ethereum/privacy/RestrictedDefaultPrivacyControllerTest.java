@@ -73,7 +73,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultPrivacyControllerTest {
+public class RestrictedDefaultPrivacyControllerTest {
 
   private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -167,7 +167,7 @@ public class DefaultPrivacyControllerTest {
     enclave = mockEnclave();
 
     privacyController =
-        new DefaultPrivacyController(
+        new RestrictedDefaultPrivacyController(
             blockchain,
             privateStateStorage,
             enclave,
@@ -179,7 +179,7 @@ public class DefaultPrivacyControllerTest {
             privateWorldStateReader,
             privateStateRootResolver);
     brokenPrivacyController =
-        new DefaultPrivacyController(
+        new RestrictedDefaultPrivacyController(
             blockchain,
             privateStateStorage,
             brokenMockEnclave(),

@@ -12,10 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.enclave.testutil;
+package org.hyperledger.besu.ethereum.privacy;
 
-public enum EnclaveType {
-  ORION,
-  TESSERA,
-  NOOP
+public class PrivacyConfigurationNotSupportedException extends RuntimeException {
+  public PrivacyConfigurationNotSupportedException(final String message) {
+    super(message);
+  }
 }

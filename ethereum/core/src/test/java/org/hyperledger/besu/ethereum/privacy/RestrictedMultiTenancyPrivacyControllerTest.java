@@ -47,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MultiTenancyPrivacyControllerTest {
+public class RestrictedMultiTenancyPrivacyControllerTest {
 
   private static final String ENCLAVE_PUBLIC_KEY1 = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
   private static final String ENCLAVE_PUBLIC_KEY2 = "OnviftjiizpjRt+HTuFBsKo2bVqD+nNlNYL5EE7y3Id=";
@@ -63,12 +63,12 @@ public class MultiTenancyPrivacyControllerTest {
   @Mock private PrivacyController privacyController;
   @Mock private Enclave enclave;
 
-  private MultiTenancyPrivacyController multiTenancyPrivacyController;
+  private RestrictedMultiTenancyPrivacyController multiTenancyPrivacyController;
 
   @Before
   public void setup() {
     multiTenancyPrivacyController =
-        new MultiTenancyPrivacyController(
+        new RestrictedMultiTenancyPrivacyController(
             privacyController, Optional.of(BigInteger.valueOf(2018)), enclave, false);
   }
 

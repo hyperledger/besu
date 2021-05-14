@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.runners.Parameterized.Parameters;
 
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
@@ -30,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
@@ -53,9 +55,11 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
     this.enclaveType = enclaveType;
   }
 
-  @Parameterized.Parameters(name = "{0}")
+  @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.asList(EnclaveType.values());
+    return Arrays.stream(EnclaveType.values())
+        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
+        .collect(Collectors.toList());
   }
 
   protected static final long POW_CHAIN_ID = 1337;
@@ -80,7 +84,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
         privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
             "node1",
             privacyAccountResolver.resolve(0),
-            Address.PRIVACY,
             false,
             enclaveType,
             Optional.of(containerNetwork));
@@ -88,7 +91,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
         privacyBesu.createOnChainPrivacyGroupEnabledNode(
             "node2",
             privacyAccountResolver.resolve(1),
-            Address.PRIVACY,
             false,
             enclaveType,
             Optional.of(containerNetwork));
@@ -96,7 +98,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
         privacyBesu.createOnChainPrivacyGroupEnabledNode(
             "node3",
             privacyAccountResolver.resolve(2),
-            Address.PRIVACY,
             false,
             enclaveType,
             Optional.of(containerNetwork));

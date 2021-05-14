@@ -28,6 +28,7 @@ import org.web3j.tx.LegacyPrivateTransactionManager;
 import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
 public class CallPrivateSmartContractFunction implements Transaction<String> {
 
@@ -37,6 +38,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
   private final String encodedFunction;
   private final Credentials senderCredentials;
   private final long chainId;
+  private final Restriction restriction;
   private final Base64String privateFrom;
   private final List<Base64String> privateFor;
   private final Base64String privacyGroupId;
@@ -46,6 +48,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
       final String encodedFunction,
       final String transactionSigningKey,
       final long chainId,
+      final Restriction restriction,
       final String privateFrom,
       final List<String> privateFor) {
     this(
@@ -53,6 +56,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
         encodedFunction,
         transactionSigningKey,
         chainId,
+        restriction,
         privateFrom,
         privateFor,
         null);
@@ -63,6 +67,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
       final String encodedFunction,
       final String transactionSigningKey,
       final long chainId,
+      final Restriction restriction,
       final String privateFrom,
       final String privacyGroupId) {
     this(
@@ -70,6 +75,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
         encodedFunction,
         transactionSigningKey,
         chainId,
+        restriction,
         privateFrom,
         null,
         privacyGroupId);
@@ -80,6 +86,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
       final String encodedFunction,
       final String transactionSigningKey,
       final long chainId,
+      final Restriction restriction,
       final String privateFrom,
       final List<String> privateFor,
       final String privacyGroupId) {
@@ -88,6 +95,7 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
     this.encodedFunction = encodedFunction;
     this.senderCredentials = Credentials.create(transactionSigningKey);
     this.chainId = chainId;
+    this.restriction = restriction;
     this.privateFrom = Base64String.wrap(privateFrom);
     this.privateFor = privateFor != null ? Base64String.wrapList(privateFor) : null;
     this.privacyGroupId = privacyGroupId != null ? Base64String.wrap(privacyGroupId) : null;
@@ -97,16 +105,10 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
   public String execute(final NodeRequests node) {
     final Besu besu = node.privacy().getBesuClient();
 
-    final PrivateTransactionManager privateTransactionManager;
-    if (privacyGroupId != null) {
-      privateTransactionManager =
-          new BesuPrivateTransactionManager(
-              besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privacyGroupId);
-    } else {
-      privateTransactionManager =
-          new LegacyPrivateTransactionManager(
-              besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privateFor);
-    }
+    final PrivateTransactionManager privateTransactionManager =
+        restriction == Restriction.RESTRICTED
+            ? restrictedTransactionManager(besu)
+            : unrestrictedTransactionManager(besu);
 
     try {
       return privateTransactionManager
@@ -119,6 +121,21 @@ public class CallPrivateSmartContractFunction implements Transaction<String> {
           .getTransactionHash();
     } catch (final IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private PrivateTransactionManager unrestrictedTransactionManager(final Besu besu) {
+    return new UnrestrictedTransactionManager(
+        besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privateFor, privacyGroupId);
+  }
+
+  private PrivateTransactionManager restrictedTransactionManager(final Besu besu) {
+    if (privacyGroupId != null) {
+      return new BesuPrivateTransactionManager(
+          besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privacyGroupId);
+    } else {
+      return new LegacyPrivateTransactionManager(
+          besu, GAS_PROVIDER, senderCredentials, chainId, privateFrom, privateFor);
     }
   }
 }

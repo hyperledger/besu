@@ -38,9 +38,9 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
@@ -63,7 +63,8 @@ public class PrivCallTest {
   @Mock private BlockchainQueries blockchainQueries;
   String privacyGroupId = "privacyGroupId";
   private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
-  private final PrivacyController privacyController = mock(DefaultPrivacyController.class);
+  private final PrivacyController privacyController =
+      mock(RestrictedDefaultPrivacyController.class);
 
   @Before
   public void setUp() {
