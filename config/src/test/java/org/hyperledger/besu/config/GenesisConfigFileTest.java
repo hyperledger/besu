@@ -103,11 +103,6 @@ public class GenesisConfigFileTest {
   }
 
   @Test
-  public void shouldGetGasTarget() {
-    assertThat(configWithProperty("gasTarget", "9999").getGasLimit()).isEqualTo(9999);
-  }
-
-  @Test
   public void shouldRequireGasLimit() {
     assertInvalidConfiguration(EMPTY_CONFIG::getGasLimit);
   }
