@@ -55,10 +55,10 @@ public class TransactionPendingResult implements TransactionResult {
   private final String gasPrice;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final String gasPremium;
+  private final String maxPriorityFeePerGas;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final String feeCap;
+  private final String maxFeePerGas;
 
   private final String hash;
   private final String input;
@@ -82,8 +82,9 @@ public class TransactionPendingResult implements TransactionResult {
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
     this.gasPrice = Quantity.create(transaction.getGasPrice());
-    this.gasPremium = transaction.getGasPremium().map(q -> q.toHexString()).orElse(null);
-    this.feeCap = transaction.getFeeCap().map(q -> q.toHexString()).orElse(null);
+    this.maxPriorityFeePerGas =
+        transaction.getMaxPriorityFeePerGas().map(q -> q.toHexString()).orElse(null);
+    this.maxFeePerGas = transaction.getMaxFeePerGas().map(q -> q.toHexString()).orElse(null);
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
@@ -127,14 +128,14 @@ public class TransactionPendingResult implements TransactionResult {
     return gasPrice;
   }
 
-  @JsonGetter(value = "gasPremium")
-  public String getGasPremium() {
-    return gasPremium;
+  @JsonGetter(value = "maxPriorityFeePerGas")
+  public String getMaxPriorityFeePerGas() {
+    return maxPriorityFeePerGas;
   }
 
-  @JsonGetter(value = "feeCap")
-  public String getFeeCap() {
-    return feeCap;
+  @JsonGetter(value = "maxFeePerGas")
+  public String getMaxFeePerGas() {
+    return maxFeePerGas;
   }
 
   @JsonGetter(value = "hash")

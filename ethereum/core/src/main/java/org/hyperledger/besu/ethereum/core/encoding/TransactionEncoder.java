@@ -161,9 +161,13 @@ public class TransactionEncoder {
             .longValue());
     out.writeLongScalar(transaction.getNonce());
     out.writeUInt256Scalar(
-        transaction.getGasPremium().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+        transaction
+            .getMaxPriorityFeePerGas()
+            .map(Quantity::getValue)
+            .map(Wei::ofNumber)
+            .orElseThrow());
     out.writeUInt256Scalar(
-        transaction.getFeeCap().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
+        transaction.getMaxFeePerGas().map(Quantity::getValue).map(Wei::ofNumber).orElseThrow());
     out.writeLongScalar(transaction.getGasLimit());
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());

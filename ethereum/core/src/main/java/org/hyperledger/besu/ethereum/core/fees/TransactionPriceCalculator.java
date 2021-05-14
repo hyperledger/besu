@@ -34,12 +34,13 @@ public interface TransactionPriceCalculator {
       if (!transaction.getType().supports1559FeeMarket()) {
         return transaction.getGasPrice();
       }
-      final Wei gasPremium =
-          Wei.of((BigInteger) transaction.getGasPremium().orElseThrow().getValue());
-      final Wei feeCap = Wei.of((BigInteger) transaction.getFeeCap().orElseThrow().getValue());
-      Wei price = gasPremium.add(baseFee);
-      if (price.compareTo(feeCap) > 0) {
-        price = feeCap;
+      final Wei maxPriorityFeePerGas =
+          Wei.of((BigInteger) transaction.getMaxPriorityFeePerGas().orElseThrow().getValue());
+      final Wei maxFeePerGas =
+          Wei.of((BigInteger) transaction.getMaxFeePerGas().orElseThrow().getValue());
+      Wei price = maxPriorityFeePerGas.add(baseFee);
+      if (price.compareTo(maxFeePerGas) > 0) {
+        price = maxFeePerGas;
       }
       return price;
     };
