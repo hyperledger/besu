@@ -30,11 +30,12 @@ import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
@@ -130,7 +131,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         MetricsSystemFactory.create(node.getMetricsConfiguration());
     final List<EnodeURL> bootnodes =
         node.getConfiguration().getBootnodes().stream()
-            .map(EnodeURL::fromURI)
+            .map(EnodeURLImpl::fromURI)
             .collect(Collectors.toList());
     final EthNetworkConfig.Builder networkConfigBuilder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(DEV))
@@ -194,7 +195,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .graphQLConfiguration(GraphQLConfiguration.createDefault())
             .staticNodes(
                 node.getStaticNodes().stream()
-                    .map(EnodeURL::fromString)
+                    .map(EnodeURLImpl::fromString)
                     .collect(Collectors.toList()))
             .besuPluginContext(new BesuPluginContextImpl())
             .autoLogBloomCaching(false)

@@ -18,9 +18,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.util.NetworkUtility.checkPort;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.IllegalPortException;
 
 import java.net.InetAddress;
@@ -63,7 +64,7 @@ public class Endpoint {
   }
 
   public EnodeURL toEnode(final Bytes nodeId) {
-    return EnodeURL.builder()
+    return EnodeURLImpl.builder()
         .nodeId(nodeId)
         .ipAddress(host)
         .listeningPort(tcpPort.orElse(udpPort))

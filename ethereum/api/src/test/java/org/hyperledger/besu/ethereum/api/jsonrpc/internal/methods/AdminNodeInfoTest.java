@@ -34,11 +34,12 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -72,7 +73,7 @@ public class AdminNodeInfoTest {
       new StubGenesisConfigOptions().chainId(BigInteger.valueOf(2019));
   private final DefaultPeer defaultPeer =
       DefaultPeer.fromEnodeURL(
-          EnodeURL.builder()
+          EnodeURLImpl.builder()
               .nodeId(nodeId)
               .ipAddress("1.2.3.4")
               .discoveryPort(7890)
@@ -188,7 +189,7 @@ public class AdminNodeInfoTest {
   @Test
   public void handlesLocalEnodeWithListeningAndDiscoveryDisabled() {
     final EnodeURL localEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
             .discoveryAndListeningPorts(0)
@@ -233,7 +234,7 @@ public class AdminNodeInfoTest {
   @Test
   public void handlesLocalEnodeWithListeningDisabled() {
     final EnodeURL localEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
             .discoveryAndListeningPorts(0)
@@ -279,7 +280,7 @@ public class AdminNodeInfoTest {
   @Test
   public void handlesLocalEnodeWithDiscoveryDisabled() {
     final EnodeURL localEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
             .discoveryAndListeningPorts(0)
