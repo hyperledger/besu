@@ -32,13 +32,11 @@ public class TransactionCompleteResultTest {
   public void eip1559TransactionFields() {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Transaction transaction = gen.transaction(TransactionType.EIP1559);
-    TransactionCompleteResult tcr = new TransactionCompleteResult(
-        new TransactionWithMetadata(transaction, 0L, Hash.ZERO, 0)
-    );
+    TransactionCompleteResult tcr =
+        new TransactionCompleteResult(new TransactionWithMetadata(transaction, 0L, Hash.ZERO, 0));
     assertThat(tcr.getMaxFeePerGas()).isNotEmpty();
     assertThat(tcr.getMaxPriorityFeePerGas()).isNotEmpty();
     assertThat(tcr.getGasPrice()).isNull();
-
   }
 
   @Test

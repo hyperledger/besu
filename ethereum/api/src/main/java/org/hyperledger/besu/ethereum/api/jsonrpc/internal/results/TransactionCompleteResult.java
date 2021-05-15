@@ -35,6 +35,8 @@ import org.apache.tuweni.bytes.Bytes;
   "from",
   "gas",
   "gasPrice",
+  "maxPriorityFeePerGas",
+  "maxFeePerGas",
   "hash",
   "input",
   "nonce",

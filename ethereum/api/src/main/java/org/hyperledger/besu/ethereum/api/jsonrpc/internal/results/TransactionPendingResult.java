@@ -32,6 +32,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "from",
   "gas",
   "gasPrice",
+  "maxPriortyFeePerGas",
+  "maxFeePerGas",
   "hash",
   "input",
   "nonce",
