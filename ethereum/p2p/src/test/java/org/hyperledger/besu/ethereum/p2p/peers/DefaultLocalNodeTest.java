@@ -19,6 +19,7 @@ import static org.assertj.core.api.Java6Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +36,7 @@ public class DefaultLocalNodeTest {
   private final Bytes nodeId = Bytes.of(new byte[64]);
   private final int port = 30303;
   private final EnodeURL enode =
-      EnodeURL.builder()
+      EnodeURLImpl.builder()
           .ipAddress("127.0.0.1")
           .discoveryAndListeningPorts(port)
           .nodeId(nodeId)

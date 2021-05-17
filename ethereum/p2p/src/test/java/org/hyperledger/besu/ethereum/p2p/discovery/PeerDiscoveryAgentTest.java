@@ -36,11 +36,12 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +65,7 @@ public class PeerDiscoveryAgentTest {
   @Test
   public void createAgentWithInvalidBootnodes() {
     final EnodeURL invalidBootnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(Peer.randomId())
             .ipAddress("127.0.0.1")
             .listeningPort(30303)
@@ -372,7 +373,10 @@ public class PeerDiscoveryAgentTest {
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
     final DiscoveryPeer remotePeer = otherNode.getAdvertisedPeer().get();
     final EnodeURL enodeWithDiscoveryDisabled =
-        EnodeURL.builder().configureFromEnode(remotePeer.getEnodeURL()).disableDiscovery().build();
+        EnodeURLImpl.builder()
+            .configureFromEnode(remotePeer.getEnodeURL())
+            .disableDiscovery()
+            .build();
     final Peer peerWithDisabledDiscovery = DefaultPeer.fromEnodeURL(enodeWithDiscoveryDisabled);
 
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
