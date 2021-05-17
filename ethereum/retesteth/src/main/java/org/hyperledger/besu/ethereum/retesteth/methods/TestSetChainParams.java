@@ -143,7 +143,6 @@ public class TestSetChainParams implements JsonRpcMethod {
                       .getString("baseFeePerGas"))
               .map(Long::decode)
               .orElse(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
-      maybeMove(genesis, "gasTarget", chainParamsJson, "gasLimit");
     }
 
     maybeMoveToNumber(params, "londonForkBlock", config, "aleutBlock");

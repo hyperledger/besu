@@ -278,8 +278,8 @@ public class MainnetTransactionValidatorTest {
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
-            .gasPremium(Optional.of(Wei.of(3)))
-            .feeCap(Optional.of(Wei.of(6)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(3)))
+            .maxFeePerGas(Optional.of(Wei.of(6)))
             .gasLimit(21000)
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
@@ -309,8 +309,8 @@ public class MainnetTransactionValidatorTest {
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
-            .gasPremium(Optional.of(Wei.of(1)))
-            .feeCap(Optional.of(Wei.of(1)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(1)))
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
@@ -331,8 +331,8 @@ public class MainnetTransactionValidatorTest {
             defaultGoQuorumCompatibilityMode);
     final Transaction transaction =
         new TransactionTestFixture()
-            .gasPremium(Optional.of(Wei.of(1)))
-            .feeCap(Optional.of(Wei.of(1)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(1)))
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);

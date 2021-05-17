@@ -76,7 +76,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getEIP1559BlockNumber();
 
-  default Optional<Long> getGenesisBaseFee() {
+  default Optional<Long> getGenesisBaseFeePerGas() {
     return getEIP1559BlockNumber().stream()
         .boxed()
         .filter(g -> g.equals(0L))

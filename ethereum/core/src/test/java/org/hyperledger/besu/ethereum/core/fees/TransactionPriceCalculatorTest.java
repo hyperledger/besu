@@ -43,8 +43,8 @@ public class TransactionPriceCalculatorTest {
   private final TransactionPriceCalculator transactionPriceCalculator;
   private final TransactionType transactionType;
   private final Wei gasPrice;
-  private final Wei gasPremium;
-  private final Wei feeCap;
+  private final Wei maxPriorityFeePerGas;
+  private final Wei maxFeePerGas;
   private final Optional<Long> baseFee;
   private final Wei expectedPrice;
 
@@ -52,15 +52,15 @@ public class TransactionPriceCalculatorTest {
       final TransactionPriceCalculator transactionPriceCalculator,
       final TransactionType transactionType,
       final Wei gasPrice,
-      final Wei gasPremium,
-      final Wei feeCap,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
       final Optional<Long> baseFee,
       final Wei expectedPrice) {
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.transactionType = transactionType;
     this.gasPrice = gasPrice;
-    this.gasPremium = gasPremium;
-    this.feeCap = feeCap;
+    this.maxPriorityFeePerGas = maxPriorityFeePerGas;
+    this.maxFeePerGas = maxFeePerGas;
     this.baseFee = baseFee;
     this.expectedPrice = expectedPrice;
   }
@@ -95,7 +95,7 @@ public class TransactionPriceCalculatorTest {
             Optional.of(150L),
             Wei.of(578L)
           },
-          // EIP-1559 must return gas premium + base fee
+          // EIP-1559 must return maxPriorityFeePerGas + base fee
           {
             EIP_1559_CALCULATOR,
             EIP1559,
@@ -126,8 +126,8 @@ public class TransactionPriceCalculatorTest {
                     .type(transactionType)
                     .accessList(transactionType == ACCESS_LIST ? Collections.emptyList() : null)
                     .gasPrice(gasPrice)
-                    .gasPremium(gasPremium)
-                    .feeCap(feeCap)
+                    .maxPriorityFeePerGas(maxPriorityFeePerGas)
+                    .maxFeePerGas(maxFeePerGas)
                     .build(),
                 baseFee))
         .isEqualByComparingTo(expectedPrice);

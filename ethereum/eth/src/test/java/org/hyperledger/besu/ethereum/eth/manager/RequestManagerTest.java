@@ -220,6 +220,11 @@ public class RequestManagerTest {
     final PeerConnection peerConnection = new MockPeerConnection(caps);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
     return new EthPeer(
-        peerConnection, EthProtocol.NAME, onPeerReady, Collections.emptyList(), TestClock.fixed());
+        peerConnection,
+        EthProtocol.NAME,
+        onPeerReady,
+        Collections.emptyList(),
+        TestClock.fixed(),
+        Collections.emptyList());
   }
 }

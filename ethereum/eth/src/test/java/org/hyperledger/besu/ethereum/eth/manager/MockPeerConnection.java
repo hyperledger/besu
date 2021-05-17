@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -47,7 +47,7 @@ public class MockPeerConnection implements PeerConnection {
     this.nodeId = Peer.randomId();
     this.peer =
         DefaultPeer.fromEnodeURL(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .ipAddress("127.0.0.1")
                 .nodeId(nodeId)
                 .discoveryAndListeningPorts(30303)

@@ -185,7 +185,7 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 1000));
     assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
     assertThat(config.getLondonBlockNumber()).hasValue(1000);
-    assertThat(config.getGenesisBaseFee()).isEmpty();
+    assertThat(config.getGenesisBaseFeePerGas()).isEmpty();
   }
 
   @Test
@@ -193,7 +193,7 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("baikalblock", 1000));
     assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
     assertThat(config.getLondonBlockNumber()).hasValue(1000);
-    assertThat(config.getGenesisBaseFee()).isEmpty();
+    assertThat(config.getGenesisBaseFeePerGas()).isEmpty();
   }
 
   @Test
@@ -202,7 +202,7 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 1000));
     assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
     assertThat(config.getAleutBlockNumber()).hasValue(1000);
-    assertThat(config.getGenesisBaseFee()).isEmpty();
+    assertThat(config.getGenesisBaseFeePerGas()).isEmpty();
   }
 
   @Test
@@ -210,7 +210,8 @@ public class GenesisConfigOptionsTest {
   public void shouldGetEIP1559BaseFeeAtGenesis() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 0));
     assertThat(config.getEIP1559BlockNumber()).hasValue(0);
-    assertThat(config.getGenesisBaseFee()).hasValue(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+    assertThat(config.getGenesisBaseFeePerGas())
+        .hasValue(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
   }
 
   @Test

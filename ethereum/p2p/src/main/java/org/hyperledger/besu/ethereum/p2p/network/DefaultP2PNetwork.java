@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBonded
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.MutableLocalNode;
@@ -47,6 +47,7 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
@@ -211,7 +212,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                 List<DiscoveryPeer> peers = new ArrayList<>();
                 for (EthereumNodeRecord enr : records) {
                   EnodeURL enodeURL =
-                      EnodeURL.builder()
+                      EnodeURLImpl.builder()
                           .ipAddress(enr.ip())
                           .nodeId(enr.publicKey().bytes())
                           .discoveryPort(Optional.ofNullable(enr.udp()))
@@ -418,7 +419,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final String advertisedAddress = natService.queryExternalIPAddress(address);
 
     final EnodeURL localEnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress(advertisedAddress)
             .listeningPort(listeningPort)
