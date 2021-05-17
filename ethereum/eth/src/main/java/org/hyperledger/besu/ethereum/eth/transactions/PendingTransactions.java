@@ -50,8 +50,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -75,11 +73,32 @@ public class PendingTransactions {
   private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
-              .thenComparing(TransactionInfo::getGasPrice)
+              .thenComparing(
+                  transactionInfo ->
+                      // safe to .get() here because it has to a 1559 tx
+                      // non-1559 txs are always in the dynamic range
+                      transactionInfo
+                          .getTransaction()
+                          .getMaxPriorityFeePerGas()
+                          .get()
+                          .getValue()
+                          .longValue())
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private final NavigableSet<TransactionInfo> prioritizedTransactionsInDynamicRange = null;
+  private final NavigableSet<TransactionInfo> prioritizedTransactionDynamicRange =
+      new TreeSet<>(
+          comparing(TransactionInfo::isReceivedFromLocalSource)
+              .thenComparing(
+                  transactionInfo ->
+                      transactionInfo
+                          .getTransaction()
+                          .getMaxFeePerGas()
+                          .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
+                          .orElse(transactionInfo.getTransaction().getGasPrice().toLong()))
+              .thenComparing(TransactionInfo::getSequence)
+              .reversed());
   private final ReentrantReadWriteLock baseFeeLock = new ReentrantReadWriteLock();
+  private long baseFee = -1;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
 
@@ -273,9 +292,14 @@ public class PendingTransactions {
       try {
         if (transaction.getType().equals(TransactionType.EIP1559)) {
           // check if it's in static or dynamic range
-          if (transaction.getMaxFeePerGas().get().subtract(transaction.getMaxPriorityFeePerGas().get()).getValue() (chainHeadHeaderSupplier.get().getBaseFee().get()) )
+          if (transaction.getMaxFeePerGas().get().getValue().longValue()
+                  - transaction.getMaxPriorityFeePerGas().get().getValue().longValue()
+              > baseFee) {
+            // static
+            prioritizedTransactionsStaticRange.add(transactionInfo);
+          }
         } else {
-          prioritizedTransactionsI.add(transactionInfo);
+          prioritizedTransactionDynamicRange.add(transactionInfo);
         }
       } finally {
         lock.unlock();
@@ -284,6 +308,7 @@ public class PendingTransactions {
       tryEvictTransactionHash(transactionInfo.getHash());
 
       if (pendingTransactions.size() > maxPendingTransactions) {
+        // todo figure out where to remove from
         final TransactionInfo toRemove = prioritizedTransactionsStaticRange.last();
         doRemoveTransaction(toRemove.getTransaction(), false);
         droppedTransaction = Optional.of(toRemove.getTransaction());

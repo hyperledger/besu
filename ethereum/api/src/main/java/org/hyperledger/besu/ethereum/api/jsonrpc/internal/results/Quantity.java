@@ -23,6 +23,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256Value;
 
+// todo make this extend the quantity from plugin and add substract instance method
 /**
  * Utility for formatting "quantity" fields and results to be returned. Quantity fields are
  * represented as minimal length hex strings with no zero-padding. There is one exception to this
