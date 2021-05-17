@@ -193,8 +193,8 @@ public class TransactionSimulator {
             .value(value)
             .payload(payload)
             .signature(FAKE_SIGNATURE);
-    callParams.getGasPremium().ifPresent(transactionBuilder::gasPremium);
-    callParams.getFeeCap().ifPresent(transactionBuilder::feeCap);
+    callParams.getMaxPriorityFeePerGas().ifPresent(transactionBuilder::maxPriorityFeePerGas);
+    callParams.getMaxFeePerGas().ifPresent(transactionBuilder::maxFeePerGas);
 
     final Transaction transaction = transactionBuilder.build();
 

@@ -157,7 +157,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, false);
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("gasPrice cannot be used with baseFee or feeCap");
+        .hasMessageContaining("gasPrice cannot be used with baseFee or maxFeePerGas");
   }
 
   @Test

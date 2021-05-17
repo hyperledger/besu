@@ -77,7 +77,7 @@ public class RetestethService {
             new EthGetTransactionCount(
                 retestethContext::getBlockchainQueries,
                 retestethContext::getPendingTransactions,
-                true),
+                false),
             new DebugStorageRangeAt(
                 retestethContext::getBlockchainQueries, retestethContext::getBlockReplay, true),
             new TestModifyTimestamp(retestethContext),
