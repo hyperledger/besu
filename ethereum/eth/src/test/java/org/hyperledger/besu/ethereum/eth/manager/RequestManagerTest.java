@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.manager.RequestManager.unwrapRequestId;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -245,19 +246,6 @@ public class RequestManagerTest {
     assertThat(response)
         .isEqualTo(
             (supportsRequestId ? unwrapRequestId(mockMessage).getValue() : mockMessage).getData());
-  }
-
-  private Map.Entry<Long, EthMessage> unwrapRequestId(final EthMessage message) {
-    final RLPInput messageDataRLP = RLP.input(message.getData().getData());
-    messageDataRLP.enterList();
-    final long requestId = messageDataRLP.readLongScalar();
-    final Bytes unwrappedMessageData = messageDataRLP.readBytes();
-    messageDataRLP.leaveList();
-
-    return new AbstractMap.SimpleImmutableEntry<>(
-        requestId,
-        new EthMessage(
-            message.getPeer(), new RawMessage(message.getData().getCode(), unwrappedMessageData)));
   }
 
   private EthPeer createPeer() {

@@ -90,7 +90,7 @@ public class RequestManager {
     return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
 
-  private static Map.Entry<Long, EthMessage> unwrapRequestId(final EthMessage message) {
+  static Map.Entry<Long, EthMessage> unwrapRequestId(final EthMessage message) {
     final RLPInput messageDataRLP = RLP.input(message.getData().getData());
     messageDataRLP.enterList();
     final long requestId = messageDataRLP.readLongScalar();
