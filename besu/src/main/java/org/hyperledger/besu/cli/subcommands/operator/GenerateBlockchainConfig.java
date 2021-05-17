@@ -236,6 +236,10 @@ class GenerateBlockchainConfig implements Runnable {
   /** Computes RLP encoded exta data from pre filled list of addresses. */
   private void processExtraData() {
     final ObjectNode configNode = JsonUtil.getObjectNode(genesisConfig, "config").orElse(null);
+    if (configNode == null) {
+      throw new IllegalArgumentException("Missing config section in config file");
+    }
+
     final JsonGenesisConfigOptions genesisConfigOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
     if (genesisConfigOptions.isIbft2()) {

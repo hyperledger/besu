@@ -253,6 +253,22 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void shouldFailIfNoConfigSection() {
+    assertThatThrownBy(
+            () ->
+                runCmdAndCheckOutput(
+                    cmd(),
+                    "/operator/config_no_config_section.json",
+                    tmpOutputDirectoryPath,
+                    "genesis.json",
+                    true,
+                    asList("key.pub", "key.priv"),
+                    Optional.of(new SECP256K1())))
+        .isInstanceOf(CommandLine.ExecutionException.class)
+        .hasMessageEndingWith("Missing config section in config file");
+  }
+
+  @Test
   public void shouldImportSecp256R1Keys() throws IOException {
     runCmdAndCheckOutput(
         cmd(),
