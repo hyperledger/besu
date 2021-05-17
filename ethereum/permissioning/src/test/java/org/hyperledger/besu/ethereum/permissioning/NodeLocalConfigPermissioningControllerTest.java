@@ -204,7 +204,8 @@ public class NodeLocalConfigPermissioningControllerTest {
     verifyCountersUntouched();
 
     assertThat(
-            controller.isPermitted(EnodeURLImpl.fromString(peer2), EnodeURLImpl.fromString(peer1)))
+            controller.isConnectionPermitted(
+                EnodeURLImpl.fromString(peer2), EnodeURLImpl.fromString(peer1)))
         .isFalse();
 
     verifyCountersUnpermitted();
@@ -305,11 +306,13 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     verifyCountersUntouched();
 
-    assertThat(controller.isPermitted(EnodeURLImpl.fromString(enode1), selfEnode)).isTrue();
+    assertThat(controller.isConnectionPermitted(EnodeURLImpl.fromString(enode1), selfEnode))
+        .isTrue();
 
     verifyCountersPermitted();
 
-    assertThat(controller.isPermitted(selfEnode, EnodeURLImpl.fromString(enode1))).isTrue();
+    assertThat(controller.isConnectionPermitted(selfEnode, EnodeURLImpl.fromString(enode1)))
+        .isTrue();
   }
 
   @Test

@@ -12,12 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.permissioning.node;
 
-import org.hyperledger.besu.plugin.data.EnodeURL;
+package org.hyperledger.besu.plugin.services;
 
-@FunctionalInterface
-public interface NodePermissioningProvider {
+import java.util.Collection;
 
-  boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode);
+public interface PluginVersionsProvider {
+  Collection<String> getPluginVersions();
 }
