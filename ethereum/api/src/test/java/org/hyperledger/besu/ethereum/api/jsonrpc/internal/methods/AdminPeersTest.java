@@ -115,7 +115,8 @@ public class AdminPeersTest {
             peerInfo,
             new InetSocketAddress("1.2.3.4", 9876),
             new InetSocketAddress("4.3.2.1", 6789));
-    final EthPeer ethPeer = new EthPeer(p, "eth", c -> {}, List.of(), TestClock.fixed());
+    final EthPeer ethPeer =
+        new EthPeer(p, "eth", c -> {}, List.of(), TestClock.fixed(), Collections.emptyList());
     return Lists.newArrayList(ethPeer);
   }
 

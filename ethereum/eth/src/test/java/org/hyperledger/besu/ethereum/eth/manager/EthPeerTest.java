@@ -18,7 +18,13 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -29,15 +35,14 @@ import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -324,6 +329,20 @@ public class EthPeerTest {
     assertThat(peer.isFullyValidated()).isTrue();
   }
 
+  @Test
+  public void message_permissioning_any_false_permission_preventsMessageFromSendingToPeer()
+      throws PeerNotConnected {
+    NodeMessagePermissioningProvider trueProvider = mock(NodeMessagePermissioningProvider.class);
+    NodeMessagePermissioningProvider falseProvider = mock(NodeMessagePermissioningProvider.class);
+    when(trueProvider.isMessagePermitted(any(), anyInt())).thenReturn(true);
+    when(falseProvider.isMessagePermitted(any(), anyInt())).thenReturn(false);
+
+    final EthPeer peer = createPeer(Collections.emptyList(), List.of(falseProvider, trueProvider));
+    peer.send(PingMessage.get());
+
+    verify(peer.getConnection(), times(0)).sendForProtocol(any(), eq(PingMessage.get()));
+  }
+
   private void messageStream(
       final ResponseStreamSupplier getStream,
       final MessageData targetMessage,
@@ -402,18 +421,29 @@ public class EthPeerTest {
   }
 
   private EthPeer createPeer() {
-    return createPeer(Collections.emptyList());
+    return createPeer(Collections.emptyList(), Collections.emptyList());
   }
 
   private EthPeer createPeer(final PeerValidator... peerValidators) {
-    return createPeer(Arrays.asList(peerValidators));
+    return createPeer(Arrays.asList(peerValidators), Collections.emptyList());
   }
 
   private EthPeer createPeer(final List<PeerValidator> peerValidators) {
-    final Set<Capability> caps = new HashSet<>(singletonList(EthProtocol.ETH63));
-    final PeerConnection peerConnection = new MockPeerConnection(caps);
+    return createPeer(peerValidators, Collections.emptyList());
+  }
+
+  private EthPeer createPeer(
+      final List<PeerValidator> peerValidators,
+      final List<NodeMessagePermissioningProvider> permissioningProviders) {
+    final PeerConnection peerConnection = mock(PeerConnection.class);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
-    return new EthPeer(peerConnection, EthProtocol.NAME, onPeerReady, peerValidators, clock);
+    return new EthPeer(
+        peerConnection,
+        EthProtocol.NAME,
+        onPeerReady,
+        peerValidators,
+        clock,
+        permissioningProviders);
   }
 
   @FunctionalInterface

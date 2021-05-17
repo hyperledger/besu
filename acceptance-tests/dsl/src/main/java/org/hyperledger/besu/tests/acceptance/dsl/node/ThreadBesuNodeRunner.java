@@ -45,6 +45,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
@@ -190,6 +191,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .webSocketConfiguration(node.webSocketConfiguration())
             .dataDir(node.homeDirectory())
             .metricsSystem(metricsSystem)
+            .permissioningService(new PermissioningServiceImpl())
             .metricsConfiguration(node.getMetricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())
             .graphQLConfiguration(GraphQLConfiguration.createDefault())

@@ -24,7 +24,7 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 
 /** An interface for creating various Metrics components. */
-public interface MetricsSystem {
+public interface MetricsSystem extends BesuService {
 
   /**
    * Creates a Counter.
