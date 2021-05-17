@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.peers;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetAddress;
@@ -32,7 +33,7 @@ import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 import org.apache.tuweni.bytes.Bytes;
 
-public class EnodeURL {
+public class EnodeURLImpl implements EnodeURL {
 
   public static final int DEFAULT_LISTENING_PORT = 30303;
   public static final int NODE_ID_SIZE = 64;
@@ -46,7 +47,7 @@ public class EnodeURL {
   private final Optional<Integer> listeningPort;
   private final Optional<Integer> discoveryPort;
 
-  private EnodeURL(
+  private EnodeURLImpl(
       final Bytes nodeId,
       final InetAddress address,
       final Optional<String> maybeHostname,
@@ -143,16 +144,17 @@ public class EnodeURL {
   }
 
   public static Bytes parseNodeId(final String nodeId) {
-    int expectedSize = EnodeURL.NODE_ID_SIZE * 2;
+    int expectedSize = EnodeURLImpl.NODE_ID_SIZE * 2;
     if (nodeId.toLowerCase().startsWith("0x")) {
       expectedSize += 2;
     }
     checkArgument(
         nodeId.length() == expectedSize,
-        "Expected " + EnodeURL.NODE_ID_SIZE + " bytes in " + nodeId);
+        "Expected " + EnodeURLImpl.NODE_ID_SIZE + " bytes in " + nodeId);
     return Bytes.fromHexString(nodeId, NODE_ID_SIZE);
   }
 
+  @Override
   public URI toURI() {
 
     final String uri =
@@ -169,6 +171,7 @@ public class EnodeURL {
     }
   }
 
+  @Override
   public URI toURIWithoutDiscoveryPort() {
     final String uri =
         String.format(
@@ -202,10 +205,12 @@ public class EnodeURL {
     return fromString(url, enodeDnsConfiguration).toURI();
   }
 
+  @Override
   public Bytes getNodeId() {
     return nodeId;
   }
 
+  @Override
   public String getIpAsString() {
     return getIp().getHostAddress();
   }
@@ -221,6 +226,7 @@ public class EnodeURL {
    *
    * @return ip
    */
+  @Override
   public InetAddress getIp() {
     this.ip =
         maybeHostname
@@ -236,26 +242,32 @@ public class EnodeURL {
     return ip;
   }
 
+  @Override
   public boolean isListening() {
     return listeningPort.isPresent();
   }
 
+  @Override
   public boolean isRunningDiscovery() {
     return discoveryPort.isPresent();
   }
 
+  @Override
   public Optional<Integer> getListeningPort() {
     return listeningPort;
   }
 
+  @Override
   public int getListeningPortOrZero() {
     return listeningPort.orElse(0);
   }
 
+  @Override
   public Optional<Integer> getDiscoveryPort() {
     return discoveryPort;
   }
 
+  @Override
   public int getDiscoveryPortOrZero() {
     return discoveryPort.orElse(0);
   }
@@ -297,7 +309,7 @@ public class EnodeURL {
 
     public EnodeURL build() {
       validate();
-      return new EnodeURL(nodeId, ip, maybeHostname, listeningPort, discoveryPort);
+      return new EnodeURLImpl(nodeId, ip, maybeHostname, listeningPort, discoveryPort);
     }
 
     private void validate() {
@@ -379,7 +391,7 @@ public class EnodeURL {
     }
 
     public Builder useDefaultPorts() {
-      discoveryAndListeningPorts(EnodeURL.DEFAULT_LISTENING_PORT);
+      discoveryAndListeningPorts(EnodeURLImpl.DEFAULT_LISTENING_PORT);
       return this;
     }
 
