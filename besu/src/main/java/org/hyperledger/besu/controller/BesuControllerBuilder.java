@@ -67,6 +67,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -106,6 +107,8 @@ public abstract class BesuControllerBuilder {
   private long reorgLoggingThreshold;
   private DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
+  private List<NodeMessagePermissioningProvider> messagePermissioningProviders =
+      Collections.emptyList();
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -136,6 +139,12 @@ public abstract class BesuControllerBuilder {
 
   public BesuControllerBuilder miningParameters(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
+    return this;
+  }
+
+  public BesuControllerBuilder messagePermissioningProviders(
+      final List<NodeMessagePermissioningProvider> messagePermissioningProviders) {
+    this.messagePermissioningProviders = messagePermissioningProviders;
     return this;
   }
 
@@ -273,7 +282,9 @@ public abstract class BesuControllerBuilder {
                     prunerConfiguration));
       }
     }
-    final EthPeers ethPeers = new EthPeers(getSupportedProtocol(), clock, metricsSystem);
+    final EthPeers ethPeers =
+        new EthPeers(getSupportedProtocol(), clock, metricsSystem, messagePermissioningProviders);
+
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler scheduler =
         new EthScheduler(
@@ -304,7 +315,6 @@ public abstract class BesuControllerBuilder {
             syncState,
             miningParameters.getMinTransactionGasPrice(),
             transactionPoolConfiguration,
-            ethereumWireProtocolConfiguration.isEth65Enabled(),
             eip1559);
 
     final EthProtocolManager ethProtocolManager =

@@ -44,7 +44,7 @@ import org.apache.tuweni.bytes.Bytes32;
  *   <li><b>SynchronizerStatus </b> - Fired when the status of the synchronizer changes.
  * </ul>
  */
-public interface BesuEvents {
+public interface BesuEvents extends BesuService {
 
   /**
    * Add a listener watching new blocks propagated.
