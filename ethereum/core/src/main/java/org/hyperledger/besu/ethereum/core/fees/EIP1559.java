@@ -100,7 +100,7 @@ public class EIP1559 {
 
   public long targetGasUsed(final BlockHeader header) {
     guardActivation();
-    return header.getGasLimit();
+    return header.getGasLimit() / getFeeMarket().getSlackCoefficient();
   }
 
   public FeeMarket getFeeMarket() {
