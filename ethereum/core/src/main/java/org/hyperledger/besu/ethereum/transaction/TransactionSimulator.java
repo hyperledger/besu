@@ -164,7 +164,7 @@ public class TransactionSimulator {
     final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
 
-    // If GoQuorum privacy enabled, and value = zero, do simulation with max bytes value.
+    // If GoQuorum privacy enabled, and value = zero, do simulation with max non-zero bytes.
     // It is possible to have a data field that has a lower intrinsic value than the PTM hash
     // so this checks the tx as if we were to place a PTM hash (with all non-zero values).
     // This means a potential over-estimate of gas, rather than the exact cost to run right now.
