@@ -72,7 +72,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
           + System.lineSeparator()
           + "  generate-blockchain-config  Generates node keypairs and genesis file with RLP"
           + System.lineSeparator()
-          + "                                encoded IBFT 2.0 extra data."
+          + "                                encoded extra data."
           + System.lineSeparator()
           + "  generate-log-bloom-cache    Generate cached values of block log bloom filters.";
 
@@ -253,6 +253,22 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void shouldFailIfNoConfigSection() {
+    assertThatThrownBy(
+            () ->
+                runCmdAndCheckOutput(
+                    cmd(),
+                    "/operator/config_no_config_section.json",
+                    tmpOutputDirectoryPath,
+                    "genesis.json",
+                    true,
+                    asList("key.pub", "key.priv"),
+                    Optional.of(new SECP256K1())))
+        .isInstanceOf(CommandLine.ExecutionException.class)
+        .hasMessageEndingWith("Missing config section in config file");
+  }
+
+  @Test
   public void shouldImportSecp256R1Keys() throws IOException {
     runCmdAndCheckOutput(
         cmd(),
@@ -261,6 +277,34 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         "genesis.json",
         false,
         singletonList("key.pub"));
+  }
+
+  @Test
+  public void shouldCreateIbft2ExtraData() throws IOException {
+    runCmdAndCheckOutput(
+        cmd(),
+        "/operator/config_import_keys.json",
+        tmpOutputDirectoryPath,
+        "genesis.json",
+        false,
+        singletonList("key.pub"),
+        Optional.empty(),
+        Optional.of(
+            "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94d5feb0fc5a54a89f97aeb34c3df15397c19f6dd294d6a9a4c886eb008ac307abdc1f38745c1dd13a88808400000000c0"));
+  }
+
+  @Test
+  public void shouldCreateQbftExtraData() throws IOException {
+    runCmdAndCheckOutput(
+        cmd(),
+        "/operator/config_import_keys_qbft.json",
+        tmpOutputDirectoryPath,
+        "genesis.json",
+        false,
+        singletonList("key.pub"),
+        Optional.empty(),
+        Optional.of(
+            "0xf84fa00000000000000000000000000000000000000000000000000000000000000000ea94d5feb0fc5a54a89f97aeb34c3df15397c19f6dd294d6a9a4c886eb008ac307abdc1f38745c1dd13a88c080c0"));
   }
 
   private void runCmdAndCheckOutput(
@@ -278,6 +322,7 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         genesisFileName,
         generate,
         expectedKeyFiles,
+        Optional.empty(),
         Optional.empty());
   }
 
@@ -289,6 +334,27 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
       final boolean generate,
       final Collection<String> expectedKeyFiles,
       final Optional<SignatureAlgorithm> signatureAlgorithm)
+      throws IOException {
+    runCmdAndCheckOutput(
+        cmd,
+        configFile,
+        outputDirectoryPath,
+        genesisFileName,
+        generate,
+        expectedKeyFiles,
+        signatureAlgorithm,
+        Optional.empty());
+  }
+
+  private void runCmdAndCheckOutput(
+      final Cmd cmd,
+      final String configFile,
+      final Path outputDirectoryPath,
+      final String genesisFileName,
+      final boolean generate,
+      final Collection<String> expectedKeyFiles,
+      final Optional<SignatureAlgorithm> signatureAlgorithm,
+      final Optional<String> expectedExtraData)
       throws IOException {
     final URL configFilePath = this.getClass().getResource(configFile);
     parseCommand(
@@ -309,6 +375,8 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
     final String genesisString = contentOf(outputGenesisFile, UTF_8);
     final JsonObject genesisContent = new JsonObject(genesisString);
     assertThat(genesisContent.containsKey("extraData")).isTrue();
+    expectedExtraData.ifPresent(
+        extraData -> assertThat(genesisContent.getString("extraData")).isEqualTo(extraData));
 
     final Path expectedKeysPath = outputDirectoryPath.resolve("keys");
     final File keysDirectory = new File(expectedKeysPath.toUri());
