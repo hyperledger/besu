@@ -421,6 +421,10 @@ public class PendingTransactions {
     }
   }
 
+  public void updateBaseFee(final Long baseFee) {
+    // lock and update or do whatever you want here
+  }
+
   /**
    * Tracks the additional metadata associated with transactions to enable prioritization for mining
    * and deciding which transactions to drop when the transaction pool reaches its size limit.
