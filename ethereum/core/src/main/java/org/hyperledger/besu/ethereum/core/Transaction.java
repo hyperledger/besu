@@ -38,6 +38,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class Transaction implements org.hyperledger.besu.plugin.data.Transaction {
@@ -306,7 +307,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the transaction max priority per gas
    */
   @Override
-  public Optional<Wei> getMaxPriorityFeePerGas() {
+  public Optional<Quantity> getMaxPriorityFeePerGas() {
     return Optional.ofNullable(maxPriorityFeePerGas);
   }
 
@@ -316,7 +317,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the transaction max fee per gas
    */
   @Override
-  public Optional<Wei> getMaxFeePerGas() {
+  public Optional<Quantity> getMaxFeePerGas() {
     return Optional.ofNullable(maxFeePerGas);
   }
 
