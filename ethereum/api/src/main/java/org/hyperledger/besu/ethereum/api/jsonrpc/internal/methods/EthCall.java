@@ -129,7 +129,8 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
     if (callParams.getGasPrice() != null
         && (callParams.getMaxFeePerGas().isPresent()
             || callParams.getMaxPriorityFeePerGas().isPresent())) {
-      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or maxFeePerGas");
+      throw new InvalidJsonRpcParameters(
+          "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
     }
     return callParams;
   }
