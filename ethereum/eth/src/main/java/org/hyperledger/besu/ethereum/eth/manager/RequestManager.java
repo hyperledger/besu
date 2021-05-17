@@ -81,7 +81,7 @@ public class RequestManager {
     }
   }
 
-  private MessageData wrapRequestId(final long requestId, final MessageData messageData) {
+  public static MessageData wrapRequestId(final long requestId, final MessageData messageData) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
     rlpOutput.writeLongScalar(requestId);
@@ -90,7 +90,7 @@ public class RequestManager {
     return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
 
-  private Map.Entry<Long, EthMessage> unwrapRequestId(final EthMessage message) {
+  private static Map.Entry<Long, EthMessage> unwrapRequestId(final EthMessage message) {
     final RLPInput messageDataRLP = RLP.input(message.getData().getData());
     messageDataRLP.enterList();
     final long requestId = messageDataRLP.readLongScalar();
