@@ -49,6 +49,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -68,12 +72,14 @@ public class PendingTransactions {
 
   private final EvictingQueue<Hash> newPooledHashes;
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
-  private final NavigableSet<TransactionInfo> prioritizedTransactions =
+  private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
+  private final NavigableSet<TransactionInfo> prioritizedTransactionsInDynamicRange = null;
+  private final ReentrantReadWriteLock baseFeeLock = new ReentrantReadWriteLock();
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
 
@@ -189,11 +195,11 @@ public class PendingTransactions {
   }
 
   private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (prioritizedTransactions) {
+    synchronized (prioritizedTransactionsStaticRange) {
       final TransactionInfo removedTransactionInfo =
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
-        prioritizedTransactions.remove(removedTransactionInfo);
+        prioritizedTransactionsStaticRange.remove(removedTransactionInfo);
         removeTransactionTrackedBySenderAndNonce(transaction);
         incrementTransactionRemovedCounter(
             removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
@@ -208,11 +214,14 @@ public class PendingTransactions {
     transactionRemovedCounter.labels(location, operation).inc();
   }
 
+  // todo make sure we only select valid transaction types. Usually they're blocked before they get
+  // here but in the case of reorging back to a block lower than the upgrade block, we could have
+  // let a future transaction type in that shouldn't be mined
   public void selectTransactions(final TransactionSelector selector) {
-    synchronized (prioritizedTransactions) {
+    synchronized (prioritizedTransactionsStaticRange) {
       final List<Transaction> transactionsToRemove = new ArrayList<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
-      for (final TransactionInfo transactionInfo : prioritizedTransactions) {
+      for (final TransactionInfo transactionInfo : prioritizedTransactionsStaticRange) {
         final AccountTransactionOrder accountTransactionOrder =
             accountTransactions.computeIfAbsent(
                 transactionInfo.getSender(), this::createSenderTransactionOrder);
@@ -249,7 +258,8 @@ public class PendingTransactions {
 
   private TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
     Optional<Transaction> droppedTransaction = Optional.empty();
-    synchronized (prioritizedTransactions) {
+    final Transaction transaction = transactionInfo.getTransaction();
+    synchronized (prioritizedTransactionsStaticRange) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
         return ALREADY_KNOWN;
       }
@@ -259,17 +269,27 @@ public class PendingTransactions {
       if (!transactionAddedStatus.equals(ADDED)) {
         return transactionAddedStatus;
       }
-      prioritizedTransactions.add(transactionInfo);
+      final Lock lock = baseFeeLock.readLock();
+      try {
+        if (transaction.getType().equals(TransactionType.EIP1559)) {
+          // check if it's in static or dynamic range
+          if (transaction.getMaxFeePerGas().get().subtract(transaction.getMaxPriorityFeePerGas().get()).getValue() (chainHeadHeaderSupplier.get().getBaseFee().get()) )
+        } else {
+          prioritizedTransactionsI.add(transactionInfo);
+        }
+      } finally {
+        lock.unlock();
+      }
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
       tryEvictTransactionHash(transactionInfo.getHash());
 
       if (pendingTransactions.size() > maxPendingTransactions) {
-        final TransactionInfo toRemove = prioritizedTransactions.last();
+        final TransactionInfo toRemove = prioritizedTransactionsStaticRange.last();
         doRemoveTransaction(toRemove.getTransaction(), false);
         droppedTransaction = Optional.of(toRemove.getTransaction());
       }
     }
-    notifyTransactionAdded(transactionInfo.getTransaction());
+    notifyTransactionAdded(transaction);
     droppedTransaction.ifPresent(this::notifyTransactionDropped);
     return ADDED;
   }

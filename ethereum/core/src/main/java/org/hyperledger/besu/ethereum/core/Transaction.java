@@ -306,7 +306,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the transaction max priority per gas
    */
   @Override
-  public Optional<Quantity> getMaxPriorityFeePerGas() {
+  public Optional<Wei> getMaxPriorityFeePerGas() {
     return Optional.ofNullable(maxPriorityFeePerGas);
   }
 
@@ -316,7 +316,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the transaction max fee per gas
    */
   @Override
-  public Optional<Quantity> getMaxFeePerGas() {
+  public Optional<Wei> getMaxFeePerGas() {
     return Optional.ofNullable(maxFeePerGas);
   }
 
