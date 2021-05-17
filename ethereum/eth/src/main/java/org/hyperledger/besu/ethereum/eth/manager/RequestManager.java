@@ -85,7 +85,7 @@ public class RequestManager {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
     rlpOutput.writeLongScalar(requestId);
-    rlpOutput.writeBytes(messageData.getData());
+    rlpOutput.writeRaw(messageData.getData());
     rlpOutput.endList();
     return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
