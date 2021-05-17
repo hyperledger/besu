@@ -21,10 +21,11 @@ import static org.assertj.core.api.Assertions.fail;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.URL;
 import java.nio.file.Files;
@@ -119,7 +120,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     // This node is defined in the PERMISSIONING_CONFIG file without the discovery port
     final EnodeURL enodeURL =
-        EnodeURL.fromString(
+        EnodeURLImpl.fromString(
             "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567?discport=30303");
 
     // In an URI comparison the URLs should not match
@@ -156,7 +157,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     // This node is defined in the PERMISSIONING_CONFIG_DNS file without the discovery port
     final EnodeURL enodeURL =
-        EnodeURL.fromString(
+        EnodeURLImpl.fromString(
             "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567?discport=30303",
             enodeDnsConfiguration);
 

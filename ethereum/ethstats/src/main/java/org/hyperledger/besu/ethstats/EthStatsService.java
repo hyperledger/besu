@@ -41,7 +41,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethstats.authentication.ImmutableAuthenticationData;
 import org.hyperledger.besu.ethstats.authentication.ImmutableNodeInfo;
 import org.hyperledger.besu.ethstats.authentication.NodeInfo;
@@ -56,6 +55,7 @@ import org.hyperledger.besu.ethstats.report.PendingTransactionsReport;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
 import org.hyperledger.besu.ethstats.util.PrimusHeartBeatsHelper;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.math.BigInteger;

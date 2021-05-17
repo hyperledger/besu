@@ -71,12 +71,12 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
-  private final Optional<TransactionBatchAddedListener> pendingTransactionBatchAddedListener;
+  private final TransactionBatchAddedListener pendingTransactionBatchAddedListener;
   private final SyncState syncState;
   private final Wei minTransactionGasPrice;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
-  private final Optional<PeerPendingTransactionTracker> maybePeerPendingTransactionTracker;
+  private final PeerPendingTransactionTracker peerPendingTransactionTracker;
   private final Optional<EIP1559> eip1559;
   private final TransactionPriceCalculator frontierPriceCalculator =
       TransactionPriceCalculator.frontier();
@@ -89,11 +89,11 @@ public class TransactionPool implements BlockAddedObserver {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBatchAddedListener transactionBatchAddedListener,
-      final Optional<TransactionBatchAddedListener> pendingTransactionBatchAddedListener,
+      final TransactionBatchAddedListener pendingTransactionBatchAddedListener,
       final SyncState syncState,
       final EthContext ethContext,
       final PeerTransactionTracker peerTransactionTracker,
-      final Optional<PeerPendingTransactionTracker> maybePeerPendingTransactionTracker,
+      final PeerPendingTransactionTracker peerPendingTransactionTracker,
       final Wei minTransactionGasPrice,
       final MetricsSystem metricsSystem,
       final Optional<EIP1559> eip1559,
@@ -105,7 +105,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.pendingTransactionBatchAddedListener = pendingTransactionBatchAddedListener;
     this.syncState = syncState;
     this.peerTransactionTracker = peerTransactionTracker;
-    this.maybePeerPendingTransactionTracker = maybePeerPendingTransactionTracker;
+    this.peerPendingTransactionTracker = peerPendingTransactionTracker;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.eip1559 = eip1559;
     this.configuration = configuration;
@@ -125,15 +125,11 @@ public class TransactionPool implements BlockAddedObserver {
         .getLocalTransactions()
         .forEach(transaction -> peerTransactionTracker.addToPeerSendQueue(peer, transaction));
 
-    maybePeerPendingTransactionTracker
-        .filter(
-            peerPendingTransactionTracker ->
-                peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65))
-        .ifPresent(
-            peerPendingTransactionTracker ->
-                pendingTransactions
-                    .getNewPooledHashes()
-                    .forEach(hash -> peerPendingTransactionTracker.addToPeerSendQueue(peer, hash)));
+    if (peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)) {
+      pendingTransactions
+          .getNewPooledHashes()
+          .forEach(hash -> peerPendingTransactionTracker.addToPeerSendQueue(peer, hash));
+    }
   }
 
   public boolean addTransactionHash(final Hash transactionHash) {
@@ -157,7 +153,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
       final Collection<Transaction> txs = singletonList(transaction);
       transactionBatchAddedListener.onTransactionsAdded(txs);
-      pendingTransactionBatchAddedListener.ifPresent(it -> it.onTransactionsAdded(txs));
+      pendingTransactionBatchAddedListener.onTransactionsAdded(txs);
     }
 
     return validationResult;

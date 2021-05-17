@@ -90,21 +90,3 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
 }
-
-task testJar(type: Jar) {
-  archiveFileName = 'testPlugins.jar'
-  manifest {
-    attributes(
-      'Specification-Title': archiveBaseName,
-      'Specification-Version': project.version,
-      'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
-      )
-  }
-  archiveClassifier = 'tests'
-  from sourceSets.test.output
-}
-
-configurations { testArtifacts }
-
-artifacts { testArtifacts testJar }
