@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerExce
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -194,7 +194,7 @@ final class DeFramer extends ByteToMessageDecoder {
     final InetSocketAddress remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
     int port = peerInfo.getPort();
     return DefaultPeer.fromEnodeURL(
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(peerInfo.getNodeId())
             .ipAddress(remoteAddress.getAddress())
             .listeningPort(port)
