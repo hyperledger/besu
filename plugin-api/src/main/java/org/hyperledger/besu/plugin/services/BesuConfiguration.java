@@ -19,7 +19,7 @@ import org.hyperledger.besu.plugin.Unstable;
 import java.nio.file.Path;
 
 /** Generally useful configuration provided by Besu. */
-public interface BesuConfiguration {
+public interface BesuConfiguration extends BesuService {
 
   /**
    * Location of the working directory of the storage in the file system running the client.

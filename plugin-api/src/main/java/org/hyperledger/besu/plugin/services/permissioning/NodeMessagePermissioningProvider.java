@@ -12,10 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services;
 
-import java.util.Collection;
+package org.hyperledger.besu.plugin.services.permissioning;
 
-public interface PluginVersionsProvider {
-  Collection<String> getPluginVersions();
+import org.hyperledger.besu.plugin.data.EnodeURL;
+
+@FunctionalInterface
+public interface NodeMessagePermissioningProvider {
+  /**
+   * Can be used to intercept messages before they are sent from besu.
+   *
+   * @param destinationEnode the enode you are about to send to
+   * @param code devp2p code for the message
+   * @return if we can send the message to the peer
+   */
+  boolean isMessagePermitted(final EnodeURL destinationEnode, final int code);
 }

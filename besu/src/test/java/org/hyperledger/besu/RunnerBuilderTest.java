@@ -56,6 +56,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.services.PermissioningServiceImpl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -133,6 +134,7 @@ public final class RunnerBuilderTest {
             .ethNetworkConfig(mock(EthNetworkConfig.class))
             .metricsSystem(mock(ObservableMetricsSystem.class))
             .jsonRpcConfiguration(mock(JsonRpcConfiguration.class))
+            .permissioningService(mock(PermissioningServiceImpl.class))
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
@@ -174,6 +176,7 @@ public final class RunnerBuilderTest {
             .besuController(besuController)
             .ethNetworkConfig(mock(EthNetworkConfig.class))
             .metricsSystem(mock(ObservableMetricsSystem.class))
+            .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(mock(JsonRpcConfiguration.class))
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
