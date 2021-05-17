@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.apache.tuweni.units.ethereum.Wei;
 import org.hyperledger.besu.plugin.Unstable;
 
 import java.math.BigInteger;
@@ -62,7 +63,7 @@ public interface Transaction {
    * @return the quantity of Wei for max fee per gas
    */
   @Unstable
-  default Optional<Quantity> getMaxPriorityFeePerGas() {
+  default Optional<Wei> getMaxPriorityFeePerGas() {
     return Optional.empty();
   }
 
@@ -72,7 +73,7 @@ public interface Transaction {
    * @return the quantity of Wei for fee cap.
    */
   @Unstable
-  default Optional<Quantity> getMaxFeePerGas() {
+  default Optional<Wei> getMaxFeePerGas() {
     return Optional.empty();
   }
 
