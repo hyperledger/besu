@@ -103,7 +103,7 @@ public class PendingTransactions {
               .reversed());
   private final ReentrantReadWriteLock collectionLock = new ReentrantReadWriteLock();
   // todo what if 1559 is enabled at genesis
-  private long baseFee = -1;
+  private Long baseFee;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
 
@@ -417,45 +417,45 @@ public class PendingTransactions {
     } else {
       maybeNegativePriorityFeePerGas = transaction.getGasPrice().getValue().longValue() - baseFee;
     }
-    return Math.max(0, maybeNegativePriorityFeePerGas);
+    return maybeNegativePriorityFeePerGas;
   }
 
   public void updateBaseFee(final Long baseFee) {
+    if (this.baseFee == baseFee) {
+      return;
+    }
     final Lock lock = collectionLock.writeLock();
     try {
-      if (this.baseFee != baseFee) {
-        final boolean baseFeeIncreased = baseFee > this.baseFee;
-        this.baseFee = baseFee;
-        if (baseFeeIncreased) {
-          // base fee increases can only cause transactions to go from static to dynamic range
-          final List<TransactionInfo> transactionInfosToTransfer =
-              prioritizedTransactionsStaticRange.stream()
-                  .filter(
-                      // these are the transactions whose effective priority fee have now dropped
-                      // below their max priority fee
-                      transactionInfo ->
-                          !isInStaticRange(transactionInfo.getTransaction(), baseFee))
-                  .collect(toUnmodifiableList());
-          transactionInfosToTransfer.forEach(
-              transactionInfo -> {
-                prioritizedTransactionsStaticRange.remove(transactionInfo);
-                prioritizedTransactionsDynamicRange.add(transactionInfo);
-              });
-        } else {
-          // base fee decreases can only cause transactions to go from dynamic to static range
-          final List<TransactionInfo> transactionInfosToTransfer =
-              prioritizedTransactionsDynamicRange.stream()
-                  .filter(
-                      // these are the transactions whose effective priority fee are now above their
-                      // max priority fee
-                      transactionInfo -> isInStaticRange(transactionInfo.getTransaction(), baseFee))
-                  .collect(toUnmodifiableList());
-          transactionInfosToTransfer.forEach(
-              transactionInfo -> {
-                prioritizedTransactionsDynamicRange.remove(transactionInfo);
-                prioritizedTransactionsStaticRange.add(transactionInfo);
-              });
-        }
+      final boolean baseFeeIncreased = baseFee > this.baseFee;
+      this.baseFee = baseFee;
+      if (baseFeeIncreased) {
+        // base fee increases can only cause transactions to go from static to dynamic range
+        final List<TransactionInfo> transactionInfosToTransfer =
+            prioritizedTransactionsStaticRange.stream()
+                .filter(
+                    // these are the transactions whose effective priority fee have now dropped
+                    // below their max priority fee
+                    transactionInfo -> !isInStaticRange(transactionInfo.getTransaction(), baseFee))
+                .collect(toUnmodifiableList());
+        transactionInfosToTransfer.forEach(
+            transactionInfo -> {
+              prioritizedTransactionsStaticRange.remove(transactionInfo);
+              prioritizedTransactionsDynamicRange.add(transactionInfo);
+            });
+      } else {
+        // base fee decreases can only cause transactions to go from dynamic to static range
+        final List<TransactionInfo> transactionInfosToTransfer =
+            prioritizedTransactionsDynamicRange.stream()
+                .filter(
+                    // these are the transactions whose effective priority fee are now above their
+                    // max priority fee
+                    transactionInfo -> isInStaticRange(transactionInfo.getTransaction(), baseFee))
+                .collect(toUnmodifiableList());
+        transactionInfosToTransfer.forEach(
+            transactionInfo -> {
+              prioritizedTransactionsDynamicRange.remove(transactionInfo);
+              prioritizedTransactionsStaticRange.add(transactionInfo);
+            });
       }
     } finally {
       lock.unlock();
