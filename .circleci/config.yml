@@ -127,6 +127,7 @@ jobs:
             build\distributions\besu\bin\besu.bat --version
 
   unitTests:
+    parallelism: 2
     executor: besu_executor_xl
     steps:
       - prepare
@@ -160,6 +161,7 @@ jobs:
       - capture_test_results
 
   referenceTests:
+    parallelism: 2
     executor: besu_executor_xl
     steps:
       - prepare
@@ -174,7 +176,7 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 6
+    parallelism: 8
     executor: besu_executor_xl
     steps:
       - prepare
