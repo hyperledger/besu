@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.Comparator.comparing;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ALREADY_KNOWN;
@@ -220,8 +221,10 @@ public class PendingTransactions {
       final TransactionInfo removedTransactionInfo =
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
-        prioritizedTransactionsStaticRange.remove(removedTransactionInfo);
-        prioritizedTransactionsDynamicRange.remove(removedTransactionInfo);
+        checkState(
+            prioritizedTransactionsStaticRange.remove(removedTransactionInfo)
+                ^ prioritizedTransactionsDynamicRange.remove(removedTransactionInfo),
+            "It shouldn't be possible that the transaction was remove from neither or both collections. It should only have been removed from one.");
         removeTransactionTrackedBySenderAndNonce(transaction);
         incrementTransactionRemovedCounter(
             removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
