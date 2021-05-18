@@ -16,6 +16,10 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class EIP1559Test {
@@ -24,6 +28,16 @@ public class EIP1559Test {
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
   private final FeeMarket feeMarket = FeeMarket.eip1559();
   private static final long TARGET_GAS_USED = 10000000L;
+
+  @Before
+  public void setUp() {
+    ExperimentalEIPs.eip1559Enabled = true;
+  }
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+  }
 
   @Test
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.TestCodeExecutor;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,6 +79,7 @@ public class LondonSStoreOperationGasCostTest {
 
   @Before
   public void setUp() {
+    ExperimentalEIPs.eip1559Enabled = true;
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().londonBlock(0));
     codeExecutor = new TestCodeExecutor(protocolSchedule);
@@ -94,5 +97,10 @@ public class LondonSStoreOperationGasCostTest {
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
     assertThat(frame.getRemainingGas()).isEqualTo(Gas.of(gasLimit - (expectedGasUsed + 2100)));
     assertThat(frame.getGasRefund()).isEqualTo(Gas.of(expectedGasRefund));
+  }
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 }

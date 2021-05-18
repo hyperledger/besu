@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -66,6 +68,11 @@ public class ProofOfWorkValidationRuleTest {
           {4400000, 4400001},
           {4400001, 4400002}
         });
+  }
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @Test
@@ -161,6 +168,8 @@ public class ProofOfWorkValidationRuleTest {
             headerHash);
 
     final BlockHeader header = headerBuilder.mixHash(solution.getMixHash()).buildBlockHeader();
+
+    ExperimentalEIPs.eip1559Enabled = true;
 
     assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
   }

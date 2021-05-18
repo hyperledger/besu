@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
-import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,29 +39,19 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
   private final EpochCalculator epochCalculator;
   private final boolean includeBaseFee;
-  private final Optional<EIP1559> eip1559;
-
-  public ProofOfWorkValidationRule(
-      final EpochCalculator epochCalculator,
-      final boolean includeBaseFee,
-      final PoWHasher hasher,
-      final Optional<EIP1559> eip1559) {
-    this.epochCalculator = epochCalculator;
-    this.includeBaseFee = includeBaseFee;
-    this.hasher = hasher;
-    this.eip1559 = eip1559;
-  }
 
   public ProofOfWorkValidationRule(
       final EpochCalculator epochCalculator, final boolean includeBaseFee, final PoWHasher hasher) {
-    this(epochCalculator, includeBaseFee, hasher, Optional.empty());
+    this.epochCalculator = epochCalculator;
+    this.includeBaseFee = includeBaseFee;
+    this.hasher = hasher;
   }
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     if (includeBaseFee) {
-      if (eip1559.isEmpty()) {
-        LOG.info("Invalid block header: EIP-1559 must be enabled");
+      if (!ExperimentalEIPs.eip1559Enabled) {
+        LOG.info("Invalid block header: EIP-1559 feature flag must be enabled --Xeip1559-enabled");
         return false;
       } else if (header.getBaseFee().isEmpty()) {
         LOG.info("Invalid block header: missing mandatory base fee.");
@@ -130,6 +119,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
     if (includeBaseFee && header.getBaseFee().isPresent()) {
+      ExperimentalEIPs.eip1559MustBeEnabled();
       out.writeLongScalar(header.getBaseFee().get());
     }
     out.endList();
