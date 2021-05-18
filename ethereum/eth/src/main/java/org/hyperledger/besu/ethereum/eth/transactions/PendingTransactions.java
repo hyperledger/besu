@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -59,7 +60,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.collect.EvictingQueue;
 
 /**
@@ -423,7 +423,7 @@ public class PendingTransactions {
   }
 
   public void updateBaseFee(final Long baseFee) {
-    if (Objects.equal(this.baseFee, baseFee)) {
+    if (Objects.equals(this.baseFee, baseFee)) {
       return;
     }
     final Lock lock = collectionLock.writeLock();
