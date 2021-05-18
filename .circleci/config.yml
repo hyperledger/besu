@@ -136,7 +136,7 @@ jobs:
           name: Build
           no_output_timeout: 20m
           command: |
-            echo yes | ./gradlew --no-daemon build --scan
+            ./gradlew --no-daemon build
       - capture_test_results
 
   integrationTests:
