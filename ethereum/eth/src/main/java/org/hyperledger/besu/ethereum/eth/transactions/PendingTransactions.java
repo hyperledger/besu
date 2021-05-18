@@ -282,7 +282,8 @@ public class PendingTransactions {
   private TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
     Optional<Transaction> droppedTransaction = Optional.empty();
     final Transaction transaction = transactionInfo.getTransaction();
-    synchronized (prioritizedTransactionsStaticRange) {
+    final Lock lock = collectionLock.writeLock();
+    try {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
         return ALREADY_KNOWN;
       }
@@ -292,34 +293,45 @@ public class PendingTransactions {
       if (!transactionAddedStatus.equals(ADDED)) {
         return transactionAddedStatus;
       }
-      final Lock lock = collectionLock.readLock();
-      try {
-        // check if it's in static or dynamic range
-        // todo comment here
-        if (transaction.getType().equals(TransactionType.EIP1559)
-            && transaction.getMaxFeePerGas().get().getValue().longValue()
-                    - transaction.getMaxPriorityFeePerGas().get().getValue().longValue()
-                > baseFee) {
-          prioritizedTransactionsStaticRange.add(transactionInfo);
-        } else {
-          prioritizedTransactionsDynamicRange.add(transactionInfo);
-        }
-      } finally {
-        lock.unlock();
+      // check if it's in static or dynamic range
+      // todo comment here
+      if (transaction.getType().equals(TransactionType.EIP1559)
+          && transaction.getMaxFeePerGas().get().getValue().longValue()
+                  - transaction.getMaxPriorityFeePerGas().get().getValue().longValue()
+              > baseFee) {
+        prioritizedTransactionsStaticRange.add(transactionInfo);
+      } else {
+        prioritizedTransactionsDynamicRange.add(transactionInfo);
       }
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
       tryEvictTransactionHash(transactionInfo.getHash());
 
       if (pendingTransactions.size() > maxPendingTransactions) {
-        // todo figure out where to remove from
-        final TransactionInfo toRemove = prioritizedTransactionsStaticRange.last();
+        final TransactionInfo staticRemovalCandidate = prioritizedTransactionsStaticRange.last();
+        final TransactionInfo dynamicRemovalCandidate = prioritizedTransactionsDynamicRange.last();
+        final TransactionInfo toRemove =
+            effectivePriorityFeePerGas(dynamicRemovalCandidate.getTransaction(), baseFee)
+                    > effectivePriorityFeePerGas(staticRemovalCandidate.getTransaction(), baseFee)
+                ? staticRemovalCandidate
+                : dynamicRemovalCandidate;
         doRemoveTransaction(toRemove.getTransaction(), false);
         droppedTransaction = Optional.of(toRemove.getTransaction());
       }
+    } finally {
+      lock.unlock();
     }
     notifyTransactionAdded(transaction);
     droppedTransaction.ifPresent(this::notifyTransactionDropped);
     return ADDED;
+  }
+
+  private long effectivePriorityFeePerGas(final Transaction transaction, final long baseFee) {
+    if (transaction.getType().equals(TransactionType.EIP1559)) {
+      return Math.min(
+          transaction.getMaxPriorityFeePerGas().get().getValue().longValue(),
+          transaction.getMaxFeePerGas().get().getValue().longValue() - baseFee);
+    }
+    return transaction.getGasPrice().getValue().longValue() - baseFee;
   }
 
   private TransactionAddedStatus addTransactionForSenderAndNonce(
