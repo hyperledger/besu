@@ -399,12 +399,16 @@ public class PendingTransactions {
   }
 
   private long effectivePriorityFeePerGas(final Transaction transaction, final long baseFee) {
+    final long maybeNegativePriorityFeePerGas;
     if (transaction.getType().equals(TransactionType.EIP1559)) {
-      return Math.min(
-          transaction.getMaxPriorityFeePerGas().get().getValue().longValue(),
-          transaction.getMaxFeePerGas().get().getValue().longValue() - baseFee);
+      maybeNegativePriorityFeePerGas =
+          Math.min(
+              transaction.getMaxPriorityFeePerGas().get().getValue().longValue(),
+              transaction.getMaxFeePerGas().get().getValue().longValue() - baseFee);
+    } else {
+      maybeNegativePriorityFeePerGas = transaction.getGasPrice().getValue().longValue() - baseFee;
     }
-    return transaction.getGasPrice().getValue().longValue() - baseFee;
+    return Math.max(0, maybeNegativePriorityFeePerGas);
   }
 
   private TransactionAddedStatus addTransactionForSenderAndNonce(
