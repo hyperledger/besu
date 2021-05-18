@@ -85,7 +85,7 @@ public class PendingTransactions {
                           .longValue())
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private final NavigableSet<TransactionInfo> prioritizedTransactionDynamicRange =
+  private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(
@@ -97,7 +97,7 @@ public class PendingTransactions {
                           .orElse(transactionInfo.getTransaction().getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private final ReentrantReadWriteLock baseFeeLock = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock collectionLock = new ReentrantReadWriteLock();
   private long baseFee = -1;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
@@ -214,15 +214,19 @@ public class PendingTransactions {
   }
 
   private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (prioritizedTransactionsStaticRange) {
+    final Lock lock = collectionLock.writeLock();
+    try {
       final TransactionInfo removedTransactionInfo =
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
         prioritizedTransactionsStaticRange.remove(removedTransactionInfo);
+        prioritizedTransactionsDynamicRange.remove(removedTransactionInfo);
         removeTransactionTrackedBySenderAndNonce(transaction);
         incrementTransactionRemovedCounter(
             removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
       }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -288,17 +292,17 @@ public class PendingTransactions {
       if (!transactionAddedStatus.equals(ADDED)) {
         return transactionAddedStatus;
       }
-      final Lock lock = baseFeeLock.readLock();
+      final Lock lock = collectionLock.readLock();
       try {
         // check if it's in static or dynamic range
+        // todo comment here
         if (transaction.getType().equals(TransactionType.EIP1559)
             && transaction.getMaxFeePerGas().get().getValue().longValue()
                     - transaction.getMaxPriorityFeePerGas().get().getValue().longValue()
                 > baseFee) {
           prioritizedTransactionsStaticRange.add(transactionInfo);
         } else {
-          // non-1559 tx always dynamic
-          prioritizedTransactionDynamicRange.add(transactionInfo);
+          prioritizedTransactionsDynamicRange.add(transactionInfo);
         }
       } finally {
         lock.unlock();
