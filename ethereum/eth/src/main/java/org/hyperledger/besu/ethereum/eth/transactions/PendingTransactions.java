@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
 
+import com.google.common.base.Objects;
 import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -135,6 +136,7 @@ public class PendingTransactions {
     this.clock = clock;
     this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
+    this.baseFee = chainHeadHeaderSupplier.get().getBaseFee().orElse(null);
     this.transactionReplacementHandler = new TransactionPoolReplacementHandler(priceBump);
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
@@ -421,7 +423,7 @@ public class PendingTransactions {
   }
 
   public void updateBaseFee(final Long baseFee) {
-    if (this.baseFee == baseFee) {
+    if (Objects.equal(this.baseFee, baseFee)) {
       return;
     }
     final Lock lock = collectionLock.writeLock();
