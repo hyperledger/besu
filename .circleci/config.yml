@@ -90,7 +90,7 @@ jobs:
       - run:
           name: Assemble
           command: |
-            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble --debug
+            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
