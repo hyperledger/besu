@@ -17,8 +17,6 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -247,9 +245,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getLondonBlockNumber() {
-    if (!ExperimentalEIPs.eip1559Enabled) {
-      return OptionalLong.empty();
-    }
     final OptionalLong londonBlock = getOptionalLong("londonblock");
     final OptionalLong baikalblock = getOptionalLong("baikalblock");
     if (baikalblock.isPresent()) {
@@ -264,7 +259,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getAleutBlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? getOptionalLong("aleutblock") : OptionalLong.empty();
+    return getOptionalLong("aleutblock");
   }
 
   @Override
