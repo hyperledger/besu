@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import static java.lang.Long.MAX_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
@@ -26,8 +25,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -73,16 +70,6 @@ public class GasLimitElasticityValidationRuleTest {
           {39960938, 40000000, 11, false},
           {4999, 40000000, 11, false}
         });
-  }
-
-  @BeforeClass
-  public static void initialize() {
-    ExperimentalEIPs.eip1559Enabled = true;
-  }
-
-  @AfterClass
-  public static void reset() {
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 
   @Test
