@@ -98,6 +98,7 @@ public class PendingTransactions {
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
   private final ReentrantReadWriteLock collectionLock = new ReentrantReadWriteLock();
+  // todo what if 1559 is enabled at genesis
   private long baseFee = -1;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
