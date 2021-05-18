@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
@@ -73,7 +72,7 @@ public class BlockHeaderValidationRulesetFactory {
             .addRule(new CliqueDifficultyValidationRule())
             .addRule(new SignerRateLimitValidationRule())
             .addRule(new CoinbaseHeaderValidationRule(epochManager));
-    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
+    if (eip1559.isPresent()) {
       builder
           .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559.get())))
           .addRule(new GasUsageValidationRule());
