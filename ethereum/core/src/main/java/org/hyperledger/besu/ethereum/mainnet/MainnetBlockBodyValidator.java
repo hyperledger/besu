@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -271,7 +272,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   }
 
   private boolean validateTransactionGasPrice(final Block block) {
-    if (maybeEip1559.isEmpty()) {
+    if (!ExperimentalEIPs.eip1559Enabled || maybeEip1559.isEmpty()) {
       return true;
     }
     final EIP1559 eip1559 = maybeEip1559.get();

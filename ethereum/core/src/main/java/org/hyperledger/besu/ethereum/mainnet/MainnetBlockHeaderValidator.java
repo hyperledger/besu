@@ -132,10 +132,7 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
             new ProofOfWorkValidationRule(
-                new EpochCalculator.DefaultEpochCalculator(),
-                true,
-                PoWHasher.ETHASH_LIGHT,
-                Optional.of(eip1559)))
+                new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 
@@ -151,10 +148,7 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
             new ProofOfWorkValidationRule(
-                new EpochCalculator.DefaultEpochCalculator(),
-                true,
-                PoWHasher.ETHASH_LIGHT,
-                Optional.of(eip1559)))
+                new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

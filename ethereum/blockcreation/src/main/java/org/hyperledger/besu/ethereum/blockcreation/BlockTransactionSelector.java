@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
@@ -83,13 +84,11 @@ public class BlockTransactionSelector {
     private long eip1559CumulativeGasUsed = 0;
 
     private void update(
-        final Transaction transaction,
-        final TransactionReceipt receipt,
-        final long gasUsed,
-        final Optional<EIP1559> eip1559) {
+        final Transaction transaction, final TransactionReceipt receipt, final long gasUsed) {
       transactions.add(transaction);
       receipts.add(receipt);
-      if (eip1559.isPresent() && transaction.getType().equals(TransactionType.EIP1559)) {
+      if (ExperimentalEIPs.eip1559Enabled
+          && transaction.getType().equals(TransactionType.EIP1559)) {
         eip1559CumulativeGasUsed += gasUsed;
       } else {
         frontierCumulativeGasUsed += gasUsed;
@@ -307,7 +306,7 @@ public class BlockTransactionSelector {
             : transaction.getGasLimit() - result.getGasRemaining();
 
     final long cumulativeGasUsed;
-    if (eip1559.isPresent()) {
+    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       cumulativeGasUsed =
           transactionSelectionResult.getTotalCumulativeGasUsed() + gasUsedByTransaction;
     } else {
@@ -319,8 +318,7 @@ public class BlockTransactionSelector {
         transaction,
         transactionReceiptFactory.create(
             transaction.getType(), result, worldState, cumulativeGasUsed),
-        gasUsedByTransaction,
-        eip1559);
+        gasUsedByTransaction);
   }
 
   private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(
@@ -338,7 +336,7 @@ public class BlockTransactionSelector {
       final long blockNumber, final long gasLimit, final Transaction transaction) {
 
     final long blockGasRemaining;
-    if (eip1559.isPresent()) {
+    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       switch (transaction.getType()) {
         case EIP1559:
           return !transactionGasBudgetCalculator.hasBudget(
@@ -371,7 +369,7 @@ public class BlockTransactionSelector {
     final double gasUsed, gasAvailable;
     gasAvailable = processableBlockHeader.getGasLimit();
 
-    if (eip1559.isPresent()) {
+    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
       gasUsed = transactionSelectionResult.getTotalCumulativeGasUsed();
     } else {
       gasUsed = transactionSelectionResult.getFrontierCumulativeGasUsed();

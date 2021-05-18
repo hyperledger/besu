@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -188,6 +189,7 @@ public final class EthHash {
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
     if (header.getBaseFee().isPresent()) {
+      ExperimentalEIPs.eip1559MustBeEnabled();
       out.writeLongScalar(header.getBaseFee().get());
     }
     out.endList();

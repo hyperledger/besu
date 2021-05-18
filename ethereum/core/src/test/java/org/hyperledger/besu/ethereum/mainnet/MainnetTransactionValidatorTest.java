@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -45,6 +46,7 @@ import java.util.Set;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -68,6 +70,11 @@ public class MainnetTransactionValidatorTest {
           .createTransaction(senderKeys);
 
   private final boolean defaultGoQuorumCompatibilityMode = false;
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+  }
 
   @Test
   public void shouldRejectTransactionIfIntrinsicGasExceedsGasLimit() {
@@ -257,6 +264,8 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldAcceptOnlyTransactionsInAcceptedTransactionTypes() {
+    ExperimentalEIPs.eip1559Enabled = true;
+
     final MainnetTransactionValidator frontierValidator =
         new MainnetTransactionValidator(
             gasCalculator,
@@ -294,10 +303,13 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(eip1559Validator.validate(transaction, Optional.of(1L)))
         .isEqualTo(ValidationResult.valid());
+
+    ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @Test
   public void shouldRejectTransactionIfEIP1559TransactionGasPriceLessBaseFee() {
+    ExperimentalEIPs.eip1559Enabled = true;
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
@@ -317,10 +329,12 @@ public class MainnetTransactionValidatorTest {
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(1));
     assertThat(validator.validate(transaction, basefee))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
+    ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @Test
   public void shouldAcceptValidEIP1559() {
+    ExperimentalEIPs.eip1559Enabled = true;
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
@@ -341,6 +355,7 @@ public class MainnetTransactionValidatorTest {
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(150001L));
 
     assertThat(validator.validate(transaction, basefee)).isEqualTo(ValidationResult.valid());
+    ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @Test

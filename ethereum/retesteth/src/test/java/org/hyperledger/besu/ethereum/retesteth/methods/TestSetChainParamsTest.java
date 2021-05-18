@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -88,6 +89,7 @@ public class TestSetChainParamsTest {
 
   @Test
   public void testValidate1559GenesisImport() throws IOException {
+    ExperimentalEIPs.eip1559Enabled = true;
     final String chainParamsJsonString =
         Resources.toString(
             TestSetChainParamsTest.class.getResource("1559ChainParams.json"), Charsets.UTF_8);

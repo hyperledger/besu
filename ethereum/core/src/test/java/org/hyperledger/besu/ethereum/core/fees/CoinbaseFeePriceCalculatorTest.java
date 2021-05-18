@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 
@@ -23,6 +24,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -71,5 +74,15 @@ public class CoinbaseFeePriceCalculatorTest {
   public void assertThatCalculatorWorks() {
     assertThat(coinbaseFeePriceCalculator.price(coinbaseFee, transactionGasPrice, baseFee))
         .isEqualByComparingTo(expectedPrice);
+  }
+
+  @Before
+  public void setUp() {
+    ExperimentalEIPs.eip1559Enabled = true;
+  }
+
+  @After
+  public void reset() {
+    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
   }
 }
