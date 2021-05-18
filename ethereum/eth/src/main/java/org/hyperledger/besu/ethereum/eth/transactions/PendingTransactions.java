@@ -290,15 +290,14 @@ public class PendingTransactions {
       }
       final Lock lock = baseFeeLock.readLock();
       try {
-        if (transaction.getType().equals(TransactionType.EIP1559)) {
-          // check if it's in static or dynamic range
-          if (transaction.getMaxFeePerGas().get().getValue().longValue()
-                  - transaction.getMaxPriorityFeePerGas().get().getValue().longValue()
-              > baseFee) {
-            // static
-            prioritizedTransactionsStaticRange.add(transactionInfo);
-          }
+        // check if it's in static or dynamic range
+        if (transaction.getType().equals(TransactionType.EIP1559)
+            && transaction.getMaxFeePerGas().get().getValue().longValue()
+                    - transaction.getMaxPriorityFeePerGas().get().getValue().longValue()
+                > baseFee) {
+          prioritizedTransactionsStaticRange.add(transactionInfo);
         } else {
+          // non-1559 tx always dynamic
           prioritizedTransactionDynamicRange.add(transactionInfo);
         }
       } finally {
