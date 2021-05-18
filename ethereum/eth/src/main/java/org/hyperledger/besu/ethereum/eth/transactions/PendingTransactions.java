@@ -41,9 +41,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -245,16 +247,20 @@ public class PendingTransactions {
   // here but in the case of reorging back to a block lower than the upgrade block, we could have
   // let a future transaction type in that shouldn't be mined
   public void selectTransactions(final TransactionSelector selector) {
-    synchronized (prioritizedTransactionsStaticRange) {
+    final Lock lock = collectionLock.writeLock();
+    try {
       final List<Transaction> transactionsToRemove = new ArrayList<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
-      for (final TransactionInfo transactionInfo : prioritizedTransactionsStaticRange) {
+      final Iterator<TransactionInfo> prioritizedTransactions = prioritizedTransactions();
+      while (prioritizedTransactions.hasNext()) {
+        final TransactionInfo highestPriorityTransactionInfo = prioritizedTransactions.next();
         final AccountTransactionOrder accountTransactionOrder =
             accountTransactions.computeIfAbsent(
-                transactionInfo.getSender(), this::createSenderTransactionOrder);
+                highestPriorityTransactionInfo.getSender(), this::createSenderTransactionOrder);
 
         for (final Transaction transactionToProcess :
-            accountTransactionOrder.transactionsToProcess(transactionInfo.getTransaction())) {
+            accountTransactionOrder.transactionsToProcess(
+                highestPriorityTransactionInfo.getTransaction())) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);
           switch (result) {
@@ -272,7 +278,70 @@ public class PendingTransactions {
         }
       }
       transactionsToRemove.forEach(this::removeTransaction);
+    } finally {
+      lock.unlock();
     }
+  }
+
+  private Iterator<TransactionInfo> prioritizedTransactions() {
+    return new Iterator<>() {
+      final Iterator<TransactionInfo> staticRangeIterable =
+          prioritizedTransactionsStaticRange.iterator();
+      final Iterator<TransactionInfo> dynamicRangeIterable =
+          prioritizedTransactionsStaticRange.iterator();
+
+      Optional<TransactionInfo> currentStaticRangeTransaction =
+          getNextOptional(staticRangeIterable);
+      Optional<TransactionInfo> currentDynamicRangeTransaction =
+          getNextOptional(dynamicRangeIterable);
+
+      @Override
+      public boolean hasNext() {
+        return staticRangeIterable.hasNext() || dynamicRangeIterable.hasNext();
+      }
+
+      @Override
+      public TransactionInfo next() {
+        if (currentStaticRangeTransaction.isEmpty() && currentDynamicRangeTransaction.isEmpty()) {
+          throw new NoSuchElementException("Tried to iterate past end of iterator.");
+        } else if (currentStaticRangeTransaction.isEmpty()) {
+          // only dynamic range txs left
+          final TransactionInfo best = currentDynamicRangeTransaction.get();
+          currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
+          return best;
+        } else if (currentDynamicRangeTransaction.isEmpty()) {
+          // only static range txs left
+          final TransactionInfo best = currentStaticRangeTransaction.get();
+          currentStaticRangeTransaction = getNextOptional(staticRangeIterable);
+          return best;
+        } else {
+          // there are both static and dynamic txs remaining so we need to compare them by their
+          // effective priority fees
+          final long dynamicRangeEffectivePriorityFee =
+              effectivePriorityFeePerGas(
+                  currentDynamicRangeTransaction.get().getTransaction(), baseFee);
+          final long staticRangeEffectivePriorityFee =
+              effectivePriorityFeePerGas(
+                  currentStaticRangeTransaction.get().getTransaction(), baseFee);
+          final TransactionInfo best;
+          if (dynamicRangeEffectivePriorityFee > staticRangeEffectivePriorityFee) {
+            best = currentDynamicRangeTransaction.get();
+            currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
+          } else {
+            best = currentStaticRangeTransaction.get();
+            currentStaticRangeTransaction = getNextOptional(staticRangeIterable);
+          }
+          return best;
+        }
+      }
+
+      private Optional<TransactionInfo> getNextOptional(
+          final Iterator<TransactionInfo> transactionInfoIterator) {
+        return transactionInfoIterator.hasNext()
+            ? Optional.of(transactionInfoIterator.next())
+            : Optional.empty();
+      }
+    };
   }
 
   private AccountTransactionOrder createSenderTransactionOrder(final Address address) {
