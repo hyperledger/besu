@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
@@ -516,7 +517,60 @@ public class PendingTransactions {
   }
 
   public void updateBaseFee(final Long baseFee) {
-    // lock and update or do whatever you want here
+    final Lock lock = collectionLock.writeLock();
+    try {
+      if (this.baseFee != baseFee) {
+        final boolean baseFeeIncreased = baseFee > this.baseFee;
+        this.baseFee = baseFee;
+        if (baseFeeIncreased) {
+          // base fee increases can only cause transactions to go from static to dynamic range
+          final List<TransactionInfo> transactionInfosToTransfer =
+              prioritizedTransactionsStaticRange.stream()
+                  .filter(
+                      // these are the transactions whose effective priority fee have now dropped
+                      // below their max priority fee
+                      transactionInfo -> {
+                        final Transaction transaction = transactionInfo.getTransaction();
+                        return effectivePriorityFeePerGas(transaction, baseFee)
+                            < transaction.getMaxPriorityFeePerGas().get().getValue().longValue();
+                      })
+                  .collect(toUnmodifiableList());
+          transactionInfosToTransfer.forEach(
+              transactionInfo -> {
+                prioritizedTransactionsStaticRange.remove(transactionInfo);
+                prioritizedTransactionsDynamicRange.add(transactionInfo);
+              });
+        } else {
+          // base fee decreases can only cause transactions to go from dynamic to static range
+          final List<TransactionInfo> transactionInfosToTransfer =
+              prioritizedTransactionsDynamicRange.stream()
+                  .filter(
+                      // these are the transactions whose effective priority fee are now above their
+                      // max priority fee
+                      transactionInfo -> {
+                        final Transaction transaction = transactionInfo.getTransaction();
+                        return transaction
+                            .getMaxPriorityFeePerGas()
+                            .map(
+                                maxPriorityFeePerGas ->
+                                    effectivePriorityFeePerGas(transaction, baseFee)
+                                        > maxPriorityFeePerGas.getValue().longValue())
+                            .orElse(
+                                // no max priority fee per gas means non-eip-1559, which means it
+                                // can't be a static range tx
+                                false);
+                      })
+                  .collect(toUnmodifiableList());
+          transactionInfosToTransfer.forEach(
+              transactionInfo -> {
+                prioritizedTransactionsDynamicRange.remove(transactionInfo);
+                prioritizedTransactionsStaticRange.add(transactionInfo);
+              });
+        }
+      }
+    } finally {
+      lock.unlock();
+    }
   }
 
   /**
