@@ -667,7 +667,7 @@ task acceptanceTestsQuorum {
    *
    * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
    */
-  def tags = "(basic && !eth-api-signed && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
+  def tags = "(basic && estimategas && !eth-api-signed && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
     exec {
