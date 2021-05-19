@@ -238,9 +238,13 @@ public class PendingTransactions {
     transactionRemovedCounter.labels(location, operation).inc();
   }
 
-  // todo make sure we only select valid transaction types. Usually they're blocked before they get
-  // here but in the case of reorging back to a block lower than the upgrade block, we could have
-  // let a future transaction type in that shouldn't be mined
+  // There's a small edge case here we could encounter.
+  // When we pass an upgrade block that has a new transaction type, we start allowing transactions
+  // of that new type into our pool.
+  // If we then reorg to a block lower than the upgrade block height _and_ we create a block, that
+  // block could end up with transactions of the new type.
+  // This seems like it would be very rare but worth it to document that we don't handle that case
+  // right now.
   public void selectTransactions(final TransactionSelector selector) {
     synchronized (lock) {
       final List<Transaction> transactionsToRemove = new ArrayList<>();
