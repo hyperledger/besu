@@ -80,11 +80,10 @@ public class PendingTransactions {
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(
                   transactionInfo ->
-                      // safe to .get() here because it has to a 1559 tx
-                      // non-1559 txs are always in the dynamic range
                       transactionInfo
                           .getTransaction()
                           .getMaxPriorityFeePerGas()
+                          // safe to .get() here because only 1559 txs can be in the static range
                           .get()
                           .getValue()
                           .longValue())
