@@ -393,7 +393,7 @@ public class PendingTransactions {
     return ADDED;
   }
 
-  private boolean isInStaticRange(final Transaction transaction, final long baseFee) {
+  private boolean isInStaticRange(final Transaction transaction, final Long baseFee) {
     return transaction
         .getMaxPriorityFeePerGas()
         .map(
