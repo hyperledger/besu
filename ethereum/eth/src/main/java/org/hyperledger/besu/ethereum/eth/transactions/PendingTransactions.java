@@ -289,7 +289,7 @@ public class PendingTransactions {
 
       @Override
       public boolean hasNext() {
-        return staticRangeIterable.hasNext() || dynamicRangeIterable.hasNext();
+        return currentStaticRangeTransaction.isPresent() || currentDynamicRangeTransaction.isPresent();
       }
 
       @Override
