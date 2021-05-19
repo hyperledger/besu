@@ -575,6 +575,7 @@ public abstract class MainnetProtocolSpecs {
                 MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
         .eip1559(Optional.of(eip1559))
+        .difficultyCalculator(MainnetDifficultyCalculators.LONDON)
         .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
