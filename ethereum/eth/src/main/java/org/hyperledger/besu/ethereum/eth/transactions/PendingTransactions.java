@@ -280,7 +280,7 @@ public class PendingTransactions {
       final Iterator<TransactionInfo> staticRangeIterable =
           prioritizedTransactionsStaticRange.iterator();
       final Iterator<TransactionInfo> dynamicRangeIterable =
-          prioritizedTransactionsStaticRange.iterator();
+          prioritizedTransactionsDynamicRange.iterator();
 
       Optional<TransactionInfo> currentStaticRangeTransaction =
           getNextOptional(staticRangeIterable);
