@@ -77,7 +77,7 @@ public class TransactionPoolReplacementHandlerTest {
   public void shouldReplace() {
     assertThat(
             new TransactionPoolReplacementHandler(rules)
-                .shouldReplace(oldTransactionInfo, newTransactionInfo, header))
+                .shouldReplace(oldTransactionInfo, newTransactionInfo, header.getBaseFee()))
         .isEqualTo(expectedResult);
   }
 

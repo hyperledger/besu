@@ -30,17 +30,16 @@ class TransactionsForSenderInfo {
     transactionsInfos = new TreeMap<>();
   }
 
-  void addTransactionToTrack(
-      final long nonce, final PendingTransactions.TransactionInfo transactionInfo) {
+  void addTransactionToTrack(final PendingTransactions.TransactionInfo transactionInfo) {
     synchronized (transactionsInfos) {
       if (!transactionsInfos.isEmpty()) {
         final long expectedNext = transactionsInfos.lastKey() + 1;
-        if (nonce > (expectedNext) && nextGap.isEmpty()) {
+        if (transactionInfo.getNonce() > (expectedNext) && nextGap.isEmpty()) {
           nextGap = OptionalLong.of(expectedNext);
         }
       }
-      transactionsInfos.put(nonce, transactionInfo);
-      if (nonce == nextGap.orElse(-1)) {
+      transactionsInfos.put(transactionInfo.getNonce(), transactionInfo);
+      if (transactionInfo.getNonce() == nextGap.orElse(-1)) {
         findGap();
       }
     }

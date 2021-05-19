@@ -14,12 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ADDED;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
 
 import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -29,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -40,24 +34,18 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
-import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
@@ -74,38 +62,6 @@ public class PendingTransactions {
   private final Clock clock;
 
   private final EvictingQueue<Hash> newPooledHashes;
-  private final Object lock = new Object();
-  private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
-  private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
-      new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
-              .thenComparing(
-                  transactionInfo ->
-                      transactionInfo
-                          .getTransaction()
-                          .getMaxPriorityFeePerGas()
-                          // safe to .get() here because only 1559 txs can be in the static range
-                          .get()
-                          .getValue()
-                          .longValue())
-              .thenComparing(TransactionInfo::getSequence)
-              .reversed());
-  private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
-      new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
-              .thenComparing(
-                  transactionInfo ->
-                      transactionInfo
-                          .getTransaction()
-                          .getMaxFeePerGas()
-                          .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
-                          .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(TransactionInfo::getSequence)
-              .reversed());
-  private Long baseFee;
-  private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
-      new ConcurrentHashMap<>();
-
   private final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
       Subscribers.create();
 
@@ -119,7 +75,9 @@ public class PendingTransactions {
 
   private final long maxPendingTransactions;
   private final TransactionPoolReplacementHandler transactionReplacementHandler;
-  private final Supplier<BlockHeader> chainHeadHeaderSupplier;
+
+  // todo: config or static?
+  private final PendingTransactionQueue pq;
 
   public PendingTransactions(
       final int maxTransactionRetentionHours,
@@ -133,8 +91,6 @@ public class PendingTransactions {
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
     this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
-    this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
-    this.baseFee = chainHeadHeaderSupplier.get().getBaseFee().orElse(null);
     this.transactionReplacementHandler = new TransactionPoolReplacementHandler(priceBump);
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
@@ -154,24 +110,57 @@ public class PendingTransactions {
             "source",
             "operation");
 
+    /* Consumer callback function for actions to take upon addition of a transaction to pending
+     * - counter mods
+     * - add transaction notifications
+     * - removal from announced transaction set
+     * */
+    Consumer<Transaction> onAdd =
+        (tx) -> {
+          notifyTransactionAdded(tx);
+          newPooledHashes.remove(tx.getHash());
+        };
+
+    /* BiConsumer callback function for actions to take upon removal of a transaction from pending
+     * - counter mods
+     * - removal from announced transaction set
+     * - dropped txn notifications
+     * */
+    BiConsumer<TransactionInfo, Boolean> onRemove =
+        (txInfo, addedToBlock) -> {
+          incrementTransactionRemovedCounter(txInfo.isReceivedFromLocalSource(), addedToBlock);
+          newPooledHashes.remove(txInfo.getHash());
+          if (!addedToBlock) {
+            notifyTransactionDropped(txInfo.transaction);
+          }
+        };
+
+    this.pq =
+        new PendingTransactionQueue.BasicPriorityFeeQueue(
+            maxPendingTransactions,
+            onAdd,
+            onRemove,
+            transactionReplacementHandler,
+            Optional.ofNullable(chainHeadHeaderSupplier.get()).flatMap(BlockHeader::getBaseFee));
+
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.TRANSACTION_POOL,
         "transactions",
         "Current size of the transaction pool",
-        pendingTransactions::size);
+        () -> pq.size());
   }
 
   public void evictOldTransactions() {
     final Instant removeTransactionsBefore =
         clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
 
-    pendingTransactions.values().stream()
+    pq.getPendingTransactions().stream()
         .filter(transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
-        .forEach(transaction -> removeTransaction(transaction.getTransaction()));
+        .forEach(transaction -> pq.removePendingTransaction(transaction.getTransaction(), false));
   }
 
   List<Transaction> getLocalTransactions() {
-    return pendingTransactions.values().stream()
+    return pq.getPendingTransactions().stream()
         .filter(TransactionInfo::isReceivedFromLocalSource)
         .map(TransactionInfo::getTransaction)
         .collect(Collectors.toList());
@@ -180,7 +169,7 @@ public class PendingTransactions {
   public boolean addRemoteTransaction(final Transaction transaction) {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
-    final TransactionAddedStatus transactionAddedStatus = addTransaction(transactionInfo);
+    final TransactionAddedStatus transactionAddedStatus = pq.addTransaction(transactionInfo);
     final boolean added = transactionAddedStatus.equals(ADDED);
     if (added) {
       remoteTransactionAddedCounter.inc();
@@ -202,36 +191,20 @@ public class PendingTransactions {
   @VisibleForTesting
   public TransactionAddedStatus addLocalTransaction(final Transaction transaction) {
     final TransactionAddedStatus transactionAdded =
-        addTransaction(new TransactionInfo(transaction, true, clock.instant()));
+        pq.addTransaction(new TransactionInfo(transaction, true, clock.instant()));
     if (transactionAdded.equals(ADDED)) {
       localTransactionAddedCounter.inc();
     }
     return transactionAdded;
   }
 
+  @VisibleForTesting
   void removeTransaction(final Transaction transaction) {
-    doRemoveTransaction(transaction, false);
-    notifyTransactionDropped(transaction);
+    pq.removePendingTransaction(transaction, false);
   }
 
   void transactionAddedToBlock(final Transaction transaction) {
-    doRemoveTransaction(transaction, true);
-  }
-
-  private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (lock) {
-      final TransactionInfo removedTransactionInfo =
-          pendingTransactions.remove(transaction.getHash());
-      if (removedTransactionInfo != null) {
-        checkState(
-            prioritizedTransactionsStaticRange.remove(removedTransactionInfo)
-                ^ prioritizedTransactionsDynamicRange.remove(removedTransactionInfo),
-            "It shouldn't be possible that the transaction was remove from neither or both collections. It should only have been removed from one.");
-        removeTransactionTrackedBySenderAndNonce(transaction);
-        incrementTransactionRemovedCounter(
-            removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
-      }
-    }
+    pq.removePendingTransaction(transaction, true);
   }
 
   private void incrementTransactionRemovedCounter(
@@ -245,256 +218,41 @@ public class PendingTransactions {
   // here but in the case of reorging back to a block lower than the upgrade block, we could have
   // let a future transaction type in that shouldn't be mined
   public void selectTransactions(final TransactionSelector selector) {
-    synchronized (lock) {
-      final List<Transaction> transactionsToRemove = new ArrayList<>();
-      final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
-      final Iterator<TransactionInfo> prioritizedTransactions = prioritizedTransactions();
-      while (prioritizedTransactions.hasNext()) {
-        final TransactionInfo highestPriorityTransactionInfo = prioritizedTransactions.next();
-        final AccountTransactionOrder accountTransactionOrder =
-            accountTransactions.computeIfAbsent(
-                highestPriorityTransactionInfo.getSender(), this::createSenderTransactionOrder);
+    final List<Transaction> transactionsToRemove = new ArrayList<>();
+    final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
 
-        for (final Transaction transactionToProcess :
-            accountTransactionOrder.transactionsToProcess(
-                highestPriorityTransactionInfo.getTransaction())) {
-          final TransactionSelectionResult result =
-              selector.evaluateTransaction(transactionToProcess);
-          switch (result) {
-            case DELETE_TRANSACTION_AND_CONTINUE:
-              transactionsToRemove.add(transactionToProcess);
-              break;
-            case CONTINUE:
-              break;
-            case COMPLETE_OPERATION:
-              transactionsToRemove.forEach(this::removeTransaction);
-              return;
-            default:
-              throw new RuntimeException("Illegal value for TransactionSelectionResult.");
-          }
+    for (final TransactionInfo transactionInfo : pq.getPendingTransactionsByPriority()) {
+
+      final AccountTransactionOrder accountTransactionOrder =
+          accountTransactions.computeIfAbsent(
+              transactionInfo.getSender(), this::createSenderTransactionOrder);
+
+      for (final Transaction transactionToProcess :
+          accountTransactionOrder.transactionsToProcess(transactionInfo.getTransaction())) {
+        final TransactionSelectionResult result =
+            selector.evaluateTransaction(transactionToProcess);
+        switch (result) {
+          case DELETE_TRANSACTION_AND_CONTINUE:
+            transactionsToRemove.add(transactionToProcess);
+            break;
+          case CONTINUE:
+            break;
+          case COMPLETE_OPERATION:
+            transactionsToRemove.forEach(tx -> pq.removePendingTransaction(tx, true));
+            return;
+          default:
+            throw new RuntimeException("Illegal value for TransactionSelectionResult.");
         }
       }
-      transactionsToRemove.forEach(this::removeTransaction);
     }
-  }
-
-  private Iterator<TransactionInfo> prioritizedTransactions() {
-    return new Iterator<>() {
-      final Iterator<TransactionInfo> staticRangeIterable =
-          prioritizedTransactionsStaticRange.iterator();
-      final Iterator<TransactionInfo> dynamicRangeIterable =
-          prioritizedTransactionsDynamicRange.iterator();
-
-      Optional<TransactionInfo> currentStaticRangeTransaction =
-          getNextOptional(staticRangeIterable);
-      Optional<TransactionInfo> currentDynamicRangeTransaction =
-          getNextOptional(dynamicRangeIterable);
-
-      @Override
-      public boolean hasNext() {
-        return currentStaticRangeTransaction.isPresent()
-            || currentDynamicRangeTransaction.isPresent();
-      }
-
-      @Override
-      public TransactionInfo next() {
-        if (currentStaticRangeTransaction.isEmpty() && currentDynamicRangeTransaction.isEmpty()) {
-          throw new NoSuchElementException("Tried to iterate past end of iterator.");
-        } else if (currentStaticRangeTransaction.isEmpty()) {
-          // only dynamic range txs left
-          final TransactionInfo best = currentDynamicRangeTransaction.get();
-          currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
-          return best;
-        } else if (currentDynamicRangeTransaction.isEmpty()) {
-          // only static range txs left
-          final TransactionInfo best = currentStaticRangeTransaction.get();
-          currentStaticRangeTransaction = getNextOptional(staticRangeIterable);
-          return best;
-        } else {
-          // there are both static and dynamic txs remaining so we need to compare them by their
-          // effective priority fees
-          final long dynamicRangeEffectivePriorityFee =
-              effectivePriorityFeePerGas(
-                  currentDynamicRangeTransaction.get().getTransaction(), baseFee);
-          final long staticRangeEffectivePriorityFee =
-              effectivePriorityFeePerGas(
-                  currentStaticRangeTransaction.get().getTransaction(), baseFee);
-          final TransactionInfo best;
-          if (dynamicRangeEffectivePriorityFee > staticRangeEffectivePriorityFee) {
-            best = currentDynamicRangeTransaction.get();
-            currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
-          } else {
-            best = currentStaticRangeTransaction.get();
-            currentStaticRangeTransaction = getNextOptional(staticRangeIterable);
-          }
-          return best;
-        }
-      }
-
-      private Optional<TransactionInfo> getNextOptional(
-          final Iterator<TransactionInfo> transactionInfoIterator) {
-        return transactionInfoIterator.hasNext()
-            ? Optional.of(transactionInfoIterator.next())
-            : Optional.empty();
-      }
-    };
+    transactionsToRemove.forEach(tx -> pq.removePendingTransaction(tx, true));
   }
 
   private AccountTransactionOrder createSenderTransactionOrder(final Address address) {
     return new AccountTransactionOrder(
-        transactionsBySender
-            .get(address)
+        pq.getTransactionsForSender(address)
             .streamTransactionInfos()
             .map(TransactionInfo::getTransaction));
-  }
-
-  private TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
-    Optional<Transaction> droppedTransaction = Optional.empty();
-    final Transaction transaction = transactionInfo.getTransaction();
-    synchronized (lock) {
-      if (pendingTransactions.containsKey(transactionInfo.getHash())) {
-        return ALREADY_KNOWN;
-      }
-
-      final TransactionAddedStatus transactionAddedStatus =
-          addTransactionForSenderAndNonce(transactionInfo);
-      if (!transactionAddedStatus.equals(ADDED)) {
-        return transactionAddedStatus;
-      }
-      // check if it's in static or dynamic range
-      if (isInStaticRange(transaction, baseFee)) {
-        prioritizedTransactionsStaticRange.add(transactionInfo);
-      } else {
-        prioritizedTransactionsDynamicRange.add(transactionInfo);
-      }
-      pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
-      tryEvictTransactionHash(transactionInfo.getHash());
-
-      if (pendingTransactions.size() > maxPendingTransactions) {
-        final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
-        if (!prioritizedTransactionsDynamicRange.isEmpty())
-          removalCandidates.add(prioritizedTransactionsDynamicRange.last());
-        if (!prioritizedTransactionsStaticRange.isEmpty())
-          removalCandidates.add(prioritizedTransactionsStaticRange.last());
-        final TransactionInfo toRemove =
-            removalCandidates
-                .build()
-                .min(
-                    Comparator.comparing(
-                        txInfo -> effectivePriorityFeePerGas(txInfo.getTransaction(), baseFee)))
-                // safe because we just added a tx to the pool so we're guaranteed to have one
-                .get();
-        doRemoveTransaction(toRemove.getTransaction(), false);
-        droppedTransaction = Optional.of(toRemove.getTransaction());
-      }
-    }
-    notifyTransactionAdded(transaction);
-    droppedTransaction.ifPresent(this::notifyTransactionDropped);
-    return ADDED;
-  }
-
-  private boolean isInStaticRange(final Transaction transaction, final Long baseFee) {
-    return transaction
-        .getMaxPriorityFeePerGas()
-        .map(
-            maxPriorityFeePerGas ->
-                effectivePriorityFeePerGas(transaction, baseFee)
-                    >= maxPriorityFeePerGas.getValue().longValue())
-        .orElse(
-            // non-eip-1559 txs can't be in static range
-            false);
-  }
-
-  private long effectivePriorityFeePerGas(final Transaction transaction, final long baseFee) {
-    final long maybeNegativePriorityFeePerGas;
-    if (transaction.getType().equals(TransactionType.EIP1559)) {
-      maybeNegativePriorityFeePerGas =
-          Math.min(
-              transaction.getMaxPriorityFeePerGas().get().getValue().longValue(),
-              transaction.getMaxFeePerGas().get().getValue().longValue() - baseFee);
-    } else {
-      maybeNegativePriorityFeePerGas = transaction.getGasPrice().getValue().longValue() - baseFee;
-    }
-    return maybeNegativePriorityFeePerGas;
-  }
-
-  public void updateBaseFee(final Long baseFee) {
-    if (Objects.equals(this.baseFee, baseFee)) {
-      return;
-    }
-    synchronized (lock) {
-      final boolean baseFeeIncreased = baseFee > this.baseFee;
-      this.baseFee = baseFee;
-      if (baseFeeIncreased) {
-        // base fee increases can only cause transactions to go from static to dynamic range
-        final List<TransactionInfo> transactionInfosToTransfer =
-            prioritizedTransactionsStaticRange.stream()
-                .filter(
-                    // these are the transactions whose effective priority fee have now dropped
-                    // below their max priority fee
-                    transactionInfo -> !isInStaticRange(transactionInfo.getTransaction(), baseFee))
-                .collect(toUnmodifiableList());
-        transactionInfosToTransfer.forEach(
-            transactionInfo -> {
-              prioritizedTransactionsStaticRange.remove(transactionInfo);
-              prioritizedTransactionsDynamicRange.add(transactionInfo);
-            });
-      } else {
-        // base fee decreases can only cause transactions to go from dynamic to static range
-        final List<TransactionInfo> transactionInfosToTransfer =
-            prioritizedTransactionsDynamicRange.stream()
-                .filter(
-                    // these are the transactions whose effective priority fee are now above their
-                    // max priority fee
-                    transactionInfo -> isInStaticRange(transactionInfo.getTransaction(), baseFee))
-                .collect(toUnmodifiableList());
-        transactionInfosToTransfer.forEach(
-            transactionInfo -> {
-              prioritizedTransactionsDynamicRange.remove(transactionInfo);
-              prioritizedTransactionsStaticRange.add(transactionInfo);
-            });
-      }
-    }
-  }
-
-  private TransactionAddedStatus addTransactionForSenderAndNonce(
-      final TransactionInfo transactionInfo) {
-    final TransactionInfo existingTransaction =
-        getTrackedTransactionBySenderAndNonce(transactionInfo);
-    if (existingTransaction != null) {
-      // todo we should abstract replacement strategy. This is currently buggy because it doesn't
-      // work for access list
-      if (existingTransaction.transaction.getType().equals(TransactionType.FRONTIER)
-          && !transactionReplacementHandler.shouldReplace(
-              existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
-        return REJECTED_UNDERPRICED_REPLACEMENT;
-      }
-      removeTransaction(existingTransaction.getTransaction());
-    }
-    trackTransactionBySenderAndNonce(transactionInfo);
-    return ADDED;
-  }
-
-  private void trackTransactionBySenderAndNonce(final TransactionInfo transactionInfo) {
-    final TransactionsForSenderInfo transactionsForSenderInfo =
-        transactionsBySender.computeIfAbsent(
-            transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
-    transactionsForSenderInfo.addTransactionToTrack(transactionInfo.getNonce(), transactionInfo);
-  }
-
-  private void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
-    Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
-        .ifPresent(
-            transactionsForSender ->
-                transactionsForSender.removeTrackedTransaction(transaction.getNonce()));
-  }
-
-  private TransactionInfo getTrackedTransactionBySenderAndNonce(
-      final TransactionInfo transactionInfo) {
-    final TransactionsForSenderInfo transactionsForSenderInfo =
-        transactionsBySender.computeIfAbsent(
-            transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
-    return transactionsForSenderInfo.getTransactionInfoForNonce(transactionInfo.getNonce());
   }
 
   private void notifyTransactionAdded(final Transaction transaction) {
@@ -510,20 +268,19 @@ public class PendingTransactions {
   }
 
   public int size() {
-    return pendingTransactions.size();
+    return pq.size();
   }
 
   public boolean containsTransaction(final Hash transactionHash) {
-    return pendingTransactions.containsKey(transactionHash);
+    return pq.containsHash(transactionHash);
   }
 
   public Optional<Transaction> getTransactionByHash(final Hash transactionHash) {
-    return Optional.ofNullable(pendingTransactions.get(transactionHash))
-        .map(TransactionInfo::getTransaction);
+    return Optional.ofNullable(pq.get(transactionHash)).map(TransactionInfo::getTransaction);
   }
 
   public Set<TransactionInfo> getTransactionInfo() {
-    return new HashSet<>(pendingTransactions.values());
+    return new HashSet<>(pq.getPendingTransactions());
   }
 
   long subscribePendingTransactions(final PendingTransactionListener listener) {
@@ -543,7 +300,7 @@ public class PendingTransactions {
   }
 
   public OptionalLong getNextNonceForSender(final Address sender) {
-    final TransactionsForSenderInfo transactionsForSenderInfo = transactionsBySender.get(sender);
+    final TransactionsForSenderInfo transactionsForSenderInfo = pq.getTransactionsForSender(sender);
     return transactionsForSenderInfo == null
         ? OptionalLong.empty()
         : transactionsForSenderInfo.maybeNextNonce();
@@ -559,6 +316,11 @@ public class PendingTransactions {
     synchronized (newPooledHashes) {
       return List.copyOf(newPooledHashes);
     }
+  }
+
+  public void updateBaseFee(final Long baseFee) {
+    // pass new baseFee to pending queue
+    pq.updateBaseFee(baseFee);
   }
 
   /**
