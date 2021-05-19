@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
@@ -37,6 +36,8 @@ import java.util.Optional;
 
 public class BlockHeaderValidationRulesetFactory {
 
+  private static final int MIN_GAS_LIMIT = 5000;
+
   /**
    * Creates a set of rules which when executed will determine if a given block header is valid with
    * respect to its parent (or chain).
@@ -56,9 +57,11 @@ public class BlockHeaderValidationRulesetFactory {
     final BlockHeaderValidator.Builder builder =
         new BlockHeaderValidator.Builder()
             .addRule(new AncestryValidationRule())
-            .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
             .addRule(new TimestampBoundedByFutureParameter(10))
             .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
+            .addRule(
+                new GasLimitRangeAndDeltaValidationRule(
+                    MIN_GAS_LIMIT, 0x7fffffffffffffffL, eip1559))
             .addRule(
                 new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
             .addRule(
@@ -69,10 +72,11 @@ public class BlockHeaderValidationRulesetFactory {
             .addRule(new CliqueDifficultyValidationRule())
             .addRule(new SignerRateLimitValidationRule())
             .addRule(new CoinbaseHeaderValidationRule(epochManager));
-    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
+    if (eip1559.isPresent()) {
       builder
           .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559.get())))
-          .addRule(new GasUsageValidationRule(eip1559));
+          .addRule(new GasUsageValidationRule());
+
     } else {
       builder.addRule(new GasUsageValidationRule());
     }

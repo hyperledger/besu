@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
   "number",
   "hash",

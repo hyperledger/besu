@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.BondingAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.RecursivePeerRefreshState.FindNeighbourDispatcher;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 
 import java.util.Collections;
 import java.util.List;
@@ -514,7 +514,7 @@ public class RecursivePeerRefreshStateTest {
   private static DiscoveryPeer createPeer(
       final Bytes id, final String ip, final int discoveryPort, final int listeningPort) {
     return DiscoveryPeer.fromEnode(
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(id)
             .ipAddress(ip)
             .discoveryPort(discoveryPort)

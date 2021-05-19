@@ -112,7 +112,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
@@ -138,9 +138,11 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -152,6 +154,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
@@ -260,6 +263,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
+  private final PermissioningServiceImpl permissioningService;
+
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
@@ -397,7 +402,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       bannedNodeIds =
           values.stream()
               .filter(value -> !value.isEmpty())
-              .map(EnodeURL::parseNodeId)
+              .map(EnodeURLImpl::parseNodeId)
               .collect(Collectors.toList());
     } catch (final IllegalArgumentException e) {
       throw new ParameterException(
@@ -451,7 +456,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
       description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer p2pPort = EnodeURL.DEFAULT_LISTENING_PORT;
+  private final Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
 
   @Option(
       names = {"--nat-method"},
@@ -1127,7 +1132,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuPluginContext,
         environment,
         new StorageServiceImpl(),
-        new SecurityModuleServiceImpl());
+        new SecurityModuleServiceImpl(),
+        new PermissioningServiceImpl());
   }
 
   @VisibleForTesting
@@ -1141,7 +1147,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment,
       final StorageServiceImpl storageService,
-      final SecurityModuleServiceImpl securityModuleService) {
+      final SecurityModuleServiceImpl securityModuleService,
+      final PermissioningServiceImpl permissioningService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1152,7 +1159,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.environment = environment;
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
-
+    this.permissioningService = permissioningService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
@@ -1275,6 +1282,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
+    besuPluginContext.addService(PermissioningService.class, permissioningService);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -1678,6 +1686,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
+        .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters(storageProvider))
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
@@ -2287,6 +2296,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem)
+            .permissioningService(permissioningService)
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
             .identityString(identityString)
@@ -2427,7 +2437,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         final List<EnodeURL> listBootNodes =
             bootNodes.stream()
                 .filter(value -> !value.isEmpty())
-                .map(url -> EnodeURL.fromString(url, getEnodeDnsConfiguration()))
+                .map(url -> EnodeURLImpl.fromString(url, getEnodeDnsConfiguration()))
                 .collect(Collectors.toList());
         DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
         builder.setBootNodes(listBootNodes);

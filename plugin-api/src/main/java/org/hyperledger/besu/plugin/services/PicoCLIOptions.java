@@ -25,7 +25,7 @@ package org.hyperledger.besu.plugin.services;
  * href="https://github.com/hyperledger/besu/blob/master/CLI-STYLE-GUIDE.md">CLI-STYLE-GUIDE.md</a>
  * conventions.
  */
-public interface PicoCLIOptions {
+public interface PicoCLIOptions extends BesuService {
 
   /**
    * During the registration callback plugins can register CLI options that should be added to

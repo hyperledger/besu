@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
@@ -1080,7 +1080,7 @@ public class PeerDiscoveryControllerTest {
 
     final DiscoveryPeer localNode =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .ipAddress("127.0.0.1")
                 .nodeId(Peer.randomId())
                 .discoveryAndListeningPorts(30303)
@@ -1120,7 +1120,7 @@ public class PeerDiscoveryControllerTest {
 
     final DiscoveryPeer localNode =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .ipAddress("127.0.0.1")
                 .nodeId(Peer.randomId())
                 .discoveryAndListeningPorts(30303)
@@ -1166,7 +1166,7 @@ public class PeerDiscoveryControllerTest {
 
     final DiscoveryPeer localNode =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .ipAddress("127.0.0.1")
                 .nodeId(Peer.randomId())
                 .discoveryAndListeningPorts(30303)
@@ -1214,7 +1214,7 @@ public class PeerDiscoveryControllerTest {
 
     final DiscoveryPeer localNode =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .ipAddress("127.0.0.1")
                 .nodeId(Peer.randomId())
                 .discoveryAndListeningPorts(30303)
@@ -1254,7 +1254,7 @@ public class PeerDiscoveryControllerTest {
 
     final DiscoveryPeer localNode =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .ipAddress("127.0.0.1")
                 .nodeId(Peer.randomId())
                 .discoveryAndListeningPorts(30303)
@@ -1377,7 +1377,7 @@ public class PeerDiscoveryControllerTest {
       final DiscoveryPeer peer =
           spy(
               DiscoveryPeer.fromEnode(
-                  EnodeURL.builder()
+                  EnodeURLImpl.builder()
                       .nodeId(id)
                       .ipAddress("127.0.0.1")
                       .discoveryAndListeningPorts(100 + counter.incrementAndGet())

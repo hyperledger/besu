@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
@@ -59,7 +60,7 @@ import picocli.CommandLine.ParentCommand;
 
 @Command(
     name = "generate-blockchain-config",
-    description = "Generates node keypairs and genesis file with RLP encoded IBFT 2.0 extra data.",
+    description = "Generates node keypairs and genesis file with RLP encoded extra data.",
     mixinStandardHelpOptions = true)
 class GenerateBlockchainConfig implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
@@ -234,13 +235,22 @@ class GenerateBlockchainConfig implements Runnable {
 
   /** Computes RLP encoded exta data from pre filled list of addresses. */
   private void processExtraData() {
-    final ObjectNode configNode = JsonUtil.getObjectNode(genesisConfig, "config").orElse(null);
+    final ObjectNode configNode =
+        JsonUtil.getObjectNode(genesisConfig, "config")
+            .orElseThrow(
+                () -> new IllegalArgumentException("Missing config section in config file"));
+
     final JsonGenesisConfigOptions genesisConfigOptions =
         JsonGenesisConfigOptions.fromJsonObject(configNode);
     if (genesisConfigOptions.isIbft2()) {
       LOG.info("Generating IBFT extra data.");
       final String extraData =
           IbftExtraDataCodec.encodeFromAddresses(addressesForGenesisExtraData).toString();
+      genesisConfig.put("extraData", extraData);
+    } else if (genesisConfigOptions.isQbft()) {
+      LOG.info("Generating QBFT extra data.");
+      final String extraData =
+          QbftExtraDataCodec.encodeFromAddresses(addressesForGenesisExtraData).toString();
       genesisConfig.put("extraData", extraData);
     }
   }

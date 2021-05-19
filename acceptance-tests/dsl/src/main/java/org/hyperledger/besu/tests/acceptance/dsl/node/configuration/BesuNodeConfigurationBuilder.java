@@ -84,7 +84,11 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder miningEnabled() {
-    this.miningParameters = new MiningParametersTestBuilder().enabled(true).build();
+    return miningEnabled(true);
+  }
+
+  public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
+    this.miningParameters = new MiningParametersTestBuilder().enabled(enabled).build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
     return this;
   }
@@ -128,6 +132,11 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder jsonRpcTxPool() {
     this.jsonRpcConfiguration.addRpcApi(RpcApis.TX_POOL);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcAdmin() {
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.ADMIN);
     return this;
   }
 

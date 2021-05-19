@@ -77,7 +77,7 @@ public class TransactionDecoder {
     try {
       transactionType = TransactionType.of(input.get(0));
     } catch (final IllegalArgumentException __) {
-      return decodeFrontier(RLP.input(input));
+      return decodeForWire(RLP.input(input));
     }
     return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
   }
@@ -174,8 +174,8 @@ public class TransactionDecoder {
             .type(TransactionType.EIP1559)
             .chainId(chainId)
             .nonce(input.readLongScalar())
-            .gasPremium(Wei.wrap(input.readBytes()))
-            .feeCap(Wei.wrap(input.readBytes()))
+            .maxPriorityFeePerGas(Wei.wrap(input.readBytes()))
+            .maxFeePerGas(Wei.wrap(input.readBytes()))
             .gasLimit(input.readLongScalar())
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))

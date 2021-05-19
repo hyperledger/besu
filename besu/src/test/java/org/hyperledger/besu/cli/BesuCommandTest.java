@@ -50,7 +50,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -67,7 +66,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
@@ -76,6 +75,7 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.StringUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
@@ -354,9 +354,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final List<EnodeURL> nodes =
         asList(
-            EnodeURL.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
-            EnodeURL.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
-            EnodeURL.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
+            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
+            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
+            EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
     assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes()).isEqualTo(nodes);
 
     final EthNetworkConfig networkConfig =
@@ -675,9 +675,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void nodePermissioningTomlPathMustUseOption() throws IOException {
     final List<EnodeURL> allowedNodes =
         Lists.newArrayList(
-            EnodeURL.fromString(
+            EnodeURLImpl.fromString(
                 "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567"),
-            EnodeURL.fromString(
+            EnodeURLImpl.fromString(
                 "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.169.0.9:4568"));
 
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_TOML);
@@ -1252,7 +1252,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes())
         .isEqualTo(
-            Stream.of(validENodeStrings).map(EnodeURL::fromString).collect(Collectors.toList()));
+            Stream.of(validENodeStrings)
+                .map(EnodeURLImpl::fromString)
+                .collect(Collectors.toList()));
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3265,7 +3267,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue().getBootNodes())
         .isEqualTo(
-            Stream.of(validENodeStrings).map(EnodeURL::fromString).collect(Collectors.toList()));
+            Stream.of(validENodeStrings)
+                .map(EnodeURLImpl::fromString)
+                .collect(Collectors.toList()));
     assertThat(networkArg.getValue().getNetworkId()).isEqualTo(1234567);
 
     assertThat(commandOutput.toString()).isEmpty();
@@ -3611,7 +3615,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     permissioningConfig.deleteOnExit();
 
     final EnodeURL staticNodeURI =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(
                 "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
             .ipAddress("127.0.0.1")
@@ -3619,7 +3623,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             .build();
 
     final EnodeURL allowedNode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(
                 "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
             .useDefaultPorts()
@@ -4000,20 +4004,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     final TestBesuCommand command = parseCommand("--logging", "WARN");
 
     assertThat(command.getLogLevel()).isEqualTo(Level.WARN);
-  }
-
-  @Test
-  public void assertThatEnablingExperimentalEIPsWorks() {
-    parseCommand("--Xeip1559-enabled=true");
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(ExperimentalEIPs.eip1559Enabled).isTrue();
-  }
-
-  @Test
-  public void assertThatDisablingExperimentalEIPsWorks() {
-    parseCommand("--Xeip1559-enabled=false");
-    assertThat(commandErrorOutput.toString()).isEmpty();
-    assertThat(ExperimentalEIPs.eip1559Enabled).isFalse();
   }
 
   @Test

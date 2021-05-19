@@ -15,8 +15,11 @@
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,8 +34,16 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
 
   private static final Logger LOG = LogManager.getLogger(GasLimitRangeAndDeltaValidationRule.class);
 
-  public GasLimitRangeAndDeltaValidationRule(final long minGasLimit, final long maxGasLimit) {
+  private final Optional<EIP1559> eip1559;
+
+  public GasLimitRangeAndDeltaValidationRule(
+      final long minGasLimit, final long maxGasLimit, final Optional<EIP1559> eip1559) {
     super(minGasLimit, maxGasLimit);
+    this.eip1559 = eip1559;
+  }
+
+  public GasLimitRangeAndDeltaValidationRule(final long minGasLimit, final long maxGasLimit) {
+    this(minGasLimit, maxGasLimit, Optional.empty());
   }
 
   @Override
@@ -48,7 +59,12 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
       return false;
     }
 
-    final long parentGasLimit = parent.getGasLimit();
+    long parentGasLimit = parent.getGasLimit();
+
+    if (eip1559.isPresent() && eip1559.get().isForkBlock(header.getNumber())) {
+      parentGasLimit = parent.getGasLimit() * eip1559.get().getFeeMarket().getSlackCoefficient();
+    }
+
     final long difference = Math.abs(parentGasLimit - gasLimit);
     final long bounds = deltaBound(parentGasLimit);
     if (Long.compareUnsigned(difference, bounds) >= 0) {
