@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -70,6 +71,11 @@ public class TransactionSimulator {
   // coinbase or an account currently unlocked by the client.
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
+
+  // Hex-encoded 64 byte array of "17" values
+  private static final Bytes MAX_PRIVATE_INTRINSIC_DATA_HEX =
+      Bytes.fromHexString(
+          "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
@@ -157,11 +163,24 @@ public class TransactionSimulator {
         callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
     final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
+
+    // If GoQuorum privacy enabled, and value = zero, do simulation with max non-zero bytes.
+    // It is possible to have a data field that has a lower intrinsic value than the PTM hash
+    // so this checks the tx as if we were to place a PTM hash (with all non-zero values).
+    // This means a potential over-estimate of gas, rather than the exact cost to run right now.
+    final Bytes payload =
+        GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()
+            ? MAX_PRIVATE_INTRINSIC_DATA_HEX
+            : (callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY);
 
     if (transactionValidationParams.isAllowExceedingBalance()) {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
     }
+
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+
+    final MainnetTransactionProcessor transactionProcessor =
+        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
@@ -179,10 +198,6 @@ public class TransactionSimulator {
 
     final Transaction transaction = transactionBuilder.build();
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
-
-    final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
