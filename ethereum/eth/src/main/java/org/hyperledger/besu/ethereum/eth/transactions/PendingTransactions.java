@@ -40,6 +40,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -56,6 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
@@ -289,7 +291,8 @@ public class PendingTransactions {
 
       @Override
       public boolean hasNext() {
-        return currentStaticRangeTransaction.isPresent() || currentDynamicRangeTransaction.isPresent();
+        return currentStaticRangeTransaction.isPresent()
+            || currentDynamicRangeTransaction.isPresent();
       }
 
       @Override
@@ -367,14 +370,20 @@ public class PendingTransactions {
       tryEvictTransactionHash(transactionInfo.getHash());
 
       if (pendingTransactions.size() > maxPendingTransactions) {
-        final TransactionInfo staticRemovalCandidate = prioritizedTransactionsStaticRange.last();
-        final TransactionInfo dynamicRemovalCandidate = prioritizedTransactionsDynamicRange.last();
+        final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
+        if (!prioritizedTransactionsDynamicRange.isEmpty())
+          removalCandidates.add(prioritizedTransactionsDynamicRange.last());
+        if (!prioritizedTransactionsStaticRange.isEmpty())
+          removalCandidates.add(prioritizedTransactionsStaticRange.last());
         final TransactionInfo toRemove =
-            effectivePriorityFeePerGas(dynamicRemovalCandidate.getTransaction(), baseFee.get())
-                    > effectivePriorityFeePerGas(
-                        staticRemovalCandidate.getTransaction(), baseFee.get())
-                ? staticRemovalCandidate
-                : dynamicRemovalCandidate;
+            removalCandidates
+                .build()
+                .min(
+                    Comparator.comparing(
+                        txInfo ->
+                            effectivePriorityFeePerGas(txInfo.getTransaction(), baseFee.get())))
+                // safe because we just added a tx to the pool so we're guaranteed to have one
+                .get();
         doRemoveTransaction(toRemove.getTransaction(), false);
         droppedTransaction = Optional.of(toRemove.getTransaction());
       }
