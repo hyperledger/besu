@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import com.google.common.base.Suppliers;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -25,16 +28,14 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.google.common.base.Suppliers;
+import org.junit.Test;
 
 public class PendingMultiTypesTransactionsTest {
 
@@ -289,6 +290,18 @@ public class PendingMultiTypesTransactionsTest {
     assertThat(iterationOrder)
         .containsExactly(
             localTransaction1, localTransaction0, localTransaction2, localTransaction3);
+  }
+
+  @Test
+  public void shouldSelectNoTransactionsIfPoolEmpty() {
+    final List<Transaction> iterationOrder = new ArrayList<>();
+    transactions.selectTransactions(
+        transaction -> {
+          iterationOrder.add(transaction);
+          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+        });
+
+    assertThat(iterationOrder).isEmpty();
   }
 
   @Test
