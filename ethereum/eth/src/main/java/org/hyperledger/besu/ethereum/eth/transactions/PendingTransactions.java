@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -73,6 +74,7 @@ public class PendingTransactions {
   private final Clock clock;
 
   private final EvictingQueue<Hash> newPooledHashes;
+  private final Object lock = new Object();
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
   private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
       new TreeSet<>(
@@ -100,7 +102,7 @@ public class PendingTransactions {
                           .orElse(transactionInfo.getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private final AtomicLong baseFee = new AtomicLong(0);
+  private Long baseFee;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
 
@@ -132,7 +134,7 @@ public class PendingTransactions {
     this.clock = clock;
     this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
-    chainHeadHeaderSupplier.get().getBaseFee().ifPresent(this.baseFee::set);
+    this.baseFee = chainHeadHeaderSupplier.get().getBaseFee().orElse(null);
     this.transactionReplacementHandler = new TransactionPoolReplacementHandler(priceBump);
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
@@ -217,7 +219,7 @@ public class PendingTransactions {
   }
 
   private void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (baseFee) {
+    synchronized (lock) {
       final TransactionInfo removedTransactionInfo =
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
@@ -243,7 +245,7 @@ public class PendingTransactions {
   // here but in the case of reorging back to a block lower than the upgrade block, we could have
   // let a future transaction type in that shouldn't be mined
   public void selectTransactions(final TransactionSelector selector) {
-    synchronized (baseFee) {
+    synchronized (lock) {
       final List<Transaction> transactionsToRemove = new ArrayList<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       final Iterator<TransactionInfo> prioritizedTransactions = prioritizedTransactions();
@@ -313,10 +315,10 @@ public class PendingTransactions {
           // effective priority fees
           final long dynamicRangeEffectivePriorityFee =
               effectivePriorityFeePerGas(
-                  currentDynamicRangeTransaction.get().getTransaction(), baseFee.get());
+                  currentDynamicRangeTransaction.get().getTransaction(), baseFee);
           final long staticRangeEffectivePriorityFee =
               effectivePriorityFeePerGas(
-                  currentStaticRangeTransaction.get().getTransaction(), baseFee.get());
+                  currentStaticRangeTransaction.get().getTransaction(), baseFee);
           final TransactionInfo best;
           if (dynamicRangeEffectivePriorityFee > staticRangeEffectivePriorityFee) {
             best = currentDynamicRangeTransaction.get();
@@ -349,7 +351,7 @@ public class PendingTransactions {
   private TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
     Optional<Transaction> droppedTransaction = Optional.empty();
     final Transaction transaction = transactionInfo.getTransaction();
-    synchronized (baseFee) {
+    synchronized (lock) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
         return ALREADY_KNOWN;
       }
@@ -360,7 +362,7 @@ public class PendingTransactions {
         return transactionAddedStatus;
       }
       // check if it's in static or dynamic range
-      if (isInStaticRange(transaction, baseFee.get())) {
+      if (isInStaticRange(transaction, baseFee)) {
         prioritizedTransactionsStaticRange.add(transactionInfo);
       } else {
         prioritizedTransactionsDynamicRange.add(transactionInfo);
@@ -379,8 +381,7 @@ public class PendingTransactions {
                 .build()
                 .min(
                     Comparator.comparing(
-                        txInfo ->
-                            effectivePriorityFeePerGas(txInfo.getTransaction(), baseFee.get())))
+                        txInfo -> effectivePriorityFeePerGas(txInfo.getTransaction(), baseFee)))
                 // safe because we just added a tx to the pool so we're guaranteed to have one
                 .get();
         doRemoveTransaction(toRemove.getTransaction(), false);
@@ -418,12 +419,12 @@ public class PendingTransactions {
   }
 
   public void updateBaseFee(final Long baseFee) {
-    if (this.baseFee.get() == baseFee) {
+    if (Objects.equals(this.baseFee, baseFee)) {
       return;
     }
-    synchronized (baseFee) {
-      final boolean baseFeeIncreased = baseFee > this.baseFee.get();
-      this.baseFee.set(baseFee);
+    synchronized (lock) {
+      final boolean baseFeeIncreased = baseFee > this.baseFee;
+      this.baseFee = baseFee;
       if (baseFeeIncreased) {
         // base fee increases can only cause transactions to go from static to dynamic range
         final List<TransactionInfo> transactionInfosToTransfer =
