@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -54,7 +53,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,11 +75,6 @@ public class TransactionSimulatorTest {
   private static final Hash DEFAULT_BLOCK_HEADER_HASH =
       Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
 
-  // Hex-encoded 64 byte array of "17" values
-  private static final Bytes MAX_PRIVATE_INTRINSIC_DATA_HEX =
-      Bytes.fromHexString(
-          "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
-
   private TransactionSimulator transactionSimulator;
 
   @Mock private Blockchain blockchain;
@@ -96,12 +89,6 @@ public class TransactionSimulatorTest {
   public void setUp() {
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
-  }
-
-  @After
-  public void tearDown() {
-    GoQuorumOptions.goQuorumCompatibilityMode =
-        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
   }
 
   @Test
@@ -130,35 +117,6 @@ public class TransactionSimulatorTest {
             .sender(callParameter.getFrom())
             .value(callParameter.getValue())
             .payload(callParameter.getPayload())
-            .signature(FAKE_SIGNATURE)
-            .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
-
-    final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, 1L);
-
-    assertThat(result.get().isSuccessful()).isTrue();
-    verifyTransactionWasProcessed(expectedTransaction);
-  }
-
-  @Test
-  public void shouldReturnSuccessfulResultWhenProcessingPotentiallyPrivateTxIsSuccessful() {
-    final CallParameter callParameter = legacyTransactionCallParameter();
-
-    GoQuorumOptions.goQuorumCompatibilityMode = true;
-
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
-    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
-
-    final Transaction expectedTransaction =
-        Transaction.builder()
-            .nonce(1L)
-            .gasPrice(callParameter.getGasPrice())
-            .gasLimit(callParameter.getGasLimit())
-            .to(callParameter.getTo())
-            .sender(callParameter.getFrom())
-            .value(callParameter.getValue())
-            .payload(MAX_PRIVATE_INTRINSIC_DATA_HEX)
             .signature(FAKE_SIGNATURE)
             .build();
     mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
