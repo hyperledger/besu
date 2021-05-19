@@ -14,10 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import com.google.common.base.Suppliers;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -28,25 +25,23 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-@SuppressWarnings({
-  "UnusedVariable",
-  "FieldCanBeFinal",
-})
 public class PendingMultiTypesTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_TRANSACTION_HASHES = 5;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance)::get;
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
   private static final KeyPair KEYS2 = SIGNATURE_ALGORITHM.get().generateKeyPair();
   private static final KeyPair KEYS3 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -54,7 +49,7 @@ public class PendingMultiTypesTransactionsTest {
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
 
-  private BlockHeader blockHeader = mock(BlockHeader.class);
+  private final BlockHeader blockHeader = mock(BlockHeader.class);
 
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final PendingTransactions transactions =
@@ -105,13 +100,13 @@ public class PendingMultiTypesTransactionsTest {
 
     transactions.selectTransactions(
         transaction -> {
-          assertThat(transaction.getNonce()).isNotIn(1);
+          assertThat(transaction.getNonce()).isNotEqualTo(1);
           return PendingTransactions.TransactionSelectionResult.CONTINUE;
         });
   }
 
   @Test
-  public void shouldReplaceTransactionWithLowestMaxFeePerGasAndLowestTip() {
+  public void shouldEvictTransactionWithLowestMaxFeePerGasAndLowestTip() {
     final Transaction localTransaction0 = create1559Transaction(0, 200, 20, KEYS1);
     final Transaction localTransaction1 = create1559Transaction(1, 200, 19, KEYS1);
     final Transaction localTransaction2 = create1559Transaction(2, 200, 18, KEYS1);
@@ -123,10 +118,54 @@ public class PendingMultiTypesTransactionsTest {
     transactions.addLocalTransaction(localTransaction2);
     transactions.addLocalTransaction(localTransaction3);
     transactions.addLocalTransaction(localTransaction4);
+    transactions.addLocalTransaction(localTransaction5); // causes eviction
 
-    transactions.updateBaseFee(100L);
+    assertThat(transactions.size()).isEqualTo(5);
 
-    transactions.addLocalTransaction(localTransaction5);
+    transactions.selectTransactions(
+        transaction -> {
+          assertThat(transaction.getNonce()).isNotEqualTo(2);
+          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+        });
+  }
+
+  @Test
+  public void shouldEvictLegacyTransactionWithLowestEffectiveMaxPriorityFeePerGas() {
+    final Transaction localTransaction0 = create1559Transaction(0, 200, 20, KEYS1);
+    final Transaction localTransaction1 = createLegacyTransaction(1, 25, KEYS1);
+    final Transaction localTransaction2 = create1559Transaction(2, 200, 18, KEYS1);
+    final Transaction localTransaction3 = create1559Transaction(3, 240, 20, KEYS1);
+    final Transaction localTransaction4 = create1559Transaction(4, 260, 20, KEYS1);
+    final Transaction localTransaction5 = create1559Transaction(5, 900, 20, KEYS1);
+    transactions.addLocalTransaction(localTransaction0);
+    transactions.addLocalTransaction(localTransaction1);
+    transactions.addLocalTransaction(localTransaction2);
+    transactions.addLocalTransaction(localTransaction3);
+    transactions.addLocalTransaction(localTransaction4);
+    transactions.addLocalTransaction(localTransaction5); // causes eviction
+    assertThat(transactions.size()).isEqualTo(5);
+
+    transactions.selectTransactions(
+        transaction -> {
+          assertThat(transaction.getNonce()).isNotEqualTo(1);
+          return PendingTransactions.TransactionSelectionResult.CONTINUE;
+        });
+  }
+
+  @Test
+  public void shouldEvictEIP1559TransactionWithLowestEffectiveMaxPriorityFeePerGas() {
+    final Transaction localTransaction0 = create1559Transaction(0, 200, 20, KEYS1);
+    final Transaction localTransaction1 = createLegacyTransaction(1, 26, KEYS1);
+    final Transaction localTransaction2 = create1559Transaction(2, 200, 18, KEYS1);
+    final Transaction localTransaction3 = create1559Transaction(3, 240, 20, KEYS1);
+    final Transaction localTransaction4 = create1559Transaction(4, 260, 20, KEYS1);
+    final Transaction localTransaction5 = create1559Transaction(5, 900, 20, KEYS1);
+    transactions.addLocalTransaction(localTransaction0);
+    transactions.addLocalTransaction(localTransaction1);
+    transactions.addLocalTransaction(localTransaction2);
+    transactions.addLocalTransaction(localTransaction3);
+    transactions.addLocalTransaction(localTransaction4);
+    transactions.addLocalTransaction(localTransaction5); // causes eviction
     assertThat(transactions.size()).isEqualTo(5);
 
     transactions.selectTransactions(
@@ -229,7 +268,7 @@ public class PendingMultiTypesTransactionsTest {
   }
 
   @Test
-  public void shouldCorrectlyPrioritizeMultipleTransactionTypesBaseOnGasPayed() {
+  public void shouldCorrectlyPrioritizeMultipleTransactionTypesBasedOnGasPayed() {
     final Transaction localTransaction0 = create1559Transaction(0, 100, 19, KEYS2);
     final Transaction localTransaction1 = createLegacyTransaction(0, 2000, KEYS1);
     final Transaction localTransaction2 = createLegacyTransaction(0, 20, KEYS3);

@@ -223,10 +223,8 @@ public class PendingTransactions {
       final TransactionInfo removedTransactionInfo =
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
-        checkState(
-            prioritizedTransactionsStaticRange.remove(removedTransactionInfo)
-                ^ prioritizedTransactionsDynamicRange.remove(removedTransactionInfo),
-            "It shouldn't be possible that the transaction was remove from neither or both collections. It should only have been removed from one.");
+        if (!prioritizedTransactionsDynamicRange.remove(removedTransactionInfo))
+          prioritizedTransactionsStaticRange.remove(removedTransactionInfo);
         removeTransactionTrackedBySenderAndNonce(transaction);
         incrementTransactionRemovedCounter(
             removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
