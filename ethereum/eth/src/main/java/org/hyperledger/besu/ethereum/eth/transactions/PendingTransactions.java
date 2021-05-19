@@ -93,6 +93,7 @@ public class PendingTransactions {
                           .longValue())
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
+
   private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
