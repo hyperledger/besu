@@ -96,7 +96,7 @@ public class PendingTransactions {
                           .getTransaction()
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
-                          .orElse(transactionInfo.getTransaction().getGasPrice().toLong()))
+                          .orElse(transactionInfo.getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
   private final AtomicLong baseFee = new AtomicLong(0);
