@@ -75,6 +75,10 @@ public class PendingTransactions {
   private final EvictingQueue<Hash> newPooledHashes;
   private final Object lock = new Object();
   private final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
+  /**
+   * See this post for an explainer about these data structures:
+   * https://hackmd.io/@adietrichs/1559-transaction-sorting
+   */
   private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
