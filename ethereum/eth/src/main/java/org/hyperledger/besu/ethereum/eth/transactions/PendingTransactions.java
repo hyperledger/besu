@@ -410,7 +410,7 @@ public class PendingTransactions {
   }
 
   public void updateBaseFee(final Long baseFee) {
-    if (Objects.equals(this.baseFee, baseFee)) {
+    if (this.baseFee.get() == baseFee) {
       return;
     }
     synchronized (baseFee) {
