@@ -457,11 +457,8 @@ public class PendingTransactions {
     final TransactionInfo existingTransaction =
         getTrackedTransactionBySenderAndNonce(transactionInfo);
     if (existingTransaction != null) {
-      // todo we should abstract replacement strategy. This is currently buggy because it doesn't
-      // work for access list
-      if (existingTransaction.transaction.getType().equals(TransactionType.FRONTIER)
-          && !transactionReplacementHandler.shouldReplace(
-              existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
+      if (!transactionReplacementHandler.shouldReplace(
+          existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
         return REJECTED_UNDERPRICED_REPLACEMENT;
       }
       removeTransaction(existingTransaction.getTransaction());
