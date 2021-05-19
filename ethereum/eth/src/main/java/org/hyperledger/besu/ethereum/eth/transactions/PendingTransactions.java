@@ -424,32 +424,30 @@ public class PendingTransactions {
       this.baseFee = baseFee;
       if (baseFeeIncreased) {
         // base fee increases can only cause transactions to go from static to dynamic range
-        final List<TransactionInfo> transactionInfosToTransfer =
-            prioritizedTransactionsStaticRange.stream()
-                .filter(
-                    // these are the transactions whose effective priority fee have now dropped
-                    // below their max priority fee
-                    transactionInfo -> !isInStaticRange(transactionInfo.getTransaction(), baseFee))
-                .collect(toUnmodifiableList());
-        transactionInfosToTransfer.forEach(
-            transactionInfo -> {
-              prioritizedTransactionsStaticRange.remove(transactionInfo);
-              prioritizedTransactionsDynamicRange.add(transactionInfo);
-            });
+        prioritizedTransactionsStaticRange.stream()
+            .filter(
+                // these are the transactions whose effective priority fee have now dropped
+                // below their max priority fee
+                transactionInfo1 -> !isInStaticRange(transactionInfo1.getTransaction(), baseFee))
+            .collect(toUnmodifiableList())
+            .forEach(
+                transactionInfo -> {
+                  prioritizedTransactionsStaticRange.remove(transactionInfo);
+                  prioritizedTransactionsDynamicRange.add(transactionInfo);
+                });
       } else {
         // base fee decreases can only cause transactions to go from dynamic to static range
-        final List<TransactionInfo> transactionInfosToTransfer =
-            prioritizedTransactionsDynamicRange.stream()
-                .filter(
-                    // these are the transactions whose effective priority fee are now above their
-                    // max priority fee
-                    transactionInfo -> isInStaticRange(transactionInfo.getTransaction(), baseFee))
-                .collect(toUnmodifiableList());
-        transactionInfosToTransfer.forEach(
-            transactionInfo -> {
-              prioritizedTransactionsDynamicRange.remove(transactionInfo);
-              prioritizedTransactionsStaticRange.add(transactionInfo);
-            });
+        prioritizedTransactionsDynamicRange.stream()
+            .filter(
+                // these are the transactions whose effective priority fee are now above their
+                // max priority fee
+                transactionInfo1 -> isInStaticRange(transactionInfo1.getTransaction(), baseFee))
+            .collect(toUnmodifiableList())
+            .forEach(
+                transactionInfo -> {
+                  prioritizedTransactionsDynamicRange.remove(transactionInfo);
+                  prioritizedTransactionsStaticRange.add(transactionInfo);
+                });
       }
     }
   }
