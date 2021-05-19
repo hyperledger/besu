@@ -174,8 +174,8 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 6
-    executor: machine_executor
+    parallelism: 8
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
