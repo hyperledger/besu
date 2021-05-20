@@ -22,6 +22,7 @@
 | Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
+| Sajida Zouarhi   | sajz             | SajidaZ          |
 | Stefan Pingel    | pinges           | pinges           |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
