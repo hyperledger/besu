@@ -70,6 +70,9 @@ public class RequestManager {
           .ifPresent(
               responseStream ->
                   responseStream.processMessage(requestIdAndEthMessage.getValue().getData()));
+      // todo, what to do if we get a message with a request id that doesn't correspond to any of
+      // our outstanding requests?
+      // should we just disconnect from the peer?
     } else {
       // otherwise iterate through all of them
       streams.forEach(s -> s.processMessage(message.getData()));
