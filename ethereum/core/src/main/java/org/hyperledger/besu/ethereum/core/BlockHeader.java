@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -37,7 +38,50 @@ public class BlockHeader extends SealableBlockHeader
 
   private final Supplier<Hash> hash;
 
+  private Optional<LogsBloomFilter> privateLogsBloom;
+
   private final Supplier<ParsedExtraData> parsedExtraData;
+
+  public BlockHeader(
+      final Hash parentHash,
+      final Hash ommersHash,
+      final Address coinbase,
+      final Hash stateRoot,
+      final Hash transactionsRoot,
+      final Hash receiptsRoot,
+      final LogsBloomFilter logsBloom,
+      final Difficulty difficulty,
+      final long number,
+      final long gasLimit,
+      final long gasUsed,
+      final long timestamp,
+      final Bytes extraData,
+      final Long baseFee,
+      final Hash mixHash,
+      final long nonce,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final Optional<LogsBloomFilter> privateLogsBloom) {
+    super(
+        parentHash,
+        ommersHash,
+        coinbase,
+        stateRoot,
+        transactionsRoot,
+        receiptsRoot,
+        logsBloom,
+        difficulty,
+        number,
+        gasLimit,
+        gasUsed,
+        timestamp,
+        extraData,
+        baseFee);
+    this.mixHash = mixHash;
+    this.nonce = nonce;
+    this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
+    this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
+    this.privateLogsBloom = privateLogsBloom;
+  }
 
   public BlockHeader(
       final Hash parentHash,
@@ -76,6 +120,7 @@ public class BlockHeader extends SealableBlockHeader
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
+    this.privateLogsBloom = Optional.empty();
   }
 
   /**
@@ -119,6 +164,31 @@ public class BlockHeader extends SealableBlockHeader
   @Override
   public org.hyperledger.besu.plugin.data.Hash getBlockHash() {
     return hash.get();
+  }
+
+  public LogsBloomFilter getLogsBloom(final boolean forFilter) {
+    if (forFilter && privateLogsBloom.isPresent()) {
+      return LogsBloomFilter.builder()
+          .insertFilter(logsBloom)
+          .insertFilter(privateLogsBloom.get())
+          .build();
+    } else {
+      return logsBloom;
+    }
+  }
+
+  public void setPrivateLogsBloom(final LogsBloomFilter privateLogsBloom) {
+    this.privateLogsBloom = Optional.ofNullable(privateLogsBloom);
+  }
+
+  /**
+   * Returns the block's private logs bloom filter that might be available if we are in goQuorum
+   * mode
+   *
+   * @return the private logs bloom filter
+   */
+  public Optional<LogsBloomFilter> getPrivateLogsBloom() {
+    return privateLogsBloom;
   }
 
   /**

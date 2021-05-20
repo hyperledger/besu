@@ -2218,6 +2218,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                                   "No KeyValueStorageFactory found for key: " + name)))
               .withCommonConfiguration(pluginCommonConfiguration)
               .withMetricsSystem(getMetricsSystem())
+              .isGoQuorumCompatibilityMode(isGoQuorumCompatibilityMode.booleanValue())
               .build();
     }
     return this.keyValueStorageProvider;
