@@ -27,6 +27,7 @@
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
+| Vijay Michalik   | vmichalik        | VijayMichalik    |
 
 ## Emeritus Maintainers
 
