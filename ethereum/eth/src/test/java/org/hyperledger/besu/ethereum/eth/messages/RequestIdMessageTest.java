@@ -13,6 +13,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.AccessListEntry;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -21,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.referencetests.StateTestAccessListDeserializer;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.Test;
 
 public class RequestIdMessageTest {
@@ -77,8 +80,7 @@ public class RequestIdMessageTest {
                 BlockHeadersMessage.create(
                     Arrays.asList(
                         objectMapper.treeToValue(
-                            testJson.get("data").get("BlockHeadersPacket"),
-                            TestBlockHeader[].class))))
+                            testJson.get("data").get("BlockHeadersPacket"), BlockHeader[].class))))
             .getData();
     assertThat(actual).isEqualTo(expected);
   }
@@ -111,7 +113,7 @@ public class RequestIdMessageTest {
                 BlockBodiesMessage.create(
                     Arrays.asList(
                         objectMapper.treeToValue(
-                            testJson.get("data").get("BlockBodiesPacket"), TestBlockBody[].class))))
+                            testJson.get("data").get("BlockBodiesPacket"), BlockBody[].class))))
             .getData();
     assertThat(actual).isEqualTo(expected);
   }
@@ -155,23 +157,19 @@ public class RequestIdMessageTest {
     }
   }
 
-  public static class TestBlockBody extends BlockBody {
+  public static class TestBlockBodyFactory {
     @JsonCreator
-    public TestBlockBody(
+    public static BlockBody create(
         @JsonProperty("Transactions") final List<Transaction> transactions,
-        @JsonProperty("Uncles") final List<TestBlockHeader> uncles) {
-      super(
-          transactions,
-          uncles.stream()
-              .map(testBlockHeader -> (BlockHeader) testBlockHeader)
-              .collect(toUnmodifiableList()));
+        @JsonProperty("Uncles") final List<BlockHeader> uncles) {
+      return new BlockBody(transactions, uncles.stream().collect(toUnmodifiableList()));
     }
   }
 
-  public static class TestBlockHeader extends BlockHeader {
+  public static class TestBlockHeaderFactory {
 
     @JsonCreator
-    public TestBlockHeader(
+    public static BlockHeader create(
         @JsonProperty("parentHash") final String parentHash,
         @JsonProperty("sha3Uncles") final String uncleHash,
         @JsonProperty("miner") final String coinbase,
@@ -188,7 +186,7 @@ public class RequestIdMessageTest {
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("hash") final String hash) {
-      super(
+      return new BlockHeader(
           Hash.fromHexString(parentHash),
           Hash.fromHexString(uncleHash),
           Address.fromHexString(coinbase),
