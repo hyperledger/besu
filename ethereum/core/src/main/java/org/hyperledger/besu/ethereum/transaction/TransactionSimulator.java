@@ -212,6 +212,7 @@ public class TransactionSimulator {
       // different est
       // TODO get the right gasCalculator
       IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
+      // TODO prob construct a new tx instead of creating this extra method
       GasAndAccessedState privateGasEstimateAndState =
           gasCalculator.transactionIntrinsicGasCostAndAccessedState(
               MAX_PRIVATE_INTRINSIC_DATA_HEX, callParams.getTo() == null);
