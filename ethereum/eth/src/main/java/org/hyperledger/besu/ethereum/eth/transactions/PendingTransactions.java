@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -411,7 +410,8 @@ public class PendingTransactions {
             false);
   }
 
-  private long effectivePriorityFeePerGas(final Transaction transaction, final Optional<Long> curBaseFee) {
+  private long effectivePriorityFeePerGas(
+      final Transaction transaction, final Optional<Long> curBaseFee) {
     final long maybeNegativePriorityFeePerGas;
     if (transaction.getType().equals(TransactionType.EIP1559)) {
       maybeNegativePriorityFeePerGas =
@@ -419,7 +419,8 @@ public class PendingTransactions {
               transaction.getMaxPriorityFeePerGas().get().getValue().longValue(),
               transaction.getMaxFeePerGas().get().getValue().longValue() - curBaseFee.orElse(0L));
     } else {
-      maybeNegativePriorityFeePerGas = transaction.getGasPrice().getValue().longValue() - curBaseFee.orElse(0L);
+      maybeNegativePriorityFeePerGas =
+          transaction.getGasPrice().getValue().longValue() - curBaseFee.orElse(0L);
     }
     return maybeNegativePriorityFeePerGas;
   }
