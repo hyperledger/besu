@@ -163,6 +163,11 @@ public class TransactionSimulator {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
     }
 
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+
+    final MainnetTransactionProcessor transactionProcessor =
+        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
+
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
@@ -179,10 +184,6 @@ public class TransactionSimulator {
 
     final Transaction transaction = transactionBuilder.build();
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
-
-    final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
