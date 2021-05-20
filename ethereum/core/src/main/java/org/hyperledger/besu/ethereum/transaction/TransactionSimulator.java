@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -23,12 +24,14 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -70,6 +73,10 @@ public class TransactionSimulator {
   // coinbase or an account currently unlocked by the client.
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
+  // Hex-encoded 64 byte array of "17" values
+  private static final Bytes MAX_PRIVATE_INTRINSIC_DATA_HEX =
+      Bytes.fromHexString(
+          "0x11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
@@ -195,6 +202,31 @@ public class TransactionSimulator {
             false,
             transactionValidationParams,
             operationTracer);
+
+    // If GoQuorum privacy enabled, and value = zero, do simulation with max non-zero bytes.
+    // It is possible to have a data field that has a lower intrinsic value than the PMT hash
+    // so this checks the tx as if we were to place a PMT hash (with all non-zero values).
+    // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
+    // fail.
+    if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
+      // different est
+      // TODO get the right gasCalculator
+      IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
+      GasAndAccessedState privateGasEstimateAndState =
+          gasCalculator.transactionIntrinsicGasCostAndAccessedState(
+              MAX_PRIVATE_INTRINSIC_DATA_HEX, callParams.getTo() == null);
+      if (privateGasEstimateAndState.getGas().toLong() > result.getEstimateGasUsedByTransaction()) {
+        // modify the result to have the larger estimate
+        TransactionProcessingResult resultPmt =
+            TransactionProcessingResult.successful(
+                result.getLogs(),
+                privateGasEstimateAndState.getGas().toLong(),
+                result.getGasRemaining(),
+                result.getOutput(),
+                result.getValidationResult());
+        return Optional.of(new TransactionSimulatorResult(transaction, resultPmt));
+      }
+    }
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

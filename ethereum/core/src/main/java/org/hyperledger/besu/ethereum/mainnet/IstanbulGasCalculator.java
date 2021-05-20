@@ -64,6 +64,28 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
     return new GasAndAccessedState(cost);
   }
 
+  public GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(
+      final Bytes payload, final boolean isContractCreation) {
+    int zeros = 0;
+    for (int i = 0; i < payload.size(); i++) {
+      if (payload.get(i) == 0) {
+        ++zeros;
+      }
+    }
+    final int nonZeros = payload.size() - zeros;
+
+    Gas cost =
+        TX_BASE_COST
+            .plus(TX_DATA_ZERO_COST.times(zeros))
+            .plus(ISTANBUL_TX_DATA_NON_ZERO_COST.times(nonZeros));
+
+    if (isContractCreation) {
+      cost = cost.plus(txCreateExtraGasCost());
+    }
+
+    return new GasAndAccessedState(cost);
+  }
+
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public Gas calculateStorageCost(
