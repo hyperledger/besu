@@ -48,6 +48,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
@@ -101,7 +102,7 @@ public class CliqueMinerExecutorTest {
                 5,
                 TestClock.fixed(),
                 metricsSystem,
-                () -> null,
+                CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
@@ -141,7 +142,7 @@ public class CliqueMinerExecutorTest {
                 5,
                 TestClock.fixed(),
                 metricsSystem,
-                () -> null,
+                CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
@@ -181,7 +182,7 @@ public class CliqueMinerExecutorTest {
                 5,
                 TestClock.fixed(),
                 metricsSystem,
-                () -> null,
+                CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
             new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, initialVanityData, false),
@@ -200,6 +201,12 @@ public class CliqueMinerExecutorTest {
                 .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
                 .buildHeader());
     assertThat(cliqueExtraData.getVanityData()).isEqualTo(modifiedVanityData);
+  }
+
+  private static BlockHeader mockBlockHeader() {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    return blockHeader;
   }
 
   private Bytes generateRandomVanityData() {
