@@ -214,6 +214,7 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
+    event.getBlock().getHeader().getBaseFee().ifPresent(pendingTransactions::updateBaseFee);
     addRemoteTransactions(event.getRemovedTransactions());
   }
 
