@@ -429,7 +429,7 @@ public class PendingTransactions {
       return;
     }
     synchronized (lock) {
-      final boolean baseFeeIncreased = baseFee > this.baseFee;
+      final boolean baseFeeIncreased = baseFee > Optional.ofNullable(this.baseFee).orElse(0L);
       this.baseFee = baseFee;
       if (baseFeeIncreased) {
         // base fee increases can only cause transactions to go from static to dynamic range
