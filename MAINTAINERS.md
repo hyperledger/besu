@@ -46,7 +46,7 @@ Each community member may progress to become a maintainer.
 There are two ways to become a maintainer:
 
 - Contribute significantly to the code in this repository.
-- Contribute significantly to the doc or being recognised as great help by other contributors.
+- Contribute significantly to the doc or being recognized as great help by other contributors.
   
 ### Code maintainers contribution requirement
 
