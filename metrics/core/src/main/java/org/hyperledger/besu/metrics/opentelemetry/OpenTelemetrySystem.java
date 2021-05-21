@@ -41,14 +41,20 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.common.Labels;
 import io.opentelemetry.api.metrics.DoubleValueRecorder;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.metrics.common.Labels;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
+import io.opentelemetry.sdk.metrics.data.DoubleHistogramPointData;
+import io.opentelemetry.sdk.metrics.data.DoublePointData;
+import io.opentelemetry.sdk.metrics.data.DoubleSummaryPointData;
+import io.opentelemetry.sdk.metrics.data.LongPointData;
 import io.opentelemetry.sdk.metrics.data.MetricData;
+import io.opentelemetry.sdk.metrics.data.MetricDataType;
+import io.opentelemetry.sdk.metrics.data.PointData;
 import io.opentelemetry.sdk.resources.Resource;
-import io.opentelemetry.sdk.resources.ResourceAttributes;
+import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -99,7 +105,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   @Override
   public Stream<Observation> streamObservations() {
-    Collection<MetricData> metricsList = meterSdkProvider.getMetricProducer().collectAllMetrics();
+    Collection<MetricData> metricsList = meterSdkProvider.collectAllMetrics();
     return metricsList.stream().map(this::convertToObservations).flatMap(stream -> stream);
   }
 
@@ -107,7 +113,32 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     List<Observation> observations = new ArrayList<>();
     MetricCategory category =
         categoryNameToMetricCategory(metricData.getInstrumentationLibraryInfo().getName());
-    for (MetricData.Point point : metricData.getPoints()) {
+    Collection<?> points;
+    switch (metricData.getType()) {
+      case DOUBLE_GAUGE:
+        points = metricData.getDoubleGaugeData().getPoints();
+        break;
+      case DOUBLE_SUM:
+        points = metricData.getDoubleSumData().getPoints();
+        break;
+      case SUMMARY:
+        points = metricData.getDoubleSummaryData().getPoints();
+        break;
+      case LONG_SUM:
+        points = metricData.getLongSumData().getPoints();
+        break;
+      case HISTOGRAM:
+        points = metricData.getDoubleHistogramData().getPoints();
+        break;
+      case LONG_GAUGE:
+        points = metricData.getLongGaugeData().getPoints();
+        break;
+      default:
+        throw new UnsupportedOperationException("Unsupported type " + metricData.getType().name());
+    }
+
+    for (Object ptObj : points) {
+      PointData point = (PointData) ptObj;
       List<String> labels = new ArrayList<>();
       point.getLabels().forEach((k, v) -> labels.add(v));
       observations.add(
@@ -131,15 +162,17 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     throw new IllegalArgumentException("Invalid metric category: " + name);
   }
 
-  private Object extractValue(final MetricData.Type type, final MetricData.Point point) {
+  private Object extractValue(final MetricDataType type, final PointData point) {
     switch (type) {
       case LONG_GAUGE:
       case LONG_SUM:
-        return ((MetricData.LongPoint) point).getValue();
+        return ((LongPointData) point).getValue();
       case DOUBLE_GAUGE:
-        return ((MetricData.DoublePoint) point).getValue();
+        return ((DoublePointData) point).getValue();
       case SUMMARY:
-        return ((MetricData.DoubleSummaryPoint) point).getPercentileValues();
+        return ((DoubleSummaryPointData) point).getPercentileValues();
+      case HISTOGRAM:
+        return ((DoubleHistogramPointData) point).getCounts();
       default:
         throw new UnsupportedOperationException("Unsupported type " + type);
     }
