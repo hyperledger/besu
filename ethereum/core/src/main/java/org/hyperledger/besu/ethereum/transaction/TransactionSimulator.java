@@ -198,9 +198,8 @@ public class TransactionSimulator {
             transactionValidationParams,
             operationTracer);
 
-    // If GoQuorum privacy enabled, and value = zero, do simulation with max non-zero bytes.
-    // It is possible to have a data field that has a lower intrinsic value than the PMT hash
-    // so this checks the tx as if we were to place a PMT hash (with all non-zero values).
+    // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
+    // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
     // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
     // fail.
     if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
