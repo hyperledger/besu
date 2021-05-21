@@ -24,14 +24,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -73,10 +72,6 @@ public class TransactionSimulator {
   // coinbase or an account currently unlocked by the client.
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
-  // Hex-encoded 64 byte array of "17" values
-  private static final Bytes MAX_PRIVATE_INTRINSIC_DATA_HEX =
-      Bytes.fromHexString(
-          "0x11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
@@ -209,19 +204,13 @@ public class TransactionSimulator {
     // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
     // fail.
     if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
-      // different est
-      // TODO get the right gasCalculator
-      IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
-      // TODO prob construct a new tx instead of creating this extra method
-      GasAndAccessedState privateGasEstimateAndState =
-          gasCalculator.transactionIntrinsicGasCostAndAccessedState(
-              MAX_PRIVATE_INTRINSIC_DATA_HEX, callParams.getTo() == null);
-      if (privateGasEstimateAndState.getGas().toLong() > result.getEstimateGasUsedByTransaction()) {
+      Gas privateGasEstimateAndState = protocolSpec.getGasCalculator().getMaximumPmtCost();
+      if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
         // modify the result to have the larger estimate
         TransactionProcessingResult resultPmt =
             TransactionProcessingResult.successful(
                 result.getLogs(),
-                privateGasEstimateAndState.getGas().toLong(),
+                privateGasEstimateAndState.toLong(),
                 result.getGasRemaining(),
                 result.getOutput(),
                 result.getValidationResult());

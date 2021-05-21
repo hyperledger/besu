@@ -161,4 +161,10 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   public Gas extCodeHashOperationGasCost() {
     return EXTCODE_HASH_COST;
   }
+
+  @Override
+  public Gas getMaximumPmtCost() {
+    int nonZeros = 64;
+    return TX_BASE_COST.plus(ISTANBUL_TX_DATA_NON_ZERO_COST.times(nonZeros));
+  }
 }
