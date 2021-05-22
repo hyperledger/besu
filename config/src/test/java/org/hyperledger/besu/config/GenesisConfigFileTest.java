@@ -428,9 +428,6 @@ public class GenesisConfigFileTest {
 
     final GenesisConfigFile genesisConfig = fromConfig(genesisNode);
 
-    var genesis = GenesisConfigFile.fromConfig("{\"config\":{}}");
-
-
     final ObjectNode output = JsonUtil.objectNodeFromMap(genesisConfig.getConfigOptions().asMap());
 
     assertThat(JsonUtil.getJson(output, true))
