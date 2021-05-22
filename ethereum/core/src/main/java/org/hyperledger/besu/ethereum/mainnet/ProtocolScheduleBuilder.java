@@ -234,6 +234,7 @@ public class ProtocolScheduleBuilder {
                 create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
                 create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
                 create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
+                create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
                 create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
             .stream()
             .filter(Optional::isPresent)
