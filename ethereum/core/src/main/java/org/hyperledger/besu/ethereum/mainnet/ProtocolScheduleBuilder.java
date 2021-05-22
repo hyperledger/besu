@@ -328,6 +328,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Agharta", config.getAghartaBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Phoenix", config.getPhoenixBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

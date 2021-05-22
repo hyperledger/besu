@@ -319,7 +319,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getMagnetoBlockNumber() {
-    return getOptionalLong("magnetoBlock");
+    return getOptionalLong("magnetoblock");
   }
 
   @Override
