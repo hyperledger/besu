@@ -192,6 +192,15 @@ public interface GenesisConfigOptions {
   OptionalLong getThanosBlockNumber();
 
   /**
+   * Block number to activate Magneto on Classic networks.
+   *
+   * @return block number of Magneto fork on Classic networks
+   * @see <a
+   *     href="https://github.com/ethereumclassic/ECIPs/issues/424">https://github.com/ethereumclassic/ECIPs/issues/424</a>
+   */
+  OptionalLong getMagnetoBlockNumber();
+
+  /**
    * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to
    * keccak-256.
    *
