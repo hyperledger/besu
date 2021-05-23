@@ -4,6 +4,8 @@
 
 ### Additions and Improvements
 
+* Ethereum Classic Magneto Hard Fork [\#2315](https://github.com/hyperledger/besu/pull/2315)
+
 ### Bug Fixes
 
 ### Early Access Features
