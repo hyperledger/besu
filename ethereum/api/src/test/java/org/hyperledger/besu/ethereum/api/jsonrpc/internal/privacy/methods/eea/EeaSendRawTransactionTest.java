@@ -215,7 +215,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
     when(privacyController.sendTransaction(any(), any(), any())).thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), anyString()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.createPrivacyMarkerTransaction(any(), any(), any()))
+    when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any()))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));

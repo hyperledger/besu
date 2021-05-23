@@ -129,18 +129,18 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Transaction createPrivacyMarkerTransaction(
+  public Transaction createPrivateMarkerTransaction(
       final String privateTransactionLookupId, final PrivateTransaction privateTransaction) {
-    return privacyController.createPrivacyMarkerTransaction(
+    return privacyController.createPrivateMarkerTransaction(
         privateTransactionLookupId, privateTransaction);
   }
 
   @Override
-  public Transaction createPrivacyMarkerTransaction(
+  public Transaction createPrivateMarkerTransaction(
       final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
       final Address privacyPrecompileAddress) {
-    return privacyController.createPrivacyMarkerTransaction(
+    return privacyController.createPrivateMarkerTransaction(
         privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
   }
 

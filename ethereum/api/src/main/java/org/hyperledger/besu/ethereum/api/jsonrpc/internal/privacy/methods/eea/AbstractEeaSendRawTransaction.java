@@ -70,13 +70,13 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
       }
 
-      final Transaction privacyMarkerTransaction =
-          createPrivacyMarkerTransaction(privateTransaction, requestContext.getUser());
+      final Transaction privateMarkerTransaction =
+          createPrivateMarkerTransaction(privateTransaction, requestContext.getUser());
 
       return transactionPool
-          .addLocalTransaction(privacyMarkerTransaction)
+          .addLocalTransaction(privateMarkerTransaction)
           .either(
-              () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
+              () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
               errorReason -> getJsonRpcErrorResponse(id, errorReason));
 
     } catch (final JsonRpcErrorResponseException e) {
@@ -100,6 +100,6 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   protected abstract ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user);
 
-  protected abstract Transaction createPrivacyMarkerTransaction(
+  protected abstract Transaction createPrivateMarkerTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user);
 }

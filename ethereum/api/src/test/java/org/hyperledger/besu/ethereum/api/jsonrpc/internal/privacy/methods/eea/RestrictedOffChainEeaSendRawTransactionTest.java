@@ -58,7 +58,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
     when(privacyController.sendTransaction(any(), any(), any())).thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.createPrivacyMarkerTransaction(any(), any(), any()))
+    when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 
@@ -72,7 +72,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
-        .createPrivacyMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY));
+        .createPrivateMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY));
   }
 
   @Test
@@ -87,7 +87,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
     when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
         .thenReturn(pantheonPrivacyGroup);
-    when(privacyController.createPrivacyMarkerTransaction(any(), any(), any()))
+    when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 
@@ -101,7 +101,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
-        .createPrivacyMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY));
+        .createPrivateMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY));
   }
 
   @Test

@@ -67,7 +67,7 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
   }
 
   @Override
-  protected Transaction createPrivacyMarkerTransaction(
+  protected Transaction createPrivateMarkerTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user) {
 
     final Optional<PrivacyGroup> maybePrivacyGroup =
@@ -79,7 +79,7 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
     final String privateTransactionLookupId =
         privacyController.sendTransaction(
             privateTransaction, enclavePublicKeyProvider.getEnclaveKey(user), maybePrivacyGroup);
-    return privacyController.createPrivacyMarkerTransaction(
+    return privacyController.createPrivateMarkerTransaction(
         privateTransactionLookupId, privateTransaction, Address.DEFAULT_PRIVACY);
   }
 }

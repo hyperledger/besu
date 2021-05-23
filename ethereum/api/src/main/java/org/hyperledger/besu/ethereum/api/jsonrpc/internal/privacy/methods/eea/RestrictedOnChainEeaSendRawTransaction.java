@@ -60,7 +60,7 @@ public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTr
   }
 
   @Override
-  protected Transaction createPrivacyMarkerTransaction(
+  protected Transaction createPrivateMarkerTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user) {
     if (privateTransaction.getPrivacyGroupId().isEmpty()) {
       throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
@@ -87,7 +87,7 @@ public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTr
         privacyController.buildAndSendAddPayload(
             privateTransaction, Bytes32.wrap(privacyGroupId), enclavePublicKey);
 
-    return privacyController.createPrivacyMarkerTransaction(
+    return privacyController.createPrivateMarkerTransaction(
         buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId),
         privateTransaction,
         Address.ONCHAIN_PRIVACY);
