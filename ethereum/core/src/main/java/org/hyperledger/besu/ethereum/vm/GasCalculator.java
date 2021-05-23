@@ -440,7 +440,5 @@ public interface GasCalculator {
   };
 
   // what would be the gas for a PMT with hash of all non-zeros
-  default Gas getMaximumPmtCost() {
-    return Gas.ZERO;
-  }
+  Gas getMaximumPmtCost();
 }
