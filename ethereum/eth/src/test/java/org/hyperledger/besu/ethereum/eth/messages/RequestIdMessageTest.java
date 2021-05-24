@@ -1,5 +1,6 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import static io.vertx.core.json.Json.mapper;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.eth.manager.RequestManager.wrapRequestId;
@@ -7,7 +8,11 @@ import static org.hyperledger.besu.ethereum.eth.manager.RequestManager.wrapReque
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -43,6 +48,14 @@ import org.junit.Test;
 
 public class RequestIdMessageTest {
 
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  static {
+    SimpleModule module = new SimpleModule();
+    module.addDeserializer(BlockBody.class, TestBlockBodyFactory);
+    objectMapper.registerModule(module);
+  }
+
   @Test
   public void GetBlockHeaders() throws IOException {
     final var testJson = parseTestFile("GetBlockHeadersPacket66.json");
@@ -72,7 +85,6 @@ public class RequestIdMessageTest {
   @Test
   public void BlockHeaders() throws IOException {
     final var testJson = parseTestFile("BlockHeadersPacket66.json");
-    final var objectMapper = new ObjectMapper();
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
@@ -106,7 +118,6 @@ public class RequestIdMessageTest {
   public void BlockBodies() throws IOException {
     final var testJson = parseTestFile("BlockBodiesPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
-    final var objectMapper = new ObjectMapper();
     final Bytes actual =
         wrapRequestId(
                 1111,
@@ -122,10 +133,10 @@ public class RequestIdMessageTest {
   //    return wrapRequestId(1111, messageData).getData();
   //  }
 
-  private static class TestTransaction extends Transaction {
+  private static class TestTransactionFactory {
 
     @JsonCreator
-    TestTransaction(
+    public static Transaction createTransaction(
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("gasPrice") final String gasPrice,
         @JsonProperty("gas") final String gasLimit,
@@ -136,24 +147,17 @@ public class RequestIdMessageTest {
         @JsonProperty("r") final String r,
         @JsonProperty("s") final String s,
         @JsonProperty("hash") final String hash) {
-      final SECPSignature secpSignature = SECPSignature.create(r, s, v);
-      super(
-                Long.decode(nonce),
-                Wei.fromHexString(gasPrice), Gas.fromHexString(gasLimit) ,Address.fromHexString(to),Wei.fromHexString(value), secpSignature,Bytes.fromHexString(data),
-        )
-      this.nonce = Long.decode(nonce);
-      this.gasPrice =
-      this.to = to.isEmpty() ? null : Address.fromHexString(to);
-
-      SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-      this.keys =
-          signatureAlgorithm.createKeyPair(
-              signatureAlgorithm.createPrivateKey(Bytes32.fromHexString(secretKey)));
-
-      this.gasLimits = parseArray(gasLimit, Gas::fromHexString);
-      this.values = parseArray(value, Wei::fromHexString);
-      this.payloads = parseArray(data, Bytes::fromHexString);
-      this.maybeAccessLists = Optional.ofNullable(maybeAccessLists);
+      final SECPSignature secpSignature =
+          new SECP256K1()
+              .createSignature(new BigInteger(r, 16), new BigInteger(s, 16), Byte.decode(v));
+      return Transaction.builder()
+          .nonce(Long.decode(nonce))
+          .gasPrice(Wei.fromHexString(gasPrice))
+          .to(Address.fromHexString(to))
+          .value(Wei.fromHexString(value))
+          .payload(Bytes.fromHexString(data))
+          .signature(secpSignature)
+          .build();
     }
   }
 
@@ -218,6 +222,6 @@ public class RequestIdMessageTest {
   }
 
   private JsonNode parseTestFile(final String filename) throws IOException {
-    return new ObjectMapper().readTree(this.getClass().getResource("/" + filename));
+    return objectMapper.readTree(this.getClass().getResource("/" + filename));
   }
 }
