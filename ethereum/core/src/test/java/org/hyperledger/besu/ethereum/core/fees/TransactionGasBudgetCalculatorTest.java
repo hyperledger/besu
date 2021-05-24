@@ -67,6 +67,9 @@ public class TransactionGasBudgetCalculatorTest {
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 0L, true},
           {FRONTIER_CALCULATOR, false, 11L, 1L, 10L, 0L, false},
           {FRONTIER_CALCULATOR, false, 5L, 1L, 10L, 6L, false},
+          {FRONTIER_CALCULATOR, true, 5L, 1L, 10L, 0L, true},
+          {FRONTIER_CALCULATOR, true, 11L, 1L, 10L, 0L, false},
+          {FRONTIER_CALCULATOR, true, 5L, 1L, 10L, 6L, false},
         });
   }
 
