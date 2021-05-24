@@ -616,7 +616,7 @@ public abstract class MainnetProtocolSpecs {
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 
-  private static TransactionReceipt berlinTransactionReceiptFactory(
+  static TransactionReceipt berlinTransactionReceiptFactory(
       final TransactionType transactionType,
       final TransactionProcessingResult transactionProcessingResult,
       final WorldState worldState,
@@ -629,7 +629,7 @@ public abstract class MainnetProtocolSpecs {
         Optional.empty());
   }
 
-  private static TransactionReceipt berlinTransactionReceiptFactoryWithReasonEnabled(
+  static TransactionReceipt berlinTransactionReceiptFactoryWithReasonEnabled(
       final TransactionType transactionType,
       final TransactionProcessingResult transactionProcessingResult,
       final WorldState worldState,

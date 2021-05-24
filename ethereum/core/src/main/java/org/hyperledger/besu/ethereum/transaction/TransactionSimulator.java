@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -195,6 +197,25 @@ public class TransactionSimulator {
             false,
             transactionValidationParams,
             operationTracer);
+
+    // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
+    // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
+    // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
+    // fail.
+    if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
+      Gas privateGasEstimateAndState = protocolSpec.getGasCalculator().getMaximumPmtCost();
+      if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
+        // modify the result to have the larger estimate
+        TransactionProcessingResult resultPmt =
+            TransactionProcessingResult.successful(
+                result.getLogs(),
+                privateGasEstimateAndState.toLong(),
+                result.getGasRemaining(),
+                result.getOutput(),
+                result.getValidationResult());
+        return Optional.of(new TransactionSimulatorResult(transaction, resultPmt));
+      }
+    }
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
