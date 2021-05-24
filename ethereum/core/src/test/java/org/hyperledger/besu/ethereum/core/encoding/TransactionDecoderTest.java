@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GoQuorumOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -58,8 +57,8 @@ public class TransactionDecoderTest {
         TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPrice()).isEqualByComparingTo(Wei.of(50L));
-    assertThat(transaction.getGasPremium()).isEmpty();
-    assertThat(transaction.getFeeCap()).isEmpty();
+    assertThat(transaction.getMaxPriorityFeePerGas()).isEmpty();
+    assertThat(transaction.getMaxFeePerGas()).isEmpty();
   }
 
   @Test
@@ -67,8 +66,7 @@ public class TransactionDecoderTest {
     final Transaction transaction =
         TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
-    assertThat(transaction.getGasPremium()).hasValue(Wei.of(2L));
-    assertThat(transaction.getFeeCap()).hasValue(Wei.of(new BigInteger("5000000000", 10)));
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
+    assertThat(transaction.getMaxPriorityFeePerGas()).hasValue(Wei.of(2L));
+    assertThat(transaction.getMaxFeePerGas()).hasValue(Wei.of(new BigInteger("5000000000", 10)));
   }
 }

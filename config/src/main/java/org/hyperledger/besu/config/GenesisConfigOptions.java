@@ -76,7 +76,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getEIP1559BlockNumber();
 
-  default Optional<Long> getGenesisBaseFee() {
+  default Optional<Long> getGenesisBaseFeePerGas() {
     return getEIP1559BlockNumber().stream()
         .boxed()
         .filter(g -> g.equals(0L))
@@ -190,6 +190,15 @@ public interface GenesisConfigOptions {
    *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1099">https://ecips.ethereumclassic.org/ECIPs/ecip-1099</a>
    */
   OptionalLong getThanosBlockNumber();
+
+  /**
+   * Block number to activate Magneto on Classic networks.
+   *
+   * @return block number of Magneto fork on Classic networks
+   * @see <a
+   *     href="https://github.com/ethereumclassic/ECIPs/issues/424">https://github.com/ethereumclassic/ECIPs/issues/424</a>
+   */
+  OptionalLong getMagnetoBlockNumber();
 
   /**
    * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to

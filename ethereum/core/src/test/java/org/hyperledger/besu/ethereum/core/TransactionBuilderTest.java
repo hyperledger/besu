@@ -32,7 +32,7 @@ public class TransactionBuilderTest {
   public void guessTypeCanGuessAllTypes() {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Transaction.Builder frontierBuilder = Transaction.builder();
-    final Transaction.Builder eip1559Builder = Transaction.builder().feeCap(Wei.of(5));
+    final Transaction.Builder eip1559Builder = Transaction.builder().maxFeePerGas(Wei.of(5));
     final Transaction.Builder accessListBuilder =
         Transaction.builder()
             .accessList(List.of(new AccessListEntry(gen.address(), List.of(gen.bytes32()))));

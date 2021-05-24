@@ -575,6 +575,7 @@ public abstract class MainnetProtocolSpecs {
                 MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
         .eip1559(Optional.of(eip1559))
+        .difficultyCalculator(MainnetDifficultyCalculators.LONDON)
         .gasBudgetCalculator(TransactionGasBudgetCalculator.eip1559(eip1559))
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
@@ -615,7 +616,7 @@ public abstract class MainnetProtocolSpecs {
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 
-  private static TransactionReceipt berlinTransactionReceiptFactory(
+  static TransactionReceipt berlinTransactionReceiptFactory(
       final TransactionType transactionType,
       final TransactionProcessingResult transactionProcessingResult,
       final WorldState worldState,
@@ -628,7 +629,7 @@ public abstract class MainnetProtocolSpecs {
         Optional.empty());
   }
 
-  private static TransactionReceipt berlinTransactionReceiptFactoryWithReasonEnabled(
+  static TransactionReceipt berlinTransactionReceiptFactoryWithReasonEnabled(
       final TransactionType transactionType,
       final TransactionProcessingResult transactionProcessingResult,
       final WorldState worldState,

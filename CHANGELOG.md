@@ -1,19 +1,12 @@
 # Changelog
 
-## 21.1.6
+## 21.1.7
 
 ### Additions and Improvements
 
-* Added support for the upcoming BAIKAL ephemeral testnet and removed the configuration for the deprecated YOLOv3 ephemeral testnet. [\#2237](https://github.com/hyperledger/besu/pull/2237)
-* Added support for the London Network Upgrade, although the block number must be set manually with `--override-genesis-config=londonBlock=<blocknumber>`. This is because the block numbers haven't been determined yet. The next release will include the number in the genesis file so it will support London with no intervention. [\#2237](https://github.com/hyperledger/besu/pull/2237)
-* Implemented [EIP-3541](https://eips.ethereum.org/EIPS/eip-3541): Reject new contracts starting with the 0xEF byte [\#2243](https://github.com/hyperledger/besu/pull/2243)
-* Implemented [EIP-3529](https://eips.ethereum.org/EIPS/eip-3529): Reduction in refunds [\#2238](https://github.com/hyperledger/besu/pull/2238)
-
+* Ethereum Classic Magneto Hard Fork [\#2315](https://github.com/hyperledger/besu/pull/2315)
 
 ### Bug Fixes
-
-- Added ACCESS_LIST transactions to the list of transactions using legacy gas pricing for 1559 [\#2239](https://github.com/hyperledger/besu/pull/2239)
-- Reduced logging level of public key decoding failure of malformed packets. [\#2143](https://github.com/hyperledger/besu/pull/2143)
 
 ### Early Access Features
 
@@ -22,6 +15,35 @@
 - Fixed issue in discv5 where nonce was incorrectly reused. [\#2075](https://github.com/hyperledger/besu/pull/2075)
 - Fixed issues in debug_standardTraceBadBlockToFile and debug_standardTraceBlockToFile. [\#2120](https://github.com/hyperledger/besu/pull/2120)
 - Fixed invalid error code in several JSON RPC methods when the requested block is not in the range. [\#2138](https://github.com/hyperledger/besu/pull/2138)
+
+## 21.1.6
+
+### Additions and Improvements
+
+* Added support for the upcoming BAIKAL ephemeral testnet and removed the configuration for the deprecated YOLOv3 ephemeral testnet. [\#2237](https://github.com/hyperledger/besu/pull/2237)
+* Implemented [EIP-3541](https://eips.ethereum.org/EIPS/eip-3541): Reject new contracts starting with the 0xEF byte [\#2243](https://github.com/hyperledger/besu/pull/2243)
+* Implemented [EIP-3529](https://eips.ethereum.org/EIPS/eip-3529): Reduction in refunds [\#2238](https://github.com/hyperledger/besu/pull/2238)
+* Implemented [EIP-3554](https://eips.ethereum.org/EIPS/eip-3554): Difficulty Bomb Delay [\#2289](https://github.com/hyperledger/besu/pull/2289)
+
+
+### Bug Fixes
+
+- Added ACCESS_LIST transactions to the list of transactions using legacy gas pricing for 1559 [\#2239](https://github.com/hyperledger/besu/pull/2239)
+- Reduced logging level of public key decoding failure of malformed packets. [\#2143](https://github.com/hyperledger/besu/pull/2143)
+- Add 1559 parameters to json-rpc responses.  [\#2222](https://github.com/hyperledger/besu/pull/2222) 
+
+### Early Access Features
+
+#### Previously identified known issues
+
+- Fixed issue in discv5 where nonce was incorrectly reused. [\#2075](https://github.com/hyperledger/besu/pull/2075)
+- Fixed issues in debug_standardTraceBadBlockToFile and debug_standardTraceBlockToFile. [\#2120](https://github.com/hyperledger/besu/pull/2120)
+- Fixed invalid error code in several JSON RPC methods when the requested block is not in the range. [\#2138](https://github.com/hyperledger/besu/pull/2138)
+
+## Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.6/besu-21.1.6.zip
+
+sha256: 3952c69a32bb390ec84ccf4c2c3eb600ea3696af9a05914985d10e1632ef8488
 
 ## 21.1.5
 

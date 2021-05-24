@@ -369,7 +369,8 @@ public class AdminNodeInfoTest {
             .agharta(7)
             .phoenix(8)
             .thanos(9)
-            .ecip1049(10);
+            .magneto(10)
+            .ecip1049(11);
 
     final AdminNodeInfo methodClassic =
         new AdminNodeInfo(
@@ -383,17 +384,19 @@ public class AdminNodeInfoTest {
     final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Long> expectedConfig =
-        Map.of(
-            "classicForkBlock", 1L,
-            "ecip1015Block", 2L,
-            "dieHardBlock", 3L,
-            "gothamBlock", 4L,
-            "ecip1041Block", 5L,
-            "atlantisBlock", 6L,
-            "aghartaBlock", 7L,
-            "phoenixBlock", 8L,
-            "thanosBlock", 9L,
-            "ecip1049Block", 10L);
+        new HashMap<>(
+            Map.of(
+                "classicForkBlock", 1L,
+                "ecip1015Block", 2L,
+                "dieHardBlock", 3L,
+                "gothamBlock", 4L,
+                "ecip1041Block", 5L,
+                "atlantisBlock", 6L,
+                "aghartaBlock", 7L,
+                "phoenixBlock", 8L,
+                "thanosBlock", 9L,
+                "magnetoBlock", 10L));
+    expectedConfig.put("ecip1049Block", 11L);
 
     final JsonRpcResponse response = methodClassic.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);

@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -335,7 +334,7 @@ public class ProtocolSpec {
   }
 
   public boolean isEip1559() {
-    return ExperimentalEIPs.eip1559Enabled && eip1559.isPresent();
+    return eip1559.isPresent();
   }
 
   /**
