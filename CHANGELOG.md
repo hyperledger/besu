@@ -5,6 +5,8 @@
 ### Additions and Improvements
 * Upgrade OpenTelemetry to 1.2.0. [\#2313](https://github.com/hyperledger/besu/pull/2313)
 
+* Ethereum Classic Magneto Hard Fork [\#2315](https://github.com/hyperledger/besu/pull/2315)
+
 ### Bug Fixes
 
 ### Early Access Features
