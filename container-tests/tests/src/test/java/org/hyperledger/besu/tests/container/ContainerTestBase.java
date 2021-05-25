@@ -157,7 +157,6 @@ public class ContainerTestBase {
         .withClasspathResourceMapping(hostGenesisPath, besuContainerGenesisPath, BindMode.READ_ONLY)
         .withClasspathResourceMapping(hostKeyPath, containerKeyPath, BindMode.READ_ONLY)
         .withCommand(
-            "--auto-log-bloom-caching-enabled=false",
             "--genesis-file",
             besuContainerGenesisPath,
             "--network-id",
