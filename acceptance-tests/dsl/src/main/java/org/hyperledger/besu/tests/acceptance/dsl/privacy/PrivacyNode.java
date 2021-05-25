@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -108,7 +109,8 @@ public class PrivacyNode implements AutoCloseable {
             Collections.emptyList(),
             besuConfig.isDnsEnabled(),
             besuConfig.getPrivacyParameters(),
-            List.of());
+            List.of(),
+            Optional.empty());
   }
 
   public void testOrionConnection(final List<PrivacyNode> otherNodes) {
