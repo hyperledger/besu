@@ -20,8 +20,8 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.opentelemetry.api.common.Labels;
 import io.opentelemetry.api.metrics.DoubleValueRecorder;
+import io.opentelemetry.api.metrics.common.Labels;
 
 public class OpenTelemetryTimer implements LabelledMetric<OperationTimer> {
 
