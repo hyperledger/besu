@@ -215,6 +215,33 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         v);
   }
 
+  public Transaction(
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Address to,
+      final Wei value,
+      final SECPSignature signature,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<BigInteger> v) {
+    this(
+        TransactionType.FRONTIER,
+        nonce,
+        gasPrice,
+        null,
+        null,
+        gasLimit,
+        Optional.of(to),
+        value,
+        signature,
+        payload,
+        Optional.empty(),
+        null,
+        chainId,
+        v);
+  }
+
   /**
    * Instantiates a transaction instance.
    *
