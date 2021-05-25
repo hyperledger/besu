@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -106,7 +105,7 @@ public class PendingTransactions {
                           .orElse(transactionInfo.getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private Long baseFee;
+  private Optional<Long> baseFee = Optional.empty();
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
 
@@ -138,7 +137,7 @@ public class PendingTransactions {
     this.clock = clock;
     this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
-    this.baseFee = chainHeadHeaderSupplier.get().getBaseFee().orElse(null);
+    this.baseFee = chainHeadHeaderSupplier.get().getBaseFee();
     this.transactionReplacementHandler = new TransactionPoolReplacementHandler(priceBump);
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
@@ -399,7 +398,7 @@ public class PendingTransactions {
     return ADDED;
   }
 
-  private boolean isInStaticRange(final Transaction transaction, final Long baseFee) {
+  private boolean isInStaticRange(final Transaction transaction, final Optional<Long> baseFee) {
     return transaction
         .getMaxPriorityFeePerGas()
         .map(
@@ -411,26 +410,28 @@ public class PendingTransactions {
             false);
   }
 
-  private long effectivePriorityFeePerGas(final Transaction transaction, final long baseFee) {
+  private long effectivePriorityFeePerGas(
+      final Transaction transaction, final Optional<Long> curBaseFee) {
     final long maybeNegativePriorityFeePerGas;
     if (transaction.getType().equals(TransactionType.EIP1559)) {
       maybeNegativePriorityFeePerGas =
           Math.min(
               transaction.getMaxPriorityFeePerGas().get().getValue().longValue(),
-              transaction.getMaxFeePerGas().get().getValue().longValue() - baseFee);
+              transaction.getMaxFeePerGas().get().getValue().longValue() - curBaseFee.orElse(0L));
     } else {
-      maybeNegativePriorityFeePerGas = transaction.getGasPrice().getValue().longValue() - baseFee;
+      maybeNegativePriorityFeePerGas =
+          transaction.getGasPrice().getValue().longValue() - curBaseFee.orElse(0L);
     }
     return maybeNegativePriorityFeePerGas;
   }
 
-  public void updateBaseFee(final Long baseFee) {
-    if (Objects.equals(this.baseFee, baseFee)) {
+  public void updateBaseFee(final Long newBaseFee) {
+    if (this.baseFee.orElse(0L).equals(newBaseFee)) {
       return;
     }
     synchronized (lock) {
-      final boolean baseFeeIncreased = baseFee > this.baseFee;
-      this.baseFee = baseFee;
+      final boolean baseFeeIncreased = newBaseFee > this.baseFee.orElse(0L);
+      this.baseFee = Optional.of(newBaseFee);
       if (baseFeeIncreased) {
         // base fee increases can only cause transactions to go from static to dynamic range
         prioritizedTransactionsStaticRange.stream()
