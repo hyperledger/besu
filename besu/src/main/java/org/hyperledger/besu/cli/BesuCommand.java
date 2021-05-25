@@ -1489,7 +1489,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
     } catch (final Exception e) {
       throw new ParameterException(
-          this.commandLine, "Unable to read genesis file. " + e.getCause());
+          this.commandLine, "Unable to load genesis file. " + e.getCause());
     }
     return genesisConfigOptions;
   }
