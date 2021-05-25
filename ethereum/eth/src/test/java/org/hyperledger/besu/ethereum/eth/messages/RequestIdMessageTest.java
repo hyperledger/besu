@@ -168,11 +168,9 @@ public class RequestIdMessageTest {
     @JsonCreator
     public TestBlockBody(
         @JsonProperty("Transactions") final List<TestTransaction> transactions,
-        @JsonProperty("Uncles") final List<BlockHeader> uncles) {
+        @JsonProperty("Uncles") final List<TestBlockHeader> uncles) {
       super(
-          transactions.stream()
-              .map(testTransaction -> (Transaction) testTransaction)
-              .collect(toUnmodifiableList()),
+          transactions.stream().collect(toUnmodifiableList()),
           uncles.stream().collect(toUnmodifiableList()));
     }
   }
