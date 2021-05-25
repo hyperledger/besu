@@ -1002,7 +1002,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).startsWith("Unable to read genesis file");
+    assertThat(commandErrorOutput.toString()).startsWith("Unable to load genesis file");
     assertThat(commandErrorOutput.toString()).contains(nonExistentGenesis);
   }
 
