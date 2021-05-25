@@ -996,13 +996,14 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void nonExistentGenesisGivesError() throws Exception {
-    parseCommand("--genesis-file", "non-existent-genesis.json");
+    final String nonExistentGenesis = "non-existent-genesis.json";
+    parseCommand("--genesis-file", nonExistentGenesis);
 
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
 
     assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
-        .startsWith("Unable to read genesis file. java.io.FileNotFoundException");
+    assertThat(commandErrorOutput.toString()).startsWith("Unable to read genesis file");
+    assertThat(commandErrorOutput.toString()).contains(nonExistentGenesis);
   }
 
   @Test
