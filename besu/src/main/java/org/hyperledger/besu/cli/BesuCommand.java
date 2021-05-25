@@ -1488,7 +1488,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
       genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
     } catch (final Exception e) {
-      throw new IllegalStateException("Unable to read genesis file for GoQuorum options", e);
+      throw new ParameterException(
+          this.commandLine, "Unable to load genesis file. " + e.getCause());
     }
     return genesisConfigOptions;
   }
