@@ -17,19 +17,30 @@ package org.hyperledger.besu.tests.container;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.deployContractAndReturnAddress;
-import static org.hyperledger.besu.tests.container.helpers.ContractOperations.generateRandomLogValue;
+import static org.hyperledger.besu.tests.container.helpers.ContractOperations.generateHexString;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.getTransactionLog;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.sendLogEventAndReturnTransactionHash;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
 import org.junit.Before;
 import org.junit.Test;
+import org.web3j.abi.EventEncoder;
+import org.web3j.abi.FunctionReturnDecoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Event;
+import org.web3j.abi.datatypes.generated.Int256;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.request.EthFilter;
+import org.web3j.protocol.core.methods.response.EthLog;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.quorum.enclave.Enclave;
 import org.web3j.quorum.enclave.Tessera;
@@ -89,7 +100,7 @@ public class ContainerTests extends ContainerTestBase {
             goQuorumPollingTransactionReceiptProcessor);
 
     // Generate a random value to insert into the log
-    final String logValue = generateRandomLogValue();
+    final String logValue = generateHexString(98765L);
 
     // Send the transaction and get the transaction hash
     final String transactionHash =
@@ -132,7 +143,7 @@ public class ContainerTests extends ContainerTestBase {
             besuPollingTransactionReceiptProcessor);
 
     // Generate a random value to insert into the log
-    final String logValue = generateRandomLogValue();
+    final String logValue = generateHexString(192837L);
 
     // Send the transaction and get the transaction hash
     final String transactionHash =
@@ -155,7 +166,8 @@ public class ContainerTests extends ContainerTestBase {
   }
 
   @Test
-  public void contractShouldBeDeployedOnlyToBesuNode() throws IOException, TransactionException {
+  public void contractShouldBeDeployedOnlyToBesuNode()
+      throws IOException, TransactionException, InterruptedException {
     // create a GoQuorum transaction manager
     final QuorumTransactionManager qtm =
         new QuorumTransactionManager(
@@ -171,7 +183,45 @@ public class ContainerTests extends ContainerTestBase {
             goQuorumPollingTransactionReceiptProcessor);
 
     // Generate a random value to insert into the log
-    final String logValue = generateRandomLogValue();
+    final String logValue = generateHexString((1234567L));
+
+    // Pull all the events for this contract
+
+    final Event testEvent =
+        new Event(
+            "TestEvent",
+            Arrays.<TypeReference<?>>asList(
+                new TypeReference<Address>(true) {}, new TypeReference<Int256>() {}));
+    final String eventEncoded = EventEncoder.encode(testEvent);
+
+    final AtomicBoolean checked = new AtomicBoolean(false);
+    final EthFilter ethFilterSubscription =
+        new EthFilter(
+            DefaultBlockParameterName.LATEST, DefaultBlockParameterName.LATEST, contractAddress);
+    ethFilterSubscription.addSingleTopic(eventEncoded);
+
+    final Disposable subscribe =
+        besuWeb3j
+            .ethLogFlowable(ethFilterSubscription)
+            .subscribe(
+                log -> {
+                  final String eventHash =
+                      log.getTopics().get(0); // Index 0 is the event definition hash
+
+                  if (eventHash.equals(eventEncoded)) {
+                    // address indexed _arg1
+                    final Address arg1 =
+                        (Address)
+                            FunctionReturnDecoder.decodeIndexedValue(
+                                log.getTopics().get(1), new TypeReference<Address>() {});
+                    assertThat(arg1.toString()).isEqualTo(credentials.getAddress());
+
+                    final String data = log.getData();
+                    assertThat(data.substring(2)).isEqualTo(logValue);
+
+                    checked.set(true);
+                  }
+                });
 
     // Send the transaction and get the transaction hash
     final String transactionHash =
@@ -184,6 +234,12 @@ public class ContainerTests extends ContainerTestBase {
             goQuorumPollingTransactionReceiptProcessor,
             logValue);
 
+    while (!checked.get()) {
+      Thread.sleep(1000);
+    }
+
+    subscribe.dispose();
+
     // Assert the Besu node has received the log
     final String besuResult = getTransactionLog(besuWeb3j, transactionHash);
     assertThat(besuResult).isEqualTo(logValue);
@@ -191,5 +247,18 @@ public class ContainerTests extends ContainerTestBase {
     // Assert the GoQuorum node has not received the log
     assertThatThrownBy(() -> getTransactionLog(goQuorumWeb3j, transactionHash))
         .hasMessageContaining("No log found");
+
+    // Get transaction log using a filter
+    final EthFilter ethFilter =
+        new EthFilter(
+            DefaultBlockParameterName.EARLIEST, DefaultBlockParameterName.LATEST, contractAddress);
+    ethFilter.addSingleTopic(eventEncoded);
+
+    @SuppressWarnings("rawtypes")
+    final List<EthLog.LogResult> logs = besuWeb3j.ethGetLogs(ethFilter).send().getLogs();
+
+    assertThat(logs.size()).isEqualTo(1);
+    assertThat(logs.toString()).contains(transactionHash);
+    assertThat(logs.toString()).contains(logValue);
   }
 }
