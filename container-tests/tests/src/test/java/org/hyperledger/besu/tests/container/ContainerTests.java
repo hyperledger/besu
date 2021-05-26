@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.container;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.deployContractAndReturnAddress;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.generateHexString;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.getTransactionLog;
@@ -182,11 +183,7 @@ public class ContainerTests extends ContainerTestBase {
             besuPollingTransactionReceiptProcessor,
             goQuorumPollingTransactionReceiptProcessor);
 
-    // Generate a random value to insert into the log
-    final String logValue = generateHexString((1234567L));
-
-    // Pull all the events for this contract
-
+    // Subscribe to the event
     final Event testEvent =
         new Event(
             "TestEvent",
@@ -194,12 +191,15 @@ public class ContainerTests extends ContainerTestBase {
                 new TypeReference<Address>(true) {}, new TypeReference<Int256>() {}));
     final String eventEncoded = EventEncoder.encode(testEvent);
 
-    final AtomicBoolean checked = new AtomicBoolean(false);
     final EthFilter ethFilterSubscription =
         new EthFilter(
             DefaultBlockParameterName.LATEST, DefaultBlockParameterName.LATEST, contractAddress);
     ethFilterSubscription.addSingleTopic(eventEncoded);
 
+    // Generate a value to insert into the log
+    final String logValue = generateHexString((1234567L));
+
+    final AtomicBoolean checked = new AtomicBoolean(false);
     final Disposable subscribe =
         besuWeb3j
             .ethLogFlowable(ethFilterSubscription)
@@ -234,8 +234,13 @@ public class ContainerTests extends ContainerTestBase {
             goQuorumPollingTransactionReceiptProcessor,
             logValue);
 
+    int secondsWaited = 0;
     while (!checked.get()) {
       Thread.sleep(1000);
+      secondsWaited++;
+      if (secondsWaited > 30) {
+        fail("Waited more than 30 seconds for log.");
+      }
     }
 
     subscribe.dispose();

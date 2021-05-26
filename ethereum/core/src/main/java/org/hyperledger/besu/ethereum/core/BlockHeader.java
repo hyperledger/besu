@@ -166,8 +166,8 @@ public class BlockHeader extends SealableBlockHeader
     return hash.get();
   }
 
-  public LogsBloomFilter getLogsBloom(final boolean forFilter) {
-    if (forFilter && privateLogsBloom.isPresent()) {
+  public LogsBloomFilter getLogsBloom(final boolean addPrivateBloom) {
+    if (addPrivateBloom && privateLogsBloom.isPresent()) {
       return LogsBloomFilter.builder()
           .insertFilter(logsBloom)
           .insertFilter(privateLogsBloom.get())
