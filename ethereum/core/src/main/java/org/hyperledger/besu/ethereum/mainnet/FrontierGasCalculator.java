@@ -467,4 +467,11 @@ public class FrontierGasCalculator implements GasCalculator {
 
     return MEMORY_WORD_GAS_COST.times(len).plus(base);
   }
+
+  @Override
+  public Gas getMaximumPmtCost() {
+    // what would be the gas for PMT with hash of all non-zeros
+    int nonZeros = 64;
+    return TX_BASE_COST.plus(TX_DATA_NON_ZERO_COST.times(nonZeros));
+  }
 }
