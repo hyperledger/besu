@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.orion.testutil;
+package org.hyperledger.enclave.testutil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,7 +30,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class OrionKeyUtils {
+public class EnclaveKeyUtils {
   private static final Logger LOG = LogManager.getLogger();
 
   /**
@@ -42,7 +42,7 @@ public class OrionKeyUtils {
    * @throws IOException throws if key not found
    */
   public static String loadKey(final String keyFileName) throws IOException {
-    InputStream is = OrionKeyUtils.class.getResourceAsStream("/" + keyFileName);
+    InputStream is = EnclaveKeyUtils.class.getResourceAsStream("/" + keyFileName);
     InputStreamReader streamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
     try (BufferedReader reader = new BufferedReader(streamReader)) {
       return reader.readLine();

@@ -16,14 +16,16 @@ package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +33,10 @@ import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 
 @SuppressWarnings("rawtypes")
-public class PrivateLogFilterAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class PrivateLogFilterAcceptanceTest extends ParameterizedEnclaveTestBase {
+  public PrivateLogFilterAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
 
   private PrivacyNode node;
 
@@ -39,7 +44,7 @@ public class PrivateLogFilterAcceptanceTest extends PrivacyAcceptanceTestBase {
   public void setUp() throws Exception {
     node =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0));
+            "miner-node", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
     privacyCluster.start(node);
   }
 
