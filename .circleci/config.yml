@@ -24,7 +24,7 @@ executors:
     machine:
       image: ubuntu-2004:202010-01
 
-  goquorum_executor:
+  xl_machine_executor:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: xlarge
@@ -175,14 +175,14 @@ jobs:
 
   acceptanceTests:
     parallelism: 8
-    executor: machine_executor
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
       - run:
           name: AcceptanceTests
-          no_output_timeout: 40m
+          no_output_timeout: 30m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
@@ -197,7 +197,7 @@ jobs:
 
   acceptanceTestsQuorum:
     parallelism: 1
-    executor: goquorum_executor
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
