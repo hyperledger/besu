@@ -660,14 +660,14 @@ task acceptanceTestsQuorum {
    * Basic tests for private and public tx: basic
    * Start a Besu/EthSigner/Tessera network with IBFT2: networks/typical-besu::ibft2
    *
-   * Not available features in Besu: privacy-enhancements-disabled, extension
+   * Not available features in Besu: privacy-enhancements-disabled, extension, mps
    * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
    *
    * Ignored for now (privacy-polishing): graphql, eth-api-signed, spam
    *
    * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
    */
-  def tags = "(basic && !spam && !eth-api-signed && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
+  def tags = "(basic && !mps && !spam && !eth-api-signed && !privacy-enhancements-disabled && !graphql && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
     exec {
