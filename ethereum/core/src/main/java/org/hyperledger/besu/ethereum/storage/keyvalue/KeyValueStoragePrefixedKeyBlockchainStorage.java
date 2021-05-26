@@ -44,15 +44,15 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       Bytes.wrap("forkHeads".getBytes(StandardCharsets.UTF_8));
 
   private static final Bytes CONSTANTS_PREFIX = Bytes.of(1);
-  private static final Bytes BLOCK_HEADER_PREFIX = Bytes.of(2);
+  static final Bytes BLOCK_HEADER_PREFIX = Bytes.of(2);
   private static final Bytes BLOCK_BODY_PREFIX = Bytes.of(3);
   private static final Bytes TRANSACTION_RECEIPTS_PREFIX = Bytes.of(4);
   private static final Bytes BLOCK_HASH_PREFIX = Bytes.of(5);
   private static final Bytes TOTAL_DIFFICULTY_PREFIX = Bytes.of(6);
   private static final Bytes TRANSACTION_LOCATION_PREFIX = Bytes.of(7);
 
-  private final KeyValueStorage storage;
-  private final BlockHeaderFunctions blockHeaderFunctions;
+  final KeyValueStorage storage;
+  final BlockHeaderFunctions blockHeaderFunctions;
 
   public KeyValueStoragePrefixedKeyBlockchainStorage(
       final KeyValueStorage storage, final BlockHeaderFunctions blockHeaderFunctions) {
@@ -118,7 +118,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     return Hash.wrap(Bytes32.wrap(bytes, 0));
   }
 
-  private Optional<Bytes> get(final Bytes prefix, final Bytes key) {
+  Optional<Bytes> get(final Bytes prefix, final Bytes key) {
     return storage.get(Bytes.concatenate(prefix, key).toArrayUnsafe()).map(Bytes::wrap);
   }
 
@@ -126,7 +126,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     private final KeyValueStorageTransaction transaction;
 
-    private Updater(final KeyValueStorageTransaction transaction) {
+    Updater(final KeyValueStorageTransaction transaction) {
       this.transaction = transaction;
     }
 
@@ -194,7 +194,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       transaction.rollback();
     }
 
-    private void set(final Bytes prefix, final Bytes key, final Bytes value) {
+    void set(final Bytes prefix, final Bytes key, final Bytes value) {
       transaction.put(Bytes.concatenate(prefix, key).toArrayUnsafe(), value.toArrayUnsafe());
     }
 

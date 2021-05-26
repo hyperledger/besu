@@ -121,9 +121,8 @@ public class ContractOperations {
     return logReceiptResult.getTransactionHash();
   }
 
-  public static String generateRandomLogValue() {
-    final StringBuilder randomValue =
-        new StringBuilder(Long.toHexString(((Double) (Math.random() * 100000000)).longValue()));
+  public static String generateHexString(final long number) {
+    final StringBuilder randomValue = new StringBuilder(Long.toHexString(number));
 
     while (randomValue.length() < 64) {
       randomValue.insert(0, '0');
