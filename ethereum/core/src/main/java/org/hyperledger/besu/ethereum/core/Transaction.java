@@ -486,7 +486,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
 
-    if (transactionType != TransactionType.FRONTIER) {
+    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
       // EIP-2718 typed transaction, return yParity:
       return recId;
     } else {
