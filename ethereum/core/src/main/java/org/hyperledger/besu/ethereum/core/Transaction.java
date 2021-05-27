@@ -485,10 +485,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
-    if (chainId.isEmpty()) {
-      return recId.add(REPLAY_UNPROTECTED_V_BASE);
+
+    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
+      // EIP-2718 typed transaction, return yParity:
+      return recId;
     } else {
-      return recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
+      if (chainId.isEmpty()) {
+        return recId.add(REPLAY_UNPROTECTED_V_BASE);
+      } else {
+        return recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
+      }
     }
   }
 
