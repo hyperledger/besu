@@ -76,7 +76,9 @@ public class StateTestVersionedTransaction {
    * Constructor for populating a mock transaction with json data.
    *
    * @param nonce Nonce of the mock transaction.
-   * @param gasPrice Gas price of the mock transaction.
+   * @param gasPrice Gas price of the mock transaction, if not 1559 transaction.
+   * @param maxFeePerGas Wei fee cap of the mock transaction, if a 1559 transaction.
+   * @param maxPriorityFeePerGas Wei tip cap of the mock transaction, if a 1559 transaction.
    * @param gasLimit Gas Limit of the mock transaction.
    * @param to Recipient account of the mock transaction.
    * @param value Amount of ether transferred in the mock transaction.
