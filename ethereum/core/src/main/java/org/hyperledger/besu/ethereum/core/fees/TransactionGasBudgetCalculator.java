@@ -29,10 +29,6 @@ public interface TransactionGasBudgetCalculator {
     return gasBudgetCalculator((blockNumber, gasLimit, ignored) -> gasLimit);
   }
 
-  static TransactionGasBudgetCalculator eip1559(final EIP1559 eip1559) {
-    return gasBudgetCalculator((blockNumber, gasLimit, transaction) -> gasLimit);
-  }
-
   static TransactionGasBudgetCalculator gasBudgetCalculator(
       final BlockGasLimitCalculator blockGasLimitCalculator) {
     return (transaction, blockNumber, gasLimit, gasUsed) -> {
