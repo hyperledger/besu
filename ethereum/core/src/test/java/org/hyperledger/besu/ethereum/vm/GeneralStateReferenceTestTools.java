@@ -149,13 +149,15 @@ public class GeneralStateReferenceTestTools {
 
     // Check the logs.
     final Hash expectedLogsHash = spec.getExpectedLogsHash();
-    Optional.ofNullable(expectedLogsHash).ifPresent(expected -> {
-      final List<Log> logs = result.getLogs();
+    Optional.ofNullable(expectedLogsHash)
+        .ifPresent(
+            expected -> {
+              final List<Log> logs = result.getLogs();
 
-      assertThat(Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo))))
-          .withFailMessage("Unmatched logs hash. Generated logs: %s", logs)
-          .isEqualTo(expected);
-    });
+              assertThat(Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo))))
+                  .withFailMessage("Unmatched logs hash. Generated logs: %s", logs)
+                  .isEqualTo(expected);
+            });
   }
 
   private static boolean shouldClearEmptyAccounts(final String eip) {

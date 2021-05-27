@@ -99,12 +99,10 @@ public class StateTestVersionedTransaction {
           final List<List<AccessListEntry>> maybeAccessLists) {
 
     this.nonce = Long.decode(nonce);
-    this.gasPrice = Optional.ofNullable(gasPrice)
-        .map(Wei::fromHexString).orElse(null);
-    this.maxFeePerGas = Optional.ofNullable(maxFeePerGas)
-        .map(Wei::fromHexString).orElse(null);
-    this.maxPriorityFeePerGas = Optional.ofNullable(maxPriorityFeePerGas)
-        .map(Wei::fromHexString).orElse(null);
+    this.gasPrice = Optional.ofNullable(gasPrice).map(Wei::fromHexString).orElse(null);
+    this.maxFeePerGas = Optional.ofNullable(maxFeePerGas).map(Wei::fromHexString).orElse(null);
+    this.maxPriorityFeePerGas =
+        Optional.ofNullable(maxPriorityFeePerGas).map(Wei::fromHexString).orElse(null);
     this.to = to.isEmpty() ? null : Address.fromHexString(to);
 
     SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
