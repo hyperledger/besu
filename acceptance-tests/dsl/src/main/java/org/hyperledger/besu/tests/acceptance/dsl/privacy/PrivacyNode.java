@@ -147,7 +147,10 @@ public class PrivacyNode implements AutoCloseable {
               } catch (final EnclaveClientException
                   | EnclaveIOException
                   | EnclaveServerException e) {
-                LOG.warn("Waiting for enclave connectivity: " + e.getMessage());
+                LOG.warn(
+                    "Waiting for enclave connectivity between {} and {}: " + e.getMessage(),
+                    enclave.getDefaultPublicKey(),
+                    to.get(0));
                 return false;
               }
             });
