@@ -60,7 +60,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public class StateTestVersionedTransaction {
 
   private final long nonce;
-  private final Wei gasPrice;
+  @Nullable private final Wei maxFeePerGas;
+  @Nullable private final Wei maxPriorityFeePerGas;
+  @Nullable private final Wei gasPrice;
   @Nullable private final Address to;
 
   private final KeyPair keys;
@@ -86,6 +88,8 @@ public class StateTestVersionedTransaction {
   public StateTestVersionedTransaction(
       @JsonProperty("nonce") final String nonce,
       @JsonProperty("gasPrice") final String gasPrice,
+      @JsonProperty("maxFeePerGas") final String maxFeePerGas,
+      @JsonProperty("maxPriorityFeePerGas") final String maxPriorityFeePerGas,
       @JsonProperty("gasLimit") final String[] gasLimit,
       @JsonProperty("to") final String to,
       @JsonProperty("value") final String[] value,
@@ -95,7 +99,12 @@ public class StateTestVersionedTransaction {
           final List<List<AccessListEntry>> maybeAccessLists) {
 
     this.nonce = Long.decode(nonce);
-    this.gasPrice = Wei.fromHexString(gasPrice);
+    this.gasPrice = Optional.ofNullable(gasPrice)
+        .map(Wei::fromHexString).orElse(null);
+    this.maxFeePerGas = Optional.ofNullable(maxFeePerGas)
+        .map(Wei::fromHexString).orElse(null);
+    this.maxPriorityFeePerGas = Optional.ofNullable(maxPriorityFeePerGas)
+        .map(Wei::fromHexString).orElse(null);
     this.to = to.isEmpty() ? null : Address.fromHexString(to);
 
     SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -118,14 +127,17 @@ public class StateTestVersionedTransaction {
   }
 
   public Transaction get(final GeneralStateTestCaseSpec.Indexes indexes) {
+
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .nonce(nonce)
-            .gasPrice(gasPrice)
             .gasLimit(gasLimits.get(indexes.gas).asUInt256().toLong())
             .to(to)
             .value(values.get(indexes.value))
             .payload(payloads.get(indexes.data));
+    Optional.ofNullable(gasPrice).ifPresent(transactionBuilder::gasPrice);
+    Optional.ofNullable(maxFeePerGas).ifPresent(transactionBuilder::maxFeePerGas);
+    Optional.ofNullable(maxPriorityFeePerGas).ifPresent(transactionBuilder::maxPriorityFeePerGas);
     maybeAccessLists.ifPresent(
         accessLists ->
             transactionBuilder.accessList(accessLists.get(indexes.data)).chainId(BigInteger.ONE));
