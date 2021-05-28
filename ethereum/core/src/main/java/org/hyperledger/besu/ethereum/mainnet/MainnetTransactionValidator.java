@@ -121,7 +121,7 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           String.format(
               "Transaction type %s is invalid, accepted transaction types are %s",
-              transactionType, acceptedTransactionTypes.toString()));
+              transactionType, acceptedTransactionTypes));
     }
 
     if (baseFee.isPresent()) {
@@ -130,6 +130,18 @@ public class MainnetTransactionValidator {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             "gasPrice is less than the current BaseFee");
+      }
+
+      // assert transaction.max_fee_per_gas >= transaction.max_priority_fee_per_gas
+      if (transaction
+              .getMaxPriorityFeePerGas()
+              .get()
+              .getAsBigInteger()
+              .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
+          > 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+            "max priority fee per gas cannot be greater than max fee per gas");
       }
     }
 
