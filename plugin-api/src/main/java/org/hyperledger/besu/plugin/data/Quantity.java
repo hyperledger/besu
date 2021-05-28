@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import java.math.BigInteger;
+
 /**
  * An interface to mark objects that also represents a disceete quantity, such as an unsigned
  * integer value.
@@ -30,7 +32,10 @@ public interface Quantity {
    *
    * @return The boxed or object based value of the quantity.
    */
+  @Deprecated
   Number getValue();
+
+  BigInteger getAsBigInteger();
 
   /**
    * The value as a hexadecimal string.
