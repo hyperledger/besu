@@ -4,8 +4,8 @@
 ## Privacy users - Orion Project Deprecation
 Tessera is now the recommended Private Transaction Manager for Hyperledger Besu.
 
-Now that all primary Orion functionality has been merged into Tessera, Orion is being deprecated,
-and we encourage all users with active projects to use the provided migration instructions,
+Now that all primary Orion functionality has been merged into Tessera, Orion is being deprecated.
+We encourage all users with active projects to use the provided migration instructions,
 documented [here](https://docs.orion.consensys.net/en/latest/Tutorials/Migrating-from-Orion-to-Tessera/).
 
 We will continue to support Orion users until 30th November 2021. If you have any questions or
