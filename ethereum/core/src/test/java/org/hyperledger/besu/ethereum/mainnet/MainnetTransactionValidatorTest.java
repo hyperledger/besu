@@ -259,9 +259,6 @@ public class MainnetTransactionValidatorTest {
             .chainId(BigInteger.ONE)
             .signAndBuild(new SECP256K1().generateKeyPair());
 
-    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
-        .thenReturn(new GasAndAccessedState(Gas.of(60)));
-
     final ValidationResult<TransactionInvalidReason> validationResult =
         validator.validate(transaction, Optional.of(1L));
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
