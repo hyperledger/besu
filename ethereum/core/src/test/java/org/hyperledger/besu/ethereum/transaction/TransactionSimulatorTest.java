@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -290,6 +291,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())

@@ -24,7 +24,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -121,7 +123,7 @@ public class GeneralStateTestCaseSpec {
   public static class PostSection {
 
     private final Hash rootHash;
-    private final Hash logsHash;
+    @Nullable private final Hash logsHash;
     private final Indexes indexes;
 
     @JsonCreator
@@ -131,7 +133,7 @@ public class GeneralStateTestCaseSpec {
         @JsonProperty("indexes") final Indexes indexes,
         @JsonProperty("txbytes") final String txbytes) {
       this.rootHash = Hash.fromHexString(hash);
-      this.logsHash = Hash.fromHexString(logs);
+      this.logsHash = Optional.ofNullable(logs).map(Hash::fromHexString).orElse(null);
       this.indexes = indexes;
     }
   }

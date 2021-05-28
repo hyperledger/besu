@@ -29,6 +29,7 @@ public class KeyValueStorageProviderBuilder {
   private KeyValueStorageFactory storageFactory;
   private BesuConfiguration commonConfiguration;
   private MetricsSystem metricsSystem;
+  private boolean isGoQuorumCompatibilityMode;
 
   public KeyValueStorageProviderBuilder withStorageFactory(
       final KeyValueStorageFactory storageFactory) {
@@ -47,6 +48,12 @@ public class KeyValueStorageProviderBuilder {
     return this;
   }
 
+  public KeyValueStorageProviderBuilder isGoQuorumCompatibilityMode(
+      final boolean isGoQuorumCompatibilityMode) {
+    this.isGoQuorumCompatibilityMode = isGoQuorumCompatibilityMode;
+    return this;
+  }
+
   public KeyValueStorageProvider build() {
     checkNotNull(storageFactory, "Cannot build a storage provider without a storage factory.");
     checkNotNull(
@@ -62,10 +69,18 @@ public class KeyValueStorageProviderBuilder {
 
     // this tickles init needed for isSegmentIsolationSupported
     storageFactory.create(KeyValueSegmentIdentifier.BLOCKCHAIN, commonConfiguration, metricsSystem);
-    return new KeyValueStorageProvider(
-        segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
-        worldStatePreImageStorage,
-        privateWorldStatePreImageStorage,
-        storageFactory.isSegmentIsolationSupported());
+    if (isGoQuorumCompatibilityMode) {
+      return new GoQuorumKeyValueStorageProvider(
+          segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
+          worldStatePreImageStorage,
+          privateWorldStatePreImageStorage,
+          storageFactory.isSegmentIsolationSupported());
+    } else {
+      return new KeyValueStorageProvider(
+          segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
+          worldStatePreImageStorage,
+          privateWorldStatePreImageStorage,
+          storageFactory.isSegmentIsolationSupported());
+    }
   }
 }

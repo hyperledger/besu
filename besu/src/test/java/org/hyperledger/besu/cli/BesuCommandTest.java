@@ -995,6 +995,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void nonExistentGenesisGivesError() throws Exception {
+    final String nonExistentGenesis = "non-existent-genesis.json";
+    parseCommand("--genesis-file", nonExistentGenesis);
+
+    Mockito.verifyZeroInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).startsWith("Unable to load genesis file");
+    assertThat(commandErrorOutput.toString()).contains(nonExistentGenesis);
+  }
+
+  @Test
   public void testDnsDiscoveryUrlEthConfig() throws Exception {
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);

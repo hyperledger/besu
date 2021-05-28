@@ -57,18 +57,19 @@ dependencyManagement {
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.35.Final'
     dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.56.Final', classifier: 'linux-x86_64'
 
-    dependency 'io.opentelemetry:opentelemetry-api:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:0.13.1-alpha'
-    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-proto:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-sdk-trace:0.13.1'
-    dependency 'io.opentelemetry:opentelemetry-sdk:0.13.1'
+    dependency 'io.opentelemetry:opentelemetry-api:1.2.0'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.2.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.2.0'
+    dependency 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.2.0'
+    dependency 'io.opentelemetry:opentelemetry-proto:1.2.0-alpha'
+    dependency 'io.opentelemetry:opentelemetry-sdk-trace:1.2.0'
+    dependency 'io.opentelemetry:opentelemetry-sdk:1.2.0'
+    dependency 'io.opentelemetry:opentelemetry-semconv:1.2.0-alpha'
 
     dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
     dependency 'io.opentracing:opentracing-api:0.33.0'
     dependency 'io.opentracing:opentracing-util:0.33.0'
-    dependency 'io.jaegertracing:jaeger-client:1.5.0'
+    dependency 'io.jaegertracing:jaeger-client:1.6.0'
 
     dependency 'io.pkts:pkts-core:3.0.7'
 
