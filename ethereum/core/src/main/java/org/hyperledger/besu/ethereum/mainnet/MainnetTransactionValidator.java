@@ -133,12 +133,13 @@ public class MainnetTransactionValidator {
       }
 
       // assert transaction.max_fee_per_gas >= transaction.max_priority_fee_per_gas
-      if (transaction
-              .getMaxPriorityFeePerGas()
-              .get()
-              .getAsBigInteger()
-              .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
-          > 0) {
+      if (transaction.getType().supports1559FeeMarket()
+          && transaction
+                  .getMaxPriorityFeePerGas()
+                  .get()
+                  .getAsBigInteger()
+                  .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
+              > 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             "max priority fee per gas cannot be greater than max fee per gas");
