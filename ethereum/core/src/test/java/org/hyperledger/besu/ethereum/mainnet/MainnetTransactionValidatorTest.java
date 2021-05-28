@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -45,6 +47,7 @@ import java.util.Set;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -203,6 +206,31 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), true))
         .isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldRejectTransactionWithMaxFeeTimesGasLimitGreaterThanBalance() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator, false, Optional.empty(), defaultGoQuorumCompatibilityMode);
+    validator.setTransactionFilter(transactionFilter(true));
+
+    assertThat(
+            validator.validateForSender(
+                Transaction.builder()
+                    .type(TransactionType.EIP1559)
+                    .nonce(0)
+                    .maxPriorityFeePerGas(Wei.of(5))
+                    .maxFeePerGas(Wei.of(7))
+                    .gasLimit(15)
+                    .to(Address.ZERO)
+                    .value(Wei.of(0))
+                    .payload(Bytes.EMPTY)
+                    .chainId(BigInteger.ONE)
+                    .signAndBuild(new SECP256K1().generateKeyPair()),
+                account(Wei.of(100), 0),
+                true))
+        .isEqualTo(ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE));
   }
 
   @Test
