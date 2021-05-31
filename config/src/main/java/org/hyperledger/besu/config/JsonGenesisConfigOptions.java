@@ -246,13 +246,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getLondonBlockNumber() {
     final OptionalLong londonBlock = getOptionalLong("londonblock");
-    final OptionalLong baikalblock = getOptionalLong("baikalblock");
-    if (baikalblock.isPresent()) {
+    final OptionalLong calaverasblock = getOptionalLong("calaverasblock");
+    if (calaverasblock.isPresent()) {
       if (londonBlock.isPresent()) {
         throw new RuntimeException(
-            "Genesis files cannot specify both londonblock and baikalblock.");
+            "Genesis files cannot specify both londonblock and calaverasblock.");
       }
-      return baikalblock;
+      return calaverasblock;
     }
     return londonBlock;
   }

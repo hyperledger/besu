@@ -5,10 +5,7 @@
       "prompt-type": "LIST",
       "question": "Which Ethereum network would you like to use ?",
       "config-key": "network",
-      "available-options": "org.hyperledger.besu.cli.config.NetworkName",
-      "additional-flag": {
-        "yolo_v3": "Xberlin-enabled"
-      }
+      "available-options": "org.hyperledger.besu.cli.config.NetworkName"
     },
     {
       "prompt-type": "LIST",

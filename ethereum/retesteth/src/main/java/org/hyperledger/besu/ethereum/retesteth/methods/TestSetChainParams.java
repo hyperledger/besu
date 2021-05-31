@@ -146,7 +146,7 @@ public class TestSetChainParams implements JsonRpcMethod {
     }
 
     maybeMoveToNumber(params, "londonForkBlock", config, "aleutBlock");
-    maybeMoveToNumber(params, "londonForkBlock", config, "baikalBlock");
+    maybeMoveToNumber(params, "londonForkBlock", config, "calaverasBlock");
     maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");
 
     // strip out precompiles with zero balance
