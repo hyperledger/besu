@@ -22,6 +22,7 @@ concerns, please reach out to the ConsenSys protocol engineering team in the
 * Added support for the upcoming CALAVERAS ephemeral testnet and removed the configuration for the deprecated BAIKAL ephemeral testnet. [\#2343](https://github.com/hyperledger/besu/pull/2343)
 
 ### Bug Fixes
+* Fix invalid transfer values with the tracing API specifically for CALL operation [\#2319](https://github.com/hyperledger/besu/pull/2319)
 
 ### Early Access Features
 
