@@ -123,7 +123,7 @@ public class StandardJsonTracer implements OperationTracer {
                     .orElse(""));
     traceLine.put("opName", currentOp.getName());
     traceLine.put("error", error);
-    out.println(traceLine.toString());
+    out.println(traceLine);
   }
 
   private Gas computeCallGas(
