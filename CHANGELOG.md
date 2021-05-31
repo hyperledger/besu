@@ -20,6 +20,7 @@ concerns, please reach out to the ConsenSys protocol engineering team in the
 * Ethereum Classic Magneto Hard Fork [\#2315](https://github.com/hyperledger/besu/pull/2315)
 
 ### Bug Fixes
+* Fix invalid transfer values with the tracing API specifically for CALL operation [\#2319](https://github.com/hyperledger/besu/pull/2319)
 
 ### Early Access Features
 
