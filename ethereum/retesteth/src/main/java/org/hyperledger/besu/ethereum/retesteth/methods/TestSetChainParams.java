@@ -138,9 +138,7 @@ public class TestSetChainParams implements JsonRpcMethod {
       // TODO EIP-1559 change for the actual fork name when known
       ExperimentalEIPs.initialBasefee =
           Optional.ofNullable(
-                  chainParamsJson
-                      .getJsonObject("genesis", new JsonObject())
-                      .getString("baseFeePerGas"))
+                  chainParamsJson.getJsonObject("genesis", new JsonObject()).getString("baseFee"))
               .map(Long::decode)
               .orElse(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
     }
