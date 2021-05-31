@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.pki.keystore;
 
-import org.hyperledger.besu.pki.PkiException;
-
+import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -29,23 +28,22 @@ import java.security.cert.Certificate;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
-
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.pki.PkiException;
 
 /**
  * Creates an instance of this class which is backed by a PKCS#11 keystore, such as a software
- * (emulated) HSM or a physical/cloud HSM (see <a href=
- * "https://docs.oracle.com/en/java/javase/11/security/pkcs11-reference-guide1.html">here</a>
+ * (emulated) HSM or a physical/cloud HSM (see <a href= "https://docs.oracle.com/en/java/javase/11/security/pkcs11-reference-guide1.html">here</a>
  */
 public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
 
   private static final Logger LOG = LogManager.getLogger();
 
+  private static final String pkcs11Provider = "SunPKCS11";
+
   private final KeyStore keystore;
   private final transient char[] keystorePassword;
-  private final String pkcs11Provider = "SunPKCS11";
 
   private final java.security.Provider provider;
 
@@ -158,7 +156,7 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
     return keystore;
   }
 
-  protected Provider getPkcs11Provider(final String config) throws Exception {
+  private Provider getPkcs11Provider(final String config) {
     final Provider provider = Security.getProvider(pkcs11Provider);
     if (null == provider) {
       throw new IllegalArgumentException("Unable to load PKCS11 provider configuration.");
