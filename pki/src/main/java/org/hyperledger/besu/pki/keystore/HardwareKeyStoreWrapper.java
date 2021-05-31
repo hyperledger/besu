@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.pki.keystore;
 
-import com.google.common.annotations.VisibleForTesting;
+import org.hyperledger.besu.pki.PkiException;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -28,13 +29,15 @@ import java.security.cert.Certificate;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.pki.PkiException;
 
 /**
  * Creates an instance of this class which is backed by a PKCS#11 keystore, such as a software
- * (emulated) HSM or a physical/cloud HSM (see <a href= "https://docs.oracle.com/en/java/javase/11/security/pkcs11-reference-guide1.html">here</a>
+ * (emulated) HSM or a physical/cloud HSM (see <a href=
+ * "https://docs.oracle.com/en/java/javase/11/security/pkcs11-reference-guide1.html">here</a>
  */
 public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
 
