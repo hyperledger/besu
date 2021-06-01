@@ -106,6 +106,20 @@ public class CmsCreationAndValidationTest {
   }
 
   @Test
+  public void cmsValidationWithoutCRLConfigDisablesCRLCheck() {
+    CmsCreator cmsCreator = new CmsCreator(keystore, "revoked");
+    Bytes data = Bytes.random(32);
+
+    Bytes cms = cmsCreator.create(data);
+
+    // Overriding validator with instance without CRL CertStore
+    cmsValidator = new CmsValidator(truststore, null);
+
+    // Because we don't have a CRL CertStore, revocation is not checked
+    assertThat(cmsValidator.validate(cms, data)).isTrue();
+  }
+
+  @Test
   public void cmsValidationWithWrongSignedData() {
     CmsCreator cmsCreator = new CmsCreator(keystore, "trusted");
     Bytes otherData = Bytes.random(32);

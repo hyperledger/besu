@@ -69,8 +69,6 @@ public class CmsCreator {
   @SuppressWarnings("rawtypes")
   public Bytes create(final Bytes contentToSign) {
     try {
-      // TODO should we send only the certificates that aren't on the truststore?
-
       // Certificates that will be sent
       final List<X509Certificate> x509Certificates =
           Stream.of(keyStore.getCertificateChain(certificateAlias))

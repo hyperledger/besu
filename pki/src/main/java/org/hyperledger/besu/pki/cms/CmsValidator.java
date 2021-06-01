@@ -57,10 +57,6 @@ public class CmsValidator {
   private final KeyStoreWrapper truststore;
   private final Optional<CertStore> crlCertStore;
 
-  public CmsValidator(final KeyStoreWrapper truststore) {
-    this(truststore, null);
-  }
-
   public CmsValidator(final KeyStoreWrapper truststore, final CertStore crlCertStore) {
     this.truststore = truststore;
     this.crlCertStore = Optional.ofNullable(crlCertStore);
@@ -151,7 +147,13 @@ public class CmsValidator {
       try {
         params = new PKIXBuilderParameters(pkixParameters.getTrustAnchors(), targetConstraints);
         // Adding CertStore with CRLs
-        crlCertStore.ifPresent(params::addCertStore);
+        crlCertStore.ifPresentOrElse(
+            params::addCertStore,
+            () -> {
+              LOGGER.warn("No CRL CertStore provided. CRL validation will be disabled.");
+              params.setRevocationEnabled(false);
+            });
+
         // Adding intermediate certificates from CMS
         params.addCertStore(cmsCertificates);
       } catch (InvalidAlgorithmParameterException e) {
