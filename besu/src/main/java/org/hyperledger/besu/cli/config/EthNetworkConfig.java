@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.ASTOR_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.CALAVERAS_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.CLASSIC_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_DISCOVERY_URL;
@@ -46,7 +47,7 @@ public class EthNetworkConfig {
   public static final BigInteger ROPSTEN_NETWORK_ID = BigInteger.valueOf(3);
   public static final BigInteger RINKEBY_NETWORK_ID = BigInteger.valueOf(4);
   public static final BigInteger GOERLI_NETWORK_ID = BigInteger.valueOf(5);
-  public static final BigInteger BAIKAL_NETWORK_ID = BigInteger.valueOf(1642);
+  public static final BigInteger CALAVERAS_NETWORK_ID = BigInteger.valueOf(123);
   public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(2018);
   public static final BigInteger ECIP1049_DEV_NETWORK_ID = BigInteger.valueOf(2021);
   public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
@@ -57,7 +58,7 @@ public class EthNetworkConfig {
   private static final String ROPSTEN_GENESIS = "/ropsten.json";
   private static final String RINKEBY_GENESIS = "/rinkeby.json";
   private static final String GOERLI_GENESIS = "/goerli.json";
-  private static final String BAIKAL_GENESIS = "/baikal.json";
+  private static final String CALAVERAS_GENESIS = "/calaveras.json";
   private static final String DEV_GENESIS = "/dev.json";
   private static final String DEV_ECIP1049_GENESIS = "/ecip1049_dev.json";
   private static final String CLASSIC_GENESIS = "/classic.json";
@@ -153,9 +154,9 @@ public class EthNetworkConfig {
             GOERLI_NETWORK_ID,
             GOERLI_BOOTSTRAP_NODES,
             GOERLI_DISCOVERY_URL);
-      case BAIKAL:
+      case CALAVERAS:
         return new EthNetworkConfig(
-            jsonConfig(BAIKAL_GENESIS), BAIKAL_NETWORK_ID, new ArrayList<>(), null);
+            jsonConfig(CALAVERAS_GENESIS), CALAVERAS_NETWORK_ID, CALAVERAS_BOOTSTRAP_NODES, null);
       case DEV:
         return new EthNetworkConfig(
             jsonConfig(DEV_GENESIS), DEV_NETWORK_ID, new ArrayList<>(), null);

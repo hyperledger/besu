@@ -190,7 +190,7 @@ public class GenesisConfigOptionsTest {
 
   @Test
   public void shouldGetBaikalBlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("baikalblock", 1000));
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("calaverasblock", 1000));
     assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
     assertThat(config.getLondonBlockNumber()).hasValue(1000);
     assertThat(config.getGenesisBaseFeePerGas()).isEmpty();
