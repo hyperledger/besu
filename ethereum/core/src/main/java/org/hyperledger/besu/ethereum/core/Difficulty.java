@@ -69,6 +69,11 @@ public final class Difficulty extends BaseUInt256Value<Difficulty> implements Qu
 
   @Override
   public Number getValue() {
+    return getAsBigInteger();
+  }
+
+  @Override
+  public BigInteger getAsBigInteger() {
     return toBigInteger();
   }
 
