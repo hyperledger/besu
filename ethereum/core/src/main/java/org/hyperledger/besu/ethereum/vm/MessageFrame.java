@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
+import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 
 import java.util.ArrayList;
@@ -450,7 +451,7 @@ public class MessageFrame {
    *
    * @param offset The item's position relative to the top of the stack
    * @return The item at the specified offset in the stack
-   * @throws IndexOutOfBoundsException if the offset is out of range
+   * @throws UnderflowException if the offset is out of range
    */
   public Bytes32 getStackItem(final int offset) {
     return stack.get(offset);
@@ -460,7 +461,7 @@ public class MessageFrame {
    * Removes the item at the top of the stack.
    *
    * @return the item at the top of the stack
-   * @throws IllegalStateException if the stack is empty
+   * @throws UnderflowException if the stack is empty
    */
   public Bytes32 popStackItem() {
     return stack.pop();

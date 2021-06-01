@@ -204,6 +204,7 @@ public class BlockTransactionSelector {
     }
 
     if (transactionTooLargeForBlock(blockNumber, gasLimit, transaction)) {
+      LOG.trace("{} too large to select for block creation", transaction);
       if (blockOccupancyAboveThreshold()) {
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
@@ -216,6 +217,10 @@ public class BlockTransactionSelector {
     final Wei actualMinTransactionGasPriceInBlock =
         transactionPriceCalculator.price(transaction, processableBlockHeader.getBaseFee());
     if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
+      LOG.trace(
+          "Gas fee of {} lower than configured minimum {}, deleting",
+          transaction,
+          minTransactionGasPrice);
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }
 
@@ -254,6 +259,7 @@ public class BlockTransactionSelector {
 
     if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
+      LOG.trace("Selected {} for block creation", transaction);
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
       return transactionSelectionResultForInvalidResult(effectiveResult.getValidationResult());
