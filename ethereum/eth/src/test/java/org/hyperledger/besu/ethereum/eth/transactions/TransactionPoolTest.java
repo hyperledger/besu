@@ -733,7 +733,8 @@ public class TransactionPoolTest {
             nullable(Account.class),
             any(TransactionValidationParams.class)))
         .thenReturn(valid());
-    final Transaction transaction = new TransactionTestFixture()
+    final Transaction transaction =
+        new TransactionTestFixture()
             .nonce(1)
             .type(TransactionType.EIP1559)
             .maxFeePerGas(Optional.of(Wei.ONE))
@@ -743,8 +744,9 @@ public class TransactionPoolTest {
             .createTransaction(KEY_PAIR1);
 
     final ValidationResult<TransactionInvalidReason> result =
-            transactionPool.addLocalTransaction(transaction);
-    assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT);
+        transactionPool.addLocalTransaction(transaction);
+    assertThat(result.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT);
   }
 
   @Test
@@ -774,7 +776,8 @@ public class TransactionPoolTest {
             nullable(Account.class),
             any(TransactionValidationParams.class)))
         .thenReturn(valid());
-    final Transaction transaction = new TransactionTestFixture()
+    final Transaction transaction =
+        new TransactionTestFixture()
             .nonce(1)
             .type(TransactionType.EIP1559)
             .maxFeePerGas(Optional.of(Wei.ONE))
@@ -784,8 +787,9 @@ public class TransactionPoolTest {
             .createTransaction(KEY_PAIR1);
 
     final ValidationResult<TransactionInvalidReason> result =
-            transactionPool.addLocalTransaction(transaction);
-    assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT);
+        transactionPool.addLocalTransaction(transaction);
+    assertThat(result.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT);
   }
 
   @Test
