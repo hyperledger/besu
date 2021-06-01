@@ -122,38 +122,39 @@ public class PrivacyNode implements AutoCloseable {
   }
 
   public void testEnclaveConnection(final List<PrivacyNode> otherNodes) {
-    LOG.debug(
-        String.format(
-            "Testing Enclave connectivity between %s (%s) and %s (%s)",
-            besu.getName(),
-            enclave.nodeUrl(),
-            Arrays.toString(otherNodes.stream().map(node -> node.besu.getName()).toArray()),
-            Arrays.toString(otherNodes.stream().map(node -> node.enclave.nodeUrl()).toArray())));
-    final EnclaveFactory factory = new EnclaveFactory(vertx);
-    final Enclave enclaveClient = factory.createVertxEnclave(enclave.clientUrl());
-    final String payload = "SGVsbG8sIFdvcmxkIQ==";
-    final List<String> to =
-        otherNodes.stream()
-            .map(node -> node.enclave.getDefaultPublicKey())
-            .collect(Collectors.toList());
+    if (!otherNodes.isEmpty()) {
+      LOG.debug(
+          String.format(
+              "Testing Enclave connectivity between %s (%s) and %s (%s)",
+              besu.getName(),
+              enclave.nodeUrl(),
+              Arrays.toString(otherNodes.stream().map(node -> node.besu.getName()).toArray()),
+              Arrays.toString(otherNodes.stream().map(node -> node.enclave.nodeUrl()).toArray())));
+      final EnclaveFactory factory = new EnclaveFactory(vertx);
+      final Enclave enclaveClient = factory.createVertxEnclave(enclave.clientUrl());
+      final String payload = "SGVsbG8sIFdvcmxkIQ==";
+      final List<String> to =
+          otherNodes.stream()
+              .map(node -> node.enclave.getDefaultPublicKey())
+              .collect(Collectors.toList());
 
-    Awaitility.await()
-        .until(
-            () -> {
-              try {
-                LOG.debug("sending from: " + enclave.getDefaultPublicKey() + " to: " + to.get(0));
-                enclaveClient.send(payload, enclave.getDefaultPublicKey(), to);
-                return true;
-              } catch (final EnclaveClientException
-                  | EnclaveIOException
-                  | EnclaveServerException e) {
-                LOG.warn(
-                    "Waiting for enclave connectivity between {} and {}: " + e.getMessage(),
-                    enclave.getDefaultPublicKey(),
-                    to.get(0));
-                return false;
-              }
-            });
+      Awaitility.await()
+          .until(
+              () -> {
+                try {
+                  enclaveClient.send(payload, enclave.getDefaultPublicKey(), to);
+                  return true;
+                } catch (final EnclaveClientException
+                    | EnclaveIOException
+                    | EnclaveServerException e) {
+                  LOG.warn(
+                      "Waiting for enclave connectivity between {} and {}: " + e.getMessage(),
+                      enclave.getDefaultPublicKey(),
+                      to.get(0));
+                  return false;
+                }
+              });
+    }
   }
 
   public EnclaveTestHarness getEnclave() {
