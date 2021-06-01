@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
 import static java.util.Collections.emptyList;
+import static java.util.function.Predicate.not;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNodeRunner;
@@ -64,7 +65,7 @@ public class PrivacyCluster {
       throw new IllegalArgumentException("Can't start a cluster with no nodes");
     }
     this.nodes = nodes;
-    this.runnableNodes = nodes.stream().map(n -> n.getBesu()).collect(Collectors.toList());
+    this.runnableNodes = nodes.stream().map(PrivacyNode::getBesu).collect(Collectors.toList());
 
     final Optional<PrivacyNode> bootNode = selectAndStartBootnode(nodes);
 
@@ -90,11 +91,16 @@ public class PrivacyCluster {
     return nodes;
   }
 
-  /** Verify that each Orion node has connected to every other Orion */
+  /** Verify that each Enclave has connected to every other Enclave */
   public void verifyAllEnclaveNetworkConnections() {
-    for (int i = 0; i < nodes.size() - 1; i++) {
-      nodes.get(i).testEnclaveConnection(nodes.subList(i + 1, nodes.size()));
-    }
+    nodes.forEach(
+        privacyNode -> {
+          final List<PrivacyNode> otherNodes =
+              nodes.stream()
+                  .filter(not(privacyNode::equals))
+                  .collect(Collectors.toUnmodifiableList());
+          privacyNode.testEnclaveConnection(otherNodes);
+        });
   }
 
   public void stop() {
