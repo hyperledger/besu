@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
@@ -72,8 +71,6 @@ public class ProtocolSpec {
 
   private final Optional<EIP1559> eip1559;
 
-  private final TransactionGasBudgetCalculator gasBudgetCalculator;
-
   private final BadBlockManager badBlockManager;
 
   private final Optional<PoWHasher> powHasher;
@@ -102,7 +99,6 @@ public class ProtocolSpec {
    * @param gasCalculator the gas calculator to use.
    * @param transactionPriceCalculator the transaction price calculator to use.
    * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
-   * @param gasBudgetCalculator the gas budget calculator to use.
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param powHasher the proof-of-work hasher
    */
@@ -128,7 +124,6 @@ public class ProtocolSpec {
       final GasCalculator gasCalculator,
       final TransactionPriceCalculator transactionPriceCalculator,
       final Optional<EIP1559> eip1559,
-      final TransactionGasBudgetCalculator gasBudgetCalculator,
       final BadBlockManager badBlockManager,
       final Optional<PoWHasher> powHasher) {
     this.name = name;
@@ -152,7 +147,6 @@ public class ProtocolSpec {
     this.gasCalculator = gasCalculator;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.eip1559 = eip1559;
-    this.gasBudgetCalculator = gasBudgetCalculator;
     this.badBlockManager = badBlockManager;
     this.powHasher = powHasher;
   }
@@ -335,15 +329,6 @@ public class ProtocolSpec {
 
   public boolean isEip1559() {
     return eip1559.isPresent();
-  }
-
-  /**
-   * Returns the gas budget calculator in this specification.
-   *
-   * @return the gas budget calculator
-   */
-  public TransactionGasBudgetCalculator getGasBudgetCalculator() {
-    return gasBudgetCalculator;
   }
 
   /**

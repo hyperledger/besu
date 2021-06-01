@@ -219,8 +219,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
-            protocolSpec.getTransactionPriceCalculator(),
-            protocolSpec.getGasBudgetCalculator());
+            protocolSpec.getTransactionPriceCalculator());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(
