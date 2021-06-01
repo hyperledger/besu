@@ -526,7 +526,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost() {
-    return getUpfrontGasCost(getGasPrice());
+    return getUpfrontGasCost((Wei.of(getMaxFeePerGas().orElse(getGasPrice()).getAsBigInteger())));
   }
 
   /**
@@ -536,8 +536,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost(final Wei gasPrice) {
-    return Wei.of(getGasLimit())
-        .multiply(Wei.of(getMaxFeePerGas().orElse(gasPrice).getAsBigInteger()));
+    if (gasPrice == null || gasPrice.isZero()) {
+      return Wei.ZERO;
+    }
+    return Wei.of(getGasLimit()).multiply(gasPrice);
   }
 
   /**
