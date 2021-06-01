@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -137,13 +138,13 @@ public class TransactionPool implements BlockAddedObserver {
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
-    if (!configuration.getTxFeeCap().isZero()
-        && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
-      return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
-    }
     final ValidationResult<TransactionInvalidReason> validationResult =
         validateTransaction(transaction);
     if (validationResult.isValid()) {
+      if (!configuration.getTxFeeCap().isZero()
+          && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
+        return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
+      }
       final TransactionAddedStatus transactionAddedStatus =
           pendingTransactions.addLocalTransaction(transaction);
       if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
@@ -244,6 +245,14 @@ public class TransactionPool implements BlockAddedObserver {
               "Transaction gas limit of %s exceeds block gas limit of %s",
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
+    if (transaction.getType().equals(TransactionType.EIP1559)
+        && !eip1559
+            .map(eip1559 -> eip1559.isEIP1559(chainHeadBlockHeader.getNumber()))
+            .orElse(false)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          String.format("EIP-1559 transaction are not allowed yet"));
+    }
 
     return protocolContext
         .getWorldStateArchive()
@@ -273,14 +282,9 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private Wei minTransactionGasPrice(final Transaction transaction) {
-    // EIP-1559 enablement guard block
-    if (this.eip1559.isEmpty()) {
-      return frontierPriceCalculator.price(transaction, Optional.empty());
-    }
-
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     // Compute transaction price using EIP-1559 rules if chain head is after fork
-    if (this.eip1559.get().isEIP1559(chainHeadBlockHeader.getNumber())) {
+    if (eip1559.isPresent() && eip1559.get().isEIP1559(chainHeadBlockHeader.getNumber())) {
       return BaseFee.minTransactionPriceInNextBlock(
           transaction, eip1559PriceCalculator, chainHeadBlockHeader::getBaseFee);
     } else { // Use frontier rules otherwise
