@@ -153,7 +153,7 @@ public class BlockTransactionSelector {
    * @param transactions The set of transactions to evaluate.
    * @return The {@code TransactionSelectionResults} results of transaction evaluation.
    */
-  public TransactionSelectionResults evaluateTransactions(List<Transaction> transactions) {
+  public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(this::evaluateTransaction);
     return transactionSelectionResult;
   }
