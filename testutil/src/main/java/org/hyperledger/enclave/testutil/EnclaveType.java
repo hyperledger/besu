@@ -12,21 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.enclave;
+package org.hyperledger.enclave.testutil;
 
-public class EnclaveClientException extends RuntimeException {
-  private int statusCode;
-
-  public EnclaveClientException(final int statusCode, final String message) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-
-  public EnclaveClientException(final String message, final Throwable cause) {
-    super(message, cause);
-  }
-
-  public int getStatusCode() {
-    return statusCode;
-  }
+public enum EnclaveType {
+  ORION,
+  TESSERA
 }
