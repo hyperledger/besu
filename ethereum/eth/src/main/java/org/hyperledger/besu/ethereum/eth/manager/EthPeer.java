@@ -44,7 +44,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -74,7 +73,6 @@ public class EthPeer {
   private final boolean supportsRequestId;
 
   private volatile long lastRequestTimestamp = 0;
-  private final AtomicLong requestIdCounter = new AtomicLong(0);
   private final RequestManager headersRequestManager;
   private final RequestManager bodiesRequestManager;
   private final RequestManager receiptsRequestManager;
