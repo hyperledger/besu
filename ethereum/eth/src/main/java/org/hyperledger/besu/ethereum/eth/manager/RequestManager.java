@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -67,12 +68,10 @@ public class RequestManager {
       // If there's a requestId, find the specific stream it belongs to
       final Map.Entry<Long, EthMessage> requestIdAndEthMessage = unwrapRequestId(message);
       Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
-          .ifPresent(
+          .ifPresentOrElse(
               responseStream ->
-                  responseStream.processMessage(requestIdAndEthMessage.getValue().getData()));
-      // todo, what to do if we get a message with a request id that doesn't correspond to any of
-      // our outstanding requests?
-      // should we just disconnect from the peer?
+                  responseStream.processMessage(requestIdAndEthMessage.getValue().getData()),
+              () -> peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL));
     } else {
       // otherwise iterate through all of them
       streams.forEach(s -> s.processMessage(message.getData()));
