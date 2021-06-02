@@ -9,6 +9,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.eth.manager.RequestManager.wrapRequestId;
 
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -17,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
@@ -109,6 +111,72 @@ public class RequestIdMessageTest {
                     Arrays.asList(
                         objectMapper.treeToValue(
                             testJson.get("data").get("BlockBodiesPacket"), TestBlockBody[].class))))
+            .getData();
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  public void GetNodeData() throws IOException {
+    final var testJson = parseTestFile("GetNodeDataPacket66.json");
+    final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
+    final Bytes actual =
+        wrapRequestId(
+                1111,
+                GetNodeDataMessage.create(
+                    Stream.of(
+                            "0x00000000000000000000000000000000000000000000000000000000deadc0de",
+                            "0x00000000000000000000000000000000000000000000000000000000feedbeef")
+                        .map(Hash::fromHexString)
+                        .collect(toUnmodifiableList())))
+            .getData();
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  public void NodeData() throws IOException {
+    final var testJson = parseTestFile("NodeDataPacket66.json");
+    final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
+    final Bytes actual =
+        wrapRequestId(
+                1111,
+                NodeDataMessage.create(
+                    Stream.of("0xdeadc0de", "0xfeedbeef")
+                        .map(Bytes::fromHexString)
+                        .collect(toUnmodifiableList())))
+            .getData();
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  public void GetReceipts() throws IOException {
+    final var testJson = parseTestFile("GetReceiptsPacket66.json");
+    final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
+    final Bytes actual =
+        wrapRequestId(
+                1111,
+                GetReceiptsMessage.create(
+                    Stream.of(
+                            "0x00000000000000000000000000000000000000000000000000000000deadc0de",
+                            "0x00000000000000000000000000000000000000000000000000000000feedbeef")
+                        .map(Hash::fromHexString)
+                        .collect(toUnmodifiableList())))
+            .getData();
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  public void Receipts() throws IOException {
+    final var testJson = parseTestFile("ReceiptsPacket66.json");
+    final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
+    final Bytes actual =
+        wrapRequestId(
+                1111,
+                ReceiptsMessage.create(
+                    List.of(
+                        Arrays.asList(
+                            objectMapper.treeToValue(
+                                testJson.get("data").get("ReceiptsPacket").get(0),
+                                TransactionReceipt[].class)))))
             .getData();
     assertThat(actual).isEqualTo(expected);
   }
