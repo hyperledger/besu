@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
@@ -206,9 +205,38 @@ public class RequestIdMessageTest {
     assertThat(actual).isEqualTo(expected);
   }
 
-  //  private Bytes wrappedData(final MessageData messageData) {
-  //    return wrapRequestId(1111, messageData).getData();
-  //  }
+  @Test
+  public void GetPooledTransactions() throws IOException {
+    final var testJson = parseTestFile("GetPooledTransactionsPacket66.json");
+    final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
+    final Bytes actual =
+        wrapRequestId(
+                1111,
+                GetPooledTransactionsMessage.create(
+                    Stream.of(
+                            "0x00000000000000000000000000000000000000000000000000000000deadc0de",
+                            "0x00000000000000000000000000000000000000000000000000000000feedbeef")
+                        .map(Hash::fromHexString)
+                        .collect(toUnmodifiableList())))
+            .getData();
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  public void PooledTransactions() throws IOException {
+    final var testJson = parseTestFile("PooledTransactionsPacket66.json");
+    final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
+    final Bytes actual =
+        wrapRequestId(
+                1111,
+                PooledTransactionsMessage.create(
+                    Arrays.asList(
+                        objectMapper.treeToValue(
+                            testJson.get("data").get("PooledTransactionsPacket"),
+                            TestTransaction[].class))))
+            .getData();
+    assertThat(actual).isEqualTo(expected);
+  }
 
   private static class TestTransaction extends Transaction {
 
