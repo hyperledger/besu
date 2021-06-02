@@ -105,6 +105,7 @@ public class BlockTransactionSelectorTest {
         .number(1)
         .gasLimit(gasLimit)
         .timestamp(Instant.now().toEpochMilli())
+        .baseFee(1L)
         .buildProcessableBlockHeader();
   }
 
@@ -316,6 +317,68 @@ public class BlockTransactionSelectorTest {
 
     assertThat(results.getTransactions().size()).isEqualTo(0);
     assertThat(pendingTransactions.size()).isEqualTo(0);
+  }
+
+  @Test
+  public void useSingleGasSpaceForAllTransactions() {
+    final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            Wei.of(6),
+            0.8,
+            this::isCancelled,
+            miningBeneficiary,
+            TransactionPriceCalculator.eip1559(),
+            TransactionGasBudgetCalculator.frontier());
+
+    // this should fill up all the block space
+    final Transaction fillingLegacyTx =
+        Transaction.builder()
+            .type(TransactionType.FRONTIER)
+            .gasLimit(300)
+            .gasPrice(Wei.of(10))
+            .nonce(1)
+            .payload(Bytes.EMPTY)
+            .to(Address.ID)
+            .value(Wei.ZERO)
+            .sender(Address.ID)
+            .chainId(BigInteger.ONE)
+            .signAndBuild(keyPair);
+
+    // so we shouldn't include this
+    final Transaction extraEIP1559Tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(10))
+            .maxFeePerGas(Wei.of(10))
+            .gasLimit(50)
+            .to(Address.ID)
+            .value(Wei.of(0))
+            .payload(Bytes.EMPTY)
+            .chainId(BigInteger.ONE)
+            .signAndBuild(keyPair);
+
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
+        .thenReturn(
+            TransactionProcessingResult.successful(
+                new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
+
+    pendingTransactions.addRemoteTransaction(fillingLegacyTx);
+    pendingTransactions.addRemoteTransaction(extraEIP1559Tx);
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+
+    assertThat(results.getTransactions().size()).isEqualTo(1);
   }
 
   @Test
