@@ -1,6 +1,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import static java.math.BigInteger.TWO;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
@@ -10,12 +11,16 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.eth.manager.RequestManager.wrapRequestId;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -35,6 +40,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.junit.Test;
 
 public class RequestIdMessageTest {
@@ -172,11 +178,30 @@ public class RequestIdMessageTest {
         wrapRequestId(
                 1111,
                 ReceiptsMessage.create(
-                    List.of(
-                        Arrays.asList(
-                            objectMapper.treeToValue(
-                                testJson.get("data").get("ReceiptsPacket").get(0),
-                                TransactionReceipt[].class)))))
+                    singletonList(
+                        singletonList(
+                            new TransactionReceipt(
+                                TransactionType.FRONTIER,
+                                0,
+                                1,
+                                singletonList(
+                                    new LogWithMetadata(
+                                        0,
+                                        0,
+                                        Hash.ZERO,
+                                        Hash.ZERO,
+                                        0,
+                                        Address.fromHexString("0x11"),
+                                        Bytes.fromHexString("0x0100ff"),
+                                        Stream.of(
+                                                "0x000000000000000000000000000000000000000000000000000000000000dead",
+                                                "0x000000000000000000000000000000000000000000000000000000000000beef")
+                                            .map(LogTopic::fromHexString)
+                                            .collect(toUnmodifiableList()),
+                                        false)),
+                                LogsBloomFilter.fromHexString(
+                                    "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+                                Optional.empty())))))
             .getData();
     assertThat(actual).isEqualTo(expected);
   }
