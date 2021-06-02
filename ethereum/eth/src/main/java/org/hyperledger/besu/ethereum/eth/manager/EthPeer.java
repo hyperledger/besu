@@ -246,10 +246,6 @@ public class EthPeer {
         msgData -> connection.sendForProtocol(protocolName, msgData), messageData);
   }
 
-  private Optional<Long> requestIdIfApplicable() {
-    return supportsRequestId ? Optional.of(requestIdCounter.incrementAndGet()) : Optional.empty();
-  }
-
   boolean validateReceivedMessage(final EthMessage message) {
     checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
     switch (message.getData().getCode()) {
