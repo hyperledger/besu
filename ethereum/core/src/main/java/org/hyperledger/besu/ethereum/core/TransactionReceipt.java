@@ -117,12 +117,12 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   }
 
   public TransactionReceipt(
-          final TransactionType transactionType,
-          final int status,
-          final long cumulativeGasUsed,
-          final List<Log> logs,
-          final LogsBloomFilter bloomFilter,
-          final Optional<Bytes> revertReason) {
+      final TransactionType transactionType,
+      final int status,
+      final long cumulativeGasUsed,
+      final List<Log> logs,
+      final LogsBloomFilter bloomFilter,
+      final Optional<Bytes> revertReason) {
     this(transactionType, null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
   }
 
