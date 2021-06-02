@@ -159,7 +159,7 @@ public class RequestManagerTest {
   }
 
   @Test
-  public void dispatchesMessagesToMultipleStreams() throws Exception {
+  public void dispatchesMessagesToMultipleStreamsIfNoRequestId() throws Exception {
     final EthPeer peer = createPeer();
     final RequestManager requestManager = new RequestManager(peer, false);
 
@@ -223,6 +223,53 @@ public class RequestManagerTest {
     assertThat(receivedMessagesB.size()).isEqualTo(2);
     assertResponseCorrect(receivedMessagesB.get(1), mockMessage, false);
     assertThat(closedCountB.get()).isEqualTo(1);
+  }
+
+  @Test
+  public void dispatchesMessagesToSingleStreamIfRequestId() throws Exception {
+    final EthPeer peer = createPeer();
+    final RequestManager requestManager = new RequestManager(peer, true);
+
+    final AtomicInteger sendCount = new AtomicInteger(0);
+    final RequestManager.RequestSender sender = __ -> sendCount.incrementAndGet();
+
+    final List<MessageData> receivedMessagesA = new ArrayList<>();
+    final AtomicInteger closedCountA = new AtomicInteger(0);
+    final RequestManager.ResponseCallback responseHandlerA =
+        (closed, msg, p) -> {
+          if (closed) {
+            closedCountA.incrementAndGet();
+          } else {
+            receivedMessagesA.add(msg);
+          }
+        };
+    final List<MessageData> receivedMessagesB = new ArrayList<>();
+    final AtomicInteger closedCountB = new AtomicInteger(0);
+    final RequestManager.ResponseCallback responseHandlerB =
+        (closed, msg, p) -> {
+          if (closed) {
+            closedCountB.incrementAndGet();
+          } else {
+            receivedMessagesB.add(msg);
+          }
+        };
+
+    // Send request
+    final RequestManager.ResponseStream streamA =
+        requestManager.dispatchRequest(sender, new RawMessage(0x01, Bytes.EMPTY));
+    final RequestManager.ResponseStream streamB =
+        requestManager.dispatchRequest(sender, new RawMessage(0x01, Bytes.EMPTY));
+    assertThat(sendCount.get()).isEqualTo(2);
+
+    streamA.then(responseHandlerA);
+    streamB.then(responseHandlerB);
+
+    // Dispatch message
+    EthMessage mockMessage = mockMessage(peer, true);
+    requestManager.dispatchResponse(mockMessage);
+
+    // Only handler A or B should get message
+    assertThat(receivedMessagesA.size() + receivedMessagesB.size()).isEqualTo(1);
   }
 
   private EthMessage mockMessage(final EthPeer peer, final boolean supportsRequestId) {
