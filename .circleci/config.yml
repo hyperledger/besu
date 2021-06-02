@@ -203,7 +203,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: Quorum Acceptance Tests (failures ignored)
+          name: Quorum Acceptance Tests
           no_output_timeout: 40m
           command: ./gradlew --no-daemon acceptanceTestsQuorum
       - store_artifacts:
