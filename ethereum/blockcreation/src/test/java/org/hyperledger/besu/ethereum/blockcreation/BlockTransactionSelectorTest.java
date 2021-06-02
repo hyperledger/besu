@@ -134,7 +134,7 @@ public class BlockTransactionSelectorTest {
             TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(0);
     assertThat(results.getReceipts().size()).isEqualTo(0);
@@ -171,7 +171,7 @@ public class BlockTransactionSelectorTest {
             TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(1);
     Assertions.assertThat(results.getTransactions()).contains(transaction);
@@ -226,7 +226,7 @@ public class BlockTransactionSelectorTest {
             TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(4);
     assertThat(results.getTransactions().contains(transactionsToInject.get(1))).isFalse();
@@ -269,7 +269,7 @@ public class BlockTransactionSelectorTest {
             TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(3);
 
@@ -306,7 +306,7 @@ public class BlockTransactionSelectorTest {
     pendingTransactions.addRemoteTransaction(tx);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(0);
     assertThat(pendingTransactions.size()).isEqualTo(0);
@@ -360,7 +360,7 @@ public class BlockTransactionSelectorTest {
     }
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(2);
     Assertions.assertThat(results.getTransactions().get(0)).isEqualTo(transactionsToInject.get(0));
@@ -425,7 +425,7 @@ public class BlockTransactionSelectorTest {
     pendingTransactions.addRemoteTransaction(transaction4);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(2);
     Assertions.assertThat(results.getTransactions().get(0)).isEqualTo(transaction1);
@@ -487,7 +487,7 @@ public class BlockTransactionSelectorTest {
             TransactionProcessingResult.invalid(
                 ValidationResult.invalid(TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT)));
 
-    selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+    selector.buildTransactionListForBlock();
 
     Assertions.assertThat(pendingTransactions.getTransactionByHash(validTransaction.getHash()))
         .isPresent();
@@ -534,7 +534,7 @@ public class BlockTransactionSelectorTest {
             TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     Assertions.assertThat(pendingTransactions.getTransactionByHash(futureTransaction.getHash()))
         .isPresent();

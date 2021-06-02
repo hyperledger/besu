@@ -141,8 +141,7 @@ public class BlockTransactionSelector {
   If running in a thread, it can be cancelled via the isCancelled supplier (which will result
   in this throwing an CancellationException).
    */
-  public TransactionSelectionResults buildTransactionListForBlock(
-      final long blockNumber, final long gasLimit) {
+  public TransactionSelectionResults buildTransactionListForBlock() {
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction));
     return transactionSelectionResult;
@@ -151,13 +150,10 @@ public class BlockTransactionSelector {
   /**
    * Evaluate the given transactions and return the result of that evaluation.
    *
-   * @param blockNumber The block number.
-   * @param gasLimit The gas limit.
    * @param transactions The set of transactions to evaluate.
    * @return The {@code TransactionSelectionResults} results of transaction evaluation.
    */
-  public TransactionSelectionResults evaluateTransactions(
-      long blockNumber, final long gasLimit, final List<Transaction> transactions) {
+  public TransactionSelectionResults evaluateTransactions(List<Transaction> transactions) {
     transactions.forEach(this::evaluateTransaction);
     return transactionSelectionResult;
   }
