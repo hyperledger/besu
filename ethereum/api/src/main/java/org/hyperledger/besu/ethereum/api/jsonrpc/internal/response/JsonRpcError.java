@@ -177,6 +177,11 @@ public enum JsonRpcError {
   ENCLAVE_PAYLOAD_NOT_FOUND(-50200, "EnclavePayloadNotFound"),
   CREATE_GROUP_INCLUDE_SELF(-50200, "CreatePrivacyGroupShouldIncludeSelf"),
 
+  // Tessera error codes
+  TESSERA_NODE_MISSING_PEER_URL(-50200, "Recipient not found for key:"),
+  TESSERA_CREATE_GROUP_INCLUDE_SELF(
+      -50200, "The list of members in a privacy group should include self"),
+
   /** Storing privacy group issue */
   ENCLAVE_UNABLE_STORE_PRIVACY_GROUP(-50200, "PrivacyGroupNotStored"),
   ENCLAVE_UNABLE_DELETE_PRIVACY_GROUP(-50200, "PrivacyGroupNotDeleted"),

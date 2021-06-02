@@ -21,10 +21,11 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.util.Optional;
 
@@ -32,14 +33,19 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
-public class PrivacyReceiptAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
+  public PrivacyReceiptAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
+
   private PrivacyNode alice;
   final MinerTransactions minerTransactions = new MinerTransactions();
 
   @Before
   public void setUp() throws Exception {
     alice =
-        privacyBesu.createIbft2NodePrivacyMiningEnabled("node1", privacyAccountResolver.resolve(0));
+        privacyBesu.createIbft2NodePrivacyMiningEnabled(
+            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
     privacyCluster.start(alice);
   }
 

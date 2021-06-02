@@ -12,18 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.orion.testutil;
+package org.hyperledger.enclave.testutil;
 
-public class OrionKeyConfiguration {
+public class EnclaveKeyConfiguration {
   private final String[] pubKeyPaths;
   private final String[] privKeyPaths;
 
-  public OrionKeyConfiguration(final String pubKeyPath, final String privKeyPath) {
+  public EnclaveKeyConfiguration(final String pubKeyPath, final String privKeyPath) {
     this.pubKeyPaths = new String[] {pubKeyPath};
     this.privKeyPaths = new String[] {privKeyPath};
   }
 
-  public OrionKeyConfiguration(final String[] pubKeyPaths, final String[] privKeyPaths) {
+  public EnclaveKeyConfiguration(final String[] pubKeyPaths, final String[] privKeyPaths) {
     this.pubKeyPaths = pubKeyPaths;
     this.privKeyPaths = privKeyPaths;
   }

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.orion.testutil;
+package org.hyperledger.enclave.testutil;
 
 import static com.google.common.io.Files.readLines;
 
@@ -32,11 +32,11 @@ import okhttp3.HttpUrl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class OrionTestHarness {
+public class OrionTestHarness implements EnclaveTestHarness {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Orion orion;
-  private final OrionConfiguration orionConfiguration;
+  private final EnclaveConfiguration enclaveConfiguration;
 
   private Config config;
 
@@ -44,25 +44,23 @@ public class OrionTestHarness {
 
   protected static final String HOST = "127.0.0.1";
 
-  protected OrionTestHarness(final OrionConfiguration orionConfiguration) {
-    this.orionConfiguration = orionConfiguration;
+  protected OrionTestHarness(final EnclaveConfiguration enclaveConfiguration) {
+    this.enclaveConfiguration = enclaveConfiguration;
     this.orion = new Orion();
   }
 
-  public Orion getOrion() {
-    return orion;
-  }
-
+  @Override
   public void start() {
     if (!isRunning) {
       config = buildConfig();
-      orion.run(config, orionConfiguration.isClearKnownNodes());
+      orion.run(config, enclaveConfiguration.isClearKnownNodes());
       isRunning = true;
       LOG.info("Orion node port: {}", orion.nodePort());
       LOG.info("Orion client port: {}", orion.clientPort());
     }
   }
 
+  @Override
   public void stop() {
     if (isRunning) {
       orion.stop();
@@ -70,6 +68,7 @@ public class OrionTestHarness {
     }
   }
 
+  @Override
   public void close() {
     stop();
     try {
@@ -79,14 +78,21 @@ public class OrionTestHarness {
     }
   }
 
+  @Override
+  public List<Path> getPublicKeyPaths() {
+    return config.publicKeys();
+  }
+
   public Config getConfig() {
     return config;
   }
 
+  @Override
   public String getDefaultPublicKey() {
     return config.publicKeys().stream().map(OrionTestHarness::readFile).findFirst().orElseThrow();
   }
 
+  @Override
   public List<String> getPublicKeys() {
     return config.publicKeys().stream()
         .map(OrionTestHarness::readFile)
@@ -102,6 +108,7 @@ public class OrionTestHarness {
     }
   }
 
+  @Override
   public URI clientUrl() {
     final HttpUrl httpUrl =
         new HttpUrl.Builder().scheme("http").host(HOST).port(orion.clientPort()).build();
@@ -109,6 +116,7 @@ public class OrionTestHarness {
     return URI.create(httpUrl.toString());
   }
 
+  @Override
   public URI nodeUrl() {
     final HttpUrl httpUrl =
         new HttpUrl.Builder().scheme("http").host(HOST).port(orion.nodePort()).build();
@@ -116,8 +124,14 @@ public class OrionTestHarness {
     return URI.create(httpUrl.toString());
   }
 
+  @Override
   public void addOtherNode(final URI otherNode) {
-    orionConfiguration.addOtherNode(otherNode.toString());
+    enclaveConfiguration.addOtherNode(otherNode.toString());
+  }
+
+  @Override
+  public EnclaveType getEnclaveType() {
+    return EnclaveType.ORION;
   }
 
   private Config buildConfig() {
@@ -135,21 +149,23 @@ public class OrionTestHarness {
             + HOST
             + "\"\n"
             + "storage = \""
-            + orionConfiguration.getStorage()
+            + enclaveConfiguration.getStorage()
             + "\"\n"
             + "publickeys = ["
-            + joinPathsAsTomlListEntry(orionConfiguration.getPublicKeys())
+            + joinPathsAsTomlListEntry(enclaveConfiguration.getPublicKeys())
             + "]\n"
             + "privatekeys = ["
-            + joinPathsAsTomlListEntry(orionConfiguration.getPrivateKeys())
+            + joinPathsAsTomlListEntry(enclaveConfiguration.getPrivateKeys())
             + "]\n"
             + "workdir= \""
-            + orionConfiguration.getTempDir().toString()
+            + enclaveConfiguration.getTempDir().toString()
             + "\"\n";
 
-    if (orionConfiguration.getOtherNodes().size() != 0) {
+    if (enclaveConfiguration.getOtherNodes().size() != 0) {
       confString +=
-          "othernodes = [" + joinStringsAsTomlListEntry(orionConfiguration.getOtherNodes()) + "]\n";
+          "othernodes = ["
+              + joinStringsAsTomlListEntry(enclaveConfiguration.getOtherNodes())
+              + "]\n";
     }
 
     // @formatter:on

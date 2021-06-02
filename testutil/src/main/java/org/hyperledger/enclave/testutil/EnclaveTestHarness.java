@@ -12,21 +12,31 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.enclave;
+package org.hyperledger.enclave.testutil;
 
-public class EnclaveClientException extends RuntimeException {
-  private int statusCode;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.List;
 
-  public EnclaveClientException(final int statusCode, final String message) {
-    super(message);
-    this.statusCode = statusCode;
-  }
+public interface EnclaveTestHarness {
 
-  public EnclaveClientException(final String message, final Throwable cause) {
-    super(message, cause);
-  }
+  void start();
 
-  public int getStatusCode() {
-    return statusCode;
-  }
+  void stop();
+
+  void close();
+
+  List<Path> getPublicKeyPaths();
+
+  String getDefaultPublicKey();
+
+  List<String> getPublicKeys();
+
+  URI clientUrl();
+
+  URI nodeUrl();
+
+  void addOtherNode(final URI otherNode);
+
+  EnclaveType getEnclaveType();
 }

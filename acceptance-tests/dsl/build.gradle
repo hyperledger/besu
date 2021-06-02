@@ -45,4 +45,6 @@ dependencies {
   implementation 'tech.pegasys.ethsigner.internal:ethsigner-core'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'
+
+  implementation 'org.testcontainers:testcontainers'
 }
