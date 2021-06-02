@@ -48,7 +48,6 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
             Wei.ZERO,
             original.getMiningBeneficiaryCalculator(),
             original.isSkipZeroBlockRewards(),
-            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
     final BlockValidator noRewardBlockValidator =
         new MainnetBlockValidator(
@@ -79,7 +78,6 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getGasCalculator(),
         original.getTransactionPriceCalculator(),
         original.getEip1559(),
-        original.getGasBudgetCalculator(),
         original.getBadBlocksManager(),
         Optional.empty());
   }

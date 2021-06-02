@@ -92,7 +92,6 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 

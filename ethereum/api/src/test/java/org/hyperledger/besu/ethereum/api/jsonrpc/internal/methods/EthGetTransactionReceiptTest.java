@@ -104,7 +104,6 @@ public class EthGetTransactionReceiptTest {
           null,
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
-          TransactionGasBudgetCalculator.frontier(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT));
   private final ProtocolSpec statusTransactionTypeSpec =
@@ -130,7 +129,6 @@ public class EthGetTransactionReceiptTest {
           null,
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
-          TransactionGasBudgetCalculator.frontier(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT));
 
