@@ -118,7 +118,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -132,7 +131,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 RESTRICTED,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
@@ -154,7 +152,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 eventEmitter.getContractAddress(),
                 eventEmitter.value().encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 RESTRICTED,
                 alice.getEnclaveKey(),
                 charlie.getEnclaveKey()));
@@ -187,9 +184,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String signedPrivateTransaction =
         Numeric.toHexString(
             PrivateTransactionEncoder.signMessage(
-                rawPrivateTransaction,
-                POW_CHAIN_ID,
-                Credentials.create(alice.getTransactionSigningKey())));
+                rawPrivateTransaction, Credentials.create(alice.getTransactionSigningKey())));
     final String transactionKey =
         alice.execute(privacyTransactions.privDistributeTransaction(signedPrivateTransaction));
 
@@ -216,7 +211,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final String signedPmt =
         Numeric.toHexString(
             TransactionEncoder.signMessage(
-                pmt, POW_CHAIN_ID, Credentials.create(alice.getTransactionSigningKey())));
+                pmt, Credentials.create(alice.getTransactionSigningKey())));
 
     final String transactionHash = alice.execute(ethTransactions.sendRawTransaction(signedPmt));
 
@@ -254,7 +249,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -269,7 +263,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -288,7 +281,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey(),
                 charlie.getEnclaveKey()));
@@ -304,7 +296,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 firstEventEmitter.getContractAddress(),
                 firstEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 charlie.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 RESTRICTED,
                 charlie.getEnclaveKey(),
                 alice.getEnclaveKey(),
@@ -330,7 +321,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -345,7 +335,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 secondEventEmitter.getContractAddress(),
                 secondEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 bob.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 RESTRICTED,
                 bob.getEnclaveKey(),
                 alice.getEnclaveKey()));

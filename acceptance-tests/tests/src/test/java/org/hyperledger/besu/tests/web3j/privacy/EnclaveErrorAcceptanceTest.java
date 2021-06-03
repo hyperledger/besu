@@ -45,8 +45,6 @@ import org.web3j.utils.Restriction;
 @RunWith(Parameterized.class)
 public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
-  private static final long IBFT2_CHAIN_ID = 4;
-
   private final PrivacyNode alice;
   private final PrivacyNode bob;
   private final String wrongPublicKey;
@@ -97,7 +95,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                     privateContractTransactions.createSmartContract(
                         EventEmitter.class,
                         alice.getTransactionSigningKey(),
-                        IBFT2_CHAIN_ID,
                         wrongPublicKey,
                         bob.getEnclaveKey())));
 
@@ -115,7 +112,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                     privateContractTransactions.createSmartContract(
                         EventEmitter.class,
                         alice.getTransactionSigningKey(),
-                        IBFT2_CHAIN_ID,
                         alice.getEnclaveKey(),
                         wrongPublicKey)));
 
@@ -133,7 +129,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -148,7 +143,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 Restriction.RESTRICTED,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
@@ -177,7 +171,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -195,7 +188,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                         eventEmitter.getContractAddress(),
                         eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                         alice.getTransactionSigningKey(),
-                        IBFT2_CHAIN_ID,
                         Restriction.RESTRICTED,
                         alice.getEnclaveKey(),
                         bob.getEnclaveKey())));

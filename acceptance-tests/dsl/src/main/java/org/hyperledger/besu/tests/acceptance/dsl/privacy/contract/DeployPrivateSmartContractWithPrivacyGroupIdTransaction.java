@@ -19,14 +19,11 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.util.Collections;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
-import org.web3j.tx.BesuPrivateTransactionManager;
 import org.web3j.tx.Contract;
-import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.tx.gas.ContractGasProvider;
@@ -42,7 +39,6 @@ public class DeployPrivateSmartContractWithPrivacyGroupIdTransaction<T extends C
 
   private final Class<T> clazz;
   private final Credentials senderCredentials;
-  private final long chainId;
   private final Restriction restriction;
   private final Base64String privateFrom;
   private final Base64String privacyGroupId;
@@ -50,13 +46,11 @@ public class DeployPrivateSmartContractWithPrivacyGroupIdTransaction<T extends C
   public DeployPrivateSmartContractWithPrivacyGroupIdTransaction(
       final Class<T> clazz,
       final String transactionSigningKey,
-      final long chainId,
       final Restriction restriction,
       final String privateFrom,
       final String privacyGroupId) {
     this.clazz = clazz;
     this.senderCredentials = Credentials.create(transactionSigningKey);
-    this.chainId = chainId;
     this.restriction = restriction;
     this.privateFrom = Base64String.wrap(privateFrom);
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
@@ -66,22 +60,11 @@ public class DeployPrivateSmartContractWithPrivacyGroupIdTransaction<T extends C
   public T execute(final NodeRequests node) {
 
     final PrivateTransactionManager privateTransactionManager =
-        restriction == Restriction.RESTRICTED
-            ? new BesuPrivateTransactionManager(
-                node.privacy().getBesuClient(),
-                GAS_PROVIDER,
-                senderCredentials,
-                chainId,
-                privateFrom,
-                privacyGroupId)
-            : new UnrestrictedTransactionManager(
-                node.privacy().getBesuClient(),
-                GAS_PROVIDER,
-                senderCredentials,
-                chainId,
-                privateFrom,
-                Collections.emptyList(),
-                privacyGroupId);
+        new PrivateTransactionManager.Builder(
+                node.privacy().getBesuClient(), senderCredentials, privateFrom)
+            .setPrivacyGroupId(privacyGroupId)
+            .setRestriction(restriction)
+            .build();
 
     try {
       final Method method =

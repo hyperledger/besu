@@ -241,7 +241,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.valueOf(value)).encodeFunctionCall(),
                 firstNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 firstNode.getEnclaveKey(),
                 privacyGroupId));
     PrivateTransactionReceipt receipt = null;
@@ -277,7 +276,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 privacyGroupId));
 
@@ -313,7 +311,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
                 eventEmitter.getContractAddress(),
                 eventEmitter.value().encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 privacyGroupId));
 
@@ -390,7 +387,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.valueOf(1337)).encodeFunctionCall(),
                 charlie.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 charlie.getEnclaveKey(),
                 privacyGroupId));
 
@@ -477,11 +473,7 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
     final T contract =
         sender.execute(
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
-                clazz,
-                sender.getTransactionSigningKey(),
-                POW_CHAIN_ID,
-                sender.getEnclaveKey(),
-                privacyGroupId));
+                clazz, sender.getTransactionSigningKey(), sender.getEnclaveKey(), privacyGroupId));
 
     privateContractVerifier
         .validPrivateContractDeployed(contract.getContractAddress(), sender.getAddress().toString())

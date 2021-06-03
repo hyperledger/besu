@@ -140,7 +140,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 privacyNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 tenant,
                 privacyGroupId));
 
@@ -201,7 +200,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.getContractAddress(),
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             privacyNode.getTransactionSigningKey(),
-            POW_CHAIN_ID,
             Restriction.RESTRICTED,
             tenant,
             privacyGroupId);
@@ -342,7 +340,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 groupCreatingPrivacyNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 groupCreatingTenant,
                 privacyGroupId));
 
@@ -363,7 +360,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.getContractAddress(),
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             groupCreatingPrivacyNode.getTransactionSigningKey(),
-            POW_CHAIN_ID,
             Restriction.RESTRICTED,
             groupCreatingTenant,
             privacyGroupId);
@@ -388,7 +384,6 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
             eventEmitter.getContractAddress(),
             eventEmitter.store(BigInteger.valueOf(VALUE_SET)).encodeFunctionCall(),
             groupCreatingPrivacyNode.getTransactionSigningKey(),
-            POW_CHAIN_ID,
             Restriction.RESTRICTED,
             groupCreatingTenant,
             privacyGroupId);

@@ -130,7 +130,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -144,7 +144,6 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
@@ -169,7 +168,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -184,7 +183,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -203,7 +202,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey(),
                 charlie.getEnclaveKey()));
@@ -219,7 +218,6 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 firstEventEmitter.getContractAddress(),
                 firstEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 charlie.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 bftPrivacyType.restriction,
                 charlie.getEnclaveKey(),
                 alice.getEnclaveKey(),
@@ -245,7 +243,6 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -260,7 +257,6 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 secondEventEmitter.getContractAddress(),
                 secondEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 bob.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 bftPrivacyType.restriction,
                 bob.getEnclaveKey(),
                 alice.getEnclaveKey()));

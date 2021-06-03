@@ -189,7 +189,6 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 privacyGroupIdABC));
 
@@ -200,7 +199,6 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
                 firstEventEmitter.getContractAddress(),
                 firstEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 charlie.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 RESTRICTED,
                 charlie.getEnclaveKey(),
                 privacyGroupIdABC));
@@ -226,7 +224,6 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 alice.getEnclaveKey(),
                 privacyGroupIdAB));
 
@@ -237,7 +234,6 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
                 secondEventEmitter.getContractAddress(),
                 secondEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 bob.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 RESTRICTED,
                 bob.getEnclaveKey(),
                 privacyGroupIdAB));

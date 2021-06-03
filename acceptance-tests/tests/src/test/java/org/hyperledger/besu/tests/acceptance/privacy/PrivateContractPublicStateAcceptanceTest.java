@@ -80,7 +80,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 transactionNode.getEnclaveKey()));
 
@@ -98,7 +97,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             (privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 transactionNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 transactionNode.getEnclaveKey())));
 
@@ -119,7 +117,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 transactionNode.getEnclaveKey()));
 
@@ -142,7 +139,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 transactionNode.getEnclaveKey()));
 
@@ -164,7 +160,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 transactionNode.getEnclaveKey()));
 

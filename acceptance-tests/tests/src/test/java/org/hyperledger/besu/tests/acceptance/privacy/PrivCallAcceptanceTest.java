@@ -84,7 +84,6 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 minerNode.getEnclaveKey(),
                 privacyGroupId));
@@ -123,7 +122,6 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 minerNode.getEnclaveKey(),
                 privacyGroupId));
@@ -155,7 +153,6 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 minerNode.getEnclaveKey(),
                 privacyGroupId));
@@ -185,7 +182,6 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 minerNode.getEnclaveKey(),
                 privacyGroupId));

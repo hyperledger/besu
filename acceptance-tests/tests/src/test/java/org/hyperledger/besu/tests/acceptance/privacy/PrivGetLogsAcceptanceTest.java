@@ -138,7 +138,6 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 node.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 node.getEnclaveKey(),
                 privacyGroupId));
@@ -159,7 +158,6 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
                 eventEmitterContract.getContractAddress(),
                 eventEmitterContract.store(BigInteger.valueOf(value)).encodeFunctionCall(),
                 node.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 node.getEnclaveKey(),
                 privacyGroupId));

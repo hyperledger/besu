@@ -75,7 +75,6 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
             privateContractTransactions.createSmartContractWithPrivacyGroupId(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                POW_CHAIN_ID,
                 restriction,
                 alice.getEnclaveKey(),
                 privacyGroupId));
