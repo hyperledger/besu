@@ -39,9 +39,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/**
- * An operation submitted by an external actor to be applied to the system.
- */
+/** An operation submitted by an external actor to be applied to the system. */
 public class Transaction implements org.hyperledger.besu.plugin.data.Transaction {
 
   // Used for transactions that are not tied to a specific chain
@@ -110,27 +108,27 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   /**
    * Instantiates a transaction instance.
    *
-   * @param transactionType      the transaction type
-   * @param nonce                the nonce
-   * @param gasPrice             the gas price
+   * @param transactionType the transaction type
+   * @param nonce the nonce
+   * @param gasPrice the gas price
    * @param maxPriorityFeePerGas the max priorty fee per gas
-   * @param maxFeePerGas         the max fee per gas
-   * @param gasLimit             the gas limit
-   * @param to                   the transaction recipient
-   * @param value                the value being transferred to the recipient
-   * @param signature            the signature
-   * @param payload              the payload
-   * @param maybeAccessList      the optional list of addresses/storage slots this transaction intends to
-   *                             preload
-   * @param sender               the transaction sender
-   * @param chainId              the chain id to apply the transaction to
-   * @param v                    the v value. This is only passed in directly for GoQuorum private transactions
-   *                             (v=37|38). For all other transactions, the v value is derived from the signature. If v is
-   *                             provided here, the chain id must be empty.
-   *                             <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
-   *                             otherwise it should contain an address.
-   *                             <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
-   *                             it will default to any chain.
+   * @param maxFeePerGas the max fee per gas
+   * @param gasLimit the gas limit
+   * @param to the transaction recipient
+   * @param value the value being transferred to the recipient
+   * @param signature the signature
+   * @param payload the payload
+   * @param maybeAccessList the optional list of addresses/storage slots this transaction intends to
+   *     preload
+   * @param sender the transaction sender
+   * @param chainId the chain id to apply the transaction to
+   * @param v the v value. This is only passed in directly for GoQuorum private transactions
+   *     (v=37|38). For all other transactions, the v value is derived from the signature. If v is
+   *     provided here, the chain id must be empty.
+   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
+   *     otherwise it should contain an address.
+   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
+   *     it will default to any chain.
    */
   public Transaction(
       final TransactionType transactionType,
@@ -212,19 +210,19 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   /**
    * Instantiates a transaction instance.
    *
-   * @param nonce     the nonce
-   * @param gasPrice  the gas price
-   * @param gasLimit  the gas limit
-   * @param to        the transaction recipient
-   * @param value     the value being transferred to the recipient
+   * @param nonce the nonce
+   * @param gasPrice the gas price
+   * @param gasLimit the gas limit
+   * @param to the transaction recipient
+   * @param value the value being transferred to the recipient
    * @param signature the signature
-   * @param payload   the payload
-   * @param sender    the transaction sender
-   * @param chainId   the chain id to apply the transaction to
-   *                  <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
-   *                  otherwise it should contain an address.
-   *                  <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
-   *                  it will default to any chain.
+   * @param payload the payload
+   * @param sender the transaction sender
+   * @param chainId the chain id to apply the transaction to
+   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
+   *     otherwise it should contain an address.
+   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
+   *     it will default to any chain.
    */
   public Transaction(
       final long nonce,
@@ -254,20 +252,20 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   /**
    * Instantiates a transaction instance.
    *
-   * @param nonce     the nonce
-   * @param gasPrice  the gas price
-   * @param gasLimit  the gas limit
-   * @param to        the transaction recipient
-   * @param value     the value being transferred to the recipient
+   * @param nonce the nonce
+   * @param gasPrice the gas price
+   * @param gasLimit the gas limit
+   * @param to the transaction recipient
+   * @param value the value being transferred to the recipient
    * @param signature the signature
-   * @param payload   the payload
-   * @param sender    the transaction sender
-   * @param chainId   the chain id to apply the transaction to
-   * @param v         the v value (only passed in directly for GoQuorum private transactions)
-   *                  <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
-   *                  otherwise it should contain an address.
-   *                  <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
-   *                  it will default to any chain.
+   * @param payload the payload
+   * @param sender the transaction sender
+   * @param chainId the chain id to apply the transaction to
+   * @param v the v value (only passed in directly for GoQuorum private transactions)
+   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
+   *     otherwise it should contain an address.
+   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
+   *     it will default to any chain.
    */
   public Transaction(
       final long nonce,
@@ -572,9 +570,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    */
   public boolean isGoQuorumPrivateTransaction() {
     return v.map(
-        value ->
-            GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN.equals(value)
-                || GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX.equals(value))
+            value ->
+                GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN.equals(value)
+                    || GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX.equals(value))
         .orElse(false);
   }
 
@@ -928,8 +926,8 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   /**
    * Calculates the effectiveGasPrice of a transaction on the basis of an {@code Optional<Long>}
-   * baseFee and handles unwrapping Optional fee parameters. If baseFee is present,
-   * effective gas is calculated as:
+   * baseFee and handles unwrapping Optional fee parameters. If baseFee is present, effective gas is
+   * calculated as:
    *
    * <p>min((baseFeePerGas + maxPriorityFeePerGas), maxFeePerGas)
    *
@@ -952,8 +950,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                                 .map(org.hyperledger.besu.plugin.data.Quantity::getAsBigInteger)
                                 .map(
                                     maxPriorityFeePerGas ->
-                                        baseFee.add(maxPriorityFeePerGas)
-                                            .min(maxFeePerGas))))
+                                        baseFee.add(maxPriorityFeePerGas).min(maxFeePerGas))))
         .orElse(getGasPrice().getAsBigInteger());
   }
 }
