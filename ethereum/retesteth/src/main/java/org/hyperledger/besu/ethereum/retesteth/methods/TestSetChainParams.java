@@ -143,8 +143,6 @@ public class TestSetChainParams implements JsonRpcMethod {
               .orElse(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
     }
 
-    maybeMoveToNumber(params, "londonForkBlock", config, "aleutBlock");
-    maybeMoveToNumber(params, "londonForkBlock", config, "calaverasBlock");
     maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");
 
     // strip out precompiles with zero balance
