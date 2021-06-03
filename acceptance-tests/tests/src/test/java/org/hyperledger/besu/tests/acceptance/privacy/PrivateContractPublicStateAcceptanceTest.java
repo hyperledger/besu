@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -68,6 +69,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
   }
 
   @Test
+  @Ignore("Web3j needs to be updated https://github.com/hyperledger/besu/issues/2098")
   public void mustAllowAccessToPublicStateFromPrivateTx() throws Exception {
     final EventEmitter publicEventEmitter =
         transactionNode.execute(contractTransactions.createSmartContract(EventEmitter.class));
