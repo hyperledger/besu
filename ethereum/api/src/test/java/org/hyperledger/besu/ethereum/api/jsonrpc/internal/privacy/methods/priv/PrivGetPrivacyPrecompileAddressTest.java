@@ -33,8 +33,7 @@ public class PrivGetPrivacyPrecompileAddressTest {
 
   @Test
   public void verifyPrivacyPrecompileAddress() {
-    when(privacyParameters.getPrivacyAddress())
-        .thenReturn(Address.privacyPrecompiled(Address.PRIVACY));
+    when(privacyParameters.getPrivacyAddress()).thenReturn(Address.DEFAULT_PRIVACY);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
     final PrivGetPrivacyPrecompileAddress privGetPrivacyPrecompileAddress =
