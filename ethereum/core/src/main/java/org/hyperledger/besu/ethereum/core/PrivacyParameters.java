@@ -61,9 +61,13 @@ public class PrivacyParameters {
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
 
   public Address getPrivacyAddress() {
-    return onchainPrivacyGroupsEnabled
-        ? Address.ONCHAIN_PRIVACY
-        : Address.precompiled(Address.PRIVACY);
+    if (isUnrestrictedPrivacyEnabled()) {
+      return Address.UNRESTRICTED_PRIVACY;
+    } else if (isOnchainPrivacyGroupsEnabled()) {
+      return Address.ONCHAIN_PRIVACY;
+    } else {
+      return Address.DEFAULT_PRIVACY;
+    }
   }
 
   public Boolean isEnabled() {
