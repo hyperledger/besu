@@ -582,7 +582,7 @@ public class BlockDataGenerator {
     return bytes;
   }
 
-  private KeyPair generateKeyPair() {
+  public KeyPair generateKeyPair() {
     final java.security.KeyPair rawKeyPair = keyPairGenerator.generateKeyPair();
     final BCECPrivateKey privateKey = (BCECPrivateKey) rawKeyPair.getPrivate();
     final BCECPublicKey publicKey = (BCECPublicKey) rawKeyPair.getPublic();

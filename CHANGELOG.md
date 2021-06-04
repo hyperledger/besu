@@ -3,6 +3,7 @@
 ## 21.7.0-RC1
 
 ### Additions and Improvements
+- eip-1559 changes: accept transactions which have maxFeePerGas below current baseFee [\#2374](https://github.com/hyperledger/besu/pull/2374)
 
 ### Bug Fixes
 
