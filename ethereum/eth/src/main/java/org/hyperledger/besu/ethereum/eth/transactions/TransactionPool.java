@@ -233,7 +233,7 @@ public class TransactionPool implements BlockAddedObserver {
       final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
-        getTransactionValidator().validate(transaction, chainHeadBlockHeader.getBaseFee());
+        getTransactionValidator().validate(transaction, Optional.empty());
     if (!basicValidationResult.isValid()) {
       return basicValidationResult;
     }
