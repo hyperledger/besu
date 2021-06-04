@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -36,11 +35,16 @@ public class TransactionCompleteResultTest {
   @Test
   public void eip1559TransactionWithShortWeiVals() {
     final BlockDataGenerator gen = new BlockDataGenerator();
-    TransactionCompleteResult zeroPriorityFeeTx = new TransactionCompleteResult(
-        new TransactionWithMetadata(new TransactionTestFixture()
-        .maxFeePerGas(Optional.of(Wei.ONE))
-        .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
-        .createTransaction(gen.generateKeyPair()), 0L, Hash.ZERO, 0));
+    TransactionCompleteResult zeroPriorityFeeTx =
+        new TransactionCompleteResult(
+            new TransactionWithMetadata(
+                new TransactionTestFixture()
+                    .maxFeePerGas(Optional.of(Wei.ONE))
+                    .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+                    .createTransaction(gen.generateKeyPair()),
+                0L,
+                Hash.ZERO,
+                0));
 
     assertThat(zeroPriorityFeeTx.getMaxFeePerGas()).isEqualTo("0x1");
     assertThat(zeroPriorityFeeTx.getMaxPriorityFeePerGas()).isEqualTo("0x0");
