@@ -54,9 +54,13 @@ public class GasLimitRangeAndDeltaValidationRuleTest {
           // In Range, <1/1024 change = valid,
           {4093, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true},
           // In Range, ,1/1024 change = valid,
-          {4092, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false},
+          {4092, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true},
+          // In Range, == 1/1024 change = valid,
+          {4100, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true},
+          // In Range, == 1/1024 change = valid,
+          {4091, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false},
           // In Range, >1/1024 change = invalid,
-          {4100, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false}
+          {4101, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false},
           // In Range, >1/1024 change = invalid,
         });
   }
