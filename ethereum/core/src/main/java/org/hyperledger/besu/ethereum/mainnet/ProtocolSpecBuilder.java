@@ -308,11 +308,11 @@ public class ProtocolSpecBuilder {
               privateTransactionValidator);
 
       if (privacyParameters.isUnrestrictedPrivacyEnabled()) {
-        final UnrestrictedPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
+        final UnrestrictedPrivacyPrecompiledContract unrestrictedPrivacyPrecompiledContract =
             (UnrestrictedPrivacyPrecompiledContract)
                 precompileContractRegistry.get(
                     Address.UNRESTRICTED_PRIVACY, Account.DEFAULT_VERSION);
-        onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
+        unrestrictedPrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
         final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
