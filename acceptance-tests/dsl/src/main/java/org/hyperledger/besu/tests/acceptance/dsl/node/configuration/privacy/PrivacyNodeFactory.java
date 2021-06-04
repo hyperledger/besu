@@ -24,6 +24,8 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -129,7 +131,7 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork)
       throws IOException {
     return createIbft2NodePrivacyEnabled(
-        name, privacyAccount, false, enclaveType, containerNetwork, false, false, false);
+        name, privacyAccount, false, enclaveType, containerNetwork, false, false, false, "0x00");
   }
 
   public PrivacyNode createIbft2NodePrivacyEnabled(
@@ -140,7 +142,8 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork,
       final boolean isOnchainPrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled)
+      final boolean isUnrestrictedEnabled,
+      final String unrestrictedPrefix)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
@@ -153,9 +156,14 @@ public class PrivacyNodeFactory {
                 .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(minerEnabled))
                 .webSocketConfiguration(node.createWebSocketEnabledConfig())
                 .devMode(false)
+                .plugins(Collections.singletonList("testPlugins"))
                 .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
+                .extraCLIOptions(
+                    List.of(
+                        "--plugin-privacy-service-encryption-enabled=true",
+                        "--plugin-privacy-service-encryption-prefix=" + unrestrictedPrefix))
                 .build(),
             new EnclaveKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),

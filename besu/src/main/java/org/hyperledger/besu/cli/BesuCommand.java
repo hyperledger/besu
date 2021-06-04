@@ -157,6 +157,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.PrivacyServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
@@ -269,6 +270,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
+  private final PrivacyServiceImpl privacyService;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -1135,7 +1137,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         environment,
         new StorageServiceImpl(),
         new SecurityModuleServiceImpl(),
-        new PermissioningServiceImpl());
+        new PermissioningServiceImpl(),
+        new PrivacyServiceImpl());
   }
 
   @VisibleForTesting
@@ -1150,7 +1153,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Map<String, String> environment,
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
-      final PermissioningServiceImpl permissioningService) {
+      final PermissioningServiceImpl permissioningService,
+      final PrivacyServiceImpl privacyService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1162,6 +1166,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
+    this.privacyService = privacyService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
@@ -2209,7 +2214,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
-
+    privacyParametersBuilder.setPrivacyService(privacyService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
     if (isPrivacyEnabled) {

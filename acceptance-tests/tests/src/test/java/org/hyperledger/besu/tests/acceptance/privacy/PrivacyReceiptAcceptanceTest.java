@@ -54,7 +54,8 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
             Optional.empty(),
             false,
             false,
-            restriction == UNRESTRICTED);
+            restriction == UNRESTRICTED,
+            "0x00");
     privacyCluster.start(alice);
   }
 
@@ -136,10 +137,10 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
   private PrivateTransaction createSignedTransaction(
       final PrivacyNode node, final String privacyGoupId, final Optional<Bytes> payload) {
 
-    org.hyperledger.besu.ethereum.privacy.Restriction besuRestriction =
+    org.hyperledger.besu.plugin.data.Restriction besuRestriction =
         restriction == RESTRICTED
-            ? org.hyperledger.besu.ethereum.privacy.Restriction.RESTRICTED
-            : org.hyperledger.besu.ethereum.privacy.Restriction.UNRESTRICTED;
+            ? org.hyperledger.besu.plugin.data.Restriction.RESTRICTED
+            : org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
 
     final Bytes defaultPayload = Bytes.wrap(new byte[] {});
     return PrivateTransaction.builder()

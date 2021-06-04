@@ -27,9 +27,9 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -49,6 +49,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   private final PrivateTransactionSimulator privateTransactionSimulator;
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivateWorldStateReader privateWorldStateReader;
+  private final PrivacyPayloadEncryptionProvider privacyPayloadEncryptionProvider;
 
   public UnrestrictedPrivacyController(
       final Blockchain blockchain,
@@ -65,6 +66,8 @@ public class UnrestrictedPrivacyController implements PrivacyController {
     this.privateNonceProvider = privateNonceProvider;
     this.privateWorldStateReader = privateWorldStateReader;
     this.privateStateRootResolver = privacyParameters.getPrivateStateRootResolver();
+    this.privacyPayloadEncryptionProvider =
+        privacyParameters.getPrivacyService().getUnrestrictedPayloadEncryptionProvider();
   }
 
   @Override
@@ -72,9 +75,10 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final PrivateTransaction privateTransaction,
       final String privacyUserId,
       final Optional<PrivacyGroup> privacyGroup) {
-    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    privateTransaction.writeTo(rlpOutput);
-    return rlpOutput.encoded().toBase64String();
+
+    return privacyPayloadEncryptionProvider
+        .encryptMarkerPayload(privateTransaction, privacyUserId)
+        .toBase64String();
   }
 
   @Override

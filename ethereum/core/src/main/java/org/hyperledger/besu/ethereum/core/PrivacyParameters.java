@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.plugin.services.PrivacyService;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,6 +60,7 @@ public class PrivacyParameters {
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
+  private PrivacyService privacyService;
 
   public Address getPrivacyAddress() {
     if (isUnrestrictedPrivacyEnabled()) {
@@ -207,6 +209,8 @@ public class PrivacyParameters {
         + onchainPrivacyGroupsEnabled
         + ", enclaveUri='"
         + enclaveUri
+        + ", privatePayloadEncryptionService='"
+        + privacyService.getClass().getSimpleName()
         + '\''
         + '}';
   }
@@ -227,6 +231,7 @@ public class PrivacyParameters {
     private boolean onchainPrivacyGroupsEnabled;
     private boolean unrestrictedPrivacyEnabled;
     private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
+    private PrivacyService privacyService;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -310,6 +315,8 @@ public class PrivacyParameters {
 
         config.setPrivateWorldStateArchive(privateWorldStateArchive);
 
+        config.setPrivacyService(privacyService);
+
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
 
@@ -355,5 +362,18 @@ public class PrivacyParameters {
       // throws exception if invalid base 64
       Base64.getDecoder().decode(this.privacyUserId);
     }
+
+    public Builder setPrivacyService(final PrivacyService privacyService) {
+      this.privacyService = privacyService;
+      return this;
+    }
+  }
+
+  private void setPrivacyService(final PrivacyService privacyService) {
+    this.privacyService = privacyService;
+  }
+
+  public PrivacyService getPrivacyService() {
+    return privacyService;
   }
 }

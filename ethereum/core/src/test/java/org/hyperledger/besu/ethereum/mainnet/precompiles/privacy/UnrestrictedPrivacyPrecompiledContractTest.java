@@ -31,6 +31,8 @@ import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.UnencryptedPayloadEncryptionService;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -43,6 +45,8 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.plugin.services.PrivacyService;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +58,7 @@ import org.junit.Test;
 
 public class UnrestrictedPrivacyPrecompiledContractTest {
   private final String DEFAULT_OUTPUT = "0x01";
+  private final Blockchain blockchain = mock(Blockchain.class);
 
   MessageFrame messageFrame;
 
@@ -81,6 +86,8 @@ public class UnrestrictedPrivacyPrecompiledContractTest {
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
 
+    when(messageFrame.getBlockchain()).thenReturn(blockchain);
+
     contract =
         new UnrestrictedPrivacyPrecompiledContract(
             new SpuriousDragonGasCalculator(),
@@ -88,6 +95,18 @@ public class UnrestrictedPrivacyPrecompiledContractTest {
                 .setEnabled(true)
                 .setUnrestrictedPrivacyEnabled(true)
                 .setStorageProvider(new InMemoryPrivacyStorageProvider())
+                .setPrivacyService(
+                    new PrivacyService() {
+                      @Override
+                      public void setUnrestrictedPayloadEncryptionProvider(
+                          final PrivacyPayloadEncryptionProvider provider) {}
+
+                      @Override
+                      public PrivacyPayloadEncryptionProvider
+                          getUnrestrictedPayloadEncryptionProvider() {
+                        return new UnencryptedPayloadEncryptionService();
+                      }
+                    })
                 .setEnclaveFactory(mock(EnclaveFactory.class))
                 .build());
   }
@@ -103,6 +122,10 @@ public class UnrestrictedPrivacyPrecompiledContractTest {
     final PrivateTransaction privateTransaction = privateTransactionBesu();
 
     final Bytes payload = convertPrivateTransactionToBytes(privateTransaction);
+
+    final Transaction transaction = Transaction.builder().payload(payload).build();
+
+    when(blockchain.getTransactionByHash(any())).thenReturn(Optional.of(transaction));
 
     final Bytes actual = contract.compute(payload, messageFrame);
 
