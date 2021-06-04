@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 
 public class CRLUtil {
 
-  // TODO add interface
-
   public static CertStore loadCRLs(final String path) {
     try {
       final List<X509CRL> crls =
