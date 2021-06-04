@@ -248,8 +248,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   @Override
   public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
       final String toBase64String, final String enclaveKey) {
-    throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+    return findPrivacyGroupByGroupId(toBase64String, enclaveKey);
   }
 
   @Override
