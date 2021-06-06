@@ -387,14 +387,15 @@ public class MainnetTransactionValidatorTest {
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
-            Optional.empty(),
+            Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode);
     final Transaction transaction =
         new TransactionTestFixture()
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .maxFeePerGas(Optional.of(Wei.of(1)))
-            .chainId(Optional.empty())
+            .type(TransactionType.EIP1559)
+            .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
     when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
@@ -402,6 +403,32 @@ public class MainnetTransactionValidatorTest {
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(150001L));
 
     assertThat(validator.validate(transaction, basefee)).isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldValidate1559TransactionWithPriceLowerThanBaseFee() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            Optional.of(TransactionPriceCalculator.eip1559()),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            defaultGoQuorumCompatibilityMode);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(1)))
+            .type(TransactionType.EIP1559)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(50)));
+
+    // validate without basefee is an adding to transaction pool case
+    // rather than a transaction processing case
+    assertThat(validator.validate(transaction, Optional.empty()))
+        .isEqualTo(ValidationResult.valid());
   }
 
   @Test

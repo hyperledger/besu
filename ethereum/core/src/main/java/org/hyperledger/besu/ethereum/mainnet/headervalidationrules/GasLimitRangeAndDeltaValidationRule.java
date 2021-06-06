@@ -67,6 +67,7 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
 
     final long difference = Math.abs(parentGasLimit - gasLimit);
     final long bounds = deltaBound(parentGasLimit);
+    // this is an exclusive bound, so the difference should be strictly less:
     if (Long.compareUnsigned(difference, bounds) >= 0) {
       LOG.info(
           "Invalid block header: gas limit delta {} is out of bounds of {}", difference, bounds);
