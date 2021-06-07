@@ -123,7 +123,7 @@ jobs:
             build\distributions\besu\bin\besu.bat --version
 
   unitTests:
-    executor: besu_executor_med
+    executor: besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
