@@ -83,6 +83,11 @@ public final class Difficulty extends BaseUInt256Value<Difficulty> implements Qu
   }
 
   @Override
+  public String toShortHexString() {
+    return super.isZero() ? "0x0" : super.toShortHexString();
+  }
+
+  @Override
   public Difficulty copy() {
     return super.copy();
   }

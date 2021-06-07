@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft;
 
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValidatorsValidationRule;
@@ -44,6 +45,9 @@ public class QbftBlockHeaderValidationRulesetFactory {
         .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
         .addRule(new TimestampBoundedByFutureParameter(1))
         .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
+        .addRule(
+            new ConstantFieldValidationRule<>(
+                "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
         .addRule(
             new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
