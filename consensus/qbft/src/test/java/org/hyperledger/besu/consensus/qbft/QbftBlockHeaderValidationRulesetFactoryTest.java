@@ -165,7 +165,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
   }
 
   @Test
-  public void bftValidateHeaderIgnoresMixHashValue() {
+  public void bftValidateHeaderFailsOnMixHash() {
     final NodeKey proposerNodeKey = NodeKeyUtils.generate();
     final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
 
@@ -188,7 +188,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     assertThat(
             validator.validateHeader(
                 blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.FULL))
-        .isTrue();
+        .isFalse();
   }
 
   @Test
@@ -332,6 +332,8 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     builder.number(number);
     builder.gasLimit(5000);
     builder.timestamp(6000 * number);
+    builder.mixHash(
+        Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"));
     builder.difficulty(Difficulty.ONE);
     builder.coinbase(Util.publicKeyToAddress(proposerNodeKey.getPublicKey()));
     builder.blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(qbftExtraDataEncoder));
