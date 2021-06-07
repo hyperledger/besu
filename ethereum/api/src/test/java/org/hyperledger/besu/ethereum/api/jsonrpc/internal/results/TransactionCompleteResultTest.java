@@ -20,13 +20,35 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
+
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
 public class TransactionCompleteResultTest {
+
+  @Test
+  public void eip1559TransactionWithShortWeiVals() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    TransactionCompleteResult zeroPriorityFeeTx =
+        new TransactionCompleteResult(
+            new TransactionWithMetadata(
+                new TransactionTestFixture()
+                    .maxFeePerGas(Optional.of(Wei.ONE))
+                    .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+                    .createTransaction(gen.generateKeyPair()),
+                0L,
+                Hash.ZERO,
+                0));
+
+    assertThat(zeroPriorityFeeTx.getMaxFeePerGas()).isEqualTo("0x1");
+    assertThat(zeroPriorityFeeTx.getMaxPriorityFeePerGas()).isEqualTo("0x0");
+  }
 
   @Test
   public void eip1559TransactionFields() {

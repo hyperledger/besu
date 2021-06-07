@@ -38,7 +38,7 @@ public class CreatePrivacyGroupTransaction implements Transaction<String> {
     this.description = description;
     this.addresses =
         Arrays.stream(nodes)
-            .map(n -> Base64String.wrap(n.getOrion().getDefaultPublicKey()))
+            .map(n -> Base64String.wrap(n.getEnclave().getDefaultPublicKey()))
             .collect(Collectors.toList());
   }
 

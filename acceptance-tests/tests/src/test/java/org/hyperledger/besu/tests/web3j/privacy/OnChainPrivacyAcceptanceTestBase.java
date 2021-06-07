@@ -41,7 +41,7 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
 
   protected String createOnChainPrivacyGroup(final PrivacyNode... members) {
     final List<String> addresses =
-        Arrays.asList(members).stream().map(m -> m.getEnclaveKey()).collect(Collectors.toList());
+        Arrays.stream(members).map(PrivacyNode::getEnclaveKey).collect(Collectors.toList());
     return createOnChainPrivacyGroup(members[0].getEnclaveKey(), addresses, members);
   }
 
