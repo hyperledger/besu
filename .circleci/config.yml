@@ -199,9 +199,9 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: Quorum Acceptance Tests (failures ignored)
+          name: Quorum Acceptance Tests
           no_output_timeout: 40m
-          command: ./gradlew --no-daemon acceptanceTestsQuorum || true # ignore result of job for now, until all issues are fixed
+          command: ./gradlew --no-daemon acceptanceTestsQuorum
       - store_artifacts:
           path: build/quorum-at
           destination: quorum-at-artifacts
@@ -286,7 +286,7 @@ workflows:
             - assemble
       - acceptanceTestsQuorum:
           requires:
-            - buildDocker
+            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -300,6 +300,7 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
       - publishDocker:
@@ -312,6 +313,7 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
           context:
