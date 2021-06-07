@@ -32,7 +32,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
+public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -46,8 +46,11 @@ public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
   private final Map<String, Certificate> cachedCertificates = new HashMap<>();
 
   public SoftwareKeyStoreWrapper(
-      final String keystoreType, final Path keystoreLocation, final String keystorePassword) {
-    this(keystoreType, keystoreLocation, keystorePassword, null, null, null);
+      final String keystoreType,
+      final Path keystoreLocation,
+      final String keystorePassword,
+      final Path crlLocation) {
+    this(keystoreType, keystoreLocation, keystorePassword, null, null, null, crlLocation);
   }
 
   public SoftwareKeyStoreWrapper(
@@ -56,7 +59,9 @@ public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
       final String keystorePassword,
       final String truststoreType,
       final Path truststoreLocation,
-      final String truststorePassword) {
+      final String truststorePassword,
+      final Path crlLocation) {
+    super(crlLocation);
 
     if (keystorePassword == null) {
       throw new IllegalArgumentException("Keystore password is null");
@@ -90,6 +95,7 @@ public class SoftwareKeyStoreWrapper implements KeyStoreWrapper {
       final String keystorePassword,
       final KeyStore truststore,
       final String truststorePassword) {
+    super(null);
     this.keystore = keystore;
     this.keystorePassword = keystorePassword.toCharArray();
     this.truststore = truststore;

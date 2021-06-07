@@ -185,7 +185,8 @@ public class SoftwareKeyStoreWrapperTest {
             "validator",
             KEYSTORE_TYPE_PKCS12,
             Path.of("src/test/resources/keystore/keystore"),
-            "validator");
+            "validator",
+            null);
 
     assertThat(loadedKeyStore.getPublicKey("validator")).isNotNull();
     assertThat(loadedKeyStore.getPrivateKey("validator")).isNotNull();
