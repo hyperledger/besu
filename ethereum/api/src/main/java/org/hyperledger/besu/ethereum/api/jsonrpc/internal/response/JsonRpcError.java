@@ -64,6 +64,7 @@ public enum JsonRpcError {
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
   REVERT_ERROR(-32000, "Execution reverted"),
   GAS_PRICE_MUST_BE_ZERO(-3200, "gasPrice must be set to zero on a GoQuorum compatible network"),
+  TRANSACTION_NOT_FOUND(-32000, "Transaction not found"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),
@@ -175,6 +176,11 @@ public enum JsonRpcError {
   ENCLAVE_PRIVACY_GROUP_CREATION(-50200, "EnclavePrivacyGroupIdCreation"),
   ENCLAVE_PAYLOAD_NOT_FOUND(-50200, "EnclavePayloadNotFound"),
   CREATE_GROUP_INCLUDE_SELF(-50200, "CreatePrivacyGroupShouldIncludeSelf"),
+
+  // Tessera error codes
+  TESSERA_NODE_MISSING_PEER_URL(-50200, "Recipient not found for key:"),
+  TESSERA_CREATE_GROUP_INCLUDE_SELF(
+      -50200, "The list of members in a privacy group should include self"),
 
   /** Storing privacy group issue */
   ENCLAVE_UNABLE_STORE_PRIVACY_GROUP(-50200, "PrivacyGroupNotStored"),

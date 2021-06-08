@@ -16,19 +16,30 @@ package org.hyperledger.besu.tests.web3j.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 
-public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class PrivacyGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
+  public PrivacyGroupAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
 
   private PrivacyNode alice;
   private PrivacyNode bob;
@@ -36,18 +47,28 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
+    final Network containerNetwork = Network.newNetwork();
+
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "node1", privacyAccountResolver.resolve(0));
+            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.of(containerNetwork));
     bob =
-        privacyBesu.createPrivateTransactionEnabledNode("node2", privacyAccountResolver.resolve(1));
+        privacyBesu.createPrivateTransactionEnabledNode(
+            "node2", privacyAccountResolver.resolve(1), enclaveType, Optional.of(containerNetwork));
     charlie =
-        privacyBesu.createPrivateTransactionEnabledNode("node3", privacyAccountResolver.resolve(2));
+        privacyBesu.createPrivateTransactionEnabledNode(
+            "node3", privacyAccountResolver.resolve(2), enclaveType, Optional.of(containerNetwork));
     privacyCluster.start(alice, bob, charlie);
   }
 
   @Test
   public void nodeCanCreatePrivacyGroup() {
+
+    final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+    final Configuration config = ctx.getConfiguration();
+    final LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+    loggerConfig.setLevel(Level.DEBUG);
+    ctx.updateLoggers();
     final String privacyGroupId =
         alice.execute(
             privacyTransactions.createPrivacyGroup(
@@ -112,7 +133,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void nodeCanCreatePrivacyGroupWithoutOptionalParams() {
     final String privacyGroupId =
-        alice.execute(privacyTransactions.createPrivacyGroup(null, null, alice, bob));
+        alice.execute(privacyTransactions.createPrivacyGroup(null, null, alice));
 
     assertThat(privacyGroupId).isNotNull();
 
@@ -122,11 +143,9 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
             PrivacyGroup.Type.PANTHEON,
             "",
             "",
-            Base64String.wrapList(alice.getEnclaveKey(), bob.getEnclaveKey()));
+            Base64String.wrapList(alice.getEnclaveKey()));
 
     alice.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
-
-    bob.verify(privateTransactionVerifier.validPrivacyGroupCreated(expected));
   }
 
   @Test

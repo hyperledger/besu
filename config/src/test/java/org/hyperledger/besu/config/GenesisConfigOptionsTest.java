@@ -181,21 +181,37 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldGetYoloV3BlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("yoloV3Block", 1000));
-    assertThat(config.getBerlinBlockNumber()).hasValue(1000);
+  public void shouldGetLondonBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 1000));
+    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+    assertThat(config.getLondonBlockNumber()).hasValue(1000);
+    assertThat(config.getGenesisBaseFeePerGas()).isEmpty();
+  }
+
+  @Test
+  public void shouldGetBaikalBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("calaverasblock", 1000));
+    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+    assertThat(config.getLondonBlockNumber()).hasValue(1000);
+    assertThat(config.getGenesisBaseFeePerGas()).isEmpty();
   }
 
   @Test
   // TODO EIP-1559 change for the actual fork name when known
-  public void shouldGetEIP1559BlockNumber() {
-    try {
-      ExperimentalEIPs.eip1559Enabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("eip1559block", 1000));
-      assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
-    } finally {
-      ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
-    }
+  public void shouldGetAleutBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 1000));
+    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+    assertThat(config.getAleutBlockNumber()).hasValue(1000);
+    assertThat(config.getGenesisBaseFeePerGas()).isEmpty();
+  }
+
+  @Test
+  // TODO EIP-1559 change for the actual fork name when known
+  public void shouldGetEIP1559BaseFeeAtGenesis() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 0));
+    assertThat(config.getEIP1559BlockNumber()).hasValue(0);
+    assertThat(config.getGenesisBaseFeePerGas())
+        .hasValue(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
   }
 
   @Test
@@ -218,6 +234,8 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getIstanbulBlockNumber()).isEmpty();
     assertThat(config.getMuirGlacierBlockNumber()).isEmpty();
     assertThat(config.getBerlinBlockNumber()).isEmpty();
+    assertThat(config.getLondonBlockNumber()).isEmpty();
+    assertThat(config.getAleutBlockNumber()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 

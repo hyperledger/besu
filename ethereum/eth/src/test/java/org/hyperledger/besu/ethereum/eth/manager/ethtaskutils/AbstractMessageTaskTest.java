@@ -102,7 +102,6 @@ public abstract class AbstractMessageTaskTest<T, R> {
             syncState,
             Wei.of(1),
             TransactionPoolConfiguration.DEFAULT,
-            true,
             Optional.empty());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(

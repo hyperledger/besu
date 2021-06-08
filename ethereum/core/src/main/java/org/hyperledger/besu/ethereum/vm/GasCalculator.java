@@ -59,7 +59,7 @@ public interface GasCalculator {
   // Transaction Gas Calculations
 
   /**
-   * Returns a {@link Transaction}s intrinisic gas cost
+   * Returns a {@link Transaction}s intrinsic gas cost
    *
    * @param transaction The transaction
    * @return the transaction's intrinsic gas cost
@@ -434,4 +434,11 @@ public interface GasCalculator {
   default Gas modExpGasCost(final Bytes input) {
     return Gas.ZERO;
   }
+
+  default long getMaxRefundQuotient() {
+    return 2;
+  };
+
+  // what would be the gas for a PMT with hash of all non-zeros
+  Gas getMaximumPmtCost();
 }

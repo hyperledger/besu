@@ -46,9 +46,9 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
-import org.hyperledger.orion.testutil.OrionTestHarness;
-import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
+import org.hyperledger.enclave.testutil.OrionTestHarness;
+import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -118,8 +118,9 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     testHarness =
         OrionTestHarnessFactory.create(
+            "enclave",
             folder.newFolder().toPath(),
-            new OrionKeyConfiguration("orion_key_0.pub", "orion_key_1.key"));
+            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_1.key"));
 
     testHarness.start();
 
@@ -164,7 +165,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   @AfterClass
   public static void tearDownOnce() {
-    testHarness.getOrion().stop();
+    testHarness.stop();
     vertx.close();
   }
 

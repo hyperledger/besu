@@ -17,15 +17,17 @@ package org.hyperledger.besu.tests.web3j.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -43,9 +45,12 @@ import org.web3j.protocol.exceptions.ClientConnectionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 
-public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
+  public PrivCallAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
 
-  private static final long POW_CHAIN_ID = 2018;
+  private static final long POW_CHAIN_ID = 1337;
   private static final int VALUE = 1024;
 
   private PrivacyNode minerNode;
@@ -54,7 +59,7 @@ public class PrivCallAcceptanceTest extends PrivacyAcceptanceTestBase {
   public void setUp() throws Exception {
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0));
+            "miner-node", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
     privacyCluster.start(minerNode);
   }
 

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
+import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -199,6 +200,13 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       // no need to log, rewardCoinbase logs the error.
       return AbstractBlockProcessor.Result.failed();
     }
+
+    // create the bloom for the private transactions in the block and store it
+    final LogsBloomFilter.Builder privateBloomBuilder = LogsBloomFilter.builder();
+    privateTxReceipts.stream()
+        .filter(pr -> pr != null)
+        .forEach(pr -> privateBloomBuilder.insertFilter(pr.getBloomFilter()));
+    blockHeader.setPrivateLogsBloom(privateBloomBuilder.build());
 
     publicWorldState.persist(blockHeader);
     privateWorldState.persist(null);

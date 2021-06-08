@@ -29,7 +29,8 @@ public class DomainObjectDecodeUtils {
   public static Transaction decodeRawTransaction(final String rawTransaction)
       throws InvalidJsonRpcRequestException {
     try {
-      return TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(rawTransaction));
+      Bytes txnBytes = Bytes.fromHexString(rawTransaction);
+      return TransactionDecoder.decodeOpaqueBytes(txnBytes);
     } catch (final IllegalArgumentException | RLPException e) {
       LOG.debug(e);
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);

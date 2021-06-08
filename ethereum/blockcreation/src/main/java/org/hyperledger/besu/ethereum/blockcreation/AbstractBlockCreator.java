@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -178,7 +177,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
-              .gasUsed(transactionResults.getTotalCumulativeGasUsed())
+              .gasUsed(transactionResults.getCumulativeGasUsed())
               .extraData(extraDataCalculator.get(parentHeader))
               .buildSealableBlockHeader();
 
@@ -221,8 +220,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             isCancelled::get,
             miningBeneficiary,
             protocolSpec.getTransactionPriceCalculator(),
-            protocolSpec.getGasBudgetCalculator(),
-            protocolSpec.getEip1559());
+            protocolSpec.getGasBudgetCalculator());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(
@@ -240,11 +238,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final MutableWorldState worldState =
         protocolContext
             .getWorldStateArchive()
-            .getMutable(parentStateRoot, parentHeader.getHash())
+            .getMutable(parentStateRoot, parentHeader.getHash(), false)
             .orElseThrow(
                 () -> {
                   LOG.info("Unable to create block because world state is not available");
-                  return new IllegalStateException(
+                  return new CancellationException(
                       "World state not available for block "
                           + parentHeader.getNumber()
                           + " with state root "
@@ -260,15 +258,16 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final long gasLimit = gasLimitCalculator.nextGasLimit(parentHeader.getGasLimit());
+    long gasLimit = gasLimitCalculator.nextGasLimit(parentHeader.getGasLimit());
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
     Long baseFee = null;
-    if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
+    if (protocolSpec.isEip1559()) {
       final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
       if (eip1559.isForkBlock(newBlockNumber)) {
+        gasLimit = gasLimit * eip1559.getFeeMarket().getSlackCoefficient();
         baseFee = eip1559.getFeeMarket().getInitialBasefee();
       } else {
         baseFee =

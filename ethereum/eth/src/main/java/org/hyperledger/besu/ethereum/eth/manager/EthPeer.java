@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.time.Clock;
 import java.util.Collections;
@@ -62,6 +63,7 @@ public class EthPeer {
   private final Set<Hash> knownBlocks;
   private final String protocolName;
   private final Clock clock;
+  private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final ChainState chainHeadState;
   private final AtomicBoolean statusHasBeenSentToPeer = new AtomicBoolean(false);
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
@@ -85,10 +87,12 @@ public class EthPeer {
       final String protocolName,
       final Consumer<EthPeer> onStatusesExchanged,
       final List<PeerValidator> peerValidators,
-      final Clock clock) {
+      final Clock clock,
+      final List<NodeMessagePermissioningProvider> permissioningProviders) {
     this.connection = connection;
     this.protocolName = protocolName;
     this.clock = clock;
+    this.permissioningProviders = permissioningProviders;
     knownBlocks =
         Collections.newSetFromMap(
             Collections.synchronizedMap(
@@ -150,6 +154,23 @@ public class EthPeer {
   }
 
   public RequestManager.ResponseStream send(final MessageData messageData) throws PeerNotConnected {
+    if (permissioningProviders.stream()
+        .anyMatch(p -> !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode()))) {
+      LOG.info(
+          "Permissioning blocked sending of message code {} to {}",
+          messageData.getCode(),
+          connection.getRemoteEnode());
+      LOG.debug(
+          "Permissioning blocked by providers {}",
+          () ->
+              permissioningProviders.stream()
+                  .filter(
+                      p ->
+                          !p.isMessagePermitted(
+                              connection.getRemoteEnode(), messageData.getCode())));
+      return null;
+    }
+
     switch (messageData.getCode()) {
       case EthPV62.GET_BLOCK_HEADERS:
         return sendRequest(headersRequestManager, messageData);

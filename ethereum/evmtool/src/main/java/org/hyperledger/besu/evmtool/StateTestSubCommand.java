@@ -201,9 +201,15 @@ public class StateTestSubCommand implements Runnable {
               TransactionValidationParams.processingBlock(),
               tracer);
       timer.stop();
-      final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
-      if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.getFork())) {
-        worldStateUpdater.deleteAccount(coinbase.getAddress());
+      if (shouldClearEmptyAccounts(spec.getFork())) {
+        final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
+        if (coinbase != null && coinbase.isEmpty()) {
+          worldStateUpdater.deleteAccount(coinbase.getAddress());
+        }
+        final Account sender = worldStateUpdater.getAccount(transaction.getSender());
+        if (sender != null && sender.isEmpty()) {
+          worldStateUpdater.deleteAccount(sender.getAddress());
+        }
       }
       worldStateUpdater.commit();
 

@@ -15,10 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 
 import java.math.BigInteger;
@@ -143,7 +141,7 @@ public class ProtocolScheduleBuilder {
 
     validateForkOrdering();
 
-    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory, chainId);
+    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
 
     // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
     // inserted _AT_ the modifier block entry.
@@ -206,7 +204,7 @@ public class ProtocolScheduleBuilder {
   }
 
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
-      final MainnetProtocolSpecFactory specFactory, final Optional<BigInteger> chainId) {
+      final MainnetProtocolSpecFactory specFactory) {
     final TreeMap<Long, BuilderMapEntry> builders =
         Lists.newArrayList(
                 create(OptionalLong.of(0), specFactory.frontierDefinition()),
@@ -223,6 +221,8 @@ public class ProtocolScheduleBuilder {
                 create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
                 create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
                 create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+                create(config.getAleutBlockNumber(), specFactory.aleutDefinition(config)),
+                create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
                 // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
                 create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
@@ -234,6 +234,7 @@ public class ProtocolScheduleBuilder {
                 create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
                 create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
                 create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
+                create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
                 create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
             .stream()
             .filter(Optional::isPresent)
@@ -244,25 +245,6 @@ public class ProtocolScheduleBuilder {
                     b -> b,
                     (existing, replacement) -> replacement,
                     TreeMap::new));
-
-    if (ExperimentalEIPs.eip1559Enabled) {
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator =
-          Optional.of(TransactionPriceCalculator.eip1559());
-      final long eip1559Block = config.getEIP1559BlockNumber().getAsLong();
-      builders.put(
-          eip1559Block,
-          new BuilderMapEntry(
-              eip1559Block,
-              MainnetProtocolSpecs.londonDefinition(
-                  chainId,
-                  transactionPriceCalculator,
-                  config.getContractSizeLimit(),
-                  config.getEvmStackSize(),
-                  isRevertReasonEnabled,
-                  config,
-                  quorumCompatibilityMode),
-              protocolSpecAdapters.getModifierForBlock(eip1559Block)));
-    }
 
     return builders;
   }
@@ -327,6 +309,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock =
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("London", config.getLondonBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -344,6 +327,8 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Atlantis", config.getAtlantisBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Agharta", config.getAghartaBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Phoenix", config.getPhoenixBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

@@ -1,0 +1,40 @@
+{
+  "genesis": {
+    "config": {
+      "chainId": 2017,
+      "eip150Block": 0,
+      "ecCurve": "abcd",
+      "ibft2": {
+
+      }
+    },
+    "nonce": "0x0",
+    "timestamp": "0x5b3c3d18",
+    "number": "0x0",
+    "gasUsed": "0x0",
+    "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "gasLimit": "0x47b760",
+    "difficulty": "0x1",
+    "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
+    "coinbase": "0x0000000000000000000000000000000000000000",
+    "ibft2": {
+      "blockperiodseconds": 2,
+      "epochlength": 30000,
+      "requesttimeoutseconds": 10
+    },
+    "alloc": {
+      "24defc2d149861d3d245749b81fe0e6b28e04f31": {
+        "balance": "0x446c3b15f9926687d2c40534fdb564000000000000"
+      },
+      "2a813d7db3de19b07f92268b6d4125ed295cbe00": {
+        "balance": "0x446c3b15f9926687d2c40534fdb542000000000000"
+      }
+    }
+  },
+  "blockchain": {
+    "nodes": {
+      "generate": true,
+      "count": 4
+    }
+  }
+}

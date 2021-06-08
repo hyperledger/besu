@@ -15,21 +15,21 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfiguration;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 
 public class PrivacyNodeConfiguration {
 
   private final int privacyAddress;
   private final boolean isOnchainPrivacyGroupEnabled;
   private final BesuNodeConfiguration besuConfig;
-  private final OrionKeyConfiguration orionConfig;
+  private final EnclaveKeyConfiguration keyConfig;
   private final boolean isMultitenancyEnabled;
 
   PrivacyNodeConfiguration(
       final int privacyAddress,
       final BesuNodeConfiguration besuConfig,
-      final OrionKeyConfiguration orionConfig) {
-    this(privacyAddress, false, false, besuConfig, orionConfig);
+      final EnclaveKeyConfiguration keyConfig) {
+    this(privacyAddress, false, false, besuConfig, keyConfig);
   }
 
   PrivacyNodeConfiguration(
@@ -37,11 +37,11 @@ public class PrivacyNodeConfiguration {
       final boolean isOnchainPrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
       final BesuNodeConfiguration besuConfig,
-      final OrionKeyConfiguration orionConfig) {
+      final EnclaveKeyConfiguration keyConfig) {
     this.privacyAddress = privacyAddress;
     this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupEnabled;
     this.besuConfig = besuConfig;
-    this.orionConfig = orionConfig;
+    this.keyConfig = keyConfig;
     this.isMultitenancyEnabled = isMultitenancyEnabled;
   }
 
@@ -61,7 +61,7 @@ public class PrivacyNodeConfiguration {
     return besuConfig;
   }
 
-  public OrionKeyConfiguration getOrionKeyConfig() {
-    return orionConfig;
+  public EnclaveKeyConfiguration getKeyConfig() {
+    return keyConfig;
   }
 }

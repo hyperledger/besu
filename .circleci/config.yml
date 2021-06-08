@@ -7,9 +7,6 @@ executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -18,13 +15,15 @@ executors:
   besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO
     resource_class: xlarge
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
+
+  xl_machine_executor:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: xlarge
 
 notify:
   webhooks:
@@ -39,7 +38,8 @@ commands:
           name: Install Packages - LibSodium
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged
+            sudo service haveged restart
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -99,7 +99,7 @@ jobs:
             - ./
       - store_artifacts:
           name: Distribution artifacts
-          path:  build/distributions
+          path: build/distributions
           destination: distributions
           when: always
   testWindows:
@@ -136,7 +136,7 @@ jobs:
       - capture_test_results
 
   integrationTests:
-    executor: besu_executor_xl
+    executor: besu_executor_med
     steps:
       - prepare
       - attach_workspace:
@@ -170,15 +170,15 @@ jobs:
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 8
-    executor: besu_executor_xl
+    parallelism: 6
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
       - run:
           name: AcceptanceTests
-          no_output_timeout: 40m
+          no_output_timeout: 30m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
@@ -190,6 +190,23 @@ jobs:
             ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
+
+  acceptanceTestsQuorum:
+    parallelism: 1
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Quorum Acceptance Tests
+          no_output_timeout: 40m
+          command: ./gradlew --no-daemon acceptanceTestsQuorum
+      - store_artifacts:
+          path: build/quorum-at
+          destination: quorum-at-artifacts
+      - store_test_results:
+          path: build/quorum-at/openjdk-latest/reports/xml-report
 
   buildDocker:
     executor: besu_executor_med
@@ -255,31 +272,24 @@ workflows:
       - unitTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
       - testWindows:
           requires:
             - assemble
       - referenceTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro            
       - integrationTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro            
       - acceptanceTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro            
+      - acceptanceTestsQuorum:
+          requires:
+            - assemble
       - buildDocker:
           requires:
-            - unitTests
-          context:
-            - besu-dockerhub-ro            
+            - assemble
       - publish:
           filters:
             branches:
@@ -290,11 +300,9 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
-            - buildDocker
-          context:
-            - besu-dockerhub-ro
       - publishDocker:
           filters:
             branches:
@@ -305,6 +313,7 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
           context:

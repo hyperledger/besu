@@ -53,7 +53,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.orion.testutil.OrionKeyUtils;
+import org.hyperledger.enclave.testutil.EnclaveKeyUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -124,7 +124,7 @@ public class DefaultPrivacyControllerTest {
           .value(Wei.ZERO)
           .payload(Base64.decode(TRANSACTION_KEY))
           .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-          .chainId(BigInteger.valueOf(2018))
+          .chainId(BigInteger.valueOf(1337))
           .signAndBuild(KEY_PAIR);
 
   private Enclave mockEnclave() {
@@ -162,7 +162,7 @@ public class DefaultPrivacyControllerTest {
 
     privateWorldStateReader = mock(PrivateWorldStateReader.class);
 
-    enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
+    enclavePublicKey = EnclaveKeyUtils.loadKey("enclave_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
     enclave = mockEnclave();
 
@@ -528,7 +528,7 @@ public class DefaultPrivacyControllerTest {
         .value(Wei.ZERO)
         .payload(Bytes.fromHexString("0x"))
         .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .restriction(Restriction.RESTRICTED);
   }
 }

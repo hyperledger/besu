@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
@@ -27,6 +26,8 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValid
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -119,31 +120,41 @@ public final class MainnetBlockHeaderValidator {
   }
 
   static BlockHeaderValidator.Builder createEip1559Validator(final EIP1559 eip1559) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(eip1559)))
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
             new ProofOfWorkValidationRule(
-                new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT))
+                new EpochCalculator.DefaultEpochCalculator(),
+                true,
+                PoWHasher.ETHASH_LIGHT,
+                Optional.of(eip1559)))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 
   static BlockHeaderValidator.Builder createEip1559OmmerValidator(final EIP1559 eip1559) {
-    ExperimentalEIPs.eip1559MustBeEnabled();
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(eip1559)))
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule(
             new ProofOfWorkValidationRule(
-                new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT))
+                new EpochCalculator.DefaultEpochCalculator(),
+                true,
+                PoWHasher.ETHASH_LIGHT,
+                Optional.of(eip1559)))
         .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

@@ -85,4 +85,30 @@ public class TestSetChainParamsTest {
     assertThat(blockHeader.getOmmersHash().toString())
         .isEqualTo("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347");
   }
+
+  @Test
+  public void testValidate1559GenesisImport() throws IOException {
+    final String chainParamsJsonString =
+        Resources.toString(
+            TestSetChainParamsTest.class.getResource("1559ChainParams.json"), Charsets.UTF_8);
+    final JsonObject chainParamsJson = new JsonObject(chainParamsJsonString);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", TestSetChainParams.METHOD_NAME, new Object[] {chainParamsJson.getMap()}));
+
+    assertThat(test_setChainParams.response(request))
+        .isEqualTo(new JsonRpcSuccessResponse(null, true));
+
+    final BlockHeader blockHeader = context.getBlockHeader(0);
+    assertThat(blockHeader.getDifficulty()).isEqualTo(UInt256.fromHexString("0x20000"));
+    assertThat(blockHeader.getGasLimit()).isEqualTo(1234L);
+    assertThat(blockHeader.getBaseFee()).hasValue(12345L);
+    assertThat(blockHeader.getExtraData().toHexString()).isEqualTo("0x00");
+    assertThat(blockHeader.getTimestamp()).isEqualTo(0l);
+    assertThat(blockHeader.getNonce()).isEqualTo(0L);
+    assertThat(blockHeader.getMixHash().toHexString())
+        .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
+  }
 }

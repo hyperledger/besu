@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -23,8 +25,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Account;
@@ -46,7 +48,7 @@ import java.util.Set;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import org.junit.After;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -70,11 +72,6 @@ public class MainnetTransactionValidatorTest {
           .createTransaction(senderKeys);
 
   private final boolean defaultGoQuorumCompatibilityMode = false;
-
-  @After
-  public void reset() {
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
-  }
 
   @Test
   public void shouldRejectTransactionIfIntrinsicGasExceedsGasLimit() {
@@ -213,6 +210,63 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
+  public void shouldRejectTransactionWithMaxFeeTimesGasLimitGreaterThanBalance() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator, false, Optional.empty(), defaultGoQuorumCompatibilityMode);
+    validator.setTransactionFilter(transactionFilter(true));
+
+    assertThat(
+            validator.validateForSender(
+                Transaction.builder()
+                    .type(TransactionType.EIP1559)
+                    .nonce(0)
+                    .maxPriorityFeePerGas(Wei.of(5))
+                    .maxFeePerGas(Wei.of(7))
+                    .gasLimit(15)
+                    .to(Address.ZERO)
+                    .value(Wei.of(0))
+                    .payload(Bytes.EMPTY)
+                    .chainId(BigInteger.ONE)
+                    .signAndBuild(new SECP256K1().generateKeyPair()),
+                account(Wei.of(100), 0),
+                true))
+        .isEqualTo(ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE));
+  }
+
+  @Test
+  public void shouldRejectTransactionWithMaxPriorityFeeGreaterThanMaxFee() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            Optional.of(TransactionPriceCalculator.eip1559()),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.values()),
+            defaultGoQuorumCompatibilityMode);
+    validator.setTransactionFilter(transactionFilter(true));
+
+    final Transaction transaction =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(7))
+            .maxFeePerGas(Wei.of(4))
+            .gasLimit(15)
+            .to(Address.ZERO)
+            .value(Wei.of(0))
+            .payload(Bytes.EMPTY)
+            .chainId(BigInteger.ONE)
+            .signAndBuild(new SECP256K1().generateKeyPair());
+
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(transaction, Optional.of(1L));
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
+    assertThat(validationResult.getErrorMessage())
+        .isEqualTo("max priority fee per gas cannot be greater than max fee per gas");
+  }
+
+  @Test
   public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
     final ArgumentCaptor<Boolean> stateChangeLocalParamCaptor =
         ArgumentCaptor.forClass(Boolean.class);
@@ -264,8 +318,6 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldAcceptOnlyTransactionsInAcceptedTransactionTypes() {
-    ExperimentalEIPs.eip1559Enabled = true;
-
     final MainnetTransactionValidator frontierValidator =
         new MainnetTransactionValidator(
             gasCalculator,
@@ -287,8 +339,8 @@ public class MainnetTransactionValidatorTest {
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
-            .gasPremium(Optional.of(Wei.of(3)))
-            .feeCap(Optional.of(Wei.of(6)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(3)))
+            .maxFeePerGas(Optional.of(Wei.of(6)))
             .gasLimit(21000)
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
@@ -303,13 +355,10 @@ public class MainnetTransactionValidatorTest {
 
     assertThat(eip1559Validator.validate(transaction, Optional.of(1L)))
         .isEqualTo(ValidationResult.valid());
-
-    ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @Test
   public void shouldRejectTransactionIfEIP1559TransactionGasPriceLessBaseFee() {
-    ExperimentalEIPs.eip1559Enabled = true;
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
@@ -321,33 +370,32 @@ public class MainnetTransactionValidatorTest {
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
-            .gasPremium(Optional.of(Wei.of(1)))
-            .feeCap(Optional.of(Wei.of(1)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(1)))
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(1));
     assertThat(validator.validate(transaction, basefee))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
-    ExperimentalEIPs.eip1559Enabled = false;
   }
 
   @Test
   public void shouldAcceptValidEIP1559() {
-    ExperimentalEIPs.eip1559Enabled = true;
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
             Optional.of(transactionPriceCalculator),
             false,
-            Optional.empty(),
+            Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
             defaultGoQuorumCompatibilityMode);
     final Transaction transaction =
         new TransactionTestFixture()
-            .gasPremium(Optional.of(Wei.of(1)))
-            .feeCap(Optional.of(Wei.of(1)))
-            .chainId(Optional.empty())
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(1)))
+            .type(TransactionType.EIP1559)
+            .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
     when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
@@ -355,7 +403,32 @@ public class MainnetTransactionValidatorTest {
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(150001L));
 
     assertThat(validator.validate(transaction, basefee)).isEqualTo(ValidationResult.valid());
-    ExperimentalEIPs.eip1559Enabled = false;
+  }
+
+  @Test
+  public void shouldValidate1559TransactionWithPriceLowerThanBaseFee() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            Optional.of(TransactionPriceCalculator.eip1559()),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            defaultGoQuorumCompatibilityMode);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(1)))
+            .type(TransactionType.EIP1559)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
+        .thenReturn(new GasAndAccessedState(Gas.of(50)));
+
+    // validate without basefee is an adding to transaction pool case
+    // rather than a transaction processing case
+    assertThat(validator.validate(transaction, Optional.empty()))
+        .isEqualTo(ValidationResult.valid());
   }
 
   @Test

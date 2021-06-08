@@ -14,16 +14,23 @@
  */
 package org.hyperledger.besu.tests.web3j.privacy;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
+
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEnclaveTestBase {
 
-  private static final long POW_CHAIN_ID = 2018;
+  public DeployPrivateSmartContractAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
+
+  private static final long POW_CHAIN_ID = 1337;
 
   private PrivacyNode minerNode;
 
@@ -31,7 +38,7 @@ public class DeployPrivateSmartContractAcceptanceTest extends PrivacyAcceptanceT
   public void setUp() throws Exception {
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0));
+            "miner-node", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
     privacyCluster.start(minerNode);
   }
 

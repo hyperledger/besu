@@ -60,9 +60,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
-import org.hyperledger.orion.testutil.OrionTestHarness;
-import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
+import org.hyperledger.enclave.testutil.EnclaveTestHarness;
+import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -78,6 +78,7 @@ import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -85,6 +86,7 @@ import org.junit.rules.TemporaryFolder;
 
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
+
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -119,7 +121,7 @@ public class PrivacyReorgTest {
           "0x608060405234801561001057600080fd5b5060008054600160a060020a03191633179055610199806100326000396000f3fe6080604052600436106100565763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633fa4f245811461005b5780636057361d1461008257806367e404ce146100ae575b600080fd5b34801561006757600080fd5b506100706100ec565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100ac600480360360208110156100a557600080fd5b50356100f2565b005b3480156100ba57600080fd5b506100c3610151565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b60025490565b604080513381526020810183905281517fc9db20adedc6cf2b5d25252b101ab03e124902a73fcb12b753f3d1aaa2d8f9f5929181900390910190a16002556001805473ffffffffffffffffffffffffffffffffffffffff191633179055565b60015473ffffffffffffffffffffffffffffffffffffffff169056fea165627a7a72305820c7f729cb24e05c221f5aa913700793994656f233fe2ce3b9fd9a505ea17e8d8a0029");
   private static final PrivateTransaction PRIVATE_TRANSACTION =
       PrivateTransaction.builder()
-          .chainId(BigInteger.valueOf(2018))
+          .chainId(BigInteger.valueOf(1337))
           .gasLimit(1000)
           .gasPrice(Wei.ZERO)
           .nonce(0)
@@ -133,18 +135,18 @@ public class PrivacyReorgTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private BesuController besuController;
-  private OrionTestHarness enclave;
+  private EnclaveTestHarness enclave;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
   private DefaultPrivacyController privacyController;
 
   @Before
   public void setUp() throws IOException {
-    // Start Enclave
     enclave =
         OrionTestHarnessFactory.create(
+            "orion",
             folder.newFolder().toPath(),
-            new OrionKeyConfiguration("enclavePublicKey", "enclavePrivateKey"));
+            new EnclaveKeyConfiguration("enclavePublicKey", "enclavePrivateKey"));
     enclave.start();
 
     // Create Storage
@@ -182,6 +184,11 @@ public class PrivacyReorgTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .build();
+  }
+
+  @After
+  public void tearDown() {
+    enclave.stop();
   }
 
   @Test
@@ -444,7 +451,7 @@ public class PrivacyReorgTest {
   private Transaction buildMarkerTransaction(final Bytes payload) {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
-        .chainId(BigInteger.valueOf(2018))
+        .chainId(BigInteger.valueOf(1337))
         .gasLimit(60000)
         .gasPrice(Wei.of(1000))
         .nonce(0)

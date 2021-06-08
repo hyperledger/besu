@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration.dnsDisabled;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 
 import java.io.IOException;
@@ -76,7 +76,7 @@ public class LocalPermissioningConfigurationBuilderTest {
         .containsExactly("0x0000000000000000000000000000000000000009");
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
     assertThat(permissioningConfiguration.getNodeAllowlist())
-        .containsExactly(EnodeURL.fromString(uri), EnodeURL.fromString(uri2));
+        .containsExactly(EnodeURLImpl.fromString(uri), EnodeURLImpl.fromString(uri2));
   }
 
   @Test
@@ -94,7 +94,7 @@ public class LocalPermissioningConfigurationBuilderTest {
         .containsExactly("0x0000000000000000000000000000000000000009");
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
     assertThat(permissioningConfiguration.getNodeAllowlist())
-        .containsExactly(EnodeURL.fromString(uri), EnodeURL.fromString(uri2));
+        .containsExactly(EnodeURLImpl.fromString(uri), EnodeURLImpl.fromString(uri2));
   }
 
   @Test
@@ -115,7 +115,7 @@ public class LocalPermissioningConfigurationBuilderTest {
     assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isFalse();
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
     assertThat(permissioningConfiguration.getNodeAllowlist())
-        .containsExactly(EnodeURL.fromString(uri));
+        .containsExactly(EnodeURLImpl.fromString(uri));
   }
 
   @Test
@@ -137,7 +137,7 @@ public class LocalPermissioningConfigurationBuilderTest {
     assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isFalse();
     assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
     assertThat(permissioningConfiguration.getNodeAllowlist())
-        .containsExactly(EnodeURL.fromString(uri));
+        .containsExactly(EnodeURLImpl.fromString(uri));
   }
 
   @Test

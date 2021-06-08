@@ -595,7 +595,7 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null,
+            PendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     transactions.addRemoteTransaction(transaction1);
@@ -619,7 +619,7 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null,
+            PendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -639,7 +639,7 @@ public class PendingTransactionsTest {
             MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
-            () -> null,
+            PendingTransactionsTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);

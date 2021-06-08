@@ -49,7 +49,7 @@ public class Enclave {
   public boolean upCheck() {
     try {
       final String upcheckResponse =
-          requestTransmitter.get(null, null, "/upcheck", this::handleRawResponse);
+          requestTransmitter.get(null, null, "/upcheck", this::handleRawResponse, false);
       return upcheckResponse.equals("I'm up!");
     } catch (final Exception e) {
       return false;
@@ -168,10 +168,51 @@ public class Enclave {
       final int statusCode, final byte[] body, final Class<T> responseType) {
     try {
       return objectMapper.readValue(body, responseType);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       final String utf8EncodedBody = new String(body, StandardCharsets.UTF_8);
-      throw new EnclaveClientException(statusCode, utf8EncodedBody);
+      // Check if it's a Tessera error message
+      try {
+        return objectMapper.readValue(
+            processTesseraError(utf8EncodedBody, responseType), responseType);
+      } catch (final IOException ex) {
+        throw new EnclaveClientException(statusCode, utf8EncodedBody);
+      }
     }
+  }
+
+  private <T> byte[] processTesseraError(final String errorMsg, final Class<T> responseType) {
+    if (responseType == SendResponse.class) {
+      final String base64Key =
+          errorMsg.substring(errorMsg.substring(0, errorMsg.indexOf('=')).lastIndexOf(' '));
+      return jsonByteArrayFromString("key", base64Key);
+    } else if (responseType == ErrorResponse.class) {
+      // Remove dynamic values
+      return jsonByteArrayFromString("error", removeBase64(errorMsg));
+    } else {
+      throw new RuntimeException("Unhandled response type.");
+    }
+  }
+
+  private String removeBase64(final String input) {
+    if (input.contains("=")) {
+      final String startInclBase64 = input.substring(0, input.indexOf('='));
+      final String startTrimmed = startInclBase64.substring(0, startInclBase64.lastIndexOf(" "));
+      final String end = input.substring(input.indexOf("="));
+      if (end.length() > 1) {
+        // Base64 in middle
+        return startTrimmed + end.substring(1);
+      } else {
+        // Base64 at end
+        return startTrimmed;
+      }
+    } else {
+      return input;
+    }
+  }
+
+  private byte[] jsonByteArrayFromString(final String key, final String value) {
+    String format = String.format("{\"%s\":\"%s\"}", key, value);
+    return format.getBytes(StandardCharsets.UTF_8);
   }
 
   private boolean clientError(final int statusCode) {
