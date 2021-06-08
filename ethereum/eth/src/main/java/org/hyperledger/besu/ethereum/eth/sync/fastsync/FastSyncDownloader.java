@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
 
@@ -44,7 +43,6 @@ public class FastSyncDownloader {
 
   private static final Logger LOG = LogManager.getLogger();
   private final FastSyncActions fastSyncActions;
-  private final WorldStateStorage worldStateStorage;
   private final WorldStateDownloader worldStateDownloader;
   private final FastSyncStateStorage fastSyncStateStorage;
   private final TaskCollection<NodeDataRequest> taskCollection;
@@ -55,14 +53,12 @@ public class FastSyncDownloader {
 
   public FastSyncDownloader(
       final FastSyncActions fastSyncActions,
-      final WorldStateStorage worldStateStorage,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<NodeDataRequest> taskCollection,
       final Path fastSyncDataDirectory,
       final FastSyncState initialFastSyncState) {
     this.fastSyncActions = fastSyncActions;
-    this.worldStateStorage = worldStateStorage;
     this.worldStateDownloader = worldStateDownloader;
     this.fastSyncStateStorage = fastSyncStateStorage;
     this.taskCollection = taskCollection;
