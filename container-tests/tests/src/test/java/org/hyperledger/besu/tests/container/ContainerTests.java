@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.deployContractAndReturnAddress;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.generateHexString;
+import static org.hyperledger.besu.tests.container.helpers.ContractOperations.getCode;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.getTransactionLog;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.sendLogEventAndReturnTransactionHash;
 
@@ -51,6 +52,7 @@ import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 
 public class ContainerTests extends ContainerTestBase {
 
+  public static final String CONTRACT_PREFIX = "0x6080604052348015600f57600080fd5b5060";
   private Credentials credentials;
   private Enclave besuEnclave;
   private EnclaveService besuEnclaveService;
@@ -120,6 +122,15 @@ public class ContainerTests extends ContainerTestBase {
 
     assertThat(besuResult).isEqualTo(logValue);
     assertThat(goQuorumResult).isEqualTo(logValue);
+
+    // Assert the Besu node gets value for eth_getCode
+    final String codeValueBesu = getCode(besuWeb3j, contractAddress);
+    assertThat(codeValueBesu).startsWith(CONTRACT_PREFIX);
+
+    // Assert the GoQuorum node gets value for eth_getCode
+    final String codeValueGoQuorum = getCode(goQuorumWeb3j, contractAddress);
+    assertThat(codeValueGoQuorum).startsWith(CONTRACT_PREFIX);
+    assertThat(codeValueBesu).isEqualTo(codeValueGoQuorum);
   }
 
   @Test
@@ -164,6 +175,14 @@ public class ContainerTests extends ContainerTestBase {
     // Assert the Besu node has not received the log
     assertThatThrownBy(() -> getTransactionLog(besuWeb3j, transactionHash))
         .hasMessageContaining("No log found");
+
+    // Assert the GoQuorum node gets value for eth_getCode
+    final String codeValueGoQuorum = getCode(goQuorumWeb3j, contractAddress);
+    assertThat(codeValueGoQuorum).startsWith(CONTRACT_PREFIX);
+
+    // Assert the Besu node gets NO value for eth_getCode
+    final String codeValueBesu = getCode(besuWeb3j, contractAddress);
+    assertThat(codeValueBesu).isEqualTo("0x");
   }
 
   @Test
@@ -233,6 +252,14 @@ public class ContainerTests extends ContainerTestBase {
             besuPollingTransactionReceiptProcessor,
             goQuorumPollingTransactionReceiptProcessor,
             logValue);
+
+    // Assert the GoQuorum node gets NO value for eth_getCode
+    final String codeValueGoQuorum = getCode(goQuorumWeb3j, contractAddress);
+    assertThat(codeValueGoQuorum).isEqualTo("0x");
+
+    // Assert the Besu node gets a value for eth_getCode
+    final String codeValueBesu = getCode(besuWeb3j, contractAddress);
+    assertThat(codeValueBesu).startsWith(CONTRACT_PREFIX);
 
     int secondsWaited = 0;
     while (!checked.get()) {
