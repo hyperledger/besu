@@ -195,7 +195,7 @@ public class FlatTraceGenerator {
       }
 
       if (traceFrame.getExceptionalHaltReason().isPresent()) {
-        currentContext = handleHalt(tracesContexts, currentContext, traceFrame);
+        currentContext = handleHalt(flatTraces, tracesContexts, currentContext, traceFrame);
       }
 
       if (currentContext == null) {
@@ -465,20 +465,29 @@ public class FlatTraceGenerator {
   }
 
   private static FlatTrace.Context handleHalt(
+      final List<FlatTrace.Builder> flatTraces,
       final Deque<FlatTrace.Context> tracesContexts,
       final FlatTrace.Context currentContext,
       final TraceFrame traceFrame) {
-    final FlatTrace.Builder traceFrameBuilder = currentContext.getBuilder();
+    final FlatTrace.Builder traceFrameBuilder;
+    if (currentContext == null) {
+      traceFrameBuilder = flatTraces.get(flatTraces.size() - 1);
+    } else {
+      traceFrameBuilder = currentContext.getBuilder();
+    }
     traceFrameBuilder.error(
         traceFrame.getExceptionalHaltReason().map(ExceptionalHaltReason::getDescription));
-    final Action.Builder actionBuilder = traceFrameBuilder.getActionBuilder();
-    actionBuilder.value(Quantity.create(traceFrame.getValue()));
-    tracesContexts.removeLast();
-    final FlatTrace.Context nextContext = tracesContexts.peekLast();
-    if (nextContext != null) {
-      nextContext.getBuilder().incSubTraces();
+    if (currentContext != null) {
+      final Action.Builder actionBuilder = traceFrameBuilder.getActionBuilder();
+      actionBuilder.value(Quantity.create(traceFrame.getValue()));
+      tracesContexts.removeLast();
+      final FlatTrace.Context nextContext = tracesContexts.peekLast();
+      if (nextContext != null) {
+        nextContext.getBuilder().incSubTraces();
+      }
+      return nextContext;
     }
-    return nextContext;
+    return currentContext;
   }
 
   private static FlatTrace.Context handleRevert(
