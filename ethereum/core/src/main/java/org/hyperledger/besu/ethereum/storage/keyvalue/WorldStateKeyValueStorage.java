@@ -63,12 +63,6 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getAccountStorageTrieNodeData(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return getAccountStorageTrieNode(accountHash, location, nodeHash);
-  }
-
-  @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
@@ -96,6 +90,11 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return getAccountStateTrieNode(Bytes.EMPTY, rootHash).isPresent();
+  }
+
+  @Override
+  public void clear() {
+    keyValueStorage.clear();
   }
 
   @Override

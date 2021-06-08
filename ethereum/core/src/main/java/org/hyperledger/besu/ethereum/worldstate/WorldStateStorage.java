@@ -31,8 +31,6 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getAccountStateTrieNode(Bytes location, Bytes32 nodeHash);
 
-  Optional<Bytes> getAccountStorageTrieNodeData(Hash accountHash, Bytes location, Bytes32 nodeHash);
-
   Optional<Bytes> getAccountStorageTrieNode(Hash accountHash, Bytes location, Bytes32 nodeHash);
 
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
@@ -43,6 +41,8 @@ public interface WorldStateStorage {
     // we don't have location info
     return getNodeData(null, hash).isPresent();
   }
+
+  void clear();
 
   Updater updater();
 
