@@ -96,10 +96,10 @@ public class CmsCreator {
 
       // Add signed content
       final CMSTypedData cmsData = new CMSProcessableByteArray(contentToSign.toArray());
-      final CMSSignedData cmsSignedData = cmsGenerator.generate(cmsData, true);
+      final CMSSignedData cmsSignedData = cmsGenerator.generate(cmsData, false);
 
       return Bytes.wrap(cmsSignedData.getEncoded());
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Error creating CMS data", e);
       throw new RuntimeException("Error creating CMS data", e);
     }

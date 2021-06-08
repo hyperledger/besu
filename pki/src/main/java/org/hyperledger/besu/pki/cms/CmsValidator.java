@@ -16,8 +16,6 @@ package org.hyperledger.besu.pki.cms;
 
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStoreException;
@@ -38,9 +36,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.SignerInformation;
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.Store;
 
@@ -74,104 +74,25 @@ public class CmsValidator {
   public boolean validate(final Bytes cms, final Bytes expectedContent) {
     try {
       LOGGER.trace("Decoding CMS message");
-      final CMSSignedData cmsSignedData = new CMSSignedData(cms.toArray());
 
-      // Content validation - expected matching block hash
-      if (!isSignedDataMatchingExpectedContent(expectedContent, cmsSignedData)) {
+      final CMSSignedData cmsSignedData =
+          new CMSSignedData(new CMSProcessableByteArray(expectedContent.toArray()), cms.toArray());
+      final X509Certificate signerCertificate = getSignerCertificate(cmsSignedData);
+
+      // Validate msg signature and content
+      if (!isSignatureValid(signerCertificate, cmsSignedData)) {
         return false;
       }
 
-      // Certificate validation - must be valid and have trusted path
-      if (!isCertificateValid(cmsSignedData)) {
+      // Validate certificate trust
+      if (!isCertificateValid(signerCertificate, cmsSignedData)) {
         return false;
       }
 
       return true;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Error validating CMS data", e);
       throw new RuntimeException("Error validating CMS data", e);
-    }
-  }
-
-  private boolean isSignedDataMatchingExpectedContent(
-      final Bytes expectedContent, final CMSSignedData cmsSignedData) throws IOException {
-    LOGGER.trace("Starting CMS content validation: expected = {}", expectedContent.toHexString());
-
-    // We expect the data to be of type CMSProcessableByteArray
-    final CMSProcessableByteArray signedContent =
-        (CMSProcessableByteArray) cmsSignedData.getSignedContent();
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    signedContent.getInputStream().transferTo(baos);
-    final Bytes recoveredContent = Bytes.wrap(baos.toByteArray());
-
-    boolean matches = recoveredContent.equals(expectedContent);
-
-    LOGGER.trace(
-        "CMS content validation {}: expected = {}, received: {}",
-        matches ? "succeeded" : "failed",
-        expectedContent.toHexString(),
-        recoveredContent.toHexString());
-
-    return matches;
-  }
-
-  private boolean isCertificateValid(final CMSSignedData cmsSignedData) {
-    LOGGER.trace("Starting CMS certificate validation");
-
-    try {
-      final CertStore cmsCertificates;
-      try {
-        cmsCertificates =
-            new JcaCertStoreBuilder().addCertificates(cmsSignedData.getCertificates()).build();
-      } catch (GeneralSecurityException e) {
-        throw new RuntimeException("Error reading certificate from CMS data", e);
-      }
-
-      // Initialize PKIXParameters with truststore, setting the trusted anchors
-      final PKIXParameters pkixParameters;
-      try {
-        pkixParameters = new PKIXParameters(truststore.getKeyStore());
-      } catch (KeyStoreException e) {
-        throw new RuntimeException("Truststore hasn't been initialized", e);
-      } catch (InvalidAlgorithmParameterException e) {
-        throw new RuntimeException("Truststore is empty", e);
-      }
-
-      // Define signer's certificate as the starting point of the path (leaf certificate)
-      final X509Certificate signerCertificate = getSignerCertificate(cmsSignedData);
-      final X509CertSelector targetConstraints = new X509CertSelector();
-      targetConstraints.setCertificate(signerCertificate);
-
-      // Set parameters for the certificate path building algorithm
-      final PKIXBuilderParameters params;
-      try {
-        params = new PKIXBuilderParameters(pkixParameters.getTrustAnchors(), targetConstraints);
-        // Adding CertStore with CRLs
-        crlCertStore.ifPresentOrElse(
-            params::addCertStore,
-            () -> {
-              LOGGER.warn("No CRL CertStore provided. CRL validation will be disabled.");
-              params.setRevocationEnabled(false);
-            });
-
-        // Adding intermediate certificates from CMS
-        params.addCertStore(cmsCertificates);
-      } catch (InvalidAlgorithmParameterException e) {
-        throw new RuntimeException("Empty trust anchors on truststore", e);
-      }
-
-      // Validate certificate path
-      try {
-        CertPathBuilder.getInstance("PKIX", BouncyCastleProvider.PROVIDER_NAME).build(params);
-        return true;
-      } catch (CertPathBuilderException cpbe) {
-        LOGGER.warn("Untrusted certificate chain", cpbe);
-        return false;
-      }
-
-    } catch (Exception e) {
-      LOGGER.error("Error validating certificate chain");
-      throw new RuntimeException("Error validating certificate chain", e);
     }
   }
 
@@ -193,9 +114,80 @@ public class CmsValidator {
       final X509CertificateHolder certificateHolder = signerCertificates.stream().findFirst().get();
 
       return new JcaX509CertificateConverter().getCertificate(certificateHolder);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       LOGGER.error("Error retrieving signer certificate from CMS data", e);
       throw new RuntimeException("Error retrieving signer certificate from CMS data", e);
+    }
+  }
+
+  private boolean isSignatureValid(
+      final X509Certificate signerCertificate, final CMSSignedData cmsSignedData) {
+    LOGGER.trace("Validating CMS signature");
+    try {
+      return cmsSignedData.verifySignatures(
+          sid -> new JcaSimpleSignerInfoVerifierBuilder().build(signerCertificate));
+    } catch (final CMSException e) {
+      return false;
+    }
+  }
+
+  private boolean isCertificateValid(
+      final X509Certificate signerCertificate, final CMSSignedData cmsSignedData) {
+    LOGGER.trace("Starting CMS certificate validation");
+
+    try {
+      final CertStore cmsCertificates;
+      try {
+        cmsCertificates =
+            new JcaCertStoreBuilder().addCertificates(cmsSignedData.getCertificates()).build();
+      } catch (final GeneralSecurityException e) {
+        throw new RuntimeException("Error reading certificate from CMS data", e);
+      }
+
+      // Initialize PKIXParameters with truststore, setting the trusted anchors
+      final PKIXParameters pkixParameters;
+      try {
+        pkixParameters = new PKIXParameters(truststore.getKeyStore());
+      } catch (final KeyStoreException e) {
+        throw new RuntimeException("Truststore hasn't been initialized", e);
+      } catch (final InvalidAlgorithmParameterException e) {
+        throw new RuntimeException("Truststore is empty", e);
+      }
+
+      // Define signer's certificate as the starting point of the path (leaf certificate)
+      final X509CertSelector targetConstraints = new X509CertSelector();
+      targetConstraints.setCertificate(signerCertificate);
+
+      // Set parameters for the certificate path building algorithm
+      final PKIXBuilderParameters params;
+      try {
+        params = new PKIXBuilderParameters(pkixParameters.getTrustAnchors(), targetConstraints);
+        // Adding CertStore with CRLs
+        crlCertStore.ifPresentOrElse(
+            params::addCertStore,
+            () -> {
+              LOGGER.warn("No CRL CertStore provided. CRL validation will be disabled.");
+              params.setRevocationEnabled(false);
+            });
+
+        // Adding intermediate certificates from CMS
+        params.addCertStore(cmsCertificates);
+      } catch (final InvalidAlgorithmParameterException e) {
+        throw new RuntimeException("Empty trust anchors on truststore", e);
+      }
+
+      // Validate certificate path
+      try {
+        CertPathBuilder.getInstance("PKIX", BouncyCastleProvider.PROVIDER_NAME).build(params);
+        return true;
+      } catch (final CertPathBuilderException cpbe) {
+        LOGGER.warn("Untrusted certificate chain", cpbe);
+        return false;
+      }
+
+    } catch (final Exception e) {
+      LOGGER.error("Error validating certificate chain");
+      throw new RuntimeException("Error validating certificate chain", e);
     }
   }
 }
