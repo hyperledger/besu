@@ -14,17 +14,23 @@
  */
 package org.hyperledger.besu.tests.web3j.privacy;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
-public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class Ibft2PrivacyClusterAcceptanceTest extends ParameterizedEnclaveTestBase {
+  public Ibft2PrivacyClusterAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
 
   private static final long IBFT2_CHAIN_ID = 4;
 
@@ -34,9 +40,17 @@ public class Ibft2PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase
 
   @Before
   public void setUp() throws Exception {
-    alice = privacyBesu.createIbft2NodePrivacyEnabled("node1", privacyAccountResolver.resolve(0));
-    bob = privacyBesu.createIbft2NodePrivacyEnabled("node2", privacyAccountResolver.resolve(1));
-    charlie = privacyBesu.createIbft2NodePrivacyEnabled("node3", privacyAccountResolver.resolve(2));
+    final Network containerNetwork = Network.newNetwork();
+
+    alice =
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.of(containerNetwork));
+    bob =
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "node2", privacyAccountResolver.resolve(1), enclaveType, Optional.of(containerNetwork));
+    charlie =
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "node3", privacyAccountResolver.resolve(2), enclaveType, Optional.of(containerNetwork));
     privacyCluster.start(alice, bob, charlie);
   }
 

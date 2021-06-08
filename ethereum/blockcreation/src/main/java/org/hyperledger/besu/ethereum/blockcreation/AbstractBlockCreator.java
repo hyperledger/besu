@@ -177,7 +177,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
-              .gasUsed(transactionResults.getTotalCumulativeGasUsed())
+              .gasUsed(transactionResults.getCumulativeGasUsed())
               .extraData(extraDataCalculator.get(parentHeader))
               .buildSealableBlockHeader();
 
@@ -220,8 +220,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             isCancelled::get,
             miningBeneficiary,
             protocolSpec.getTransactionPriceCalculator(),
-            protocolSpec.getGasBudgetCalculator(),
-            protocolSpec.getEip1559());
+            protocolSpec.getGasBudgetCalculator());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(

@@ -280,7 +280,7 @@ public class FlatTraceGenerator {
                 nextTraceFrame.map(TraceFrame::getInputData).map(Bytes::toHexString).orElse(null))
             .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
             .callType(opcodeString.toLowerCase(Locale.US))
-            .value(Quantity.create(transactionTrace.getTransaction().getValue()));
+            .value(Quantity.create(traceFrame.getValue()));
 
     if (stack.length > 1) {
       subTraceActionBuilder.to(toAddress(stack[stack.length - 2]).toString());

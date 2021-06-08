@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -36,11 +35,9 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -79,21 +76,13 @@ public class BlockTransactionSelector {
 
     private final List<Transaction> transactions = Lists.newArrayList();
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
-    private long frontierCumulativeGasUsed = 0;
-    private long eip1559CumulativeGasUsed = 0;
+    private long cumulativeGasUsed = 0;
 
     private void update(
-        final Transaction transaction,
-        final TransactionReceipt receipt,
-        final long gasUsed,
-        final Optional<EIP1559> eip1559) {
+        final Transaction transaction, final TransactionReceipt receipt, final long gasUsed) {
       transactions.add(transaction);
       receipts.add(receipt);
-      if (eip1559.isPresent() && transaction.getType().equals(TransactionType.EIP1559)) {
-        eip1559CumulativeGasUsed += gasUsed;
-      } else {
-        frontierCumulativeGasUsed += gasUsed;
-      }
+      cumulativeGasUsed += gasUsed;
     }
 
     public List<Transaction> getTransactions() {
@@ -104,16 +93,8 @@ public class BlockTransactionSelector {
       return receipts;
     }
 
-    public long getFrontierCumulativeGasUsed() {
-      return frontierCumulativeGasUsed;
-    }
-
-    public long getEip1559CumulativeGasUsed() {
-      return eip1559CumulativeGasUsed;
-    }
-
-    public long getTotalCumulativeGasUsed() {
-      return frontierCumulativeGasUsed + eip1559CumulativeGasUsed;
+    public long getCumulativeGasUsed() {
+      return cumulativeGasUsed;
     }
   }
 
@@ -127,7 +108,6 @@ public class BlockTransactionSelector {
   private final Address miningBeneficiary;
   private final TransactionPriceCalculator transactionPriceCalculator;
   private final TransactionGasBudgetCalculator transactionGasBudgetCalculator;
-  private final Optional<EIP1559> eip1559;
 
   private final TransactionSelectionResults transactionSelectionResult =
       new TransactionSelectionResults();
@@ -144,8 +124,7 @@ public class BlockTransactionSelector {
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
       final TransactionPriceCalculator transactionPriceCalculator,
-      final TransactionGasBudgetCalculator transactionGasBudgetCalculator,
-      final Optional<EIP1559> eip1559) {
+      final TransactionGasBudgetCalculator transactionGasBudgetCalculator) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -158,7 +137,6 @@ public class BlockTransactionSelector {
     this.miningBeneficiary = miningBeneficiary;
     this.transactionPriceCalculator = transactionPriceCalculator;
     this.transactionGasBudgetCalculator = transactionGasBudgetCalculator;
-    this.eip1559 = eip1559;
   }
 
   /*
@@ -204,6 +182,7 @@ public class BlockTransactionSelector {
     }
 
     if (transactionTooLargeForBlock(blockNumber, gasLimit, transaction)) {
+      LOG.trace("{} too large to select for block creation", transaction);
       if (blockOccupancyAboveThreshold()) {
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
@@ -216,6 +195,10 @@ public class BlockTransactionSelector {
     final Wei actualMinTransactionGasPriceInBlock =
         transactionPriceCalculator.price(transaction, processableBlockHeader.getBaseFee());
     if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
+      LOG.trace(
+          "Gas fee of {} lower than configured minimum {}, deleting",
+          transaction,
+          minTransactionGasPrice);
       return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }
 
@@ -254,6 +237,7 @@ public class BlockTransactionSelector {
 
     if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
+      LOG.trace("Selected {} for block creation", transaction);
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
       return transactionSelectionResultForInvalidResult(effectiveResult.getValidationResult());
@@ -306,21 +290,14 @@ public class BlockTransactionSelector {
             ? 0
             : transaction.getGasLimit() - result.getGasRemaining();
 
-    final long cumulativeGasUsed;
-    if (eip1559.isPresent()) {
-      cumulativeGasUsed =
-          transactionSelectionResult.getTotalCumulativeGasUsed() + gasUsedByTransaction;
-    } else {
-      cumulativeGasUsed =
-          transactionSelectionResult.getFrontierCumulativeGasUsed() + gasUsedByTransaction;
-    }
+    final long cumulativeGasUsed =
+        transactionSelectionResult.getCumulativeGasUsed() + gasUsedByTransaction;
 
     transactionSelectionResult.update(
         transaction,
         transactionReceiptFactory.create(
             transaction.getType(), result, worldState, cumulativeGasUsed),
-        gasUsedByTransaction,
-        eip1559);
+        gasUsedByTransaction);
   }
 
   private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(
@@ -333,49 +310,15 @@ public class BlockTransactionSelector {
         ValidationResult.valid());
   }
 
-  @SuppressWarnings("FallThrough")
   private boolean transactionTooLargeForBlock(
       final long blockNumber, final long gasLimit, final Transaction transaction) {
-
-    final long blockGasRemaining;
-    if (eip1559.isPresent()) {
-      switch (transaction.getType()) {
-        case EIP1559:
-          return !transactionGasBudgetCalculator.hasBudget(
-              transaction,
-              blockNumber,
-              gasLimit,
-              transactionSelectionResult.eip1559CumulativeGasUsed);
-        case FRONTIER:
-        case ACCESS_LIST:
-          return !transactionGasBudgetCalculator.hasBudget(
-              transaction,
-              blockNumber,
-              gasLimit,
-              transactionSelectionResult.frontierCumulativeGasUsed);
-        default:
-          throw new IllegalStateException(
-              String.format(
-                  "Developer error. Supported transaction type %s doesn't have a block gas budget calculator",
-                  transaction.getType()));
-      }
-    } else {
-      blockGasRemaining =
-          processableBlockHeader.getGasLimit()
-              - transactionSelectionResult.getFrontierCumulativeGasUsed();
-      return transaction.getGasLimit() > blockGasRemaining;
-    }
+    return !transactionGasBudgetCalculator.hasBudget(
+        transaction, blockNumber, gasLimit, transactionSelectionResult.cumulativeGasUsed);
   }
 
   private boolean blockOccupancyAboveThreshold() {
-    final double gasUsed, gasAvailable;
-    gasAvailable = processableBlockHeader.getGasLimit();
-
-    if (eip1559.isPresent()) {
-      gasUsed = transactionSelectionResult.getTotalCumulativeGasUsed();
-    } else {
-      gasUsed = transactionSelectionResult.getFrontierCumulativeGasUsed();
-    }
+    final double gasAvailable = processableBlockHeader.getGasLimit();
+    final double gasUsed = transactionSelectionResult.getCumulativeGasUsed();
     return (gasUsed / gasAvailable) >= minBlockOccupancyRatio;
   }
 }

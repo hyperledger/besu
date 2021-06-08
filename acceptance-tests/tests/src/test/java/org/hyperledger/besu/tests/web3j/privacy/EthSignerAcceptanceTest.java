@@ -17,13 +17,15 @@ package org.hyperledger.besu.tests.web3j.privacy;
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.EthSignerClient;
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarness;
 import org.hyperledger.besu.tests.acceptance.dsl.ethsigner.testutil.EthSignerTestHarnessFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -32,7 +34,10 @@ import org.web3j.protocol.besu.response.privacy.PrivacyGroup;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 
-public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class EthSignerAcceptanceTest extends ParameterizedEnclaveTestBase {
+  public EthSignerAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
 
   private PrivacyNode minerNode;
   private EthSignerTestHarness ethSigner;
@@ -43,7 +48,7 @@ public class EthSignerAcceptanceTest extends PrivacyAcceptanceTestBase {
   public void setUp() throws Exception {
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "miner-node", privacyAccountResolver.resolve(0));
+            "miner-node", privacyAccountResolver.resolve(0), enclaveType, Optional.empty());
     privacyCluster.start(minerNode);
 
     ethSigner =

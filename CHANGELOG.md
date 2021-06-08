@@ -1,5 +1,16 @@
 # Changelog
 
+## 21.7.0-RC1
+
+### Additions and Improvements
+- eip-1559 changes: accept transactions which have maxFeePerGas below current baseFee [\#2374](https://github.com/hyperledger/besu/pull/2374)
+- Introduced transitions for IBFT2 block rewards [\#1977](https://github.com/hyperledger/besu/pull/1977) 
+
+### Bug Fixes
+
+### Early Access Features
+
+## 21.1.7
 
 ## Privacy users - Orion Project Deprecation
 Tessera is now the recommended Private Transaction Manager for Hyperledger Besu.
@@ -12,14 +23,16 @@ We will continue to support Orion users until 30th November 2021. If you have an
 concerns, please reach out to the ConsenSys protocol engineering team in the
 [#orion channel on Discord](https://discord.gg/hYpHRjK) or by [email](mailto:quorum@consensys.net).
 
-## 21.1.7
 
 ### Additions and Improvements
 * Upgrade OpenTelemetry to 1.2.0. [\#2313](https://github.com/hyperledger/besu/pull/2313)
 
 * Ethereum Classic Magneto Hard Fork [\#2315](https://github.com/hyperledger/besu/pull/2315)
 
+* Added support for the upcoming CALAVERAS ephemeral testnet and removed the configuration for the deprecated BAIKAL ephemeral testnet. [\#2343](https://github.com/hyperledger/besu/pull/2343)
+
 ### Bug Fixes
+* Fix invalid transfer values with the tracing API specifically for CALL operation [\#2319](https://github.com/hyperledger/besu/pull/2319)
 
 ### Early Access Features
 
@@ -28,6 +41,12 @@ concerns, please reach out to the ConsenSys protocol engineering team in the
 - Fixed issue in discv5 where nonce was incorrectly reused. [\#2075](https://github.com/hyperledger/besu/pull/2075)
 - Fixed issues in debug_standardTraceBadBlockToFile and debug_standardTraceBlockToFile. [\#2120](https://github.com/hyperledger/besu/pull/2120)
 - Fixed invalid error code in several JSON RPC methods when the requested block is not in the range. [\#2138](https://github.com/hyperledger/besu/pull/2138)
+
+## Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.1.7/besu-21.1.7.zip
+
+sha256: f415c9b67d26819caeb9940324b2b1b9ce6e872c9181052739438545e84e2531
+
 
 ## 21.1.6
 

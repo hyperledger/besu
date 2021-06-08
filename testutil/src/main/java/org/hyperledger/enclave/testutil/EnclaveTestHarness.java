@@ -12,18 +12,31 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.config;
+package org.hyperledger.enclave.testutil;
 
-public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  CALAVERAS,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  ECIP1049_DEV,
-  ASTOR
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.List;
+
+public interface EnclaveTestHarness {
+
+  void start();
+
+  void stop();
+
+  void close();
+
+  List<Path> getPublicKeyPaths();
+
+  String getDefaultPublicKey();
+
+  List<String> getPublicKeys();
+
+  URI clientUrl();
+
+  URI nodeUrl();
+
+  void addOtherNode(final URI otherNode);
+
+  EnclaveType getEnclaveType();
 }

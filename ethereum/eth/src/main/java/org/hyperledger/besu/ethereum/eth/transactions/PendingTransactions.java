@@ -59,6 +59,8 @@ import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -67,6 +69,7 @@ import com.google.common.collect.EvictingQueue;
  * <p>This class is safe for use across multiple threads.
  */
 public class PendingTransactions {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final int maxTransactionRetentionHours;
   private final Clock clock;
@@ -170,7 +173,11 @@ public class PendingTransactions {
 
     pendingTransactions.values().stream()
         .filter(transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
-        .forEach(transaction -> removeTransaction(transaction.getTransaction()));
+        .forEach(
+            transactionInfo -> {
+              LOG.trace("Evicted {} due to age", transactionInfo);
+              removeTransaction(transactionInfo.getTransaction());
+            });
   }
 
   List<Transaction> getLocalTransactions() {
@@ -372,6 +379,7 @@ public class PendingTransactions {
       } else {
         prioritizedTransactionsDynamicRange.add(transactionInfo);
       }
+      LOG.trace("Adding {} to pending transactions", transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
       tryEvictTransactionHash(transactionInfo.getHash());
 
@@ -390,6 +398,7 @@ public class PendingTransactions {
                 // safe because we just added a tx to the pool so we're guaranteed to have one
                 .get();
         doRemoveTransaction(toRemove.getTransaction(), false);
+        LOG.trace("Evicted {} due to transaction pool size", toRemove);
         droppedTransaction = Optional.of(toRemove.getTransaction());
       }
     }
@@ -426,6 +435,7 @@ public class PendingTransactions {
   }
 
   public void updateBaseFee(final Long newBaseFee) {
+    LOG.trace("Updating base fee from {} to {}", this.baseFee, newBaseFee);
     if (this.baseFee.orElse(0L).equals(newBaseFee)) {
       return;
     }
@@ -442,6 +452,7 @@ public class PendingTransactions {
             .collect(toUnmodifiableList())
             .forEach(
                 transactionInfo -> {
+                  LOG.trace("Moving {} from static to dynamic gas fee paradigm", transactionInfo);
                   prioritizedTransactionsStaticRange.remove(transactionInfo);
                   prioritizedTransactionsDynamicRange.add(transactionInfo);
                 });
@@ -455,6 +466,7 @@ public class PendingTransactions {
             .collect(toUnmodifiableList())
             .forEach(
                 transactionInfo -> {
+                  LOG.trace("Moving {} from dynamic to static gas fee paradigm", transactionInfo);
                   prioritizedTransactionsDynamicRange.remove(transactionInfo);
                   prioritizedTransactionsStaticRange.add(transactionInfo);
                 });

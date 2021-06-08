@@ -43,4 +43,11 @@ public interface Quantity {
    * @return This value represented as hexadecimal, starting with "0x".
    */
   String toHexString();
+
+  /**
+   * The value as a hexadecimal string with leading zeros truncated.
+   *
+   * @return This value represented as hexadecimal, starting with "0x".
+   */
+  String toShortHexString();
 }

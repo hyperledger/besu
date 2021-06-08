@@ -42,7 +42,7 @@ public class AddToOnChainPrivacyGroupTransaction implements Transaction<String> 
     this.signer = signer;
     this.addresses =
         Arrays.stream(nodes)
-            .map(n -> n.getOrion().getDefaultPublicKey())
+            .map(n -> n.getEnclave().getDefaultPublicKey())
             .collect(Collectors.toList());
   }
 
