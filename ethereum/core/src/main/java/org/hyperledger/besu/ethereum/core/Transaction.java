@@ -167,10 +167,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     // TODO: do we want to require gas fields by transactionType or leave that to validate()?
-    if (!maxFeePerGas.isPresent() && !gasPrice.isPresent()) {
-      throw new IllegalStateException(
-          String.format("Transaction requires either gasPrice or maxFeePerGas"));
-    }
 
     this.transactionType = transactionType;
     this.nonce = nonce;
@@ -774,10 +770,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append("{");
     sb.append("type=").append(getType()).append(", ");
     sb.append("nonce=").append(getNonce()).append(", ");
-    getGasPrice().ifPresent(gasPrice -> sb.append("gasPrice=").append(gasPrice).append(", "));
+    getGasPrice()
+        .ifPresent(
+            gasPrice -> sb.append("gasPrice=").append(gasPrice.toShortHexString()).append(", "));
     if (getMaxPriorityFeePerGas().isPresent() && getMaxFeePerGas().isPresent()) {
-      sb.append("maxPriorityFeePerGas=").append(getMaxPriorityFeePerGas()).append(", ");
-      sb.append("maxFeePerGas=").append(getMaxFeePerGas()).append(", ");
+      sb.append("maxPriorityFeePerGas=")
+          .append(getMaxPriorityFeePerGas().map(Wei::toShortHexString).get())
+          .append(", ");
+      sb.append("maxFeePerGas=")
+          .append(getMaxFeePerGas().map(Wei::toShortHexString).get())
+          .append(", ");
     }
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
