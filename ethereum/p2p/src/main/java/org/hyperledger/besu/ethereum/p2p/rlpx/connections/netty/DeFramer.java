@@ -114,7 +114,7 @@ final class DeFramer extends ByteToMessageDecoder {
           ctx.close();
           return;
         }
-        LOG.debug("Received HELLO message: {}", peerInfo);
+        LOG.trace("Received HELLO message: {}", peerInfo);
         if (peerInfo.getVersion() >= 5) {
           LOG.trace("Enable compression for p2pVersion: {}", peerInfo.getVersion());
           framer.enableCompression();
