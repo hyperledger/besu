@@ -78,7 +78,7 @@ public class CmsCreationAndValidationTest {
   }
 
   @Test
-  public void cmsValidationWithValidChain() {
+  public void cmsValidationWithTrustedChain() {
     final CmsCreator cmsCreator = new CmsCreator(keystore, "trusted");
     final Bytes data = Bytes.random(32);
 
@@ -88,7 +88,7 @@ public class CmsCreationAndValidationTest {
   }
 
   @Test
-  public void cmsValidationWithInvalidChain() {
+  public void cmsValidationWithUntrustedChain() {
     final CmsCreator cmsCreator = new CmsCreator(keystore, "untrusted");
     final Bytes data = Bytes.random(32);
 

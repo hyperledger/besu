@@ -73,7 +73,7 @@ public class CmsValidator {
    */
   public boolean validate(final Bytes cms, final Bytes expectedContent) {
     try {
-      LOGGER.trace("Decoding CMS message");
+      LOGGER.trace("Validating CMS message");
 
       final CMSSignedData cmsSignedData =
           new CMSSignedData(new CMSProcessableByteArray(expectedContent.toArray()), cms.toArray());
@@ -85,7 +85,7 @@ public class CmsValidator {
       }
 
       // Validate certificate trust
-      if (!isCertificateValid(signerCertificate, cmsSignedData)) {
+      if (!isCertificateTrusted(signerCertificate, cmsSignedData)) {
         return false;
       }
 
@@ -131,7 +131,7 @@ public class CmsValidator {
     }
   }
 
-  private boolean isCertificateValid(
+  private boolean isCertificateTrusted(
       final X509Certificate signerCertificate, final CMSSignedData cmsSignedData) {
     LOGGER.trace("Starting CMS certificate validation");
 
