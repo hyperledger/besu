@@ -78,7 +78,7 @@ public class TransactionEncoder {
   static void encodeFrontier(final Transaction transaction, final RLPOutput out) {
     out.startList();
     out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(transaction.getGasPrice());
+    out.writeUInt256Scalar(transaction.getGasPrice().get());
     out.writeLongScalar(transaction.getGasLimit());
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
@@ -92,7 +92,7 @@ public class TransactionEncoder {
     encodeAccessListInner(
         transaction.getChainId(),
         transaction.getNonce(),
-        transaction.getGasPrice(),
+        transaction.getGasPrice().get(),
         transaction.getGasLimit(),
         transaction.getTo(),
         transaction.getValue(),

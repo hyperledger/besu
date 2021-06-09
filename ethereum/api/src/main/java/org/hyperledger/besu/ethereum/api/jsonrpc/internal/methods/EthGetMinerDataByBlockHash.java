@@ -92,6 +92,7 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
                           t.getTransaction().getHash());
                   return t.getTransaction()
                       .getGasPrice()
+                      .get()
                       .multiply(
                           transactionReceiptWithMetadata
                               .map(TransactionReceiptWithMetadata::getGasUsed)

@@ -112,7 +112,8 @@ public class MainnetTransactionValidator {
       return signatureResult;
     }
 
-    if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
+    if (goQuorumCompatibilityMode
+        && !transaction.getGasPrice().map(Wei::isZero).orElse(Boolean.TRUE)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
           "gasPrice must be set to zero on a GoQuorum compatible network");

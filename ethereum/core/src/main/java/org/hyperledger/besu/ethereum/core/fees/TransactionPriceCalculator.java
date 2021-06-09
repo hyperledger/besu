@@ -25,14 +25,14 @@ public interface TransactionPriceCalculator {
   Wei price(Transaction transaction, Optional<Long> baseFee);
 
   static TransactionPriceCalculator frontier() {
-    return (transaction, baseFee) -> transaction.getGasPrice();
+    return (transaction, baseFee) -> transaction.getGasPrice().get();
   }
 
   static TransactionPriceCalculator eip1559() {
     return (transaction, maybeBaseFee) -> {
       final Wei baseFee = Wei.of(maybeBaseFee.orElseThrow());
       if (!transaction.getType().supports1559FeeMarket()) {
-        return transaction.getGasPrice();
+        return transaction.getGasPrice().get();
       }
       final Wei maxPriorityFeePerGas =
           Wei.of((BigInteger) transaction.getMaxPriorityFeePerGas().orElseThrow().getValue());

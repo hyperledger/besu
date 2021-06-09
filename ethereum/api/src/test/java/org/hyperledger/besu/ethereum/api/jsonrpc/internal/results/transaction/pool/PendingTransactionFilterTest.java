@@ -128,7 +128,7 @@ public class PendingTransactionFilterTest {
     final int numberTrx = 5;
     for (int i = 1; i < numberTrx; i++) {
       Transaction transaction = mock(Transaction.class);
-      when(transaction.getGasPrice()).thenReturn(Wei.of(i));
+      when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.of(i)));
       when(transaction.getValue()).thenReturn(Wei.of(i));
       when(transaction.getGasLimit()).thenReturn((long) i);
       when(transaction.getNonce()).thenReturn((long) i);

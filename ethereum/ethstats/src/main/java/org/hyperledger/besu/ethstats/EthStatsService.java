@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -439,8 +438,9 @@ public class EthStatsService {
     // retrieves transactions from the last blocks and takes the lowest gas price. If no transaction
     // is present we return the minTransactionGasPrice of the mining coordinator
     return block.getBody().getTransactions().stream()
-        .min(Comparator.comparing(Transaction::getGasPrice))
-        .map(Transaction::getGasPrice)
+        // TODO: should use effective gas price here?
+        .min(Comparator.comparing(t -> t.getGasPrice().get()))
+        .map(t -> t.getGasPrice().get())
         .filter(wei -> wei.getValue().longValue() > 0)
         .orElse(miningCoordinator.getMinTransactionGasPrice())
         .getValue()

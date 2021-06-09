@@ -820,7 +820,10 @@ public class BlockchainQueries {
                         .orElseThrow(
                             () -> new IllegalStateException("Could not retrieve block #" + l)))
             .flatMap(Collection::stream)
-            .mapToLong(t -> t.getGasPrice().toLong())
+            // TODO: discuss whether we should filter by gas price or calculate an effective gas
+            // price
+            .filter(t -> t.getGasPrice().isPresent())
+            .mapToLong(t -> t.getGasPrice().get().toLong())
             .sorted()
             .toArray();
     return (gasCollection == null || gasCollection.length == 0)
