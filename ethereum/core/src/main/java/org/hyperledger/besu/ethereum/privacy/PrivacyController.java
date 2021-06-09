@@ -49,10 +49,10 @@ public interface PrivacyController {
 
   PrivacyGroup[] findOffChainPrivacyGroupByMembers(List<String> addresses, String enclavePublicKey);
 
-  Transaction createPrivacyMarkerTransaction(
+  Transaction createPrivateMarkerTransaction(
       String privateTransactionLookupId, PrivateTransaction privateTransaction);
 
-  Transaction createPrivacyMarkerTransaction(
+  Transaction createPrivateMarkerTransaction(
       String privateTransactionLookupId,
       PrivateTransaction privateTransaction,
       Address privacyPrecompileAddress);

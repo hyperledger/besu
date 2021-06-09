@@ -165,13 +165,13 @@ public class DefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Transaction createPrivacyMarkerTransaction(
+  public Transaction createPrivateMarkerTransaction(
       final String privateTransactionLookupId, final PrivateTransaction privateTransaction) {
     return privateMarkerTransactionFactory.create(privateTransactionLookupId, privateTransaction);
   }
 
   @Override
-  public Transaction createPrivacyMarkerTransaction(
+  public Transaction createPrivateMarkerTransaction(
       final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
       final Address privacyPrecompileAddress) {
@@ -431,7 +431,7 @@ public class DefaultPrivacyController implements PrivacyController {
           privateTransactionMetadataList.get(i);
       final Transaction privateMarkerTransaction =
           blockchain
-              .getTransactionByHash(privateTransactionMetadata.getPrivacyMarkerTransactionHash())
+              .getTransactionByHash(privateTransactionMetadata.getPrivateMarkerTransactionHash())
               .orElseThrow();
       final ReceiveResponse receiveResponse =
           retrieveTransaction(
