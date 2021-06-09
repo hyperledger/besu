@@ -225,7 +225,6 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                gasBudgetCalculator,
                 goQuorumPrivacyParameters) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
@@ -234,7 +233,6 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        gasBudgetCalculator,
                         Optional.empty())))
         .name("DaoRecoveryInit");
   }

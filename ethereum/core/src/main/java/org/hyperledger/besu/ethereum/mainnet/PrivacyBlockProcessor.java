@@ -191,16 +191,16 @@ public class PrivacyBlockProcessor implements BlockProcessor {
           actualList = Collections.emptyList();
         } else {
           // we are being added, but do not have to rehydrate all private transactions
-          final Hash nodeLatestPrivacyMarkerTransactionHash =
+          final Hash nodeLatestPrivateMarkerTransactionHash =
               nodeLatestPrivateTxMetadataList
                   .get(nodeLatestPrivateTxMetadataList.size() - 1)
-                  .getPrivacyMarkerTransactionHash();
+                  .getPrivateMarkerTransactionHash();
           for (int i = 0; i < privateTransactionWithMetadataList.size(); i++) {
             if (!privateTransactionWithMetadataList
                 .get(i)
                 .getPrivateTransactionMetadata()
-                .getPrivacyMarkerTransactionHash()
-                .equals(nodeLatestPrivacyMarkerTransactionHash)) {
+                .getPrivateMarkerTransactionHash()
+                .equals(nodeLatestPrivateMarkerTransactionHash)) {
               continue;
             }
             if (privateTransactionWithMetadataList.size() - 1 == i) {
