@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -65,7 +64,6 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final TransactionGasBudgetCalculator gasBudgetCalculator,
       final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
     super(
         transactionProcessor,
@@ -73,7 +71,6 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        gasBudgetCalculator,
         Optional.empty());
 
     this.goQuorumEnclave = goQuorumPrivacyParameters.orElseThrow().enclave();
