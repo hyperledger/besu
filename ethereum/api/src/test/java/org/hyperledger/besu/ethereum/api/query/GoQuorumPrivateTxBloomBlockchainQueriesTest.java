@@ -50,7 +50,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class GQPrivateTxBloomBlockchainQueriesTest {
+public class GoQuorumPrivateTxBloomBlockchainQueriesTest {
 
   @ClassRule public static TemporaryFolder cacheDir = new TemporaryFolder();
 

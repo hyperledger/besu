@@ -58,7 +58,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("unused")
 @RunWith(MockitoJUnitRunner.class)
-public class GQPrivateTransactionLogBloomCacherTest {
+public class GoQuorumPrivateTransactionLogBloomCacherTest {
 
   private static final long NUMBER_3 = 3L;
   private static LogsQuery logsQuery;
