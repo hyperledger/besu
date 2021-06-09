@@ -41,7 +41,7 @@ public abstract class AbstractKeyStoreWrapper implements KeyStoreWrapper {
                 .map(X509CRL.class::cast)
                 .collect(Collectors.toList());
       } catch (final Exception e) {
-        throw new PkiException("Failed to initialize software truststore: " + crlLocation, e);
+        throw new PkiException("Failed to initialize software truststore", e);
       }
     }
   }

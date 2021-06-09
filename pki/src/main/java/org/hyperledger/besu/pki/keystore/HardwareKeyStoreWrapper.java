@@ -164,12 +164,17 @@ public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
     return keystore;
   }
 
-  public Provider getPkcs11Provider(final String config) {
+  private Provider getPkcs11Provider(final String config) {
     final Provider provider = Security.getProvider(pkcs11Provider);
     if (null == provider) {
       throw new IllegalArgumentException("Unable to load PKCS11 provider configuration.");
     } else {
       return provider.configure(config);
     }
+  }
+
+  @VisibleForTesting
+  public Provider getPkcs11ProviderForConfig(final String config) {
+    return getPkcs11Provider(config);
   }
 }

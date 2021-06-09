@@ -38,14 +38,12 @@ public class CryptoTestUtil {
   }
 
   public static String getNSSLibPath() throws IOException, InterruptedException {
-    String nssLibPath = ""; // default path
+    String nssLibPath = "";
     final String centOS_nssPathCmd =
-        "whereis libnssdbm3 | grep -o \"\\/.*libnssdbm3\\.[0-9a-z]* \" | sed 's/\\/libnssdbm3.*//g'"; // Jenkins
-    // box
+        "whereis libnssdbm3 | grep -o \"\\/.*libnssdbm3\\.[0-9a-z]* \" | sed 's/\\/libnssdbm3.*//g'";
     final String debian_nssPathCmd =
-        "whereis libnss3 | grep  -o \".*libnss3.[0-9a-z]\" | sed 's/lib.* \\(\\/.*\\)\\/lib.*/\\1/'"; // debian
-    // agents
-    final String macOS_nssPathCmd = "dirname `which certutil` | sed 's/bin/lib/g'"; // Dev box
+        "whereis libnss3 | grep  -o \".*libnss3.[0-9a-z]\" | sed 's/lib.* \\(\\/.*\\)\\/lib.*/\\1/'";
+    final String macOS_nssPathCmd = "dirname `which certutil` | sed 's/bin/lib/g'";
 
     nssLibPath = executeSystemCmd(centOS_nssPathCmd).orElse(nssLibPath);
     LOG.info("centOS_nssPathCmd: {}", nssLibPath);

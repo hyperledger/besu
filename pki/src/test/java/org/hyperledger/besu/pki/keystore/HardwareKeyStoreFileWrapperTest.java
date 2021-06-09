@@ -75,7 +75,7 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
   public void getPkcs11Provider() throws Exception {
     final HardwareKeyStoreWrapper sut =
         (HardwareKeyStoreWrapper) getHardwareKeyStoreWrapper(configName);
-    sut.getPkcs11Provider("no-library");
+    sut.getPkcs11ProviderForConfig("no-library");
   }
 
   @Test
