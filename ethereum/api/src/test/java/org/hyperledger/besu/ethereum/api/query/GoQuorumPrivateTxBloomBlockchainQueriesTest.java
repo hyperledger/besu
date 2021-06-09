@@ -115,7 +115,7 @@ public class GoQuorumPrivateTxBloomBlockchainQueriesTest {
    * block header matches the bloom filter.
    */
   @Test
-  public void uncachedUncachedSeamTest() {
+  public void testPrivateBloomsWork() {
     blockchainQueries.matchingLogs(0, 2, logsQuery, () -> true);
 
     verify(blockchain, times(3)).getBlockHeader(anyLong());
