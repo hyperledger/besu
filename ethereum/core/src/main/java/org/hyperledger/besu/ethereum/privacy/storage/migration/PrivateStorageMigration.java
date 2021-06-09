@@ -131,14 +131,14 @@ public class PrivateStorageMigration {
     final List<Transaction> txs = block.getBody().getTransactions();
     int lastPmtIndex = -1;
     for (int i = 0; i < txs.size(); i++) {
-      if (isPrivacyMarkerTransaction(txs.get(i))) {
+      if (isPrivateMarkerTransaction(txs.get(i))) {
         lastPmtIndex = i;
       }
     }
     return lastPmtIndex;
   }
 
-  private boolean isPrivacyMarkerTransaction(final Transaction tx) {
+  private boolean isPrivateMarkerTransaction(final Transaction tx) {
     return tx.getTo().isPresent() && tx.getTo().get().equals(privacyPrecompileAddress);
   }
 
