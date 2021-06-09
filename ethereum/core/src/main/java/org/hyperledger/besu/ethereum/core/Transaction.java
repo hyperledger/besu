@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -547,11 +548,12 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    */
   public Wei getUpfrontGasCost() {
     return getUpfrontGasCost(
-        maxFeePerGas.orElse(
-            gasPrice.orElseThrow(
+        Stream.concat(maxFeePerGas.stream(), gasPrice.stream())
+            .findFirst()
+            .orElseThrow(
                 () ->
                     new IllegalStateException(
-                        String.format("Transaction requires either gasPrice or maxFeePerGas")))));
+                        String.format("Transaction requires either gasPrice or maxFeePerGas"))));
   }
 
   /**
