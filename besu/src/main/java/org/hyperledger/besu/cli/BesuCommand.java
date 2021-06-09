@@ -954,7 +954,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--privacy-marker-transaction-signing-key-file"},
       description =
           "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
-  private final Path privacyMarkerTransactionSigningKeyPath = null;
+  private final Path privateMarkerTransactionSigningKeyPath = null;
 
   @Option(
       names = {"--privacy-enable-database-migration"},
@@ -2130,7 +2130,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privacyMarkerTransactionSigningKeyPath == null) {
+        if (privateMarkerTransactionSigningKeyPath == null) {
           throw new ParameterException(
               commandLine,
               "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
@@ -2142,7 +2142,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-precompiled-address option is deprecated. This address is derived, based on --privacy-onchain-groups-enabled.");
       }
 
-      privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
+      privacyParametersBuilder.setPrivateKeyPath(privateMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
       if (isPrivacyTlsEnabled) {

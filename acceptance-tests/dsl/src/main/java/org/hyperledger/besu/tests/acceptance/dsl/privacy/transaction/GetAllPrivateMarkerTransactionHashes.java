@@ -27,7 +27,7 @@ import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.EthBlock;
 
-public class GetAllPrivacyMarkerTransactionHashes implements Transaction<List<String>> {
+public class GetAllPrivateMarkerTransactionHashes implements Transaction<List<String>> {
   @Override
   public List<String> execute(final NodeRequests node) {
     final Besu besu = node.privacy().getBesuClient();
