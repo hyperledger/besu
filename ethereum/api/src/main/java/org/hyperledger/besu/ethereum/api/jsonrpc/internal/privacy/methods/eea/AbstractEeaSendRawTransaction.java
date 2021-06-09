@@ -18,23 +18,17 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter.convertTransactionInvalidReason;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.DECODE_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
-import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
 
-import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -42,23 +36,16 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
 
+import io.vertx.ext.auth.User;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class EeaSendRawTransaction implements JsonRpcMethod {
-
+public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
-  final TransactionPool transactionPool;
-  final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final TransactionPool transactionPool;
 
-  public EeaSendRawTransaction(
-      final TransactionPool transactionPool,
-      final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+  protected AbstractEeaSendRawTransaction(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
-    this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
   }
 
   @Override
@@ -75,36 +62,22 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
       final PrivateTransaction privateTransaction =
           PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
 
-      final String enclavePublicKey =
-          enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
-
-      if (!privateTransaction.getPrivateFrom().equals(Bytes.fromBase64String(enclavePublicKey))) {
-        return new JsonRpcErrorResponse(id, PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
-      }
-
-      final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
-
-      final Optional<PrivacyGroup> maybePrivacyGroup =
-          findPrivacyGroup(
-              privacyController, maybePrivacyGroupId, enclavePublicKey, privateTransaction);
-
       final ValidationResult<TransactionInvalidReason> validationResult =
-          privacyController.validatePrivateTransaction(privateTransaction, enclavePublicKey);
+          validatePrivateTransaction(privateTransaction, requestContext.getUser());
 
       if (!validationResult.isValid()) {
         return new JsonRpcErrorResponse(
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
       }
 
-      final JsonRpcResponse ret =
-          createPMTAndAddToTxPool(
-              id,
-              privateTransaction,
-              maybePrivacyGroup,
-              maybePrivacyGroupId,
-              enclavePublicKey,
-              Address.DEFAULT_PRIVACY);
-      return ret;
+      final Transaction privateMarkerTransaction =
+          createPrivateMarkerTransaction(privateTransaction, requestContext.getUser());
+
+      return transactionPool
+          .addLocalTransaction(privateMarkerTransaction)
+          .either(
+              () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
+              errorReason -> getJsonRpcErrorResponse(id, errorReason));
 
     } catch (final JsonRpcErrorResponseException e) {
       return new JsonRpcErrorResponse(id, e.getJsonRpcError());
@@ -116,35 +89,6 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     }
   }
 
-  Optional<PrivacyGroup> findPrivacyGroup(
-      final PrivacyController privacyController,
-      final Optional<Bytes> maybePrivacyGroupId,
-      final String enclavePublicKey,
-      final PrivateTransaction privateTransaction) {
-    final Optional<PrivacyGroup> maybePrivacyGroup =
-        findOffchainPrivacyGroup(privacyController, maybePrivacyGroupId, enclavePublicKey);
-    return maybePrivacyGroup;
-  }
-
-  JsonRpcResponse createPMTAndAddToTxPool(
-      final Object id,
-      final PrivateTransaction privateTransaction,
-      final Optional<PrivacyGroup> maybePrivacyGroup,
-      final Optional<Bytes> maybePrivacyGroupId,
-      final String enclavePublicKey,
-      final Address privacyPrecompileAddress) {
-    final String privateTransactionLookupId =
-        privacyController.sendTransaction(privateTransaction, enclavePublicKey, maybePrivacyGroup);
-    final Transaction privacyMarkerTransaction =
-        privacyController.createPrivacyMarkerTransaction(
-            privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
-    return transactionPool
-        .addLocalTransaction(privacyMarkerTransaction)
-        .either(
-            () -> new JsonRpcSuccessResponse(id, privacyMarkerTransaction.getHash().toString()),
-            errorReason -> getJsonRpcErrorResponse(id, errorReason));
-  }
-
   JsonRpcErrorResponse getJsonRpcErrorResponse(
       final Object id, final TransactionInvalidReason errorReason) {
     if (errorReason.equals(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT)) {
@@ -152,4 +96,10 @@ public class EeaSendRawTransaction implements JsonRpcMethod {
     }
     return new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason));
   }
+
+  protected abstract ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
+      final PrivateTransaction privateTransaction, final Optional<User> user);
+
+  protected abstract Transaction createPrivateMarkerTransaction(
+      final PrivateTransaction privateTransaction, final Optional<User> user);
 }

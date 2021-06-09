@@ -88,11 +88,6 @@ public class PrivateTransactionValidator {
     if (!privateTransaction.getValue().isZero()) {
       return ValidationResult.invalid(TransactionInvalidReason.PRIVATE_VALUE_NOT_ZERO);
     }
-    if (!privateTransaction.getRestriction().equals(Restriction.RESTRICTED)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
-    }
-
     return ValidationResult.valid();
   }
 

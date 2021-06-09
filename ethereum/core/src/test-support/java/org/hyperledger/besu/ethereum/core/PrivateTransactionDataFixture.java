@@ -80,21 +80,21 @@ public class PrivateTransactionDataFixture {
   public static final Address VALID_CONTRACT_DEPLOYMENT_ADDRESS =
       Address.fromHexString("0x0bac79b78b9866ef11c989ad21a7fcf15f7a18d7");
 
-  public static Transaction privacyMarkerTransaction() {
-    return privacyMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, Address.DEFAULT_PRIVACY);
+  public static Transaction privateMarkerTransaction() {
+    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, Address.DEFAULT_PRIVACY);
   }
 
-  public static Transaction privacyMarkerTransactionOnChain() {
-    return privacyMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, Address.ONCHAIN_PRIVACY);
+  public static Transaction privateMarkerTransactionOnChain() {
+    return privateMarkerTransaction(VALID_BASE64_ENCLAVE_KEY, Address.ONCHAIN_PRIVACY);
   }
 
-  public static Transaction privacyMarkerTransactionOnChainAdd() {
-    return privacyMarkerTransaction(
+  public static Transaction privateMarkerTransactionOnChainAdd() {
+    return privateMarkerTransaction(
         Bytes.concatenate(VALID_BASE64_ENCLAVE_KEY, VALID_BASE64_ENCLAVE_KEY),
         Address.ONCHAIN_PRIVACY);
   }
 
-  private static Transaction privacyMarkerTransaction(
+  private static Transaction privateMarkerTransaction(
       final Bytes transactionKey, final Address precompiledContractAddress) {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
