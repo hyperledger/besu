@@ -93,12 +93,7 @@ public class GQPrivateTransactionLogBloomCacherTest {
     fakeHeader = createBlock(NUMBER_3);
 
     testBlockHeaderHash = fakeHeader.getHash();
-    when(scheduler.scheduleFutureTask(any(Runnable.class), any(Duration.class)))
-        .thenAnswer(
-            invocation -> {
-              invocation.getArgument(0, Runnable.class).run();
-              return null;
-            });
+
     transactionLogBloomCacher =
         new TransactionLogBloomCacher(blockchain, cacheDir.getRoot().toPath(), scheduler);
 
