@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -143,15 +142,10 @@ public class GQPrivateTransactionLogBloomCacherTest {
 
   private void createLogBloomCache(final File logBloom) throws IOException {
     try (final RandomAccessFile randomAccessFile = new RandomAccessFile(logBloom, "rws")) {
-      writeThreeEntries(testLogsBloomFilter, randomAccessFile);
+      randomAccessFile.write(testLogsBloomFilter.toArray());
+      randomAccessFile.write(testLogsBloomFilter.toArray());
+      randomAccessFile.write(testLogsBloomFilter.toArray());
     }
-  }
-
-  private static void writeThreeEntries(final LogsBloomFilter filter, final RandomAccessFile file)
-      throws IOException {
-    file.write(filter.toArray());
-    file.write(filter.toArray());
-    file.write(filter.toArray());
   }
 
   private BlockHeader createBlock(final long number) {
