@@ -34,7 +34,6 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -106,11 +105,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return TransactionDecoder.decodeForWire(rlpInput);
   }
 
-  private static final Supplier<IllegalStateException> missingGasPrice =
-      () ->
-          new IllegalStateException(
-              String.format("Transaction requires either gasPrice or maxFeePerGas"));
-
   /**
    * Instantiates a transaction instance.
    *
@@ -172,8 +166,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
     }
 
+    // TODO: do we want to require gas fields by transactionType or leave that to validate()?
     if (!maxFeePerGas.isPresent() && !gasPrice.isPresent()) {
-      throw missingGasPrice.get();
+      throw new IllegalStateException(
+          String.format("Transaction requires either gasPrice or maxFeePerGas"));
     }
 
     this.transactionType = transactionType;
@@ -554,7 +550,12 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost() {
-    return getUpfrontGasCost(maxFeePerGas.orElse(gasPrice.orElseThrow(missingGasPrice)));
+    return getUpfrontGasCost(
+        maxFeePerGas.orElse(
+            gasPrice.orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        String.format("Transaction requires either gasPrice or maxFeePerGas")))));
   }
 
   /**
