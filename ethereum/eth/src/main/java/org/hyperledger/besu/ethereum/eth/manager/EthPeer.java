@@ -61,16 +61,23 @@ public class EthPeer {
 
   private final int maxTrackedSeenBlocks = 300;
 
-  private final Set<Hash> knownBlocks;
+  private final Set<Hash> knownBlocks =
+      Collections.newSetFromMap(
+          Collections.synchronizedMap(
+              new LinkedHashMap<>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry<Hash, Boolean> eldest) {
+                  return size() > maxTrackedSeenBlocks;
+                }
+              }));
   private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
-  private final ChainState chainHeadState;
+  private final ChainState chainHeadState = new ChainState();
   private final AtomicBoolean statusHasBeenSentToPeer = new AtomicBoolean(false);
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
-  private final boolean supportsRequestId;
 
   private volatile long lastRequestTimestamp = 0;
   private final RequestManager headersRequestManager;
@@ -95,27 +102,16 @@ public class EthPeer {
     this.protocolName = protocolName;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
-    knownBlocks =
-        Collections.newSetFromMap(
-            Collections.synchronizedMap(
-                new LinkedHashMap<>(16, 0.75f, true) {
-                  @Override
-                  protected boolean removeEldestEntry(final Map.Entry<Hash, Boolean> eldest) {
-                    return size() > maxTrackedSeenBlocks;
-                  }
-                }));
-    this.chainHeadState = new ChainState();
     this.onStatusesExchanged.set(onStatusesExchanged);
-    for (final PeerValidator peerValidator : peerValidators) {
-      validationStatus.put(peerValidator, false);
-    }
+    peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
-    this.supportsRequestId = getAgreedCapabilities().contains(EthProtocol.ETH66);
-    headersRequestManager = new RequestManager(this, supportsRequestId);
-    bodiesRequestManager = new RequestManager(this, supportsRequestId);
-    receiptsRequestManager = new RequestManager(this, supportsRequestId);
-    nodeDataRequestManager = new RequestManager(this, supportsRequestId);
-    pooledTransactionsRequestManager = new RequestManager(this, supportsRequestId);
+    
+    final boolean supportsRequestId = getAgreedCapabilities().contains(EthProtocol.ETH66);
+    this.headersRequestManager = new RequestManager(this, supportsRequestId);
+    this.bodiesRequestManager = new RequestManager(this, supportsRequestId);
+    this.receiptsRequestManager = new RequestManager(this, supportsRequestId);
+    this.nodeDataRequestManager = new RequestManager(this, supportsRequestId);
+    this.pooledTransactionsRequestManager = new RequestManager(this, supportsRequestId);
   }
 
   public void markValidated(final PeerValidator validator) {
