@@ -24,7 +24,9 @@ import java.util.List;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
+import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetCode;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
@@ -36,6 +38,11 @@ import org.web3j.quorum.tx.QuorumTransactionManager;
 import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 
 public class ContractOperations {
+
+  public static final String SIMPLE_STORAGE_CONTRACT_BYTECODE =
+      "6080604052348015600f57600080fd5b5060de8061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060275760003560e01c8062f88abf14602c575b600080fd5b605560048036036020811015604057600080fd5b81019080803590602001909291905050506057565b005b3373ffffffffffffffffffffffffffffffffffffffff167f748aa07c80b05bd067e3688dbb79d9f9583cd018be6a589a7c364cacd770e0a2826040518082815260200191505060405180910390a25056fea26469706673582212207df0d3ad8bced04b7bd476cc81a6233c0b575966c29b4af96450313628ee623964736f6c63430007040033";
+  public static String SIMPLE_STORAGE_CONTRACT_WITH_CONSTRUCTOR;
+
   public static String deployContractAndReturnAddress(
       final Quorum quorumWeb3j,
       final Credentials credentials,
@@ -44,10 +51,9 @@ public class ContractOperations {
       final PollingTransactionReceiptProcessor pollingTransactionReceiptProcessorIgnore)
       throws IOException, TransactionException {
     // Build smart contract transaction
-    final String simpleStorageContractBytecode =
-        "6080604052348015600f57600080fd5b5060de8061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060275760003560e01c8062f88abf14602c575b600080fd5b605560048036036020811015604057600080fd5b81019080803590602001909291905050506057565b005b3373ffffffffffffffffffffffffffffffffffffffff167f748aa07c80b05bd067e3688dbb79d9f9583cd018be6a589a7c364cacd770e0a2826040518082815260200191505060405180910390a25056fea26469706673582212207df0d3ad8bced04b7bd476cc81a6233c0b575966c29b4af96450313628ee623964736f6c63430007040033";
     final String encodedConstructor = FunctionEncoder.encodeConstructor(Collections.emptyList());
-    final String binaryAndInitCode = simpleStorageContractBytecode + encodedConstructor;
+    SIMPLE_STORAGE_CONTRACT_WITH_CONSTRUCTOR =
+        SIMPLE_STORAGE_CONTRACT_BYTECODE + encodedConstructor;
 
     final RawTransaction contractTransaction =
         RawTransaction.createTransaction(
@@ -56,7 +62,7 @@ public class ContractOperations {
             BigInteger.valueOf(4300000),
             "",
             BigInteger.ZERO,
-            binaryAndInitCode);
+            SIMPLE_STORAGE_CONTRACT_WITH_CONSTRUCTOR);
 
     // Send the signed transaction to quorum
     final EthSendTransaction sendContractTransactionResult = qtm.signAndSend(contractTransaction);
@@ -73,6 +79,17 @@ public class ContractOperations {
             sendContractTransactionResult.getTransactionHash());
 
     return transactionReceiptResult.getContractAddress();
+  }
+
+  public static String getCode(final Quorum web3j, final String contractAddress)
+      throws IOException {
+    DefaultBlockParameter blockParam =
+        DefaultBlockParameter.valueOf(DefaultBlockParameterName.LATEST.toString());
+    final EthGetCode codeResult = web3j.ethGetCode(contractAddress, blockParam).send();
+    assertThat(codeResult.getCode())
+        .withFailMessage("Code for contractAddress not found.")
+        .isNotEmpty();
+    return codeResult.getCode();
   }
 
   public static String getTransactionLog(final Quorum web3j, final String transactionHash)
