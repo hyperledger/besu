@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -30,7 +31,6 @@ import java.util.Deque;
 import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 public class TestCodeExecutor {
 

@@ -147,11 +147,7 @@ public class TransactionEncoder {
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
     out.startList();
-    out.writeLongScalar(
-        transaction
-            .getChainId()
-            .orElseThrow()
-            .longValue());
+    out.writeLongScalar(transaction.getChainId().orElseThrow().longValue());
     out.writeLongScalar(transaction.getNonce());
     out.writeUInt256Scalar(
         transaction
