@@ -71,6 +71,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -829,6 +830,45 @@ public class TransactionPoolTest {
     final ValidationResult<TransactionInvalidReason> result =
         transactionPool.addLocalTransaction(transactionLocal);
     assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
+  }
+
+  @Test
+  public void shouldRejectGoQuorumTransactionWithNonZeroValue() {
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final EthContext ethContext = ethProtocolManager.ethContext();
+    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
+    final Wei twoEthers = Wei.fromEth(2);
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            transactions,
+            protocolSchedule,
+            protocolContext,
+            batchAddedListener,
+            pendingBatchAddedListener,
+            syncState,
+            ethContext,
+            peerTransactionTracker,
+            peerPendingTransactionTracker,
+            Wei.ZERO,
+            metricsSystem,
+            Optional.empty(),
+            ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
+
+    final Transaction transaction37 =
+        Transaction.builder().v(BigInteger.valueOf(37)).value(Wei.ONE).build();
+    final Transaction transaction38 =
+        Transaction.builder().v(BigInteger.valueOf(38)).value(Wei.ONE).build();
+
+    final ValidationResult<TransactionInvalidReason> result37 =
+        transactionPool.addLocalTransaction(transaction37);
+    final ValidationResult<TransactionInvalidReason> result38 =
+        transactionPool.addLocalTransaction(transaction38);
+
+    assertThat(result37.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
+    assertThat(result38.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
   }
 
   private void assertTransactionPending(final Transaction t) {

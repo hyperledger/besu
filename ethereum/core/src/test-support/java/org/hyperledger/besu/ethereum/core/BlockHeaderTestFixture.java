@@ -122,7 +122,7 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture baseFee(final long baseFee) {
+  public BlockHeaderTestFixture baseFeePerGas(final long baseFee) {
     this.baseFee = Optional.of(baseFee);
     return this;
   }

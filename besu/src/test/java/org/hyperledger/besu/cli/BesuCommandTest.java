@@ -3484,7 +3484,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void privacyMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
+  public void privateMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
     parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
 
     assertThat(commandErrorOutput.toString())

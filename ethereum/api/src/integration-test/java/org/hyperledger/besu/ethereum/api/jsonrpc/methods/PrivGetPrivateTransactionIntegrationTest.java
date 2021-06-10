@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privacyMarkerTransaction;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateMarkerTransaction;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -152,7 +152,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
         new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
 
     final Hash blockHash = Hash.ZERO;
-    final Transaction pmt = spy(privacyMarkerTransaction());
+    final Transaction pmt = spy(privateMarkerTransaction());
     when(blockchain.getTransactionByHash(eq(pmt.getHash()))).thenReturn(Optional.of(pmt));
     when(blockchain.getTransactionLocation(eq(pmt.getHash())))
         .thenReturn(Optional.of(new TransactionLocation(blockHash, 0)));
