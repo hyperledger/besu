@@ -54,7 +54,8 @@ public class EnodeURLImpl implements EnodeURL {
       final Optional<Integer> listeningPort,
       final Optional<Integer> discoveryPort) {
     checkArgument(
-        nodeId.size() == NODE_ID_SIZE, "Invalid node id of length "+ nodeId.size()+".  Expected id of length: 64 bytes.");
+        nodeId.size() == NODE_ID_SIZE,
+        "Invalid node id of length " + nodeId.size() + ".  Expected id of length: 64 bytes.");
     listeningPort.ifPresent(port -> NetworkUtility.checkPort(port, "listening"));
     discoveryPort.ifPresent(port -> NetworkUtility.checkPort(port, "discovery"));
 
