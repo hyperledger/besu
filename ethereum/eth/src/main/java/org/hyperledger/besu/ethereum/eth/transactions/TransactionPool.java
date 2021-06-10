@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
+import static java.util.Optional.ofNullable;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
@@ -235,8 +236,9 @@ public class TransactionPool implements BlockAddedObserver {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
 
     // Check whether it's a GoQuorum transaction
-    if (isQuorumTransaction(transaction)) {
-      if (!transaction.getValue().isZero()) {
+    if (isGoQuorumPrivateTransaction(transaction)) {
+      final Optional<Wei> weiValue = ofNullable(transaction.getValue());
+      if (weiValue.isPresent() && !weiValue.get().isZero()) {
         return ValidationResult.invalid(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
       }
     }
@@ -285,9 +287,9 @@ public class TransactionPool implements BlockAddedObserver {
     return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
   }
 
-  private boolean isQuorumTransaction(final Transaction transaction) {
-    return (transaction.getV().compareTo(BigInteger.valueOf(37)) == 0)
-        || (transaction.getV().compareTo(BigInteger.valueOf(38)) == 0);
+  private boolean isGoQuorumPrivateTransaction(final Transaction transaction) {
+    return (transaction.getV().equals(BigInteger.valueOf(37))
+        || (transaction.getV().equals(BigInteger.valueOf(38))));
   }
 
   public interface TransactionBatchAddedListener {
