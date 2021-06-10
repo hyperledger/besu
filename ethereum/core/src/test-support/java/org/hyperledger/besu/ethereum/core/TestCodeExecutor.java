@@ -30,6 +30,7 @@ import java.util.Deque;
 import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 public class TestCodeExecutor {
 
@@ -56,6 +57,7 @@ public class TestCodeExecutor {
 
     final Transaction transaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .value(Wei.ZERO)
             .sender(SENDER_ADDRESS)
             .signature(

@@ -150,8 +150,7 @@ public class TransactionEncoder {
     out.writeLongScalar(
         transaction
             .getChainId()
-            .orElseThrow(
-                () -> new IllegalArgumentException("chainId is required for EIP-1559 transactions"))
+            .orElseThrow()
             .longValue());
     out.writeLongScalar(transaction.getNonce());
     out.writeUInt256Scalar(
