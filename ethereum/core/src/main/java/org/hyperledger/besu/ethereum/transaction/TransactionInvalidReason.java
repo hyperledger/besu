@@ -44,5 +44,6 @@ public enum TransactionInvalidReason {
   PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE,
   INTERNAL_ERROR,
   // Quroum Compatibility Invalid Reasons
-  GAS_PRICE_MUST_BE_ZERO
+  GAS_PRICE_MUST_BE_ZERO,
+  ETHER_VALUE_NOT_SUPPORTED
 }
