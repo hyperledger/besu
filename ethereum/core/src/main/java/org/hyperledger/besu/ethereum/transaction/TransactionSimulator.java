@@ -40,8 +40,8 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
@@ -172,7 +172,6 @@ public class TransactionSimulator {
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
-            .type(TransactionType.FRONTIER)
             .nonce(nonce)
             .gasPrice(gasPrice)
             .gasLimit(gasLimit)
@@ -184,6 +183,10 @@ public class TransactionSimulator {
     callParams.getMaxPriorityFeePerGas().ifPresent(transactionBuilder::maxPriorityFeePerGas);
     callParams.getMaxFeePerGas().ifPresent(transactionBuilder::maxFeePerGas);
 
+    transactionBuilder.guessType();
+    if (transactionBuilder.getTransactionType().requiresChainId()) {
+      transactionBuilder.chainId(BigInteger.ONE); // needed to make some transactions valid
+    }
     final Transaction transaction = transactionBuilder.build();
 
     final TransactionProcessingResult result =
