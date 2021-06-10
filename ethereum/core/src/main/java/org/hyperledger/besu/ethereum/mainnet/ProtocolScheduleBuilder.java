@@ -221,7 +221,6 @@ public class ProtocolScheduleBuilder {
                 create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
                 create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
                 create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
-                create(config.getAleutBlockNumber(), specFactory.aleutDefinition(config)),
                 create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
                 // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
