@@ -46,6 +46,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -232,6 +233,14 @@ public class TransactionPool implements BlockAddedObserver {
   private ValidationResult<TransactionInvalidReason> validateTransaction(
       final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
+
+    // Check whether it's a GoQuorum transaction
+    if (isQuorumTransaction(transaction)) {
+      if (!transaction.getValue().isZero()) {
+        return ValidationResult.invalid(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
+      }
+    }
+
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
         getTransactionValidator().validate(transaction, Optional.empty());
     if (!basicValidationResult.isValid()) {
@@ -251,7 +260,7 @@ public class TransactionPool implements BlockAddedObserver {
             .orElse(false)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          String.format("EIP-1559 transaction are not allowed yet"));
+          "EIP-1559 transaction are not allowed yet");
     }
 
     return protocolContext
@@ -274,6 +283,11 @@ public class TransactionPool implements BlockAddedObserver {
   private BlockHeader getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
+  }
+
+  private boolean isQuorumTransaction(final Transaction transaction) {
+    return (transaction.getV().compareTo(BigInteger.valueOf(37)) == 0)
+        || (transaction.getV().compareTo(BigInteger.valueOf(38)) == 0);
   }
 
   public interface TransactionBatchAddedListener {
