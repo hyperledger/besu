@@ -892,6 +892,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     public Transaction build() {
+      if (transactionType == null) guessType();
       return new Transaction(
           transactionType,
           nonce,
