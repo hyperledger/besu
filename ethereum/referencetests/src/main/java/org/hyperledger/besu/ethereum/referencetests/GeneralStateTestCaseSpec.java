@@ -136,6 +136,7 @@ public class GeneralStateTestCaseSpec {
   }
 
   /** Represents the "post" part of a general state test json _for a specific hard-fork_. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class PostSection {
 
     private final Hash rootHash;
