@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -128,6 +129,7 @@ public class TransactionPriceCalculatorTest {
                     .gasPrice(gasPrice)
                     .maxPriorityFeePerGas(maxPriorityFeePerGas)
                     .maxFeePerGas(maxFeePerGas)
+                    .chainId(BigInteger.ONE)
                     .build(),
                 baseFee))
         .isEqualByComparingTo(expectedPrice);
