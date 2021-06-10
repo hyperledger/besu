@@ -119,13 +119,7 @@ public class TransactionEncoder {
       final Bytes payload,
       final List<AccessListEntry> accessList,
       final RLPOutput rlpOutput) {
-    rlpOutput.writeLongScalar(
-        chainId
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "chainId is required for access list transactions"))
-            .longValue());
+    rlpOutput.writeLongScalar(chainId.orElseThrow().longValue());
     rlpOutput.writeLongScalar(nonce);
     rlpOutput.writeUInt256Scalar(gasPrice);
     rlpOutput.writeLongScalar(gasLimit);
