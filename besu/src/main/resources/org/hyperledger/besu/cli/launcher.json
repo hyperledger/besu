@@ -124,13 +124,13 @@
         {
           "prompt-type": "INPUT",
           "question": "What is the URL of Ethstats (nodename:secret@host:port) ?",
-          "config-key": "Xethstats",
+          "config-key": "ethstats",
           "regex": "([-\\w]+):([\\w]+)?@([-.\\w]+):([\\d]+)"
         },
         {
           "prompt-type": "INPUT",
           "question": "What is the contact address ?",
-          "config-key": "Xethstats-contact"
+          "config-key": "ethstats-contact"
         }
       ]
     },
