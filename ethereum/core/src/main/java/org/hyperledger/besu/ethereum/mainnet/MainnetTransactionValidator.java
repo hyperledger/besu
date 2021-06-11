@@ -97,6 +97,7 @@ public class MainnetTransactionValidator {
    *
    * @param transaction the transaction to validate
    * @param baseFee optional baseFee
+   * @param transactionValidationParams Validation parameters that will be used
    * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.

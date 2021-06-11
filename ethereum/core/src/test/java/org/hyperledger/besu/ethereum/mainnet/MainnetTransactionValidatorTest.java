@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -264,7 +264,8 @@ public class MainnetTransactionValidatorTest {
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         validator.validate(transaction, Optional.of(1L), transactionValidationParams);
-    assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
+    assertThat(validationResult)
+        .isEqualTo(ValidationResult.invalid(MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS));
     assertThat(validationResult.getErrorMessage())
         .isEqualTo("max priority fee per gas cannot be greater than max fee per gas");
   }
