@@ -198,13 +198,13 @@ public class PrivacyReorgTest {
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
 
-    final Transaction privacyMarkerTransaction =
+    final Transaction privateMarkerTransaction =
         buildMarkerTransaction(getEnclaveKey(enclave.clientUrl()));
     final Block firstBlock =
         gen.block(
             getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
-                privacyMarkerTransaction,
+                privateMarkerTransaction,
                 FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);

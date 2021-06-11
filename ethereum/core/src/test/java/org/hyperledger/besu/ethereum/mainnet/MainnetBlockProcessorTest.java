@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
@@ -50,7 +49,6 @@ public class MainnetBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
@@ -77,7 +75,6 @@ public class MainnetBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             false,
-            TransactionGasBudgetCalculator.frontier(),
             Optional.empty());
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());

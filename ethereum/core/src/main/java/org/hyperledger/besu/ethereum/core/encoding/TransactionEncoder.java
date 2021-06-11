@@ -119,13 +119,7 @@ public class TransactionEncoder {
       final Bytes payload,
       final List<AccessListEntry> accessList,
       final RLPOutput rlpOutput) {
-    rlpOutput.writeLongScalar(
-        chainId
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "chainId is required for access list transactions"))
-            .longValue());
+    rlpOutput.writeLongScalar(chainId.orElseThrow().longValue());
     rlpOutput.writeLongScalar(nonce);
     rlpOutput.writeUInt256Scalar(gasPrice);
     rlpOutput.writeLongScalar(gasLimit);
@@ -153,12 +147,7 @@ public class TransactionEncoder {
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
     out.startList();
-    out.writeLongScalar(
-        transaction
-            .getChainId()
-            .orElseThrow(
-                () -> new IllegalArgumentException("chainId is required for EIP-1559 transactions"))
-            .longValue());
+    out.writeLongScalar(transaction.getChainId().orElseThrow().longValue());
     out.writeLongScalar(transaction.getNonce());
     out.writeUInt256Scalar(
         transaction

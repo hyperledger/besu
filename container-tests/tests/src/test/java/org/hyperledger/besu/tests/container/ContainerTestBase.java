@@ -42,9 +42,12 @@ import org.web3j.quorum.Quorum;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ContainerTestBase {
-  // A docker image can be built using gradlew distDocker
-  // To use that local image change besuImage to "hyperledger/besu:<VERSION>-SNAPSHOT"
+  // A docker image can be built using `./gradlew clean distDocker`
+  // check the status of local images with `docker images`
+  // To use that local image, change besuImage below eg
+  // private final String besuImage = "hyperledger/besu:21.7.0-RC1-SNAPSHOT";
   private final String besuImage = System.getProperty("containertest.imagename");
+
   private final String goQuorumVersion = "21.1.0";
   private final String tesseraVersion = "21.1.1";
 

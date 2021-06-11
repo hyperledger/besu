@@ -57,6 +57,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED;
       case GAS_PRICE_MUST_BE_ZERO:
         return JsonRpcError.GAS_PRICE_MUST_BE_ZERO;
+      case ETHER_VALUE_NOT_SUPPORTED:
+        return JsonRpcError.ETHER_VALUE_NOT_SUPPORTED;
       default:
         return JsonRpcError.INVALID_PARAMS;
     }

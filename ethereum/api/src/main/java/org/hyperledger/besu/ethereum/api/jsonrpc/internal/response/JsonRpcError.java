@@ -125,6 +125,7 @@ public enum JsonRpcError {
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
+  ETHER_VALUE_NOT_SUPPORTED(-50100, "ether value is not supported for private transactions"),
   FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
   FIND_ONCHAIN_PRIVACY_GROUP_ERROR(-50100, "Error finding onchain privacy group"),
   GOQUORUM_NO_PRIVATE_FOR(

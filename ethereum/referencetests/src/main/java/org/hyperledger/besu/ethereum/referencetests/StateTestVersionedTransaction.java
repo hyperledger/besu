@@ -135,12 +135,18 @@ public class StateTestVersionedTransaction {
             .to(to)
             .value(values.get(indexes.value))
             .payload(payloads.get(indexes.data));
+
     Optional.ofNullable(gasPrice).ifPresent(transactionBuilder::gasPrice);
     Optional.ofNullable(maxFeePerGas).ifPresent(transactionBuilder::maxFeePerGas);
     Optional.ofNullable(maxPriorityFeePerGas).ifPresent(transactionBuilder::maxPriorityFeePerGas);
     maybeAccessLists.ifPresent(
-        accessLists ->
-            transactionBuilder.accessList(accessLists.get(indexes.data)).chainId(BigInteger.ONE));
-    return transactionBuilder.guessType().signAndBuild(keys);
+        accessLists -> transactionBuilder.accessList(accessLists.get(indexes.data)));
+
+    transactionBuilder.guessType();
+    if (transactionBuilder.getTransactionType().requiresChainId()) {
+      transactionBuilder.chainId(BigInteger.ONE);
+    }
+
+    return transactionBuilder.signAndBuild(keys);
   }
 }
