@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.cli.options.stable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.ethstats.util.NetstatsUrl;
@@ -24,12 +24,11 @@ import picocli.CommandLine;
 
 public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
 
-  private static final String ETHSTATS = "--Xethstats";
-  private static final String ETHSTATS_CONTACT = "--Xethstats-contact";
+  private static final String ETHSTATS = "--ethstats";
+  private static final String ETHSTATS_CONTACT = "--ethstats-contact";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
-      hidden = true,
       names = {ETHSTATS},
       paramLabel = "<nodename:secret@host:port>",
       description = "Reporting URL of a ethstats server",
@@ -38,7 +37,6 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
-      hidden = true,
       names = {ETHSTATS_CONTACT},
       description = "Contact address to send to ethstats server",
       arity = "1")
