@@ -65,6 +65,8 @@ public enum JsonRpcError {
   REVERT_ERROR(-32000, "Execution reverted"),
   GAS_PRICE_MUST_BE_ZERO(-3200, "gasPrice must be set to zero on a GoQuorum compatible network"),
   TRANSACTION_NOT_FOUND(-32000, "Transaction not found"),
+  PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS(
+      32000, "Max priority fee per gas exceeds max fee per gas"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),

@@ -62,6 +62,9 @@ public class MainnetTransactionValidatorTest {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
+  private static final TransactionValidationParams transactionValidationParams =
+      TransactionValidationParams.processingBlockParams;
+
   @Mock private GasCalculator gasCalculator;
 
   @Mock private TransactionPriceCalculator transactionPriceCalculator;
@@ -86,7 +89,7 @@ public class MainnetTransactionValidatorTest {
     when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
         .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
-    assertThat(validator.validate(transaction, Optional.empty()))
+    assertThat(validator.validate(transaction, Optional.empty(), transactionValidationParams))
         .isEqualTo(
             ValidationResult.invalid(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT));
   }
@@ -96,7 +99,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, false, Optional.empty(), defaultGoQuorumCompatibilityMode);
-    assertThat(validator.validate(basicTransaction, Optional.empty()))
+    assertThat(validator.validate(basicTransaction, Optional.empty(), transactionValidationParams))
         .isEqualTo(
             ValidationResult.invalid(
                 TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED));
@@ -110,7 +113,7 @@ public class MainnetTransactionValidatorTest {
             false,
             Optional.of(BigInteger.valueOf(2)),
             defaultGoQuorumCompatibilityMode);
-    assertThat(validator.validate(basicTransaction, Optional.empty()))
+    assertThat(validator.validate(basicTransaction, Optional.empty(), transactionValidationParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.WRONG_CHAIN_ID));
   }
 
@@ -260,7 +263,7 @@ public class MainnetTransactionValidatorTest {
             .signAndBuild(new SECP256K1().generateKeyPair());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(transaction, Optional.of(1L));
+        validator.validate(transaction, Optional.of(1L), transactionValidationParams);
     assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
     assertThat(validationResult.getErrorMessage())
         .isEqualTo("max priority fee per gas cannot be greater than max fee per gas");
@@ -347,13 +350,14 @@ public class MainnetTransactionValidatorTest {
 
     when(transactionPriceCalculator.price(eq(transaction), any())).thenReturn(Wei.of(160000L));
 
-    assertThat(frontierValidator.validate(transaction, Optional.empty()))
+    assertThat(
+            frontierValidator.validate(transaction, Optional.empty(), transactionValidationParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
 
     when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
         .thenReturn(new GasAndAccessedState(Gas.of(0)));
 
-    assertThat(eip1559Validator.validate(transaction, Optional.of(1L)))
+    assertThat(eip1559Validator.validate(transaction, Optional.of(1L), transactionValidationParams))
         .isEqualTo(ValidationResult.valid());
   }
 
@@ -376,7 +380,7 @@ public class MainnetTransactionValidatorTest {
             .createTransaction(senderKeys);
     final Optional<Long> basefee = Optional.of(150000L);
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(1));
-    assertThat(validator.validate(transaction, basefee))
+    assertThat(validator.validate(transaction, basefee, transactionValidationParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT));
   }
 
@@ -402,11 +406,12 @@ public class MainnetTransactionValidatorTest {
         .thenReturn(new GasAndAccessedState(Gas.of(50)));
     when(transactionPriceCalculator.price(transaction, basefee)).thenReturn(Wei.of(150001L));
 
-    assertThat(validator.validate(transaction, basefee)).isEqualTo(ValidationResult.valid());
+    assertThat(validator.validate(transaction, basefee, transactionValidationParams))
+        .isEqualTo(ValidationResult.valid());
   }
 
   @Test
-  public void shouldValidate1559TransactionWithPriceLowerThanBaseFee() {
+  public void shouldValidate1559TransactionWithPriceLowerThanBaseFeeForTransactionPool() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
@@ -425,9 +430,9 @@ public class MainnetTransactionValidatorTest {
     when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
         .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
-    // validate without basefee is an adding to transaction pool case
-    // rather than a transaction processing case
-    assertThat(validator.validate(transaction, Optional.empty()))
+    assertThat(
+            validator.validate(
+                transaction, Optional.of(1L), TransactionValidationParams.transactionPool()))
         .isEqualTo(ValidationResult.valid());
   }
 
@@ -441,8 +446,15 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.empty())
             .createTransaction(senderKeys);
 
-    assertThat(validator.validate(transaction, Optional.empty()).isValid()).isFalse();
-    assertThat(validator.validate(transaction, Optional.empty()).getInvalidReason())
+    assertThat(
+            validator
+                .validate(transaction, Optional.empty(), transactionValidationParams)
+                .isValid())
+        .isFalse();
+    assertThat(
+            validator
+                .validate(transaction, Optional.empty(), transactionValidationParams)
+                .getInvalidReason())
         .isEqualTo(GAS_PRICE_MUST_BE_ZERO);
   }
 
@@ -459,7 +471,11 @@ public class MainnetTransactionValidatorTest {
     when(gasCalculator.transactionIntrinsicGasCostAndAccessedState(transaction))
         .thenReturn(new GasAndAccessedState(Gas.of(50)));
 
-    assertThat(validator.validate(transaction, Optional.empty()).isValid()).isTrue();
+    assertThat(
+            validator
+                .validate(transaction, Optional.empty(), transactionValidationParams)
+                .isValid())
+        .isTrue();
   }
 
   private Account accountWithNonce(final long nonce) {

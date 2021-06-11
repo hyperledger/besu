@@ -102,7 +102,9 @@ public class MainnetTransactionValidator {
    *     is invalid.
    */
   public ValidationResult<TransactionInvalidReason> validate(
-      final Transaction transaction, final Optional<Long> baseFee) {
+      final Transaction transaction,
+      final Optional<Long> baseFee,
+      final TransactionValidationParams transactionValidationParams) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
@@ -126,7 +128,8 @@ public class MainnetTransactionValidator {
 
     if (baseFee.isPresent()) {
       final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
-      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+      if (!transactionValidationParams.isAllowMaxFeerGasBelowBaseFee()
+          && price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             "gasPrice is less than the current BaseFee");
@@ -140,8 +143,9 @@ public class MainnetTransactionValidator {
                   .getAsBigInteger()
                   .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
               > 0) {
+        System.out.println("ici ");
         return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+            TransactionInvalidReason.PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
             "max priority fee per gas cannot be greater than max fee per gas");
       }
     }

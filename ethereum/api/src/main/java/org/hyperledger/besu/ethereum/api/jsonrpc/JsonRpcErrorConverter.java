@@ -49,6 +49,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.GAS_PRICE_TOO_LOW;
       case TX_FEECAP_EXCEEDED:
         return JsonRpcError.TX_FEECAP_EXCEEDED;
+      case PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS:
+        return JsonRpcError.PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
       case OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST:
         return JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST;
       case TRANSACTION_ALREADY_KNOWN:
