@@ -105,16 +105,6 @@ public class MainnetProtocolSpecFactory {
         chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
   }
 
-  public ProtocolSpecBuilder aleutDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.aleutDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        genesisConfigOptions,
-        quorumCompatibilityMode);
-  }
-
   public ProtocolSpecBuilder londonDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.londonDefinition(
         chainId,
