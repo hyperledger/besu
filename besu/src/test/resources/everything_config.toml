@@ -147,7 +147,7 @@ privacy-precompiled-address=9
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-onchain-groups-enabled=false
-privacy-unrestricted-enabled=false
+privacy-unrestricted-enabled-beta=false
 
 # Transaction Pool
 tx-pool-retention-hours=999

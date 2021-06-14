@@ -971,7 +971,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
   @Option(
-      names = {"--privacy-unrestricted-enabled"},
+      names = {"--privacy-unrestricted-enabled-beta"},
       description =
           "Enable unrestricted (stores payload onchain) privacy (default: ${DEFAULT-VALUE})")
   private final Boolean isUnrestrictedPrivacyEnabled = false;

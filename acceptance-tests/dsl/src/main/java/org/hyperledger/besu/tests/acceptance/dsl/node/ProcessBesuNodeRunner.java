@@ -139,7 +139,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       }
 
       if (node.getPrivacyParameters().isUnrestrictedPrivacyEnabled()) {
-        params.add("--privacy-unrestricted-enabled");
+        params.add("--privacy-unrestricted-enabled-beta");
       }
     }
 
