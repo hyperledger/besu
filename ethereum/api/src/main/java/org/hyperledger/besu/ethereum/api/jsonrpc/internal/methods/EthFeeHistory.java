@@ -34,29 +34,38 @@ public class EthFeeHistory implements JsonRpcMethod {
   //  public FeeHistory feeHistory(final long blockCount, final long lastBlock) {
   //    return null;
   //  }
-  //
-  //  private static class FeeHistory {
-  //    private final long firstBlock;
-  //    private final List<Long> baseFee;
-  //    private final List<Double> gasUsedRatio;
-  //
-  //    private FeeHistory(
-  //        final long firstBlock, final List<Long> baseFee, final List<Double> gasUsedRatio) {
-  //      this.firstBlock = firstBlock;
-  //      this.baseFee = baseFee;
-  //      this.gasUsedRatio = gasUsedRatio;
-  //    }
-  //
-  //    public long getFirstBlock() {
-  //      return firstBlock;
-  //    }
-  //
-  //    public List<Long> getBaseFee() {
-  //      return baseFee;
-  //    }
-  //
-  //    public List<Double> getGasUsedRatio() {
-  //      return gasUsedRatio;
-  //    }
-  //  }
+
+  public static class FeeHistory {
+    private final long firstBlock;
+    private final List<Long> baseFees;
+    private final List<Double> gasUsedRatios;
+    private final Optional<List<List<Long>>> rewards;
+
+    FeeHistory(final long firstBlock, final List<Long> baseFees, final List<Double> gasUsedRatios) {
+      this(firstBlock, baseFees, gasUsedRatios, null);
+    }
+
+    public FeeHistory(
+        final long firstBlock,
+        final List<Long> baseFees,
+        final List<Double> gasUsedRatios,
+        final List<List<Long>> rewards) {
+      this.firstBlock = firstBlock;
+      this.baseFees = baseFees;
+      this.gasUsedRatios = gasUsedRatios;
+      this.rewards = Optional.ofNullable(rewards);
+    }
+
+    public long getFirstBlock() {
+      return firstBlock;
+    }
+
+    public List<Long> getBaseFees() {
+      return baseFees;
+    }
+
+    public List<Double> getGasUsedRatios() {
+      return gasUsedRatios;
+    }
+  }
 }
