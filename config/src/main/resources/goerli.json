@@ -4,6 +4,7 @@
     "petersburgBlock":0,
     "istanbulBlock":1561651,
     "berlinBlock":4460644,
+    "londonBlock":5062605,
     "clique":{
       "blockperiodseconds":15,
       "epochlength":30000
