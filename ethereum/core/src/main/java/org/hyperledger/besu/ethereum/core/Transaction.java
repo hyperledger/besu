@@ -991,6 +991,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                                 .map(
                                     maxPriorityFeePerGas ->
                                         baseFee.add(maxPriorityFeePerGas).min(maxFeePerGas))))
-        .orElse(getGasPrice().getAsBigInteger());
+        .orElse(getGasPrice().map(Wei::getAsBigInteger).get());
   }
 }
