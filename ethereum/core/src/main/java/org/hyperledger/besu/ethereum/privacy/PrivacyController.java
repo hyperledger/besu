@@ -35,7 +35,7 @@ public interface PrivacyController {
   Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(
       final Hash pmtHash, final String enclaveKey);
 
-  String sendTransaction(
+  String createPrivateMarkerTransactionPayload(
       PrivateTransaction privateTransaction,
       String enclavePublicKey,
       Optional<PrivacyGroup> privacyGroup);
@@ -50,10 +50,10 @@ public interface PrivacyController {
   PrivacyGroup[] findOffChainPrivacyGroupByMembers(List<String> addresses, String enclavePublicKey);
 
   Transaction createPrivateMarkerTransaction(
-      String privateTransactionLookupId, PrivateTransaction privateTransaction);
+      String privateMarkerTransactionPayload, PrivateTransaction privateTransaction);
 
   Transaction createPrivateMarkerTransaction(
-      String privateTransactionLookupId,
+      String privateMarkerTransactionPayload,
       PrivateTransaction privateTransaction,
       Address privacyPrecompileAddress);
 

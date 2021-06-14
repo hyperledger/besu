@@ -197,7 +197,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
     final String privateTransactionLookupId =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
+        privacyController.createPrivateMarkerTransactionPayload(transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
@@ -220,7 +220,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
     final String privateTransactionLookupId =
-        privacyController.sendTransaction(
+        privacyController.createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY, Optional.of(PANTHEON_PRIVACY_GROUP));
 
     final ValidationResult<TransactionInvalidReason> validationResult =
@@ -281,7 +281,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     assertThatExceptionOfType(EnclaveServerException.class)
         .isThrownBy(
             () ->
-                brokenPrivacyController.sendTransaction(
+                brokenPrivacyController.createPrivateMarkerTransactionPayload(
                     buildLegacyPrivateTransaction(), ENCLAVE_PUBLIC_KEY, Optional.empty()));
   }
 
@@ -463,7 +463,7 @@ public class RestrictedDefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(0);
 
     final String privateTransactionLookupId =
-        privacyController.sendTransaction(
+        privacyController.createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ONCHAIN_PRIVACY_GROUP));
 
     final Transaction onChainPrivateMarkerTransaction =

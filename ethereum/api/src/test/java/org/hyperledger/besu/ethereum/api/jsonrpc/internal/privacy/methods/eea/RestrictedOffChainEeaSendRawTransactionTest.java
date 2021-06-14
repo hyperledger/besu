@@ -55,7 +55,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
   @Test
   public void validLegacyTransactionIsSentToTransactionPool() {
-    when(privacyController.sendTransaction(any(), any(), any())).thenReturn(MOCK_ORION_KEY);
+    when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any())).thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))

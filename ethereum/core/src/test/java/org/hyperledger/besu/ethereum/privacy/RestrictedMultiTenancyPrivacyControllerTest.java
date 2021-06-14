@@ -80,16 +80,16 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
             .privateFrom(Bytes.fromBase64String(ENCLAVE_PUBLIC_KEY1))
             .build();
 
-    when(privacyController.sendTransaction(
+    when(privacyController.createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP)))
         .thenReturn(ENCLAVE_KEY);
 
     final String enclaveKey =
-        multiTenancyPrivacyController.sendTransaction(
+        multiTenancyPrivacyController.createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
     assertThat(enclaveKey).isEqualTo(ENCLAVE_KEY);
     verify(privacyController)
-        .sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
+        .createPrivateMarkerTransactionPayload(transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
   }
 
   @Test
@@ -108,18 +108,18 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
             "",
             "",
             List.of(ENCLAVE_PUBLIC_KEY1, ENCLAVE_PUBLIC_KEY2));
-    when(privacyController.sendTransaction(
+    when(privacyController.createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithEnclavePublicKey)))
         .thenReturn(ENCLAVE_KEY);
     when(enclave.retrievePrivacyGroup(PRIVACY_GROUP_ID))
         .thenReturn(privacyGroupWithEnclavePublicKey);
 
     final String response =
-        multiTenancyPrivacyController.sendTransaction(
+        multiTenancyPrivacyController.createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithEnclavePublicKey));
     assertThat(response).isEqualTo(ENCLAVE_KEY);
     verify(privacyController)
-        .sendTransaction(
+        .createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithEnclavePublicKey));
     verify(enclave).retrievePrivacyGroup(PRIVACY_GROUP_ID);
   }
@@ -133,13 +133,13 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
 
     assertThatThrownBy(
             () ->
-                multiTenancyPrivacyController.sendTransaction(
+                multiTenancyPrivacyController.createPrivateMarkerTransactionPayload(
                     transaction, ENCLAVE_PUBLIC_KEY1, Optional.empty()))
         .isInstanceOf(MultiTenancyValidationException.class)
         .hasMessage("Transaction privateFrom must match enclave public key");
 
     verify(privacyController, never())
-        .sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1, Optional.empty());
+        .createPrivateMarkerTransactionPayload(transaction, ENCLAVE_PUBLIC_KEY1, Optional.empty());
   }
 
   @Test
@@ -152,13 +152,13 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
 
     assertThatThrownBy(
             () ->
-                multiTenancyPrivacyController.sendTransaction(
+                multiTenancyPrivacyController.createPrivateMarkerTransactionPayload(
                     transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP)))
         .isInstanceOf(MultiTenancyValidationException.class)
         .hasMessage("Transaction privateFrom must match enclave public key");
 
     verify(privacyController, never())
-        .sendTransaction(transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
+        .createPrivateMarkerTransactionPayload(transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
   }
 
   @Test
@@ -178,7 +178,7 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
 
     assertThatThrownBy(
             () ->
-                multiTenancyPrivacyController.sendTransaction(
+                multiTenancyPrivacyController.createPrivateMarkerTransactionPayload(
                     transaction,
                     ENCLAVE_PUBLIC_KEY1,
                     Optional.of(privacyGroupWithoutEnclavePublicKey)))
@@ -186,7 +186,7 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
         .hasMessage("Privacy group must contain the enclave public key");
 
     verify(privacyController, never())
-        .sendTransaction(
+        .createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(privacyGroupWithoutEnclavePublicKey));
   }
 

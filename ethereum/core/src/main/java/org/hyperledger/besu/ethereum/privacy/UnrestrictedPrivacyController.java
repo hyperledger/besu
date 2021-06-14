@@ -68,7 +68,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   }
 
   @Override
-  public String sendTransaction(
+  public String createPrivateMarkerTransactionPayload(
       final PrivateTransaction privateTransaction,
       final String enclavePublicKey,
       final Optional<PrivacyGroup> privacyGroup) {
@@ -79,17 +79,17 @@ public class UnrestrictedPrivacyController implements PrivacyController {
 
   @Override
   public Transaction createPrivateMarkerTransaction(
-      final String privateTransactionLookupId, final PrivateTransaction privateTransaction) {
-    return privateMarkerTransactionFactory.create(privateTransactionLookupId, privateTransaction);
+          final String unrestrictedTransactionPayload, final PrivateTransaction privateTransaction) {
+    return privateMarkerTransactionFactory.create(unrestrictedTransactionPayload, privateTransaction);
   }
 
   @Override
   public Transaction createPrivateMarkerTransaction(
-      final String privateTransactionLookupId,
+      final String unrestrictedTransactionPayload,
       final PrivateTransaction privateTransaction,
       final Address privacyPrecompileAddress) {
     return privateMarkerTransactionFactory.create(
-        privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
+        unrestrictedTransactionPayload, privateTransaction, privacyPrecompileAddress);
   }
 
   @Override

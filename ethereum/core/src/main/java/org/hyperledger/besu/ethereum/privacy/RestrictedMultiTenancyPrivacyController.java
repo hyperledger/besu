@@ -76,7 +76,7 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   }
 
   @Override
-  public String sendTransaction(
+  public String createPrivateMarkerTransactionPayload(
       final PrivateTransaction privateTransaction,
       final String enclavePublicKey,
       final Optional<PrivacyGroup> maybePrivacyGroup) {
@@ -86,7 +86,7 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
       verifyPrivacyGroupContainsEnclavePublicKey(
           privateTransaction.getPrivacyGroupId().get().toBase64String(), enclavePublicKey);
     }
-    return privacyController.sendTransaction(
+    return privacyController.createPrivateMarkerTransactionPayload(
         privateTransaction, enclavePublicKey, maybePrivacyGroup);
   }
 

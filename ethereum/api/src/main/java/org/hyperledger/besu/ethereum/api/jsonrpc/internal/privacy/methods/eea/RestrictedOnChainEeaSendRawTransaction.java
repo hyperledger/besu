@@ -82,7 +82,7 @@ public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTr
     final Bytes privacyGroupId = privateTransaction.getPrivacyGroupId().get();
 
     final String privateTransactionLookupId =
-        privacyController.sendTransaction(privateTransaction, enclavePublicKey, privacyGroup);
+        privacyController.createPrivateMarkerTransactionPayload(privateTransaction, enclavePublicKey, privacyGroup);
     final Optional<String> addPayloadPrivateTransactionLookupId =
         privacyController.buildAndSendAddPayload(
             privateTransaction, Bytes32.wrap(privacyGroupId), enclavePublicKey);

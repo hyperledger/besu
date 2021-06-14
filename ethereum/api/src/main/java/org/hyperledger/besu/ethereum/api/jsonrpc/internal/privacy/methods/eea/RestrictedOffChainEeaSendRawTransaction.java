@@ -77,7 +77,7 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
             enclavePublicKeyProvider.getEnclaveKey(user));
 
     final String privateTransactionLookupId =
-        privacyController.sendTransaction(
+        privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, enclavePublicKeyProvider.getEnclaveKey(user), maybePrivacyGroup);
     return privacyController.createPrivateMarkerTransaction(
         privateTransactionLookupId, privateTransaction, Address.DEFAULT_PRIVACY);

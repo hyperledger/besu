@@ -123,7 +123,7 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   }
 
   @Override
-  public String sendTransaction(
+  public String createPrivateMarkerTransactionPayload(
       final PrivateTransaction privateTransaction,
       final String enclavePublicKey,
       final Optional<PrivacyGroup> maybePrivacyGroup) {
@@ -172,11 +172,11 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
 
   @Override
   public Transaction createPrivateMarkerTransaction(
-      final String privateTransactionLookupId,
+      final String transactionPayload,
       final PrivateTransaction privateTransaction,
       final Address privacyPrecompileAddress) {
     return privateMarkerTransactionFactory.create(
-        privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
+            transactionPayload, privateTransaction, privacyPrecompileAddress);
   }
 
   @Override

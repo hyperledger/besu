@@ -44,7 +44,7 @@ public class UnrestrictedEeaSendRawTransactionTest extends BaseEeaSendRawTransac
 
   @Test
   public void validUnrestrictedTransactionIsSentToTransactionPool() {
-    when(privacyController.sendTransaction(any(), any(), any())).thenReturn("");
+    when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any())).thenReturn("");
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))

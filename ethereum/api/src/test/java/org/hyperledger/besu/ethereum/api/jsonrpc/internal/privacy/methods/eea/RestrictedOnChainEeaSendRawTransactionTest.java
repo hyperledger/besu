@@ -57,7 +57,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
 
   @Test
   public void validOnChainTransactionPrivacyGroupIsSentToTransactionPool() {
-    when(privacyController.sendTransaction(any(), any(), any())).thenReturn(MOCK_ORION_KEY);
+    when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any())).thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivateMarkerTransaction(

@@ -108,7 +108,7 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
       }
 
       final String enclaveKey =
-          privacyController.sendTransaction(
+          privacyController.createPrivateMarkerTransactionPayload(
               privateTransaction, enclavePublicKey, maybePrivacyGroup);
       return new JsonRpcSuccessResponse(id, hexEncodeEnclaveKey(enclaveKey));
     } catch (final MultiTenancyValidationException e) {
