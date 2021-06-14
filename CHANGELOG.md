@@ -9,6 +9,8 @@
 
 ### Bug Fixes
 
+- Updated `eth_sendRawTransaction` to return an error when maxPriorityFeePerGas exceeds maxFeePerGas [\#2424](https://github.com/hyperledger/besu/pull/2424)
+
 ### Early Access Features
 This release contains the activation blocks for London across all supported testnets. They are: 
   * Ropsten 10_499_401 (24 Jun 2021)

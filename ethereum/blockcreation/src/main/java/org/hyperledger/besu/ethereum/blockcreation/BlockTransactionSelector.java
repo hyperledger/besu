@@ -252,10 +252,13 @@ public class BlockTransactionSelector {
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final WorldUpdater publicWorldStateUpdater) {
+    final TransactionValidationParams transactionValidationParams =
+        TransactionValidationParams.processingBlock();
     final MainnetTransactionValidator transactionValidator =
         transactionProcessor.getTransactionValidator();
     ValidationResult<TransactionInvalidReason> validationResult =
-        transactionValidator.validate(transaction, blockHeader.getBaseFee());
+        transactionValidator.validate(
+            transaction, blockHeader.getBaseFee(), transactionValidationParams);
     if (!validationResult.isValid()) {
       return validationResult;
     }
@@ -264,8 +267,7 @@ public class BlockTransactionSelector {
 
     final EvmAccount sender = publicWorldStateUpdater.getOrCreate(senderAddress);
     validationResult =
-        transactionValidator.validateForSender(
-            transaction, sender, TransactionValidationParams.processingBlock());
+        transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
 
     return validationResult;
   }
