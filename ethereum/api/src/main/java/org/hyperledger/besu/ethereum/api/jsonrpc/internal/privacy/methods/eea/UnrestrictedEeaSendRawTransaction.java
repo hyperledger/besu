@@ -51,7 +51,8 @@ public class UnrestrictedEeaSendRawTransaction extends AbstractEeaSendRawTransac
   protected Transaction createPrivateMarkerTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user) {
     final String encryptedRlpPayload =
-        privacyController.createPrivateMarkerTransactionPayload(privateTransaction, "", Optional.empty());
+        privacyController.createPrivateMarkerTransactionPayload(
+            privateTransaction, "", Optional.empty());
 
     return privacyController.createPrivateMarkerTransaction(
         encryptedRlpPayload, privateTransaction, Address.UNRESTRICTED_PRIVACY);

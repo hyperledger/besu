@@ -79,8 +79,9 @@ public class UnrestrictedPrivacyController implements PrivacyController {
 
   @Override
   public Transaction createPrivateMarkerTransaction(
-          final String unrestrictedTransactionPayload, final PrivateTransaction privateTransaction) {
-    return privateMarkerTransactionFactory.create(unrestrictedTransactionPayload, privateTransaction);
+      final String unrestrictedTransactionPayload, final PrivateTransaction privateTransaction) {
+    return privateMarkerTransactionFactory.create(
+        unrestrictedTransactionPayload, privateTransaction);
   }
 
   @Override

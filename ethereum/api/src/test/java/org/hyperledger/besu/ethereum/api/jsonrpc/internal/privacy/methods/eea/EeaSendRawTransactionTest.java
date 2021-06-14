@@ -152,7 +152,8 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   public void invalidTransactionFailingWithMultiTenancyValidationErrorReturnsUnauthorizedError() {
     when(privacyController.validatePrivateTransaction(any(PrivateTransaction.class), anyString()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.createPrivateMarkerTransactionPayload(any(PrivateTransaction.class), any(), any()))
+    when(privacyController.createPrivateMarkerTransactionPayload(
+            any(PrivateTransaction.class), any(), any()))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final JsonRpcResponse expectedResponse =
@@ -212,7 +213,8 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
 
-    when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any())).thenReturn(MOCK_ORION_KEY);
+    when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
+        .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), anyString()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))

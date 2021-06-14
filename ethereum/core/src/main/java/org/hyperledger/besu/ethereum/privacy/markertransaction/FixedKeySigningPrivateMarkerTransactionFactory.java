@@ -44,7 +44,7 @@ public class FixedKeySigningPrivateMarkerTransactionFactory
       final PrivateTransaction privateTransaction,
       final Address precompileAddress) {
     return create(
-            privateMarkerTransactionPayload,
+        privateMarkerTransactionPayload,
         privateTransaction,
         nonceProvider.getNonce(sender),
         signingKey,

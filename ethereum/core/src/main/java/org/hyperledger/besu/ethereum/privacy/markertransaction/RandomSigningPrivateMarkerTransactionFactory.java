@@ -32,6 +32,7 @@ public class RandomSigningPrivateMarkerTransactionFactory extends PrivateMarkerT
       final PrivateTransaction privateTransaction,
       final Address precompileAddress) {
     final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-    return create(privateMarkerTransactionPayload, privateTransaction, 0, signingKey, precompileAddress);
+    return create(
+        privateMarkerTransactionPayload, privateTransaction, 0, signingKey, precompileAddress);
   }
 }

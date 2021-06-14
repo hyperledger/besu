@@ -197,7 +197,8 @@ public class RestrictedDefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
     final String privateTransactionLookupId =
-        privacyController.createPrivateMarkerTransactionPayload(transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
+        privacyController.createPrivateMarkerTransactionPayload(
+            transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);

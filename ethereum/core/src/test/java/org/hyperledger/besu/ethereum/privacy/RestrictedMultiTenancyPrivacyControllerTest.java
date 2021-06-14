@@ -89,7 +89,8 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
             transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
     assertThat(enclaveKey).isEqualTo(ENCLAVE_KEY);
     verify(privacyController)
-        .createPrivateMarkerTransactionPayload(transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
+        .createPrivateMarkerTransactionPayload(
+            transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
   }
 
   @Test
@@ -158,7 +159,8 @@ public class RestrictedMultiTenancyPrivacyControllerTest {
         .hasMessage("Transaction privateFrom must match enclave public key");
 
     verify(privacyController, never())
-        .createPrivateMarkerTransactionPayload(transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
+        .createPrivateMarkerTransactionPayload(
+            transaction, ENCLAVE_PUBLIC_KEY1, Optional.of(PANTHEON_PRIVACY_GROUP));
   }
 
   @Test
