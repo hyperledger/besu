@@ -22,9 +22,11 @@ import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +34,9 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.testcontainers.containers.Network;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthCall;
@@ -39,9 +44,21 @@ import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 
+@RunWith(Parameterized.class)
 public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBase {
 
-  protected static final long POW_CHAIN_ID = 2018;
+  private final EnclaveType enclaveType;
+
+  public OnChainPrivacyAcceptanceTest(final EnclaveType enclaveType) {
+    this.enclaveType = enclaveType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.asList(EnclaveType.values());
+  }
+
+  protected static final long POW_CHAIN_ID = 1337;
 
   private PrivacyNode alice;
   private PrivacyNode bob;
@@ -57,15 +74,32 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
 
   @Before
   public void setUp() throws Exception {
+    final Network containerNetwork = Network.newNetwork();
+
     alice =
         privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
-            "node1", privacyAccountResolver.resolve(0), Address.PRIVACY, false);
+            "node1",
+            privacyAccountResolver.resolve(0),
+            Address.PRIVACY,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork));
     bob =
         privacyBesu.createOnChainPrivacyGroupEnabledNode(
-            "node2", privacyAccountResolver.resolve(1), Address.PRIVACY, false);
+            "node2",
+            privacyAccountResolver.resolve(1),
+            Address.PRIVACY,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork));
     charlie =
         privacyBesu.createOnChainPrivacyGroupEnabledNode(
-            "node3", privacyAccountResolver.resolve(2), Address.PRIVACY, false);
+            "node3",
+            privacyAccountResolver.resolve(2),
+            Address.PRIVACY,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork));
     privacyCluster.start(alice, bob, charlie);
   }
 

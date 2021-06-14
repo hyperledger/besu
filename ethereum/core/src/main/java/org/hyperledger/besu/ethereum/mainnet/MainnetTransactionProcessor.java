@@ -253,7 +253,8 @@ public class MainnetTransactionProcessor {
     try {
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
-          transactionValidator.validate(transaction, blockHeader.getBaseFee());
+          transactionValidator.validate(
+              transaction, blockHeader.getBaseFee(), transactionValidationParams);
       // Make sure the transaction is intrinsically valid before trying to
       // compare against a sender account (because the transaction may not
       // be signed correctly to extract the sender).
@@ -466,11 +467,13 @@ public class MainnetTransactionProcessor {
     }
   }
 
-  protected static Gas refunded(
+  protected Gas refunded(
       final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
     final Gas maxRefundAllowance =
-        Gas.of(transaction.getGasLimit()).minus(gasRemaining).dividedBy(2);
+        Gas.of(transaction.getGasLimit())
+            .minus(gasRemaining)
+            .dividedBy(gasCalculator.getMaxRefundQuotient());
     final Gas refundAllowance = maxRefundAllowance.min(gasRefund);
     return gasRemaining.plus(refundAllowance);
   }

@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.p2p.config;
 
 import static java.util.stream.Collectors.toList;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class DiscoveryConfiguration {
                   // Ethereum Foundation Aleth Bootnodes
                   "enode://979b7fa28feeb35a4741660a16076f1943202cb72b6af70d327f053e248bab9ba81760f39d0701ef1d8f89cc1fbd2cacba0710a12cd5314d5e0c9021aa3637f9@5.1.83.226:30303" // DE
                   )
-              .map(EnodeURL::fromString)
+              .map(EnodeURLImpl::fromString)
               .collect(toList()));
   public static final List<EnodeURL> RINKEBY_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
@@ -67,7 +68,7 @@ public class DiscoveryConfiguration {
                   "enode://a24ac7c5484ef4ed0c5eb2d36620ba4e4aa13b8c84684e1b4aab0cebea2ae45cb4d375b77eab56516d34bfbd3c1a833fc51296ff084b770b94fb9028c4d25ccf@52.169.42.101:30303",
                   "enode://343149e4feefa15d882d9fe4ac7d88f885bd05ebb735e547f12e12080a9fa07c8014ca6fd7f373123488102fe5e34111f8509cf0b7de3f5b44339c9f25e87cb8@52.3.158.184:30303",
                   "enode://b6b28890b006743680c52e64e0d16db57f28124885595fa03a562be1d2bf0f3a1da297d56b13da25fb992888fd556d4c1a27b1f39d531bde7de1921c90061cc6@159.89.28.211:30303")
-              .map(EnodeURL::fromString)
+              .map(EnodeURLImpl::fromString)
               .collect(toList()));
   public static final List<EnodeURL> ROPSTEN_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
@@ -76,7 +77,7 @@ public class DiscoveryConfiguration {
                   "enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303",
                   "enode://30b7ab30a01c124a6cceca36863ece12c4f5fa68e3ba9b0b51407ccc002eeed3b3102d20a88f1c1d3c3154e2449317b8ef95090e77b312d5cc39354f86d5d606@52.176.7.10:30303",
                   "enode://865a63255b3bb68023b6bffd5095118fcc13e79dcf014fe4e47e065c350c7cc72af2e53eff895f11ba1bbb6a2b33271c1116ee870f266618eadfc2e78aa7349c@52.176.100.77:30303")
-              .map(EnodeURL::fromString)
+              .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
   public static final List<EnodeURL> GOERLI_BOOTSTRAP_NODES =
@@ -95,7 +96,14 @@ public class DiscoveryConfiguration {
                   "enode://807b37ee4816ecf407e9112224494b74dd5933625f655962d892f2f0f02d7fbbb3e2a94cf87a96609526f30c998fd71e93e2f53015c558ffc8b03eceaf30ee33@51.15.119.157:30303", // @q9f Uklun
                   "enode://a59e33ccd2b3e52d578f1fbd70c6f9babda2650f0760d6ff3b37742fdcdfdb3defba5d56d315b40c46b70198c7621e63ffa3f987389c7118634b0fefbbdfa7fd@51.15.119.157:40303" // @q9f Uklun
                   )
-              .map(EnodeURL::fromString)
+              .map(EnodeURLImpl::fromString)
+              .collect(toList()));
+
+  public static final List<EnodeURL> CALAVERAS_BOOTSTRAP_NODES =
+      Collections.unmodifiableList(
+          Stream.of(
+                  "enode://9e1096aa59862a6f164994cb5cb16f5124d6c992cdbf4535ff7dea43ea1512afe5448dca9df1b7ab0726129603f1a3336b631e4d7a1a44c94daddd03241587f9@3.9.20.133:30303")
+              .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
   public static final List<EnodeURL> CLASSIC_BOOTSTRAP_NODES =
@@ -139,7 +147,7 @@ public class DiscoveryConfiguration {
                   "enode://0daae2a30f2c73b0b257746587136efb8e3479496f7ea1e943eeb9a663b72dd04582f699f7010ee02c57fc45d1f09568c20a9050ff937f9139e2973ddd98b87b@159.89.169.103:30303",
                   "enode://50808461dd73b3d70537e4c1e5fafd1132b3a90f998399af9205f8889987d62096d4e853813562dd43e7270a71c9d9d4e4dd73a534fdb22fbac98c389c1a7362@178.128.55.119:30303",
                   "enode://5cd218959f8263bc3721d7789070806b0adff1a0ed3f95ec886fb469f9362c7507e3b32b256550b9a7964a23a938e8d42d45a0c34b332bfebc54b29081e83b93@35.187.57.94:30303")
-              .map(EnodeURL::fromString)
+              .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
   public static final List<EnodeURL> KOTTI_BOOTSTRAP_NODES =
@@ -159,7 +167,7 @@ public class DiscoveryConfiguration {
                   "enode://efd7391a3bed73ad74ae5760319bb48f9c9f1983ff22964422688cdb426c5d681004ece26c47121396653cf9bafe7104aa4ecff70e24cc5b11fd76be8e5afce0@51.158.191.43:45678", // @q9f Mizar
                   "enode://93b12383c74c39b67afa99a7ff44ce250fe94295fa1fc087465cc4fe2d0b33b91a8d8cabe03b250104a9096aa0e06bcde5f95665a5bd9f890edd2ab33e16ae47@51.15.41.19:30303" // @q9f Zibal
                   )
-              .map(EnodeURL::fromString)
+              .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
   public static final List<EnodeURL> MORDOR_BOOTSTRAP_NODES =
@@ -194,21 +202,14 @@ public class DiscoveryConfiguration {
                   "enode://8fa15f5012ac3c47619147220b7772fcc5db0cb7fd132b5d196e7ccacb166ac1fcf83be1dace6cd288e288a85e032423b6e7e9e57f479fe7373edea045caa56b@176.9.51.216:31355", // @q9f Ceibo
                   "enode://34c14141b79652afc334dcd2ba4d8047946246b2310dc8e45737ebe3e6f15f9279ca4702b90bc5be12929f6194e2c3ce19a837b7fec7ebffcee9e9fe4693b504@176.9.51.216:31365" // @q9f Ceibo
                   )
-              .map(EnodeURL::fromString)
-              .collect(toList()));
-
-  public static final List<EnodeURL> YOLO_V3_BOOTSTRAP_NODES =
-      Collections.unmodifiableList(
-          Stream.of(
-                  "enode://9e1096aa59862a6f164994cb5cb16f5124d6c992cdbf4535ff7dea43ea1512afe5448dca9df1b7ab0726129603f1a3336b631e4d7a1a44c94daddd03241587f9@3.9.20.133:30303")
-              .map(EnodeURL::fromString)
+              .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
   public static final List<EnodeURL> ASTOR_BOOTSTRAP_NODES =
       Collections.unmodifiableList(
           Stream.of(
                   "enode://b638fc3dca6181ae97fac2ea0157e8330f5ac8a20c0d4c63aa6f98dcbac4e35b4e023f656757b58c1da7a7b2be9ffad9342e0f769b8cf0f5e35ff73116ff7dfd@3.16.171.213:30303")
-              .map(EnodeURL::fromString)
+              .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
   private boolean active = true;

@@ -201,7 +201,8 @@ public class BlockchainReferenceTestCaseSpec {
     "blocknumber",
     "chainname",
     "expectExceptionALL",
-    "chainnetwork"
+    "chainnetwork",
+    "transactionSequence"
   })
   public static class CandidateBlock {
 

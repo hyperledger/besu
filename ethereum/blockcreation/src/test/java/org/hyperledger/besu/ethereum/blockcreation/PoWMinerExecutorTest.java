@@ -15,7 +15,10 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -25,6 +28,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
+
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -43,7 +48,7 @@ public class PoWMinerExecutorTest {
             5,
             TestClock.fixed(),
             metricsSystem,
-            () -> null,
+            PoWMinerExecutorTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final PoWMinerExecutor executor =
@@ -72,7 +77,7 @@ public class PoWMinerExecutorTest {
             5,
             TestClock.fixed(),
             metricsSystem,
-            () -> null,
+            PoWMinerExecutorTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final PoWMinerExecutor executor =
@@ -88,5 +93,11 @@ public class PoWMinerExecutorTest {
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))
         .withMessageContaining("Coinbase cannot be unset.");
+  }
+
+  private static BlockHeader mockBlockHeader() {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    return blockHeader;
   }
 }

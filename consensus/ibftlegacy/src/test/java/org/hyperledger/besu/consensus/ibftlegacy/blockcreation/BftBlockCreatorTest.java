@@ -68,6 +68,9 @@ public class BftBlockCreatorTest {
     final MutableBlockchain blockchain = mock(MutableBlockchain.class);
     when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
     when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
 
     final KeyPair nodeKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     // Add the local node as a validator (can't propose a block if node is not a validator).

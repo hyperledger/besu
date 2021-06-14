@@ -139,6 +139,59 @@ public class ProofOfWorkValidationRuleTest {
     assertThat(validationRule.validate(header, parentHeader)).isFalse();
   }
 
+  @Test
+  public void failsWithNonEip1559BlockAfterFork() {
+    final ProofOfWorkValidationRule proofOfWorkValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT);
+
+    final BlockHeaderBuilder headerBuilder =
+        BlockHeaderBuilder.fromHeader(blockHeader)
+            .difficulty(Difficulty.ONE)
+            .blockHeaderFunctions(mainnetBlockHashFunction())
+            .timestamp(1);
+    final BlockHeader preHeader = headerBuilder.buildBlockHeader();
+    final Hash headerHash = validationRule.hashHeader(preHeader);
+
+    PoWSolution solution =
+        PoWHasher.ETHASH_LIGHT.hash(
+            preHeader.getNonce(),
+            preHeader.getNumber(),
+            new EpochCalculator.DefaultEpochCalculator(),
+            headerHash);
+
+    final BlockHeader header = headerBuilder.mixHash(solution.getMixHash()).buildBlockHeader();
+
+    assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
+  }
+
+  @Test
+  public void failsWithEip1559BlockBeforeFork() {
+    final ProofOfWorkValidationRule proofOfWorkValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.ETHASH_LIGHT);
+
+    final BlockHeaderBuilder headerBuilder =
+        BlockHeaderBuilder.fromHeader(blockHeader)
+            .difficulty(Difficulty.ONE)
+            .baseFee(10L)
+            .blockHeaderFunctions(mainnetBlockHashFunction())
+            .timestamp(1);
+    final BlockHeader preHeader = headerBuilder.buildBlockHeader();
+    final Hash headerHash = validationRule.hashHeader(preHeader);
+
+    PoWSolution solution =
+        PoWHasher.ETHASH_LIGHT.hash(
+            preHeader.getNonce(),
+            preHeader.getNumber(),
+            new EpochCalculator.DefaultEpochCalculator(),
+            headerHash);
+
+    final BlockHeader header = headerBuilder.mixHash(solution.getMixHash()).buildBlockHeader();
+
+    assertThat(proofOfWorkValidationRule.validate(header, parentHeader)).isFalse();
+  }
+
   private BlockHeaderFunctions mainnetBlockHashFunction() {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     return ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);

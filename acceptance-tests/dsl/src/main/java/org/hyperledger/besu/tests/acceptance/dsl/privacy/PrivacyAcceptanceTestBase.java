@@ -40,7 +40,7 @@ import org.junit.rules.TemporaryFolder;
 public class PrivacyAcceptanceTestBase {
   @ClassRule public static final TemporaryFolder privacy = new TemporaryFolder();
 
-  protected static final long POW_CHAIN_ID = 2018;
+  protected static final long POW_CHAIN_ID = 1337;
 
   protected final PrivacyTransactions privacyTransactions;
   protected final PrivateContractVerifier privateContractVerifier;

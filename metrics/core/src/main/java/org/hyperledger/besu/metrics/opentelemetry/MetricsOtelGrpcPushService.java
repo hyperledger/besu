@@ -27,6 +27,8 @@ import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.export.IntervalMetricReader;
+import io.opentelemetry.sdk.metrics.export.IntervalMetricReaderBuilder;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.SpanProcessor;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import org.apache.logging.log4j.LogManager;
@@ -52,23 +54,16 @@ public class MetricsOtelGrpcPushService implements MetricsService {
   public CompletableFuture<?> start() {
     LOG.info("Starting OpenTelemetry push service");
     OtlpGrpcMetricExporter exporter = OtlpGrpcMetricExporter.getDefault();
-    IntervalMetricReader.Builder builder =
+    IntervalMetricReaderBuilder builder =
         IntervalMetricReader.builder()
             .setExportIntervalMillis(configuration.getPushInterval() * 1000L)
-            .readEnvironmentVariables()
-            .readSystemProperties()
-            .setMetricProducers(
-                Collections.singleton(metricsSystem.getMeterSdkProvider().getMetricProducer()))
+            .setMetricProducers(Collections.singleton(metricsSystem.getMeterSdkProvider()))
             .setMetricExporter(exporter);
-    this.periodicReader = builder.build();
-    this.spanProcessor =
-        BatchSpanProcessor.builder(
-                OtlpGrpcSpanExporter.builder()
-                    .readSystemProperties()
-                    .readEnvironmentVariables()
-                    .build())
-            .build();
-    OpenTelemetrySdk.get().getTracerManagement().addSpanProcessor(spanProcessor);
+    this.periodicReader = builder.buildAndStart();
+    this.spanProcessor = BatchSpanProcessor.builder(OtlpGrpcSpanExporter.builder().build()).build();
+    OpenTelemetrySdk.builder()
+        .setTracerProvider(SdkTracerProvider.builder().addSpanProcessor(spanProcessor).build())
+        .buildAndRegisterGlobal();
     return CompletableFuture.completedFuture(null);
   }
 

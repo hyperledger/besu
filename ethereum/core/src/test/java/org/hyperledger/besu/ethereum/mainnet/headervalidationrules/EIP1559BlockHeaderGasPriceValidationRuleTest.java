@@ -15,18 +15,13 @@
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Java6Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.blockHeader;
-import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.disableEIP1559;
-import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.enableEIP1559;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
 
 import java.util.Optional;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,56 +37,34 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
     validationRule = new EIP1559BlockHeaderGasPriceValidationRule(eip1559);
   }
 
-  @After
-  public void reset() {
-    ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
-  }
-
-  @Test
-  public void eipActivationShouldBeGuardedProperly() {
-    disableEIP1559();
-    assertThatThrownBy(
-            () -> validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
-        .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("EIP-1559 is not enabled");
-  }
-
   @Test
   public void shouldReturnTrueBeforeFork() {
-    enableEIP1559();
     assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
         .isTrue();
-    disableEIP1559();
   }
 
   @Test
   public void shouldReturnTrueIfInitialBaseFeeAtForkBlock() {
-    enableEIP1559();
     assertThat(
             validationRule.validate(
                 blockHeader(FORK_BLOCK, 0, Optional.of(feeMarket.getInitialBasefee())), null))
         .isTrue();
-    disableEIP1559();
   }
 
   @Test
   public void shouldReturnFalseIfNotInitialBaseFeeAtForkBlock() {
-    enableEIP1559();
     assertThat(
             validationRule.validate(
                 blockHeader(FORK_BLOCK, 0, Optional.of(feeMarket.getInitialBasefee() - 1)), null))
         .isFalse();
-    disableEIP1559();
   }
 
   @Test
   public void shouldReturnIfNoBaseFeeAfterForkBlock() {
-    enableEIP1559();
     assertThat(
             validationRule.validate(
                 blockHeader(FORK_BLOCK + 2, 0, Optional.empty()),
                 blockHeader(FORK_BLOCK + 1, 0, Optional.empty())))
         .isFalse();
-    disableEIP1559();
   }
 }

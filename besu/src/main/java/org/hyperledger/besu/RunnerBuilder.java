@@ -74,7 +74,6 @@ import org.hyperledger.besu.ethereum.p2p.network.NoopP2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -107,7 +106,9 @@ import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
 import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
@@ -164,6 +165,7 @@ public class RunnerBuilder {
   private Optional<Path> pidPath = Optional.empty();
   private MetricsConfiguration metricsConfiguration;
   private ObservableMetricsSystem metricsSystem;
+  private PermissioningServiceImpl permissioningService;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private Collection<EnodeURL> staticNodes = Collections.emptyList();
   private Optional<String> identityString = Optional.empty();
@@ -288,8 +290,8 @@ public class RunnerBuilder {
   }
 
   public RunnerBuilder permissioningConfiguration(
-      final PermissioningConfiguration permissioningConfiguration) {
-    this.permissioningConfiguration = Optional.of(permissioningConfiguration);
+      final Optional<PermissioningConfiguration> permissioningConfiguration) {
+    this.permissioningConfiguration = permissioningConfiguration;
     return this;
   }
 
@@ -315,6 +317,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder metricsSystem(final ObservableMetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
+    return this;
+  }
+
+  public RunnerBuilder permissioningService(final PermissioningServiceImpl permissioningService) {
+    this.permissioningService = permissioningService;
     return this;
   }
 
@@ -708,7 +715,23 @@ public class RunnerBuilder {
                   localNodeId,
                   transactionSimulator,
                   metricsSystem,
-                  blockchain);
+                  blockchain,
+                  permissioningService.getConnectionPermissioningProviders());
+
+      return Optional.of(nodePermissioningController);
+    } else if (permissioningService.getConnectionPermissioningProviders().size() > 0) {
+      final NodePermissioningController nodePermissioningController =
+          new NodePermissioningControllerFactory()
+              .create(
+                  new PermissioningConfiguration(
+                      Optional.empty(), Optional.empty(), Optional.empty()),
+                  synchronizer,
+                  fixedNodes,
+                  localNodeId,
+                  transactionSimulator,
+                  metricsSystem,
+                  blockchain,
+                  permissioningService.getConnectionPermissioningProviders());
 
       return Optional.of(nodePermissioningController);
     } else {

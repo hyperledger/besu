@@ -73,11 +73,11 @@ public class RetestethService {
             new DebugAccountRange(retestethContext::getBlockchainQueries),
             new EthGetBalance(retestethContext::getBlockchainQueries),
             new EthGetBlockByHash(retestethContext::getBlockchainQueries, blockResult, true),
-            new EthGetCode(retestethContext::getBlockchainQueries),
+            new EthGetCode(retestethContext::getBlockchainQueries, Optional.empty()),
             new EthGetTransactionCount(
                 retestethContext::getBlockchainQueries,
                 retestethContext::getPendingTransactions,
-                true),
+                false),
             new DebugStorageRangeAt(
                 retestethContext::getBlockchainQueries, retestethContext::getBlockReplay, true),
             new TestModifyTimestamp(retestethContext),

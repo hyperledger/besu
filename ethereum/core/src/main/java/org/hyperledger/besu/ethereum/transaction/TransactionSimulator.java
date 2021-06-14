@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -38,8 +40,8 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
@@ -163,9 +165,13 @@ public class TransactionSimulator {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
     }
 
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+
+    final MainnetTransactionProcessor transactionProcessor =
+        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
+
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
-            .type(TransactionType.FRONTIER)
             .nonce(nonce)
             .gasPrice(gasPrice)
             .gasLimit(gasLimit)
@@ -174,15 +180,15 @@ public class TransactionSimulator {
             .value(value)
             .payload(payload)
             .signature(FAKE_SIGNATURE);
-    callParams.getGasPremium().ifPresent(transactionBuilder::gasPremium);
-    callParams.getFeeCap().ifPresent(transactionBuilder::feeCap);
+    callParams.getMaxPriorityFeePerGas().ifPresent(transactionBuilder::maxPriorityFeePerGas);
+    callParams.getMaxFeePerGas().ifPresent(transactionBuilder::maxFeePerGas);
 
+    transactionBuilder.guessType();
+    if (transactionBuilder.getTransactionType().requiresChainId()) {
+      transactionBuilder.chainId(BigInteger.ONE); // needed to make some transactions valid
+    }
     final Transaction transaction = transactionBuilder.build();
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
-
-    final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
@@ -194,6 +200,25 @@ public class TransactionSimulator {
             false,
             transactionValidationParams,
             operationTracer);
+
+    // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
+    // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
+    // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
+    // fail.
+    if (GoQuorumOptions.goQuorumCompatibilityMode && value.isZero()) {
+      Gas privateGasEstimateAndState = protocolSpec.getGasCalculator().getMaximumPmtCost();
+      if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
+        // modify the result to have the larger estimate
+        TransactionProcessingResult resultPmt =
+            TransactionProcessingResult.successful(
+                result.getLogs(),
+                privateGasEstimateAndState.toLong(),
+                result.getGasRemaining(),
+                result.getOutput(),
+                result.getValidationResult());
+        return Optional.of(new TransactionSimulatorResult(transaction, resultPmt));
+      }
+    }
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

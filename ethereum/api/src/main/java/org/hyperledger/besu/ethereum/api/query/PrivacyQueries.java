@@ -70,7 +70,7 @@ public class PrivacyQueries {
 
     final List<Hash> pmtHashList =
         privateTransactionMetadataList.stream()
-            .map(PrivateTransactionMetadata::getPrivacyMarkerTransactionHash)
+            .map(PrivateTransactionMetadata::getPrivateMarkerTransactionHash)
             .collect(Collectors.toList());
 
     final List<PrivateTransactionReceipt> privateTransactionReceiptList =
@@ -90,7 +90,7 @@ public class PrivacyQueries {
                     privateTransactionReceiptList.get(i),
                     blockNumber,
                     blockHash,
-                    privateTransactionMetadataList.get(i).getPrivacyMarkerTransactionHash(),
+                    privateTransactionMetadataList.get(i).getPrivateMarkerTransactionHash(),
                     findPMTIndex(pmtHashList.get(i)),
                     removed))
         .flatMap(Collection::stream)

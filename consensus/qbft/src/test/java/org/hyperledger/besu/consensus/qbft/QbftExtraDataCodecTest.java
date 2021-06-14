@@ -34,8 +34,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -92,7 +92,10 @@ public class QbftExtraDataCodecTest {
     encoder.writeBytes(vanity_data);
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
-    vote.get().writeTo(encoder);
+    encoder.startList();
+    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeByte(Vote.ADD_BYTE_VALUE);
+    encoder.endList();
 
     // This is to verify that the decoding works correctly when the round is encoded as non-fixed
     // length bytes
@@ -130,8 +133,8 @@ public class QbftExtraDataCodecTest {
     encoder.writeBytes(vanity_data);
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
-    // encoded vote
-    vote.get().writeTo(encoder);
+    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeByte(Vote.ADD_BYTE_VALUE);
 
     // This is to verify that the decoding throws an exception when the round number is encoded in
     // 4 byte format
@@ -215,7 +218,10 @@ public class QbftExtraDataCodecTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
     // encoded vote
-    vote.get().writeTo(encoder);
+    encoder.startList();
+    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeNull();
+    encoder.endList();
 
     encoder.writeIntScalar(round);
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
@@ -355,7 +361,10 @@ public class QbftExtraDataCodecTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
     // encoded vote
-    vote.get().writeTo(encoder);
+    encoder.startList();
+    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeByte(Vote.ADD_BYTE_VALUE);
+    encoder.endList();
 
     encoder.writeIntScalar(round);
     encoder.writeEmptyList();
@@ -366,6 +375,8 @@ public class QbftExtraDataCodecTest {
     Bytes actualEncoding =
         bftExtraDataCodec.encodeWithoutCommitSeals(
             new BftExtraData(vanity_data, committerSeals, vote, round, validators));
+
+    System.out.println("actualEncoding = " + actualEncoding);
 
     assertThat(actualEncoding).isEqualTo(expectedEncoding);
   }
@@ -391,7 +402,10 @@ public class QbftExtraDataCodecTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
     // encoded vote
-    vote.get().writeTo(encoder);
+    encoder.startList();
+    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeByte(Vote.ADD_BYTE_VALUE);
+    encoder.endList();
 
     encoder.writeNull();
     encoder.writeEmptyList();
@@ -410,7 +424,6 @@ public class QbftExtraDataCodecTest {
   @Test
   public void incorrectlyStructuredRlpThrowsException() {
     final List<Address> validators = Lists.newArrayList();
-    final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));
     final int round = 0x00FEDCBA;
     final List<SECPSignature> committerSeals = Lists.newArrayList();
 
@@ -424,7 +437,10 @@ public class QbftExtraDataCodecTest {
     encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
 
     // encoded vote
-    vote.get().writeTo(encoder);
+    encoder.startList();
+    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeByte(Vote.ADD_BYTE_VALUE);
+    encoder.endList();
 
     encoder.writeInt(round);
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));

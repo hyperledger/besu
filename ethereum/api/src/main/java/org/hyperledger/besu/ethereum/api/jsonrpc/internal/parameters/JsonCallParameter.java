@@ -42,8 +42,8 @@ public class JsonCallParameter extends CallParameter {
       @JsonProperty("to") final Address to,
       @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
       @JsonProperty("gasPrice") final Wei gasPrice,
-      @JsonProperty("gasPremium") final Wei gasPremium,
-      @JsonProperty("feeCap") final Wei feeCap,
+      @JsonProperty("maxPriorityFeePerGas") final Wei maxPriorityFeePerGas,
+      @JsonProperty("maxFeePerGas") final Wei maxFeePerGas,
       @JsonProperty("value") final Wei value,
       @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
           final Bytes payload,
@@ -53,8 +53,8 @@ public class JsonCallParameter extends CallParameter {
         to,
         gasLimit != null ? gasLimit.toLong() : -1,
         gasPrice,
-        Optional.ofNullable(gasPremium),
-        Optional.ofNullable(feeCap),
+        Optional.ofNullable(maxPriorityFeePerGas),
+        Optional.ofNullable(maxFeePerGas),
         value,
         payload);
     this.strict = Optional.ofNullable(strict).orElse(FALSE);

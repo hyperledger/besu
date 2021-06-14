@@ -20,12 +20,15 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfigur
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccount;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
+import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import org.testcontainers.containers.Network;
 
 public class PrivacyNodeFactory {
 
@@ -37,17 +40,30 @@ public class PrivacyNodeFactory {
     this.vertx = vertx;
   }
 
-  private PrivacyNode create(final PrivacyNodeConfiguration privacyNodeConfig) throws IOException {
-    return new PrivacyNode(privacyNodeConfig, vertx);
+  private PrivacyNode create(
+      final PrivacyNodeConfiguration privacyNodeConfig,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
+      throws IOException {
+    return new PrivacyNode(privacyNodeConfig, vertx, enclaveType, containerNetwork);
   }
 
   public PrivacyNode createPrivateTransactionEnabledMinerNode(
-      final String name, final PrivacyAccount privacyAccount) throws IOException {
-    return createPrivateTransactionEnabledMinerNode(name, privacyAccount, Address.PRIVACY);
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
+      throws IOException {
+    return createPrivateTransactionEnabledMinerNode(
+        name, privacyAccount, Address.PRIVACY, enclaveType, containerNetwork);
   }
 
   public PrivacyNode createPrivateTransactionEnabledMinerNode(
-      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final int privacyAddress,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
@@ -60,17 +76,28 @@ public class PrivacyNodeFactory {
                 .enablePrivateTransactions()
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .build(),
-            new OrionKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())));
+            new EnclaveKeyConfiguration(
+                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+        enclaveType,
+        containerNetwork);
   }
 
   public PrivacyNode createPrivateTransactionEnabledNode(
-      final String name, final PrivacyAccount privacyAccount) throws IOException {
-    return createPrivateTransactionEnabledNode(name, privacyAccount, Address.PRIVACY);
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
+      throws IOException {
+    return createPrivateTransactionEnabledNode(
+        name, privacyAccount, Address.PRIVACY, enclaveType, containerNetwork);
   }
 
   public PrivacyNode createPrivateTransactionEnabledNode(
-      final String name, final PrivacyAccount privacyAccount, final int privacyAddress)
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final int privacyAddress,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
@@ -82,25 +109,39 @@ public class PrivacyNodeFactory {
                 .enablePrivateTransactions()
                 .webSocketEnabled()
                 .build(),
-            new OrionKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())));
+            new EnclaveKeyConfiguration(
+                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+        enclaveType,
+        containerNetwork);
   }
 
   public PrivacyNode createIbft2NodePrivacyMiningEnabled(
-      final String name, final PrivacyAccount privacyAccount) throws IOException {
-    return createIbft2NodePrivacyEnabled(name, privacyAccount, Address.PRIVACY, true);
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
+      throws IOException {
+    return createIbft2NodePrivacyEnabled(
+        name, privacyAccount, Address.PRIVACY, true, enclaveType, containerNetwork);
   }
 
   public PrivacyNode createIbft2NodePrivacyEnabled(
-      final String name, final PrivacyAccount privacyAccount) throws IOException {
-    return createIbft2NodePrivacyEnabled(name, privacyAccount, Address.PRIVACY, false);
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
+      throws IOException {
+    return createIbft2NodePrivacyEnabled(
+        name, privacyAccount, Address.PRIVACY, false, enclaveType, containerNetwork);
   }
 
   public PrivacyNode createIbft2NodePrivacyEnabled(
       final String name,
       final PrivacyAccount privacyAccount,
       final int privacyAddress,
-      final boolean minerEnabled)
+      final boolean minerEnabled,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
@@ -115,15 +156,19 @@ public class PrivacyNodeFactory {
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .build(),
-            new OrionKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())));
+            new EnclaveKeyConfiguration(
+                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+        enclaveType,
+        containerNetwork);
   }
 
   public PrivacyNode createOnChainPrivacyGroupEnabledMinerNode(
       final String name,
       final PrivacyAccount privacyAccount,
       final int privacyAddress,
-      final boolean multiTenancyEnabled)
+      final boolean multiTenancyEnabled,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
       throws IOException, URISyntaxException {
     final BesuNodeConfigurationBuilder besuNodeConfigurationBuilder =
         new BesuNodeConfigurationBuilder();
@@ -144,15 +189,19 @@ public class PrivacyNodeFactory {
                 .enablePrivateTransactions()
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .build(),
-            new OrionKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())));
+            new EnclaveKeyConfiguration(
+                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+        enclaveType,
+        containerNetwork);
   }
 
   public PrivacyNode createOnChainPrivacyGroupEnabledNode(
       final String name,
       final PrivacyAccount privacyAccount,
       final int privacyAddress,
-      final boolean multiTenancyEnabled)
+      final boolean multiTenancyEnabled,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
@@ -166,7 +215,9 @@ public class PrivacyNodeFactory {
                 .enablePrivateTransactions()
                 .webSocketEnabled()
                 .build(),
-            new OrionKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())));
+            new EnclaveKeyConfiguration(
+                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+        enclaveType,
+        containerNetwork);
   }
 }

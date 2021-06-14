@@ -35,7 +35,6 @@
         {
           "blockHash": "0x1878c6f27178250f3d55186a2887b076936599f307d96dabcf331b2ff0a38f0c",
           "blockNumber": "0x10",
-          "chainId": null,
           "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
           "gas": "0x4cb2f",
           "gasPrice": "0x1",
