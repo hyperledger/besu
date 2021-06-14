@@ -7,7 +7,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.jetbrains.annotations.NotNull;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -17,9 +18,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class EthFeeHistoryTest {
-  @Mock private Blockchain blockchain;
+  private final Blockchain blockchain = mock(Blockchain.class);
 
   private EthFeeHistory method;
 
@@ -55,14 +59,22 @@ public class EthFeeHistoryTest {
   @Test
   public void allFieldsPresentForLatestBlock() {
     final JsonRpcRequestContext requestContext =
-        feeHistoryRequestContext(1, "latest", new double[] {4.0});
-    assertThat(method.response(requestContext))
+        feeHistoryRequestContext(1, "latest", new double[] {100.0});
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(50L);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(200L));
+    when(blockHeader.getGasUsed()).thenReturn(15000000L / 2);
+    when(blockHeader.getGasLimit()).thenReturn(15000000L);
+    when(blockchain.getBlockHeader(eq(50L))).thenReturn(Optional.of(blockHeader));
+    assertThat(((JsonRpcSuccessResponse) method.response(requestContext)).getResult())
         .isEqualTo(
-            new JsonRpcSuccessResponse(
-                requestContext.getRequest().getId(),
-                new EthFeeHistory.FeeHistory(
-                    0x30, List.of(200L), List.of(0.5), List.of(List.of(150L)))));
+            new EthFeeHistory.FeeHistory(
+                50, List.of(Optional.of(200L)), List.of(0.5), List.of(List.of(150L))));
   }
+
+  // test base fee always being of size > 1
+  // test block count goes further than chain head
+  // test names of field are alright
 
   private JsonRpcRequestContext feeHistoryRequestContext(final Object... params) {
     return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_feeHistory", params));
