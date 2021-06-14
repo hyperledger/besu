@@ -254,6 +254,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         chainId,
         Optional.empty());
   }
+
   /**
    * Instantiates a transaction instance.
    *
@@ -935,5 +936,35 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                   chainId),
               keys);
     }
+  }
+
+  /**
+   * Calculates the effectiveGasPrice of a transaction on the basis of an {@code Optional<Long>}
+   * baseFee and handles unwrapping Optional fee parameters. If baseFee is present, effective gas is
+   * calculated as:
+   *
+   * <p>min((baseFeePerGas + maxPriorityFeePerGas), maxFeePerGas)
+   *
+   * <p>Otherwise, return gasPrice for legacy transactions.
+   *
+   * @param baseFeePerGas optional baseFee from the block header, if we are post-london
+   * @return the effective gas price.
+   */
+  public final BigInteger calcEffectiveGas(final Optional<Long> baseFeePerGas) {
+    return baseFeePerGas
+        .filter(fee -> getType().supports1559FeeMarket())
+        .map(BigInteger::valueOf)
+        .flatMap(
+            baseFee ->
+                getMaxFeePerGas()
+                    .map(org.hyperledger.besu.plugin.data.Quantity::getAsBigInteger)
+                    .flatMap(
+                        maxFeePerGas ->
+                            getMaxPriorityFeePerGas()
+                                .map(org.hyperledger.besu.plugin.data.Quantity::getAsBigInteger)
+                                .map(
+                                    maxPriorityFeePerGas ->
+                                        baseFee.add(maxPriorityFeePerGas).min(maxFeePerGas))))
+        .orElse(getGasPrice().getAsBigInteger());
   }
 }

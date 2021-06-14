@@ -77,9 +77,11 @@ public class EthGetTransactionReceiptTest {
       Hash.fromHexString("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
   private final TransactionReceiptWithMetadata stateReceiptWithMetaData =
-      TransactionReceiptWithMetadata.create(stateReceipt, transaction, hash, 1, 2, blockHash, 4);
+      TransactionReceiptWithMetadata.create(
+          stateReceipt, transaction, hash, 1, 2, Optional.empty(), blockHash, 4);
   private final TransactionReceiptWithMetadata rootReceiptWithMetaData =
-      TransactionReceiptWithMetadata.create(rootReceipt, transaction, hash, 1, 2, blockHash, 4);
+      TransactionReceiptWithMetadata.create(
+          rootReceipt, transaction, hash, 1, 2, Optional.empty(), blockHash, 4);
 
   private final ProtocolSpec rootTransactionTypeSpec =
       new ProtocolSpec(
