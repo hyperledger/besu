@@ -144,7 +144,6 @@ public class MainnetTransactionValidator {
                   .getAsBigInteger()
                   .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
               > 0) {
-        System.out.println("ici ");
         return ValidationResult.invalid(
             TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
             "max priority fee per gas cannot be greater than max fee per gas");
