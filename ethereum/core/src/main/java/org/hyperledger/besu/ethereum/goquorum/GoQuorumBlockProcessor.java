@@ -221,8 +221,11 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final WorldUpdater publicWorldStateUpdater) {
     final MainnetTransactionValidator transactionValidator =
         transactionProcessor.getTransactionValidator();
+    final TransactionValidationParams transactionValidationParams =
+        TransactionValidationParams.processingBlock();
     ValidationResult<TransactionInvalidReason> validationResult =
-        transactionValidator.validate(transaction, blockHeader.getBaseFee());
+        transactionValidator.validate(
+            transaction, blockHeader.getBaseFee(), transactionValidationParams);
     if (!validationResult.isValid()) {
       LOG.warn(
           "Invalid transaction: {}. Block {} Transaction {}",
@@ -236,8 +239,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
     final EvmAccount sender = publicWorldStateUpdater.getOrCreate(senderAddress);
     validationResult =
-        transactionValidator.validateForSender(
-            transaction, sender, TransactionValidationParams.processingBlock());
+        transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
     if (!validationResult.isValid()) {
       LOG.warn(
           "Invalid transaction: {}. Block {} Transaction {}",
