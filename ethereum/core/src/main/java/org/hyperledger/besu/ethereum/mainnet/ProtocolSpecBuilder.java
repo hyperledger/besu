@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
@@ -69,8 +68,6 @@ public class ProtocolSpecBuilder {
   private TransactionPriceCalculator transactionPriceCalculator =
       TransactionPriceCalculator.frontier();
   private Optional<EIP1559> eip1559 = Optional.empty();
-  private TransactionGasBudgetCalculator gasBudgetCalculator =
-      TransactionGasBudgetCalculator.frontier();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
 
@@ -228,12 +225,6 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder gasBudgetCalculator(
-      final TransactionGasBudgetCalculator gasBudgetCalculator) {
-    this.gasBudgetCalculator = gasBudgetCalculator;
-    return this;
-  }
-
   public ProtocolSpecBuilder badBlocksManager(final BadBlockManager badBlockManager) {
     this.badBlockManager = badBlockManager;
     return this;
@@ -301,7 +292,6 @@ public class ProtocolSpecBuilder {
             blockReward,
             miningBeneficiaryCalculator,
             skipZeroBlockRewards,
-            gasBudgetCalculator,
             privacyParameters.getGoQuorumPrivacyParameters());
     // Set private Tx Processor
     PrivateTransactionProcessor privateTransactionProcessor = null;
@@ -369,7 +359,6 @@ public class ProtocolSpecBuilder {
         gasCalculator,
         transactionPriceCalculator,
         eip1559,
-        gasBudgetCalculator,
         badBlockManager,
         Optional.ofNullable(powHasher));
   }
@@ -402,7 +391,6 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        TransactionGasBudgetCalculator gasBudgetCalculator,
         Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
   }
 

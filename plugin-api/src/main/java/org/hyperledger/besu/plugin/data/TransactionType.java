@@ -60,4 +60,8 @@ public enum TransactionType {
   public boolean supports1559FeeMarket() {
     return !LEGACY_FEE_MARKET_TRANSACTION_TYPES.contains(this);
   }
+
+  public boolean requiresChainId() {
+    return !this.equals(FRONTIER);
+  }
 }

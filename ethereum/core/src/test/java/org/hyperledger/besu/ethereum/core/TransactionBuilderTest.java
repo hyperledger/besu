@@ -39,7 +39,7 @@ public class TransactionBuilderTest {
 
     final Set<TransactionType> guessedTypes =
         Stream.of(frontierBuilder, eip1559Builder, accessListBuilder)
-            .map(transactionBuilder -> transactionBuilder.guessType().build().getType())
+            .map(transactionBuilder -> transactionBuilder.guessType().getTransactionType())
             .collect(toUnmodifiableSet());
 
     assertThat(guessedTypes).containsExactlyInAnyOrder(TransactionType.values());

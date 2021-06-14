@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
+import static java.util.Optional.ofNullable;
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 
@@ -46,6 +47,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -232,8 +234,21 @@ public class TransactionPool implements BlockAddedObserver {
   private ValidationResult<TransactionInvalidReason> validateTransaction(
       final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
+
+    // Check whether it's a GoQuorum transaction
+    if (isGoQuorumPrivateTransaction(transaction)) {
+      final Optional<Wei> weiValue = ofNullable(transaction.getValue());
+      if (weiValue.isPresent() && !weiValue.get().isZero()) {
+        return ValidationResult.invalid(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
+      }
+    }
+
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
-        getTransactionValidator().validate(transaction, chainHeadBlockHeader.getBaseFee());
+        getTransactionValidator()
+            .validate(
+                transaction,
+                chainHeadBlockHeader.getBaseFee(),
+                TransactionValidationParams.transactionPool());
     if (!basicValidationResult.isValid()) {
       return basicValidationResult;
     }
@@ -251,7 +266,7 @@ public class TransactionPool implements BlockAddedObserver {
             .orElse(false)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          String.format("EIP-1559 transaction are not allowed yet"));
+          "EIP-1559 transaction are not allowed yet");
     }
 
     return protocolContext
@@ -274,6 +289,11 @@ public class TransactionPool implements BlockAddedObserver {
   private BlockHeader getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
+  }
+
+  private boolean isGoQuorumPrivateTransaction(final Transaction transaction) {
+    return (transaction.getV().equals(BigInteger.valueOf(37))
+        || (transaction.getV().equals(BigInteger.valueOf(38))));
   }
 
   public interface TransactionBatchAddedListener {

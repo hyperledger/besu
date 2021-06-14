@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
@@ -133,11 +132,10 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(0);
     assertThat(results.getReceipts().size()).isEqualTo(0);
@@ -171,11 +169,10 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(1);
     Assertions.assertThat(results.getTransactions()).contains(transaction);
@@ -227,11 +224,10 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(4);
     assertThat(results.getTransactions().contains(transactionsToInject.get(1))).isFalse();
@@ -271,11 +267,10 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(3);
 
@@ -306,14 +301,13 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final Transaction tx = createTransaction(1);
     pendingTransactions.addRemoteTransaction(tx);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(0);
     assertThat(pendingTransactions.size()).isEqualTo(0);
@@ -336,8 +330,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.eip1559(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.eip1559());
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -376,7 +369,7 @@ public class BlockTransactionSelectorTest {
     pendingTransactions.addRemoteTransaction(fillingLegacyTx);
     pendingTransactions.addRemoteTransaction(extraEIP1559Tx);
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(1);
   }
@@ -404,8 +397,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 3 transactions to the Pending Transactions, 79% of block, 100% of block and 10% of block
@@ -430,7 +422,7 @@ public class BlockTransactionSelectorTest {
     }
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(2);
     Assertions.assertThat(results.getTransactions().get(0)).isEqualTo(transactionsToInject.get(0));
@@ -461,8 +453,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
@@ -496,7 +487,7 @@ public class BlockTransactionSelectorTest {
     pendingTransactions.addRemoteTransaction(transaction4);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(2);
     Assertions.assertThat(results.getTransactions().get(0)).isEqualTo(transaction1);
@@ -522,8 +513,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     final Transaction validTransaction =
@@ -559,7 +549,7 @@ public class BlockTransactionSelectorTest {
             TransactionProcessingResult.invalid(
                 ValidationResult.invalid(TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT)));
 
-    selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+    selector.buildTransactionListForBlock();
 
     Assertions.assertThat(pendingTransactions.getTransactionByHash(validTransaction.getHash()))
         .isPresent();
@@ -603,11 +593,10 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            TransactionPriceCalculator.frontier(),
-            TransactionGasBudgetCalculator.frontier());
+            TransactionPriceCalculator.frontier());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock(blockHeader.getNumber(), blockHeader.getGasLimit());
+        selector.buildTransactionListForBlock();
 
     Assertions.assertThat(pendingTransactions.getTransactionByHash(futureTransaction.getHash()))
         .isPresent();
