@@ -9,6 +9,8 @@
 
 ### Bug Fixes
 
+- Updated `eth_sendRawTransaction` to return an error when maxPriorityFeePerGas exceeds maxFeePerGas [\#2424](https://github.com/hyperledger/besu/pull/2424)
+
 ### Early Access Features
 
 ## 21.1.7
