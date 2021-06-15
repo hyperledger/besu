@@ -18,10 +18,8 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
@@ -119,8 +117,7 @@ public class TestImportRawBlockTest {
 
     final JsonRpcRequestContext requestRewind =
         new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0", TestRewindToBlock.METHOD_NAME, new Object[] {0L}));
+            new JsonRpcRequest("2.0", TestRewindToBlock.METHOD_NAME, new Object[] {0L}));
 
     final var response = test_importRawBlock.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
@@ -130,6 +127,5 @@ public class TestImportRawBlockTest {
     assertThat(reimportResponse.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
 
     assertThat(context.getBlockchain().getChainHead().getHeight()).isEqualTo(1L);
-
   }
 }
