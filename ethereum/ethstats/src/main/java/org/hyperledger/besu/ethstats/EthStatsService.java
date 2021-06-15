@@ -438,9 +438,8 @@ public class EthStatsService {
     // retrieves transactions from the last blocks and takes the lowest gas price. If no transaction
     // is present we return the minTransactionGasPrice of the mining coordinator
     return block.getBody().getTransactions().stream()
-        // TODO: should use effective gas price here?
-        .min(Comparator.comparing(t -> t.getGasPrice().get()))
-        .map(t -> t.getGasPrice().get())
+        .min(Comparator.comparing(t -> t.calcEffectiveGas(block.getHeader().getBaseFee())))
+        .map(t -> t.calcEffectiveGas(block.getHeader().getBaseFee()))
         .filter(wei -> wei.getValue().longValue() > 0)
         .orElse(miningCoordinator.getMinTransactionGasPrice())
         .getValue()

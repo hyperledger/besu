@@ -167,7 +167,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
     }
 
-    // TODO: do we want to require gas fields by transactionType or leave that to validate()?
+    checkArgument(
+        gasPrice.isPresent() || maxFeePerGas.isPresent(),
+        "Transaction requires either gasPrice or maxFeePerGas");
 
     this.transactionType = transactionType;
     this.nonce = nonce;
@@ -976,7 +978,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param baseFeePerGas optional baseFee from the block header, if we are post-london
    * @return the effective gas price.
    */
-  public final BigInteger calcEffectiveGas(final Optional<Long> baseFeePerGas) {
+  public final Wei calcEffectiveGas(final Optional<Long> baseFeePerGas) {
     return baseFeePerGas
         .filter(fee -> getType().supports1559FeeMarket())
         .map(BigInteger::valueOf)
@@ -991,6 +993,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                                 .map(
                                     maxPriorityFeePerGas ->
                                         baseFee.add(maxPriorityFeePerGas).min(maxFeePerGas))))
-        .orElse(getGasPrice().map(Wei::getAsBigInteger).get());
+        .map(Wei::ofNumber)
+        .orElse(getGasPrice().get());
   }
 }

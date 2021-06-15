@@ -820,8 +820,8 @@ public class BlockchainQueries {
                         .orElseThrow(
                             () -> new IllegalStateException("Could not retrieve block #" + l)))
             .flatMap(Collection::stream)
-            // TODO: discuss whether we should filter by gas price or calculate an effective gas
-            // price
+            // TODO: currently we omit 1559 transactions from this calculation, what should
+            //       gasPrice() return for this endpoint post-London? (substitute effective gas?)
             .filter(t -> t.getGasPrice().isPresent())
             .mapToLong(t -> t.getGasPrice().get().toLong())
             .sorted()
