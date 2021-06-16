@@ -167,10 +167,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
     }
 
-    checkArgument(
-        gasPrice.isPresent() || maxFeePerGas.isPresent(),
-        "Transaction requires either gasPrice or maxFeePerGas");
-
     this.transactionType = transactionType;
     this.nonce = nonce;
     this.gasPrice = gasPrice;
