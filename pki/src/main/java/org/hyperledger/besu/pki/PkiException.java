@@ -12,27 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.orion.testutil;
+package org.hyperledger.besu.pki;
 
-public class OrionKeyConfiguration {
-  private final String[] pubKeyPaths;
-  private final String[] privKeyPaths;
+public class PkiException extends RuntimeException {
 
-  public OrionKeyConfiguration(final String pubKeyPath, final String privKeyPath) {
-    this.pubKeyPaths = new String[] {pubKeyPath};
-    this.privKeyPaths = new String[] {privKeyPath};
+  private static final long serialVersionUID = 1L;
+
+  public PkiException() {
+    super();
   }
 
-  public OrionKeyConfiguration(final String[] pubKeyPaths, final String[] privKeyPaths) {
-    this.pubKeyPaths = pubKeyPaths;
-    this.privKeyPaths = privKeyPaths;
+  public PkiException(final String message) {
+    super(message);
   }
 
-  public String[] getPubKeyPaths() {
-    return pubKeyPaths;
+  public PkiException(final String message, final Throwable t) {
+    super(message, t);
   }
 
-  public String[] getPrivKeyPaths() {
-    return privKeyPaths;
+  public PkiException(final Throwable t) {
+    super(t);
   }
 }

@@ -106,6 +106,7 @@ public class Runner implements AutoCloseable {
   public void start() {
     try {
       LOG.info("Starting Ethereum main loop ... ");
+      metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       natService.start();
       networkRunner.start();
       if (networkRunner.getNetwork().isP2pEnabled()) {
@@ -120,7 +121,6 @@ public class Runner implements AutoCloseable {
       jsonRpc.ifPresent(service -> waitForServiceToStart("jsonRpc", service.start()));
       graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
       websocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
-      metrics.ifPresent(service -> waitForServiceToStart("metrics", service.start()));
       ethStatsService.ifPresent(EthStatsService::start);
       LOG.info("Ethereum main loop is up.");
       writeBesuPortsToFile();

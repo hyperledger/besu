@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
@@ -146,18 +147,23 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Optional<BigInteger> chainId,
       final Optional<BigInteger> v) {
     if (v.isPresent() && chainId.isPresent()) {
-      throw new IllegalStateException(
+      throw new IllegalArgumentException(
           String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
     }
 
+    if (transactionType.requiresChainId()) {
+      checkArgument(
+          chainId.isPresent(), "Chain id must be present for transaction type %s", transactionType);
+    }
+
     if (maybeAccessList.isPresent()) {
-      checkState(
+      checkArgument(
           transactionType.supportsAccessList(),
           "Must not specify access list for transaction not supporting it");
     }
 
     if (Objects.equals(transactionType, TransactionType.ACCESS_LIST)) {
-      checkState(
+      checkArgument(
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
     }
 
@@ -248,6 +254,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         chainId,
         Optional.empty());
   }
+
   /**
    * Instantiates a transaction instance.
    *
@@ -485,10 +492,16 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
 
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
-    if (chainId.isEmpty()) {
-      return recId.add(REPLAY_UNPROTECTED_V_BASE);
+
+    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
+      // EIP-2718 typed transaction, return yParity:
+      return recId;
     } else {
-      return recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
+      if (chainId.isEmpty()) {
+        return recId.add(REPLAY_UNPROTECTED_V_BASE);
+      } else {
+        return recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(chainId.get()));
+      }
     }
   }
 
@@ -520,7 +533,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost() {
-    return getUpfrontGasCost(getGasPrice());
+    return getUpfrontGasCost((Wei.of(getMaxFeePerGas().orElse(getGasPrice()).getAsBigInteger())));
   }
 
   /**
@@ -581,6 +594,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       final Bytes payload,
       final Optional<List<AccessListEntry>> accessList,
       final Optional<BigInteger> chainId) {
+    if (transactionType.requiresChainId()) {
+      checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
+    }
     final Bytes preimage;
     switch (transactionType) {
       case FRONTIER:
@@ -872,7 +888,12 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
       return this;
     }
 
+    public TransactionType getTransactionType() {
+      return transactionType;
+    }
+
     public Transaction build() {
+      if (transactionType == null) guessType();
       return new Transaction(
           transactionType,
           nonce,
@@ -915,5 +936,35 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                   chainId),
               keys);
     }
+  }
+
+  /**
+   * Calculates the effectiveGasPrice of a transaction on the basis of an {@code Optional<Long>}
+   * baseFee and handles unwrapping Optional fee parameters. If baseFee is present, effective gas is
+   * calculated as:
+   *
+   * <p>min((baseFeePerGas + maxPriorityFeePerGas), maxFeePerGas)
+   *
+   * <p>Otherwise, return gasPrice for legacy transactions.
+   *
+   * @param baseFeePerGas optional baseFee from the block header, if we are post-london
+   * @return the effective gas price.
+   */
+  public final BigInteger calcEffectiveGas(final Optional<Long> baseFeePerGas) {
+    return baseFeePerGas
+        .filter(fee -> getType().supports1559FeeMarket())
+        .map(BigInteger::valueOf)
+        .flatMap(
+            baseFee ->
+                getMaxFeePerGas()
+                    .map(org.hyperledger.besu.plugin.data.Quantity::getAsBigInteger)
+                    .flatMap(
+                        maxFeePerGas ->
+                            getMaxPriorityFeePerGas()
+                                .map(org.hyperledger.besu.plugin.data.Quantity::getAsBigInteger)
+                                .map(
+                                    maxPriorityFeePerGas ->
+                                        baseFee.add(maxPriorityFeePerGas).min(maxFeePerGas))))
+        .orElse(getGasPrice().getAsBigInteger());
   }
 }

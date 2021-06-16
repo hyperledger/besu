@@ -114,8 +114,8 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
 
       ctx.channel()
           .pipeline()
-          .addFirst(new ValidateFirstOutboundMessage(framer))
-          .replace(this, "DeFramer", deFramer);
+          .replace(this, "DeFramer", deFramer)
+          .addBefore("DeFramer", "validate", new ValidateFirstOutboundMessage(framer));
 
       ctx.writeAndFlush(new OutboundMessage(null, HelloMessage.create(localNode.getPeerInfo())))
           .addListener(

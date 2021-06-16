@@ -99,9 +99,9 @@ public class TransactionCompleteResult implements TransactionResult {
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
     this.maxPriorityFeePerGas =
-        tx.getTransaction().getMaxPriorityFeePerGas().map(q -> q.toHexString()).orElse(null);
+        tx.getTransaction().getMaxPriorityFeePerGas().map(q -> q.toShortHexString()).orElse(null);
     this.maxFeePerGas =
-        tx.getTransaction().getMaxFeePerGas().map(q -> q.toHexString()).orElse(null);
+        tx.getTransaction().getMaxFeePerGas().map(q -> q.toShortHexString()).orElse(null);
     this.gasPrice = Quantity.create(transaction.getGasPrice());
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();

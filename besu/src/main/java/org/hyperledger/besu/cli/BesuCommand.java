@@ -48,10 +48,10 @@ import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
+import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
-import org.hyperledger.besu.cli.options.unstable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
@@ -249,7 +249,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
-  private final EthstatsOptions unstableEthstatsOptions = EthstatsOptions.create();
   private final DataStorageOptions unstableDataStorageOptions = DataStorageOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final MiningOptions unstableMiningOptions = MiningOptions.create();
@@ -257,6 +256,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
+
+  // stable CLI options
+  private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
 
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
@@ -954,7 +956,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--privacy-marker-transaction-signing-key-file"},
       description =
           "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
-  private final Path privacyMarkerTransactionSigningKeyPath = null;
+  private final Path privateMarkerTransactionSigningKeyPath = null;
 
   @Option(
       names = {"--privacy-enable-database-migration"},
@@ -1174,6 +1176,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
 
+    handleStableOptions();
     enableExperimentalEIPs();
     addSubCommands(resultHandler, in);
     registerConverters();
@@ -1254,6 +1257,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
   }
 
+  private void handleStableOptions() {
+    commandLine.addMixin("Ethstats", ethstatsOptions);
+  }
+
   private void handleUnstableOptions() {
     // Add unstable options
     final ImmutableMap.Builder<String, Object> unstableOptionsBuild = ImmutableMap.builder();
@@ -1267,7 +1274,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("NAT Configuration", unstableNatOptions)
             .put("Synchronizer", unstableSynchronizerOptions)
             .put("TransactionPool", unstableTransactionPoolOptions)
-            .put("Ethstats", unstableEthstatsOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Data Storage Options", unstableDataStorageOptions)
@@ -1327,8 +1333,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         final ImmutableLauncherConfig launcherConfig =
             ImmutableLauncherConfig.builder()
                 .launcherScript(BesuCommand.class.getResourceAsStream("launcher.json"))
-                .addCommandClasses(
-                    this, unstableNatOptions, unstableEthstatsOptions, unstableMiningOptions)
+                .addCommandClasses(this, unstableNatOptions, ethstatsOptions, unstableMiningOptions)
                 .isLauncherForced(unstableLauncherOptions.isLauncherModeForced())
                 .build();
         final File file = new LauncherManager(launcherConfig).run();
@@ -1337,7 +1342,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             configParsingHandler,
             exceptionHandler,
             String.format("%s=%s", CONFIG_FILE_OPTION_NAME, file.getAbsolutePath()));
-      } catch (LauncherException e) {
+      } catch (final LauncherException e) {
         logger.warn("Unable to run the launcher {}", e.getMessage());
       }
     } else {
@@ -1464,12 +1469,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateNetStatsParams() {
-    if (Strings.isNullOrEmpty(unstableEthstatsOptions.getEthstatsUrl())
-        && !unstableEthstatsOptions.getEthstatsContact().isEmpty()) {
+    if (Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl())
+        && !ethstatsOptions.getEthstatsContact().isEmpty()) {
       throw new ParameterException(
           this.commandLine,
-          "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
-              + " or provide an url (via --Xethstats=nodename:secret@host:port)");
+          "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact"
+              + " or provide an url (via --ethstats=nodename:secret@host:port)");
     }
   }
 
@@ -2130,7 +2135,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privacyMarkerTransactionSigningKeyPath == null) {
+        if (privateMarkerTransactionSigningKeyPath == null) {
           throw new ParameterException(
               commandLine,
               "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
@@ -2142,7 +2147,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-precompiled-address option is deprecated. This address is derived, based on --privacy-onchain-groups-enabled.");
       }
 
-      privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
+      privacyParametersBuilder.setPrivateKeyPath(privateMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
       if (isPrivacyTlsEnabled) {
@@ -2219,6 +2224,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                                   "No KeyValueStorageFactory found for key: " + name)))
               .withCommonConfiguration(pluginCommonConfiguration)
               .withMetricsSystem(getMetricsSystem())
+              .isGoQuorumCompatibilityMode(isGoQuorumCompatibilityMode.booleanValue())
               .build();
     }
     return this.keyValueStorageProvider;
@@ -2303,8 +2309,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
-            .ethstatsUrl(unstableEthstatsOptions.getEthstatsUrl())
-            .ethstatsContact(unstableEthstatsOptions.getEthstatsContact())
+            .ethstatsUrl(ethstatsOptions.getEthstatsUrl())
+            .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
             .build();

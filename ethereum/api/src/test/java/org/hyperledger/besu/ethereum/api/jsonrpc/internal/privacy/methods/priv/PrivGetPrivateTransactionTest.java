@@ -67,7 +67,7 @@ public class PrivGetPrivateTransactionTest {
     privGetPrivateTransaction =
         new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
 
-    markerTransaction = PrivateTransactionDataFixture.privacyMarkerTransaction();
+    markerTransaction = PrivateTransactionDataFixture.privateMarkerTransaction();
   }
 
   @Test

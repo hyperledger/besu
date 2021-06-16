@@ -19,7 +19,7 @@ public enum NetworkName {
   RINKEBY,
   ROPSTEN,
   GOERLI,
-  BAIKAL,
+  CALAVERAS,
   DEV,
   CLASSIC,
   KOTTI,

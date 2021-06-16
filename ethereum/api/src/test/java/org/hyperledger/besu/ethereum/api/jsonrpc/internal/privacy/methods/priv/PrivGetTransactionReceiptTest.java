@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
-import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privacyMarkerTransaction;
+import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateMarkerTransaction;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionLegacy;
 import static org.mockito.ArgumentMatchers.any;
@@ -85,7 +85,7 @@ public class PrivGetTransactionReceiptTest {
 
   @Test
   public void returnReceiptIfLegacyTransactionExists() {
-    final Transaction pmt = privacyMarkerTransaction();
+    final Transaction pmt = privateMarkerTransaction();
     final PrivateTransaction legacyPrivateTransaction = privateTransactionLegacy();
     final ExecutedPrivateTransaction executedPrivateTransaction =
         createExecutedPrivateTransaction(pmt, legacyPrivateTransaction);
@@ -106,7 +106,7 @@ public class PrivGetTransactionReceiptTest {
 
   @Test
   public void returnReceiptIfBesuTransactionExists() {
-    final Transaction pmt = privacyMarkerTransaction();
+    final Transaction pmt = privateMarkerTransaction();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
     final ExecutedPrivateTransaction executedPrivateTransaction =
         createExecutedPrivateTransaction(pmt, privateTransaction);
@@ -152,7 +152,7 @@ public class PrivGetTransactionReceiptTest {
 
   @Test
   public void transactionReceiptContainsRevertReasonWhenInvalidTransactionOccurs() {
-    final Transaction pmt = privacyMarkerTransaction();
+    final Transaction pmt = privateMarkerTransaction();
     final PrivateTransaction privateTransaction = privateTransactionBesu();
     final ExecutedPrivateTransaction executedPrivateTransaction =
         createExecutedPrivateTransaction(pmt, privateTransaction);

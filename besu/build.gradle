@@ -29,6 +29,7 @@ jar {
 
 dependencies {
   implementation project(':config')
+  implementation project(':pki')
   implementation project(':consensus:clique')
   implementation project(':consensus:common')
   implementation project(':consensus:ibft')

@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.goquorum;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -27,14 +25,13 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class GoQuorumKeyValueStorage implements GoQuorumPrivateStorage {
+public class GoQuorumPrivateKeyValueStorage implements GoQuorumPrivateStorage {
 
   private static final Bytes PRIVATE_STATEROOT_SUFFIX = Bytes.of("PRIVSTATEROOT".getBytes(UTF_8));
-  private static final Bytes TX_RECEIPT_SUFFIX = Bytes.of("RECEIPT".getBytes(UTF_8));
 
   private final KeyValueStorage keyValueStorage;
 
-  public GoQuorumKeyValueStorage(final KeyValueStorage keyValueStorage) {
+  public GoQuorumPrivateKeyValueStorage(final KeyValueStorage keyValueStorage) {
     this.keyValueStorage = keyValueStorage;
   }
 
@@ -43,20 +40,8 @@ public class GoQuorumKeyValueStorage implements GoQuorumPrivateStorage {
     return get(publicStateRootHash, PRIVATE_STATEROOT_SUFFIX).map(Bytes32::wrap).map(Hash::wrap);
   }
 
-  @Override
-  public Optional<TransactionReceipt> getTransactionReceipt(
-      final Bytes32 blockHash, final Bytes32 txHash) {
-    final Bytes key = keyForTransactionReceipt(blockHash, txHash);
-    return get(key, TX_RECEIPT_SUFFIX)
-        .map(b -> TransactionReceipt.readFrom(new BytesValueRLPInput(b, false)));
-  }
-
   private Optional<Bytes> get(final Bytes key, final Bytes keySuffix) {
     return keyValueStorage.get(Bytes.concatenate(key, keySuffix).toArrayUnsafe()).map(Bytes::wrap);
-  }
-
-  private static Bytes keyForTransactionReceipt(final Bytes32 blockHash, final Bytes32 txHash) {
-    return Bytes.concatenate(blockHash, txHash);
   }
 
   @Override

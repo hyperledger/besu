@@ -66,6 +66,8 @@ public abstract class MainnetProtocolSpecs {
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
 
+  public static final String LONDON_FORK_NAME = "London";
+
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
 
@@ -225,7 +227,6 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                gasBudgetCalculator,
                 goQuorumPrivacyParameters) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
@@ -234,7 +235,6 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        gasBudgetCalculator,
                         Optional.empty())))
         .name("DaoRecoveryInit");
   }
@@ -455,62 +455,6 @@ public abstract class MainnetProtocolSpecs {
         .name("Berlin");
   }
 
-  static ProtocolSpecBuilder aleutDefinition(
-      final Optional<BigInteger> chainId,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final boolean quorumCompatibilityMode) {
-    final Optional<TransactionPriceCalculator> transactionPriceCalculator =
-        Optional.of(TransactionPriceCalculator.eip1559());
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    final EIP1559 eip1559 =
-        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE));
-    return berlinDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            quorumCompatibilityMode)
-        .transactionValidatorBuilder(
-            gasCalculator ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    transactionPriceCalculator,
-                    true,
-                    chainId,
-                    Set.of(
-                        TransactionType.FRONTIER,
-                        TransactionType.ACCESS_LIST,
-                        TransactionType.EIP1559),
-                    quorumCompatibilityMode))
-        .transactionProcessorBuilder(
-            (gasCalculator,
-                transactionValidator,
-                contractCreationProcessor,
-                messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidator,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    true,
-                    stackSizeLimit,
-                    Account.DEFAULT_VERSION,
-                    transactionPriceCalculator.orElseThrow(),
-                    CoinbaseFeePriceCalculator.eip1559()))
-        .evmBuilder(
-            gasCalculator ->
-                MainnetEvmRegistries.london(gasCalculator, chainId.orElse(BigInteger.ZERO)))
-        .name("Aleut")
-        .transactionPriceCalculator(transactionPriceCalculator.orElseThrow())
-        .eip1559(Optional.of(eip1559))
-        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
-        .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559));
-  }
-
   static ProtocolSpecBuilder londonDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
@@ -577,7 +521,7 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator.createEip1559Validator(eip1559))
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559))
-        .name("London");
+        .name(LONDON_FORK_NAME);
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

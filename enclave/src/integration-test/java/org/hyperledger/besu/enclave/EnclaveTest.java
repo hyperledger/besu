@@ -21,9 +21,9 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
-import org.hyperledger.orion.testutil.OrionTestHarness;
-import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
+import org.hyperledger.enclave.testutil.OrionTestHarness;
+import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -59,8 +59,9 @@ public class EnclaveTest {
 
     testHarness =
         OrionTestHarnessFactory.create(
+            "enclave",
             folder.newFolder().toPath(),
-            new OrionKeyConfiguration("orion_key_0.pub", "orion_key_0.key"));
+            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_0.key"));
 
     testHarness.start();
 

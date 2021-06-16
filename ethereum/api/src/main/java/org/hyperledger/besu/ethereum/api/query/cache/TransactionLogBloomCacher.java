@@ -141,7 +141,7 @@ public class TransactionLogBloomCacher {
         cachingStatus.currentBlock = blockNum;
         blockNum++;
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
         LOG.error(e.getMessage());
         System.exit(0);
@@ -171,7 +171,7 @@ public class TransactionLogBloomCacher {
             for (long number = ancestorBlockNumber.get() + 1;
                 number < blockHeader.getNumber();
                 number++) {
-              Optional<BlockHeader> ancestorBlockHeader = blockchain.getBlockHeader(number);
+              final Optional<BlockHeader> ancestorBlockHeader = blockchain.getBlockHeader(number);
               if (ancestorBlockHeader.isPresent()) {
                 cacheSingleBlock(ancestorBlockHeader.get(), cacheFile);
               }
@@ -199,7 +199,7 @@ public class TransactionLogBloomCacher {
       throws IOException, InvalidCacheException {
     try (final RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
 
-      long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
+      final long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
       final long blockIndex = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE);
       final long offset = blockIndex * BLOOM_BITS_LENGTH;
 
@@ -208,7 +208,7 @@ public class TransactionLogBloomCacher {
         throw new InvalidCacheException();
       }
       writer.seek(offset);
-      writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+      writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom(true).toArray()));
 
       // remove invalid logs when there was a reorg
       final long validCacheSize = offset + BLOOM_BITS_LENGTH;
@@ -308,7 +308,7 @@ public class TransactionLogBloomCacher {
 
   private void fillCacheFileWithBlock(final BlockHeader blockHeader, final OutputStream fos)
       throws IOException {
-    fos.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
+    fos.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom(true).toArray()));
   }
 
   private byte[] ensureBloomBitsAreCorrectLength(final byte[] logs) {
