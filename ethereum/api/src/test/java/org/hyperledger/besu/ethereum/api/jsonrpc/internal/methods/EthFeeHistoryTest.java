@@ -93,7 +93,7 @@ public class EthFeeHistoryTest {
         .isEqualTo(
             new EthFeeHistory.FeeHistory(
                 10,
-                List.of(Optional.of(47177L)),
+                List.of(47177L),
                 List.of(0.9999999992132459),
                 Optional.of(List.of(List.of(1524742083L)))));
   }

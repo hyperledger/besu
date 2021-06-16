@@ -65,10 +65,12 @@ public class EthFeeHistory implements JsonRpcMethod {
                         .getChainHeadBlockNumber() /* both latest and pending use the head block until we have pending block support */);
     final long firstBlock = Math.max(0, resolvedBlockNumber - (blockCount - 1));
 
-    final List<Optional<Long>> baseFees =
+    final List<Long> baseFees =
         LongStream.range(firstBlock, firstBlock + blockCount)
             .mapToObj(blockchain::getBlockHeader)
-            .map(maybeBlockHeader -> maybeBlockHeader.flatMap(ProcessableBlockHeader::getBaseFee))
+            .map(
+                maybeBlockHeader ->
+                    maybeBlockHeader.flatMap(ProcessableBlockHeader::getBaseFee).orElse(0L))
             .collect(toUnmodifiableList());
 
     final List<Double> gasUsedRatios =
@@ -138,13 +140,13 @@ public class EthFeeHistory implements JsonRpcMethod {
 
   public static class FeeHistory {
     private final long firstBlock;
-    private final List<Optional<Long>> baseFees;
+    private final List<Long> baseFees;
     private final List<Double> gasUsedRatios;
     private final Optional<List<List<Long>>> maybeRewards;
 
     public FeeHistory(
         final long firstBlock,
-        final List<Optional<Long>> baseFees,
+        final List<Long> baseFees,
         final List<Double> gasUsedRatios,
         final Optional<List<List<Long>>> maybeRewards) {
       this.firstBlock = firstBlock;
@@ -157,7 +159,7 @@ public class EthFeeHistory implements JsonRpcMethod {
       return firstBlock;
     }
 
-    public List<Optional<Long>> getBaseFees() {
+    public List<Long> getBaseFees() {
       return baseFees;
     }
 
