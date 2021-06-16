@@ -44,6 +44,8 @@ public class SECP256R1Test {
         LocalDateTime.now(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
     suiteName(SECP256R1Test.class);
+
+    SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create("secp256r1"));
   }
 
   @Before
@@ -84,14 +86,9 @@ public class SECP256R1Test {
 
     final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
     final Bytes32 dataHash = keccak256(data);
-    final SECPSignature expectedSignature =
-        secp256R1.createSignature(
-            new BigInteger("6ae3ac096d1b69ab1e18a721689cc40f2710ab25c35a4f465b8384c470e7079b", 16),
-            new BigInteger("28a39d61a8812005312b552e022afd6fa3db323754f48033c87f4acf6e9960e6", 16),
-            (byte) 1);
 
-    final SECPSignature actualSignature = secp256R1.sign(dataHash, keyPair);
-    assertThat(actualSignature).isEqualTo(expectedSignature);
+    final SECPSignature signature = secp256R1.sign(dataHash, keyPair);
+    assertThat(secp256R1.verify(dataHash, signature, keyPair.getPublicKey())).isTrue();
   }
 
   @Test
