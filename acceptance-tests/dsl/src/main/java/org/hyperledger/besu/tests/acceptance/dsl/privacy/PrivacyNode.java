@@ -118,7 +118,8 @@ public class PrivacyNode implements AutoCloseable {
             Collections.emptyList(),
             besuConfig.isDnsEnabled(),
             besuConfig.getPrivacyParameters(),
-            List.of());
+            List.of(),
+            Optional.empty());
   }
 
   public void testEnclaveConnection(final List<PrivacyNode> otherNodes) {
