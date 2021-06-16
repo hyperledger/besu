@@ -80,8 +80,8 @@ public class KeyPairUtil {
     return key;
   }
 
-  public static KeyPair loadKeyPair(final Path homeDirectory) {
-    return loadKeyPair(getDefaultKeyFile(homeDirectory));
+  public static KeyPair loadKeyPair(final Path directory) {
+    return loadKeyPair(getDefaultKeyFile(directory));
   }
 
   public static void storeKeyFile(final KeyPair keyPair, final Path homeDirectory) {
@@ -92,8 +92,8 @@ public class KeyPairUtil {
     }
   }
 
-  public static File getDefaultKeyFile(final Path homeDirectory) {
-    return homeDirectory.resolve("key").toFile();
+  public static File getDefaultKeyFile(final Path directory) {
+    return directory.resolve("key").toFile();
   }
 
   public static KeyPair load(final File file) {

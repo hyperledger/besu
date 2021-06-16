@@ -47,7 +47,7 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
   private static final String OTHER_NODE_PRIVATE_KEY =
       "c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3";
 
-  private static final SECP256R1 SIGNATURE_ALGORITHM = new SECP256R1();
+  private static final SECP256R1 SECP256R1_SIGNATURE_ALGORITHM = new SECP256R1();
 
   @Before
   public void setUp() throws Exception {
@@ -96,7 +96,7 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
   }
 
   private KeyPair createKeyPair(final String privateKey) {
-    return SIGNATURE_ALGORITHM.createKeyPair(
-        SIGNATURE_ALGORITHM.createPrivateKey(Bytes32.fromHexString(privateKey)));
+    return SECP256R1_SIGNATURE_ALGORITHM.createKeyPair(
+        SECP256R1_SIGNATURE_ALGORITHM.createPrivateKey(Bytes32.fromHexString(privateKey)));
   }
 }
