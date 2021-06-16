@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -28,26 +29,41 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-
 public class EthFeeHistoryTest {
-  private final Blockchain blockchain = mock(Blockchain.class);
-  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-
+  final BlockDataGenerator gen = new BlockDataGenerator();
+  private MutableBlockchain blockchain;
+  private BlockchainQueries blockchainQueries;
   private EthFeeHistory method;
 
   @Before
   public void setUp() {
-    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    final Block genesisBlock = gen.genesisBlock();
+    blockchain = createInMemoryBlockchain(genesisBlock);
+    gen.blockSequence(genesisBlock, 10)
+        .forEach(block -> blockchain.appendBlock(block, gen.receipts(block)));
+    blockchainQueries =
+        new BlockchainQueries(
+            blockchain,
+            new DefaultWorldStateArchive(
+                new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+                new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage())));
     method = new EthFeeHistory(blockchainQueries);
   }
 
@@ -69,33 +85,17 @@ public class EthFeeHistoryTest {
   }
 
   @Test
-  public void allFieldsPresentForLatestBlock() {
-    final JsonRpcRequestContext requestContext =
-        feeHistoryRequestContext(1, "latest", new double[] {100.0});
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(50L);
-    final BlockHeader blockHeader = mock(BlockHeader.class);
-    final Block block = mock(Block.class);
-    when(block.getHeader()).thenReturn(blockHeader);
-    final BlockBody blockBody = mock(BlockBody.class);
-    when(block.getBody()).thenReturn(blockBody);
-    final Transaction transaction = mock(Transaction.class);
-    when(transaction.getEffectivePriorityFeePerGas(any())).thenReturn(150L);
-    when(blockBody.getTransactions()).thenReturn(List.of(transaction));
-    when(blockchain.getBlockByNumber(50L)).thenReturn(Optional.of(block));
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(200L));
-    final long HALF_GAS_LIMIT = 15_000_000L / 2;
-    when(blockHeader.getGasUsed()).thenReturn(HALF_GAS_LIMIT);
-    when(blockHeader.getGasLimit()).thenReturn(15_000_000L);
-    when(blockchain.getBlockHeader(eq(50L))).thenReturn(Optional.of(blockHeader));
-    final TransactionReceiptWithMetadata transactionReceiptWithMetadata =
-        mock(TransactionReceiptWithMetadata.class);
-    when(transactionReceiptWithMetadata.getGasUsed()).thenReturn(HALF_GAS_LIMIT);
-    when(blockchainQueries.transactionReceiptByTransactionHash(any()))
-        .thenReturn(Optional.of(transactionReceiptWithMetadata));
-    assertThat(((JsonRpcSuccessResponse) method.response(requestContext)).getResult())
+  public void allFieldsPresentForLatestBlockGenerated() {
+    assertThat(
+            ((JsonRpcSuccessResponse)
+                    method.response(feeHistoryRequestContext(1, "latest", new double[] {100.0})))
+                .getResult())
         .isEqualTo(
             new EthFeeHistory.FeeHistory(
-                50, List.of(Optional.of(200L)), List.of(0.5), Optional.of(List.of(List.of(150L)))));
+                10,
+                List.of(Optional.of(47177L)),
+                List.of(0.9999999992132459),
+                Optional.of(List.of(List.of(1524742083L)))));
   }
 
   // test base fee always being of size > 1

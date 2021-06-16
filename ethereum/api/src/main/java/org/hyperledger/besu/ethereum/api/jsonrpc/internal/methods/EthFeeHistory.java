@@ -118,42 +118,29 @@ public class EthFeeHistory implements JsonRpcMethod {
     final ArrayList<Long> rewards = new ArrayList<>();
     int rewardIndex = 0;
     long gasUsed = 0;
-    for (int transactionIndex = 0; transactionIndex < transactions.size(); transactionIndex++) {
-
-      while (rewardIndex < rewardPercentiles.size()
-          && gasUsed / (double) block.getHeader().getGasUsed()
-              > rewardPercentiles.get(rewardIndex)) {
-        rewards.add(
-            transactionsAscendingEffectiveGasFee
-                .get(transactionIndex)
-                .getEffectivePriorityFeePerGas(baseFee));
-        rewardIndex++;
-      }
+    for (final Transaction transaction : transactionsAscendingEffectiveGasFee) {
 
       gasUsed +=
           blockchainQueries
-              .transactionReceiptByTransactionHash(
-                  transactionsAscendingEffectiveGasFee.get(transactionIndex).getHash())
+              .transactionReceiptByTransactionHash(transaction.getHash())
               .get()
               .getGasUsed();
+
+      while (rewardIndex < rewardPercentiles.size()
+          && 100.0 * gasUsed / block.getHeader().getGasUsed()
+              >= rewardPercentiles.get(rewardIndex)) {
+        rewards.add(transaction.getEffectivePriorityFeePerGas(baseFee));
+        rewardIndex++;
+      }
     }
     return rewards;
   }
-
-  //  public FeeHistory feeHistory(final long blockCount, final long lastBlock) {
-  //    return null;
-  //  }
 
   public static class FeeHistory {
     private final long firstBlock;
     private final List<Optional<Long>> baseFees;
     private final List<Double> gasUsedRatios;
     private final Optional<List<List<Long>>> maybeRewards;
-
-    //    FeeHistory(final long firstBlock, final List<Long> baseFees, final List<Double>
-    // gasUsedRatios) {
-    //      this(firstBlock, baseFees, gasUsedRatios, null);
-    //    }
 
     public FeeHistory(
         final long firstBlock,

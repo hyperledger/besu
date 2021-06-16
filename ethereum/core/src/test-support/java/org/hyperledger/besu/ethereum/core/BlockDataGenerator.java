@@ -279,6 +279,7 @@ public class BlockDataGenerator {
         .parentHash(options.getParentHash(hash()))
         .ommersHash(BodyValidation.ommersHash(body.getOmmers()))
         .coinbase(options.getCoinbase(address()))
+        .baseFee(options.getBaseFee(uint256(2).toLong()))
         .stateRoot(options.getStateRoot(hash()))
         .transactionsRoot(BodyValidation.transactionsRoot(body.getTransactions()))
         .receiptsRoot(options.getReceiptsRoot(hash()))
@@ -372,7 +373,7 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.ACCESS_LIST)
         .nonce(positiveLong())
-        .gasPrice(Wei.wrap(bytes32()))
+        .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.wrap(bytes32()))
@@ -399,8 +400,8 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.EIP1559)
         .nonce(positiveLong())
-        .maxPriorityFeePerGas(Wei.wrap(bytes32()))
-        .maxFeePerGas(Wei.wrap(bytes32()))
+        .maxPriorityFeePerGas(Wei.wrap(bytesValue(4)))
+        .maxFeePerGas(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.of(positiveLong()))
@@ -413,7 +414,7 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
         .nonce(positiveLong())
-        .gasPrice(Wei.wrap(bytes32()))
+        .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.wrap(bytes32()))
@@ -618,6 +619,7 @@ public class BlockDataGenerator {
     private boolean hasTransactions = true;
     private TransactionType[] transactionTypes = TransactionType.values();
     private Optional<Address> coinbase = Optional.empty();
+    private Optional<Long> baseFee = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -769,6 +771,14 @@ public class BlockDataGenerator {
 
     public Address getCoinbase(final Address defaultValue) {
       return coinbase.orElse(defaultValue);
+    }
+
+    public Long getBaseFee(final Long defaultValue) {
+      return baseFee.orElse(defaultValue);
+    }
+
+    public void setBaseFee(final Optional<Long> baseFee) {
+      this.baseFee = baseFee;
     }
   }
 }

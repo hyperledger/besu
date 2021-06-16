@@ -337,7 +337,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
                     Math.min(
                         getMaxPriorityFeePerGas().get().getAsBigInteger().longValue(),
                         getMaxFeePerGas().get().getAsBigInteger().longValue() - baseFee)))
-        .orElse(getGasPrice().getValue().longValue());
+        .orElseGet(() -> getGasPrice().getValue().longValue());
   }
   /**
    * Returns the transaction gas limit.
