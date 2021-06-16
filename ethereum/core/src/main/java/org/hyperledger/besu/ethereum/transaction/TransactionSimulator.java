@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -40,7 +41,6 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Optional;
 
@@ -151,38 +151,62 @@ public class TransactionSimulator {
     }
     final WorldUpdater updater = getEffectiveWorldStateUpdater(header, publicWorldState);
 
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+
     final Address senderAddress =
         callParams.getFrom() != null ? callParams.getFrom() : DEFAULT_FROM;
-    final Account sender = publicWorldState.get(senderAddress);
-    final long nonce = sender != null ? sender.getNonce() : 0L;
-    final long gasLimit =
-        callParams.getGasLimit() >= 0 ? callParams.getGasLimit() : header.getGasLimit();
-    final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
-    final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
-    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
+
+    BlockHeader blockHeaderToProcess = header;
 
     if (transactionValidationParams.isAllowExceedingBalance()) {
       updater.getOrCreate(senderAddress).getMutable().setBalance(Wei.of(UInt256.MAX_VALUE));
+      if (header.getBaseFee().isPresent()) {
+        blockHeaderToProcess =
+            BlockHeaderBuilder.fromHeader(header)
+                .baseFee(0L)
+                .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
+                .buildBlockHeader();
+      }
     }
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+    final Account sender = publicWorldState.get(senderAddress);
+    final long nonce = sender != null ? sender.getNonce() : 0L;
+    final Wei gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
+    final long gasLimit =
+        callParams.getGasLimit() >= 0
+            ? callParams.getGasLimit()
+            : blockHeaderToProcess.getGasLimit();
+    final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
+    final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
 
     final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockNumber(header.getNumber()).getTransactionProcessor();
+        protocolSchedule
+            .getByBlockNumber(blockHeaderToProcess.getNumber())
+            .getTransactionProcessor();
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
-            .type(TransactionType.FRONTIER)
             .nonce(nonce)
-            .gasPrice(gasPrice)
             .gasLimit(gasLimit)
             .to(callParams.getTo())
             .sender(senderAddress)
             .value(value)
             .payload(payload)
             .signature(FAKE_SIGNATURE);
-    callParams.getMaxPriorityFeePerGas().ifPresent(transactionBuilder::maxPriorityFeePerGas);
-    callParams.getMaxFeePerGas().ifPresent(transactionBuilder::maxFeePerGas);
+
+    if (header.getBaseFee().isEmpty()) {
+      transactionBuilder.gasPrice(gasPrice);
+    } else {
+      if (protocolSchedule.getChainId().isEmpty()) {
+        return Optional.empty();
+      }
+      transactionBuilder
+          .chainId(protocolSchedule.getChainId().orElseThrow())
+          .maxFeePerGas(callParams.getMaxFeePerGas().orElse(gasPrice))
+          .maxPriorityFeePerGas(callParams.getMaxPriorityFeePerGas().orElse(gasPrice));
+    }
+
+    transactionBuilder.guessType();
 
     final Transaction transaction = transactionBuilder.build();
 
@@ -190,10 +214,12 @@ public class TransactionSimulator {
         transactionProcessor.processTransaction(
             blockchain,
             updater,
-            header,
+            blockHeaderToProcess,
             transaction,
-            protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
-            new BlockHashLookup(header, blockchain),
+            protocolSpec
+                .getMiningBeneficiaryCalculator()
+                .calculateBeneficiary(blockHeaderToProcess),
+            new BlockHashLookup(blockHeaderToProcess, blockchain),
             false,
             transactionValidationParams,
             operationTracer);
