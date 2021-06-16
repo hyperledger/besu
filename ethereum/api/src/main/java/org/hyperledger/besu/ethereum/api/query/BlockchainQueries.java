@@ -578,11 +578,12 @@ public class BlockchainQueries {
     // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
     // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
-    final BlockBody blockBody = blockchain.getBlockBody(location.getBlockHash()).orElseThrow();
-    final Transaction transaction = blockBody.getTransactions().get(location.getTransactionIndex());
+    final Block block = blockchain.getBlockByHash(location.getBlockHash()).orElseThrow();
+    final Transaction transaction =
+        block.getBody().getTransactions().get(location.getTransactionIndex());
 
     final Hash blockhash = location.getBlockHash();
-    final BlockHeader header = blockchain.getBlockHeader(blockhash).orElseThrow();
+    final BlockHeader header = block.getHeader();
     final List<TransactionReceipt> transactionReceipts =
         blockchain.getTxReceipts(blockhash).orElseThrow();
     final TransactionReceipt transactionReceipt =
@@ -602,6 +603,7 @@ public class BlockchainQueries {
             transactionHash,
             location.getTransactionIndex(),
             gasUsed,
+            header.getBaseFee(),
             blockhash,
             header.getNumber()));
   }
