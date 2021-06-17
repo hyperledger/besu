@@ -129,24 +129,25 @@ public class MultiTenancyPrivacyController implements PrivacyController {
   }
 
   @Override
-  public Transaction createPrivacyMarkerTransaction(
+  public Transaction createPrivateMarkerTransaction(
       final String privateTransactionLookupId, final PrivateTransaction privateTransaction) {
-    return privacyController.createPrivacyMarkerTransaction(
+    return privacyController.createPrivateMarkerTransaction(
         privateTransactionLookupId, privateTransaction);
   }
 
   @Override
-  public Transaction createPrivacyMarkerTransaction(
+  public Transaction createPrivateMarkerTransaction(
       final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
       final Address privacyPrecompileAddress) {
-    return privacyController.createPrivacyMarkerTransaction(
+    return privacyController.createPrivateMarkerTransaction(
         privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
   }
 
   @Override
   public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+
     final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
     verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
     return privateTransactionValidator.validate(

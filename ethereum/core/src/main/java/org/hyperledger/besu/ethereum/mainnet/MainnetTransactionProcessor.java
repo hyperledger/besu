@@ -253,7 +253,8 @@ public class MainnetTransactionProcessor {
     try {
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
-          transactionValidator.validate(transaction, blockHeader.getBaseFee());
+          transactionValidator.validate(
+              transaction, blockHeader.getBaseFee(), transactionValidationParams);
       // Make sure the transaction is intrinsically valid before trying to
       // compare against a sender account (because the transaction may not
       // be signed correctly to extract the sender).

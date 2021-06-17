@@ -1560,25 +1560,25 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void ethStatsOptionIsParsedCorrectly() {
     final String url = "besu-node:secret@host:443";
-    parseCommand("--Xethstats", url);
+    parseCommand("--ethstats", url);
     verify(mockRunnerBuilder).ethstatsUrl(url);
   }
 
   @Test
   public void ethStatsContactOptionIsParsedCorrectly() {
     final String contact = "contact@mail.net";
-    parseCommand("--Xethstats", "besu-node:secret@host:443", "--Xethstats-contact", contact);
+    parseCommand("--ethstats", "besu-node:secret@host:443", "--ethstats-contact", contact);
     verify(mockRunnerBuilder).ethstatsContact(contact);
   }
 
   @Test
   public void ethStatsContactOptionCannotBeUsedWithoutEthStatsServerProvided() {
-    parseCommand("--Xethstats-contact", "besu-updated");
+    parseCommand("--ethstats-contact", "besu-updated");
     Mockito.verifyZeroInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString())
         .contains(
-            "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact or provide an url (via --Xethstats=nodename:secret@host:port)");
+            "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide an url (via --ethstats=nodename:secret@host:port)");
   }
 
   @Test
@@ -3484,7 +3484,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void privacyMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
+  public void privateMarkerTransactionSigningKeyFileRequiredIfMinGasPriceNonZero() {
     parseCommand("--privacy-enabled", "--privacy-public-key-file", ENCLAVE_PUBLIC_KEY_PATH);
 
     assertThat(commandErrorOutput.toString())

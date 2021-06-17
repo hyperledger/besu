@@ -111,6 +111,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())
@@ -138,6 +139,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())
@@ -171,6 +173,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())
@@ -204,6 +207,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(Wei.ZERO)
             .gasLimit(0L)
@@ -229,6 +233,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(0L)
             .gasPrice(Wei.ZERO)
             .gasLimit(0L)
@@ -254,6 +259,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())
@@ -319,6 +325,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(Wei.ZERO)
             .gasLimit(0L)
@@ -344,6 +351,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(0L)
             .gasPrice(Wei.ZERO)
             .gasLimit(0L)
@@ -369,6 +377,7 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .nonce(1L)
             .gasPrice(callParameter.getGasPrice())
             .gasLimit(callParameter.getGasLimit())
@@ -396,6 +405,8 @@ public class TransactionSimulatorTest {
 
     final Transaction expectedTransaction =
         Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.ONE)
             .nonce(1L)
             .chainId(BigInteger.ONE)
             .type(TransactionType.EIP1559)

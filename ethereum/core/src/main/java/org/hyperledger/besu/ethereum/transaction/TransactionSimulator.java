@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
@@ -207,6 +208,10 @@ public class TransactionSimulator {
 
     transactionBuilder.guessType();
 
+    transactionBuilder.guessType();
+    if (transactionBuilder.getTransactionType().requiresChainId()) {
+      transactionBuilder.chainId(BigInteger.ONE); // needed to make some transactions valid
+    }
     final Transaction transaction = transactionBuilder.build();
 
     final TransactionProcessingResult result =

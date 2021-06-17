@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -78,9 +77,11 @@ public class EthGetTransactionReceiptTest {
       Hash.fromHexString("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
   private final TransactionReceiptWithMetadata stateReceiptWithMetaData =
-      TransactionReceiptWithMetadata.create(stateReceipt, transaction, hash, 1, 2, blockHash, 4);
+      TransactionReceiptWithMetadata.create(
+          stateReceipt, transaction, hash, 1, 2, Optional.empty(), blockHash, 4);
   private final TransactionReceiptWithMetadata rootReceiptWithMetaData =
-      TransactionReceiptWithMetadata.create(rootReceipt, transaction, hash, 1, 2, blockHash, 4);
+      TransactionReceiptWithMetadata.create(
+          rootReceipt, transaction, hash, 1, 2, Optional.empty(), blockHash, 4);
 
   private final ProtocolSpec rootTransactionTypeSpec =
       new ProtocolSpec(
@@ -105,7 +106,6 @@ public class EthGetTransactionReceiptTest {
           null,
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
-          TransactionGasBudgetCalculator.frontier(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT));
   private final ProtocolSpec statusTransactionTypeSpec =
@@ -131,7 +131,6 @@ public class EthGetTransactionReceiptTest {
           null,
           TransactionPriceCalculator.frontier(),
           Optional.empty(),
-          TransactionGasBudgetCalculator.frontier(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT));
 

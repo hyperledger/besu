@@ -131,18 +131,18 @@ public class PrivacyBlockProcessorTest {
     final Block firstBlock =
         blockDataGenerator.block(
             BlockDataGenerator.BlockOptions.create()
-                .addTransaction(PrivateTransactionDataFixture.privacyMarkerTransactionOnChain()));
+                .addTransaction(PrivateTransactionDataFixture.privateMarkerTransactionOnChain()));
     final Block secondBlock =
         blockDataGenerator.block(
             BlockDataGenerator.BlockOptions.create()
                 .addTransaction(
-                    PrivateTransactionDataFixture.privacyMarkerTransactionOnChainAdd()));
+                    PrivateTransactionDataFixture.privateMarkerTransactionOnChainAdd()));
 
     when(enclave.receive(any()))
         .thenReturn(
             PrivateTransactionDataFixture.generateAddToGroupReceiveResponse(
                 PrivateTransactionDataFixture.privateTransactionBesu(),
-                PrivateTransactionDataFixture.privacyMarkerTransactionOnChain()));
+                PrivateTransactionDataFixture.privateMarkerTransactionOnChain()));
     when(blockchain.getTransactionLocation(any()))
         .thenReturn(Optional.of(new TransactionLocation(firstBlock.getHash(), 0)));
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(firstBlock));
