@@ -151,15 +151,8 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final String name,
       final String description,
       final String enclavePublicKey) {
-
-    if (!addresses.contains(enclavePublicKey)) {
-      throw new PrivacyValidationException(
-          "Privacy group addresses must contain the enclave public key");
-    }
-
-    final String[] privateFor = addresses.subList(1, addresses.size()).toArray(new String[0]);
-    final String privacyGroupId = createPrivacyGroupId(addresses.get(0), privateFor);
-    return new PrivacyGroup(privacyGroupId, PrivacyGroup.Type.LEGACY, name, description, addresses);
+    throw new PrivacyConfigurationNotSupportedException(
+        "Method not supported for UnrestrictedPrivacy");
   }
 
   @Override

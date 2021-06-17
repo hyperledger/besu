@@ -46,9 +46,9 @@ public class PrivacyTransactions {
     return new PrivGetTransactionReceiptTransaction(transactionHash);
   }
 
-  public CreatePrivacyGroupTransaction createPrivacyGroup(
+  public RestrictedCreatePrivacyGroupTransaction createPrivacyGroup(
       final String name, final String description, final PrivacyNode... nodes) {
-    return new CreatePrivacyGroupTransaction(name, description, nodes);
+    return new RestrictedCreatePrivacyGroupTransaction(name, description, nodes);
   }
 
   public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(

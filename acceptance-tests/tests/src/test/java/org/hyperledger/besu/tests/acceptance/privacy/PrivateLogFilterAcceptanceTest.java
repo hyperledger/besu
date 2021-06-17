@@ -119,8 +119,7 @@ public class PrivateLogFilterAcceptanceTest extends ParameterizedEnclaveTestBase
   }
 
   private String createPrivacyGroup() {
-    return node.execute(
-        privacyTransactions.createPrivacyGroup("myGroupName", "my group description", node));
+    return node.execute(createPrivacyGroup("myGroupName", "my group description", node));
   }
 
   private EventEmitter deployEventEmitterContract(final String privacyGroupId) {

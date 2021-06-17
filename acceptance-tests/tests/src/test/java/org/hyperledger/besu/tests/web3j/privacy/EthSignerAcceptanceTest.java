@@ -110,8 +110,7 @@ public class EthSignerAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   @Test
   public void privateSmartContractMustDeployWithPrivacyGroup() throws IOException {
-    final String privacyGroupId =
-        minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
+    final String privacyGroupId = minerNode.execute(createPrivacyGroup(null, null, minerNode));
 
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(
@@ -133,8 +132,7 @@ public class EthSignerAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   @Test
   public void privateSmartContractMustDeployWithPrivacyGroupNoNonce() throws IOException {
-    final String privacyGroupId =
-        minerNode.execute(privacyTransactions.createPrivacyGroup(null, null, minerNode));
+    final String privacyGroupId = minerNode.execute(createPrivacyGroup(null, null, minerNode));
 
     final String transactionHash =
         ethSignerClient.eeaSendTransaction(

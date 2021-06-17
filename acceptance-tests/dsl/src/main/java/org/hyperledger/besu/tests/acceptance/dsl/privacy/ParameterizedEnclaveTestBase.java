@@ -20,6 +20,9 @@ import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 import static org.web3j.utils.Restriction.RESTRICTED;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.RestrictedCreatePrivacyGroupTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.UnrestrictedCreatePrivacyGroupTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.util.Arrays;
@@ -49,5 +52,17 @@ public abstract class ParameterizedEnclaveTestBase extends PrivacyAcceptanceTest
           {RESTRICTED, ORION},
           {UNRESTRICTED, NOOP}
         });
+  }
+
+  public Transaction<String> createPrivacyGroup(
+      final String name, final String description, final PrivacyNode... nodes) {
+
+    if (restriction == RESTRICTED) {
+      return new RestrictedCreatePrivacyGroupTransaction(name, description, nodes);
+    } else if (restriction == UNRESTRICTED) {
+      return new UnrestrictedCreatePrivacyGroupTransaction(nodes);
+    } else {
+      throw new RuntimeException("Do not know how to handle " + restriction);
+    }
   }
 }

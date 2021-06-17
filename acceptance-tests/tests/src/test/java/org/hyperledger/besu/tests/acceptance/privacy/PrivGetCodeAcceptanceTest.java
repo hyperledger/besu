@@ -88,8 +88,7 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private String createPrivacyGroup() {
     final String privacyGroupId =
-        alice.execute(
-            privacyTransactions.createPrivacyGroup("myGroupName", "my group description", alice));
+        alice.execute(createPrivacyGroup("myGroupName", "my group description", alice));
 
     assertThat(privacyGroupId).isNotNull();
 

@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
@@ -60,8 +60,7 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   @Test
   public void createPrivateTransactionReceiptSuccessfulTransaction() {
-    final CreatePrivacyGroupTransaction onlyAlice =
-        privacyTransactions.createPrivacyGroup("Only Alice", "", alice);
+    final Transaction<String> onlyAlice = createPrivacyGroup("Only Alice", "", alice);
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
@@ -80,8 +79,7 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   @Test
   public void createPrivateTransactionReceiptFailedTransaction() {
-    final CreatePrivacyGroupTransaction onlyAlice =
-        privacyTransactions.createPrivacyGroup("Only Alice", "", alice);
+    final Transaction<String> onlyAlice = createPrivacyGroup("Only Alice", "", alice);
 
     final String privacyGroupId = alice.execute(onlyAlice);
 
@@ -101,8 +99,7 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   @Test
   public void createPrivateTransactionReceiptInvalidTransaction() {
-    final CreatePrivacyGroupTransaction onlyAlice =
-        privacyTransactions.createPrivacyGroup("Only Alice", "", alice);
+    final Transaction<String> onlyAlice = createPrivacyGroup("Only Alice", "", alice);
 
     final String privacyGroupId = alice.execute(onlyAlice);
 

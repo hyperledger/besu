@@ -70,8 +70,7 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
   public void nodesInGroupShouldHaveSameStateRoot() {
     final String privacyGroupId =
         aliceNode.execute(
-            privacyTransactions.createPrivacyGroup(
-                "testGroup", "A group for everyone", aliceNode, bobNode));
+            createPrivacyGroup("testGroup", "A group for everyone", aliceNode, bobNode));
 
     final Hash aliceStateRootId =
         aliceNode

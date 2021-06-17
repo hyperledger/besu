@@ -75,9 +75,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   public void mustReturnCorrectValue() throws Exception {
 
     final String privacyGroupId =
-        minerNode.execute(
-            privacyTransactions.createPrivacyGroup(
-                "myGroupName", "my group description", minerNode));
+        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
         minerNode.execute(
@@ -113,9 +111,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   public void shouldReturnEmptyResultWithNonExistingPrivacyGroup() throws IOException {
 
     final String privacyGroupId =
-        minerNode.execute(
-            privacyTransactions.createPrivacyGroup(
-                "myGroupName", "my group description", minerNode));
+        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
         minerNode.execute(
@@ -144,9 +140,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   public void mustNotSucceedWithWronglyEncodedFunction() {
 
     final String privacyGroupId =
-        minerNode.execute(
-            privacyTransactions.createPrivacyGroup(
-                "myGroupName", "my group description", minerNode));
+        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
         minerNode.execute(
@@ -173,9 +167,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   public void mustReturn0xUsingInvalidContractAddress() throws IOException {
 
     final String privacyGroupId =
-        minerNode.execute(
-            privacyTransactions.createPrivacyGroup(
-                "myGroupName", "my group description", minerNode));
+        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
 
     final EventEmitter eventEmitter =
         minerNode.execute(
