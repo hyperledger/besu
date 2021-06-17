@@ -114,6 +114,31 @@ public class EthFeeHistoryTest {
   }
 
   @Test
+  public void cantGetZeroBlockCount() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    assertThat(
+            ((JsonRpcErrorResponse) feeHistoryRequest(0, "latest", new double[] {100.0}))
+                .getError())
+        .isEqualTo(JsonRpcError.INVALID_PARAMS);
+  }
+
+  @Test
+  public void doesntGoPastChainHeadWithHighBlockCount() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    final EthFeeHistory.FeeHistory result =
+        (EthFeeHistory.FeeHistory)
+            ((JsonRpcSuccessResponse) feeHistoryRequest(20, "latest")).getResult();
+    assertThat(result.getOldestBlock()).isEqualTo(0);
+    assertThat(result.getBaseFeePerGas()).hasSize(12);
+    assertThat(result.getGasUsedRatio()).hasSize(11);
+    assertThat(result.getReward()).isNull();
+  }
+
+  @Test
   public void allZeroPercentilesForZeroBlock() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));

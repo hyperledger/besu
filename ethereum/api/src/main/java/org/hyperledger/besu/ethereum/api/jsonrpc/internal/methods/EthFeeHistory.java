@@ -60,7 +60,12 @@ public class EthFeeHistory implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
+    final Object requestId = request.getRequest().getId();
+
     final long blockCount = request.getRequiredParameter(0, Long.class);
+    if (blockCount < 1) {
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS);
+    }
     final BlockParameter highestBlock = request.getRequiredParameter(1, BlockParameter.class);
     final Optional<List<Double>> maybeRewardPercentiles =
         request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
@@ -74,7 +79,6 @@ public class EthFeeHistory implements JsonRpcMethod {
                     ? BlockHeader.GENESIS_BLOCK_NUMBER
                     : chainHeadBlockNumber /* both latest and pending use the head block until we have pending block support */);
 
-    final Object requestId = request.getRequest().getId();
     if (resolvedHighestBlockNumber > chainHeadBlockNumber) {
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS);
     }
@@ -91,9 +95,8 @@ public class EthFeeHistory implements JsonRpcMethod {
     final List<Long> explicitlyRequestedBaseFees =
         LongStream.range(oldestBlock, oldestBlock + blockCount)
             .mapToObj(blockchain::getBlockHeader)
-            .map(
-                maybeBlockHeader ->
-                    maybeBlockHeader.flatMap(ProcessableBlockHeader::getBaseFee).orElse(0L))
+            .flatMap(Optional::stream)
+            .map(blockHeader -> blockHeader.getBaseFee().orElse(0L))
             .collect(toUnmodifiableList());
     final long nextBlockNumber = resolvedHighestBlockNumber + 1;
     final Long nextBaseFee =
@@ -127,7 +130,8 @@ public class EthFeeHistory implements JsonRpcMethod {
         maybeRewardPercentiles.map(
             rewardPercentiles ->
                 LongStream.range(oldestBlock, oldestBlock + blockCount)
-                    .mapToObj(blockNumber -> blockchain.getBlockByNumber(blockNumber).get())
+                    .mapToObj(blockNumber -> blockchain.getBlockByNumber(blockNumber))
+                    .flatMap(Optional::stream)
                     .map(
                         block ->
                             computeRewards(
