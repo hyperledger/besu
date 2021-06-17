@@ -550,6 +550,18 @@
           "data": "0x000000000000000000000000000000000000000000000000000000000000ea60"
         }
       ]
+    },
+    {
+      "number": "0x21",
+      "transactions" : [
+        {
+          "comment": "Call to a contract creation that fails with a stack underflow",
+          "secretKey": "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+          "gasLimit": "0x47B760",
+          "gasPrice": "0x1",
+          "data": "0x602af300"
+        }
+      ]
     }
   ]
 }
