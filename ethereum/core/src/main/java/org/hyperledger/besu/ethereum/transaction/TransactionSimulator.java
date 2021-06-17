@@ -199,7 +199,6 @@ public class TransactionSimulator {
       transactionBuilder.gasPrice(gasPrice);
     } else if (protocolSchedule.getChainId().isPresent()) {
       transactionBuilder
-          .chainId(protocolSchedule.getChainId().orElseThrow())
           .maxFeePerGas(callParams.getMaxFeePerGas().orElse(gasPrice))
           .maxPriorityFeePerGas(callParams.getMaxPriorityFeePerGas().orElse(gasPrice));
     } else {
@@ -207,10 +206,11 @@ public class TransactionSimulator {
     }
 
     transactionBuilder.guessType();
-
-    transactionBuilder.guessType();
     if (transactionBuilder.getTransactionType().requiresChainId()) {
-      transactionBuilder.chainId(BigInteger.ONE); // needed to make some transactions valid
+      transactionBuilder.chainId(
+          protocolSchedule
+              .getChainId()
+              .orElse(BigInteger.ONE)); // needed to make some transactions valid
     }
     final Transaction transaction = transactionBuilder.build();
 

@@ -349,7 +349,7 @@ public class EthCallIntegrationTest {
             null,
             null,
             null);
-    final JsonRpcRequestContext request = requestWithParams(callParameter, "0x21");
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x");
 
     final JsonRpcResponse response = method.response(request);

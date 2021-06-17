@@ -234,7 +234,8 @@ public class EthCallIntegrationTest {
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(
+            null, JsonRpcError.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS);
 
     final JsonRpcResponse response = method.response(request);
 

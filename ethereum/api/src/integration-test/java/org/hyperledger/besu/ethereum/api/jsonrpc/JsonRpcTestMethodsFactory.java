@@ -76,7 +76,6 @@ public class JsonRpcTestMethodsFactory {
     final ProtocolContext context = new ProtocolContext(blockchain, stateArchive, null);
 
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
-
     for (final Block block : importer.getBlocks()) {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
