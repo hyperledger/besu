@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
@@ -39,6 +38,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class EthFeeHistory implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
