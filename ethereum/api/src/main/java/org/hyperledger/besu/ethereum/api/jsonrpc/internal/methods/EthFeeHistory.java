@@ -69,17 +69,17 @@ public class EthFeeHistory implements JsonRpcMethod {
                     ? BlockHeader.GENESIS_BLOCK_NUMBER
                     : blockchain
                         .getChainHeadBlockNumber() /* both latest and pending use the head block until we have pending block support */);
-    final long firstBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));
+    final long oldestBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));
 
     final List<BlockHeader> blockHeaders =
-        LongStream.range(firstBlock, firstBlock + blockCount)
+        LongStream.range(oldestBlock, oldestBlock + blockCount)
             .mapToObj(blockchain::getBlockHeader)
             .flatMap(Optional::stream)
             .collect(toUnmodifiableList());
 
     // we return the base fees for the blocks requested and 1 more because we can always compute it
     final List<Long> explicitlyRequestedBaseFees =
-        LongStream.range(firstBlock, firstBlock + blockCount)
+        LongStream.range(oldestBlock, oldestBlock + blockCount)
             .mapToObj(blockchain::getBlockHeader)
             .map(
                 maybeBlockHeader ->
@@ -116,7 +116,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Optional<List<List<Long>>> maybeRewards =
         maybeRewardPercentiles.map(
             rewardPercentiles ->
-                LongStream.range(firstBlock, firstBlock + blockCount)
+                LongStream.range(oldestBlock, oldestBlock + blockCount)
                     .mapToObj(blockNumber -> blockchain.getBlockByNumber(blockNumber).get())
                     .map(block -> computeRewards(rewardPercentiles, block))
                     .collect(toUnmodifiableList()));
@@ -124,7 +124,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(),
         new FeeHistory(
-            firstBlock,
+            oldestBlock,
             Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
                 .collect(toUnmodifiableList()),
             gasUsedRatios,
@@ -172,32 +172,20 @@ public class EthFeeHistory implements JsonRpcMethod {
   }
 
   public static class FeeHistory {
-    private final long firstBlock;
-    private final List<Long> baseFees;
-    private final List<Double> gasUsedRatios;
-    private final Optional<List<List<Long>>> maybeRewards;
+    private final long oldestBlock;
+    private final List<Long> baseFeePerGas;
+    private final List<Double> gasUsedRatio;
+    private final Optional<List<List<Long>>> reward;
 
     public FeeHistory(
-        final long firstBlock,
-        final List<Long> baseFees,
-        final List<Double> gasUsedRatios,
-        final Optional<List<List<Long>>> maybeRewards) {
-      this.firstBlock = firstBlock;
-      this.baseFees = baseFees;
-      this.gasUsedRatios = gasUsedRatios;
-      this.maybeRewards = maybeRewards;
-    }
-
-    public long getFirstBlock() {
-      return firstBlock;
-    }
-
-    public List<Long> getBaseFees() {
-      return baseFees;
-    }
-
-    public List<Double> getGasUsedRatios() {
-      return gasUsedRatios;
+        final long oldestBlock,
+        final List<Long> baseFeePerGas,
+        final List<Double> gasUsedRatio,
+        final Optional<List<List<Long>>> reward) {
+      this.oldestBlock = oldestBlock;
+      this.baseFeePerGas = baseFeePerGas;
+      this.gasUsedRatio = gasUsedRatio;
+      this.reward = reward;
     }
 
     @Override
@@ -205,22 +193,22 @@ public class EthFeeHistory implements JsonRpcMethod {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       final FeeHistory that = (FeeHistory) o;
-      return firstBlock == that.firstBlock
-          && baseFees.equals(that.baseFees)
-          && gasUsedRatios.equals(that.gasUsedRatios)
-          && maybeRewards.equals(that.maybeRewards);
+      return oldestBlock == that.oldestBlock
+          && baseFeePerGas.equals(that.baseFeePerGas)
+          && gasUsedRatio.equals(that.gasUsedRatio)
+          && reward.equals(that.reward);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(firstBlock, baseFees, gasUsedRatios, maybeRewards);
+      return Objects.hash(oldestBlock, baseFeePerGas, gasUsedRatio, reward);
     }
 
     @Override
     public String toString() {
       return String.format(
           "FeeHistory{firstBlock=%d, baseFees=%s, gasUsedRatios=%s, rewards=%s}",
-          firstBlock, baseFees, gasUsedRatios, maybeRewards);
+          oldestBlock, baseFeePerGas, gasUsedRatio, reward);
     }
   }
 }
