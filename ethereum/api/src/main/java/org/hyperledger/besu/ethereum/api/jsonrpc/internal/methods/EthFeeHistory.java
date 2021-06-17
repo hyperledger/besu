@@ -90,9 +90,7 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     // we return the base fees for the blocks requested and 1 more because we can always compute it
     final List<Long> explicitlyRequestedBaseFees =
-        LongStream.range(oldestBlock, oldestBlock + blockCount)
-            .mapToObj(blockchain::getBlockHeader)
-            .flatMap(Optional::stream)
+        blockHeaders.stream()
             .map(blockHeader -> blockHeader.getBaseFee().orElse(0L))
             .collect(toUnmodifiableList());
     final long nextBlockNumber = resolvedHighestBlockNumber + 1;
@@ -127,7 +125,7 @@ public class EthFeeHistory implements JsonRpcMethod {
         maybeRewardPercentiles.map(
             rewardPercentiles ->
                 LongStream.range(oldestBlock, oldestBlock + blockCount)
-                    .mapToObj(blockNumber -> blockchain.getBlockByNumber(blockNumber))
+                    .mapToObj(blockchain::getBlockByNumber)
                     .flatMap(Optional::stream)
                     .map(
                         block ->
