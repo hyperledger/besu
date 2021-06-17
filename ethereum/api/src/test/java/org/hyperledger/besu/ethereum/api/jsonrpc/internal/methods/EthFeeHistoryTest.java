@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -35,6 +36,12 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.fees.EIP1559;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
+import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
@@ -43,17 +50,21 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 public class EthFeeHistoryTest {
   final BlockDataGenerator gen = new BlockDataGenerator();
   private MutableBlockchain blockchain;
   private BlockchainQueries blockchainQueries;
   private EthFeeHistory method;
+  private ProtocolSchedule protocolSchedule;
 
   @Before
   public void setUp() {
+    protocolSchedule = mock(ProtocolSchedule.class);
     final Block genesisBlock = gen.genesisBlock();
     blockchain = createInMemoryBlockchain(genesisBlock);
     gen.blockSequence(genesisBlock, 10)
@@ -64,7 +75,7 @@ public class EthFeeHistoryTest {
             new DefaultWorldStateArchive(
                 new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
                 new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage())));
-    method = new EthFeeHistory(blockchainQueries);
+    method = new EthFeeHistory(protocolSchedule, blockchainQueries);
   }
 
   @Test
@@ -85,7 +96,10 @@ public class EthFeeHistoryTest {
   }
 
   @Test
-  public void allFieldsPresentForLatestBlockGenerated() {
+  public void allFieldsPresentForLatestBlock() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(protocolSchedule.getByBlockNumber(eq(11L))).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcSuccessResponse)
                     method.response(feeHistoryRequestContext(1, "latest", new double[] {100.0})))
@@ -93,7 +107,7 @@ public class EthFeeHistoryTest {
         .isEqualTo(
             new EthFeeHistory.FeeHistory(
                 10,
-                List.of(47177L),
+                List.of(47177L, 53074L),
                 List.of(0.9999999992132459),
                 Optional.of(List.of(List.of(1524742083L)))));
   }

@@ -26,19 +26,25 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 public class EthFeeHistory implements JsonRpcMethod {
+  private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
   private final Blockchain blockchain;
 
-  public EthFeeHistory(final BlockchainQueries blockchainQueries) {
+  public EthFeeHistory(
+      final ProtocolSchedule protocolSchedule, final BlockchainQueries blockchainQueries) {
+    this.protocolSchedule = protocolSchedule;
     this.blockchainQueries = blockchainQueries;
     this.blockchain = blockchainQueries.getBlockchain();
   }
@@ -55,7 +61,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Optional<List<Double>> maybeRewardPercentiles =
         request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
 
-    final long resolvedBlockNumber =
+    final long resolvedHighestBlockNumber =
         highestBlock
             .getNumber()
             .orElse(
@@ -63,26 +69,48 @@ public class EthFeeHistory implements JsonRpcMethod {
                     ? BlockHeader.GENESIS_BLOCK_NUMBER
                     : blockchain
                         .getChainHeadBlockNumber() /* both latest and pending use the head block until we have pending block support */);
-    final long firstBlock = Math.max(0, resolvedBlockNumber - (blockCount - 1));
+    final long firstBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));
 
-    final List<Long> baseFees =
+    final List<BlockHeader> blockHeaders =
+        LongStream.range(firstBlock, firstBlock + blockCount)
+            .mapToObj(blockchain::getBlockHeader)
+            .flatMap(Optional::stream)
+            .collect(toUnmodifiableList());
+
+    // we return the base fees for the blocks requested and 1 more because we can always compute it
+    final List<Long> explicitlyRequestedBaseFees =
         LongStream.range(firstBlock, firstBlock + blockCount)
             .mapToObj(blockchain::getBlockHeader)
             .map(
                 maybeBlockHeader ->
                     maybeBlockHeader.flatMap(ProcessableBlockHeader::getBaseFee).orElse(0L))
             .collect(toUnmodifiableList());
+    final long nextBlockNumber = resolvedHighestBlockNumber + 1;
+    final Long nextBaseFee =
+        blockchain
+            .getBlockHeader(nextBlockNumber)
+            .map(blockHeader -> blockHeader.getBaseFee().orElse(0L))
+            .orElseGet(
+                () ->
+                    protocolSchedule
+                        .getByBlockNumber(nextBlockNumber)
+                        .getEip1559()
+                        .map(
+                            eip1559 -> {
+                              final BlockHeader lastBlockHeader =
+                                  blockHeaders.get(blockHeaders.size() - 1);
+                              return eip1559.computeBaseFee(
+                                  nextBlockNumber,
+                                  explicitlyRequestedBaseFees.get(
+                                      explicitlyRequestedBaseFees.size() - 1),
+                                  lastBlockHeader.getGasUsed(),
+                                  eip1559.targetGasUsed(lastBlockHeader));
+                            })
+                        .orElse(0L));
 
     final List<Double> gasUsedRatios =
-        LongStream.range(firstBlock, firstBlock + blockCount)
-            .mapToObj(blockchain::getBlockHeader)
-            .flatMap(
-                maybeBlockheader ->
-                    maybeBlockheader
-                        .map(
-                            blockHeader ->
-                                blockHeader.getGasUsed() / (double) blockHeader.getGasLimit())
-                        .stream())
+        blockHeaders.stream()
+            .map(blockHeader -> blockHeader.getGasUsed() / (double) blockHeader.getGasLimit())
             .collect(toUnmodifiableList());
 
     final Optional<List<List<Long>>> maybeRewards =
@@ -95,7 +123,12 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(),
-        new FeeHistory(firstBlock, baseFees, gasUsedRatios, maybeRewards));
+        new FeeHistory(
+            firstBlock,
+            Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
+                .collect(toUnmodifiableList()),
+            gasUsedRatios,
+            maybeRewards));
   }
 
   private List<Long> computeRewards(
@@ -165,6 +198,22 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     public List<Double> getGasUsedRatios() {
       return gasUsedRatios;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final FeeHistory that = (FeeHistory) o;
+      return firstBlock == that.firstBlock
+          && baseFees.equals(that.baseFees)
+          && gasUsedRatios.equals(that.gasUsedRatios)
+          && maybeRewards.equals(that.maybeRewards);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(firstBlock, baseFees, gasUsedRatios, maybeRewards);
     }
 
     @Override

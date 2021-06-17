@@ -263,15 +263,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
       if (eip1559.isForkBlock(newBlockNumber)) {
         gasLimit = gasLimit * eip1559.getFeeMarket().getSlackCoefficient();
-        baseFee = eip1559.getFeeMarket().getInitialBasefee();
-      } else {
-        baseFee =
-            eip1559.computeBaseFee(
-                newBlockNumber,
-                parentHeader.getBaseFee().orElseThrow(),
-                parentHeader.getGasUsed(),
-                eip1559.targetGasUsed(parentHeader));
       }
+      baseFee =
+          eip1559.computeBaseFee(
+              newBlockNumber,
+              parentHeader.getBaseFee().orElseThrow(),
+              parentHeader.getGasUsed(),
+              eip1559.targetGasUsed(parentHeader));
     }
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
