@@ -131,10 +131,6 @@ public class EthFeeHistoryTest {
     assertThat(result.getReward()).isEqualTo(List.of(List.of(0L)));
   }
 
-  // test names of field are alright
-  // ascending order for rewards implies sorting
-  // check invalid numerals in parsing
-
   private JsonRpcResponse feeHistoryRequest(final Object... params) {
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_feeHistory", params)));

@@ -17,7 +17,7 @@
     "jsonrpc": "2.0",
     "id": 28,
     "result": {
-      "oldestBlock": 1,
+      "oldestBlock": 31,
       "baseFeePerGas": [
         0,
         0,
@@ -29,12 +29,14 @@
       ],
       "reward": [
         [
-          4,
-          5
+          1,
+          1,
+          1
         ],
         [
-          4,
-          5
+          1,
+          1,
+          1
         ]
       ]
     }
