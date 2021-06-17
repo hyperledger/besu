@@ -19,6 +19,10 @@ This release contains the activation blocks for London across all supported test
   * Goerli 5_062_605 (30 Jun 2021)
   * Rinkeby 8_897_988 (7 Jul 2021)
 
+## Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.0-RC1/besu-21.7.0-RC1.zip
+sha256sum fc959646af65a0e267fc4d695e0af7e87331d774e6e8e890f5cc391549ed175a
+
 ## 21.1.7
 
 ## Privacy users - Orion Project Deprecation

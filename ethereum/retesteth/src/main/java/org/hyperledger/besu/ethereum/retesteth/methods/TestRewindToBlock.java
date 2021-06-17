@@ -23,13 +23,15 @@ import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 public class TestRewindToBlock implements JsonRpcMethod {
   private final RetestethContext context;
 
+  public static final String METHOD_NAME = "test_rewindToBlock";
+
   public TestRewindToBlock(final RetestethContext context) {
     this.context = context;
   }
 
   @Override
   public String getName() {
-    return "test_rewindToBlock";
+    return METHOD_NAME;
   }
 
   @Override
