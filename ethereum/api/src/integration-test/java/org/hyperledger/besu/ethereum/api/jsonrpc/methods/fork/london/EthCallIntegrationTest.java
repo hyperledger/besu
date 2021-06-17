@@ -49,6 +49,7 @@ public class EthCallIntegrationTest {
   public static void setUpOnce() throws Exception {
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestLondonGenesisUrl(), Charsets.UTF_8);
+
     BLOCKCHAIN =
         new JsonRpcTestMethodsFactory(
             new BlockchainImporter(BlockTestUtil.getTestLondonBlockchainUrl(), genesisJson));

@@ -196,14 +196,13 @@ public class TransactionSimulator {
 
     if (header.getBaseFee().isEmpty()) {
       transactionBuilder.gasPrice(gasPrice);
-    } else {
-      if (protocolSchedule.getChainId().isEmpty()) {
-        return Optional.empty();
-      }
+    } else if (protocolSchedule.getChainId().isPresent()) {
       transactionBuilder
           .chainId(protocolSchedule.getChainId().orElseThrow())
           .maxFeePerGas(callParams.getMaxFeePerGas().orElse(gasPrice))
           .maxPriorityFeePerGas(callParams.getMaxPriorityFeePerGas().orElse(gasPrice));
+    } else {
+      return Optional.empty();
     }
 
     transactionBuilder.guessType();

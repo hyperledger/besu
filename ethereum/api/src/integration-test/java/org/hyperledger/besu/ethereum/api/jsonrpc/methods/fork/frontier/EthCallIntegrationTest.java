@@ -52,6 +52,7 @@ public class EthCallIntegrationTest {
   public static void setUpOnce() throws Exception {
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+
     BLOCKCHAIN =
         new JsonRpcTestMethodsFactory(
             new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson));
@@ -65,7 +66,6 @@ public class EthCallIntegrationTest {
 
   @Test
   public void shouldReturnExpectedResultForCallAtLatestBlock() {
-
     final JsonCallParameter callParameter =
         new JsonCallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),

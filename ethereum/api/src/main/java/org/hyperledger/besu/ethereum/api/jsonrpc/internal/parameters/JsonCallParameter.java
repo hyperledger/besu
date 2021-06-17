@@ -58,7 +58,7 @@ public class JsonCallParameter extends CallParameter {
     this.strict = Optional.ofNullable(strict);
   }
 
-  public Optional<Boolean> isStrict() {
+  public Optional<Boolean> isMaybeStrict() {
     return strict;
   }
 }

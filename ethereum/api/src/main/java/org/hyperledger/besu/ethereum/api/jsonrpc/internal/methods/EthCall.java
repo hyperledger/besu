@@ -129,6 +129,12 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
     if (callParams.getTo() == null) {
       throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
     }
+    if (callParams.getGasPrice() != null
+        && (callParams.getMaxFeePerGas().isPresent()
+            || callParams.getMaxPriorityFeePerGas().isPresent())) {
+      throw new InvalidJsonRpcParameters(
+          "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
+    }
     return callParams;
   }
 
@@ -141,7 +147,8 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
 
     // if it is not set explicitly whether we want a strict check of the balance or not. this will
     // be decided according to the provided parameters
-    if (callParams.isStrict().isEmpty()) {
+
+    if (callParams.isMaybeStrict().isEmpty()) {
 
       boolean isZeroGasPrice =
           callParams.getGasPrice() == null || Wei.ZERO.equals(callParams.getGasPrice());
@@ -170,7 +177,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
               });
     } else {
       transactionValidationParams.isAllowExceedingBalance(
-          !callParams.isStrict().orElse(Boolean.FALSE));
+          !callParams.isMaybeStrict().orElse(Boolean.FALSE));
     }
     return transactionValidationParams.build();
   }

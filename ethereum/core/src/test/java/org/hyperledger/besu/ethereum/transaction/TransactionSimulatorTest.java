@@ -391,13 +391,14 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenEip1559TransactionProcessingIsSuccessful() {
     final CallParameter callParameter = eip1559TransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Hash.ZERO, 1L);
     mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
             .nonce(1L)
-            .gasPrice(callParameter.getGasPrice())
+            .chainId(BigInteger.ONE)
+            .type(TransactionType.EIP1559)
             .gasLimit(callParameter.getGasLimit())
             .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
             .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
@@ -451,12 +452,24 @@ public class TransactionSimulatorTest {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getStateRoot()).thenReturn(stateRoot);
     when(blockHeader.getNumber()).thenReturn(blockNumber);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(0L));
+    when(blockchain.getBlockHeader(blockNumber)).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(headerHash)).thenReturn(Optional.of(blockHeader));
+  }
+
+  private void mockBlockchainForBlockHeader(
+      final Hash stateRoot, final long blockNumber, final Hash headerHash, final long baseFee) {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getStateRoot()).thenReturn(stateRoot);
+    when(blockHeader.getNumber()).thenReturn(blockNumber);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(baseFee));
     when(blockchain.getBlockHeader(blockNumber)).thenReturn(Optional.of(blockHeader));
     when(blockchain.getBlockHeader(headerHash)).thenReturn(Optional.of(blockHeader));
   }
 
   private void mockProcessorStatusForTransaction(
       final long blockNumber, final Transaction transaction, final Status status) {
+    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(protocolSchedule.getByBlockNumber(eq(blockNumber))).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
