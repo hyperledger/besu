@@ -107,7 +107,7 @@ public class PendingTransactions {
                           .orElse(transactionInfo.getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private Optional<Long> baseFee = Optional.empty();
+  private Optional<Long> baseFee;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
 
