@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -41,11 +40,12 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.junit.Before;
+import org.junit.Test;
 
 public class EthFeeHistoryTest {
   final BlockDataGenerator gen = new BlockDataGenerator();
@@ -126,7 +126,8 @@ public class EthFeeHistoryTest {
     blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
     final EthFeeHistory.FeeHistory result =
         (EthFeeHistory.FeeHistory)
-            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0})).getResult();
+            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
+                .getResult();
     assertThat(result.getReward()).hasValue(List.of(List.of(0L)));
   }
 
