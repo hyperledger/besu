@@ -109,7 +109,7 @@ final class DeFramer extends ByteToMessageDecoder {
         try {
           peerInfo = HelloMessage.readFrom(message).getPeerInfo();
         } catch (final RLPException e) {
-          LOG.warn("Received invalid HELLO message, set log level to TRACE for message body", e);
+          LOG.debug("Received invalid HELLO message, set log level to TRACE for message body", e);
           connectFuture.completeExceptionally(e);
           ctx.close();
           return;
