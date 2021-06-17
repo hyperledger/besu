@@ -118,12 +118,16 @@ public class EthFeeHistoryTest {
   }
 
   @Test
-  public void cantGetZeroBlockCount() {
+  public void blockCountBounds() {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest(0, "latest", new double[] {100.0}))
+                .getError())
+        .isEqualTo(JsonRpcError.INVALID_PARAMS);
+    assertThat(
+            ((JsonRpcErrorResponse) feeHistoryRequest(1025, "latest", new double[] {100.0}))
                 .getError())
         .isEqualTo(JsonRpcError.INVALID_PARAMS);
   }
