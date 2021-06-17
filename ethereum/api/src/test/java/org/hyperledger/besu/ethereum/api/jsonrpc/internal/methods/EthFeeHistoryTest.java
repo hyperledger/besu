@@ -116,8 +116,24 @@ public class EthFeeHistoryTest {
     assertThat(result.getReward()).hasValueSatisfying(reward -> assertThat(reward).hasSize(2));
   }
 
+  @Test
+  public void allZeroPercentilesForZeroBlock() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    final BlockDataGenerator.BlockOptions blockOptions = BlockDataGenerator.BlockOptions.create();
+    blockOptions.hasTransactions(false);
+    blockOptions.setParentHash(blockchain.getChainHeadHash());
+    blockOptions.setBlockNumber(11);
+    final Block emptyBlock = gen.block(blockOptions);
+    blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
+    final EthFeeHistory.FeeHistory result =
+        (EthFeeHistory.FeeHistory)
+            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0})).getResult();
+    assertThat(result.getReward()).hasValue(List.of(List.of(0L)));
+  }
+
   // test names of field are alright
-  // zeros for empty block
   // ascending order for rewards implies sorting
   // check invalid numerals in parsing
 
