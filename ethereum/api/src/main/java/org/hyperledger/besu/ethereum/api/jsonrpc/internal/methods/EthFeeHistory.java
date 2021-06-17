@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
@@ -179,12 +180,13 @@ public class EthFeeHistory implements JsonRpcMethod {
     return rewards;
   }
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   public static class FeeHistory {
 
     private final long oldestBlock;
     private final List<Long> baseFeePerGas;
     private final List<Double> gasUsedRatio;
-    private final Optional<List<List<Long>>> reward;
+    private final List<List<Long>> reward;
 
     public FeeHistory(
         final long oldestBlock,
@@ -194,7 +196,7 @@ public class EthFeeHistory implements JsonRpcMethod {
       this.oldestBlock = oldestBlock;
       this.baseFeePerGas = baseFeePerGas;
       this.gasUsedRatio = gasUsedRatio;
-      this.reward = reward;
+      this.reward = reward.orElse(null);
     }
 
     public long getOldestBlock() {
@@ -209,7 +211,7 @@ public class EthFeeHistory implements JsonRpcMethod {
       return gasUsedRatio;
     }
 
-    public Optional<List<List<Long>>> getReward() {
+    public List<List<Long>> getReward() {
       return reward;
     }
 

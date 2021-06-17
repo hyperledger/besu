@@ -128,7 +128,7 @@ public class EthFeeHistoryTest {
         (EthFeeHistory.FeeHistory)
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
                 .getResult();
-    assertThat(result.getReward()).hasValue(List.of(List.of(0L)));
+    assertThat(result.getReward()).isEqualTo(List.of(List.of(0L)));
   }
 
   // test names of field are alright
