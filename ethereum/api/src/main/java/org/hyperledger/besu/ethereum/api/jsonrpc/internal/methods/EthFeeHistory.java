@@ -61,14 +61,17 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Optional<List<Double>> maybeRewardPercentiles =
         request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
 
+    final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
     final long resolvedHighestBlockNumber =
         highestBlock
             .getNumber()
+            .map(
+                requestedHighestBlockNumber ->
+                    Math.min(chainHeadBlockNumber, requestedHighestBlockNumber))
             .orElse(
                 highestBlock.isEarliest()
                     ? BlockHeader.GENESIS_BLOCK_NUMBER
-                    : blockchain
-                        .getChainHeadBlockNumber() /* both latest and pending use the head block until we have pending block support */);
+                    : chainHeadBlockNumber /* both latest and pending use the head block until we have pending block support */);
     final long oldestBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));
 
     final List<BlockHeader> blockHeaders =
@@ -172,6 +175,7 @@ public class EthFeeHistory implements JsonRpcMethod {
   }
 
   public static class FeeHistory {
+
     private final long oldestBlock;
     private final List<Long> baseFeePerGas;
     private final List<Double> gasUsedRatio;
@@ -186,6 +190,22 @@ public class EthFeeHistory implements JsonRpcMethod {
       this.baseFeePerGas = baseFeePerGas;
       this.gasUsedRatio = gasUsedRatio;
       this.reward = reward;
+    }
+
+    public long getOldestBlock() {
+      return oldestBlock;
+    }
+
+    public List<Long> getBaseFeePerGas() {
+      return baseFeePerGas;
+    }
+
+    public List<Double> getGasUsedRatio() {
+      return gasUsedRatio;
+    }
+
+    public Optional<List<List<Long>>> getReward() {
+      return reward;
     }
 
     @Override

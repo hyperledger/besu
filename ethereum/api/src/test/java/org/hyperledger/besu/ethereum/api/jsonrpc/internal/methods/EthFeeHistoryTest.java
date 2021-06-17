@@ -18,28 +18,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -48,12 +41,9 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 public class EthFeeHistoryTest {
   final BlockDataGenerator gen = new BlockDataGenerator();
@@ -80,19 +70,20 @@ public class EthFeeHistoryTest {
 
   @Test
   public void params() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
     // should fail because no required params given
-    assertThatThrownBy(() -> method.response(feeHistoryRequestContext()))
-        .isInstanceOf(InvalidJsonRpcParameters.class);
+    assertThatThrownBy(this::feeHistoryRequest).isInstanceOf(InvalidJsonRpcParameters.class);
     // should fail because newestBlock not given
-    assertThatThrownBy(() -> method.response(feeHistoryRequestContext(1)))
-        .isInstanceOf(InvalidJsonRpcParameters.class);
+    assertThatThrownBy(() -> feeHistoryRequest(1)).isInstanceOf(InvalidJsonRpcParameters.class);
     // should fail because blockCount not given
-    assertThatThrownBy(() -> method.response(feeHistoryRequestContext("latest")))
+    assertThatThrownBy(() -> feeHistoryRequest("latest"))
         .isInstanceOf(InvalidJsonRpcParameters.class);
     // should pass because both required params given
-    method.response(feeHistoryRequestContext(1, "latest"));
+    feeHistoryRequest(1, "latest");
     // should pass because both required params and optional param given
-    method.response(feeHistoryRequestContext(1, "latest", new double[] {1, 20.4}));
+    feeHistoryRequest(1, "latest", new double[] {1, 20.4});
   }
 
   @Test
@@ -101,8 +92,7 @@ public class EthFeeHistoryTest {
     when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
     when(protocolSchedule.getByBlockNumber(eq(11L))).thenReturn(londonSpec);
     assertThat(
-            ((JsonRpcSuccessResponse)
-                    method.response(feeHistoryRequestContext(1, "latest", new double[] {100.0})))
+            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
                 .getResult())
         .isEqualTo(
             new EthFeeHistory.FeeHistory(
@@ -112,14 +102,27 @@ public class EthFeeHistoryTest {
                 Optional.of(List.of(List.of(1524742083L)))));
   }
 
-  // test base fee always being of size > 1
-  // test block count goes further than chain head
+  @Test
+  public void cantGetBlockHigherThanChainHead() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    final EthFeeHistory.FeeHistory result =
+        (EthFeeHistory.FeeHistory)
+            ((JsonRpcSuccessResponse) feeHistoryRequest(2, "11", new double[] {100.0})).getResult();
+    assertThat(result.getOldestBlock()).isEqualTo(9);
+    assertThat(result.getBaseFeePerGas()).hasSize(3);
+    assertThat(result.getGasUsedRatio()).hasSize(2);
+    assertThat(result.getReward()).hasValueSatisfying(reward -> assertThat(reward).hasSize(2));
+  }
+
   // test names of field are alright
   // zeros for empty block
   // ascending order for rewards implies sorting
   // check invalid numerals in parsing
 
-  private JsonRpcRequestContext feeHistoryRequestContext(final Object... params) {
-    return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_feeHistory", params));
+  private JsonRpcResponse feeHistoryRequest(final Object... params) {
+    return method.response(
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_feeHistory", params)));
   }
 }
