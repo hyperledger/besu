@@ -19,6 +19,8 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -65,13 +67,16 @@ public class EthFeeHistory implements JsonRpcMethod {
     final long resolvedHighestBlockNumber =
         highestBlock
             .getNumber()
-            .map(
-                requestedHighestBlockNumber ->
-                    Math.min(chainHeadBlockNumber, requestedHighestBlockNumber))
             .orElse(
                 highestBlock.isEarliest()
                     ? BlockHeader.GENESIS_BLOCK_NUMBER
                     : chainHeadBlockNumber /* both latest and pending use the head block until we have pending block support */);
+
+    final Object requestId = request.getRequest().getId();
+    if (resolvedHighestBlockNumber > chainHeadBlockNumber) {
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS);
+    }
+
     final long oldestBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));
 
     final List<BlockHeader> blockHeaders =
@@ -125,7 +130,7 @@ public class EthFeeHistory implements JsonRpcMethod {
                     .collect(toUnmodifiableList()));
 
     return new JsonRpcSuccessResponse(
-        request.getRequest().getId(),
+        requestId,
         new FeeHistory(
             oldestBlock,
             Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))

@@ -26,6 +26,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -107,13 +109,8 @@ public class EthFeeHistoryTest {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
-    final EthFeeHistory.FeeHistory result =
-        (EthFeeHistory.FeeHistory)
-            ((JsonRpcSuccessResponse) feeHistoryRequest(2, "11", new double[] {100.0})).getResult();
-    assertThat(result.getOldestBlock()).isEqualTo(9);
-    assertThat(result.getBaseFeePerGas()).hasSize(3);
-    assertThat(result.getGasUsedRatio()).hasSize(2);
-    assertThat(result.getReward()).hasValueSatisfying(reward -> assertThat(reward).hasSize(2));
+    assertThat(((JsonRpcErrorResponse) feeHistoryRequest(2, "11", new double[] {100.0})).getError())
+        .isEqualTo(JsonRpcError.INVALID_PARAMS);
   }
 
   @Test
