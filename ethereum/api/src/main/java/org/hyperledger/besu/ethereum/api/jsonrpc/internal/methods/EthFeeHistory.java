@@ -128,7 +128,11 @@ public class EthFeeHistory implements JsonRpcMethod {
             rewardPercentiles ->
                 LongStream.range(oldestBlock, oldestBlock + blockCount)
                     .mapToObj(blockNumber -> blockchain.getBlockByNumber(blockNumber).get())
-                    .map(block -> computeRewards(rewardPercentiles, block))
+                    .map(
+                        block ->
+                            computeRewards(
+                                rewardPercentiles.stream().sorted().collect(toUnmodifiableList()),
+                                block))
                     .collect(toUnmodifiableList()));
 
     return new JsonRpcSuccessResponse(
@@ -160,8 +164,11 @@ public class EthFeeHistory implements JsonRpcMethod {
                     transaction -> transaction.getEffectivePriorityFeePerGas(baseFee)))
             .collect(toUnmodifiableList());
 
+    // We need to weight the percentile of rewards by the gas used in the transaction.
+    // That's why we're keeping track of the cumulative gas used and checking to see which
+    // percentile markers we've passed
     final ArrayList<Long> rewards = new ArrayList<>();
-    int rewardIndex = 0;
+    int rewardPercentileIndex = 0;
     long gasUsed = 0;
     for (final Transaction transaction : transactionsAscendingEffectiveGasFee) {
 
@@ -171,11 +178,11 @@ public class EthFeeHistory implements JsonRpcMethod {
               .get()
               .getGasUsed();
 
-      while (rewardIndex < rewardPercentiles.size()
+      while (rewardPercentileIndex < rewardPercentiles.size()
           && 100.0 * gasUsed / block.getHeader().getGasUsed()
-              >= rewardPercentiles.get(rewardIndex)) {
+              >= rewardPercentiles.get(rewardPercentileIndex)) {
         rewards.add(transaction.getEffectivePriorityFeePerGas(baseFee));
-        rewardIndex++;
+        rewardPercentileIndex++;
       }
     }
     return rewards;
