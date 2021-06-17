@@ -408,8 +408,6 @@ public class TransactionSimulatorTest {
             .type(TransactionType.EIP1559)
             .chainId(BigInteger.ONE)
             .nonce(1L)
-            .chainId(BigInteger.ONE)
-            .type(TransactionType.EIP1559)
             .gasLimit(callParameter.getGasLimit())
             .maxFeePerGas(callParameter.getMaxFeePerGas().orElseThrow())
             .maxPriorityFeePerGas(callParameter.getMaxPriorityFeePerGas().orElseThrow())
