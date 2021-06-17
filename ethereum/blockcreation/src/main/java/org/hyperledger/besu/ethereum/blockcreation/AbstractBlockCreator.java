@@ -267,7 +267,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       baseFee =
           eip1559.computeBaseFee(
               newBlockNumber,
-              parentHeader.getBaseFee().orElseThrow(),
+              parentHeader.getBaseFee().orElse(0L),
               parentHeader.getGasUsed(),
               eip1559.targetGasUsed(parentHeader));
     }

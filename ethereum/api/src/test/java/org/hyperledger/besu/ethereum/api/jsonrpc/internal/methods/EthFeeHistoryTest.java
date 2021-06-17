@@ -18,10 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -139,6 +141,17 @@ public class EthFeeHistoryTest {
     assertThat(result.getBaseFeePerGas()).hasSize(12);
     assertThat(result.getGasUsedRatio()).hasSize(11);
     assertThat(result.getReward()).isNull();
+  }
+
+  @Test
+  public void correctlyHandlesForkBlock() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(11)));
+    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
+    final FeeHistoryResult result =
+        (FeeHistoryResult) ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
+    assertThat(result.getBaseFeePerGas().get(1))
+        .isEqualTo(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
   }
 
   @Test
