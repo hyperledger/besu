@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistoryResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -97,11 +99,12 @@ public class EthFeeHistoryTest {
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
                 .getResult())
         .isEqualTo(
-            new EthFeeHistory.FeeHistory(
-                10,
-                List.of(47177L, 53074L),
-                List.of(0.9999999992132459),
-                Optional.of(List.of(List.of(1524742083L)))));
+            ImmutableFeeHistoryResult.builder()
+                .oldestBlock(10)
+                .baseFeePerGas(List.of(47177L, 53074L))
+                .gasUsedRatio(List.of(0.9999999992132459))
+                .reward(List.of(List.of(1524742083L)))
+                .build());
   }
 
   @Test
@@ -129,8 +132,8 @@ public class EthFeeHistoryTest {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
-    final EthFeeHistory.FeeHistory result =
-        (EthFeeHistory.FeeHistory)
+    final FeeHistoryResult result =
+        (ImmutableFeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(20, "latest")).getResult();
     assertThat(result.getOldestBlock()).isEqualTo(0);
     assertThat(result.getBaseFeePerGas()).hasSize(12);
@@ -149,8 +152,8 @@ public class EthFeeHistoryTest {
     blockOptions.setBlockNumber(11);
     final Block emptyBlock = gen.block(blockOptions);
     blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
-    final EthFeeHistory.FeeHistory result =
-        (EthFeeHistory.FeeHistory)
+    final FeeHistoryResult result =
+        (FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
                 .getResult();
     assertThat(result.getReward()).isEqualTo(List.of(List.of(0L)));

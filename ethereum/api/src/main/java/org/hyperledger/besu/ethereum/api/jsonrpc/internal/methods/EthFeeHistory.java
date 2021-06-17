@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -34,12 +34,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class EthFeeHistory implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
@@ -139,14 +136,15 @@ public class EthFeeHistory implements JsonRpcMethod {
                                 block))
                     .collect(toUnmodifiableList()));
 
-    return new JsonRpcSuccessResponse(
-        requestId,
-        new FeeHistory(
-            oldestBlock,
-            Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
-                .collect(toUnmodifiableList()),
-            gasUsedRatios,
-            maybeRewards));
+    final ImmutableFeeHistoryResult.Builder feeHistoryResultBuilder =
+        ImmutableFeeHistoryResult.builder()
+            .oldestBlock(oldestBlock)
+            .baseFeePerGas(
+                Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
+                    .collect(toUnmodifiableList()))
+            .gasUsedRatio(gasUsedRatios);
+    maybeRewards.ifPresent(feeHistoryResultBuilder::reward);
+    return new JsonRpcSuccessResponse(requestId, feeHistoryResultBuilder.build());
   }
 
   private List<Long> computeRewards(
@@ -190,64 +188,5 @@ public class EthFeeHistory implements JsonRpcMethod {
       }
     }
     return rewards;
-  }
-
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  public static class FeeHistory {
-
-    private final long oldestBlock;
-    private final List<Long> baseFeePerGas;
-    private final List<Double> gasUsedRatio;
-    private final List<List<Long>> reward;
-
-    public FeeHistory(
-        final long oldestBlock,
-        final List<Long> baseFeePerGas,
-        final List<Double> gasUsedRatio,
-        final Optional<List<List<Long>>> reward) {
-      this.oldestBlock = oldestBlock;
-      this.baseFeePerGas = baseFeePerGas;
-      this.gasUsedRatio = gasUsedRatio;
-      this.reward = reward.orElse(null);
-    }
-
-    public long getOldestBlock() {
-      return oldestBlock;
-    }
-
-    public List<Long> getBaseFeePerGas() {
-      return baseFeePerGas;
-    }
-
-    public List<Double> getGasUsedRatio() {
-      return gasUsedRatio;
-    }
-
-    public List<List<Long>> getReward() {
-      return reward;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      final FeeHistory that = (FeeHistory) o;
-      return oldestBlock == that.oldestBlock
-          && baseFeePerGas.equals(that.baseFeePerGas)
-          && gasUsedRatio.equals(that.gasUsedRatio)
-          && reward.equals(that.reward);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(oldestBlock, baseFeePerGas, gasUsedRatio, reward);
-    }
-
-    @Override
-    public String toString() {
-      return String.format(
-          "FeeHistory{firstBlock=%d, baseFees=%s, gasUsedRatios=%s, rewards=%s}",
-          oldestBlock, baseFeePerGas, gasUsedRatio, reward);
-    }
   }
 }

@@ -318,7 +318,8 @@ public class BlockTransactionSelectorTest {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final PendingTransactions pendingTransactions1559 = new PendingTransactions(
+    final PendingTransactions pendingTransactions1559 =
+        new PendingTransactions(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             5,
             5,
@@ -335,7 +336,7 @@ public class BlockTransactionSelectorTest {
             transactionProcessor,
             blockchain,
             worldState,
-                pendingTransactions1559,
+            pendingTransactions1559,
             blockHeader,
             this::createReceipt,
             Wei.of(6),
