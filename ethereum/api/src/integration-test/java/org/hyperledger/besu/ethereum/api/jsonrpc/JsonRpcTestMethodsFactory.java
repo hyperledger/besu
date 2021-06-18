@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
-import io.vertx.core.json.Json;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -76,12 +75,11 @@ public class JsonRpcTestMethodsFactory {
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
     this.context = new ProtocolContext(blockchain, stateArchive, null);
 
-
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
 
     for (final Block block : importer.getBlocks()) {
       final ProtocolSpec protocolSpec =
-              protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
@@ -149,7 +147,7 @@ public class JsonRpcTestMethodsFactory {
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscovery,
-                blockchainQueries,
+            blockchainQueries,
             synchronizer,
             importer.getProtocolSchedule(),
             filterManager,
