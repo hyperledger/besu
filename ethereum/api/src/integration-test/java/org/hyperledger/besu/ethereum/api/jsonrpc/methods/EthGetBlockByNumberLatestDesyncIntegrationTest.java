@@ -43,6 +43,7 @@ import org.hyperledger.besu.testutil.BlockTestUtil;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -121,4 +122,5 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
               assertThat(br.getNumber()).isEqualTo("0x0");
             });
   }
+
 }
