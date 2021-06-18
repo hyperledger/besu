@@ -16,9 +16,9 @@
 package org.hyperledger.besu.pki.cms;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.hyperledger.besu.pki.util.TestCertificateUtils.createCA;
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.createCRL;
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.createKeyPair;
+import static org.hyperledger.besu.pki.util.TestCertificateUtils.createSelfSignedCertificate;
 import static org.hyperledger.besu.pki.util.TestCertificateUtils.issueCertificate;
 
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
@@ -66,60 +66,24 @@ public class CmsCreationAndValidationTest {
     final Instant notAfter = Instant.now().plus(1, ChronoUnit.DAYS);
 
     /*
-     Create trusted certificates
+     Create self-signed certificate
+    */
+    final KeyPair selfsignedKeyPair = createKeyPair();
+    final X509Certificate selfsignedCertificate =
+        createSelfSignedCertificate("selfsigned", notBefore, notAfter, selfsignedKeyPair);
+
+    /*
+      Create trusted chain (ca -> interca -> partneraca -> partneravalidator)
     */
     final KeyPair caKeyPair = createKeyPair();
-    final X509Certificate caCertificate = createCA("ca", notBefore, notAfter, caKeyPair);
+    final X509Certificate caCertificate =
+        createSelfSignedCertificate("ca", notBefore, notAfter, caKeyPair);
 
     final KeyPair interCAKeyPair = createKeyPair();
     final X509Certificate interCACertificate =
         issueCertificate(
             caCertificate, caKeyPair, "interca", notBefore, notAfter, interCAKeyPair, true);
 
-    final KeyPair selfsignedKeyPair = createKeyPair();
-    final X509Certificate selfsignedCertificate =
-        createCA("selfsigned", notBefore, notAfter, selfsignedKeyPair);
-
-    /*
-     Create expired and revoked certificates
-    */
-    final KeyPair expiredKeyPair = createKeyPair();
-    final X509Certificate expiredCertificate =
-        issueCertificate(
-            caCertificate,
-            caKeyPair,
-            "expired",
-            notBefore,
-            notBefore.plus(1, ChronoUnit.SECONDS),
-            expiredKeyPair,
-            true);
-
-    final KeyPair revokedKeyPair = createKeyPair();
-    final X509Certificate revokedCertificate =
-        issueCertificate(
-            caCertificate, caKeyPair, "revoked", notBefore, notAfter, revokedKeyPair, true);
-
-    /*
-     Create untrusted chain (untrusted_selfsigned -> unstrusted_partner)
-    */
-    final KeyPair untrustedSelfSignedKeyPair = createKeyPair();
-    final X509Certificate untrustedSelfsignedCertificate =
-        createCA("untrusted_selfsigned", notBefore, notAfter, untrustedSelfSignedKeyPair);
-
-    final KeyPair untrustedIntermediateKeyPair = createKeyPair();
-    final X509Certificate untrustedIntermediateCertificate =
-        issueCertificate(
-            untrustedSelfsignedCertificate,
-            untrustedSelfSignedKeyPair,
-            "unstrusted_partner",
-            notBefore,
-            notAfter,
-            untrustedIntermediateKeyPair,
-            true);
-
-    /*
-     Create parterA (trusted) chain (ca -> interca -> partneraca -> partneravalidator)
-    */
     final KeyPair partnerACAPair = createKeyPair();
     final X509Certificate partnerACACertificate =
         issueCertificate(
@@ -143,6 +107,47 @@ public class CmsCreationAndValidationTest {
             false);
 
     /*
+     Create expired certificate
+    */
+    final KeyPair expiredKeyPair = createKeyPair();
+    final X509Certificate expiredCertificate =
+        issueCertificate(
+            caCertificate,
+            caKeyPair,
+            "expired",
+            notBefore,
+            notBefore.plus(1, ChronoUnit.SECONDS),
+            expiredKeyPair,
+            true);
+
+    /*
+     Create revoked and revoked certificates
+    */
+    final KeyPair revokedKeyPair = createKeyPair();
+    final X509Certificate revokedCertificate =
+        issueCertificate(
+            caCertificate, caKeyPair, "revoked", notBefore, notAfter, revokedKeyPair, true);
+
+    /*
+     Create untrusted chain (untrusted_selfsigned -> unstrusted_partner)
+    */
+    final KeyPair untrustedSelfSignedKeyPair = createKeyPair();
+    final X509Certificate untrustedSelfsignedCertificate =
+        createSelfSignedCertificate(
+            "untrusted_selfsigned", notBefore, notAfter, untrustedSelfSignedKeyPair);
+
+    final KeyPair untrustedIntermediateKeyPair = createKeyPair();
+    final X509Certificate untrustedIntermediateCertificate =
+        issueCertificate(
+            untrustedSelfsignedCertificate,
+            untrustedSelfSignedKeyPair,
+            "unstrusted_partner",
+            notBefore,
+            notAfter,
+            untrustedIntermediateKeyPair,
+            true);
+
+    /*
      Create truststore wrapper with 3 trusted certificates: 'ca', 'interca' and 'selfsigned'
     */
     final KeyStore truststore = KeyStore.getInstance("PKCS12");
@@ -155,7 +160,7 @@ public class CmsCreationAndValidationTest {
     truststoreWrapper = new SoftwareKeyStoreWrapper(truststore, "");
 
     /*
-     Create keystore with certificates used by the tests
+     Create keystore with certificates used in tests
     */
     final KeyStore keystore = KeyStore.getInstance("PKCS12");
     keystore.load(null, null);
@@ -184,9 +189,7 @@ public class CmsCreationAndValidationTest {
         "trusted",
         parterAValidatorKeyPair.getPrivate(),
         "".toCharArray(),
-        new Certificate[] {
-          partnerAValidatorCertificate, partnerACACertificate, interCACertificate, caCertificate
-        });
+        new Certificate[] {partnerAValidatorCertificate, partnerACACertificate});
     keystore.setKeyEntry(
         "untrusted",
         untrustedIntermediateKeyPair.getPrivate(),
@@ -195,7 +198,7 @@ public class CmsCreationAndValidationTest {
     keystoreWrapper = new SoftwareKeyStoreWrapper(keystore, "");
 
     /*
-     Create CRLs
+     Create CRLs for all CA certificates (mostly empty, only ca has one revoked certificate)
     */
     final X509CRL caCRL = createCRL(caCertificate, caKeyPair, Set.of(revokedCertificate));
     final X509CRL intercaCRL =

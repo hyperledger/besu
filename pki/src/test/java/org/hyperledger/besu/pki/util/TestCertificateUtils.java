@@ -71,7 +71,7 @@ public class TestCertificateUtils {
     }
   }
 
-  public static X509Certificate createCA(
+  public static X509Certificate createSelfSignedCertificate(
       final String name, final Instant notBefore, final Instant notAfter, final KeyPair keyPair) {
     try {
       final ContentSigner signer =
