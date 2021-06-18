@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import io.vertx.core.json.Json;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -62,28 +63,40 @@ public class JsonRpcTestMethodsFactory {
   private static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
 
   private final BlockchainImporter importer;
+  private final MutableBlockchain blockchain;
+  private final WorldStateArchive stateArchive;
+  private final ProtocolContext context;
+  private final BlockchainQueries blockchainQueries;
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
     this.importer = importer;
-  }
+    this.blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
+    this.stateArchive = createInMemoryWorldStateArchive();
+    this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
+    this.context = new ProtocolContext(blockchain, stateArchive, null);
 
-  public Map<String, JsonRpcMethod> methods() {
-    final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
-
-    importer.getGenesisState().writeStateTo(stateArchive.getMutable());
-
-    final MutableBlockchain blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
-    final ProtocolContext context = new ProtocolContext(blockchain, stateArchive, null);
 
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
     for (final Block block : importer.getBlocks()) {
       final ProtocolSpec protocolSpec =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+              protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
+    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+  }
 
-    final BlockchainQueries blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+  public JsonRpcTestMethodsFactory(final BlockchainImporter importer, final MutableBlockchain blockchain,
+                                   final WorldStateArchive stateArchive, final ProtocolContext context) {
+    this.importer = importer;
+    this.blockchain = blockchain;
+    this.stateArchive = stateArchive;
+    this.context = context;
+    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+
+  }
+
+  public Map<String, JsonRpcMethod> methods() {
 
     final Synchronizer synchronizer = mock(Synchronizer.class);
     final P2PNetwork peerDiscovery = mock(P2PNetwork.class);
@@ -124,7 +137,7 @@ public class JsonRpcTestMethodsFactory {
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscovery,
-            blockchainQueries,
+                blockchainQueries,
             synchronizer,
             protocolSchedule,
             filterManager,
