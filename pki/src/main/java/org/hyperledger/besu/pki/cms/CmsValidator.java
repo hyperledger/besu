@@ -16,18 +16,17 @@ package org.hyperledger.besu.pki.cms;
 
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
-import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyStoreException;
 import java.security.Security;
 import java.security.cert.CertPathBuilder;
 import java.security.cert.CertPathBuilderException;
 import java.security.cert.CertStore;
 import java.security.cert.PKIXBuilderParameters;
-import java.security.cert.PKIXParameters;
+import java.security.cert.PKIXRevocationChecker;
+import java.security.cert.PKIXRevocationChecker.Option;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -136,52 +135,41 @@ public class CmsValidator {
     LOGGER.trace("Starting CMS certificate validation");
 
     try {
-      final CertStore cmsCertificates;
-      try {
-        cmsCertificates =
-            new JcaCertStoreBuilder().addCertificates(cmsSignedData.getCertificates()).build();
-      } catch (final GeneralSecurityException e) {
-        throw new RuntimeException("Error reading certificate from CMS data", e);
-      }
+      final CertPathBuilder cpb = CertPathBuilder.getInstance("PKIX");
 
-      // Initialize PKIXParameters with truststore, setting the trusted anchors
-      final PKIXParameters pkixParameters;
-      try {
-        pkixParameters = new PKIXParameters(truststore.getKeyStore());
-      } catch (final KeyStoreException e) {
-        throw new RuntimeException("Truststore hasn't been initialized", e);
-      } catch (final InvalidAlgorithmParameterException e) {
-        throw new RuntimeException("Truststore is empty", e);
-      }
-
-      // Define signer's certificate as the starting point of the path (leaf certificate)
+      // Define CMS signer certificate as the starting point of the path (leaf certificate)
       final X509CertSelector targetConstraints = new X509CertSelector();
       targetConstraints.setCertificate(signerCertificate);
 
       // Set parameters for the certificate path building algorithm
-      final PKIXBuilderParameters params;
-      try {
-        params = new PKIXBuilderParameters(pkixParameters.getTrustAnchors(), targetConstraints);
-        // Adding CertStore with CRLs
-        crlCertStore.ifPresentOrElse(
-            params::addCertStore,
-            () -> {
-              LOGGER.warn("No CRL CertStore provided. CRL validation will be disabled.");
-              params.setRevocationEnabled(false);
-            });
+      final PKIXBuilderParameters params =
+          new PKIXBuilderParameters(truststore.getKeyStore(), targetConstraints);
 
-        // Adding intermediate certificates from CMS
-        params.addCertStore(cmsCertificates);
-      } catch (final InvalidAlgorithmParameterException e) {
-        throw new RuntimeException("Empty trust anchors on truststore", e);
-      }
+      // Adding CertStore with CRLs (if present, otherwise disabling revocation check)
+      crlCertStore.ifPresentOrElse(
+          CRLs -> {
+            params.addCertStore(CRLs);
+            PKIXRevocationChecker rc = (PKIXRevocationChecker) cpb.getRevocationChecker();
+            rc.setOptions(EnumSet.of(Option.PREFER_CRLS));
+            params.addCertPathChecker(rc);
+          },
+          () -> {
+            LOGGER.warn("No CRL CertStore provided. CRL validation will be disabled.");
+            params.setRevocationEnabled(false);
+          });
+
+      // Read certificates sent on the CMS message and adding it to the path building algorithm
+      final CertStore cmsCertificates =
+          new JcaCertStoreBuilder().addCertificates(cmsSignedData.getCertificates()).build();
+      params.addCertStore(cmsCertificates);
 
       // Validate certificate path
       try {
-        CertPathBuilder.getInstance("PKIX", BouncyCastleProvider.PROVIDER_NAME).build(params);
+        cpb.build(params);
         return true;
       } catch (final CertPathBuilderException cpbe) {
         LOGGER.warn("Untrusted certificate chain", cpbe);
+        LOGGER.trace("Reason for failed validation", cpbe.getCause());
         return false;
       }
 

@@ -16,15 +16,26 @@
 package org.hyperledger.besu.pki.cms;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hyperledger.besu.pki.util.TestCertificateUtils.createCA;
+import static org.hyperledger.besu.pki.util.TestCertificateUtils.createCRL;
+import static org.hyperledger.besu.pki.util.TestCertificateUtils.createKeyPair;
+import static org.hyperledger.besu.pki.util.TestCertificateUtils.issueCertificate;
 
-import org.hyperledger.besu.pki.crl.CRLUtil;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.pki.keystore.SoftwareKeyStoreWrapper;
 
-import java.nio.file.Paths;
+import java.security.KeyPair;
+import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.CertStore;
+import java.security.cert.Certificate;
+import java.security.cert.CollectionCertStoreParameters;
+import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
@@ -38,28 +49,177 @@ import org.bouncycastle.operator.DigestCalculatorProvider;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class CmsCreationAndValidationTest {
 
-  private static final String PATH_TO_KEYSTORES = "src/test/resources/cms/";
-  private static final String KEYSTORE_TYPE = "PKCS12";
-  private static final String KEYSTORE_PASSWORD = "validator";
+  private static KeyStoreWrapper keystoreWrapper;
+  private static KeyStoreWrapper truststoreWrapper;
+  private static CertStore CRLs;
 
-  private KeyStoreWrapper keystore;
-  private KeyStoreWrapper truststore;
   private CmsValidator cmsValidator;
+
+  @BeforeClass
+  public static void beforeAll() throws Exception {
+    final Instant notBefore = Instant.now().minus(1, ChronoUnit.DAYS);
+    final Instant notAfter = Instant.now().plus(1, ChronoUnit.DAYS);
+
+    /*
+     Create trusted certificates
+    */
+    final KeyPair caKeyPair = createKeyPair();
+    final X509Certificate caCertificate = createCA("ca", notBefore, notAfter, caKeyPair);
+
+    final KeyPair interCAKeyPair = createKeyPair();
+    final X509Certificate interCACertificate =
+        issueCertificate(
+            caCertificate, caKeyPair, "interca", notBefore, notAfter, interCAKeyPair, true);
+
+    final KeyPair selfsignedKeyPair = createKeyPair();
+    final X509Certificate selfsignedCertificate =
+        createCA("selfsigned", notBefore, notAfter, selfsignedKeyPair);
+
+    /*
+     Create expired and revoked certificates
+    */
+    final KeyPair expiredKeyPair = createKeyPair();
+    final X509Certificate expiredCertificate =
+        issueCertificate(
+            caCertificate,
+            caKeyPair,
+            "expired",
+            notBefore,
+            notBefore.plus(1, ChronoUnit.SECONDS),
+            expiredKeyPair,
+            true);
+
+    final KeyPair revokedKeyPair = createKeyPair();
+    final X509Certificate revokedCertificate =
+        issueCertificate(
+            caCertificate, caKeyPair, "revoked", notBefore, notAfter, revokedKeyPair, true);
+
+    /*
+     Create untrusted chain (untrusted_selfsigned -> unstrusted_partner)
+    */
+    final KeyPair untrustedSelfSignedKeyPair = createKeyPair();
+    final X509Certificate untrustedSelfsignedCertificate =
+        createCA("untrusted_selfsigned", notBefore, notAfter, untrustedSelfSignedKeyPair);
+
+    final KeyPair untrustedIntermediateKeyPair = createKeyPair();
+    final X509Certificate untrustedIntermediateCertificate =
+        issueCertificate(
+            untrustedSelfsignedCertificate,
+            untrustedSelfSignedKeyPair,
+            "unstrusted_partner",
+            notBefore,
+            notAfter,
+            untrustedIntermediateKeyPair,
+            true);
+
+    /*
+     Create parterA (trusted) chain (ca -> interca -> partneraca -> partneravalidator)
+    */
+    final KeyPair partnerACAPair = createKeyPair();
+    final X509Certificate partnerACACertificate =
+        issueCertificate(
+            interCACertificate,
+            interCAKeyPair,
+            "partneraca",
+            notBefore,
+            notAfter,
+            partnerACAPair,
+            true);
+
+    final KeyPair parterAValidatorKeyPair = createKeyPair();
+    final X509Certificate partnerAValidatorCertificate =
+        issueCertificate(
+            partnerACACertificate,
+            partnerACAPair,
+            "partneravalidator",
+            notBefore,
+            notAfter,
+            parterAValidatorKeyPair,
+            false);
+
+    /*
+     Create truststore wrapper with 3 trusted certificates: 'ca', 'interca' and 'selfsigned'
+    */
+    final KeyStore truststore = KeyStore.getInstance("PKCS12");
+    truststore.load(null, null);
+
+    truststore.setCertificateEntry("ca", caCertificate);
+    truststore.setCertificateEntry("interca", interCACertificate);
+    truststore.setCertificateEntry("selfsigned", selfsignedCertificate);
+
+    truststoreWrapper = new SoftwareKeyStoreWrapper(truststore, "");
+
+    /*
+     Create keystore with certificates used by the tests
+    */
+    final KeyStore keystore = KeyStore.getInstance("PKCS12");
+    keystore.load(null, null);
+
+    keystore.setKeyEntry(
+        "trusted_selfsigned",
+        selfsignedKeyPair.getPrivate(),
+        "".toCharArray(),
+        new Certificate[] {selfsignedCertificate});
+    keystore.setKeyEntry(
+        "untrusted_selfsigned",
+        untrustedSelfSignedKeyPair.getPrivate(),
+        "".toCharArray(),
+        new Certificate[] {untrustedSelfsignedCertificate});
+    keystore.setKeyEntry(
+        "expired",
+        expiredKeyPair.getPrivate(),
+        "".toCharArray(),
+        new Certificate[] {expiredCertificate});
+    keystore.setKeyEntry(
+        "revoked",
+        revokedKeyPair.getPrivate(),
+        "".toCharArray(),
+        new Certificate[] {revokedCertificate});
+    keystore.setKeyEntry(
+        "trusted",
+        parterAValidatorKeyPair.getPrivate(),
+        "".toCharArray(),
+        new Certificate[] {
+          partnerAValidatorCertificate, partnerACACertificate, interCACertificate, caCertificate
+        });
+    keystore.setKeyEntry(
+        "untrusted",
+        untrustedIntermediateKeyPair.getPrivate(),
+        "".toCharArray(),
+        new Certificate[] {untrustedIntermediateCertificate, untrustedSelfsignedCertificate});
+    keystoreWrapper = new SoftwareKeyStoreWrapper(keystore, "");
+
+    /*
+     Create CRLs
+    */
+    final X509CRL caCRL = createCRL(caCertificate, caKeyPair, Set.of(revokedCertificate));
+    final X509CRL intercaCRL =
+        createCRL(interCACertificate, interCAKeyPair, Collections.emptyList());
+    final X509CRL partnerACACRL =
+        createCRL(partnerACACertificate, partnerACAPair, Collections.emptyList());
+    final X509CRL selfsignedCRL =
+        createCRL(selfsignedCertificate, selfsignedKeyPair, Collections.emptyList());
+
+    CRLs =
+        CertStore.getInstance(
+            "Collection",
+            new CollectionCertStoreParameters(
+                Set.of(caCRL, intercaCRL, partnerACACRL, selfsignedCRL)));
+  }
 
   @Before
   public void before() {
-    truststore = loadKeystore("truststore");
-    keystore = loadKeystore("keystore");
-    cmsValidator = new CmsValidator(truststore, loadCRLs("crl.pem"));
+    cmsValidator = new CmsValidator(truststoreWrapper, CRLs);
   }
 
   @Test
   public void cmsValidationWithTrustedSelfSignedCertificate() {
-    final CmsCreator cmsCreator = new CmsCreator(keystore, "trusted_selfsigned");
+    final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "trusted_selfsigned");
     final Bytes data = Bytes.random(32);
 
     final Bytes cms = cmsCreator.create(data);
@@ -69,7 +229,7 @@ public class CmsCreationAndValidationTest {
 
   @Test
   public void cmsValidationWithUntrustedSelfSignedCertificate() {
-    final CmsCreator cmsCreator = new CmsCreator(keystore, "untrusted_selfsigned");
+    final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "untrusted_selfsigned");
     final Bytes data = Bytes.random(32);
 
     final Bytes cms = cmsCreator.create(data);
@@ -79,7 +239,7 @@ public class CmsCreationAndValidationTest {
 
   @Test
   public void cmsValidationWithTrustedChain() {
-    final CmsCreator cmsCreator = new CmsCreator(keystore, "trusted");
+    final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "trusted");
     final Bytes data = Bytes.random(32);
 
     final Bytes cms = cmsCreator.create(data);
@@ -89,7 +249,7 @@ public class CmsCreationAndValidationTest {
 
   @Test
   public void cmsValidationWithUntrustedChain() {
-    final CmsCreator cmsCreator = new CmsCreator(keystore, "untrusted");
+    final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "untrusted");
     final Bytes data = Bytes.random(32);
 
     final Bytes cms = cmsCreator.create(data);
@@ -99,7 +259,7 @@ public class CmsCreationAndValidationTest {
 
   @Test
   public void cmsValidationWithExpiredCertificate() {
-    final CmsCreator cmsCreator = new CmsCreator(keystore, "expired");
+    final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "expired");
     final Bytes data = Bytes.random(32);
 
     final Bytes cms = cmsCreator.create(data);
@@ -109,7 +269,7 @@ public class CmsCreationAndValidationTest {
 
   @Test
   public void cmsValidationWithRevokedCertificate() {
-    final CmsCreator cmsCreator = new CmsCreator(keystore, "revoked");
+    final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "revoked");
     final Bytes data = Bytes.random(32);
 
     final Bytes cms = cmsCreator.create(data);
@@ -119,13 +279,13 @@ public class CmsCreationAndValidationTest {
 
   @Test
   public void cmsValidationWithoutCRLConfigDisablesCRLCheck() {
-    final CmsCreator cmsCreator = new CmsCreator(keystore, "revoked");
+    final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "revoked");
     final Bytes data = Bytes.random(32);
 
     final Bytes cms = cmsCreator.create(data);
 
     // Overriding validator with instance without CRL CertStore
-    cmsValidator = new CmsValidator(truststore, null);
+    cmsValidator = new CmsValidator(truststoreWrapper, null);
 
     // Because we don't have a CRL CertStore, revocation is not checked
     assertThat(cmsValidator.validate(cms, data)).isTrue();
@@ -133,7 +293,7 @@ public class CmsCreationAndValidationTest {
 
   @Test
   public void cmsValidationWithWrongSignedData() {
-    final CmsCreator cmsCreator = new CmsCreator(keystore, "trusted");
+    final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "trusted");
     final Bytes otherData = Bytes.random(32);
     final Bytes cms = cmsCreator.create(otherData);
 
@@ -146,10 +306,11 @@ public class CmsCreationAndValidationTest {
     // Create a CMS message signed with a certificate, but create SignerInfo using another
     // certificate to trigger the signature verification to fail.
 
-    final PrivateKey privateKey = keystore.getPrivateKey("trusted");
-    final X509Certificate signerCertificate = (X509Certificate) keystore.getCertificate("trusted");
+    final PrivateKey privateKey = keystoreWrapper.getPrivateKey("trusted");
+    final X509Certificate signerCertificate =
+        (X509Certificate) keystoreWrapper.getCertificate("trusted");
     final X509Certificate otherCertificate =
-        (X509Certificate) keystore.getCertificate("trusted_selfsigned");
+        (X509Certificate) keystoreWrapper.getCertificate("trusted_selfsigned");
 
     final ContentSigner contentSigner =
         new JcaContentSignerBuilder("SHA256withRSA").build(privateKey);
@@ -170,14 +331,5 @@ public class CmsCreationAndValidationTest {
     final Bytes cmsBytes = Bytes.wrap(cmsSignedData.getEncoded());
 
     assertThat(cmsValidator.validate(cmsBytes, expectedData)).isFalse();
-  }
-
-  private KeyStoreWrapper loadKeystore(final String name) {
-    return new SoftwareKeyStoreWrapper(
-        KEYSTORE_TYPE, Paths.get(PATH_TO_KEYSTORES, name), KEYSTORE_PASSWORD);
-  }
-
-  private CertStore loadCRLs(final String name) {
-    return CRLUtil.loadCRLs(PATH_TO_KEYSTORES + "/" + name);
   }
 }
