@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
-import io.vertx.core.json.Json;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -77,23 +76,26 @@ public class JsonRpcTestMethodsFactory {
 
 
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
+
     for (final Block block : importer.getBlocks()) {
       final ProtocolSpec protocolSpec =
-              protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
     this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
   }
 
-  public JsonRpcTestMethodsFactory(final BlockchainImporter importer, final MutableBlockchain blockchain,
-                                   final WorldStateArchive stateArchive, final ProtocolContext context) {
+  public JsonRpcTestMethodsFactory(
+      final BlockchainImporter importer,
+      final MutableBlockchain blockchain,
+      final WorldStateArchive stateArchive,
+      final ProtocolContext context) {
     this.importer = importer;
     this.blockchain = blockchain;
     this.stateArchive = stateArchive;
     this.context = context;
     this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
-
   }
 
   public Map<String, JsonRpcMethod> methods() {
@@ -137,7 +139,7 @@ public class JsonRpcTestMethodsFactory {
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscovery,
-                blockchainQueries,
+            blockchainQueries,
             synchronizer,
             protocolSchedule,
             filterManager,
