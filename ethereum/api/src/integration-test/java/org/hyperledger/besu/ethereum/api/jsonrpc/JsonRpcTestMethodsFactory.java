@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import io.vertx.core.json.Json;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -63,9 +64,10 @@ public class JsonRpcTestMethodsFactory {
 
   private final BlockchainImporter importer;
   private final MutableBlockchain blockchain;
-  private WorldStateArchive stateArchive;
+  private final WorldStateArchive stateArchive;
   private final ProtocolContext context;
-  private BlockchainQueries blockchainQueries;
+  private final BlockchainQueries blockchainQueries;
+
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
     this.importer = importer;
@@ -77,7 +79,7 @@ public class JsonRpcTestMethodsFactory {
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
     for (final Block block : importer.getBlocks()) {
       final ProtocolSpec protocolSpec =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+              protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
@@ -100,16 +102,8 @@ public class JsonRpcTestMethodsFactory {
     return blockchainQueries;
   }
 
-  public void setBlockchainQueries(final BlockchainQueries blockchainQueries) {
-    this.blockchainQueries = blockchainQueries;
-  }
-
   public WorldStateArchive getStateArchive() {
     return stateArchive;
-  }
-
-  public void setStateArchive(final WorldStateArchive stateArchive) {
-    this.stateArchive = stateArchive;
   }
 
   public Map<String, JsonRpcMethod> methods() {
@@ -153,9 +147,9 @@ public class JsonRpcTestMethodsFactory {
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscovery,
-            blockchainQueries,
+                blockchainQueries,
             synchronizer,
-            protocolSchedule,
+            importer.getProtocolSchedule(),
             filterManager,
             transactionPool,
             miningCoordinator,
