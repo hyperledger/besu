@@ -46,7 +46,7 @@ public class PrivacyParameters {
 
   private boolean enabled;
   private URI enclaveUri;
-  private String enclavePublicKey;
+  private String privacyUserId;
   private File enclavePublicKeyFile;
   private Optional<KeyPair> signingKeyPair = Optional.empty();
   private Enclave enclave;
@@ -86,13 +86,13 @@ public class PrivacyParameters {
     this.enclaveUri = enclaveUri;
   }
 
-  public String getEnclavePublicKey() {
-    return enclavePublicKey;
+  public String getPrivacyUserId() {
+    return privacyUserId;
   }
 
   @VisibleForTesting
-  public void setEnclavePublicKey(final String enclavePublicKey) {
-    this.enclavePublicKey = enclavePublicKey;
+  public void setPrivacyUserId(final String privacyUserId) {
+    this.privacyUserId = privacyUserId;
   }
 
   public File getEnclavePublicKeyFile() {
@@ -216,7 +216,7 @@ public class PrivacyParameters {
     private boolean enabled;
     private URI enclaveUrl;
     private File enclavePublicKeyFile;
-    private String enclavePublicKey;
+    private String privacyUserId;
     private Path privateKeyPath;
     private PrivacyStorageProvider storageProvider;
     private EnclaveFactory enclaveFactory;
@@ -313,7 +313,7 @@ public class PrivacyParameters {
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
 
-        config.setEnclavePublicKey(enclavePublicKey);
+        config.setPrivacyUserId(privacyUserId);
         config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         // pass TLS options to enclave factory if they are set
         if (privacyKeyStoreFile != null) {
@@ -340,9 +340,9 @@ public class PrivacyParameters {
       return config;
     }
 
-    public Builder setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
+    public Builder setPrivacyUserIdUsingFile(final File publicKeyFile) throws IOException {
       this.enclavePublicKeyFile = publicKeyFile;
-      this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
+      this.privacyUserId = Files.asCharSource(publicKeyFile, UTF_8).read();
       validatePublicKey(publicKeyFile);
       return this;
     }
@@ -353,7 +353,7 @@ public class PrivacyParameters {
             "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
       }
       // throws exception if invalid base 64
-      Base64.getDecoder().decode(this.enclavePublicKey);
+      Base64.getDecoder().decode(this.privacyUserId);
     }
   }
 }

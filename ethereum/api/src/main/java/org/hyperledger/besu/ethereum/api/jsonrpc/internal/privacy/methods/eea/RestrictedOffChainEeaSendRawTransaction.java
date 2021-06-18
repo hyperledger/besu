@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchainPrivacyGroup;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -36,15 +36,15 @@ import org.apache.tuweni.bytes.Bytes;
 public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
 
   public RestrictedOffChainEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     super(transactionPool);
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -56,14 +56,14 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
           TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
     }
 
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(user);
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
-    if (!privateTransaction.getPrivateFrom().equals(Bytes.fromBase64String(enclavePublicKey))) {
+    if (!privateTransaction.getPrivateFrom().equals(Bytes.fromBase64String(privacyUserId))) {
       throw new JsonRpcErrorResponseException(PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
     }
 
     return privacyController.validatePrivateTransaction(
-        privateTransaction, enclavePublicKeyProvider.getEnclaveKey(user));
+        privateTransaction, privacyIdProvider.getPrivacyUserId(user));
   }
 
   @Override
@@ -74,11 +74,11 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
         findOffchainPrivacyGroup(
             privacyController,
             privateTransaction.getPrivacyGroupId(),
-            enclavePublicKeyProvider.getEnclaveKey(user));
+            privacyIdProvider.getPrivacyUserId(user));
 
     final String privateTransactionLookupId =
         privacyController.createPrivateMarkerTransactionPayload(
-            privateTransaction, enclavePublicKeyProvider.getEnclaveKey(user), maybePrivacyGroup);
+            privateTransaction, privacyIdProvider.getPrivacyUserId(user), maybePrivacyGroup);
     return privacyController.createPrivateMarkerTransaction(
         privateTransactionLookupId, privateTransaction, Address.DEFAULT_PRIVACY);
   }

@@ -160,7 +160,7 @@ public class PrivacyReorgTest {
             .setEnclaveUrl(enclave.clientUrl())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .build();
-    privacyParameters.setEnclavePublicKey(ENCLAVE_PUBLIC_KEY.toBase64String());
+    privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
     privacyController = mock(RestrictedDefaultPrivacyController.class);
     when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
         .thenReturn(Optional.of(new PrivacyGroup()));
@@ -427,14 +427,14 @@ public class PrivacyReorgTest {
   private SendResponse sendRequest(
       final Enclave enclave,
       final PrivateTransaction privateTransaction,
-      final String enclavePublicKey) {
+      final String privacyUserId) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     privateTransaction.writeTo(rlpOutput);
     final String payload = rlpOutput.encoded().toBase64String();
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return enclave.send(
-          payload, enclavePublicKey, privateTransaction.getPrivacyGroupId().get().toBase64String());
+          payload, privacyUserId, privateTransaction.getPrivacyGroupId().get().toBase64String());
     } else {
       final List<String> privateFor =
           privateTransaction.getPrivateFor().get().stream()

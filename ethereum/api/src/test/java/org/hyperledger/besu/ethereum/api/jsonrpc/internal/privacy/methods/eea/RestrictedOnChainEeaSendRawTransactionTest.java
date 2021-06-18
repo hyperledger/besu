@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -44,7 +44,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
   final String MOCK_ORION_KEY = "";
 
-  final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   RestrictedOnChainEeaSendRawTransaction method;
 
@@ -52,7 +52,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
   public void before() {
     method =
         new RestrictedOnChainEeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider);
+            transactionPool, privacyController, privacyIdProvider);
   }
 
   @Test
@@ -95,7 +95,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
 
     method =
         new RestrictedOnChainEeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider);
+            transactionPool, privacyController, privacyIdProvider);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
@@ -114,7 +114,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
 
     method =
         new RestrictedOnChainEeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider);
+            transactionPool, privacyController, privacyIdProvider);
 
     when(privacyController.findOnChainPrivacyGroupAndAddNewMembers(any(), any(), any()))
         .thenReturn(Optional.empty());
@@ -136,7 +136,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
 
     method =
         new RestrictedOnChainEeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider);
+            transactionPool, privacyController, privacyIdProvider);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(

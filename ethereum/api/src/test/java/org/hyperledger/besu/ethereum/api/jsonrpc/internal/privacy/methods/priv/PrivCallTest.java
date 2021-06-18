@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -62,13 +62,13 @@ public class PrivCallTest {
 
   @Mock private BlockchainQueries blockchainQueries;
   String privacyGroupId = "privacyGroupId";
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
   private final PrivacyController privacyController =
       mock(RestrictedDefaultPrivacyController.class);
 
   @Before
   public void setUp() {
-    method = new PrivCall(blockchainQueries, privacyController, enclavePublicKeyProvider);
+    method = new PrivCall(blockchainQueries, privacyController, privacyIdProvider);
   }
 
   @Test
@@ -187,7 +187,7 @@ public class PrivCallTest {
   public void multiTenancyCheckFailure() {
     doThrow(new MultiTenancyValidationException("msg"))
         .when(privacyController)
-        .verifyPrivacyGroupContainsEnclavePublicKey(
+        .verifyPrivacyGroupContainsPrivacyUserId(
             eq(privacyGroupId), eq(ENCLAVE_PUBLIC_KEY), eq(Optional.of(1L)));
 
     final JsonRpcRequestContext request = ethCallRequest(privacyGroupId, callParameter(), "0x02");

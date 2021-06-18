@@ -30,7 +30,7 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetPrivateTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionLegacyResult;
@@ -70,7 +70,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
 
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
   private final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
   private final Blockchain blockchain = mock(Blockchain.class);
 
@@ -149,7 +149,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
   @Test
   public void returnsStoredPrivateTransaction() {
     final PrivGetPrivateTransaction privGetPrivateTransaction =
-        new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider);
+        new PrivGetPrivateTransaction(privacyController, privacyIdProvider);
 
     final Hash blockHash = Hash.ZERO;
     final Transaction pmt = spy(privateMarkerTransaction());

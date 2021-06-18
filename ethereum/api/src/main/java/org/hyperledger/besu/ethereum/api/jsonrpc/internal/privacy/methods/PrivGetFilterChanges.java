@@ -31,16 +31,16 @@ import java.util.List;
 public class PrivGetFilterChanges implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
   private final FilterManager filterManager;
 
   public PrivGetFilterChanges(
       final FilterManager filterManager,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     this.filterManager = filterManager;
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -53,7 +53,7 @@ public class PrivGetFilterChanges implements JsonRpcMethod {
     final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
     final String filterId = requestContext.getRequiredParameter(1, String.class);
 
-    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(requestContext, privacyGroupId);
+    checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(requestContext, privacyGroupId);
 
     final List<LogWithMetadata> logs = filterManager.logsChanges(filterId);
     if (logs != null) {
@@ -64,9 +64,9 @@ public class PrivGetFilterChanges implements JsonRpcMethod {
         requestContext.getRequest().getId(), JsonRpcError.FILTER_NOT_FOUND);
   }
 
-  private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+  private void checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(
       final JsonRpcRequestContext request, final String privacyGroupId) {
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
-    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
+    privacyController.verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
   }
 }

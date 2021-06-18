@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
@@ -58,7 +58,7 @@ public class PrivDebugGetStateRootTest {
           Collections.singletonList(ENCLAVE_PUBLIC_KEY));
 
   private PrivDebugGetStateRoot method;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final PrivacyController privacyController =
@@ -66,8 +66,7 @@ public class PrivDebugGetStateRootTest {
 
   @Before
   public void setUp() {
-    method =
-        new PrivDebugGetStateRoot(blockchainQueries, enclavePublicKeyProvider, privacyController);
+    method = new PrivDebugGetStateRoot(blockchainQueries, privacyIdProvider, privacyController);
   }
 
   @Test

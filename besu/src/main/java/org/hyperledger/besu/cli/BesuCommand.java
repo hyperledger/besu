@@ -2161,7 +2161,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
         try {
-          privacyParametersBuilder.setEnclavePublicKeyUsingFile(privacyPublicKeyFile);
+          privacyParametersBuilder.setPrivacyUserIdUsingFile(privacyPublicKeyFile);
         } catch (final IOException e) {
           throw new ParameterException(
               commandLine, "Problem with privacy-public-key-file: " + e.getMessage(), e);

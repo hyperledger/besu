@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -54,7 +54,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
           + "b33a0b8c8a72657374726963746564";
 
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
-  final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
   final String MOCK_ORION_KEY = "";
 
   RestrictedOffChainEeaSendRawTransaction method;
@@ -63,7 +63,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   public void before() {
     method =
         new RestrictedOffChainEeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider);
+            transactionPool, privacyController, privacyIdProvider);
   }
 
   @Test

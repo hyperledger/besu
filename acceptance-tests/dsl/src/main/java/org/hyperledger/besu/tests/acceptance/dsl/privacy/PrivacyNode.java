@@ -198,7 +198,7 @@ public class PrivacyNode implements AutoCloseable {
           new PrivacyParameters.Builder()
               .setEnabled(true)
               .setEnclaveUrl(enclave.clientUrl())
-              .setEnclavePublicKeyUsingFile(enclave.getPublicKeyPaths().get(0).toFile())
+              .setPrivacyUserIdUsingFile(enclave.getPublicKeyPaths().get(0).toFile())
               .setStorageProvider(createKeyValueStorageProvider(dataDir, dbDir))
               .setPrivateKeyPath(KeyPairUtil.getDefaultKeyFile(besu.homeDirectory()).toPath())
               .setEnclaveFactory(new EnclaveFactory(vertx))

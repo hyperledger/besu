@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOnchainPrivacyGroup;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -37,15 +37,15 @@ import org.apache.tuweni.bytes.Bytes32;
 public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   private final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
 
   public RestrictedOnChainEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     super(transactionPool);
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -56,7 +56,7 @@ public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTr
           TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
     }
     return privacyController.validatePrivateTransaction(
-        privateTransaction, enclavePublicKeyProvider.getEnclaveKey(user));
+        privateTransaction, privacyIdProvider.getPrivacyUserId(user));
   }
 
   @Override
@@ -66,13 +66,13 @@ public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTr
       throw new JsonRpcErrorResponseException(JsonRpcError.ONCHAIN_PRIVACY_GROUP_ID_NOT_AVAILABLE);
     }
 
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(user);
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
     final Optional<PrivacyGroup> privacyGroup =
         findOnchainPrivacyGroup(
             privacyController,
             privateTransaction.getPrivacyGroupId(),
-            enclavePublicKey,
+            privacyUserId,
             privateTransaction);
 
     if (privacyGroup.isEmpty()) {
@@ -83,10 +83,10 @@ public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTr
 
     final String privateTransactionLookupId =
         privacyController.createPrivateMarkerTransactionPayload(
-            privateTransaction, enclavePublicKey, privacyGroup);
+            privateTransaction, privacyUserId, privacyGroup);
     final Optional<String> addPayloadPrivateTransactionLookupId =
         privacyController.buildAndSendAddPayload(
-            privateTransaction, Bytes32.wrap(privacyGroupId), enclavePublicKey);
+            privateTransaction, Bytes32.wrap(privacyGroupId), privacyUserId);
 
     return privacyController.createPrivateMarkerTransaction(
         buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId),

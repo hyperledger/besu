@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -63,21 +63,14 @@ public class PrivateWebSocketMethodsFactory {
 
   public Collection<JsonRpcMethod> methods() {
     final SubscriptionRequestMapper subscriptionRequestMapper = new SubscriptionRequestMapper();
-    final EnclavePublicKeyProvider enclavePublicKeyProvider =
-        EnclavePublicKeyProvider.build(privacyParameters);
+    final PrivacyIdProvider privacyIdProvider = PrivacyIdProvider.build(privacyParameters);
     final PrivacyController privacyController = createPrivacyController();
 
     return Set.of(
         new PrivSubscribe(
-            subscriptionManager,
-            subscriptionRequestMapper,
-            privacyController,
-            enclavePublicKeyProvider),
+            subscriptionManager, subscriptionRequestMapper, privacyController, privacyIdProvider),
         new PrivUnsubscribe(
-            subscriptionManager,
-            subscriptionRequestMapper,
-            privacyController,
-            enclavePublicKeyProvider));
+            subscriptionManager, subscriptionRequestMapper, privacyController, privacyIdProvider));
   }
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory() {

@@ -70,7 +70,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   @Override
   public String createPrivateMarkerTransactionPayload(
       final PrivateTransaction privateTransaction,
-      final String enclavePublicKey,
+      final String privacyUserId,
       final Optional<PrivacyGroup> privacyGroup) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     privateTransaction.writeTo(rlpOutput);
@@ -95,11 +95,11 @@ public class UnrestrictedPrivacyController implements PrivacyController {
 
   @Override
   public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
-      final PrivateTransaction privateTransaction, final String enclavePublicKey) {
+      final PrivateTransaction privateTransaction, final String privacyUserId) {
     final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
     return privateTransactionValidator.validate(
         privateTransaction,
-        determineBesuNonce(privateTransaction.getSender(), privacyGroupId, enclavePublicKey),
+        determineBesuNonce(privateTransaction.getSender(), privacyGroupId, privacyUserId),
         true);
   }
 
@@ -139,8 +139,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   }
 
   @Override
-  public ReceiveResponse retrieveTransaction(
-      final String enclaveKey, final String enclavePublicKey) {
+  public ReceiveResponse retrieveTransaction(final String enclaveKey, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported for UnrestrictedPrivacy");
   }
@@ -150,20 +149,20 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final List<String> addresses,
       final String name,
       final String description,
-      final String enclavePublicKey) {
+      final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported for UnrestrictedPrivacy");
   }
 
   @Override
-  public String deletePrivacyGroup(final String privacyGroupId, final String enclavePublicKey) {
+  public String deletePrivacyGroup(final String privacyGroupId, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported for UnrestrictedPrivacy");
   }
 
   @Override
   public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
-      final List<String> addresses, final String enclavePublicKey) {
+      final List<String> addresses, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported for UnrestrictedPrivacy");
   }
@@ -173,10 +172,10 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final String privateFrom,
       final String[] privateFor,
       final Address address,
-      final String enclavePublicKey) {
+      final String privacyUserId) {
 
     final String privacyGroupId = createPrivacyGroupId(privateFrom, privateFor);
-    return determineBesuNonce(address, privacyGroupId, enclavePublicKey);
+    return determineBesuNonce(address, privacyGroupId, privacyUserId);
   }
 
   private String createPrivacyGroupId(final String privateFrom, final String[] privateFor) {
@@ -190,7 +189,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
 
   @Override
   public long determineBesuNonce(
-      final Address sender, final String privacyGroupId, final String enclavePublicKey) {
+      final Address sender, final String privacyGroupId, final String privacyUserId) {
     return privateNonceProvider.getNonce(
         sender, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
   }
@@ -198,7 +197,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   @Override
   public Optional<TransactionProcessingResult> simulatePrivateTransaction(
       final String privacyGroupId,
-      final String enclavePublicKey,
+      final String privacyUserId,
       final CallParameter callParams,
       final long blockNumber) {
     return privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
@@ -209,7 +208,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final String privacyGroupId,
       final Address contractAddress,
       final Hash blockHash,
-      final String enclavePublicKey) {
+      final String privacyUserId) {
 
     return privateWorldStateReader.getContractCode(privacyGroupId, blockHash, contractAddress);
   }
@@ -221,7 +220,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
 
   @Override
   public Optional<Hash> getStateRootByBlockNumber(
-      final String privacyGroupId, final String enclavePublicKey, final long blockNumber) {
+      final String privacyGroupId, final String privacyUserId, final long blockNumber) {
     return blockchain
         .getBlockByNumber(blockNumber)
         .map(
@@ -234,20 +233,20 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   public Optional<String> buildAndSendAddPayload(
       final PrivateTransaction privateTransaction,
       final Bytes32 privacyGroupId,
-      final String enclaveKey) {
+      final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported for UnrestrictedPrivacy");
   }
 
   @Override
   public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
-      final String toBase64String, final String enclaveKey) {
-    return findPrivacyGroupByGroupId(toBase64String, enclaveKey);
+      final String toBase64String, final String privacyUserId) {
+    return findPrivacyGroupByGroupId(toBase64String, privacyUserId);
   }
 
   @Override
   public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
-      final String privacyGroupId, final String enclaveKey) {
+      final String privacyGroupId, final String privacyUserId) {
     return Optional.of(
         new PrivacyGroup(
             privacyGroupId,
@@ -259,7 +258,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
 
   @Override
   public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
-      final List<String> asList, final String enclaveKey) {
+      final List<String> asList, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported for UnrestrictedPrivacy");
   }
@@ -267,7 +266,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   @Override
   public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
       final Bytes privacyGroupId,
-      final String enclavePublicKey,
+      final String privacyUserId,
       final PrivateTransaction privateTransaction) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported for UnrestrictedPrivacy");
@@ -286,12 +285,12 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   }
 
   @Override
-  public void verifyPrivacyGroupContainsEnclavePublicKey(
-      final String privacyGroupId, final String enclavePublicKey)
+  public void verifyPrivacyGroupContainsPrivacyUserId(
+      final String privacyGroupId, final String privacyUserId)
       throws MultiTenancyValidationException {}
 
   @Override
-  public void verifyPrivacyGroupContainsEnclavePublicKey(
-      final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
+  public void verifyPrivacyGroupContainsPrivacyUserId(
+      final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber)
       throws MultiTenancyValidationException {}
 }

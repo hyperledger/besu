@@ -23,7 +23,7 @@ import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -47,7 +47,7 @@ public class PrivDeletePrivacyGroupTest {
   private final PrivacyController privacyController = mock(PrivacyController.class);
   private final User user =
       new JWTUser(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
   private JsonRpcRequestContext request;
 
   @Before
@@ -66,7 +66,7 @@ public class PrivDeletePrivacyGroupTest {
         .thenReturn(PRIVACY_GROUP_ID);
 
     final PrivDeletePrivacyGroup privDeletePrivacyGroup =
-        new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
+        new PrivDeletePrivacyGroup(privacyController, privacyIdProvider);
 
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privDeletePrivacyGroup.response(request);
@@ -81,7 +81,7 @@ public class PrivDeletePrivacyGroupTest {
         .thenThrow(new EnclaveClientException(500, "some failure"));
 
     final PrivDeletePrivacyGroup privDeletePrivacyGroup =
-        new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
+        new PrivDeletePrivacyGroup(privacyController, privacyIdProvider);
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);
@@ -95,7 +95,7 @@ public class PrivDeletePrivacyGroupTest {
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final PrivDeletePrivacyGroup privDeletePrivacyGroup =
-        new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider);
+        new PrivDeletePrivacyGroup(privacyController, privacyIdProvider);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(

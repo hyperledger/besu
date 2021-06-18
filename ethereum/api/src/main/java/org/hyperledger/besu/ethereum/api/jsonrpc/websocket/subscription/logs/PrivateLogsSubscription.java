@@ -19,24 +19,24 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParam
 public class PrivateLogsSubscription extends LogsSubscription {
 
   private final String privacyGroupId;
-  private final String enclavePublicKey;
+  private final String privacyUserId;
 
   public PrivateLogsSubscription(
       final Long subscriptionId,
       final String connectionId,
       final FilterParameter filterParameter,
       final String privacyGroupId,
-      final String enclavePublicKey) {
+      final String privacyUserId) {
     super(subscriptionId, connectionId, filterParameter);
     this.privacyGroupId = privacyGroupId;
-    this.enclavePublicKey = enclavePublicKey;
+    this.privacyUserId = privacyUserId;
   }
 
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }
 
-  public String getEnclavePublicKey() {
-    return enclavePublicKey;
+  public String getPrivacyUserId() {
+    return privacyUserId;
   }
 }

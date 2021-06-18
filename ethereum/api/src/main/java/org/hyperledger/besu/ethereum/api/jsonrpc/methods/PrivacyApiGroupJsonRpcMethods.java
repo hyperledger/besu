@@ -18,8 +18,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -93,8 +93,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     final PrivateMarkerTransactionFactory markerTransactionFactory =
         createPrivateMarkerTransactionFactory(
             privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
-    final EnclavePublicKeyProvider enclavePublicProvider =
-        EnclavePublicKeyProvider.build(privacyParameters);
+    final PrivacyIdProvider enclavePublicProvider = PrivacyIdProvider.build(privacyParameters);
     final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
     return create(privacyController, enclavePublicProvider).entrySet().stream()
         .collect(
@@ -104,8 +103,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   }
 
   protected abstract Map<String, JsonRpcMethod> create(
-      final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider);
+      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
       final PrivacyParameters privacyParameters,
