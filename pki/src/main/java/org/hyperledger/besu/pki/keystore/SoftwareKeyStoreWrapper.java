@@ -104,6 +104,7 @@ public class SoftwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
 
   @VisibleForTesting
   public SoftwareKeyStoreWrapper(final KeyStore keystore, final String keystorePassword) {
+    super(null);
     this.keystore = keystore;
     this.keystorePassword = keystorePassword.toCharArray();
     this.truststore = null;
