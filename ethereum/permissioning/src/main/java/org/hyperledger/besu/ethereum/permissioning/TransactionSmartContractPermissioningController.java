@@ -196,7 +196,6 @@ public class TransactionSmartContractPermissioningController
         encodeAddress(transaction.getSender()),
         encodeAddress(transaction.getTo()),
         transaction.getValue().toBytes(),
-        // TODO: no treatment of 1559 fields here, is Bytes32.ZERO an appropriate fallback?
         transaction.getGasPrice().map(BaseUInt256Value::toBytes).orElse(Bytes32.ZERO),
         encodeLong(transaction.getGasLimit()),
         encodeBytes(transaction.getPayload()));

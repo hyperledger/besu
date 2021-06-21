@@ -28,9 +28,11 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -337,6 +339,24 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   @Override
   public Optional<Wei> getMaxFeePerGas() {
     return maxFeePerGas;
+  }
+
+  /**
+   * Boolean which indicates the transaction has associated cost data, whether gas price or
+   * 1559 fee market parameters.
+   *
+   * @return whether cost params are presetn
+   */
+  public boolean hasCostParams() {
+    return Arrays.asList(
+        getGasPrice(),
+        getMaxFeePerGas(),
+        getMaxPriorityFeePerGas())
+        .stream()
+        .flatMap(Optional::stream)
+        .map(Quantity::getAsBigInteger)
+        .filter(q -> q.longValue() > 0L)
+        .findAny().isPresent();
   }
 
   /**
