@@ -39,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  * (emulated) HSM or a physical/cloud HSM (see <a href=
  * "https://docs.oracle.com/en/java/javase/11/security/pkcs11-reference-guide1.html">here</a>
  */
-public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
+public class HardwareKeyStoreWrapper extends AbstractKeyStoreWrapper {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -50,7 +50,9 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
 
   private final java.security.Provider provider;
 
-  public HardwareKeyStoreWrapper(final String keystorePassword, final Provider provider) {
+  public HardwareKeyStoreWrapper(
+      final String keystorePassword, final Provider provider, final Path crlLocation) {
+    super(crlLocation);
     try {
       if (provider == null) {
         throw new IllegalArgumentException("Provider is null");
@@ -70,7 +72,9 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
     }
   }
 
-  public HardwareKeyStoreWrapper(final String keystorePassword, final Path config) {
+  public HardwareKeyStoreWrapper(
+      final String keystorePassword, final Path config, final Path crlLocation) {
+    super(crlLocation);
     try {
       if (keystorePassword == null) {
         throw new IllegalArgumentException("Keystore password is null");
@@ -103,6 +107,7 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
 
   @VisibleForTesting
   HardwareKeyStoreWrapper(final KeyStore keystore, final String password) {
+    super(null);
     this.keystore = keystore;
     this.keystorePassword = password.toCharArray();
     this.provider = null;
@@ -166,5 +171,10 @@ public class HardwareKeyStoreWrapper implements KeyStoreWrapper {
     } else {
       return provider.configure(config);
     }
+  }
+
+  @VisibleForTesting
+  public Provider getPkcs11ProviderForConfig(final String config) {
+    return getPkcs11Provider(config);
   }
 }
