@@ -1699,8 +1699,20 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(result.getValue("to")).isNull();
     }
     assertThat(Wei.fromHexString(result.getString("value"))).isEqualTo(transaction.getValue());
-    assertThat(Wei.fromHexString(result.getString("gasPrice")))
-        .isEqualTo(transaction.getGasPrice());
+    Optional.ofNullable(result.getString("gasPrice"))
+        .ifPresent(
+            maxFeePerGas ->
+                assertThat(Wei.fromHexString(maxFeePerGas)).isEqualTo(transaction.getGasPrice()));
+    Optional.ofNullable(result.getString("maxFeePerGas"))
+        .ifPresent(
+            maxPriorityFeePerGas ->
+                assertThat(Wei.fromHexString(maxPriorityFeePerGas))
+                    .isEqualTo(transaction.getMaxFeePerGas().get()));
+    Optional.ofNullable(result.getString("maxPriorityFeePerGas"))
+        .ifPresent(
+            gasPriceString ->
+                assertThat(Wei.fromHexString(gasPriceString))
+                    .isEqualTo(transaction.getMaxPriorityFeePerGas().get()));
     assertThat(Long.decode(result.getString("gas"))).isEqualTo(transaction.getGasLimit());
     assertThat(Bytes.fromHexString(result.getString("input"))).isEqualTo(transaction.getPayload());
   }
