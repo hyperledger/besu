@@ -342,21 +342,18 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   }
 
   /**
-   * Boolean which indicates the transaction has associated cost data, whether gas price or
-   * 1559 fee market parameters.
+   * Boolean which indicates the transaction has associated cost data, whether gas price or 1559 fee
+   * market parameters.
    *
    * @return whether cost params are presetn
    */
   public boolean hasCostParams() {
-    return Arrays.asList(
-        getGasPrice(),
-        getMaxFeePerGas(),
-        getMaxPriorityFeePerGas())
-        .stream()
+    return Arrays.asList(getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas()).stream()
         .flatMap(Optional::stream)
         .map(Quantity::getAsBigInteger)
         .filter(q -> q.longValue() > 0L)
-        .findAny().isPresent();
+        .findAny()
+        .isPresent();
   }
 
   /**
