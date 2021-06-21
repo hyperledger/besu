@@ -135,7 +135,7 @@ public class PrivacyNodeFactory {
         name, privacyAccount, Address.PRIVACY, false, enclaveType, containerNetwork);
   }
 
-  private PrivacyNode createIbft2NodePrivacyEnabled(
+  public PrivacyNode createIbft2NodePrivacyEnabled(
       final String name,
       final PrivacyAccount privacyAccount,
       final int privacyAddress,
