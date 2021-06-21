@@ -329,14 +329,19 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   public long getEffectivePriorityFeePerGas(final Optional<Long> maybeBaseFee) {
     return maybeBaseFee
-        .filter(__ -> getType().supports1559FeeMarket())
         .map(
-            baseFee ->
-                Math.max(
-                    0,
-                    Math.min(
-                        getMaxPriorityFeePerGas().get().getAsBigInteger().longValue(),
-                        getMaxFeePerGas().get().getAsBigInteger().longValue() - baseFee)))
+            baseFee -> {
+              if (getType().supports1559FeeMarket()) {
+                return Math.min(
+                    getMaxPriorityFeePerGas().get().getAsBigInteger().longValue(),
+                    getMaxFeePerGas().get().getAsBigInteger().longValue() - baseFee);
+              } else {
+                return getGasPrice().getValue().longValue() - baseFee;
+              }
+            })
+        .map(
+            maybeNegativeEffectivePriorityFeePerGas ->
+                Math.max(0, maybeNegativeEffectivePriorityFeePerGas))
         .orElseGet(() -> getGasPrice().getValue().longValue());
   }
   /**
