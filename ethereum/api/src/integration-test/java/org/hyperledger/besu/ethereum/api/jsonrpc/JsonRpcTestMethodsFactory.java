@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -75,8 +74,8 @@ public class JsonRpcTestMethodsFactory {
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
     this.context = new ProtocolContext(blockchain, stateArchive, null);
 
+    final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
     for (final Block block : importer.getBlocks()) {
-      final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
@@ -156,7 +155,7 @@ public class JsonRpcTestMethodsFactory {
             peerDiscovery,
             blockchainQueries,
             synchronizer,
-            ProtocolScheduleFixture.MAINNET,
+            protocolSchedule,
             filterManager,
             transactionPool,
             miningCoordinator,
