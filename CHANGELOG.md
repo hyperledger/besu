@@ -12,6 +12,7 @@
 ### Bug Fixes
 
 - Updated `eth_sendRawTransaction` to return an error when maxPriorityFeePerGas exceeds maxFeePerGas [\#2424](https://github.com/hyperledger/besu/pull/2424)
+- Ibft2 could create invalid RoundChange messages in some circumstances with duplicate prepares [\#2449](https://github.com/hyperledger/besu/pull/2449)
 
 ### Early Access Features
 This release contains the activation blocks for London across all supported testnets. They are: 
