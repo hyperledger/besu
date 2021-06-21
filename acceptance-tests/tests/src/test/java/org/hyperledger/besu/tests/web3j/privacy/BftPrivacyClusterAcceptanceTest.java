@@ -14,22 +14,58 @@
  */
 package org.hyperledger.besu.tests.web3j.privacy;
 
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.ConsensusType;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 
-public class Ibft2PrivacyClusterAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public Ibft2PrivacyClusterAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
+@RunWith(Parameterized.class)
+public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
+  private final BftPrivacyType bftPrivacyType;
+
+  public static class BftPrivacyType {
+    private final EnclaveType enclaveType;
+    private final ConsensusType consensusType;
+
+    public BftPrivacyType(final EnclaveType enclaveType, final ConsensusType consensusType) {
+      this.enclaveType = enclaveType;
+      this.consensusType = consensusType;
+    }
+
+    @Override
+    public String toString() {
+      return String.join(",", enclaveType.toString(), consensusType.toString());
+    }
+  }
+
+  public BftPrivacyClusterAcceptanceTest(final BftPrivacyType bftPrivacyType) {
+    this.bftPrivacyType = bftPrivacyType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<BftPrivacyType> bftPrivacyTypes() {
+    final List<BftPrivacyType> bftPrivacyTypes = new ArrayList<>();
+    for (EnclaveType enclaveType : EnclaveType.values()) {
+      for (ConsensusType consensusType : ConsensusType.values()) {
+        bftPrivacyTypes.add(new BftPrivacyType(enclaveType, consensusType));
+      }
+    }
+    return bftPrivacyTypes;
   }
 
   private static final long IBFT2_CHAIN_ID = 4;
@@ -42,16 +78,31 @@ public class Ibft2PrivacyClusterAcceptanceTest extends ParameterizedEnclaveTestB
   public void setUp() throws Exception {
     final Network containerNetwork = Network.newNetwork();
 
-    alice =
-        privacyBesu.createIbft2NodePrivacyEnabled(
-            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.of(containerNetwork));
-    bob =
-        privacyBesu.createIbft2NodePrivacyEnabled(
-            "node2", privacyAccountResolver.resolve(1), enclaveType, Optional.of(containerNetwork));
-    charlie =
-        privacyBesu.createIbft2NodePrivacyEnabled(
-            "node3", privacyAccountResolver.resolve(2), enclaveType, Optional.of(containerNetwork));
+    alice = createNode(containerNetwork, "node1", 0);
+    bob = createNode(containerNetwork, "node2", 1);
+    charlie = createNode(containerNetwork, "node3", 2);
+
     privacyCluster.start(alice, bob, charlie);
+  }
+
+  private PrivacyNode createNode(
+      final Network containerNetwork, final String nodeName, final int privacyAccount)
+      throws IOException {
+    if (bftPrivacyType.consensusType == ConsensusType.IBFT2) {
+      return privacyBesu.createIbft2NodePrivacyEnabled(
+          nodeName,
+          privacyAccountResolver.resolve(privacyAccount),
+          bftPrivacyType.enclaveType,
+          Optional.of(containerNetwork));
+    } else if (bftPrivacyType.consensusType == ConsensusType.QBFT) {
+      return privacyBesu.createQbftNodePrivacyEnabled(
+          nodeName,
+          privacyAccountResolver.resolve(privacyAccount),
+          bftPrivacyType.enclaveType,
+          Optional.of(containerNetwork));
+    } else {
+      throw new IllegalStateException("Unknown consensus type " + bftPrivacyType.consensusType);
+    }
   }
 
   @Test

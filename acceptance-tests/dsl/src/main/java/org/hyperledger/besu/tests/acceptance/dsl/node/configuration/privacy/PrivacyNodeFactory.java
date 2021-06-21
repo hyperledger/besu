@@ -135,7 +135,7 @@ public class PrivacyNodeFactory {
         name, privacyAccount, Address.PRIVACY, false, enclaveType, containerNetwork);
   }
 
-  public PrivacyNode createIbft2NodePrivacyEnabled(
+  private PrivacyNode createIbft2NodePrivacyEnabled(
       final String name,
       final PrivacyAccount privacyAccount,
       final int privacyAddress,
@@ -153,6 +153,31 @@ public class PrivacyNodeFactory {
                 .webSocketConfiguration(node.createWebSocketEnabledConfig())
                 .devMode(false)
                 .genesisConfigProvider(genesis::createPrivacyIbft2GenesisConfig)
+                .keyFilePath(privacyAccount.getPrivateKeyPath())
+                .enablePrivateTransactions()
+                .build(),
+            new EnclaveKeyConfiguration(
+                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+        enclaveType,
+        containerNetwork);
+  }
+
+  public PrivacyNode createQbftNodePrivacyEnabled(
+      final String name,
+      final PrivacyAccount privacyAccount,
+      final EnclaveType enclaveType,
+      final Optional<Network> containerNetwork)
+      throws IOException {
+    return create(
+        new PrivacyNodeConfiguration(
+            Address.PRIVACY,
+            new BesuNodeConfigurationBuilder()
+                .name(name)
+                .miningEnabled()
+                .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
+                .webSocketConfiguration(node.createWebSocketEnabledConfig())
+                .devMode(false)
+                .genesisConfigProvider(genesis::createQbftGenesisConfig)
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .enablePrivateTransactions()
                 .build(),
