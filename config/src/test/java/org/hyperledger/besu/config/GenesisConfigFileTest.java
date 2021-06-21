@@ -167,6 +167,7 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldNotGetBaseFeeAtGenesis() {
     assertThat(EMPTY_CONFIG.getBaseFeePerGas()).isNotPresent();
+    assertThat(EMPTY_CONFIG.getGenesisBaseFeePerGas()).isNotPresent();
   }
 
   @Test
