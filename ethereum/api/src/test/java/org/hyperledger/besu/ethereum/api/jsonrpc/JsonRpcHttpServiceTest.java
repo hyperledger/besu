@@ -1699,20 +1699,13 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(result.getValue("to")).isNull();
     }
     assertThat(Wei.fromHexString(result.getString("value"))).isEqualTo(transaction.getValue());
-    Optional.ofNullable(result.getString("gasPrice"))
-        .ifPresent(
-            gasPrice ->
-                assertThat(Wei.fromHexString(gasPrice)).isEqualTo(transaction.getGasPrice()));
-    Optional.ofNullable(result.getString("maxFeePerGas"))
-        .ifPresent(
-            maxFeePerGas ->
-                assertThat(Wei.fromHexString(maxFeePerGas))
-                    .isEqualTo(transaction.getMaxFeePerGas().get()));
-    Optional.ofNullable(result.getString("maxPriorityFeePerGas"))
-        .ifPresent(
-            maxPriorityFeePerGas ->
-                assertThat(Wei.fromHexString(maxPriorityFeePerGas))
-                    .isEqualTo(transaction.getMaxPriorityFeePerGas().get()));
+    assertThat(Optional.ofNullable(result.getString("gasPrice")).map(Wei::fromHexString))
+        .isEqualTo(transaction.getGasPrice());
+    assertThat(Optional.ofNullable(result.getString("maxFeePerGas")).map(Wei::fromHexString))
+        .isEqualTo(transaction.getMaxFeePerGas());
+    assertThat(
+            Optional.ofNullable(result.getString("maxPriorityFeePerGas")).map(Wei::fromHexString))
+        .isEqualTo(transaction.getMaxPriorityFeePerGas());
     assertThat(Long.decode(result.getString("gas"))).isEqualTo(transaction.getGasLimit());
     assertThat(Bytes.fromHexString(result.getString("input"))).isEqualTo(transaction.getPayload());
   }

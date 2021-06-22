@@ -590,10 +590,7 @@ public class PendingTransactions {
     }
 
     public Wei getGasPrice() {
-      if (transaction.getGasPrice() == null) {
-        return Wei.ZERO;
-      }
-      return transaction.getGasPrice();
+      return transaction.getGasPrice().orElse(Wei.ZERO);
     }
 
     public long getSequence() {
