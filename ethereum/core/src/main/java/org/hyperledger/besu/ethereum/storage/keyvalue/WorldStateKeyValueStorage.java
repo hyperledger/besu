@@ -93,6 +93,11 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public void clear() {
+    keyValueStorage.clear();
+  }
+
+  @Override
   public Updater updater() {
     return new Updater(lock, keyValueStorage.startTransaction(), nodeAddedListeners);
   }
