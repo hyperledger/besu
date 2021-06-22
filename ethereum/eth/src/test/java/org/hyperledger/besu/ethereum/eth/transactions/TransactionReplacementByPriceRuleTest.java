@@ -91,7 +91,7 @@ public class TransactionReplacementByPriceRuleTest {
     final TransactionInfo transactionInfo = mock(TransactionInfo.class);
     final Transaction transaction = mock(Transaction.class);
     when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
-    when(transaction.getGasPrice()).thenReturn(Wei.of(price));
+    when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.of(price)));
     when(transactionInfo.getTransaction()).thenReturn(transaction);
     return transactionInfo;
   }

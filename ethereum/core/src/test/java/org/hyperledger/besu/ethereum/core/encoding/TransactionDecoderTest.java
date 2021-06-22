@@ -58,7 +58,7 @@ public class TransactionDecoderTest {
     final Transaction transaction =
         TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
-    assertThat(transaction.getGasPrice()).isEqualByComparingTo(Wei.of(50L));
+    assertThat(transaction.getGasPrice().get()).isEqualByComparingTo(Wei.of(50L));
     assertThat(transaction.getMaxPriorityFeePerGas()).isEmpty();
     assertThat(transaction.getMaxFeePerGas()).isEmpty();
   }

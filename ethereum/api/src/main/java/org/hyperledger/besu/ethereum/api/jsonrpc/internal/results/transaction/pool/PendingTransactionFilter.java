@@ -67,7 +67,8 @@ public class PendingTransactionFilter {
           isValid = validateTo(transactionInfo, predicate, value);
           break;
         case GAS_PRICE_FIELD:
-          isValid = validateWei(transactionInfo.getTransaction().getGasPrice(), predicate, value);
+          isValid =
+              validateWei(transactionInfo.getTransaction().getGasPrice().get(), predicate, value);
           break;
         case GAS_FIELD:
           isValid =

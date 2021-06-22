@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthChainId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCoinbase;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthEstimateGas;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthFeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGasPrice;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBalance;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockByHash;
@@ -128,6 +129,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
                 privacyParameters)),
+        new EthFeeHistory(protocolSchedule, blockchainQueries),
         new EthGetCode(blockchainQueries, Optional.of(privacyParameters)),
         new EthGetLogs(blockchainQueries),
         new EthGetProof(blockchainQueries),

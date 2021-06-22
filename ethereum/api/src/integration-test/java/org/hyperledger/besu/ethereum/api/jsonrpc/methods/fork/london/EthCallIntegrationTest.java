@@ -12,16 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
+package org.hyperledger.besu.ethereum.api.jsonrpc.methods.fork.london;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -29,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
@@ -51,11 +48,11 @@ public class EthCallIntegrationTest {
   @BeforeClass
   public static void setUpOnce() throws Exception {
     final String genesisJson =
-        Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+        Resources.toString(BlockTestUtil.getTestLondonGenesisUrl(), Charsets.UTF_8);
 
     BLOCKCHAIN =
         new JsonRpcTestMethodsFactory(
-            new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson));
+            new BlockchainImporter(BlockTestUtil.getTestLondonBlockchainUrl(), genesisJson));
   }
 
   @Before
@@ -65,17 +62,17 @@ public class EthCallIntegrationTest {
   }
 
   @Test
-  public void shouldReturnExpectedResultForCallAtLatestBlock() {
+  public void shouldReturnSuccessWithoutGasPriceAndEmptyBalance() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
-            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            Address.fromHexString("0xdeadbeef00000000000000000000000000000000"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
             null,
             null,
             null,
             null,
             null,
-            Bytes.fromHexString("0x12a7b914"),
+            Bytes.fromHexString("0x2e64cec1"),
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
@@ -88,86 +85,18 @@ public class EthCallIntegrationTest {
   }
 
   @Test
-  public void shouldReturnExpectedResultForCallAtSpecificBlock() {
+  public void shouldReturnErrorWithGasPriceTooHigh() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
-            null,
-            null,
-            null,
-            null,
-            null,
-            Bytes.fromHexString("0x12a7b914"),
-            null);
-    final JsonRpcRequestContext request = requestWithParams(callParameter, "0x8");
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(
-            null, "0x0000000000000000000000000000000000000000000000000000000000000000");
-
-    final JsonRpcResponse response = method.response(request);
-
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
-  }
-
-  @Test
-  public void shouldReturnInvalidRequestWhenMissingToField() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            Bytes.fromHexString("0x12a7b914"),
-            null);
-    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
-
-    final Throwable thrown = catchThrowable(() -> method.response(request));
-
-    assertThat(thrown)
-        .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasNoCause()
-        .hasMessage("Missing \"to\" field in call arguments");
-  }
-
-  @Test
-  public void shouldReturnErrorWithGasLimitTooLow() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
-            Gas.ZERO,
-            null,
-            null,
-            null,
-            null,
-            Bytes.fromHexString("0x12a7b914"),
-            null);
-    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INTRINSIC_GAS_EXCEEDS_LIMIT);
-
-    final JsonRpcResponse response = method.response(request);
-
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
-  }
-
-  @Test
-  public void shouldReturnErrorWithGasPriceTooHighAndStrict() {
-    final JsonCallParameter callParameter =
-        new JsonCallParameter(
-            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
             null,
             Wei.fromHexString("0x10000000000000"),
             null,
             null,
             null,
-            Bytes.fromHexString("0x12a7b914"),
-            true);
+            Bytes.fromHexString("0x2e64cec1"),
+            null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
@@ -178,18 +107,18 @@ public class EthCallIntegrationTest {
   }
 
   @Test
-  public void shouldReturnSuccessWithGasPriceTooHighNotStrict() {
+  public void shouldReturnSuccessWithValidGasPrice() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
             null,
-            Wei.fromHexString("0x10000000000000"),
+            Wei.fromHexString("0x3B9ACA01"),
             null,
             null,
             null,
-            Bytes.fromHexString("0x12a7b914"),
-            false);
+            Bytes.fromHexString("0x2e64cec1"),
+            null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -201,20 +130,134 @@ public class EthCallIntegrationTest {
   }
 
   @Test
-  public void shouldReturnEmptyHashResultForCallWithOnlyToField() {
+  public void shouldReturnErrorWithGasPriceLessThanCurrentBaseFee() {
     final JsonCallParameter callParameter =
         new JsonCallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
             null,
-            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
-            null,
-            null,
-            null,
-            null,
+            Wei.fromHexString("0x0A"),
             null,
             null,
+            null,
+            Bytes.fromHexString("0x2e64cec1"),
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
-    final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnSuccessWithValidMaxFeePerGas() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
+            null,
+            null,
+            null,
+            Wei.fromHexString("0x3B9ACA01"),
+            null,
+            Bytes.fromHexString("0x2e64cec1"),
+            null);
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            null, "0x0000000000000000000000000000000000000000000000000000000000000001");
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnSuccessWithValidMaxFeePerGasAndMaxPriorityFeePerGas() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
+            null,
+            null,
+            Wei.fromHexString("0x3B9ACA00"),
+            Wei.fromHexString("0x3B9ACA01"),
+            null,
+            Bytes.fromHexString("0x2e64cec1"),
+            null);
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            null, "0x0000000000000000000000000000000000000000000000000000000000000001");
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnErrorWithValidMaxFeePerGasLessThanCurrentBaseFee() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
+            null,
+            null,
+            null,
+            Wei.fromHexString("0x0A"),
+            null,
+            Bytes.fromHexString("0x2e64cec1"),
+            null);
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnErrorWithValidMaxFeePerGasLessThanMaxPriorityFeePerGas() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
+            null,
+            null,
+            Wei.fromHexString("0x3B9ACA02"),
+            Wei.fromHexString("0x3B9ACA01"),
+            null,
+            Bytes.fromHexString("0x2e64cec1"),
+            null);
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            null, JsonRpcError.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS);
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+  }
+
+  @Test
+  public void shouldReturnErrorWithMaxFeePerGasAndEmptyBalance() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            Address.fromHexString("0xdeadbeef00000000000000000000000000000000"),
+            Address.fromHexString("0x9b8397f1b0fecd3a1a40cdd5e8221fa461898517"),
+            null,
+            null,
+            null,
+            Wei.fromHexString("0x3B9ACA01"),
+            null,
+            Bytes.fromHexString("0x2e64cec1"),
+            null);
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
 
     final JsonRpcResponse response = method.response(request);
 

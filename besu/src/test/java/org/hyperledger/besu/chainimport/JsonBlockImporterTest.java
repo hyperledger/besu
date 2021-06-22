@@ -138,7 +138,7 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getTo())
           .hasValue(Address.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57"));
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFF1L);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xFF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xFF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(1L));
       assertThat(tx.getNonce()).isEqualTo(0L);
       // Check second tx
@@ -148,7 +148,7 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getTo())
           .hasValue(Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732"));
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFF2L);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xEF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xEF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(0L));
       assertThat(tx.getNonce()).isEqualTo(1L);
 
@@ -166,7 +166,7 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getTo())
           .hasValue(Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732"));
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFFFL);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xFF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xFF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(0L));
       assertThat(tx.getNonce()).isEqualTo(0L);
 
@@ -192,7 +192,7 @@ public abstract class JsonBlockImporterTest {
           .isEqualTo(Address.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57"));
       assertThat(tx.getTo()).isEmpty();
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFFFL);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xFF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xFF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(0L));
       assertThat(tx.getNonce()).isEqualTo(1L);
     }
@@ -229,7 +229,7 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getTo())
           .hasValue(Address.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57"));
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFF1L);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xFF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xFF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(1L));
       assertThat(tx.getNonce()).isEqualTo(0L);
       // Check second tx
@@ -239,7 +239,7 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getTo())
           .hasValue(Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732"));
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFF2L);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xEF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xEF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(0L));
       assertThat(tx.getNonce()).isEqualTo(1L);
 
@@ -257,7 +257,7 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getTo())
           .hasValue(Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732"));
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFFFL);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xFF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xFF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(0L));
       assertThat(tx.getNonce()).isEqualTo(0L);
 
@@ -283,7 +283,7 @@ public abstract class JsonBlockImporterTest {
           .isEqualTo(Address.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57"));
       assertThat(tx.getTo()).isEmpty();
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFFFL);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xFF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xFF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(0L));
       assertThat(tx.getNonce()).isEqualTo(1L);
     }
@@ -334,7 +334,7 @@ public abstract class JsonBlockImporterTest {
       assertThat(tx.getTo())
           .hasValue(Address.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57"));
       assertThat(tx.getGasLimit()).isEqualTo(0xFFFFF1L);
-      assertThat(tx.getGasPrice()).isEqualTo(Wei.fromHexString("0xFF"));
+      assertThat(tx.getGasPrice().get()).isEqualTo(Wei.fromHexString("0xFF"));
       assertThat(tx.getValue()).isEqualTo(Wei.of(1L));
       assertThat(tx.getNonce()).isEqualTo(2L);
     }
