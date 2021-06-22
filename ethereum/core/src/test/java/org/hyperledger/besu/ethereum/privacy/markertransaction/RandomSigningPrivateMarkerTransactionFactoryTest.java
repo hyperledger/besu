@@ -57,7 +57,7 @@ public class RandomSigningPrivateMarkerTransactionFactoryTest {
 
     assertThat(transaction.getNonce()).isEqualTo(0);
     assertThat(transaction.getGasLimit()).isEqualTo(privTransaction.getGasLimit());
-    assertThat(transaction.getGasPrice()).isEqualTo(privTransaction.getGasPrice());
+    assertThat(transaction.getGasPrice().get()).isEqualTo(privTransaction.getGasPrice());
     assertThat(transaction.getValue()).isEqualTo(privTransaction.getValue());
     assertThat(transaction.getTo()).isEqualTo(Optional.of(precompiledAddress));
     assertThat(transaction.getPayload())

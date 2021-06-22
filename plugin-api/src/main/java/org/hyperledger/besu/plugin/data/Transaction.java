@@ -53,7 +53,7 @@ public interface Transaction {
    *
    * @return the quantity of Wei per gas unit paid.
    */
-  Quantity getGasPrice();
+  Optional<? extends Quantity> getGasPrice();
 
   /**
    * A scalar value equal to the number of Wei to be paid on top of base fee, as specified in
@@ -62,7 +62,7 @@ public interface Transaction {
    * @return the quantity of Wei for max fee per gas
    */
   @Unstable
-  default Optional<Quantity> getMaxPriorityFeePerGas() {
+  default Optional<? extends Quantity> getMaxPriorityFeePerGas() {
     return Optional.empty();
   }
 
@@ -72,7 +72,7 @@ public interface Transaction {
    * @return the quantity of Wei for fee cap.
    */
   @Unstable
-  default Optional<Quantity> getMaxFeePerGas() {
+  default Optional<? extends Quantity> getMaxFeePerGas() {
     return Optional.empty();
   }
 

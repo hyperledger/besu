@@ -102,7 +102,7 @@ public class TransactionCompleteResult implements TransactionResult {
         tx.getTransaction().getMaxPriorityFeePerGas().map(q -> q.toShortHexString()).orElse(null);
     this.maxFeePerGas =
         tx.getTransaction().getMaxFeePerGas().map(q -> q.toShortHexString()).orElse(null);
-    this.gasPrice = Quantity.create(transaction.getGasPrice());
+    this.gasPrice = transaction.getGasPrice().map(Quantity::create).orElse(null);
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
