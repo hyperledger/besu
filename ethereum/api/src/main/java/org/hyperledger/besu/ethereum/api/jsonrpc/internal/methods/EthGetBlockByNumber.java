@@ -68,6 +68,7 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
   protected Object latestResult(final JsonRpcRequestContext request) {
     //old behavior - throws exception when trransactions incomplete on head.
     return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
+
   }
 
   private BlockResult transactionComplete(final long blockNumber) {
