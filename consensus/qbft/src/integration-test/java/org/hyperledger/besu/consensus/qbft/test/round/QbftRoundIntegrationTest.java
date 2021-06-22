@@ -65,6 +65,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class QbftRoundIntegrationTest {
 
   private final MessageFactory peerMessageFactory = new MessageFactory(NodeKeyUtils.generate());
+  private final MessageFactory peerMessageFactory2 = new MessageFactory(NodeKeyUtils.generate());
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
   private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
@@ -184,7 +185,7 @@ public class QbftRoundIntegrationTest {
     verifyNoInteractions(multicaster);
 
     round.handleCommitMessage(
-        peerMessageFactory.createCommit(roundIdentifier, Hash.EMPTY, remoteCommitSeal));
+        peerMessageFactory2.createCommit(roundIdentifier, Hash.EMPTY, remoteCommitSeal));
     assertThat(roundState.isCommitted()).isTrue();
     verifyNoInteractions(multicaster);
 
