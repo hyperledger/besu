@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -140,6 +142,32 @@ public class GenesisConfigFileTest {
   @Test
   public void shouldGetTimestamp() {
     assertThat(configWithProperty("timestamp", "0x10").getTimestamp()).isEqualTo(16L);
+  }
+
+  @Test
+  public void shouldGetBaseFeeAtGenesis() {
+    GenesisConfigFile withBaseFeeAtGenesis =
+        GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isPresent();
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get()).isEqualTo(10L);
+    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas()).isPresent();
+    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas().get()).isEqualTo(10L);
+  }
+
+  @Test
+  public void shouldGetDefaultBaseFeeAtGenesis() {
+    GenesisConfigFile withBaseFeeAtGenesis =
+        GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0}}");
+    assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isNotPresent();
+    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas()).isPresent();
+    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas().get())
+        .isEqualTo(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+  }
+
+  @Test
+  public void shouldNotGetBaseFeeAtGenesis() {
+    assertThat(EMPTY_CONFIG.getBaseFeePerGas()).isNotPresent();
+    assertThat(EMPTY_CONFIG.getGenesisBaseFeePerGas()).isNotPresent();
   }
 
   @Test
