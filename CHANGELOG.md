@@ -1,5 +1,11 @@
 # Changelog
 
+## 21.7.0
+
+### Additions and Improvements
+
+### Bug Fixes
+
 ## 21.7.0-RC2
 
 ### Additions and Improvements
