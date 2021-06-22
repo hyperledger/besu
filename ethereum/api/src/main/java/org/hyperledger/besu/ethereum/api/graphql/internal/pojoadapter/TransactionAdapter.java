@@ -91,7 +91,7 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<Wei> getGasPrice() {
-    return Optional.of(transactionWithMetadata.getTransaction().getGasPrice());
+    return transactionWithMetadata.getTransaction().getGasPrice();
   }
 
   public Optional<Long> getGas() {

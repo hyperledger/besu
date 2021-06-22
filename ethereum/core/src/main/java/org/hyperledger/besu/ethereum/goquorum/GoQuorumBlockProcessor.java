@@ -269,7 +269,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
     return new Transaction(
         transaction.getNonce(),
-        transaction.getGasPrice(),
+        transaction.getGasPrice().get(),
         transaction.getGasLimit(),
         transaction.getTo(),
         transaction.getValue(),

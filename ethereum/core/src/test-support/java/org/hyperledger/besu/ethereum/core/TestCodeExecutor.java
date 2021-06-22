@@ -79,7 +79,7 @@ public class TestCodeExecutor {
             .originator(SENDER_ADDRESS)
             .contract(SENDER_ADDRESS)
             .contractAccountVersion(accountVersion)
-            .gasPrice(transaction.getGasPrice())
+            .gasPrice(transaction.getGasPrice().get())
             .inputData(transaction.getPayload())
             .sender(SENDER_ADDRESS)
             .value(transaction.getValue())
