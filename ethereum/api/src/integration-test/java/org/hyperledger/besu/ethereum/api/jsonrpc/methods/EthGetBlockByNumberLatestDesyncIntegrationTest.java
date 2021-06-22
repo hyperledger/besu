@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.assertj.core.api.Assertions;
+import org.assertj.core.util.Hexadecimals;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
@@ -23,6 +24,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -92,14 +95,21 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
   public void shouldReturnedLatestFullSynced() {
 
     assertThat(latestFullySyncdBlockNumber.longValue()).isNotEqualTo(0L);
+    //otherwise our setup didn't work as expected
     Object[] params = {"latest", false};
     JsonRpcRequestContext ctx = new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "eth_getBlockByNumber", params));
     Assertions.assertThatNoException().isThrownBy(() -> {
       final JsonRpcResponse resp = ethGetBlockNumber.response(ctx);
       assertThat(resp).isNotNull();
-      assertThat(resp).
+      assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+      Object r = ((JsonRpcSuccessResponse)resp).getResult();
+      assertThat(r).isInstanceOf(BlockResult.class);
+      BlockResult br = (BlockResult)r;
+      assertThat(br.getNumber()).isEqualTo("0x"+Long.toHexString(latestFullySyncdBlockNumber));
     });
+
+    //TODO: what test to cover including transactions?
 
   }
 }
