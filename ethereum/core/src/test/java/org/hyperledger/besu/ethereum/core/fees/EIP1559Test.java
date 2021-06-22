@@ -29,7 +29,7 @@ public class EIP1559Test {
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                FORK_BLOCK,
+                FORK_BLOCK + 1,
                 feeMarket.getInitialBasefee(),
                 TARGET_GAS_USED - 1000000L,
                 TARGET_GAS_USED))
@@ -41,7 +41,7 @@ public class EIP1559Test {
   public void assertThatBaseFeeIncreasesWhenAboveTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                FORK_BLOCK,
+                FORK_BLOCK + 1,
                 feeMarket.getInitialBasefee(),
                 TARGET_GAS_USED + 1000000L,
                 TARGET_GAS_USED))
