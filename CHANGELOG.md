@@ -3,7 +3,7 @@
 ## 21.7.0-RC2
 
 ### Additions and Improvements
-- eth_feeHistory API for wallet providers [\#2432](https://github.com/hyperledger/besu/pull/2432)
+- eth_feeHistory API for wallet providers [\#2466](https://github.com/hyperledger/besu/pull/2466)
 ### Bug Fixes
 - Ibft2 could create invalid RoundChange messages in some circumstances containing duplicate prepares [\#2449](https://github.com/hyperledger/besu/pull/2449)
 
