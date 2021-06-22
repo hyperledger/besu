@@ -141,6 +141,15 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public void clear() {
+    accountStorage.clear();
+    codeStorage.clear();
+    storageStorage.clear();
+    trieBranchStorage.clear();
+    trieLogStorage.clear();
+  }
+
+  @Override
   public Updater updater() {
     return new Updater(
         accountStorage.startTransaction(),
