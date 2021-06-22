@@ -44,18 +44,28 @@ public class SECP256K1 extends AbstractSECP256 {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private boolean useNative = true;
+  private boolean useNative;
 
   public static final String CURVE_NAME = "secp256k1";
 
   public SECP256K1() {
     super(CURVE_NAME, SecP256K1Curve.q);
+
+    // use the native library implementation, if it is available
+    useNative = LibSecp256k1.CONTEXT != null;
+    if (!useNative) {
+      LOG.info("Native secp256k1 not available");
+    }
   }
 
   @Override
-  public void enableNative() {
-    useNative = LibSecp256k1.CONTEXT != null;
-    LOG.info(useNative ? "Using native secp256k1" : "Native secp256k1 requested but not available");
+  public void disableNative() {
+    useNative = false;
+  }
+
+  @Override
+  public boolean isNative() {
+    return useNative;
   }
 
   @Override

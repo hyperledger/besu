@@ -30,14 +30,16 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LogManager.getLogger();
-  static boolean useNative = true;
 
-  public static void enableNative() {
-    useNative = LibEthPairings.ENABLED;
-    LOG.info(
-        useNative
-            ? "Using LibEthPairings native alt bn128"
-            : "Native alt bn128 requested but not available");
+  // use the native library implementation, if it is available
+  static boolean useNative = LibEthPairings.ENABLED;
+
+  public static void disableNative() {
+    useNative = false;
+  }
+
+  public static boolean isNative() {
+    return useNative;
   }
 
   private final byte operationId;
@@ -46,6 +48,10 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
       final String name, final GasCalculator gasCalculator, final byte operationId) {
     super(name, gasCalculator);
     this.operationId = operationId;
+
+    if (!LibEthPairings.ENABLED) {
+      LOG.info("Native alt bn128 not available");
+    }
   }
 
   public Bytes computeNative(final Bytes input, final MessageFrame messageFrame) {

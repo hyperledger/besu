@@ -1,11 +1,18 @@
 # Changelog
 
+## 21.7.0-RC2
+
+### Bug Fixes
+- Ibft2 could create invalid RoundChange messages in some circumstances containing duplicate prepares [\#2449](https://github.com/hyperledger/besu/pull/2449)
+
 ## 21.7.0-RC1
 
 ### Additions and Improvements
 - eip-1559 changes: accept transactions which have maxFeePerGas below current baseFee [\#2374](https://github.com/hyperledger/besu/pull/2374)
 - Introduced transitions for IBFT2 block rewards [\#1977](https://github.com/hyperledger/besu/pull/1977) 
 - Change Ethstats's status from experimental feature to stable. [\#2405](https://github.com/hyperledger/besu/pull/2405) 
+- Fixed disabling of native libraries for secp256k1 and altBn128. [\#2163](https://github.com/hyperledger/besu/pull/2163)
+
 
 ### Bug Fixes
 
@@ -16,6 +23,10 @@ This release contains the activation blocks for London across all supported test
   * Ropsten 10_499_401 (24 Jun 2021)
   * Goerli 5_062_605 (30 Jun 2021)
   * Rinkeby 8_897_988 (7 Jul 2021)
+
+## Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.0-RC1/besu-21.7.0-RC1.zip
+sha256sum fc959646af65a0e267fc4d695e0af7e87331d774e6e8e890f5cc391549ed175a
 
 ## 21.1.7
 

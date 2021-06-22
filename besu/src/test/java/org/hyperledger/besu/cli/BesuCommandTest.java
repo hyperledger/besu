@@ -66,6 +66,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -4345,5 +4346,37 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nativeSecp256IsDisabled() {
+    SignatureAlgorithmFactory.resetInstance();
+    parseCommand("--Xsecp256k1-native-enabled", "false");
+
+    verify(mockLogger).info("Using the Java implementation of secp256k1");
+    assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isFalse();
+  }
+
+  @Test
+  public void nativeAltBn128IsDisabled() {
+    // it is necessary to reset it, because the tested variable
+    // is static and it will stay true if it has been set in another test
+    // AbstractAltBnPrecompiledContract.resetNative();
+
+    parseCommand("--Xaltbn128-native-enabled", "false");
+
+    verify(mockLogger).info("Using the Java implementation of alt bn128");
+    assertThat(AbstractAltBnPrecompiledContract.isNative()).isFalse();
+  }
+
+  @Test
+  public void nativeLibrariesAreEnabledByDefault() {
+    parseCommand();
+
+    assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isTrue();
+    verify(mockLogger).info("Using native secp256k1");
+
+    assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
+    verify(mockLogger).info("Using LibEthPairings native alt bn128");
   }
 }
