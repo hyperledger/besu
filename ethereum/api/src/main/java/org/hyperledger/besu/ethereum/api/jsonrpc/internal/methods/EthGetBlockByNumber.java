@@ -14,16 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import com.google.common.base.Suppliers;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
+
 
 import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 
 public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
@@ -66,9 +70,22 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
   @Override
   protected Object latestResult(final JsonRpcRequestContext request) {
-    //old behavior - throws exception when trransactions incomplete on head.
-    return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
+    //old behavior - throws exception when transactions incomplete on head.
+    //return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
+    //if head has state, return that.
 
+
+    final long headBlockNumber = blockchainQueries.get().headBlockNumber();
+    BlockHeader headHeader = blockchainQueries.get().getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
+
+    Hash block = headHeader.getHash();
+    Hash stateRoot = headHeader.getStateRoot();
+
+    if(blockchainQueries.get().getWorldStateArchive().isWorldStateAvailable(stateRoot, block)) {
+      return resultByBlockNumber(request, headBlockNumber);
+    } else {
+      return resultByBlockNumber(request, blockchainQueries.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
+    }
   }
 
   private BlockResult transactionComplete(final long blockNumber) {
