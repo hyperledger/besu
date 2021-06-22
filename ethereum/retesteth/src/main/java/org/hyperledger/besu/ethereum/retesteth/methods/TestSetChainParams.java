@@ -135,7 +135,6 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMove(chainParamsJson, "accounts", chainParamsJson, "alloc");
 
     if (params.containsKey("londonForkBlock")) {
-      // TODO EIP-1559 change for the actual fork name when known
       JsonObject genesisConfig = chainParamsJson.getJsonObject("genesis", new JsonObject());
       ExperimentalEIPs.initialBasefee =
           Optional.ofNullable(
