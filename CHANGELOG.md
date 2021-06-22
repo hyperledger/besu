@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.7.0-RC2
+
+### Bug Fixes
+- Ibft2 could create invalid RoundChange messages in some circumstances containing duplicate prepares [\#2449](https://github.com/hyperledger/besu/pull/2449)
+
 ## 21.7.0-RC1
 
 ### Additions and Improvements
