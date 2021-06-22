@@ -39,6 +39,10 @@ public class EIP1559 {
       final long parentBaseFee,
       final long parentBlockGasUsed,
       final long targetGasUsed) {
+    if (isForkBlock(blockNumber)) {
+      return getFeeMarket().getInitialBasefee();
+    }
+
     long gasDelta, feeDelta, baseFee;
     if (parentBlockGasUsed == targetGasUsed) {
       return parentBaseFee;

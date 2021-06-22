@@ -351,11 +351,26 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return Arrays.asList(getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas()).stream()
         .flatMap(Optional::stream)
         .map(Quantity::getAsBigInteger)
-        .filter(q -> q.longValue() > 0L)
-        .findAny()
-        .isPresent();
+        .anyMatch(q -> q.longValue() > 0L);
   }
 
+  public long getEffectivePriorityFeePerGas(final Optional<Long> maybeBaseFee) {
+    return maybeBaseFee
+        .map(
+            baseFee -> {
+              if (getType().supports1559FeeMarket()) {
+                return Math.min(
+                    getMaxPriorityFeePerGas().get().getAsBigInteger().longValue(),
+                    getMaxFeePerGas().get().getAsBigInteger().longValue() - baseFee);
+              } else {
+                return getGasPrice().get().getValue().longValue() - baseFee;
+              }
+            })
+        .map(
+            maybeNegativeEffectivePriorityFeePerGas ->
+                Math.max(0, maybeNegativeEffectivePriorityFeePerGas))
+        .orElseGet(() -> getGasPrice().get().getValue().longValue());
+  }
   /**
    * Returns the transaction gas limit.
    *
