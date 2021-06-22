@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.7.0-RC2
+
+### Additions and Improvements
+- eth_feeHistory API for wallet providers [\#2432](https://github.com/hyperledger/besu/pull/2432)
+
 ## 21.7.0-RC1
 
 ### Additions and Improvements
