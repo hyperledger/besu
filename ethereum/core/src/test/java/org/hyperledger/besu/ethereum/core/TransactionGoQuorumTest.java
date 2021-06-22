@@ -52,6 +52,7 @@ public class TransactionGoQuorumTest {
   public void givenPublicTransaction_assertThatIsGoQuorumFlagIsFalse() {
     final Transaction transaction = Transaction.readFrom(ETHEREUM_PUBLIC_TX_RLP);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isFalse();
+    assertThat(transaction.hasCostParams()).isTrue();
   }
 
   @Test
@@ -60,6 +61,7 @@ public class TransactionGoQuorumTest {
 
     assertThat(transaction.getV()).isEqualTo(37);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
+    assertThat(transaction.hasCostParams()).isFalse();
   }
 
   @Test
@@ -68,6 +70,7 @@ public class TransactionGoQuorumTest {
 
     assertThat(transaction.getV()).isEqualTo(38);
     assertThat(transaction.isGoQuorumPrivateTransaction()).isTrue();
+    assertThat(transaction.hasCostParams()).isFalse();
   }
 
   private static RLPInput toRLP(final String bytes) {

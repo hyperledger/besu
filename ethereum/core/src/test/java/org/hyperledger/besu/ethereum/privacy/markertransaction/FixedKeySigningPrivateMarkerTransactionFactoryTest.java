@@ -64,7 +64,7 @@ public class FixedKeySigningPrivateMarkerTransactionFactoryTest {
 
     assertThat(transaction.getNonce()).isEqualTo(providedNonce);
     assertThat(transaction.getGasLimit()).isEqualTo(privTransaction.getGasLimit());
-    assertThat(transaction.getGasPrice()).isEqualTo(privTransaction.getGasPrice());
+    assertThat(transaction.getGasPrice().get()).isEqualTo(privTransaction.getGasPrice());
     assertThat(transaction.getValue()).isEqualTo(privTransaction.getValue());
     assertThat(transaction.getSender())
         .isEqualTo(Util.publicKeyToAddress(signingKeys.getPublicKey()));
