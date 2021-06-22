@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core.fees;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 
-import java.math.BigInteger;
 import java.util.Optional;
 
 @FunctionalInterface
@@ -25,19 +24,17 @@ public interface TransactionPriceCalculator {
   Wei price(Transaction transaction, Optional<Long> baseFee);
 
   static TransactionPriceCalculator frontier() {
-    return (transaction, baseFee) -> transaction.getGasPrice();
+    return (transaction, baseFee) -> transaction.getGasPrice().get();
   }
 
   static TransactionPriceCalculator eip1559() {
     return (transaction, maybeBaseFee) -> {
       final Wei baseFee = Wei.of(maybeBaseFee.orElseThrow());
       if (!transaction.getType().supports1559FeeMarket()) {
-        return transaction.getGasPrice();
+        return transaction.getGasPrice().get();
       }
-      final Wei maxPriorityFeePerGas =
-          Wei.of((BigInteger) transaction.getMaxPriorityFeePerGas().orElseThrow().getValue());
-      final Wei maxFeePerGas =
-          Wei.of((BigInteger) transaction.getMaxFeePerGas().orElseThrow().getValue());
+      final Wei maxPriorityFeePerGas = transaction.getMaxPriorityFeePerGas().orElseThrow();
+      final Wei maxFeePerGas = transaction.getMaxFeePerGas().orElseThrow();
       Wei price = maxPriorityFeePerGas.add(baseFee);
       if (price.compareTo(maxFeePerGas) > 0) {
         price = maxFeePerGas;

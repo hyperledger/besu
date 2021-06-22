@@ -24,10 +24,12 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.util.List;
 import java.util.Optional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 public class TransactionCompleteResultTest {
@@ -62,7 +64,7 @@ public class TransactionCompleteResultTest {
   }
 
   @Test
-  public void accessListTransactionFields() throws JsonProcessingException {
+  public void accessListTransactionFields() {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Transaction transaction = gen.transaction(TransactionType.ACCESS_LIST);
     final TransactionCompleteResult transactionCompleteResult =
@@ -78,18 +80,17 @@ public class TransactionCompleteResultTest {
     assertThat(transactionCompleteResult.getMaxFeePerGas()).isNull();
     assertThat(transactionCompleteResult.getMaxPriorityFeePerGas()).isNull();
     final ObjectMapper objectMapper = new ObjectMapper();
-    final String jsonString =
-        objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(transactionCompleteResult);
-
-    assertThat(jsonString)
-        .startsWith(
-            "{\n"
-                + "  \"accessList\" : [ {\n"
-                + "    \"address\" : \"0x47902028e61cfdc243d9d16008aabc9fb77cc723\",\n"
-                + "    \"storageKeys\" : [ ]\n"
-                + "  }, {\n"
-                + "    \"address\" : \"0xa56017e14f1ce8b1698341734a6823ce02043e01\",\n"
-                + "    \"storageKeys\" : [ \"0x6b544901214a2ddab82fec85c0b9fe0549c475be5b887bb4b8995b24fb5c6846\", \"0xf88b527b4f9d4c1391f1678b23ba4f9c9cd7bc93eb5776f4f036753448642946\" ]\n"
-                + "  } ],");
+    final JsonNode transactionCompleteResultJson =
+        objectMapper.valueToTree(transactionCompleteResult);
+    final List<JsonNode> accessListJson =
+        ImmutableList.copyOf(transactionCompleteResultJson.get("accessList").elements());
+    assertThat(accessListJson).hasSizeGreaterThan(0);
+    accessListJson.forEach(
+        accessListEntryJson -> {
+          assertThat(accessListEntryJson.get("address").asText()).matches("^0x\\X{40}$");
+          ImmutableList.copyOf(accessListEntryJson.get("storageKeys").elements())
+              .forEach(
+                  storageKeyJson -> assertThat(storageKeyJson.asText()).matches("^0x\\X{64}$"));
+        });
   }
 }

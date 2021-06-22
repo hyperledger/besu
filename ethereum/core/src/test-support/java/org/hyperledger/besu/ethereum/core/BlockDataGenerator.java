@@ -274,28 +274,30 @@ public class BlockDataGenerator {
     final int gasLimit = random.nextInt() & Integer.MAX_VALUE;
     final int gasUsed = Math.max(0, gasLimit - 1);
     final long blockNonce = random.nextLong();
-
-    return BlockHeaderBuilder.create()
-        .parentHash(options.getParentHash(hash()))
-        .ommersHash(BodyValidation.ommersHash(body.getOmmers()))
-        .coinbase(options.getCoinbase(address()))
-        .stateRoot(options.getStateRoot(hash()))
-        .transactionsRoot(BodyValidation.transactionsRoot(body.getTransactions()))
-        .receiptsRoot(options.getReceiptsRoot(hash()))
-        .logsBloom(options.getLogsBloom(logsBloom()))
-        .difficulty(options.getDifficulty(Difficulty.of(uint256(4))))
-        .number(number)
-        .gasLimit(gasLimit)
-        .gasUsed(options.getGasUsed(gasUsed))
-        .timestamp(
-            options
-                .getTimestamp()
-                .orElse(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond()))
-        .extraData(options.getExtraData(bytes32()))
-        .mixHash(hash())
-        .nonce(blockNonce)
-        .blockHeaderFunctions(options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()))
-        .buildBlockHeader();
+    final BlockHeaderBuilder blockHeaderBuilder =
+        BlockHeaderBuilder.create()
+            .parentHash(options.getParentHash(hash()))
+            .ommersHash(BodyValidation.ommersHash(body.getOmmers()))
+            .coinbase(options.getCoinbase(address()))
+            .stateRoot(options.getStateRoot(hash()))
+            .transactionsRoot(BodyValidation.transactionsRoot(body.getTransactions()))
+            .receiptsRoot(options.getReceiptsRoot(hash()))
+            .logsBloom(options.getLogsBloom(logsBloom()))
+            .difficulty(options.getDifficulty(Difficulty.of(uint256(4))))
+            .number(number)
+            .gasLimit(gasLimit)
+            .gasUsed(options.getGasUsed(gasUsed))
+            .timestamp(
+                options
+                    .getTimestamp()
+                    .orElse(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond()))
+            .extraData(options.getExtraData(bytes32()))
+            .mixHash(hash())
+            .nonce(blockNonce)
+            .blockHeaderFunctions(
+                options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+    options.getBaseFee(Optional.of(uint256(2).toLong())).ifPresent(blockHeaderBuilder::baseFee);
+    return blockHeaderBuilder.buildBlockHeader();
   }
 
   public BlockBody body() {
@@ -372,7 +374,7 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.ACCESS_LIST)
         .nonce(positiveLong())
-        .gasPrice(Wei.wrap(bytes32()))
+        .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.wrap(bytes32()))
@@ -399,8 +401,8 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.EIP1559)
         .nonce(positiveLong())
-        .maxPriorityFeePerGas(Wei.wrap(bytes32()))
-        .maxFeePerGas(Wei.wrap(bytes32()))
+        .maxPriorityFeePerGas(Wei.wrap(bytesValue(4)))
+        .maxFeePerGas(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.of(positiveLong()))
@@ -413,7 +415,7 @@ public class BlockDataGenerator {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
         .nonce(positiveLong())
-        .gasPrice(Wei.wrap(bytes32()))
+        .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
         .value(Wei.wrap(bytes32()))
@@ -618,6 +620,7 @@ public class BlockDataGenerator {
     private boolean hasTransactions = true;
     private TransactionType[] transactionTypes = TransactionType.values();
     private Optional<Address> coinbase = Optional.empty();
+    private Optional<Optional<Long>> maybeBaseFee = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -769,6 +772,15 @@ public class BlockDataGenerator {
 
     public Address getCoinbase(final Address defaultValue) {
       return coinbase.orElse(defaultValue);
+    }
+
+    public Optional<Long> getBaseFee(final Optional<Long> defaultValue) {
+      return maybeBaseFee.orElse(defaultValue);
+    }
+
+    public BlockOptions setBaseFee(final Optional<Long> baseFee) {
+      this.maybeBaseFee = Optional.of(baseFee);
+      return this;
     }
   }
 }
