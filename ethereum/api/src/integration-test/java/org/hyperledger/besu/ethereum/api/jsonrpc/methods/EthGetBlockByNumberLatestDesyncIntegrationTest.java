@@ -15,9 +15,11 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-import org.assertj.core.api.Assertions;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
@@ -37,19 +39,17 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.testutil.BlockTestUtil;
+
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class EthGetBlockByNumberLatestDesyncIntegrationTest {
-
 
   private static JsonRpcTestMethodsFactory methodsFactorySynced;
   private static JsonRpcTestMethodsFactory methodsFactoryDesynced;
@@ -57,9 +57,11 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
   @BeforeClass
   public static void setUpOnce() throws Exception {
     final String genesisJson =
-            Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
-    BlockchainImporter importer = new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson);
-    MutableBlockchain chain = InMemoryKeyValueStorageProvider.createInMemoryBlockchain(importer.getGenesisBlock());
+        Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+    BlockchainImporter importer =
+        new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson);
+    MutableBlockchain chain =
+        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(importer.getGenesisBlock());
     WorldStateArchive state = InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     importer.getGenesisState().writeStateTo(state.getMutable());
     ProtocolContext context = new ProtocolContext(chain, state, null);
@@ -67,35 +69,37 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
     for (final Block block : importer.getBlocks()) {
       final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
       final ProtocolSpec protocolSpec =
-              protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
 
-    methodsFactorySynced = new JsonRpcTestMethodsFactory( importer, chain, state, context );
+    methodsFactorySynced = new JsonRpcTestMethodsFactory(importer, chain, state, context);
 
     WorldStateArchive unsynced = mock(WorldStateArchive.class);
     when(unsynced.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(false);
 
-    methodsFactoryDesynced = new JsonRpcTestMethodsFactory( importer, chain, unsynced, context );
+    methodsFactoryDesynced = new JsonRpcTestMethodsFactory(importer, chain, unsynced, context);
   }
 
   @Test
   public void shouldReturnHeadIfFullySynced() {
     JsonRpcMethod ethGetBlockNumber = methodsFactorySynced.methods().get("eth_getBlockByNumber");
     Object[] params = {"latest", false};
-    JsonRpcRequestContext ctx = new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "eth_getBlockByNumber", params));
-    Assertions.assertThatNoException().isThrownBy(() -> {
-      final JsonRpcResponse resp = ethGetBlockNumber.response(ctx);
-      assertThat(resp).isNotNull();
-      assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
-      Object r = ((JsonRpcSuccessResponse)resp).getResult();
-      assertThat(r).isInstanceOf(BlockResult.class);
-      BlockResult br = (BlockResult)r;
-      assertThat(br.getNumber()).isEqualTo("0x20");
-      //assert on the state existing?
-    });
+    JsonRpcRequestContext ctx =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_getBlockByNumber", params));
+    Assertions.assertThatNoException()
+        .isThrownBy(
+            () -> {
+              final JsonRpcResponse resp = ethGetBlockNumber.response(ctx);
+              assertThat(resp).isNotNull();
+              assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+              Object r = ((JsonRpcSuccessResponse) resp).getResult();
+              assertThat(r).isInstanceOf(BlockResult.class);
+              BlockResult br = (BlockResult) r;
+              assertThat(br.getNumber()).isEqualTo("0x20");
+              // assert on the state existing?
+            });
   }
 
   @Test
@@ -103,17 +107,18 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
 
     JsonRpcMethod ethGetBlockNumber = methodsFactoryDesynced.methods().get("eth_getBlockByNumber");
     Object[] params = {"latest", false};
-    JsonRpcRequestContext ctx = new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "eth_getBlockByNumber", params));
-    Assertions.assertThatNoException().isThrownBy(() -> {
-      final JsonRpcResponse resp = ethGetBlockNumber.response(ctx);
-      assertThat(resp).isNotNull();
-      assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
-      Object r = ((JsonRpcSuccessResponse)resp).getResult();
-      assertThat(r).isInstanceOf(BlockResult.class);
-      BlockResult br = (BlockResult)r;
-      assertThat(br.getNumber()).isEqualTo("0x0");
-    });
-
+    JsonRpcRequestContext ctx =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_getBlockByNumber", params));
+    Assertions.assertThatNoException()
+        .isThrownBy(
+            () -> {
+              final JsonRpcResponse resp = ethGetBlockNumber.response(ctx);
+              assertThat(resp).isNotNull();
+              assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+              Object r = ((JsonRpcSuccessResponse) resp).getResult();
+              assertThat(r).isInstanceOf(BlockResult.class);
+              BlockResult br = (BlockResult) r;
+              assertThat(br.getNumber()).isEqualTo("0x0");
+            });
   }
 }
