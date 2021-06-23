@@ -1060,7 +1060,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     when(blockchainQueries.blockByNumber(eq(0L))).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockHeader(blockchainQueries.headBlockNumber()))
-            .thenReturn(Optional.of(block.getHeader()));
+        .thenReturn(Optional.of(block.getHeader()));
     WorldStateArchive state = mock(WorldStateArchive.class);
     when(state.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(true);
     when(blockchainQueries.getWorldStateArchive()).thenReturn(state);
@@ -1090,12 +1090,12 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Block block = gen.genesisBlock();
     final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
-            blockWithMetadata(block);
+        blockWithMetadata(block);
     when(blockchainQueries.headBlockNumber()).thenReturn(0L);
     when(blockchainQueries.blockByNumber(eq(0L))).thenReturn(Optional.of(blockWithMetadata));
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockHeader(blockchainQueries.headBlockNumber()))
-            .thenReturn(Optional.of(block.getHeader()));
+        .thenReturn(Optional.of(block.getHeader()));
     WorldStateArchive state = mock(WorldStateArchive.class);
     when(state.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(true);
     when(blockchainQueries.getWorldStateArchive()).thenReturn(state);

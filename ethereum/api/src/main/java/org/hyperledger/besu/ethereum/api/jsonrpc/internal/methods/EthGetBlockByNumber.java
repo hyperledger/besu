@@ -23,9 +23,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.WorldState;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -86,8 +84,8 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
     Hash stateRoot = headHeader.getStateRoot();
 
     if (blockchainQueries.get().getWorldStateArchive().isWorldStateAvailable(stateRoot, block)) {
-      //Optional<WorldState> worldState = blockchainQueries.get().getWorldState(headBlockNumber);
-      //log.trace(worldState.get().toString());
+      // Optional<WorldState> worldState = blockchainQueries.get().getWorldState(headBlockNumber);
+      // log.trace(worldState.get().toString());
       return resultByBlockNumber(request, headBlockNumber);
     } else {
       log.trace("no world state available for block {} returning genesis", headBlockNumber);
