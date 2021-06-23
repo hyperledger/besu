@@ -76,8 +76,6 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     return bftPrivacyTypes;
   }
 
-  private static final long IBFT2_CHAIN_ID = 4;
-
   private PrivacyNode alice;
   private PrivacyNode bob;
   private PrivacyNode charlie;
