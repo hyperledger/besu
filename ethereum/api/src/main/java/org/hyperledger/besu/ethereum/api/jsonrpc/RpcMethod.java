@@ -71,6 +71,7 @@ public enum RpcMethod {
   ETH_CHAIN_ID("eth_chainId"),
   ETH_COINBASE("eth_coinbase"),
   ETH_ESTIMATE_GAS("eth_estimateGas"),
+  ETH_FEE_HISTORY("eth_feeHistory"),
   ETH_GAS_PRICE("eth_gasPrice"),
   ETH_GET_BALANCE("eth_getBalance"),
   ETH_GET_BLOCK_BY_HASH("eth_getBlockByHash"),

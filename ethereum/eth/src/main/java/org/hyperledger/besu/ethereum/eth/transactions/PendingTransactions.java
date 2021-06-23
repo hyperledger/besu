@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -108,7 +107,7 @@ public class PendingTransactions {
                           .orElse(transactionInfo.getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-  private Optional<Long> baseFee = Optional.empty();
+  private Optional<Long> baseFee;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
 
@@ -326,11 +325,15 @@ public class PendingTransactions {
           // there are both static and dynamic txs remaining so we need to compare them by their
           // effective priority fees
           final long dynamicRangeEffectivePriorityFee =
-              effectivePriorityFeePerGas(
-                  currentDynamicRangeTransaction.get().getTransaction(), baseFee);
+              currentDynamicRangeTransaction
+                  .get()
+                  .getTransaction()
+                  .getEffectivePriorityFeePerGas(baseFee);
           final long staticRangeEffectivePriorityFee =
-              effectivePriorityFeePerGas(
-                  currentStaticRangeTransaction.get().getTransaction(), baseFee);
+              currentStaticRangeTransaction
+                  .get()
+                  .getTransaction()
+                  .getEffectivePriorityFeePerGas(baseFee);
           final TransactionInfo best;
           if (dynamicRangeEffectivePriorityFee > staticRangeEffectivePriorityFee) {
             best = currentDynamicRangeTransaction.get();
@@ -394,7 +397,7 @@ public class PendingTransactions {
                 .build()
                 .min(
                     Comparator.comparing(
-                        txInfo -> effectivePriorityFeePerGas(txInfo.getTransaction(), baseFee)))
+                        txInfo -> txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee)))
                 // safe because we just added a tx to the pool so we're guaranteed to have one
                 .get();
         doRemoveTransaction(toRemove.getTransaction(), false);
@@ -412,26 +415,11 @@ public class PendingTransactions {
         .getMaxPriorityFeePerGas()
         .map(
             maxPriorityFeePerGas ->
-                effectivePriorityFeePerGas(transaction, baseFee)
+                transaction.getEffectivePriorityFeePerGas(baseFee)
                     >= maxPriorityFeePerGas.getValue().longValue())
         .orElse(
             // non-eip-1559 txs can't be in static range
             false);
-  }
-
-  private long effectivePriorityFeePerGas(
-      final Transaction transaction, final Optional<Long> curBaseFee) {
-    final long maybeNegativePriorityFeePerGas;
-    if (transaction.getType().equals(TransactionType.EIP1559)) {
-      maybeNegativePriorityFeePerGas =
-          Math.min(
-              transaction.getMaxPriorityFeePerGas().get().getValue().longValue(),
-              transaction.getMaxFeePerGas().get().getValue().longValue() - curBaseFee.orElse(0L));
-    } else {
-      maybeNegativePriorityFeePerGas =
-          transaction.getGasPrice().getValue().longValue() - curBaseFee.orElse(0L);
-    }
-    return maybeNegativePriorityFeePerGas;
   }
 
   public void updateBaseFee(final Long newBaseFee) {
@@ -602,10 +590,7 @@ public class PendingTransactions {
     }
 
     public Wei getGasPrice() {
-      if (transaction.getGasPrice() == null) {
-        return Wei.ZERO;
-      }
-      return transaction.getGasPrice();
+      return transaction.getGasPrice().orElse(Wei.ZERO);
     }
 
     public long getSequence() {

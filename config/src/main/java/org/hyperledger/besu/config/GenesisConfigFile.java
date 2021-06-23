@@ -17,6 +17,8 @@ package org.hyperledger.besu.config;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -120,6 +122,16 @@ public class GenesisConfigFile {
 
   public long getGasLimit() {
     return parseLong("gasLimit", getFirstRequiredString("gaslimit", "gastarget"));
+  }
+
+  public Optional<Long> getBaseFeePerGas() {
+    return JsonUtil.getString(configRoot, "basefeepergas")
+        .map(baseFeeStr -> parseLong("baseFeePerGas", baseFeeStr));
+  }
+
+  public Optional<Long> getGenesisBaseFeePerGas() {
+    return Optional.of(getBaseFeePerGas().orElse(ExperimentalEIPs.initialBasefee))
+        .filter(z -> 0L == getConfigOptions().getEIP1559BlockNumber().orElse(-1L));
   }
 
   public String getMixHash() {

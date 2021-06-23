@@ -51,7 +51,7 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
   public PendingTransactionDetailResult(final Transaction tx) {
     this.from = tx.getSender().toString();
     this.gas = Quantity.create(tx.getGasLimit());
-    this.gasPrice = Quantity.create(tx.getGasPrice());
+    this.gasPrice = tx.getGasPrice().map(Quantity::create).orElse(null);
     this.hash = tx.getHash().toString();
     this.input = tx.getPayload().toString();
     this.nonce = Quantity.create(tx.getNonce());
