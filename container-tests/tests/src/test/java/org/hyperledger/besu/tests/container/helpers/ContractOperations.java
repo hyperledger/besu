@@ -142,16 +142,16 @@ public class ContractOperations {
   public static String generate64BytesHexString(final long number) {
     final String str = Long.toHexString(number);
 
-    return prependZeroesToHexString(str, 64);
+    return prependZeroesToPadHexStringToGivenLength(str, 64);
   }
 
   @NotNull
-  public static String prependZeroesToHexString(final String hexString, final int lenRequested) {
-    final StringBuilder randomValue = new StringBuilder(hexString);
-    while (randomValue.length() < lenRequested) {
-      randomValue.insert(0, '0');
+  public static String prependZeroesToPadHexStringToGivenLength(final String hexString, final int lenRequested) {
+    final StringBuilder sb = new StringBuilder(hexString);
+    while (sb.length() < lenRequested) {
+      sb.insert(0, '0');
     }
-    return randomValue.toString();
+    return sb.toString();
   }
 
   public static int getNonce(final Quorum quorum, final Credentials credentials)

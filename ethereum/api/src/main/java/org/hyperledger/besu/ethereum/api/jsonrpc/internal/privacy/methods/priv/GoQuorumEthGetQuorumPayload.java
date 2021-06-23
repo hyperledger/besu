@@ -41,7 +41,7 @@ public class GoQuorumEthGetQuorumPayload implements JsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.ETH_GET_QUORUM_PAYLOAD.getMethodName();
+    return RpcMethod.GOQUORUM_ETH_GET_QUORUM_PAYLOAD.getMethodName();
   }
 
   @Override

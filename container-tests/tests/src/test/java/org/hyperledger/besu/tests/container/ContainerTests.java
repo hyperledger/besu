@@ -232,7 +232,7 @@ public class ContainerTests extends ContainerTestBase {
     ethFilterSubscription.addSingleTopic(eventEncoded);
 
     // Generate a value to insert into the log
-    final String logValue = generate64BytesHexString((1234567L));
+    final String logValue = generate64BytesHexString(1234567L);
 
     final AtomicBoolean checked = new AtomicBoolean(false);
     final Disposable subscribe =
