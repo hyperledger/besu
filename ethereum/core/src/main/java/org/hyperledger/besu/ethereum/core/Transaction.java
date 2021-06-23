@@ -228,9 +228,9 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     this(
         TransactionType.FRONTIER,
         nonce,
-        gasPrice,
-        null,
-        null,
+        Optional.of(gasPrice),
+        Optional.empty(),
+        Optional.empty(),
         gasLimit,
         Optional.of(to),
         value,
