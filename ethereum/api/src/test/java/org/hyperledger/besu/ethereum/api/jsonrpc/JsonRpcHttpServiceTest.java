@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.math.BigInteger;
@@ -1057,6 +1058,12 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
         blockWithMetadata(block);
     when(blockchainQueries.headBlockNumber()).thenReturn(0L);
     when(blockchainQueries.blockByNumber(eq(0L))).thenReturn(Optional.of(blockWithMetadata));
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getBlockHeader(blockchainQueries.headBlockNumber()))
+            .thenReturn(Optional.of(block.getHeader()));
+    WorldStateArchive state = mock(WorldStateArchive.class);
+    when(state.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(true);
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(state);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -1079,6 +1086,19 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             "{\"jsonrpc\":\"2.0\",\"id\":"
                 + Json.encode(id)
                 + ",\"method\":\"eth_getBlockByNumber\", \"params\": [\"pending\",true]}");
+    // Setup mocks to return a block
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block block = gen.genesisBlock();
+    final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
+            blockWithMetadata(block);
+    when(blockchainQueries.headBlockNumber()).thenReturn(0L);
+    when(blockchainQueries.blockByNumber(eq(0L))).thenReturn(Optional.of(blockWithMetadata));
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getBlockHeader(blockchainQueries.headBlockNumber()))
+            .thenReturn(Optional.of(block.getHeader()));
+    WorldStateArchive state = mock(WorldStateArchive.class);
+    when(state.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(true);
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(state);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -1088,7 +1108,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final JsonObject result = json.getJsonObject("result");
-      assertThat(result).isNull();
+      verifyBlockResult(block, blockWithMetadata.getTotalDifficulty(), result, false);
     }
   }
 
