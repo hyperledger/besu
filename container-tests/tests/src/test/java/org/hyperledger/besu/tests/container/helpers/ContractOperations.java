@@ -146,7 +146,8 @@ public class ContractOperations {
   }
 
   @NotNull
-  public static String prependZeroesToPadHexStringToGivenLength(final String hexString, final int lenRequested) {
+  public static String prependZeroesToPadHexStringToGivenLength(
+      final String hexString, final int lenRequested) {
     final StringBuilder sb = new StringBuilder(hexString);
     while (sb.length() < lenRequested) {
       sb.insert(0, '0');
