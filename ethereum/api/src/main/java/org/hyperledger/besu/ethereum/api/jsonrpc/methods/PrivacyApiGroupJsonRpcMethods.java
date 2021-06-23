@@ -152,7 +152,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final PrivacyParameters privacyParameters, final JsonRpcMethod rpcMethod) {
     final String methodName = rpcMethod.getName();
     if (methodName.equals(RpcMethod.ETH_SEND_RAW_PRIVATE_TRANSACTION.getMethodName())
-        || methodName.equals(RpcMethod.GOQUORUM_STORE_RAW.getMethodName())) {
+        || methodName.equals(RpcMethod.GOQUORUM_STORE_RAW.getMethodName())
+        || methodName.equals(RpcMethod.ETH_GET_QUORUM_PAYLOAD.getMethodName())) {
       return rpcMethod;
     } else if (privacyParameters.isEnabled() && privacyParameters.isMultiTenancyEnabled()) {
       return new MultiTenancyRpcMethodDecorator(rpcMethod);

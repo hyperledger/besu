@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
@@ -139,9 +140,15 @@ public class ContractOperations {
   }
 
   public static String generateHexString(final long number) {
-    final StringBuilder randomValue = new StringBuilder(Long.toHexString(number));
+    final String str = Long.toHexString(number);
 
-    while (randomValue.length() < 64) {
+    return getHexStrLen(str, 64);
+  }
+
+  @NotNull
+  public static String getHexStrLen(final String str, final int len) {
+    final StringBuilder randomValue = new StringBuilder(str);
+    while (randomValue.length() < len) {
       randomValue.insert(0, '0');
     }
     return randomValue.toString();

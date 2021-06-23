@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.abi.EventEncoder;
@@ -43,10 +44,12 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthLog;
+import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.quorum.enclave.Enclave;
 import org.web3j.quorum.enclave.Tessera;
 import org.web3j.quorum.enclave.protocol.EnclaveService;
+import org.web3j.quorum.methods.response.PrivatePayload;
 import org.web3j.quorum.tx.QuorumTransactionManager;
 import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 
@@ -131,6 +134,19 @@ public class ContainerTests extends ContainerTestBase {
     final String codeValueGoQuorum = getCode(goQuorumWeb3j, contractAddress);
     assertThat(codeValueGoQuorum).startsWith(CONTRACT_PREFIX);
     assertThat(codeValueBesu).isEqualTo(codeValueGoQuorum);
+
+    // Assert that the private payloads returned are the same
+    final String enclaveKey = getEnclaveKey(transactionHash);
+    final PrivatePayload goQuorumPayload = goQuorumWeb3j.quorumGetPrivatePayload(enclaveKey).send();
+    final PrivatePayload besuPayload = besuWeb3j.quorumGetPrivatePayload(enclaveKey).send();
+
+    assertThat(goQuorumPayload.getPrivatePayload()).isEqualTo(besuPayload.getPrivatePayload());
+  }
+
+  @NotNull
+  private String getEnclaveKey(final String transactionHash) throws IOException {
+    final EthTransaction send = besuWeb3j.ethGetTransactionByHash(transactionHash).send();
+    return send.getTransaction().get().getInput();
   }
 
   @Test
