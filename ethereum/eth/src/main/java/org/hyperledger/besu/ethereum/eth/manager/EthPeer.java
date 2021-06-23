@@ -105,7 +105,7 @@ public class EthPeer {
     this.onStatusesExchanged.set(onStatusesExchanged);
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
-    
+
     final boolean supportsRequestId = getAgreedCapabilities().contains(EthProtocol.ETH66);
     this.headersRequestManager = new RequestManager(this, supportsRequestId);
     this.bodiesRequestManager = new RequestManager(this, supportsRequestId);
