@@ -139,16 +139,16 @@ public class ContractOperations {
     return logReceiptResult.getTransactionHash();
   }
 
-  public static String generateHexString(final long number) {
+  public static String generate64BytesHexString(final long number) {
     final String str = Long.toHexString(number);
 
-    return getHexStrLen(str, 64);
+    return prependZeroesToHexString(str, 64);
   }
 
   @NotNull
-  public static String getHexStrLen(final String str, final int len) {
-    final StringBuilder randomValue = new StringBuilder(str);
-    while (randomValue.length() < len) {
+  public static String prependZeroesToHexString(final String hexString, final int lenRequested) {
+    final StringBuilder randomValue = new StringBuilder(hexString);
+    while (randomValue.length() < lenRequested) {
       randomValue.insert(0, '0');
     }
     return randomValue.toString();

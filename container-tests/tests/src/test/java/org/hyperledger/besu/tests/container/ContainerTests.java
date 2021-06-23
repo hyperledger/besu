@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.deployContractAndReturnAddress;
-import static org.hyperledger.besu.tests.container.helpers.ContractOperations.generateHexString;
+import static org.hyperledger.besu.tests.container.helpers.ContractOperations.generate64BytesHexString;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.getCode;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.getTransactionLog;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.sendLogEventAndReturnTransactionHash;
@@ -106,7 +106,7 @@ public class ContainerTests extends ContainerTestBase {
             goQuorumPollingTransactionReceiptProcessor);
 
     // Generate a random value to insert into the log
-    final String logValue = generateHexString(98765L);
+    final String logValue = generate64BytesHexString(98765L);
 
     // Send the transaction and get the transaction hash
     final String transactionHash =
@@ -171,7 +171,7 @@ public class ContainerTests extends ContainerTestBase {
             besuPollingTransactionReceiptProcessor);
 
     // Generate a random value to insert into the log
-    final String logValue = generateHexString(192837L);
+    final String logValue = generate64BytesHexString(192837L);
 
     // Send the transaction and get the transaction hash
     final String transactionHash =
@@ -232,7 +232,7 @@ public class ContainerTests extends ContainerTestBase {
     ethFilterSubscription.addSingleTopic(eventEncoded);
 
     // Generate a value to insert into the log
-    final String logValue = generateHexString((1234567L));
+    final String logValue = generate64BytesHexString((1234567L));
 
     final AtomicBoolean checked = new AtomicBoolean(false);
     final Disposable subscribe =
