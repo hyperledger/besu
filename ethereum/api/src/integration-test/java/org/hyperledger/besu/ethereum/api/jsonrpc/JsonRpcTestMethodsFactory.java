@@ -63,9 +63,9 @@ public class JsonRpcTestMethodsFactory {
 
   private final BlockchainImporter importer;
   private final MutableBlockchain blockchain;
-  private final WorldStateArchive stateArchive;
+  private WorldStateArchive stateArchive;
   private final ProtocolContext context;
-  private final BlockchainQueries blockchainQueries;
+  private BlockchainQueries blockchainQueries;
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
     this.importer = importer;
@@ -96,6 +96,22 @@ public class JsonRpcTestMethodsFactory {
     this.stateArchive = stateArchive;
     this.context = context;
     this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+  }
+
+  public BlockchainQueries getBlockchainQueries() {
+    return blockchainQueries;
+  }
+
+  public void setBlockchainQueries(final BlockchainQueries blockchainQueries) {
+    this.blockchainQueries = blockchainQueries;
+  }
+
+  public WorldStateArchive getStateArchive() {
+    return stateArchive;
+  }
+
+  public void setStateArchive(final WorldStateArchive stateArchive) {
+    this.stateArchive = stateArchive;
   }
 
   public Map<String, JsonRpcMethod> methods() {

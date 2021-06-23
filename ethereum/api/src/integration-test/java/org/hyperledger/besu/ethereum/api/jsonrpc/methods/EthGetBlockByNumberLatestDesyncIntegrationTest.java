@@ -15,8 +15,9 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.util.Hexadecimals;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
@@ -28,94 +29,60 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.testutil.BlockTestUtil;
-
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 @RunWith(MockitoJUnitRunner.class)
 public class EthGetBlockByNumberLatestDesyncIntegrationTest {
 
-  private static JsonRpcMethod ethGetBlockNumber;
-  private static Long latestFullySyncdBlockNumber = 0L;
-  private static Long latestFastSyncdBlockNumber = 0L;
+
+  private static JsonRpcTestMethodsFactory methodsFactorySynced;
+  private static JsonRpcTestMethodsFactory methodsFactoryDesynced;
 
   @BeforeClass
   public static void setUpOnce() throws Exception {
     final String genesisJson =
-        Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
-    final BlockchainImporter importer =
-        new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson);
-
-    final BlockDataGenerator gen = new BlockDataGenerator();
-    final WorldStateArchive state =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
-    // TODO: run same test with coverage of Bonsai state?
-
+            Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
+    BlockchainImporter importer = new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson);
+    MutableBlockchain chain = InMemoryKeyValueStorageProvider.createInMemoryBlockchain(importer.getGenesisBlock());
+    WorldStateArchive state = InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     importer.getGenesisState().writeStateTo(state.getMutable());
-    final Block genesis = importer.getGenesisBlock();
-    final MutableBlockchain blockchain =
-        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(importer.getGenesisBlock());
-    final ProtocolContext ether = new ProtocolContext(blockchain, state, null);
-    final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
-
-    final ProtocolSpec genesisSpec =
-            protocolSchedule.getByBlockNumber(genesis.getHeader().getNumber());
-    final BlockImporter genesisSpecBlockImporter = genesisSpec.getBlockImporter();
-    //genesisSpecBlockImporter.fastImportBlock(ether, genesis, gen.receipts(genesis),
-      //      HeaderValidationMode.LIGHT_SKIP_DETACHED, HeaderValidationMode.LIGHT_SKIP_DETACHED);
-    genesisSpecBlockImporter.importBlock(ether, genesis, HeaderValidationMode.FULL, HeaderValidationMode.FULL);
+    ProtocolContext context = new ProtocolContext(chain, state, null);
 
     for (final Block block : importer.getBlocks()) {
-        final ProtocolSpec protocolSpec =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
-        final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-        //blockImporter.importBlock(ether, block, HeaderValidationMode.LIGHT);
-        blockImporter.fastImportBlock(ether, block,gen.receipts(block),
-                HeaderValidationMode.LIGHT_SKIP_DETACHED,HeaderValidationMode.LIGHT_SKIP_DETACHED);
-      latestFastSyncdBlockNumber = block.getHeader().getNumber();
-    }
-
-
-    int pivotBlockIndex = importer.getBlocks().size() / 3;
-    //TODO: the way we are establishing state isn't exactly analogous to what is happening in a fastsync.
-
-    for(int i = 0; i< pivotBlockIndex*2; i++) {  //Then do a third of 'em FULL,
-      Block toReimportFully = importer.getBlocks().get(i);
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(
-              toReimportFully.getHeader().getNumber());
+      final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
+      final ProtocolSpec protocolSpec =
+              protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-      blockImporter.importBlock(ether, toReimportFully, HeaderValidationMode.FULL);
-      latestFullySyncdBlockNumber = toReimportFully.getHeader().getNumber();
+      blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
 
-    final JsonRpcTestMethodsFactory factory =
-        new JsonRpcTestMethodsFactory(importer, blockchain, state, ether);
+    methodsFactorySynced = new JsonRpcTestMethodsFactory( importer, chain, state, context );
 
-    ethGetBlockNumber = factory.methods().get("eth_getBlockByNumber");
+    WorldStateArchive unsynced = mock(WorldStateArchive.class);
+    when(unsynced.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(false);
+
+    methodsFactoryDesynced = new JsonRpcTestMethodsFactory( importer, chain, unsynced, context );
   }
 
   @Test
-  public void shouldReturnedLatestFullSynced() {
-
-    assertThat(latestFullySyncdBlockNumber.longValue()).isNotEqualTo(0L);
-    assertThat(latestFastSyncdBlockNumber.longValue()).isNotEqualTo(latestFullySyncdBlockNumber);
-    //otherwise our setup didn't work as expected
+  public void shouldReturnHeadIfFullySynced() {
+    JsonRpcMethod ethGetBlockNumber = methodsFactorySynced.methods().get("eth_getBlockByNumber");
     Object[] params = {"latest", false};
     JsonRpcRequestContext ctx = new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "eth_getBlockByNumber", params));
@@ -126,10 +93,27 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
       Object r = ((JsonRpcSuccessResponse)resp).getResult();
       assertThat(r).isInstanceOf(BlockResult.class);
       BlockResult br = (BlockResult)r;
-      assertThat(br.getNumber()).isEqualTo("0x"+Long.toHexString(latestFullySyncdBlockNumber));
+      assertThat(br.getNumber()).isEqualTo("0x20");
+      //assert on the state existing?
     });
+  }
 
-    //TODO: what test to cover including transactions?
+  @Test
+  public void shouldReturnGenesisIfNotSynced() {
+
+    JsonRpcMethod ethGetBlockNumber = methodsFactoryDesynced.methods().get("eth_getBlockByNumber");
+    Object[] params = {"latest", false};
+    JsonRpcRequestContext ctx = new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_getBlockByNumber", params));
+    Assertions.assertThatNoException().isThrownBy(() -> {
+      final JsonRpcResponse resp = ethGetBlockNumber.response(ctx);
+      assertThat(resp).isNotNull();
+      assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+      Object r = ((JsonRpcSuccessResponse)resp).getResult();
+      assertThat(r).isInstanceOf(BlockResult.class);
+      BlockResult br = (BlockResult)r;
+      assertThat(br.getNumber()).isEqualTo("0x0");
+    });
 
   }
 }

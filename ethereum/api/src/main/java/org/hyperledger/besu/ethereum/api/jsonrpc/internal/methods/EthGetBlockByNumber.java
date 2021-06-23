@@ -15,17 +15,19 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import com.google.common.base.Suppliers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.WorldState;
 
-
+import java.util.Optional;
 import java.util.function.Supplier;
 
 
@@ -33,6 +35,7 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
   private final BlockResultFactory blockResult;
   private final boolean includeCoinbase;
+  private static final Logger log = LogManager.getLogger();
 
   public EthGetBlockByNumber(
       final BlockchainQueries blockchain, final BlockResultFactory blockResult) {
@@ -82,8 +85,11 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
     Hash stateRoot = headHeader.getStateRoot();
 
     if(blockchainQueries.get().getWorldStateArchive().isWorldStateAvailable(stateRoot, block)) {
+      Optional<WorldState> worldState = blockchainQueries.get().getWorldState(headBlockNumber);
+      log.trace(worldState.get().toString());
       return resultByBlockNumber(request, headBlockNumber);
     } else {
+      log.trace("no world state available for block {} returning genesis", headBlockNumber);
       return resultByBlockNumber(request, blockchainQueries.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
     }
   }
