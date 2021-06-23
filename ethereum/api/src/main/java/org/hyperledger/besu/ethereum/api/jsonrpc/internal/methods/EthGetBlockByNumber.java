@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import com.google.common.base.Suppliers;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
@@ -30,6 +27,9 @@ import org.hyperledger.besu.ethereum.core.WorldState;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
@@ -73,24 +73,26 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
   @Override
   protected Object latestResult(final JsonRpcRequestContext request) {
-    //old behavior - throws exception when transactions incomplete on head.
-    //return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
-    //if head has state, return that.
-
+    // old behavior - throws exception when transactions incomplete on head.
+    // return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
+    // if head has state, return that.
 
     final long headBlockNumber = blockchainQueries.get().headBlockNumber();
-    BlockHeader headHeader = blockchainQueries.get().getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
+    BlockHeader headHeader =
+        blockchainQueries.get().getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
 
     Hash block = headHeader.getHash();
     Hash stateRoot = headHeader.getStateRoot();
 
-    if(blockchainQueries.get().getWorldStateArchive().isWorldStateAvailable(stateRoot, block)) {
+    if (blockchainQueries.get().getWorldStateArchive().isWorldStateAvailable(stateRoot, block)) {
       Optional<WorldState> worldState = blockchainQueries.get().getWorldState(headBlockNumber);
       log.trace(worldState.get().toString());
       return resultByBlockNumber(request, headBlockNumber);
     } else {
       log.trace("no world state available for block {} returning genesis", headBlockNumber);
-      return resultByBlockNumber(request, blockchainQueries.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
+      return resultByBlockNumber(
+          request,
+          blockchainQueries.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
     }
   }
 
