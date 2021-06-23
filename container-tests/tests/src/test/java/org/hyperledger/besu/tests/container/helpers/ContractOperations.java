@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
@@ -138,13 +139,20 @@ public class ContractOperations {
     return logReceiptResult.getTransactionHash();
   }
 
-  public static String generateHexString(final long number) {
-    final StringBuilder randomValue = new StringBuilder(Long.toHexString(number));
+  public static String generate64BytesHexString(final long number) {
+    final String str = Long.toHexString(number);
 
-    while (randomValue.length() < 64) {
-      randomValue.insert(0, '0');
+    return prependZeroesToPadHexStringToGivenLength(str, 64);
+  }
+
+  @NotNull
+  public static String prependZeroesToPadHexStringToGivenLength(
+      final String hexString, final int lenRequested) {
+    final StringBuilder sb = new StringBuilder(hexString);
+    while (sb.length() < lenRequested) {
+      sb.insert(0, '0');
     }
-    return randomValue.toString();
+    return sb.toString();
   }
 
   public static int getNonce(final Quorum quorum, final Credentials credentials)
