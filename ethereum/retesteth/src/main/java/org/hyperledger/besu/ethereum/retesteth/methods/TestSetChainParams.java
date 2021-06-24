@@ -134,20 +134,16 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMove(genesis, "timestamp", chainParamsJson, "timestamp");
     maybeMove(chainParamsJson, "accounts", chainParamsJson, "alloc");
 
-    if (ExperimentalEIPs.eip1559Enabled) {
-      // TODO EIP-1559 change for the actual fork name when known
-      maybeMoveToNumber(params, "londonForkBlock", config, "aleutBlock");
-      maybeMoveToNumber(params, "londonForkBlock", config, "baikalBlock");
-      maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");
+    if (params.containsKey("londonForkBlock")) {
+      JsonObject genesisConfig = chainParamsJson.getJsonObject("genesis", new JsonObject());
       ExperimentalEIPs.initialBasefee =
           Optional.ofNullable(
-                  chainParamsJson
-                      .getJsonObject("genesis", new JsonObject())
-                      .getString("baseFeePerGas"))
+                  genesisConfig.getString("baseFeePerGas", genesisConfig.getString("baseFee")))
               .map(Long::decode)
               .orElse(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
-      maybeMove(genesis, "gasTarget", chainParamsJson, "gasLimit");
     }
+
+    maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");
 
     // strip out precompiles with zero balance
     final JsonObject alloc = chainParamsJson.getJsonObject("alloc");

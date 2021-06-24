@@ -70,13 +70,14 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.extension.trace.propagation.B3Propagator;
 import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
-import io.opentelemetry.extension.trace.propagation.TraceMultiPropagator;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -114,13 +115,13 @@ public class JsonRpcHttpService {
   private static final String EMPTY_RESPONSE = "";
 
   private static final TextMapPropagator traceFormats =
-      TraceMultiPropagator.create(
+      TextMapPropagator.composite(
           JaegerPropagator.getInstance(),
-          B3Propagator.getInstance(),
+          B3Propagator.injectingSingleHeader(),
           W3CBaggagePropagator.getInstance());
 
-  private static final TextMapPropagator.Getter<HttpServerRequest> requestAttributesGetter =
-      new TextMapPropagator.Getter<>() {
+  private static final TextMapGetter<HttpServerRequest> requestAttributesGetter =
+      new TextMapGetter<>() {
         @Override
         public Iterable<String> keys(final HttpServerRequest carrier) {
           return carrier.headers().names();
@@ -142,7 +143,7 @@ public class JsonRpcHttpService {
   private final NatService natService;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
-  private final Tracer tracer;
+  private Tracer tracer;
   private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
@@ -210,7 +211,6 @@ public class JsonRpcHttpService {
     this.authenticationService = authenticationService;
     this.livenessService = livenessService;
     this.readinessService = readinessService;
-    this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
     this.maxActiveConnections = config.getMaxActiveConnections();
   }
 
@@ -226,6 +226,7 @@ public class JsonRpcHttpService {
   public CompletableFuture<?> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
+    this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
@@ -365,7 +366,7 @@ public class JsonRpcHttpService {
         tracer
             .spanBuilder(address.host() + ":" + address.port())
             .setParent(parent)
-            .setSpanKind(Span.Kind.SERVER)
+            .setSpanKind(SpanKind.SERVER)
             .startSpan();
     routingContext.put(SPAN_CONTEXT, Context.current().with(serverSpan));
 
@@ -695,7 +696,7 @@ public class JsonRpcHttpService {
     Span span =
         tracer
             .spanBuilder(requestBody.getMethod())
-            .setSpanKind(Span.Kind.INTERNAL)
+            .setSpanKind(SpanKind.INTERNAL)
             .setParent(ctx.get(SPAN_CONTEXT))
             .startSpan();
     try {

@@ -17,8 +17,6 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -247,24 +245,21 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getLondonBlockNumber() {
-    if (!ExperimentalEIPs.eip1559Enabled) {
-      return OptionalLong.empty();
-    }
     final OptionalLong londonBlock = getOptionalLong("londonblock");
-    final OptionalLong baikalblock = getOptionalLong("baikalblock");
-    if (baikalblock.isPresent()) {
+    final OptionalLong calaverasblock = getOptionalLong("calaverasblock");
+    if (calaverasblock.isPresent()) {
       if (londonBlock.isPresent()) {
         throw new RuntimeException(
-            "Genesis files cannot specify both londonblock and baikalblock.");
+            "Genesis files cannot specify both londonblock and calaverasblock.");
       }
-      return baikalblock;
+      return calaverasblock;
     }
     return londonBlock;
   }
 
   @Override
   public OptionalLong getAleutBlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? getOptionalLong("aleutblock") : OptionalLong.empty();
+    return getOptionalLong("aleutblock");
   }
 
   @Override
@@ -320,6 +315,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getThanosBlockNumber() {
     return getOptionalLong("thanosblock");
+  }
+
+  @Override
+  public OptionalLong getMagnetoBlockNumber() {
+    return getOptionalLong("magnetoblock");
   }
 
   @Override
@@ -410,6 +410,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+    getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
@@ -508,7 +509,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getAghartaBlockNumber(),
             getPhoenixBlockNumber(),
             getThanosBlockNumber(),
+            getMagnetoBlockNumber(),
             getEcip1049BlockNumber());
+    // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers
         .filter(OptionalLong::isPresent)

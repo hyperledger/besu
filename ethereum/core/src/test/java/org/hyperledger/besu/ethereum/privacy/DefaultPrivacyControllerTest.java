@@ -53,7 +53,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.orion.testutil.OrionKeyUtils;
+import org.hyperledger.enclave.testutil.EnclaveKeyUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -162,7 +162,7 @@ public class DefaultPrivacyControllerTest {
 
     privateWorldStateReader = mock(PrivateWorldStateReader.class);
 
-    enclavePublicKey = OrionKeyUtils.loadKey("orion_key_0.pub");
+    enclavePublicKey = EnclaveKeyUtils.loadKey("enclave_key_0.pub");
     privateTransactionValidator = mockPrivateTransactionValidator();
     enclave = mockEnclave();
 
@@ -203,7 +203,7 @@ public class DefaultPrivacyControllerTest {
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(privateTransactionLookupId, transaction);
+        privacyController.createPrivateMarkerTransaction(privateTransactionLookupId, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -227,7 +227,7 @@ public class DefaultPrivacyControllerTest {
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivacyMarkerTransaction(privateTransactionLookupId, transaction);
+        privacyController.createPrivateMarkerTransaction(privateTransactionLookupId, transaction);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -459,26 +459,26 @@ public class DefaultPrivacyControllerTest {
   }
 
   @Test
-  public void canCreatePrivacyMarkerTransactionForOnChainPrivacy() {
+  public void canCreatePrivateMarkerTransactionForOnChainPrivacy() {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(0);
 
     final String privateTransactionLookupId =
         privacyController.sendTransaction(
             transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ONCHAIN_PRIVACY_GROUP));
 
-    final Transaction onChainPrivacyMarkerTransaction =
-        privacyController.createPrivacyMarkerTransaction(
+    final Transaction onChainPrivateMarkerTransaction =
+        privacyController.createPrivateMarkerTransaction(
             privateTransactionLookupId, transaction, Address.ONCHAIN_PRIVACY);
 
-    assertThat(onChainPrivacyMarkerTransaction.contractAddress())
+    assertThat(onChainPrivateMarkerTransaction.contractAddress())
         .isEqualTo(PUBLIC_TRANSACTION.contractAddress());
-    assertThat(onChainPrivacyMarkerTransaction.getPayload())
+    assertThat(onChainPrivateMarkerTransaction.getPayload())
         .isEqualTo(PUBLIC_TRANSACTION.getPayload());
-    assertThat(onChainPrivacyMarkerTransaction.getNonce()).isEqualTo(PUBLIC_TRANSACTION.getNonce());
-    assertThat(onChainPrivacyMarkerTransaction.getSender())
+    assertThat(onChainPrivateMarkerTransaction.getNonce()).isEqualTo(PUBLIC_TRANSACTION.getNonce());
+    assertThat(onChainPrivateMarkerTransaction.getSender())
         .isEqualTo(PUBLIC_TRANSACTION.getSender());
-    assertThat(onChainPrivacyMarkerTransaction.getValue()).isEqualTo(PUBLIC_TRANSACTION.getValue());
-    assertThat(onChainPrivacyMarkerTransaction.getTo().get()).isEqualTo(Address.ONCHAIN_PRIVACY);
+    assertThat(onChainPrivateMarkerTransaction.getValue()).isEqualTo(PUBLIC_TRANSACTION.getValue());
+    assertThat(onChainPrivateMarkerTransaction.getTo().get()).isEqualTo(Address.ONCHAIN_PRIVACY);
     verify(enclave)
         .send(anyString(), eq(ENCLAVE_PUBLIC_KEY), eq(singletonList(ENCLAVE_PUBLIC_KEY)));
   }

@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.Set;
 
 public class ClassicProtocolSpecs {
   private static final Wei MAX_BLOCK_REWARD = Wei.fromEth(5);
@@ -90,7 +91,6 @@ public class ClassicProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                gasBudgetCalculator,
                 goQuorumPrivacyParameters) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
@@ -284,5 +284,35 @@ public class ClassicProtocolSpecs {
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
         .powHasher(powHasher(PowAlgorithm.KECCAK256))
         .name("ecip1049");
+  }
+
+  public static ProtocolSpecBuilder magnetoDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds,
+      final boolean quorumCompatibilityMode) {
+    return thanosDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds,
+            quorumCompatibilityMode)
+        .gasCalculator(BerlinGasCalculator::new)
+        .transactionValidatorBuilder(
+            gasCalculator ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    true,
+                    chainId,
+                    Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST),
+                    quorumCompatibilityMode))
+        .transactionReceiptFactory(
+            enableRevertReason
+                ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
+                : MainnetProtocolSpecs::berlinTransactionReceiptFactory)
+        .name("Magneto");
   }
 }

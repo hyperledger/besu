@@ -33,7 +33,7 @@ public abstract class AbstractGasLimitSpecification {
     this.maxGasLimit = maxGasLimit;
   }
 
-  protected static long deltaBound(final long currentGasLimit) {
+  public static long deltaBound(final long currentGasLimit) {
     return Long.divideUnsigned(currentGasLimit, GAS_LIMIT_BOUND_DIVISOR);
   }
 }

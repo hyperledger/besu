@@ -578,11 +578,12 @@ public class BlockchainQueries {
     // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
     // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
-    final BlockBody blockBody = blockchain.getBlockBody(location.getBlockHash()).orElseThrow();
-    final Transaction transaction = blockBody.getTransactions().get(location.getTransactionIndex());
+    final Block block = blockchain.getBlockByHash(location.getBlockHash()).orElseThrow();
+    final Transaction transaction =
+        block.getBody().getTransactions().get(location.getTransactionIndex());
 
     final Hash blockhash = location.getBlockHash();
-    final BlockHeader header = blockchain.getBlockHeader(blockhash).orElseThrow();
+    final BlockHeader header = block.getHeader();
     final List<TransactionReceipt> transactionReceipts =
         blockchain.getTxReceipts(blockhash).orElseThrow();
     final TransactionReceipt transactionReceipt =
@@ -602,6 +603,7 @@ public class BlockchainQueries {
             transactionHash,
             location.getTransactionIndex(),
             gasUsed,
+            header.getBaseFee(),
             blockhash,
             header.getNumber()));
   }
@@ -683,7 +685,7 @@ public class BlockchainQueries {
         // handles the case when fromBlockNumber is past chain head.
         .takeWhile(Optional::isPresent)
         .map(Optional::get)
-        .filter(header -> query.couldMatch(header.getLogsBloom()))
+        .filter(header -> query.couldMatch(header.getLogsBloom(true)))
         .flatMap(header -> matchingLogs(header.getHash(), query, isQueryAlive).stream())
         .collect(Collectors.toList());
   }
@@ -818,7 +820,8 @@ public class BlockchainQueries {
                         .orElseThrow(
                             () -> new IllegalStateException("Could not retrieve block #" + l)))
             .flatMap(Collection::stream)
-            .mapToLong(t -> t.getGasPrice().toLong())
+            .filter(t -> t.getGasPrice().isPresent())
+            .mapToLong(t -> t.getGasPrice().get().toLong())
             .sorted()
             .toArray();
     return (gasCollection == null || gasCollection.length == 0)

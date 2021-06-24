@@ -97,19 +97,22 @@ public class MainnetTransactionValidator {
    *
    * @param transaction the transaction to validate
    * @param baseFee optional baseFee
+   * @param transactionValidationParams Validation parameters that will be used
    * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
   public ValidationResult<TransactionInvalidReason> validate(
-      final Transaction transaction, final Optional<Long> baseFee) {
+      final Transaction transaction,
+      final Optional<Long> baseFee,
+      final TransactionValidationParams transactionValidationParams) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
     }
 
-    if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
+    if (goQuorumCompatibilityMode && transaction.hasCostParams()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
           "gasPrice must be set to zero on a GoQuorum compatible network");
@@ -121,15 +124,29 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           String.format(
               "Transaction type %s is invalid, accepted transaction types are %s",
-              transactionType, acceptedTransactionTypes.toString()));
+              transactionType, acceptedTransactionTypes));
     }
 
     if (baseFee.isPresent()) {
       final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
-      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+      if (!transactionValidationParams.isAllowMaxFeerGasBelowBaseFee()
+          && price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
             "gasPrice is less than the current BaseFee");
+      }
+
+      // assert transaction.max_fee_per_gas >= transaction.max_priority_fee_per_gas
+      if (transaction.getType().supports1559FeeMarket()
+          && transaction
+                  .getMaxPriorityFeePerGas()
+                  .get()
+                  .getAsBigInteger()
+                  .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
+              > 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
+            "max priority fee per gas cannot be greater than max fee per gas");
       }
     }
 

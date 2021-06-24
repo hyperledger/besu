@@ -77,8 +77,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class QbftRoundTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
+  private final NodeKey nodeKey2 = NodeKeyUtils.generate();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 0);
   private final MessageFactory messageFactory = new MessageFactory(nodeKey);
+  private final MessageFactory messageFactory2 = new MessageFactory(nodeKey2);
   private final Subscribers<MinedBlockObserver> subscribers = Subscribers.create();
   private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private ProtocolContext protocolContext;
@@ -243,7 +245,7 @@ public class QbftRoundTest {
     verify(blockImporter, never()).importBlock(any(), any(), any());
 
     round.handlePrepareMessage(
-        messageFactory.createPrepare(roundIdentifier, proposedBlock.getHash()));
+        messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
 
     verify(transmitter, times(1))
         .multicastCommit(roundIdentifier, proposedBlock.getHash(), localCommitSeal);
@@ -321,7 +323,7 @@ public class QbftRoundTest {
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
     // indicates the block has entered the roundState (note: all msgs are deemed valid due to mocks)
     round.handlePrepareMessage(
-        messageFactory.createPrepare(roundIdentifier, proposedBlock.getHash()));
+        messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
     assertThat(roundState.isPrepared()).isTrue();
   }
 
@@ -360,7 +362,7 @@ public class QbftRoundTest {
     // Inject a single Prepare message, and confirm the roundState has gone to Prepared (which
     // indicates the block has entered the roundState (note: all msgs are deemed valid due to mocks)
     round.handlePrepareMessage(
-        messageFactory.createPrepare(roundIdentifier, proposedBlock.getHash()));
+        messageFactory2.createPrepare(roundIdentifier, proposedBlock.getHash()));
     assertThat(roundState.isPrepared()).isTrue();
   }
 

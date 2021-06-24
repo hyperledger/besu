@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -178,7 +177,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
-              .gasUsed(transactionResults.getTotalCumulativeGasUsed())
+              .gasUsed(transactionResults.getCumulativeGasUsed())
               .extraData(extraDataCalculator.get(parentHeader))
               .buildSealableBlockHeader();
 
@@ -220,18 +219,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
-            protocolSpec.getTransactionPriceCalculator(),
-            protocolSpec.getGasBudgetCalculator(),
-            protocolSpec.getEip1559());
+            protocolSpec.getTransactionPriceCalculator());
 
     if (transactions.isPresent()) {
-      return selector.evaluateTransactions(
-          processableBlockHeader.getNumber(),
-          processableBlockHeader.getGasLimit(),
-          transactions.get());
+      return selector.evaluateTransactions(transactions.get());
     } else {
-      return selector.buildTransactionListForBlock(
-          processableBlockHeader.getNumber(), processableBlockHeader.getGasLimit());
+      return selector.buildTransactionListForBlock();
     }
   }
 
@@ -260,24 +253,23 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    final long gasLimit = gasLimitCalculator.nextGasLimit(parentHeader.getGasLimit());
+    long gasLimit = gasLimitCalculator.nextGasLimit(parentHeader.getGasLimit());
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
     Long baseFee = null;
-    if (ExperimentalEIPs.eip1559Enabled && protocolSpec.isEip1559()) {
+    if (protocolSpec.isEip1559()) {
       final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
       if (eip1559.isForkBlock(newBlockNumber)) {
-        baseFee = eip1559.getFeeMarket().getInitialBasefee();
-      } else {
-        baseFee =
-            eip1559.computeBaseFee(
-                newBlockNumber,
-                parentHeader.getBaseFee().orElseThrow(),
-                parentHeader.getGasUsed(),
-                eip1559.targetGasUsed(parentHeader));
+        gasLimit = gasLimit * eip1559.getFeeMarket().getSlackCoefficient();
       }
+      baseFee =
+          eip1559.computeBaseFee(
+              newBlockNumber,
+              parentHeader.getBaseFee().orElse(0L),
+              parentHeader.getGasUsed(),
+              eip1559.targetGasUsed(parentHeader));
     }
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())

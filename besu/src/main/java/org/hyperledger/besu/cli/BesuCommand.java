@@ -48,10 +48,10 @@ import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
+import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
-import org.hyperledger.besu.cli.options.unstable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
@@ -112,7 +112,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
@@ -138,9 +138,11 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -152,6 +154,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
@@ -246,7 +249,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
-  private final EthstatsOptions unstableEthstatsOptions = EthstatsOptions.create();
   private final DataStorageOptions unstableDataStorageOptions = DataStorageOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final MiningOptions unstableMiningOptions = MiningOptions.create();
@@ -255,11 +257,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
 
+  // stable CLI options
+  private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
+
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
   private final BesuPluginContextImpl besuPluginContext;
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
+  private final PermissioningServiceImpl permissioningService;
+
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
@@ -397,7 +404,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       bannedNodeIds =
           values.stream()
               .filter(value -> !value.isEmpty())
-              .map(EnodeURL::parseNodeId)
+              .map(EnodeURLImpl::parseNodeId)
               .collect(Collectors.toList());
     } catch (final IllegalArgumentException e) {
       throw new ParameterException(
@@ -451,7 +458,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       paramLabel = MANDATORY_PORT_FORMAT_HELP,
       description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Integer p2pPort = EnodeURL.DEFAULT_LISTENING_PORT;
+  private final Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
 
   @Option(
       names = {"--nat-method"},
@@ -949,7 +956,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--privacy-marker-transaction-signing-key-file"},
       description =
           "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
-  private final Path privacyMarkerTransactionSigningKeyPath = null;
+  private final Path privateMarkerTransactionSigningKeyPath = null;
 
   @Option(
       names = {"--privacy-enable-database-migration"},
@@ -1127,7 +1134,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         besuPluginContext,
         environment,
         new StorageServiceImpl(),
-        new SecurityModuleServiceImpl());
+        new SecurityModuleServiceImpl(),
+        new PermissioningServiceImpl());
   }
 
   @VisibleForTesting
@@ -1141,7 +1149,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment,
       final StorageServiceImpl storageService,
-      final SecurityModuleServiceImpl securityModuleService) {
+      final SecurityModuleServiceImpl securityModuleService,
+      final PermissioningServiceImpl permissioningService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1152,7 +1161,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.environment = environment;
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
-
+    this.permissioningService = permissioningService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
@@ -1167,6 +1176,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
             .setCaseInsensitiveEnumValuesAllowed(true);
 
+    handleStableOptions();
     enableExperimentalEIPs();
     addSubCommands(resultHandler, in);
     registerConverters();
@@ -1247,6 +1257,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
   }
 
+  private void handleStableOptions() {
+    commandLine.addMixin("Ethstats", ethstatsOptions);
+  }
+
   private void handleUnstableOptions() {
     // Add unstable options
     final ImmutableMap.Builder<String, Object> unstableOptionsBuild = ImmutableMap.builder();
@@ -1260,7 +1274,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("NAT Configuration", unstableNatOptions)
             .put("Synchronizer", unstableSynchronizerOptions)
             .put("TransactionPool", unstableTransactionPoolOptions)
-            .put("Ethstats", unstableEthstatsOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Data Storage Options", unstableDataStorageOptions)
@@ -1275,6 +1288,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
+    besuPluginContext.addService(PermissioningService.class, permissioningService);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -1319,8 +1333,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         final ImmutableLauncherConfig launcherConfig =
             ImmutableLauncherConfig.builder()
                 .launcherScript(BesuCommand.class.getResourceAsStream("launcher.json"))
-                .addCommandClasses(
-                    this, unstableNatOptions, unstableEthstatsOptions, unstableMiningOptions)
+                .addCommandClasses(this, unstableNatOptions, ethstatsOptions, unstableMiningOptions)
                 .isLauncherForced(unstableLauncherOptions.isLauncherModeForced())
                 .build();
         final File file = new LauncherManager(launcherConfig).run();
@@ -1329,7 +1342,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             configParsingHandler,
             exceptionHandler,
             String.format("%s=%s", CONFIG_FILE_OPTION_NAME, file.getAbsolutePath()));
-      } catch (LauncherException e) {
+      } catch (final LauncherException e) {
         logger.warn("Unable to run the launcher {}", e.getMessage());
       }
     } else {
@@ -1391,11 +1404,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void configureNativeLibs() {
-    if (unstableNativeLibraryOptions.getNativeAltbn128()) {
-      AbstractAltBnPrecompiledContract.enableNative();
+    if (unstableNativeLibraryOptions.getNativeAltbn128()
+        && AbstractAltBnPrecompiledContract.isNative()) {
+      logger.info("Using LibEthPairings native alt bn128");
+    } else {
+      AbstractAltBnPrecompiledContract.disableNative();
+      logger.info("Using the Java implementation of alt bn128");
     }
-    if (unstableNativeLibraryOptions.getNativeSecp256k1()) {
-      SignatureAlgorithmFactory.getInstance().enableNative();
+
+    if (unstableNativeLibraryOptions.getNativeSecp256k1()
+        && SignatureAlgorithmFactory.getInstance().isNative()) {
+      logger.info("Using native secp256k1");
+    } else {
+      SignatureAlgorithmFactory.getInstance().disableNative();
+      logger.info("Using the Java implementation of secp256k1");
     }
   }
 
@@ -1456,12 +1478,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateNetStatsParams() {
-    if (Strings.isNullOrEmpty(unstableEthstatsOptions.getEthstatsUrl())
-        && !unstableEthstatsOptions.getEthstatsContact().isEmpty()) {
+    if (Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl())
+        && !ethstatsOptions.getEthstatsContact().isEmpty()) {
       throw new ParameterException(
           this.commandLine,
-          "The `--Xethstats-contact` requires ethstats server URL to be provided. Either remove --Xethstats-contact"
-              + " or provide an url (via --Xethstats=nodename:secret@host:port)");
+          "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact"
+              + " or provide an url (via --ethstats=nodename:secret@host:port)");
     }
   }
 
@@ -1480,7 +1502,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
       genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
     } catch (final Exception e) {
-      throw new IllegalStateException("Unable to read genesis file for GoQuorum options", e);
+      throw new ParameterException(
+          this.commandLine, "Unable to load genesis file. " + e.getCause());
     }
     return genesisConfigOptions;
   }
@@ -1678,6 +1701,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
+        .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters(storageProvider))
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
@@ -2120,7 +2144,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privacyMarkerTransactionSigningKeyPath == null) {
+        if (privateMarkerTransactionSigningKeyPath == null) {
           throw new ParameterException(
               commandLine,
               "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
@@ -2132,7 +2156,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-precompiled-address option is deprecated. This address is derived, based on --privacy-onchain-groups-enabled.");
       }
 
-      privacyParametersBuilder.setPrivateKeyPath(privacyMarkerTransactionSigningKeyPath);
+      privacyParametersBuilder.setPrivateKeyPath(privateMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
       if (isPrivacyTlsEnabled) {
@@ -2209,6 +2233,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                                   "No KeyValueStorageFactory found for key: " + name)))
               .withCommonConfiguration(pluginCommonConfiguration)
               .withMetricsSystem(getMetricsSystem())
+              .isGoQuorumCompatibilityMode(isGoQuorumCompatibilityMode.booleanValue())
               .build();
     }
     return this.keyValueStorageProvider;
@@ -2287,13 +2312,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .dataDir(dataDir())
             .bannedNodeIds(bannedNodeIds)
             .metricsSystem(metricsSystem)
+            .permissioningService(permissioningService)
             .metricsConfiguration(metricsConfiguration)
             .staticNodes(staticNodes)
             .identityString(identityString)
             .besuPluginContext(besuPluginContext)
             .autoLogBloomCaching(autoLogBloomCachingEnabled)
-            .ethstatsUrl(unstableEthstatsOptions.getEthstatsUrl())
-            .ethstatsContact(unstableEthstatsOptions.getEthstatsContact())
+            .ethstatsUrl(ethstatsOptions.getEthstatsUrl())
+            .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
             .build();
@@ -2427,7 +2453,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         final List<EnodeURL> listBootNodes =
             bootNodes.stream()
                 .filter(value -> !value.isEmpty())
-                .map(url -> EnodeURL.fromString(url, getEnodeDnsConfiguration()))
+                .map(url -> EnodeURLImpl.fromString(url, getEnodeDnsConfiguration()))
                 .collect(Collectors.toList());
         DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
         builder.setBootNodes(listBootNodes);

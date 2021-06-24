@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.clique;
 
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -58,7 +57,7 @@ public class CliqueProtocolSchedule {
     final EpochManager epochManager = new EpochManager(cliqueConfig.getEpochLength());
 
     final Optional<EIP1559> eip1559 =
-        ExperimentalEIPs.eip1559Enabled
+        config.getEIP1559BlockNumber().isPresent()
             ? Optional.of(new EIP1559(config.getEIP1559BlockNumber().orElse(0)))
             : Optional.empty();
 

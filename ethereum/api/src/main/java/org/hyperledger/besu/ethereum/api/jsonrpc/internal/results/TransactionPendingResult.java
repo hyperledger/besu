@@ -32,6 +32,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "from",
   "gas",
   "gasPrice",
+  "maxPriortyFeePerGas",
+  "maxFeePerGas",
   "hash",
   "input",
   "nonce",
@@ -50,7 +52,16 @@ public class TransactionPendingResult implements TransactionResult {
   private final String chainId;
   private final String from;
   private final String gas;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String gasPrice;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String maxPriorityFeePerGas;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String maxFeePerGas;
+
   private final String hash;
   private final String input;
   private final String nonce;
@@ -72,7 +83,10 @@ public class TransactionPendingResult implements TransactionResult {
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
-    this.gasPrice = Quantity.create(transaction.getGasPrice());
+    this.gasPrice = transaction.getGasPrice().map(Quantity::create).orElse(null);
+    this.maxPriorityFeePerGas =
+        transaction.getMaxPriorityFeePerGas().map(q -> q.toHexString()).orElse(null);
+    this.maxFeePerGas = transaction.getMaxFeePerGas().map(q -> q.toHexString()).orElse(null);
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
@@ -114,6 +128,16 @@ public class TransactionPendingResult implements TransactionResult {
   @JsonGetter(value = "gasPrice")
   public String getGasPrice() {
     return gasPrice;
+  }
+
+  @JsonGetter(value = "maxPriorityFeePerGas")
+  public String getMaxPriorityFeePerGas() {
+    return maxPriorityFeePerGas;
+  }
+
+  @JsonGetter(value = "maxFeePerGas")
+  public String getMaxFeePerGas() {
+    return maxFeePerGas;
   }
 
   @JsonGetter(value = "hash")

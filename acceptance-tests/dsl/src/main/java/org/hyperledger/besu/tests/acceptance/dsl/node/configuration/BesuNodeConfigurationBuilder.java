@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -65,6 +66,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean isDnsEnabled = false;
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private List<String> runCommand = new ArrayList<>();
+  private Optional<KeyPair> keyPair = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -84,7 +86,11 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder miningEnabled() {
-    this.miningParameters = new MiningParametersTestBuilder().enabled(true).build();
+    return miningEnabled(true);
+  }
+
+  public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
+    this.miningParameters = new MiningParametersTestBuilder().enabled(enabled).build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
     return this;
   }
@@ -128,6 +134,11 @@ public class BesuNodeConfigurationBuilder {
 
   public BesuNodeConfigurationBuilder jsonRpcTxPool() {
     this.jsonRpcConfiguration.addRpcApi(RpcApis.TX_POOL);
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcAdmin() {
+    this.jsonRpcConfiguration.addRpcApi(RpcApis.ADMIN);
     return this;
   }
 
@@ -286,6 +297,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder keyPair(final KeyPair keyPair) {
+    this.keyPair = Optional.of(keyPair);
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder run(final String... commands) {
     this.runCommand = List.of(commands);
     return this;
@@ -316,6 +332,7 @@ public class BesuNodeConfigurationBuilder {
         staticNodes,
         isDnsEnabled,
         privacyParameters,
-        runCommand);
+        runCommand,
+        keyPair);
   }
 }

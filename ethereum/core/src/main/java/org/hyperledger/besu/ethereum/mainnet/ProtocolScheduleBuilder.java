@@ -221,7 +221,6 @@ public class ProtocolScheduleBuilder {
                 create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
                 create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
                 create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
-                create(config.getAleutBlockNumber(), specFactory.aleutDefinition(config)),
                 create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
                 // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
@@ -234,6 +233,7 @@ public class ProtocolScheduleBuilder {
                 create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
                 create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
                 create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
+                create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
                 create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
             .stream()
             .filter(Optional::isPresent)
@@ -326,6 +326,8 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Atlantis", config.getAtlantisBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Agharta", config.getAghartaBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Phoenix", config.getPhoenixBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

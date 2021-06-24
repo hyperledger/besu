@@ -1,0 +1,25 @@
+{
+  "config": {
+    "homesteadBlock": 1,
+    "daoForkBlock": 2,
+    "eip150Block": 3,
+    "eip158Block": 4,
+    "byzantiumBlock": 5,
+    "constantinopleBlock": 6,
+    "petersburgBlock": 7,
+    "istanbulBlock": 8,
+    "muirGlacierBlock": 9,
+    "berlinBlock": 10,
+    "londonBlock": 11,
+    "aleutBlock": 99,
+    "ecip1015Block": 102,
+    "dieHardBlock": 103,
+    "gothamBlock": 104,
+    "ecip1041Block": 105,
+    "atlantisBlock": 106,
+    "aghartaBlock": 107,
+    "phoenixBlock": 108,
+    "thanosBlock": 109,
+    "ecip1049Block": 199
+  }
+}

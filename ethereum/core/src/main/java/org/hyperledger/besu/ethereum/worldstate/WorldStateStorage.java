@@ -42,6 +42,8 @@ public interface WorldStateStorage {
     return getNodeData(null, hash).isPresent();
   }
 
+  void clear();
+
   Updater updater();
 
   long prune(Predicate<byte[]> inUseCheck);

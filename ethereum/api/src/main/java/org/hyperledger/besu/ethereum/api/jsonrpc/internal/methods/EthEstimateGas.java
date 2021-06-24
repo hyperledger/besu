@@ -82,7 +82,7 @@ public class EthEstimateGas implements JsonRpcMethod {
             modifiedCallParams,
             ImmutableTransactionValidationParams.builder()
                 .from(TransactionValidationParams.transactionSimulator())
-                .isAllowExceedingBalance(!callParams.isStrict())
+                .isAllowExceedingBalance(!callParams.isMaybeStrict().orElse(Boolean.FALSE))
                 .build(),
             operationTracer,
             blockHeader.getNumber())
@@ -102,8 +102,8 @@ public class EthEstimateGas implements JsonRpcMethod {
         callParams.getTo(),
         gasLimit,
         Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
-        callParams.getGasPremium(),
-        callParams.getFeeCap(),
+        callParams.getMaxPriorityFeePerGas(),
+        callParams.getMaxFeePerGas(),
         callParams.getValue(),
         callParams.getPayload());
   }
@@ -167,8 +167,9 @@ public class EthEstimateGas implements JsonRpcMethod {
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getGasPrice() != null
-        && (callParams.getFeeCap().isPresent() || callParams.getGasPremium().isPresent())) {
-      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or feeCap");
+        && (callParams.getMaxFeePerGas().isPresent()
+            || callParams.getMaxPriorityFeePerGas().isPresent())) {
+      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or maxFeePerGas");
     }
     return callParams;
   }

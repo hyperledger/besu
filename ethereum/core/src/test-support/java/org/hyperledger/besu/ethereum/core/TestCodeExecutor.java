@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -56,6 +57,7 @@ public class TestCodeExecutor {
 
     final Transaction transaction =
         Transaction.builder()
+            .type(TransactionType.FRONTIER)
             .value(Wei.ZERO)
             .sender(SENDER_ADDRESS)
             .signature(
@@ -77,7 +79,7 @@ public class TestCodeExecutor {
             .originator(SENDER_ADDRESS)
             .contract(SENDER_ADDRESS)
             .contractAccountVersion(accountVersion)
-            .gasPrice(transaction.getGasPrice())
+            .gasPrice(transaction.getGasPrice().get())
             .inputData(transaction.getPayload())
             .sender(SENDER_ADDRESS)
             .value(transaction.getValue())

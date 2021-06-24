@@ -60,9 +60,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
-import org.hyperledger.orion.testutil.OrionTestHarness;
-import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
+import org.hyperledger.enclave.testutil.EnclaveTestHarness;
+import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -78,6 +78,7 @@ import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -85,6 +86,7 @@ import org.junit.rules.TemporaryFolder;
 
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
+
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -103,9 +105,9 @@ public class PrivacyReorgTest {
       Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
   private static final String FIRST_BLOCK_WITH_NO_TRANSACTIONS_STATE_ROOT =
-      "0xe368938a01d983e331eb0e4ea61224726d06075c1ad525569b369f664067ff26";
+      "0xb0784ff11dffceac824188583f20f3b8bb4ca275e033b3b1c0e280915743be7f";
   private static final String FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT =
-      "0x9c88988f9602184efc538cf1c2f482a6b8757ff918d234602884dc8e3b983edd";
+      "0xe33629724501c0bc271a2b6858da64d3e92048d7e0cd019c5646770330694ff4";
   private static final String BLOCK_WITH_SINGLE_TRANSACTION_RECEIPTS_ROOT =
       "0xc8267b3f9ed36df3ff8adb51a6d030716f23eeb50270e7fce8d9822ffa7f0461";
   private static final String STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE =
@@ -133,18 +135,18 @@ public class PrivacyReorgTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private BesuController besuController;
-  private OrionTestHarness enclave;
+  private EnclaveTestHarness enclave;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
   private DefaultPrivacyController privacyController;
 
   @Before
   public void setUp() throws IOException {
-    // Start Enclave
     enclave =
         OrionTestHarnessFactory.create(
+            "orion",
             folder.newFolder().toPath(),
-            new OrionKeyConfiguration("enclavePublicKey", "enclavePrivateKey"));
+            new EnclaveKeyConfiguration("enclavePublicKey", "enclavePrivateKey"));
     enclave.start();
 
     // Create Storage
@@ -184,6 +186,11 @@ public class PrivacyReorgTest {
             .build();
   }
 
+  @After
+  public void tearDown() {
+    enclave.stop();
+  }
+
   @Test
   public void privacyGroupHeadIsTracked() {
     // Setup an initial blockchain with one private transaction
@@ -191,13 +198,13 @@ public class PrivacyReorgTest {
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage = privacyParameters.getPrivateStateStorage();
 
-    final Transaction privacyMarkerTransaction =
+    final Transaction privateMarkerTransaction =
         buildMarkerTransaction(getEnclaveKey(enclave.clientUrl()));
     final Block firstBlock =
         gen.block(
             getBlockOptionsWithTransaction(
                 blockchain.getGenesisBlock(),
-                privacyMarkerTransaction,
+                privateMarkerTransaction,
                 FIRST_BLOCK_WITH_SINGLE_TRANSACTION_STATE_ROOT));
 
     appendBlock(besuController, blockchain, protocolContext, firstBlock);
@@ -214,7 +221,7 @@ public class PrivacyReorgTest {
         .contains(expected);
 
     final String secondBlockStateRoot =
-        "0xd86a520e49caf215e7e4028262924db50540a5b26e415ab7c944e46a0c01d704";
+        "0x57a19f52a9ff4405428b3e605e136662d5c1b6be6f84f98f3b8c42ddac5139c2";
     final Block secondBlock =
         gen.block(getBlockOptionsNoTransaction(firstBlock, secondBlockStateRoot));
 
@@ -271,7 +278,7 @@ public class PrivacyReorgTest {
         gen.block(getBlockOptionsNoTransaction(blockchain.getGenesisBlock(), firstBlockStateRoot));
 
     final String secondBlockStateRoot =
-        "0x7e887f91d2a6205f4a643701aba022c2db0bac5ab235102ab7477edd7a8a4317";
+        "0xb3d70bce4428fb9b4549240b2130c4eea12c4ea36ae13108ed21289366a8d65f";
     final Block secondBlock =
         gen.block(
             getBlockOptionsWithTransaction(
@@ -298,7 +305,7 @@ public class PrivacyReorgTest {
             .plus(blockchain.getBlockByNumber(2).get().getHeader().getDifficulty());
 
     final String forkBlockStateRoot =
-        "0x486b886bde6472e8d706f8eb4fb6378ebbdceb4848a5a8d69a726575b22e41b6";
+        "0x5c0adcdde38d38b4365c238c4ba05bf9ebfdf506f749b884b67003f375e43e4b";
     final Block forkBlock =
         gen.block(
             getBlockOptionsNoTransactionWithDifficulty(
@@ -348,7 +355,7 @@ public class PrivacyReorgTest {
         privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
 
     final String secondForkBlockStateRoot =
-        "0x2c37a360a700c614b10c980138f64be9ad66fc4a14cd5145199cd0d8ec43d51d";
+        "0x76b8747d05fabcc87b2cfba519da0b1359b29fe7553bfd4837746edf31fb95fc";
     final Block secondForkBlock =
         gen.block(
             getBlockOptionsNoTransactionWithDifficulty(
@@ -366,7 +373,7 @@ public class PrivacyReorgTest {
 
     // Add another private transaction
     final String thirdForkBlockStateRoot =
-        "0x8fe42678733e6099e7b10b9b1d4684b8f2ce3d6479cb122ea12932ef304a1793";
+        "0xcae9fa05107c1501c1962239f729d2f34186414abbaeb0dd1a3e0a6c899f79a3";
     final Block thirdForkBlock =
         gen.block(
             getBlockOptionsWithTransactionAndDifficulty(
@@ -378,7 +385,8 @@ public class PrivacyReorgTest {
     appendBlock(besuController, blockchain, protocolContext, thirdForkBlock);
 
     // Check that the private state did change after reorg
-    assertPrivateStateRoot(privateStateRootResolver, blockchain, EMPTY_ROOT_HASH);
+    assertPrivateStateRoot(
+        privateStateRootResolver, blockchain, STATE_ROOT_AFTER_TRANSACTION_APPENDED_TO_EMPTY_STATE);
   }
 
   @SuppressWarnings("unchecked")
@@ -525,6 +533,7 @@ public class PrivacyReorgTest {
   private BlockDataGenerator.BlockOptions getBlockOptions(
       final BlockDataGenerator.BlockOptions blockOptions, final Block parentBlock) {
     return blockOptions
+        .setBaseFee(Optional.empty())
         .setBlockNumber(parentBlock.getHeader().getNumber() + 1)
         .setParentHash(parentBlock.getHash())
         .hasOmmers(false)

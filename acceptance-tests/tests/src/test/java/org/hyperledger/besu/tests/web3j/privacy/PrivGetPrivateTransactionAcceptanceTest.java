@@ -19,23 +19,37 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreatePrivacyGroupTransaction;
+import org.hyperledger.enclave.testutil.EnclaveType;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.containers.Network;
 
-public class PrivGetPrivateTransactionAcceptanceTest extends PrivacyAcceptanceTestBase {
+public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclaveTestBase {
+
+  public PrivGetPrivateTransactionAcceptanceTest(final EnclaveType enclaveType) {
+    super(enclaveType);
+  }
 
   private PrivacyNode alice;
   private PrivacyNode bob;
 
   @Before
   public void setUp() throws Exception {
-    alice = privacyBesu.createIbft2NodePrivacyEnabled("node1", privacyAccountResolver.resolve(0));
-    bob = privacyBesu.createIbft2NodePrivacyEnabled("node2", privacyAccountResolver.resolve(1));
+    final Network containerNetwork = Network.newNetwork();
+
+    alice =
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.of(containerNetwork));
+    bob =
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "node2", privacyAccountResolver.resolve(1), enclaveType, Optional.of(containerNetwork));
     privacyCluster.start(alice, bob);
   }
 

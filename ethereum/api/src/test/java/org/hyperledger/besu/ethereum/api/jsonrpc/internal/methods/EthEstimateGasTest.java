@@ -101,7 +101,8 @@ public class EthEstimateGasTest {
         new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -118,7 +119,8 @@ public class EthEstimateGasTest {
         new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -130,7 +132,8 @@ public class EthEstimateGasTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -143,7 +146,8 @@ public class EthEstimateGasTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -153,7 +157,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, false);
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("gasPrice cannot be used with baseFee or feeCap");
+        .hasMessageContaining("gasPrice cannot be used with baseFee or maxFeePerGas");
   }
 
   @Test
@@ -164,7 +168,8 @@ public class EthEstimateGasTest {
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -178,7 +183,8 @@ public class EthEstimateGasTest {
         new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -191,7 +197,8 @@ public class EthEstimateGasTest {
         new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -205,7 +212,8 @@ public class EthEstimateGasTest {
         new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -218,7 +226,8 @@ public class EthEstimateGasTest {
         new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -232,7 +241,8 @@ public class EthEstimateGasTest {
         new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -245,7 +255,8 @@ public class EthEstimateGasTest {
         new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test

@@ -19,8 +19,6 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
@@ -182,56 +180,16 @@ public class GenesisConfigOptionsTest {
 
   @Test
   public void shouldGetLondonBlockNumber() {
-    try {
-      ExperimentalEIPs.eip1559Enabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 1000));
-      assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
-      assertThat(config.getLondonBlockNumber()).hasValue(1000);
-      assertThat(config.getGenesisBaseFee()).isEmpty();
-    } finally {
-      ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
-    }
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 1000));
+    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+    assertThat(config.getLondonBlockNumber()).hasValue(1000);
   }
 
   @Test
   public void shouldGetBaikalBlockNumber() {
-    try {
-      ExperimentalEIPs.eip1559Enabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("baikalblock", 1000));
-      assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
-      assertThat(config.getLondonBlockNumber()).hasValue(1000);
-      assertThat(config.getGenesisBaseFee()).isEmpty();
-    } finally {
-      ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
-    }
-  }
-
-  @Test
-  // TODO EIP-1559 change for the actual fork name when known
-  public void shouldGetAleutBlockNumber() {
-    try {
-      ExperimentalEIPs.eip1559Enabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("aleutblock", 1000));
-      assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
-      assertThat(config.getAleutBlockNumber()).hasValue(1000);
-      assertThat(config.getGenesisBaseFee()).isEmpty();
-    } finally {
-      ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
-    }
-  }
-
-  @Test
-  // TODO EIP-1559 change for the actual fork name when known
-  public void shouldGetEIP1559BaseFeeAtGenesis() {
-    try {
-      ExperimentalEIPs.eip1559Enabled = true;
-      final GenesisConfigOptions config = fromConfigOptions(singletonMap("londonblock", 0));
-      assertThat(config.getEIP1559BlockNumber()).hasValue(0);
-      assertThat(config.getGenesisBaseFee())
-          .hasValue(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
-    } finally {
-      ExperimentalEIPs.eip1559Enabled = ExperimentalEIPs.EIP1559_ENABLED_DEFAULT_VALUE;
-    }
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("calaverasblock", 1000));
+    assertThat(config.getEIP1559BlockNumber()).hasValue(1000);
+    assertThat(config.getLondonBlockNumber()).hasValue(1000);
   }
 
   @Test

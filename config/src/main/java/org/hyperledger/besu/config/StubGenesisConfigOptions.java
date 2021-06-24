@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.config;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +49,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong aghartaBlockNumber = OptionalLong.empty();
   private OptionalLong phoenixBlockNumber = OptionalLong.empty();
   private OptionalLong thanosBlockNumber = OptionalLong.empty();
+  private OptionalLong magnetoBlockNumber = OptionalLong.empty();
   private OptionalLong ecip1049BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
@@ -170,13 +169,13 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getLondonBlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? londonBlockNumber : OptionalLong.empty();
+    return londonBlockNumber;
   }
 
   @Override
   // TODO EIP-1559 change for the actual fork name when known
   public OptionalLong getAleutBlockNumber() {
-    return ExperimentalEIPs.eip1559Enabled ? aleutBlockNumber : OptionalLong.empty();
+    return aleutBlockNumber;
   }
 
   @Override
@@ -231,6 +230,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getThanosBlockNumber() {
     return thanosBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getMagnetoBlockNumber() {
+    return magnetoBlockNumber;
   }
 
   @Override
@@ -294,6 +298,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
     getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
+    getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
@@ -445,6 +450,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions thanos(final long blockNumber) {
     thanosBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions magneto(final long blockNumber) {
+    magnetoBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

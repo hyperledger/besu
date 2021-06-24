@@ -22,7 +22,6 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
@@ -36,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionI
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.Subscribers;
