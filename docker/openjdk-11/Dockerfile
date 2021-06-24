@@ -1,5 +1,6 @@
 
-FROM openjdk:11.0.7-jre-slim-buster
+FROM adoptopenjdk/openjdk11:jre-11.0.11_9
+
 ARG VERSION="dev"
 
 RUN adduser --disabled-password --gecos "" --home /opt/besu besu && \
