@@ -195,7 +195,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
       protected void initChannel(final SocketChannel ch) throws Exception {
         ch.pipeline()
             .addLast(
-                timeouHandler(
+                timeoutHandler(
                     connectionFuture,
                     "Timed out waiting to establish connection with peer: " + peer.getId()));
         addAdditionalOutboundHandlers(ch);
@@ -214,7 +214,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
             connection -> connectSubscribers.forEach(c -> c.onConnect(connection)));
         ch.pipeline()
             .addLast(
-                timeouHandler(
+                timeoutHandler(
                     connectionFuture, "Timed out waiting to fully establish incoming connection"));
         addAdditionalInboundHandlers(ch);
         ch.pipeline().addLast(inboundHandler(connectionFuture));
@@ -248,7 +248,7 @@ public class NettyConnectionInitializer implements ConnectionInitializer {
   }
 
   @NotNull
-  private TimeoutHandler<Channel> timeouHandler(
+  private TimeoutHandler<Channel> timeoutHandler(
       final CompletableFuture<PeerConnection> connectionFuture, final String s) {
     return new TimeoutHandler<>(
         connectionFuture::isDone,

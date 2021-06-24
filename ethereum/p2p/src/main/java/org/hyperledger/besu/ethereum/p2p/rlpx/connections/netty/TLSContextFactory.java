@@ -192,7 +192,7 @@ public class TLSContextFactory {
         sslcontext.init(null, null, null);
         enabledCipherSuites = Arrays.asList(sslcontext.createSSLEngine().getEnabledCipherSuites());
       }
-    } catch (final Exception e) {
+    } catch (final NoSuchAlgorithmException | KeyManagementException e) {
       LOG.warn(
           "Could not get list of enabled (JDK) cipher suites for protocol:{}, reverting to Netty's default ones.",
           protocol);

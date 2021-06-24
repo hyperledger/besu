@@ -576,6 +576,7 @@ public class RlpxAgent {
               new NettyTLSConnectionInitializer(
                   nodeKey, config, localNode, connectionEvents, metricsSystem, p2pTLSConfiguration);
         } else {
+          LOG.debug("Using default NettyConnectionInitializer");
           connectionInitializer =
               new NettyConnectionInitializer(
                   nodeKey, config, localNode, connectionEvents, metricsSystem);
