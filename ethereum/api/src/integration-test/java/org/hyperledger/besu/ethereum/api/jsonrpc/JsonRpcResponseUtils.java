@@ -165,7 +165,7 @@ public class JsonRpcResponseUtils {
 
     final Transaction transaction = mock(Transaction.class);
     when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
-    when(transaction.getGasPrice()).thenReturn(Wei.fromHexString(gasPrice));
+    when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.fromHexString(gasPrice)));
     when(transaction.getNonce()).thenReturn(unsignedLong(nonce));
     when(transaction.getV()).thenReturn(bigInteger(v));
     when(transaction.getR()).thenReturn(bigInteger(r));

@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.deployContractAndReturnAddress;
-import static org.hyperledger.besu.tests.container.helpers.ContractOperations.generateHexString;
+import static org.hyperledger.besu.tests.container.helpers.ContractOperations.generate64BytesHexString;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.getCode;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.getTransactionLog;
 import static org.hyperledger.besu.tests.container.helpers.ContractOperations.sendLogEventAndReturnTransactionHash;
@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.abi.EventEncoder;
@@ -43,10 +44,12 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthLog;
+import org.web3j.protocol.core.methods.response.EthTransaction;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.quorum.enclave.Enclave;
 import org.web3j.quorum.enclave.Tessera;
 import org.web3j.quorum.enclave.protocol.EnclaveService;
+import org.web3j.quorum.methods.response.PrivatePayload;
 import org.web3j.quorum.tx.QuorumTransactionManager;
 import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 
@@ -103,7 +106,7 @@ public class ContainerTests extends ContainerTestBase {
             goQuorumPollingTransactionReceiptProcessor);
 
     // Generate a random value to insert into the log
-    final String logValue = generateHexString(98765L);
+    final String logValue = generate64BytesHexString(98765L);
 
     // Send the transaction and get the transaction hash
     final String transactionHash =
@@ -131,6 +134,19 @@ public class ContainerTests extends ContainerTestBase {
     final String codeValueGoQuorum = getCode(goQuorumWeb3j, contractAddress);
     assertThat(codeValueGoQuorum).startsWith(CONTRACT_PREFIX);
     assertThat(codeValueBesu).isEqualTo(codeValueGoQuorum);
+
+    // Assert that the private payloads returned are the same
+    final String enclaveKey = getEnclaveKey(transactionHash);
+    final PrivatePayload goQuorumPayload = goQuorumWeb3j.quorumGetPrivatePayload(enclaveKey).send();
+    final PrivatePayload besuPayload = besuWeb3j.quorumGetPrivatePayload(enclaveKey).send();
+
+    assertThat(goQuorumPayload.getPrivatePayload()).isEqualTo(besuPayload.getPrivatePayload());
+  }
+
+  @NotNull
+  private String getEnclaveKey(final String transactionHash) throws IOException {
+    final EthTransaction send = besuWeb3j.ethGetTransactionByHash(transactionHash).send();
+    return send.getTransaction().get().getInput();
   }
 
   @Test
@@ -155,7 +171,7 @@ public class ContainerTests extends ContainerTestBase {
             besuPollingTransactionReceiptProcessor);
 
     // Generate a random value to insert into the log
-    final String logValue = generateHexString(192837L);
+    final String logValue = generate64BytesHexString(192837L);
 
     // Send the transaction and get the transaction hash
     final String transactionHash =
@@ -216,7 +232,7 @@ public class ContainerTests extends ContainerTestBase {
     ethFilterSubscription.addSingleTopic(eventEncoded);
 
     // Generate a value to insert into the log
-    final String logValue = generateHexString((1234567L));
+    final String logValue = generate64BytesHexString(1234567L);
 
     final AtomicBoolean checked = new AtomicBoolean(false);
     final Disposable subscribe =
