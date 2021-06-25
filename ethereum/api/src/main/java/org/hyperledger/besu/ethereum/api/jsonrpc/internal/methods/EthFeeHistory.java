@@ -161,6 +161,8 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     final Optional<Long> baseFee = block.getHeader().getBaseFee();
 
+    // we need to get the gas used for the individual transactions and can't use the cumulative gas
+    // used because we're going to be reordering the transactions
     final List<Long> transactionsGasUsed = new ArrayList<>();
     for (final TransactionReceipt transactionReceipt :
         blockchain.getTxReceipts(block.getHash()).get()) {
