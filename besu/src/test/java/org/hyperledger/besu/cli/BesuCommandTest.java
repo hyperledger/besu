@@ -4203,7 +4203,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET);
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
     assertThat(commandErrorOutput.toString())
-        .contains("GoQuorum compatibility mode (enabled) cannot be used on Mainnet");
+        .contains("GoQuorum compatibility mode cannot be used on Mainnet");
   }
 
   @Test
