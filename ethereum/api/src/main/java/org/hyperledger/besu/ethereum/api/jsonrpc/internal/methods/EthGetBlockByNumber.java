@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 
 import java.util.function.Supplier;
 
@@ -35,18 +36,23 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
   private final BlockResultFactory blockResult;
   private final boolean includeCoinbase;
   private static final Logger log = LogManager.getLogger();
+  private final Synchronizer synchronizer;
 
   public EthGetBlockByNumber(
-      final BlockchainQueries blockchain, final BlockResultFactory blockResult) {
-    this(Suppliers.ofInstance(blockchain), blockResult, false);
+      final BlockchainQueries blockchain,
+      final BlockResultFactory blockResult,
+      final Synchronizer synchronizer) {
+    this(Suppliers.ofInstance(blockchain), blockResult, synchronizer, false);
   }
 
   public EthGetBlockByNumber(
       final Supplier<BlockchainQueries> blockchain,
       final BlockResultFactory blockResult,
+      final Synchronizer synchronizer,
       final boolean includeCoinbase) {
     super(blockchain);
     this.blockResult = blockResult;
+    this.synchronizer = synchronizer;
     this.includeCoinbase = includeCoinbase;
   }
 
@@ -72,9 +78,6 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
   @Override
   protected Object latestResult(final JsonRpcRequestContext request) {
-    // old behavior - throws exception when transactions incomplete on head.
-    // return resultByBlockNumber(request, blockchainQueries.get().headBlockNumber());
-    // if head has state, return that.
 
     final long headBlockNumber = blockchainQueries.get().headBlockNumber();
     Blockchain chain = blockchainQueries.get().getBlockchain();
@@ -84,15 +87,17 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
     Hash stateRoot = headHeader.getStateRoot();
 
     if (blockchainQueries.get().getWorldStateArchive().isWorldStateAvailable(stateRoot, block)) {
-      // Optional<WorldState> worldState = blockchainQueries.get().getWorldState(headBlockNumber);
-      // log.trace(worldState.get().toString());
-      return resultByBlockNumber(request, headBlockNumber);
-    } else {
-      log.trace("no world state available for block {} returning genesis", headBlockNumber);
-      return resultByBlockNumber(
-          request,
-          blockchainQueries.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
+      if (this.synchronizer.getSyncStatus().isEmpty()) { // we are already in sync
+        return resultByBlockNumber(request, headBlockNumber);
+      } else { // out of sync, return highest pulled block
+        long headishBlock = this.synchronizer.getSyncStatus().get().getCurrentBlock();
+        return resultByBlockNumber(request, headishBlock);
+      }
     }
+
+    log.trace("no world state available for block {} returning genesis", headBlockNumber);
+    return resultByBlockNumber(
+        request, blockchainQueries.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
   }
 
   private BlockResult transactionComplete(final long blockNumber) {

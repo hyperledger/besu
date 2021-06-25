@@ -35,11 +35,15 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.testutil.BlockTestUtil;
+
+import java.util.Optional;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -54,6 +58,8 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
 
   private static JsonRpcTestMethodsFactory methodsFactorySynced;
   private static JsonRpcTestMethodsFactory methodsFactoryDesynced;
+  private static JsonRpcTestMethodsFactory methodsFactoryMidDownload;
+  private static final long ARBITRARY_SYNC_BLOCK = 4L;
 
   @BeforeClass
   public static void setUpOnce() throws Exception {
@@ -81,6 +87,18 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
     when(unsynced.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(false);
 
     methodsFactoryDesynced = new JsonRpcTestMethodsFactory(importer, chain, unsynced, context);
+
+    WorldStateArchive midSync = mock(WorldStateArchive.class);
+    when(midSync.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(true);
+
+    Synchronizer synchronizer = mock(Synchronizer.class);
+    SyncStatus status = mock(SyncStatus.class);
+    when(status.getCurrentBlock())
+        .thenReturn(ARBITRARY_SYNC_BLOCK); // random choice for current sync state.
+    when(synchronizer.getSyncStatus()).thenReturn(Optional.of(status));
+
+    methodsFactoryMidDownload =
+        new JsonRpcTestMethodsFactory(importer, chain, midSync, context, synchronizer);
   }
 
   @Test
@@ -120,6 +138,26 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
               assertThat(r).isInstanceOf(BlockResult.class);
               BlockResult br = (BlockResult) r;
               assertThat(br.getNumber()).isEqualTo("0x0");
+            });
+  }
+
+  @Test
+  public void shouldReturnCurrentSyncedIfDownloadingWorldState() {
+    JsonRpcMethod ethGetBlockNumber =
+        methodsFactoryMidDownload.methods().get("eth_getBlockByNumber");
+    Object[] params = {"latest", false};
+    JsonRpcRequestContext ctx =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_getBlockByNumber", params));
+    Assertions.assertThatNoException()
+        .isThrownBy(
+            () -> {
+              final JsonRpcResponse resp = ethGetBlockNumber.response(ctx);
+              assertThat(resp).isNotNull();
+              assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+              Object r = ((JsonRpcSuccessResponse) resp).getResult();
+              assertThat(r).isInstanceOf(BlockResult.class);
+              BlockResult br = (BlockResult) r;
+              assertThat(br.getNumber()).isEqualTo("0x4");
             });
   }
 }

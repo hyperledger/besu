@@ -65,8 +65,8 @@ public class JsonRpcTestMethodsFactory {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive stateArchive;
   private final ProtocolContext context;
-  private final BlockchainQueries blockchainQueries;
-
+  private BlockchainQueries blockchainQueries;
+  private final Synchronizer synchronizer;
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
     this.importer = importer;
@@ -75,6 +75,8 @@ public class JsonRpcTestMethodsFactory {
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
     this.context = new ProtocolContext(blockchain, stateArchive, null);
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
+    this.synchronizer = mock(Synchronizer.class);
+
     for (final Block block : importer.getBlocks()) {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
@@ -94,6 +96,21 @@ public class JsonRpcTestMethodsFactory {
     this.stateArchive = stateArchive;
     this.context = context;
     this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+    this.synchronizer = mock(Synchronizer.class);
+  }
+
+  public JsonRpcTestMethodsFactory(
+      final BlockchainImporter importer,
+      final MutableBlockchain blockchain,
+      final WorldStateArchive stateArchive,
+      final ProtocolContext context,
+      final Synchronizer synchronizer) {
+    this.importer = importer;
+    this.blockchain = blockchain;
+    this.stateArchive = stateArchive;
+    this.context = context;
+    this.synchronizer = synchronizer;
+    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
   }
 
   public BlockchainQueries getBlockchainQueries() {
@@ -105,8 +122,6 @@ public class JsonRpcTestMethodsFactory {
   }
 
   public Map<String, JsonRpcMethod> methods() {
-
-    final Synchronizer synchronizer = mock(Synchronizer.class);
     final P2PNetwork peerDiscovery = mock(P2PNetwork.class);
     final EthPeers ethPeers = mock(EthPeers.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
