@@ -184,9 +184,10 @@ public class EthGetTransactionReceiptTest {
     when(blockchain.headBlockNumber()).thenReturn(1L);
     final Transaction transaction1559 =
         new BlockDataGenerator().transaction(TransactionType.EIP1559);
+    final long baseFee = 1L;
     final TransactionReceiptWithMetadata transactionReceiptWithMetadata =
         TransactionReceiptWithMetadata.create(
-            statusReceipt, transaction1559, hash, 1, 2, Optional.of(1L), blockHash, 4);
+            statusReceipt, transaction1559, hash, 1, 2, Optional.of(baseFee), blockHash, 4);
     when(blockchain.transactionReceiptByTransactionHash(receiptHash))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
     when(protocolSchedule.getByBlockNumber(1)).thenReturn(rootTransactionTypeSpec);
@@ -197,5 +198,10 @@ public class EthGetTransactionReceiptTest {
         (TransactionReceiptStatusResult) response.getResult();
 
     assertThat(result.getStatus()).isEqualTo("0x1");
+    assertThat(Long.decode(result.getEffectiveGasPrice()))
+        .isEqualTo(
+            Math.min(
+                baseFee + transaction1559.getMaxPriorityFeePerGas().get().toLong(),
+                transaction1559.getMaxFeePerGas().get().toLong()));
   }
 }

@@ -3,7 +3,7 @@
 ## 21.7.0
 
 ### Bug Fixes
-- Fixed NoSuchElementException with legacy transaction receipts when using eth_getTransactionReceipt [\#2477](https://github.com/hyperledger/besu/pull/2477)
+- Fixed NoSuchElementException with EIP1559 transaction receipts when using eth_getTransactionReceipt [\#2477](https://github.com/hyperledger/besu/pull/2477)
 
 ## 21.7.0-RC2
 
