@@ -33,7 +33,6 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -1008,13 +1007,6 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @return the effective gas price.
    */
   public final Wei getEffectiveGasPrice(final Optional<Long> baseFeePerGas) {
-    return baseFeePerGas
-        .filter(fee -> getType().supports1559FeeMarket())
-        .map(
-            baseFee ->
-                Collections.min(
-                    Arrays.asList(
-                        getMaxFeePerGas().get(), getMaxPriorityFeePerGas().get().add(baseFee))))
-        .orElseGet(() -> getGasPrice().get());
+    return Wei.of(getEffectivePriorityFeePerGas(baseFeePerGas) + baseFeePerGas.orElse(0L));
   }
 }
