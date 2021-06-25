@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTran
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestGetLogHash;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestImportRawBlock;
 import org.hyperledger.besu.ethereum.retesteth.methods.TestMineBlocks;
@@ -45,6 +46,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 
 public class RetestethService {
 
@@ -63,13 +66,18 @@ public class RetestethService {
     final BlockResultFactory blockResult = new BlockResultFactory();
     final NatService natService = new NatService(Optional.empty());
 
+
+    //Synchronizer needed by RPC methods. Didn't wanna mock it, since this isn't the test module.
+    Synchronizer sync = new DummySynchronizer();
+
+
     final Map<String, JsonRpcMethod> jsonRpcMethods =
         mapOf(
             new Web3ClientVersion(clientVersion),
             new TestSetChainParams(retestethContext),
             new TestImportRawBlock(retestethContext),
             new EthBlockNumber(retestethContext::getBlockchainQueries, true),
-            new EthGetBlockByNumber(retestethContext::getBlockchainQueries, blockResult, true),
+            new EthGetBlockByNumber(retestethContext::getBlockchainQueries, blockResult, sync,true),
             new DebugAccountRange(retestethContext::getBlockchainQueries),
             new EthGetBalance(retestethContext::getBlockchainQueries),
             new EthGetBlockByHash(retestethContext::getBlockchainQueries, blockResult, true),
