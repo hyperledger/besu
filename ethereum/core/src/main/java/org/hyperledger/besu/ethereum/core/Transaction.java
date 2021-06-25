@@ -1006,22 +1006,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
    * @param baseFeePerGas optional baseFee from the block header, if we are post-london
    * @return the effective gas price.
    */
-  public final Wei calcEffectiveGas(final Optional<Long> baseFeePerGas) {
-    return baseFeePerGas
-        .filter(fee -> getType().supports1559FeeMarket())
-        .map(BigInteger::valueOf)
-        .flatMap(
-            baseFee ->
-                getMaxFeePerGas()
-                    .map(org.hyperledger.besu.plugin.data.Quantity::getAsBigInteger)
-                    .flatMap(
-                        maxFeePerGas ->
-                            getMaxPriorityFeePerGas()
-                                .map(org.hyperledger.besu.plugin.data.Quantity::getAsBigInteger)
-                                .map(
-                                    maxPriorityFeePerGas ->
-                                        baseFee.add(maxPriorityFeePerGas).min(maxFeePerGas))))
-        .map(Wei::ofNumber)
-        .orElse(getGasPrice().get());
+  public final Wei getEffectiveGasPrice(final Optional<Long> baseFeePerGas) {
+    return Wei.of(getEffectivePriorityFeePerGas(baseFeePerGas) + baseFeePerGas.orElse(0L));
   }
 }

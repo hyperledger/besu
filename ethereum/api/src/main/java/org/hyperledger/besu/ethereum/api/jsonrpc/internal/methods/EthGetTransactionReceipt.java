@@ -28,10 +28,10 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 
 public class EthGetTransactionReceipt implements JsonRpcMethod {
 
-  private final BlockchainQueries blockchain;
+  private final BlockchainQueries blockchainQueries;
 
-  public EthGetTransactionReceipt(final BlockchainQueries blockchain) {
-    this.blockchain = blockchain;
+  public EthGetTransactionReceipt(final BlockchainQueries blockchainQueries) {
+    this.blockchainQueries = blockchainQueries;
   }
 
   @Override
@@ -43,9 +43,9 @@ public class EthGetTransactionReceipt implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
     final TransactionReceiptResult result =
-        blockchain
+        blockchainQueries
             .transactionReceiptByTransactionHash(hash)
-            .map(receipt -> getResult(receipt))
+            .map(this::getResult)
             .orElse(null);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
   }
