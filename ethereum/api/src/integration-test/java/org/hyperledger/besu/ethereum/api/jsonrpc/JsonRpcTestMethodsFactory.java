@@ -65,7 +65,7 @@ public class JsonRpcTestMethodsFactory {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive stateArchive;
   private final ProtocolContext context;
-  private BlockchainQueries blockchainQueries;
+  private final BlockchainQueries blockchainQueries;
   private final Synchronizer synchronizer;
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
