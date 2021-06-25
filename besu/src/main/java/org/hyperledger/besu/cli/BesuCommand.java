@@ -393,6 +393,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
   private final Boolean randomPeerPriority = false;
 
+  private GenesisConfigOptions genesisConfigOptions;
+
   @Option(
       names = {"--banned-node-ids", "--banned-node-id"},
       paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
@@ -1080,11 +1082,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Maximum gas price for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Long apiGasPriceMax = 500_000_000_000L;
 
-  @Option(
-      names = {"--goquorum-compatibility-enabled"},
-      hidden = true,
-      description = "Start Besu in GoQuorum compatibility mode (default: ${DEFAULT-VALUE})")
-  private final Boolean isGoQuorumCompatibilityMode = false;
+  //  @Option(
+  //      names = {"--goquorum-compatibility-enabled"},
+  //      hidden = true,
+  //      description = "Start Besu in GoQuorum compatibility mode (default: ${DEFAULT-VALUE})")
+  //  private final Boolean dummy = false;
 
   @CommandLine.Option(
       names = {"--static-nodes-file"},
@@ -1114,6 +1116,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
+  private Boolean isGoQuorumCompatibilityMode = false;
 
   public BesuCommand(
       final Logger logger,
@@ -1195,6 +1198,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
+
+      // Set the goquorum compatibility mode based on the genesis file
+      if (genesisFile != null) {
+        genesisConfigOptions = readGenesisConfigOptions();
+        if (genesisConfigOptions.isQuorum()) {
+          // this static flag is read by the RLP decoder
+          GoQuorumOptions.goQuorumCompatibilityMode = true;
+          isGoQuorumCompatibilityMode = true;
+        }
+      }
 
       validateOptions();
       configure();
@@ -1573,7 +1586,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     ethNetworkConfig = updateNetworkConfig(getNetwork());
 
-    checkGoQuorumGenesisConfig();
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
     jsonRpcConfiguration = jsonRpcConfiguration();
@@ -2059,7 +2071,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     try {
-      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
       final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
       return Optional.of(
           GoQuorumPermissioningConfiguration.enabled(
@@ -2610,33 +2621,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void checkGoQuorumGenesisConfig() {
-    if (genesisFile != null) {
-      if (readGenesisConfigOptions().isQuorum() && !isGoQuorumCompatibilityMode) {
-        throw new IllegalStateException(
-            "Cannot use GoQuorum genesis file without GoQuorum privacy enabled");
-      }
-    }
-  }
-
   private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
     if (isGoQuorumCompatibilityMode) {
-      if (genesisFile == null) {
-        throw new ParameterException(
-            this.commandLine,
-            "--genesis-file must be specified if GoQuorum compatibility mode is enabled.");
-      }
-
-      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
-
-      // this static flag is read by the RLP decoder
-      GoQuorumOptions.goQuorumCompatibilityMode = true;
-
-      if (!genesisConfigOptions.isQuorum()) {
-        throw new IllegalStateException(
-            "GoQuorum compatibility mode (enabled) can only be used if genesis file has 'isQuorum' flag set to true.");
-      }
-
       if (!minTransactionGasPrice.isZero()) {
         throw new ParameterException(
             this.commandLine,
@@ -2690,7 +2676,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return;
     }
 
-    Optional<String> ecCurve = getEcCurveFromGenesisFile();
+    final Optional<String> ecCurve = getEcCurveFromGenesisFile();
 
     if (ecCurve.isEmpty()) {
       SignatureAlgorithmFactory.setDefaultInstance();
@@ -2699,7 +2685,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     try {
       SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
-    } catch (IllegalArgumentException e) {
+    } catch (final IllegalArgumentException e) {
       throw new CommandLine.InitializationException(
           new StringBuilder()
               .append("Invalid genesis file configuration for ecCurve. ")
@@ -2712,9 +2698,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisFile == null) {
       return Optional.empty();
     }
-
-    GenesisConfigOptions options = readGenesisConfigOptions();
-
-    return options.getEcCurve();
+    return genesisConfigOptions.getEcCurve();
   }
 }
