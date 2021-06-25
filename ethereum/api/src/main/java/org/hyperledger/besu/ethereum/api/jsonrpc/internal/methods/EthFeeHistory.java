@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -46,14 +45,11 @@ import com.google.common.collect.Streams;
 
 public class EthFeeHistory implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
-  private final BlockchainQueries blockchainQueries;
   private final Blockchain blockchain;
 
-  public EthFeeHistory(
-      final ProtocolSchedule protocolSchedule, final BlockchainQueries blockchainQueries) {
+  public EthFeeHistory(final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
     this.protocolSchedule = protocolSchedule;
-    this.blockchainQueries = blockchainQueries;
-    this.blockchain = blockchainQueries.getBlockchain();
+    this.blockchain = blockchain;
   }
 
   @Override
