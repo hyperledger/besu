@@ -1082,12 +1082,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Maximum gas price for eth_gasPrice (default: ${DEFAULT-VALUE})")
   private final Long apiGasPriceMax = 500_000_000_000L;
 
-  //  @Option(
-  //      names = {"--goquorum-compatibility-enabled"},
-  //      hidden = true,
-  //      description = "Start Besu in GoQuorum compatibility mode (default: ${DEFAULT-VALUE})")
-  //  private final Boolean dummy = false;
-
   @CommandLine.Option(
       names = {"--static-nodes-file"},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
@@ -1193,11 +1187,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     try {
       configureLogging(true);
-      instantiateSignatureAlgorithmFactory();
-      configureNativeLibs();
-      logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
-      // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-      vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
       // Set the goquorum compatibility mode based on the genesis file
       if (genesisFile != null) {
@@ -1208,6 +1197,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           isGoQuorumCompatibilityMode = true;
         }
       }
+
+      instantiateSignatureAlgorithmFactory();
+      configureNativeLibs();
+      logger.info("Starting Besu version: {}", BesuInfo.nodeName(identityString));
+      // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
+      vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
       validateOptions();
       configure();
@@ -1555,7 +1550,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.checkMultiOptionDependencies(
         logger,
         commandLine,
-        List.of("--miner-enabled", "--goquorum-compatibility-enabled"),
+        List.of("--miner-enabled"),
         List.of(!isMiningEnabled, !isGoQuorumCompatibilityMode),
         singletonList("--min-gas-price"));
 
@@ -1647,7 +1642,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine,
-          "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.",
+          "--privacy-public-key-file must be set when isquorum is set in genesis file.",
           e);
     }
     if (key.length() != 44) {
@@ -2100,7 +2095,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.checkMultiOptionDependencies(
         logger,
         commandLine,
-        List.of("--privacy-enabled", "--goquorum-compatibility-enabled"),
+        List.of("--privacy-enabled"),
         List.of(!isPrivacyEnabled, !isGoQuorumCompatibilityMode),
         List.of("--privacy-url", "--privacy-public-key-file"));
 
@@ -2631,7 +2626,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (ensureGoQuorumCompatibilityModeNotUsedOnMainnet(genesisConfigOptions, ethNetworkConfig)) {
         throw new ParameterException(
-            this.commandLine, "GoQuorum compatibility mode (enabled) cannot be used on Mainnet.");
+            this.commandLine, "GoQuorum compatibility mode cannot be used on Mainnet.");
       }
     }
   }
