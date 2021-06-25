@@ -21,7 +21,7 @@ import static org.web3j.utils.Restriction.RESTRICTED;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.RestrictedCreatePrivacyGroupTransaction;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.UnrestrictedCreatePrivacyGroupTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.UnrestrictedCreateRandomPrivacyGroupIdTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
@@ -60,7 +60,7 @@ public abstract class ParameterizedEnclaveTestBase extends PrivacyAcceptanceTest
     if (restriction == RESTRICTED) {
       return new RestrictedCreatePrivacyGroupTransaction(name, description, nodes);
     } else if (restriction == UNRESTRICTED) {
-      return new UnrestrictedCreatePrivacyGroupTransaction(nodes);
+      return new UnrestrictedCreateRandomPrivacyGroupIdTransaction();
     } else {
       throw new RuntimeException("Do not know how to handle " + restriction);
     }
