@@ -74,7 +74,7 @@ public abstract class TransactionReceiptResult {
     this.from = txn.getSender().toString();
     this.gasUsed = Quantity.create(receiptWithMetadata.getGasUsed());
     this.effectiveGasPrice =
-        Quantity.create(txn.calcEffectiveGas(receiptWithMetadata.getBaseFee()));
+        Quantity.create(txn.getEffectiveGasPrice(receiptWithMetadata.getBaseFee()));
 
     this.logs =
         logReceipts(
