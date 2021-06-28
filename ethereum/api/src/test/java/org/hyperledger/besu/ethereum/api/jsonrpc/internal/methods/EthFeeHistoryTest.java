@@ -32,17 +32,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistoryResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,7 +48,6 @@ import org.junit.Test;
 public class EthFeeHistoryTest {
   final BlockDataGenerator gen = new BlockDataGenerator();
   private MutableBlockchain blockchain;
-  private BlockchainQueries blockchainQueries;
   private EthFeeHistory method;
   private ProtocolSchedule protocolSchedule;
 
@@ -64,13 +58,7 @@ public class EthFeeHistoryTest {
     blockchain = createInMemoryBlockchain(genesisBlock);
     gen.blockSequence(genesisBlock, 10)
         .forEach(block -> blockchain.appendBlock(block, gen.receipts(block)));
-    blockchainQueries =
-        new BlockchainQueries(
-            blockchain,
-            new DefaultWorldStateArchive(
-                new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-                new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage())));
-    method = new EthFeeHistory(protocolSchedule, blockchainQueries);
+    method = new EthFeeHistory(protocolSchedule, blockchain);
   }
 
   @Test
