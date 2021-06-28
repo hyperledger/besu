@@ -91,7 +91,7 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
                             receipt ->
                                 receipt
                                     .getTransaction()
-                                    .calcEffectiveGas(receipt.getBaseFee())
+                                    .getEffectiveGasPrice(receipt.getBaseFee())
                                     .multiply(receipt.getGasUsed()))
                         .orElse(Wei.ZERO))
             .reduce(Wei.ZERO, BaseUInt256Value::add);
