@@ -84,7 +84,7 @@ public class ContractOperations {
 
   public static String getCode(final Quorum web3j, final String contractAddress)
       throws IOException {
-    DefaultBlockParameter blockParam =
+    final DefaultBlockParameter blockParam =
         DefaultBlockParameter.valueOf(DefaultBlockParameterName.LATEST.toString());
     final EthGetCode codeResult = web3j.ethGetCode(contractAddress, blockParam).send();
     assertThat(codeResult.getCode())
