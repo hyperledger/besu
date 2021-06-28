@@ -35,7 +35,7 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
   private final BlockResultFactory blockResult;
   private final boolean includeCoinbase;
-  private static final Logger log = LogManager.getLogger();
+  private static final Logger LOGGER = LogManager.getLogger();
   private final Synchronizer synchronizer;
 
   public EthGetBlockByNumber(
@@ -95,7 +95,7 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
       }
     }
 
-    log.trace("no world state available for block {} returning genesis", headBlockNumber);
+    LOGGER.trace("no world state available for block {} returning genesis", headBlockNumber);
     return resultByBlockNumber(
         request, blockchainQueries.get().getBlockchain().getGenesisBlock().getHeader().getNumber());
   }
