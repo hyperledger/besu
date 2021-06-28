@@ -22,9 +22,9 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import java.util.Optional;
 
 /**
- * Naive implementation of Synchronizer used by retesteth. Because retesteth is not implemented in the test module, it
- * has no access to mockito. This class provides a minimum implementation needed to run RPC methods which may require a
- * Synchronizer.
+ * Naive implementation of Synchronizer used by retesteth. Because retesteth is not implemented in
+ * the test module, it has no access to mockito. This class provides a minimum implementation needed
+ * to run RPC methods which may require a Synchronizer.
  */
 public class DummySynchronizer implements Synchronizer {
   @Override
