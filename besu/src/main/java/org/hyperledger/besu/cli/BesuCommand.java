@@ -1550,7 +1550,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.checkMultiOptionDependencies(
         logger,
         commandLine,
-        List.of("--miner-enabled"),
+        "--min-gas-price ignored because none of --miner-enabled or isQuorum (in genesis file) was defined.",
         List.of(!isMiningEnabled, !isGoQuorumCompatibilityMode),
         singletonList("--min-gas-price"));
 
@@ -1642,7 +1642,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine,
-          "--privacy-public-key-file must be set when isquorum is set in genesis file.",
+          "--privacy-public-key-file must be set if isQuorum is set in the genesis file.",
           e);
     }
     if (key.length() != 44) {
@@ -2095,7 +2095,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.checkMultiOptionDependencies(
         logger,
         commandLine,
-        List.of("--privacy-enabled"),
+        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.",
         List.of(!isPrivacyEnabled, !isGoQuorumCompatibilityMode),
         List.of("--privacy-url", "--privacy-public-key-file"));
 
@@ -2621,12 +2621,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (!minTransactionGasPrice.isZero()) {
         throw new ParameterException(
             this.commandLine,
-            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
       }
 
       if (ensureGoQuorumCompatibilityModeNotUsedOnMainnet(genesisConfigOptions, ethNetworkConfig)) {
-        throw new ParameterException(
-            this.commandLine, "GoQuorum compatibility mode cannot be used on Mainnet.");
+        throw new ParameterException(this.commandLine, "isQuorum mode cannot be used on Mainnet.");
       }
     }
   }

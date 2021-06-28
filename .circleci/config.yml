@@ -191,22 +191,22 @@ jobs:
       - capture_test_results
       - capture_test_logs
 
-#  acceptanceTestsQuorum:
-#    parallelism: 1
-#    executor: xl_machine_executor
-#    steps:
-#      - prepare
-#      - attach_workspace:
-#          at: ~/project
-#      - run:
-#          name: Quorum Acceptance Tests
-#          no_output_timeout: 40m
-#          command: ./gradlew --no-daemon acceptanceTestsQuorum
-#      - store_artifacts:
-#          path: build/quorum-at
-#          destination: quorum-at-artifacts
-#      - store_test_results:
-#          path: build/quorum-at/openjdk-latest/reports/xml-report
+  acceptanceTestsQuorum:
+    parallelism: 1
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Quorum Acceptance Tests
+          no_output_timeout: 40m
+          command: ./gradlew --no-daemon acceptanceTestsQuorum || true # ignore until the quorum ATs CI loop is fixed
+      - store_artifacts:
+          path: build/quorum-at
+          destination: quorum-at-artifacts
+      - store_test_results:
+          path: build/quorum-at/openjdk-latest/reports/xml-report
 
   buildDocker:
     executor: besu_executor_med
@@ -284,9 +284,9 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
-#      - acceptanceTestsQuorum:
-#          requires:
-#            - assemble
+      - acceptanceTestsQuorum:
+          requires:
+            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -300,7 +300,7 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
-#            - acceptanceTestsQuorum
+            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
       - publishDocker:
@@ -313,7 +313,7 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
-#            - acceptanceTestsQuorum
+            - acceptanceTestsQuorum
             - referenceTests
             - buildDocker
           context:

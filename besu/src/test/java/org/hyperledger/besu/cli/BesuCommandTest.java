@@ -26,7 +26,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.MULTI_DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -77,7 +76,6 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.util.StringUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -135,9 +133,9 @@ public class BesuCommandTest extends CommandTestAbstract {
       (new JsonObject())
           .put(
               "config",
-              new JsonObject().put("isquorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
+              new JsonObject().put("isQuorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET =
-      (new JsonObject()).put("config", new JsonObject().put("isquorum", true));
+      (new JsonObject()).put("config", new JsonObject().put("isQuorum", true));
   private static final JsonObject INVALID_GENESIS_EC_CURVE =
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "abcd"));
   private static final JsonObject VALID_GENESIS_EC_CURVE =
@@ -3005,14 +3003,15 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void minGasPriceRequiresMainOption() {
     parseCommand("--min-gas-price", "0");
 
-    verifyMultiOptionsConstraintLoggerCall(List.of("--miner-enabled"), "--min-gas-price");
+    verifyMultiOptionsConstraintLoggerCall(
+        "--min-gas-price ignored because none of --miner-enabled or isQuorum (in genesis file) was defined.");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void miningParametersAreCaptured() throws Exception {
+  public void miningParametersAreCaptured() {
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     final String extraDataString =
         "0x1122334455667788990011223344556677889900112233445566778899001122";
@@ -3337,7 +3336,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
     verifyMultiOptionsConstraintLoggerCall(
-        List.of("--privacy-enabled"), "--privacy-url", "--privacy-public-key-file");
+        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3551,25 +3550,10 @@ public class BesuCommandTest extends CommandTestAbstract {
    * <p>Here we check the calls to logger and not the result of the log line as we don't test the
    * logger itself but the fact that we call it.
    *
-   * @param dependentOptions the string representing the list of dependent options names
-   * @param mainOptions the main option names
+   * @param stringToLog the string that is logged
    */
-  private void verifyMultiOptionsConstraintLoggerCall(
-      final List<String> mainOptions, final String... dependentOptions) {
-    verify(mockLogger, atLeast(1))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(MULTI_DEPENDENCY_WARNING_MSG);
-
-    for (final String option : dependentOptions) {
-      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
-    }
-
-    final String joinedOptions =
-        StringUtils.joiningWithLastDelimiter(", ", " or ").apply(mainOptions);
-    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(joinedOptions);
+  private void verifyMultiOptionsConstraintLoggerCall(final String stringToLog) {
+    verify(mockLogger, atLeast(1)).warn(stringToLog);
   }
 
   @Test
@@ -4147,7 +4131,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString())
         .contains(
-            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
   }
 
   @Test
@@ -4157,7 +4141,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
     assertThat(commandErrorOutput.toString())
         .contains(
-            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
   }
 
   @Test
@@ -4186,7 +4170,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-public-key-file",
         "ThisFileDoesNotExist");
     assertThat(commandErrorOutput.toString())
-        .contains("--privacy-public-key-file must be set when isquorum is set in genesis file.");
+        .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
   }
 
   @Test
@@ -4195,15 +4179,14 @@ public class BesuCommandTest extends CommandTestAbstract {
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
     assertThat(commandErrorOutput.toString())
-        .contains("--privacy-public-key-file must be set when isquorum is set in genesis file.");
+        .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
   }
 
   @Test
   public void quorumInteropEnabledFailsWithMainnetDefaultNetwork() throws IOException {
     final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET);
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString())
-        .contains("GoQuorum compatibility mode cannot be used on Mainnet");
+    assertThat(commandErrorOutput.toString()).contains("isQuorum mode cannot be used on Mainnet.");
   }
 
   @Test
@@ -4211,8 +4194,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile =
         createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET.put("chainId", "1"));
     parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString())
-        .contains("GoQuorum compatibility mode cannot be used on Mainnet");
+    assertThat(commandErrorOutput.toString()).contains("isQuorum mode cannot be used on Mainnet.");
   }
 
   @Test
