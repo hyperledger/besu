@@ -61,6 +61,7 @@ import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.unstable.UnrestrictedPrivacyOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -256,6 +257,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
+  private final UnrestrictedPrivacyOptions unstableUnrestrictedPrivacyOptions =
+      UnrestrictedPrivacyOptions.create();
 
   // stable CLI options
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
@@ -971,12 +974,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
   @Option(
-      names = {"--privacy-unrestricted-enabled-beta"},
-      description =
-          "Enable unrestricted (stores payload onchain) privacy (default: ${DEFAULT-VALUE})")
-  private final Boolean isUnrestrictedPrivacyEnabled = false;
-
-  @Option(
       names = {"--target-gas-limit"},
       description =
           "Sets target gas limit per block. If set each block's gas limit will approach this setting over time if the current gas limit is different.")
@@ -1286,6 +1283,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("RPC", unstableRPCOptions)
             .put("DNS Configuration", unstableDnsOptions)
             .put("NAT Configuration", unstableNatOptions)
+            .put("Unrestricted Privacy Configuration", unstableUnrestrictedPrivacyOptions)
             .put("Synchronizer", unstableSynchronizerOptions)
             .put("TransactionPool", unstableTransactionPoolOptions)
             .put("Mining", unstableMiningOptions)
@@ -2129,13 +2127,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
       }
 
-      if (isUnrestrictedPrivacyEnabled && isPrivacyMultiTenancyEnabled) {
+      if (unstableUnrestrictedPrivacyOptions.isUnrestrictedPrivacyEnabled()
+          && isPrivacyMultiTenancyEnabled) {
         throw new ParameterException(
             commandLine,
             "Privacy unrestricted privacy can not be used in multi-tenant environment");
       }
 
-      if (isUnrestrictedPrivacyEnabled && isFlexiblePrivacyGroupsEnabled) {
+      if (unstableUnrestrictedPrivacyOptions.isUnrestrictedPrivacyEnabled()
+          && isFlexiblePrivacyGroupsEnabled) {
         throw new ParameterException(
             commandLine,
             "Privacy unrestricted privacy can not be used with flexible (onchain) privacy groups");
@@ -2145,7 +2145,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
-      privacyParametersBuilder.setUnrestrictedPrivacyEnabled(isUnrestrictedPrivacyEnabled);
+      privacyParametersBuilder.setUnrestrictedPrivacyEnabled(
+          unstableUnrestrictedPrivacyOptions.isUnrestrictedPrivacyEnabled());
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
 
