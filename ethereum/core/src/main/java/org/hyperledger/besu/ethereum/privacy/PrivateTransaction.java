@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.ethereum.privacy.Restriction.RESTRICTED;
+import static org.hyperledger.besu.ethereum.privacy.Restriction.UNRESTRICTED;
+import static org.hyperledger.besu.ethereum.privacy.Restriction.UNSUPPORTED;
 import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -40,12 +43,15 @@ import java.util.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class PrivateTransaction {
+  private static final Logger LOG = LogManager.getLogger();
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -172,12 +178,14 @@ public class PrivateTransaction {
   }
 
   private static Restriction convertToEnum(final Bytes readBytes) {
-    if (readBytes.equals(Restriction.RESTRICTED.getBytes())) {
-      return Restriction.RESTRICTED;
-    } else if (readBytes.equals(Restriction.UNRESTRICTED.getBytes())) {
-      return Restriction.UNRESTRICTED;
+    if (readBytes.equals(RESTRICTED.getBytes())) {
+      return RESTRICTED;
+    } else if (readBytes.equals(UNRESTRICTED.getBytes())) {
+      return UNRESTRICTED;
+    } else {
+      LOG.error("Transaction restriction '{}' not supported", readBytes.toString());
+      return UNSUPPORTED;
     }
-    return Restriction.UNSUPPORTED;
   }
 
   /**
@@ -453,8 +461,8 @@ public class PrivateTransaction {
   /**
    * Returns the transaction hash.
    *
-   * @deprecated All private transactions should be identified by their corresponding PMT hash.
    * @return the transaction hash
+   * @deprecated All private transactions should be identified by their corresponding PMT hash.
    */
   // This field will be removed in 1.5.0
   @Deprecated(since = "1.4.3")

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -174,6 +175,25 @@ public final class EthProtocolManagerTest {
               blockchain.getChainHeadHash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, statusMessage));
+
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      assertThat(peer.isDisconnected()).isTrue();
+    }
+  }
+
+  @Test
+  public void disconnectOnVeryLargeMessage() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig())) {
+      final MessageData messageData = mock(MessageData.class);
+      when(messageData.getSize()).thenReturn(10 * 1_000_000 + 1 /* just over 10MB*/);
+      when(messageData.getCode()).thenReturn(EthPV62.TRANSACTIONS);
+      final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();

@@ -40,7 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MultiTenancyPrivacyControllerOnchainTest {
+public class RestrictedMultiTenancyPrivacyControllerOnchainTest {
 
   private static final String ENCLAVE_PUBLIC_KEY1 = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
   private static final String ENCLAVE_PUBLIC_KEY2 = "OnviftjiizpjRt+HTuFBsKo2bVqD+nNlNYL5EE7y3Id=";
@@ -54,7 +54,7 @@ public class MultiTenancyPrivacyControllerOnchainTest {
   private final OnchainPrivacyGroupContract onchainPrivacyGroupContract =
       mock(OnchainPrivacyGroupContract.class);
 
-  private MultiTenancyPrivacyController multiTenancyPrivacyController;
+  private RestrictedMultiTenancyPrivacyController multiTenancyPrivacyController;
 
   @Before
   public void setup() {
@@ -63,7 +63,7 @@ public class MultiTenancyPrivacyControllerOnchainTest {
         .thenReturn(Optional.of(ONCHAIN_PRIVACY_GROUP));
 
     multiTenancyPrivacyController =
-        new MultiTenancyPrivacyController(
+        new RestrictedMultiTenancyPrivacyController(
             privacyController,
             Optional.of(BigInteger.valueOf(2018)),
             enclave,

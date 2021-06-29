@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -34,8 +34,8 @@ public class PrivUnsubscribe extends AbstractPrivateSubscriptionMethod {
       final SubscriptionManager subscriptionManager,
       final SubscriptionRequestMapper mapper,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    super(subscriptionManager, mapper, privacyController, enclavePublicKeyProvider);
+      final PrivacyIdProvider privacyIdProvider) {
+    super(subscriptionManager, mapper, privacyController, privacyIdProvider);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class PrivUnsubscribe extends AbstractPrivateSubscriptionMethod {
       final PrivateUnsubscribeRequest unsubscribeRequest =
           getMapper().mapPrivateUnsubscribeRequest(requestContext);
 
-      checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+      checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(
           requestContext, unsubscribeRequest.getPrivacyGroupId());
 
       final boolean unsubscribed = subscriptionManager().unsubscribe(unsubscribeRequest);
