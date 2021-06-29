@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledCon
 import org.hyperledger.besu.ethereum.mainnet.precompiles.SHA256PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.UnrestrictedPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 /** Provides the various precompiled contracts used on mainnet hard forks. */
@@ -170,7 +171,16 @@ public abstract class MainnetPrecompiledContractRegistries {
       return;
     }
 
-    if (precompiledContractConfiguration.getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
+    if (precompiledContractConfiguration.getPrivacyParameters().isUnrestrictedPrivacyEnabled()) {
+      registry.put(
+          Address.UNRESTRICTED_PRIVACY,
+          accountVersion,
+          new UnrestrictedPrivacyPrecompiledContract(
+              precompiledContractConfiguration.getGasCalculator(),
+              precompiledContractConfiguration.getPrivacyParameters()));
+    } else if (precompiledContractConfiguration
+        .getPrivacyParameters()
+        .isOnchainPrivacyGroupsEnabled()) {
       registry.put(
           Address.ONCHAIN_PRIVACY,
           accountVersion,

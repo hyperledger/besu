@@ -27,12 +27,12 @@ import org.web3j.protocol.besu.Besu;
 import org.web3j.protocol.besu.response.privacy.PrivCreatePrivacyGroup;
 import org.web3j.utils.Base64String;
 
-public class CreatePrivacyGroupTransaction implements Transaction<String> {
+public class RestrictedCreatePrivacyGroupTransaction implements Transaction<String> {
   private final String name;
   private final String description;
   private final List<Base64String> addresses;
 
-  public CreatePrivacyGroupTransaction(
+  public RestrictedCreatePrivacyGroupTransaction(
       final String name, final String description, final PrivacyNode... nodes) {
     this.name = name;
     this.description = description;

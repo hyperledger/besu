@@ -295,8 +295,8 @@ public class FilterManagerLogFilterTest {
     assertThat(filterRepository.getFilter(privateLogFilterId, PrivateLogFilter.class)).isEmpty();
   }
 
-  private void privateTransactionEvent(final String privacyGroupId, final String enclavePublicKey) {
-    PrivateTransactionEvent event = new PrivateTransactionEvent(privacyGroupId, enclavePublicKey);
+  private void privateTransactionEvent(final String privacyGroupId, final String privacyUserId) {
+    PrivateTransactionEvent event = new PrivateTransactionEvent(privacyGroupId, privacyUserId);
     filterManager.processRemovalEvent(event);
   }
 

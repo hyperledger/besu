@@ -17,18 +17,18 @@ package org.hyperledger.besu.ethereum.privacy;
 
 public class PrivateTransactionEvent {
   private final String privacyGroupId;
-  private final String enclavePublicKey;
+  private final String privacyUserId;
 
-  public PrivateTransactionEvent(final String privacyGroupId, final String enclavePublicKey) {
+  public PrivateTransactionEvent(final String privacyGroupId, final String privacyUserId) {
     this.privacyGroupId = privacyGroupId;
-    this.enclavePublicKey = enclavePublicKey;
+    this.privacyUserId = privacyUserId;
   }
 
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }
 
-  public String getEnclavePublicKey() {
-    return enclavePublicKey;
+  public String getPrivacyUserId() {
+    return privacyUserId;
   }
 }

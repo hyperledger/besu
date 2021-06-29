@@ -16,7 +16,6 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
@@ -29,12 +28,14 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.testcontainers.containers.Network;
 
 @RunWith(Parameterized.class)
@@ -47,9 +48,11 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
     this.enclaveType = enclaveType;
   }
 
-  @Parameterized.Parameters(name = "{0}")
+  @Parameters(name = "{0}")
   public static Collection<EnclaveType> enclaveTypes() {
-    return Arrays.asList(EnclaveType.values());
+    return Arrays.stream(EnclaveType.values())
+        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
+        .collect(Collectors.toList());
   }
 
   private PrivacyNode aliceNode;
@@ -63,7 +66,6 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
         privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
             "alice-node",
             PrivacyAccountResolver.ALICE,
-            Address.PRIVACY,
             false,
             enclaveType,
             Optional.of(containerNetwork));
@@ -71,7 +73,6 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
         privacyBesu.createOnChainPrivacyGroupEnabledNode(
             "bob-node",
             PrivacyAccountResolver.BOB,
-            Address.PRIVACY,
             false,
             enclaveType,
             Optional.of(containerNetwork));
