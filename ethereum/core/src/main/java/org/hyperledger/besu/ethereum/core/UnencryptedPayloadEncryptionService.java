@@ -23,13 +23,17 @@ import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProv
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class UnencryptedPayloadEncryptionService implements PrivacyPayloadEncryptionProvider {
+  private static final Logger LOG = LogManager.getLogger();
 
   @Override
   public Bytes encryptMarkerPayload(
       final PrivateTransaction privateTransaction, final String privacyUserId) {
+    LOG.warn("Unrestricted privacy is being used without encrypting payload");
     return serialize(privateTransaction).encoded();
   }
 

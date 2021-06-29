@@ -115,6 +115,23 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
 
   public static PrivateTransaction readFrom(
       final org.hyperledger.besu.plugin.data.PrivateTransaction p) {
+
+    final BigInteger v = p.getV();
+    final byte recId;
+    Optional<BigInteger> chainId = p.getChainId();
+    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
+      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
+    } else {
+      throw new RuntimeException(
+          String.format("An unsupported encoded `v` value of %s was found", v));
+    }
+
+    final SECPSignature signature =
+        SIGNATURE_ALGORITHM.get().createSignature(p.getR(), p.getS(), recId);
+
     final Builder b =
         builder()
             .nonce(p.getNonce())
@@ -125,9 +142,10 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
             .sender(Address.wrap(p.getSender()))
             .payload(p.getPayload())
             .privateFrom(p.getPrivateFrom())
-            .restriction(p.getRestriction());
+            .restriction(p.getRestriction())
+            .signature(signature);
 
-    p.getChainId().ifPresent(b::chainId);
+    chainId.ifPresent(b::chainId);
     p.getPrivateFor().ifPresent(b::privateFor);
     p.getPrivacyGroupId().ifPresent(b::privacyGroupId);
 

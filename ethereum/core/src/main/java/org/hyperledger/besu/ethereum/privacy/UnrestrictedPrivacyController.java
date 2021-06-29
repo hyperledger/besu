@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
+
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -26,10 +28,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
+import org.hyperledger.besu.plugin.services.PrivacyService;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -49,7 +50,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   private final PrivateTransactionSimulator privateTransactionSimulator;
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivateWorldStateReader privateWorldStateReader;
-  private final PrivacyPayloadEncryptionProvider privacyPayloadEncryptionProvider;
+  private final PrivacyService privacyService;
 
   public UnrestrictedPrivacyController(
       final Blockchain blockchain,
@@ -66,8 +67,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
     this.privateNonceProvider = privateNonceProvider;
     this.privateWorldStateReader = privateWorldStateReader;
     this.privateStateRootResolver = privacyParameters.getPrivateStateRootResolver();
-    this.privacyPayloadEncryptionProvider =
-        privacyParameters.getPrivacyService().getUnrestrictedPayloadEncryptionProvider();
+    this.privacyService = privacyParameters.getPrivacyService();
   }
 
   @Override
@@ -76,7 +76,8 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final String privacyUserId,
       final Optional<PrivacyGroup> privacyGroup) {
 
-    return privacyPayloadEncryptionProvider
+    return privacyService
+        .getUnrestrictedPayloadEncryptionProvider()
         .encryptMarkerPayload(privateTransaction, privacyUserId)
         .toBase64String();
   }
@@ -123,9 +124,16 @@ public class UnrestrictedPrivacyController implements PrivacyController {
     final BlockHeader blockHeader =
         blockchain.getBlockHeader(transactionLocation.getBlockHash()).orElseThrow();
 
-    final BytesValueRLPInput input = new BytesValueRLPInput(transaction.get().getPayload(), false);
+    final Optional<org.hyperledger.besu.plugin.data.PrivateTransaction> pluginPrivateTransaction =
+        privacyService
+            .getUnrestrictedPayloadEncryptionProvider()
+            .decryptMarkerPayload(blockHeader.getNumber(), transaction.get().getPayload());
 
-    final PrivateTransaction privateTransaction = PrivateTransaction.readFrom(input);
+    if (pluginPrivateTransaction.isEmpty()) {
+      return Optional.empty();
+    }
+
+    final PrivateTransaction privateTransaction = readFrom(pluginPrivateTransaction.get());
 
     final String internalPrivacyGroupId =
         privateTransaction.determinePrivacyGroupId().toBase64String();
@@ -179,6 +187,9 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final String privacyUserId) {
 
     final String privacyGroupId = createPrivacyGroupId(privateFrom, privateFor);
+
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
     return determineBesuNonce(address, privacyGroupId, privacyUserId);
   }
 
@@ -194,6 +205,8 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   @Override
   public long determineBesuNonce(
       final Address sender, final String privacyGroupId, final String privacyUserId) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
     return privateNonceProvider.getNonce(
         sender, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
   }
@@ -204,6 +217,8 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final String privacyUserId,
       final CallParameter callParams,
       final long blockNumber) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
     return privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
   }
 
@@ -213,6 +228,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final Address contractAddress,
       final Hash blockHash,
       final String privacyUserId) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
 
     return privateWorldStateReader.getContractCode(privacyGroupId, blockHash, contractAddress);
   }
@@ -225,6 +241,8 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   @Override
   public Optional<Hash> getStateRootByBlockNumber(
       final String privacyGroupId, final String privacyUserId, final long blockNumber) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
     return blockchain
         .getBlockByNumber(blockNumber)
         .map(
@@ -239,18 +257,21 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final Bytes32 privacyGroupId,
       final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported for UnrestrictedPrivacy - you can not send a payload without it being on-chain");
   }
 
   @Override
   public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
       final String toBase64String, final String privacyUserId) {
+
     return findPrivacyGroupByGroupId(toBase64String, privacyUserId);
   }
 
   @Override
   public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
       final String privacyGroupId, final String privacyUserId) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
     return Optional.of(
         new PrivacyGroup(
             privacyGroupId,
@@ -290,11 +311,18 @@ public class UnrestrictedPrivacyController implements PrivacyController {
 
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
-      final String privacyGroupId, final String privacyUserId)
-      throws MultiTenancyValidationException {}
+      final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber) {
+    if (!privacyService
+        .getPrivacyGroupAuthProvider()
+        .canAccess(privacyGroupId, privacyUserId, blockNumber)) {
+      throw new MultiTenancyValidationException(
+          "PrivacyUserId " + privacyUserId + " does not have access to " + privacyGroupId);
+    }
+  }
 
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
-      final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber)
-      throws MultiTenancyValidationException {}
+      final String privacyUserId, final String privacyGroupId) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId, Optional.empty());
+  }
 }

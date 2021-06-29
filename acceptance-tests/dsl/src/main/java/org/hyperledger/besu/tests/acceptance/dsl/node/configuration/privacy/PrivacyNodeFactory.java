@@ -131,7 +131,7 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork)
       throws IOException {
     return createIbft2NodePrivacyEnabled(
-        name, privacyAccount, false, enclaveType, containerNetwork, false, false, false, "0x00");
+        name, privacyAccount, false, enclaveType, containerNetwork, false, false, false, "0xAA");
   }
 
   public PrivacyNode createIbft2NodePrivacyEnabled(

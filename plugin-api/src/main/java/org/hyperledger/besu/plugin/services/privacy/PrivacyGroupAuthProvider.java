@@ -12,18 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services;
+package org.hyperledger.besu.plugin.services.privacy;
 
-import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
-import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
+import java.util.Optional;
 
-public interface PrivacyService extends BesuService {
-  void setUnrestrictedPayloadEncryptionProvider(
-      PrivacyPayloadEncryptionProvider privacyPayloadEncryptionProvider);
-
-  PrivacyPayloadEncryptionProvider getUnrestrictedPayloadEncryptionProvider();
-
-  void setPrivacyGroupAuthProvider(PrivacyGroupAuthProvider privacyGroupAuthProvider);
-
-  PrivacyGroupAuthProvider getPrivacyGroupAuthProvider();
+@FunctionalInterface
+public interface PrivacyGroupAuthProvider {
+  boolean canAccess(String privacyGroupId, String privacyUserId, Optional<Long> blockNumber);
 }

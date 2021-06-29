@@ -111,7 +111,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
           false,
           false,
           bftPrivacyType.restriction == Restriction.UNRESTRICTED,
-          "0x00");
+          "0xAA");
     } else if (bftPrivacyType.consensusType == ConsensusType.QBFT) {
       return privacyBesu.createQbftNodePrivacyEnabled(
           nodeName,

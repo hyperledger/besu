@@ -39,18 +39,16 @@ public class TestPermissioningPlugin implements BesuPlugin {
       "ce7edc292d7b747fab2f23584bbafaffde5c8ff17cf689969614441e0527b90015ea9fee96aed6d9c0fc2fbe0bd1883dee223b3200246ff1e21976bdbc9a0fc8";
 
   PermissioningService service;
-  Options options;
 
   @Override
   public void register(final BesuContext context) {
-    options = new Options();
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("permissioning", options);
+    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("permissioning", this);
     service = context.getService(PermissioningService.class).get();
   }
 
   @Override
   public void start() {
-    if (options.enabled) {
+    if (enabled) {
       service.registerNodePermissioningProvider(
           (sourceEnode, destinationEnode) -> {
             if (sourceEnode.toString().contains(bobNode)
@@ -88,8 +86,6 @@ public class TestPermissioningPlugin implements BesuPlugin {
   @Override
   public void stop() {}
 
-  public static class Options {
-    @Option(names = "--plugin-permissioning-enabled")
-    boolean enabled = false;
-  }
+  @Option(names = "--plugin-permissioning-enabled")
+  boolean enabled = false;
 }

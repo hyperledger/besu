@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.plugin.services.PrivacyService;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
 
 import java.util.ArrayList;
@@ -105,6 +106,15 @@ public class UnrestrictedPrivacyPrecompiledContractTest {
                       public PrivacyPayloadEncryptionProvider
                           getUnrestrictedPayloadEncryptionProvider() {
                         return new UnencryptedPayloadEncryptionService();
+                      }
+
+                      @Override
+                      public void setPrivacyGroupAuthProvider(
+                          final PrivacyGroupAuthProvider privacyGroupAuthProvider) {}
+
+                      @Override
+                      public PrivacyGroupAuthProvider getPrivacyGroupAuthProvider() {
+                        return (privacyGroupId, privacyUserId, blockNumber) -> true;
                       }
                     })
                 .setEnclaveFactory(mock(EnclaveFactory.class))

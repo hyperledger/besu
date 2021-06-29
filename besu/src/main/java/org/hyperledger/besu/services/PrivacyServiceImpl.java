@@ -16,19 +16,33 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.ethereum.core.UnencryptedPayloadEncryptionService;
 import org.hyperledger.besu.plugin.services.PrivacyService;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
 
 public class PrivacyServiceImpl implements PrivacyService {
-  PrivacyPayloadEncryptionProvider provider = new UnencryptedPayloadEncryptionService();
+  private PrivacyPayloadEncryptionProvider privacyPayloadEncryptionProvider =
+      new UnencryptedPayloadEncryptionService();
+  private PrivacyGroupAuthProvider privacyGroupAuthProvider =
+      (privacyGroupId, privacyUserId, blockNumber) -> true;
 
   @Override
   public void setUnrestrictedPayloadEncryptionProvider(
-      final PrivacyPayloadEncryptionProvider provider) {
-    this.provider = provider;
+      final PrivacyPayloadEncryptionProvider privacyPayloadEncryptionProvider) {
+    this.privacyPayloadEncryptionProvider = privacyPayloadEncryptionProvider;
   }
 
   @Override
   public PrivacyPayloadEncryptionProvider getUnrestrictedPayloadEncryptionProvider() {
-    return provider;
+    return privacyPayloadEncryptionProvider;
+  }
+
+  @Override
+  public void setPrivacyGroupAuthProvider(final PrivacyGroupAuthProvider privacyGroupAuthProvider) {
+    this.privacyGroupAuthProvider = privacyGroupAuthProvider;
+  }
+
+  @Override
+  public PrivacyGroupAuthProvider getPrivacyGroupAuthProvider() {
+    return privacyGroupAuthProvider;
   }
 }

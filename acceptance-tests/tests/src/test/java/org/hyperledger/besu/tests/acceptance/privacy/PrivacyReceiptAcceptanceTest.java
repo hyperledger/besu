@@ -55,7 +55,7 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
             false,
             false,
             restriction == UNRESTRICTED,
-            "0x00");
+            "0xAA");
     privacyCluster.start(alice);
   }
 

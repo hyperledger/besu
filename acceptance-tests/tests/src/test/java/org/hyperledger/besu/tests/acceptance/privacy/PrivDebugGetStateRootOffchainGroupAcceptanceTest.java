@@ -54,7 +54,7 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
             false,
             false,
             restriction == UNRESTRICTED,
-            "0x00");
+            "0xAA");
     bobNode =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "bob-node",
@@ -65,7 +65,7 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
             false,
             false,
             restriction == UNRESTRICTED,
-            "0x01");
+            "0xBB");
 
     privacyCluster.start(aliceNode, bobNode);
   }

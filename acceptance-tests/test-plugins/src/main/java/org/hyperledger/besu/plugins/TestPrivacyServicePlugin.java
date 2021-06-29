@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugins;
 
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
+import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.serialize;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.plugin.BesuContext;
@@ -27,42 +28,52 @@ import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProv
 import java.util.Optional;
 
 import com.google.auto.service.AutoService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Option;
 
 @AutoService(BesuPlugin.class)
 public class TestPrivacyServicePlugin implements BesuPlugin {
-  private Options options;
+  private static final Logger LOG = LogManager.getLogger();
+
   private PrivacyService service;
 
   @Override
   public void register(final BesuContext context) {
-    options = new TestPrivacyServicePlugin.Options();
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", options);
+    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
     service = context.getService(PrivacyService.class).get();
   }
 
   @Override
   public void start() {
-    if (options.enabled) {
+    if (enabled) {
       service.setUnrestrictedPayloadEncryptionProvider(
           new PrivacyPayloadEncryptionProvider() {
             @Override
             public Bytes encryptMarkerPayload(
                 final PrivateTransaction privateTransaction, final String privacyUserId) {
-              return Bytes.fromHexString(options.prefix).and(privateTransaction.getPayload());
+
+              return Bytes.wrap(
+                  Bytes.fromHexString(prefix), serialize(privateTransaction).encoded());
             }
 
             @Override
             public Optional<PrivateTransaction> decryptMarkerPayload(
                 final long blockNumber, final Bytes payload) {
-              if (payload.toHexString().startsWith(options.prefix)) {
-                final BytesValueRLPInput bytesValueRLPInput =
-                    new BytesValueRLPInput(payload, false);
-                return Optional.of(readFrom(bytesValueRLPInput));
-              }
 
-              return Optional.empty();
+              LOG.info("decrypting payload in block " + blockNumber + " for " + prefix);
+
+              final Bytes prefixBytes = Bytes.fromHexString(prefix);
+              if (payload.slice(0, prefixBytes.size()).equals(prefixBytes)) {
+                LOG.info("processing payload for" + prefix);
+                final BytesValueRLPInput bytesValueRLPInput =
+                    new BytesValueRLPInput(payload.slice(prefixBytes.size()).copy(), false);
+                return Optional.of(readFrom(bytesValueRLPInput));
+              } else {
+                LOG.info("Can not process payload for" + prefix);
+                return Optional.empty();
+              }
             }
           });
     }
@@ -71,11 +82,9 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   @Override
   public void stop() {}
 
-  public static class Options {
-    @Option(names = "--plugin-privacy-service-encryption-enabled")
-    boolean enabled = false;
+  @Option(names = "--plugin-privacy-service-encryption-enabled")
+  boolean enabled = false;
 
-    @Option(names = "--plugin-privacy-service-encryption-prefix")
-    String prefix;
-  }
+  @Option(names = "--plugin-privacy-service-encryption-prefix")
+  String prefix;
 }
