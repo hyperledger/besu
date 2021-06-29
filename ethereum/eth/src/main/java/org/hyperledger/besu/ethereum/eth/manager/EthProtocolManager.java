@@ -238,6 +238,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (message.getData().getSize() > 10 * 1_000_000 /*10MB*/) {
       LOG.debug("Received message over 10MB. Disconnecting from {}", peer);
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      return;
     }
 
     // Handle STATUS processing
