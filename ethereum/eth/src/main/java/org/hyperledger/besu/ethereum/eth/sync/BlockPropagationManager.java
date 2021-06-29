@@ -261,9 +261,8 @@ public class BlockPropagationManager {
     }
   }
 
-  @SuppressWarnings("unused")
   private CompletableFuture<Block> retrieveMissingAnnouncedBlock(final long blockNumber) {
-    LOG.info("retrieveMissingAnnouncedBlock " + blockNumber);
+    LOG.debug("Retrieve missing announced block {} from peer", blockNumber);
     final List<EthPeer> peers =
         ethContext.getEthPeers().streamBestPeers().collect(Collectors.toList());
     final GetBlockFromPeersTask getBlockTask =
