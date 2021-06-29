@@ -16,6 +16,8 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -84,15 +86,15 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
-  private BftConfigOptions bftConfig;
+  private QbftConfigOptions qbftConfig;
   private ValidatorPeers peers;
   private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
   private final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataCodec);
 
   @Override
   protected void prepForBuild() {
-    bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
-    bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
+    qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
+    bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
   }
 
   @Override
@@ -135,7 +137,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
+            qbftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
             bftExtraDataCodec);
 
     final ValidatorProvider validatorProvider =
@@ -149,7 +151,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     peers = new ValidatorPeers(validatorProvider, Istanbul100SubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
-        new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
+        new UniqueMessageMulticaster(peers, qbftConfig.getGossipedHistoryLimit());
 
     final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster);
 
@@ -160,8 +162,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(bftEventQueue, bftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
+            new RoundTimer(bftEventQueue, qbftConfig.getRequestTimeoutSeconds(), bftExecutors),
+            new BlockTimer(bftEventQueue, qbftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
             blockCreatorFactory,
             clock);
 
