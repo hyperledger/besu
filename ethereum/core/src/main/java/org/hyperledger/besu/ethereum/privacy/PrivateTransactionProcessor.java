@@ -184,7 +184,7 @@ public class PrivateTransactionProcessor {
       messageFrameStack.addFirst(initialFrame);
 
       while (!messageFrameStack.isEmpty()) {
-        process(messageFrameStack.peekFirst(), operationTracer);
+        process(messageFrameStack.peekFirst(), OperationTracer.NO_TRACING);
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
