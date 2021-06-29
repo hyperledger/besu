@@ -108,6 +108,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public QbftConfigOptions getQbftConfigOptions() {
+    return QbftConfigOptions.DEFAULT;
+  }
+
+  @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
   }
