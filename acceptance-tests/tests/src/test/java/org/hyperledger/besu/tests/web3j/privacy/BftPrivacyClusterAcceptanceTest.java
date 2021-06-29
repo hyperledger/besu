@@ -33,6 +33,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
+import org.web3j.utils.Restriction;
 
 @RunWith(Parameterized.class)
 public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
@@ -41,15 +42,21 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   public static class BftPrivacyType {
     private final EnclaveType enclaveType;
     private final ConsensusType consensusType;
+    private final Restriction restriction;
 
-    public BftPrivacyType(final EnclaveType enclaveType, final ConsensusType consensusType) {
+    public BftPrivacyType(
+        final EnclaveType enclaveType,
+        final ConsensusType consensusType,
+        final Restriction restriction) {
       this.enclaveType = enclaveType;
       this.consensusType = consensusType;
+      this.restriction = restriction;
     }
 
     @Override
     public String toString() {
-      return String.join(",", enclaveType.toString(), consensusType.toString());
+      return String.join(
+          ",", enclaveType.toString(), consensusType.toString(), restriction.toString());
     }
   }
 
@@ -60,15 +67,21 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Parameterized.Parameters(name = "{0}")
   public static Collection<BftPrivacyType> bftPrivacyTypes() {
     final List<BftPrivacyType> bftPrivacyTypes = new ArrayList<>();
-    for (EnclaveType enclaveType : EnclaveType.values()) {
-      for (ConsensusType consensusType : ConsensusType.values()) {
-        bftPrivacyTypes.add(new BftPrivacyType(enclaveType, consensusType));
+    for (EnclaveType x : EnclaveType.values()) {
+      if (!x.equals(EnclaveType.NOOP)) {
+        for (ConsensusType consensusType : ConsensusType.values()) {
+          bftPrivacyTypes.add(new BftPrivacyType(x, consensusType, Restriction.RESTRICTED));
+        }
       }
     }
+
+    for (ConsensusType consensusType : ConsensusType.values()) {
+      bftPrivacyTypes.add(
+          new BftPrivacyType(EnclaveType.NOOP, consensusType, Restriction.UNRESTRICTED));
+    }
+
     return bftPrivacyTypes;
   }
-
-  private static final long IBFT2_CHAIN_ID = 4;
 
   private PrivacyNode alice;
   private PrivacyNode bob;
@@ -92,14 +105,21 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
       return privacyBesu.createIbft2NodePrivacyEnabled(
           nodeName,
           privacyAccountResolver.resolve(privacyAccount),
+          true,
           bftPrivacyType.enclaveType,
-          Optional.of(containerNetwork));
+          Optional.of(containerNetwork),
+          false,
+          false,
+          bftPrivacyType.restriction == Restriction.UNRESTRICTED);
     } else if (bftPrivacyType.consensusType == ConsensusType.QBFT) {
       return privacyBesu.createQbftNodePrivacyEnabled(
           nodeName,
           privacyAccountResolver.resolve(privacyAccount),
           bftPrivacyType.enclaveType,
-          Optional.of(containerNetwork));
+          Optional.of(containerNetwork),
+          false,
+          false,
+          bftPrivacyType.restriction == Restriction.UNRESTRICTED);
     } else {
       throw new IllegalStateException("Unknown consensus type " + bftPrivacyType.consensusType);
     }
@@ -115,7 +135,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -129,7 +149,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -139,7 +159,10 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob.verify(
         privateTransactionVerifier.validPrivateTransactionReceipt(
             transactionHash, expectedReceipt));
-    charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(transactionHash));
+
+    if (bftPrivacyType.restriction != Restriction.UNRESTRICTED) {
+      charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(transactionHash));
+    }
   }
 
   @Test
@@ -153,7 +176,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -168,7 +191,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -187,7 +210,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey(),
                 charlie.getEnclaveKey()));
@@ -203,7 +226,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 firstEventEmitter.getContractAddress(),
                 firstEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 charlie.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 charlie.getEnclaveKey(),
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
@@ -228,7 +251,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -243,7 +266,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                 secondEventEmitter.getContractAddress(),
                 secondEventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 bob.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                bftPrivacyType.restriction,
                 bob.getEnclaveKey(),
                 alice.getEnclaveKey()));
 
@@ -256,6 +279,8 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             secondTransactionHash, secondExpectedReceipt));
 
     // charlie cannot see the receipt
-    charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(secondTransactionHash));
+    if (bftPrivacyType.restriction != Restriction.UNRESTRICTED) {
+      charlie.verify(privateTransactionVerifier.noPrivateTransactionReceipt(secondTransactionHash));
+    }
   }
 }

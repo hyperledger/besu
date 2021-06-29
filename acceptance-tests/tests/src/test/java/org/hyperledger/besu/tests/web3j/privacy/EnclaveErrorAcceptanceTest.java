@@ -18,44 +18,68 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.crypto.sodium.Box;
 import org.assertj.core.api.Condition;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
+import org.web3j.utils.Restriction;
 
-public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public EnclaveErrorAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
+@RunWith(Parameterized.class)
+public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
+
+  private final PrivacyNode alice;
+  private final PrivacyNode bob;
+  private final String wrongPublicKey;
+
+  @Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return Arrays.stream(EnclaveType.values())
+        .filter(enclaveType -> enclaveType != EnclaveType.NOOP)
+        .collect(Collectors.toList());
   }
 
-  private static final long IBFT2_CHAIN_ID = 4;
+  public EnclaveErrorAcceptanceTest(final EnclaveType enclaveType) throws IOException {
 
-  private PrivacyNode alice;
-  private PrivacyNode bob;
-  private String wrongPublicKey;
-
-  @Before
-  public void setUp() throws Exception {
     final Network containerNetwork = Network.newNetwork();
 
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
-            "node1", privacyAccountResolver.resolve(0), enclaveType, Optional.of(containerNetwork));
+            "node1",
+            privacyAccountResolver.resolve(0),
+            false,
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            false);
     bob =
         privacyBesu.createIbft2NodePrivacyEnabled(
-            "node2", privacyAccountResolver.resolve(1), enclaveType, Optional.of(containerNetwork));
+            "node2",
+            privacyAccountResolver.resolve(1),
+            false,
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            false);
     privacyCluster.start(alice, bob);
 
     wrongPublicKey =
@@ -71,7 +95,6 @@ public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
                     privateContractTransactions.createSmartContract(
                         EventEmitter.class,
                         alice.getTransactionSigningKey(),
-                        IBFT2_CHAIN_ID,
                         wrongPublicKey,
                         bob.getEnclaveKey())));
 
@@ -89,7 +112,6 @@ public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
                     privateContractTransactions.createSmartContract(
                         EventEmitter.class,
                         alice.getTransactionSigningKey(),
-                        IBFT2_CHAIN_ID,
                         alice.getEnclaveKey(),
                         wrongPublicKey)));
 
@@ -107,7 +129,6 @@ public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -122,7 +143,7 @@ public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
                 eventEmitter.getContractAddress(),
                 eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
+                Restriction.RESTRICTED,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -150,7 +171,6 @@ public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 alice.getTransactionSigningKey(),
-                IBFT2_CHAIN_ID,
                 alice.getEnclaveKey(),
                 bob.getEnclaveKey()));
 
@@ -168,7 +188,7 @@ public class EnclaveErrorAcceptanceTest extends ParameterizedEnclaveTestBase {
                         eventEmitter.getContractAddress(),
                         eventEmitter.store(BigInteger.ONE).encodeFunctionCall(),
                         alice.getTransactionSigningKey(),
-                        IBFT2_CHAIN_ID,
+                        Restriction.RESTRICTED,
                         alice.getEnclaveKey(),
                         bob.getEnclaveKey())));
 

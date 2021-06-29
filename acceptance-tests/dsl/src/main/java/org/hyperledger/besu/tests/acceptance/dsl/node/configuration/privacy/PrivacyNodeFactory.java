@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy;
 
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
@@ -55,19 +54,23 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork)
       throws IOException {
     return createPrivateTransactionEnabledMinerNode(
-        name, privacyAccount, Address.PRIVACY, enclaveType, containerNetwork);
+        name, privacyAccount, enclaveType, containerNetwork, false, false, false);
   }
 
   public PrivacyNode createPrivateTransactionEnabledMinerNode(
       final String name,
       final PrivacyAccount privacyAccount,
-      final int privacyAddress,
       final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
+      final Optional<Network> containerNetwork,
+      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isMultitenancyEnabled,
+      final boolean isUnrestrictedEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            privacyAddress,
+            isOnchainPrivacyGroupEnabled,
+            isMultitenancyEnabled,
+            isUnrestrictedEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -89,19 +92,23 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork)
       throws IOException {
     return createPrivateTransactionEnabledNode(
-        name, privacyAccount, Address.PRIVACY, enclaveType, containerNetwork);
+        name, privacyAccount, enclaveType, containerNetwork, false, false, false);
   }
 
   public PrivacyNode createPrivateTransactionEnabledNode(
       final String name,
       final PrivacyAccount privacyAccount,
-      final int privacyAddress,
       final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
+      final Optional<Network> containerNetwork,
+      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isMultitenancyEnabled,
+      final boolean isUnrestrictedEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            privacyAddress,
+            isOnchainPrivacyGroupEnabled,
+            isMultitenancyEnabled,
+            isUnrestrictedEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .jsonRpcEnabled()
@@ -115,16 +122,6 @@ public class PrivacyNodeFactory {
         containerNetwork);
   }
 
-  public PrivacyNode createIbft2NodePrivacyMiningEnabled(
-      final String name,
-      final PrivacyAccount privacyAccount,
-      final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
-      throws IOException {
-    return createIbft2NodePrivacyEnabled(
-        name, privacyAccount, Address.PRIVACY, true, enclaveType, containerNetwork);
-  }
-
   public PrivacyNode createIbft2NodePrivacyEnabled(
       final String name,
       final PrivacyAccount privacyAccount,
@@ -132,20 +129,24 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork)
       throws IOException {
     return createIbft2NodePrivacyEnabled(
-        name, privacyAccount, Address.PRIVACY, false, enclaveType, containerNetwork);
+        name, privacyAccount, false, enclaveType, containerNetwork, false, false, false);
   }
 
   public PrivacyNode createIbft2NodePrivacyEnabled(
       final String name,
       final PrivacyAccount privacyAccount,
-      final int privacyAddress,
       final boolean minerEnabled,
       final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
+      final Optional<Network> containerNetwork,
+      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isMultitenancyEnabled,
+      final boolean isUnrestrictedEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            privacyAddress,
+            isOnchainPrivacyGroupEnabled,
+            isMultitenancyEnabled,
+            isUnrestrictedEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -166,11 +167,16 @@ public class PrivacyNodeFactory {
       final String name,
       final PrivacyAccount privacyAccount,
       final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
+      final Optional<Network> containerNetwork,
+      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isMultitenancyEnabled,
+      final boolean isUnrestrictedEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            Address.PRIVACY,
+            isOnchainPrivacyGroupEnabled,
+            isMultitenancyEnabled,
+            isUnrestrictedEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -190,7 +196,6 @@ public class PrivacyNodeFactory {
   public PrivacyNode createOnChainPrivacyGroupEnabledMinerNode(
       final String name,
       final PrivacyAccount privacyAccount,
-      final int privacyAddress,
       final boolean multiTenancyEnabled,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork)
@@ -203,9 +208,9 @@ public class PrivacyNodeFactory {
     }
     return create(
         new PrivacyNodeConfiguration(
-            privacyAddress,
             true,
             multiTenancyEnabled,
+            false,
             besuNodeConfigurationBuilder
                 .name(name)
                 .miningEnabled()
@@ -223,16 +228,15 @@ public class PrivacyNodeFactory {
   public PrivacyNode createOnChainPrivacyGroupEnabledNode(
       final String name,
       final PrivacyAccount privacyAccount,
-      final int privacyAddress,
       final boolean multiTenancyEnabled,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
-            privacyAddress,
             true,
             multiTenancyEnabled,
+            false,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .jsonRpcEnabled()

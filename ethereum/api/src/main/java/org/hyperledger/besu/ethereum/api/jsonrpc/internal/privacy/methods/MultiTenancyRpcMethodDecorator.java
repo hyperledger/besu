@@ -48,7 +48,7 @@ public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
     if (user.isEmpty()) {
       LOG.error("Request does not contain an authorization token");
       return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
-    } else if (MultiTenancyUserUtil.enclavePublicKey(user).isEmpty()) {
+    } else if (MultiTenancyUserUtil.privacyUserId(user).isEmpty()) {
       LOG.error("Request token does not contain an enclave public key");
       return new JsonRpcErrorResponse(id, JsonRpcError.INVALID_REQUEST);
     } else {

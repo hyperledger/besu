@@ -98,7 +98,6 @@ public class OnChainPrivacyAcceptanceTestBase extends PrivacyAcceptanceTestBase 
             Address.ONCHAIN_PRIVACY_PROXY.toHexString(),
             GET_PARTICIPANTS_METHOD_SIGNATURE.toString(),
             groupCreator.getTransactionSigningKey(),
-            POW_CHAIN_ID,
             privateFrom,
             privacyGroupId));
   }

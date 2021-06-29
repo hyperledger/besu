@@ -124,7 +124,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
    * Installs a new private log filter
    *
    * @param privacyGroupId String privacyGroupId
-   * @param enclavePublicKey String enclavePublicKey of user creating the filter
+   * @param privacyUserId String privacyUserId of user creating the filter
    * @param fromBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
    * @param toBlock {@link BlockParameter} Integer block number, or latest/pending/earliest.
    * @param logsQuery {@link LogsQuery} Addresses and/or topics to filter by
@@ -132,14 +132,14 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
    */
   public String installPrivateLogFilter(
       final String privacyGroupId,
-      final String enclavePublicKey,
+      final String privacyUserId,
       final BlockParameter fromBlock,
       final BlockParameter toBlock,
       final LogsQuery logsQuery) {
     final String filterId = filterIdGenerator.nextId();
     filterRepository.save(
         new PrivateLogFilter(
-            filterId, privacyGroupId, enclavePublicKey, fromBlock, toBlock, logsQuery));
+            filterId, privacyGroupId, privacyUserId, fromBlock, toBlock, logsQuery));
     return filterId;
   }
 
@@ -231,7 +231,7 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
         .filter(
             privateLogFilter ->
                 privateLogFilter.getPrivacyGroupId().equals(event.getPrivacyGroupId())
-                    && privateLogFilter.getEnclavePublicKey().equals(event.getEnclavePublicKey()))
+                    && privateLogFilter.getPrivacyUserId().equals(event.getPrivacyUserId()))
         .forEach(
             privateLogFilter -> {
               uninstallFilter(privateLogFilter.getId());

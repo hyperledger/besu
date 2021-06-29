@@ -46,7 +46,7 @@ public class PrivacyParameters {
 
   private boolean enabled;
   private URI enclaveUri;
-  private String enclavePublicKey;
+  private String privacyUserId;
   private File enclavePublicKeyFile;
   private Optional<KeyPair> signingKeyPair = Optional.empty();
   private Enclave enclave;
@@ -55,12 +55,19 @@ public class PrivacyParameters {
   private PrivateStateStorage privateStateStorage;
   private boolean multiTenancyEnabled;
   private boolean onchainPrivacyGroupsEnabled;
+  private boolean unrestrictedPrivacyEnabled;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
 
-  public Integer getPrivacyAddress() {
-    return onchainPrivacyGroupsEnabled ? Address.PRIVACY - 1 : Address.PRIVACY;
+  public Address getPrivacyAddress() {
+    if (isUnrestrictedPrivacyEnabled()) {
+      return Address.UNRESTRICTED_PRIVACY;
+    } else if (isOnchainPrivacyGroupsEnabled()) {
+      return Address.ONCHAIN_PRIVACY;
+    } else {
+      return Address.DEFAULT_PRIVACY;
+    }
   }
 
   public Boolean isEnabled() {
@@ -79,13 +86,13 @@ public class PrivacyParameters {
     this.enclaveUri = enclaveUri;
   }
 
-  public String getEnclavePublicKey() {
-    return enclavePublicKey;
+  public String getPrivacyUserId() {
+    return privacyUserId;
   }
 
   @VisibleForTesting
-  public void setEnclavePublicKey(final String enclavePublicKey) {
-    this.enclavePublicKey = enclavePublicKey;
+  public void setPrivacyUserId(final String privacyUserId) {
+    this.privacyUserId = privacyUserId;
   }
 
   public File getEnclavePublicKeyFile() {
@@ -152,6 +159,14 @@ public class PrivacyParameters {
     return onchainPrivacyGroupsEnabled;
   }
 
+  private void setUnrestrictedPrivacyEnabled(final boolean unrestrictedPrivacyEnabled) {
+    this.unrestrictedPrivacyEnabled = unrestrictedPrivacyEnabled;
+  }
+
+  public boolean isUnrestrictedPrivacyEnabled() {
+    return unrestrictedPrivacyEnabled;
+  }
+
   public PrivateStateRootResolver getPrivateStateRootResolver() {
     return privateStateRootResolver;
   }
@@ -186,6 +201,8 @@ public class PrivacyParameters {
         + enabled
         + ", multiTenancyEnabled = "
         + multiTenancyEnabled
+        + ", unrestrictedPrivacyEnabled = "
+        + unrestrictedPrivacyEnabled
         + ", onchainPrivacyGroupsEnabled = "
         + onchainPrivacyGroupsEnabled
         + ", enclaveUri='"
@@ -199,7 +216,7 @@ public class PrivacyParameters {
     private boolean enabled;
     private URI enclaveUrl;
     private File enclavePublicKeyFile;
-    private String enclavePublicKey;
+    private String privacyUserId;
     private Path privateKeyPath;
     private PrivacyStorageProvider storageProvider;
     private EnclaveFactory enclaveFactory;
@@ -208,6 +225,7 @@ public class PrivacyParameters {
     private Path privacyKeyStorePasswordFile;
     private Path privacyTlsKnownEnclaveFile;
     private boolean onchainPrivacyGroupsEnabled;
+    private boolean unrestrictedPrivacyEnabled;
     private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
@@ -260,6 +278,11 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setUnrestrictedPrivacyEnabled(final boolean unrestrictedPrivacyEnabled) {
+      this.unrestrictedPrivacyEnabled = unrestrictedPrivacyEnabled;
+      return this;
+    }
+
     public Builder setGoQuorumPrivacyParameters(
         final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
       this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
@@ -286,10 +309,12 @@ public class PrivacyParameters {
                 privateStateRootResolver, privateWorldStateArchive, privateStateStorage));
 
         config.setPrivateWorldStateArchive(privateWorldStateArchive);
-        config.setEnclavePublicKey(enclavePublicKey);
-        config.setEnclavePublicKeyFile(enclavePublicKeyFile);
+
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
+
+        config.setPrivacyUserId(privacyUserId);
+        config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         // pass TLS options to enclave factory if they are set
         if (privacyKeyStoreFile != null) {
           config.setEnclave(
@@ -301,22 +326,23 @@ public class PrivacyParameters {
         } else {
           config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
         }
+        config.setEnclaveUri(enclaveUrl);
 
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPairUtil.load(privateKeyPath.toFile()));
         }
       }
       config.setEnabled(enabled);
-      config.setEnclaveUri(enclaveUrl);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
+      config.setUnrestrictedPrivacyEnabled(unrestrictedPrivacyEnabled);
       config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
       return config;
     }
 
-    public Builder setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
+    public Builder setPrivacyUserIdUsingFile(final File publicKeyFile) throws IOException {
       this.enclavePublicKeyFile = publicKeyFile;
-      this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
+      this.privacyUserId = Files.asCharSource(publicKeyFile, UTF_8).read();
       validatePublicKey(publicKeyFile);
       return this;
     }
@@ -327,7 +353,7 @@ public class PrivacyParameters {
             "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
       }
       // throws exception if invalid base 64
-      Base64.getDecoder().decode(this.enclavePublicKey);
+      Base64.getDecoder().decode(this.privacyUserId);
     }
   }
 }
