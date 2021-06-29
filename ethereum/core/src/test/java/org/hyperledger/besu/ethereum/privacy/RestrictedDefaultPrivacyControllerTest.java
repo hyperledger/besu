@@ -73,7 +73,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultPrivacyControllerTest {
+public class RestrictedDefaultPrivacyControllerTest {
 
   private static final String TRANSACTION_KEY = "93Ky7lXwFkMc7+ckoFgUMku5bpr9tz4zhmWmk9RlNng=";
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -167,7 +167,7 @@ public class DefaultPrivacyControllerTest {
     enclave = mockEnclave();
 
     privacyController =
-        new DefaultPrivacyController(
+        new RestrictedDefaultPrivacyController(
             blockchain,
             privateStateStorage,
             enclave,
@@ -179,7 +179,7 @@ public class DefaultPrivacyControllerTest {
             privateWorldStateReader,
             privateStateRootResolver);
     brokenPrivacyController =
-        new DefaultPrivacyController(
+        new RestrictedDefaultPrivacyController(
             blockchain,
             privateStateStorage,
             brokenMockEnclave(),
@@ -197,7 +197,8 @@ public class DefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildLegacyPrivateTransaction(1);
 
     final String privateTransactionLookupId =
-        privacyController.sendTransaction(transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
+        privacyController.createPrivateMarkerTransactionPayload(
+            transaction, ENCLAVE_PUBLIC_KEY, Optional.empty());
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
@@ -220,7 +221,7 @@ public class DefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(1);
 
     final String privateTransactionLookupId =
-        privacyController.sendTransaction(
+        privacyController.createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY, Optional.of(PANTHEON_PRIVACY_GROUP));
 
     final ValidationResult<TransactionInvalidReason> validationResult =
@@ -281,7 +282,7 @@ public class DefaultPrivacyControllerTest {
     assertThatExceptionOfType(EnclaveServerException.class)
         .isThrownBy(
             () ->
-                brokenPrivacyController.sendTransaction(
+                brokenPrivacyController.createPrivateMarkerTransactionPayload(
                     buildLegacyPrivateTransaction(), ENCLAVE_PUBLIC_KEY, Optional.empty()));
   }
 
@@ -463,7 +464,7 @@ public class DefaultPrivacyControllerTest {
     final PrivateTransaction transaction = buildBesuPrivateTransaction(0);
 
     final String privateTransactionLookupId =
-        privacyController.sendTransaction(
+        privacyController.createPrivateMarkerTransactionPayload(
             transaction, ENCLAVE_PUBLIC_KEY, Optional.of(ONCHAIN_PRIVACY_GROUP));
 
     final Transaction onChainPrivateMarkerTransaction =

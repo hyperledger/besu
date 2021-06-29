@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
 public class PrivGetPrivacyPrecompileAddress implements JsonRpcMethod {
 
-  private final Integer privacyAddress;
+  private final Address privacyAddress;
 
   public PrivGetPrivacyPrecompileAddress(final PrivacyParameters privacyParameters) {
     privacyAddress = privacyParameters.getPrivacyAddress();
@@ -38,6 +38,6 @@ public class PrivGetPrivacyPrecompileAddress implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), Address.privacyPrecompiled(privacyAddress).toString());
+        requestContext.getRequest().getId(), privacyAddress.toString());
   }
 }

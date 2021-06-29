@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.privacyUserId;
 
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.util.InvalidConfigurationException;
@@ -24,32 +24,32 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 
 @FunctionalInterface
-public interface EnclavePublicKeyProvider {
+public interface PrivacyIdProvider {
 
-  String getEnclaveKey(Optional<User> user);
+  String getPrivacyUserId(Optional<User> user);
 
-  static EnclavePublicKeyProvider build(final PrivacyParameters privacyParameters) {
+  static PrivacyIdProvider build(final PrivacyParameters privacyParameters) {
     if (privacyParameters.getGoQuorumPrivacyParameters().isPresent()) {
-      return goQuorumEnclavePublicKeyProvider(privacyParameters);
+      return goQuorumPrivacyUserIdProvider(privacyParameters);
     } else if (privacyParameters.isMultiTenancyEnabled()) {
-      return multiTenancyEnclavePublicKeyProvider();
+      return multiTenancyPrivacyUserIdProvider();
     }
-    return defaultEnclavePublicKeyProvider(privacyParameters);
+    return defaultPrivacyUserIdProvider(privacyParameters);
   }
 
-  private static EnclavePublicKeyProvider multiTenancyEnclavePublicKeyProvider() {
+  private static PrivacyIdProvider multiTenancyPrivacyUserIdProvider() {
     return user ->
-        enclavePublicKey(user)
+        privacyUserId(user)
             .orElseThrow(
                 () -> new IllegalStateException("Request does not contain an authorization token"));
   }
 
-  private static EnclavePublicKeyProvider defaultEnclavePublicKeyProvider(
+  private static PrivacyIdProvider defaultPrivacyUserIdProvider(
       final PrivacyParameters privacyParameters) {
-    return user -> privacyParameters.getEnclavePublicKey();
+    return user -> privacyParameters.getPrivacyUserId();
   }
 
-  private static EnclavePublicKeyProvider goQuorumEnclavePublicKeyProvider(
+  private static PrivacyIdProvider goQuorumPrivacyUserIdProvider(
       final PrivacyParameters privacyParameters) {
     return user ->
         privacyParameters

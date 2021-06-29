@@ -31,17 +31,17 @@ public abstract class PrivateMarkerTransactionFactory {
   }
 
   public Transaction create(
-      final String privateTransactionLookupId, final PrivateTransaction privateTransaction) {
-    return create(privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
+      final String privateMarkerTransactionPayload, final PrivateTransaction privateTransaction) {
+    return create(privateMarkerTransactionPayload, privateTransaction, privacyPrecompileAddress);
   }
 
   public abstract Transaction create(
-      final String privateTransactionLookupId,
+      final String privateMarkerTransactionPayload,
       final PrivateTransaction privateTransaction,
       final Address precompileAddress);
 
   protected Transaction create(
-      final String privateTransactionLookupId,
+      final String privateMarkerTransactionPayload,
       final PrivateTransaction privateTransaction,
       final long nonce,
       final KeyPair signingKey,
@@ -53,7 +53,7 @@ public abstract class PrivateMarkerTransactionFactory {
         .gasLimit(privateTransaction.getGasLimit())
         .to(precompileAddress)
         .value(privateTransaction.getValue())
-        .payload(Bytes.fromBase64String(privateTransactionLookupId))
+        .payload(Bytes.fromBase64String(privateMarkerTransactionPayload))
         .signAndBuild(signingKey);
   }
 }
