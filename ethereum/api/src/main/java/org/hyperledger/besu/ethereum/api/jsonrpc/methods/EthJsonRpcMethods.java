@@ -119,7 +119,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthBlockNumber(blockchainQueries),
         new EthGetBalance(blockchainQueries),
         new EthGetBlockByHash(blockchainQueries, blockResult),
-        new EthGetBlockByNumber(blockchainQueries, blockResult),
+        new EthGetBlockByNumber(blockchainQueries, blockResult, synchronizer),
         new EthGetBlockTransactionCountByNumber(blockchainQueries),
         new EthGetBlockTransactionCountByHash(blockchainQueries),
         new EthCall(
