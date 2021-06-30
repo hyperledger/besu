@@ -245,4 +245,18 @@ public class PendingBlocksManagerTest {
     }
     assertThat(pendingBlocksManager.contains(reorgBlock.getHash())).isTrue();
   }
+
+  @Test
+  public void shouldReturnLowestBlockByNumber() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block parentBlock = gen.block();
+    final Block childBlock = gen.nextBlock(parentBlock);
+    final Block childBlock2 = gen.nextBlock(parentBlock);
+
+    pendingBlocksManager.registerPendingBlock(parentBlock, NODE_ID_1);
+    pendingBlocksManager.registerPendingBlock(childBlock, NODE_ID_1);
+    pendingBlocksManager.registerPendingBlock(childBlock2, NODE_ID_1);
+
+    assertThat(pendingBlocksManager.lowestAnnouncedBlock()).contains(parentBlock.getHeader());
+  }
 }
