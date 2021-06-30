@@ -103,4 +103,22 @@ public class BonsaiWorldStateArchiveTest {
     assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash(), false))
         .containsInstanceOf(BonsaiLayeredWorldState.class);
   }
+
+  @Test
+  public void testGetMutableWithStorageInconsistencyRollbackTheState() {
+
+    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain);
+    final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
+    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
+    final TrieLogLayer trieLogLayer = new TrieLogLayer();
+    trieLogLayer.setBlockHash(blockHeader.getHash());
+    trieLogLayer.writeTo(rlpLog);
+    when(keyValueStorage.get(blockHeader.getHash().toArrayUnsafe()))
+        .thenReturn(Optional.of(rlpLog.encoded().toArrayUnsafe()));
+
+    when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
+
+    assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash()))
+        .containsInstanceOf(BonsaiLayeredWorldState.class);
+  }
 }
