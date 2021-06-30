@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
@@ -46,9 +45,9 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -421,7 +420,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         messageFrame.getTransactionHash(),
         buildSimulationTransaction(privacyGroupId, privateWorldStateUpdater, methodSignature),
         messageFrame.getMiningBeneficiary(),
-        new DebugOperationTracer(TraceOptions.DEFAULT),
+        OperationTracer.NO_TRACING,
         messageFrame.getBlockHashLookup(),
         privacyGroupId);
   }
