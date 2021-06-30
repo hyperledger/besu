@@ -72,5 +72,4 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation 'org.springframework:spring-core'
 }

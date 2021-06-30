@@ -22,6 +22,7 @@ import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.pki.keystore.SoftwareKeyStoreWrapper;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,7 +52,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.springframework.util.SocketUtils;
 
 @RunWith(Parameterized.class)
 public class TLSContextFactoryTest {
@@ -83,7 +83,6 @@ public class TLSContextFactoryTest {
 
   private static final int MAX_NUMBER_MESSAGES = 10;
 
-  private static int port;
   private Server server;
   private Client client;
 
@@ -197,13 +196,10 @@ public class TLSContextFactoryTest {
   }
 
   @Before
-  public void init() throws IOException, InterruptedException {
-    port = SocketUtils.findAvailableTcpPort(49152);
-  }
+  public void init() throws IOException, InterruptedException {}
 
   @After
   public void tearDown() {
-    port = SocketUtils.findAvailableTcpPort(49152);
     if (client != null) {
       client.stop();
     }
@@ -246,8 +242,8 @@ public class TLSContextFactoryTest {
   public void testConnection() throws Exception {
     final CountDownLatch serverLatch = new CountDownLatch(MAX_NUMBER_MESSAGES);
     final CountDownLatch clientLatch = new CountDownLatch(MAX_NUMBER_MESSAGES);
-    server = startServer(port, serverKeyStoreWrapper, serverLatch);
-    client = startClient(port, clientKeyStoreWrapper, clientLatch);
+    server = startServer(serverKeyStoreWrapper, serverLatch);
+    client = startClient(server.port, clientKeyStoreWrapper, clientLatch);
 
     if (testSuccess) {
       client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0));
@@ -265,11 +261,10 @@ public class TLSContextFactoryTest {
     }
   }
 
-  private Server startServer(
-      final int port, final KeyStoreWrapper keyStoreWrapper, final CountDownLatch latch)
+  private Server startServer(final KeyStoreWrapper keyStoreWrapper, final CountDownLatch latch)
       throws Exception {
 
-    final Server nettyServer = new Server(port, validKeystorePassword, keyStoreWrapper, latch);
+    final Server nettyServer = new Server(validKeystorePassword, keyStoreWrapper, latch);
     nettyServer.start();
     return nettyServer;
   }
@@ -361,7 +356,7 @@ public class TLSContextFactoryTest {
   }
 
   static class Server {
-    private final int port;
+    private int port;
     private final String keystorePassword;
     private final KeyStoreWrapper keyStoreWrapper;
     private final CountDownLatch latch;
@@ -373,11 +368,9 @@ public class TLSContextFactoryTest {
     private final EventLoopGroup childGroup = new NioEventLoopGroup();
 
     Server(
-        final int port,
         final String keystorePassword,
         final KeyStoreWrapper keyStoreWrapper,
         final CountDownLatch latch) {
-      this.port = port;
       this.keystorePassword = keystorePassword;
       this.keyStoreWrapper = keyStoreWrapper;
       this.latch = latch;
@@ -405,9 +398,10 @@ public class TLSContextFactoryTest {
                 }
               });
 
-      final ChannelFuture cf = sb.bind(port).sync();
+      final ChannelFuture cf = sb.bind(0).sync();
       this.channel = cf.channel();
       this.channelFuture = cf;
+      this.port = ((InetSocketAddress) channel.localAddress()).getPort();
     }
 
     public void stop() {

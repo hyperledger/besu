@@ -144,7 +144,6 @@ dependencyManagement {
     dependency 'org.slf4j:slf4j-log4j12:1.7.26'
 
     dependency 'org.springframework.security:spring-security-crypto:5.4.2'
-    dependency 'org.springframework:spring-core:5.3.8'
     
     dependency 'org.web3j:abi:4.5.15'
     dependency 'org.web3j:besu:4.5.15'
