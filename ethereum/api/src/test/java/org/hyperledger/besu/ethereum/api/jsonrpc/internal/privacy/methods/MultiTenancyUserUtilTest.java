@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 
 import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.enclavePublicKey;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.privacyUserId;
 
 import java.util.Optional;
 
@@ -28,8 +28,8 @@ import org.junit.Test;
 public class MultiTenancyUserUtilTest {
 
   @Test
-  public void noEnclavePublicKeyWhenNoUserProvided() {
-    assertThat(enclavePublicKey(empty())).isEmpty();
+  public void noPrivacyUserIdWhenNoUserProvided() {
+    assertThat(privacyUserId(empty())).isEmpty();
   }
 
   @Test
@@ -37,7 +37,7 @@ public class MultiTenancyUserUtilTest {
     final JsonObject token = new JsonObject();
     final Optional<User> user = Optional.of(new JWTUser(token, ""));
 
-    assertThat(enclavePublicKey(user)).isEmpty();
+    assertThat(privacyUserId(user)).isEmpty();
   }
 
   @Test
@@ -46,6 +46,6 @@ public class MultiTenancyUserUtilTest {
     principle.put("privacyPublicKey", "ABC123");
     final Optional<User> user = Optional.of(new JWTUser(principle, ""));
 
-    assertThat(enclavePublicKey(user)).contains("ABC123");
+    assertThat(privacyUserId(user)).contains("ABC123");
   }
 }

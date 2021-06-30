@@ -24,30 +24,32 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Streams;
+
 public class EthFeeHistory implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
-  private final BlockchainQueries blockchainQueries;
   private final Blockchain blockchain;
 
-  public EthFeeHistory(
-      final ProtocolSchedule protocolSchedule, final BlockchainQueries blockchainQueries) {
+  public EthFeeHistory(final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
     this.protocolSchedule = protocolSchedule;
-    this.blockchainQueries = blockchainQueries;
-    this.blockchain = blockchainQueries.getBlockchain();
+    this.blockchain = blockchain;
   }
 
   @Override
@@ -143,8 +145,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(requestId, feeHistoryResultBuilder.build());
   }
 
-  private List<Long> computeRewards(
-      final List<Double> rewardPercentiles, final org.hyperledger.besu.ethereum.core.Block block) {
+  private List<Long> computeRewards(final List<Double> rewardPercentiles, final Block block) {
     final List<Transaction> transactions = block.getBody().getTransactions();
     if (transactions.isEmpty()) {
       // all 0's for empty block
@@ -155,11 +156,25 @@ public class EthFeeHistory implements JsonRpcMethod {
     }
 
     final Optional<Long> baseFee = block.getHeader().getBaseFee();
-    final List<Transaction> transactionsAscendingEffectiveGasFee =
-        transactions.stream()
+
+    // we need to get the gas used for the individual transactions and can't use the cumulative gas
+    // used because we're going to be reordering the transactions
+    final List<Long> transactionsGasUsed = new ArrayList<>();
+    for (final TransactionReceipt transactionReceipt :
+        blockchain.getTxReceipts(block.getHash()).get()) {
+      transactionsGasUsed.add(
+          transactionsGasUsed.isEmpty()
+              ? transactionReceipt.getCumulativeGasUsed()
+              : transactionReceipt.getCumulativeGasUsed()
+                  - transactionsGasUsed.get(transactionsGasUsed.size() - 1));
+    }
+    final List<Map.Entry<Transaction, Long>> transactionsAndGasUsedAscendingEffectiveGasFee =
+        Streams.zip(
+                transactions.stream(), transactionsGasUsed.stream(), AbstractMap.SimpleEntry::new)
             .sorted(
                 Comparator.comparing(
-                    transaction -> transaction.getEffectivePriorityFeePerGas(baseFee)))
+                    transactionAndGasUsed ->
+                        transactionAndGasUsed.getKey().getEffectivePriorityFeePerGas(baseFee)))
             .collect(toUnmodifiableList());
 
     // We need to weight the percentile of rewards by the gas used in the transaction.
@@ -168,18 +183,15 @@ public class EthFeeHistory implements JsonRpcMethod {
     final ArrayList<Long> rewards = new ArrayList<>();
     int rewardPercentileIndex = 0;
     long gasUsed = 0;
-    for (final Transaction transaction : transactionsAscendingEffectiveGasFee) {
+    for (final Map.Entry<Transaction, Long> transactionAndGasUsed :
+        transactionsAndGasUsedAscendingEffectiveGasFee) {
 
-      gasUsed +=
-          blockchainQueries
-              .transactionReceiptByTransactionHash(transaction.getHash())
-              .get()
-              .getGasUsed();
+      gasUsed += transactionAndGasUsed.getValue();
 
       while (rewardPercentileIndex < rewardPercentiles.size()
           && 100.0 * gasUsed / block.getHeader().getGasUsed()
               >= rewardPercentiles.get(rewardPercentileIndex)) {
-        rewards.add(transaction.getEffectivePriorityFeePerGas(baseFee));
+        rewards.add(transactionAndGasUsed.getKey().getEffectivePriorityFeePerGas(baseFee));
         rewardPercentileIndex++;
       }
     }

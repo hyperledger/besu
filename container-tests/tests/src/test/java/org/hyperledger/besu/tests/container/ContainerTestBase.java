@@ -173,7 +173,6 @@ public class ContainerTestBase {
             besuRpcPort.toString(),
             "--rpc-http-api",
             "ADMIN,ETH,NET,WEB3,GOQUORUM",
-            "--goquorum-compatibility-enabled",
             "--min-gas-price",
             "0",
             "--privacy-public-key-file",

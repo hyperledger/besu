@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -30,15 +30,15 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 public class PrivCall extends AbstractBlockParameterMethod {
 
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
   private final PrivacyController privacyController;
 
   public PrivCall(
       final BlockchainQueries blockchainQueries,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     super(blockchainQueries);
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
     this.privacyController = privacyController;
   }
 
@@ -58,13 +58,13 @@ public class PrivCall extends AbstractBlockParameterMethod {
     final JsonCallParameter callParams = validateAndGetCallParams(request);
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
 
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
     PrivUtil.checkMembershipForAuthenticatedUser(
-        privacyController, enclavePublicKeyProvider, request, privacyGroupId, blockNumber);
+        privacyController, privacyIdProvider, request, privacyGroupId, blockNumber);
 
     return privacyController
-        .simulatePrivateTransaction(privacyGroupId, enclavePublicKey, callParams, blockNumber)
+        .simulatePrivateTransaction(privacyGroupId, privacyUserId, callParams, blockNumber)
         .map(
             result ->
                 result

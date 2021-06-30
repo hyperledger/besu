@@ -25,12 +25,11 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.tx.Contract;
-import org.web3j.tx.LegacyPrivateTransactionManager;
-import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
 public class DeployPrivateSmartContractTransaction<T extends Contract> implements Transaction<T> {
 
@@ -40,33 +39,33 @@ public class DeployPrivateSmartContractTransaction<T extends Contract> implement
 
   private final Class<T> clazz;
   private final Credentials senderCredentials;
-  private final long chainId;
+  private final Restriction restriction;
   private final Base64String privateFrom;
   private final List<Base64String> privateFor;
 
   public DeployPrivateSmartContractTransaction(
       final Class<T> clazz,
       final String transactionSigningKey,
-      final long chainId,
+      final Restriction restriction,
       final String privateFrom,
       final List<String> privateFor) {
     this.clazz = clazz;
     this.senderCredentials = Credentials.create(transactionSigningKey);
-    this.chainId = chainId;
+    this.restriction = restriction;
     this.privateFrom = Base64String.wrap(privateFrom);
     this.privateFor = Base64String.wrapList(privateFor);
   }
 
   @Override
   public T execute(final NodeRequests node) {
+
     final PrivateTransactionManager privateTransactionManager =
-        new LegacyPrivateTransactionManager(
-            node.privacy().getBesuClient(),
-            GAS_PROVIDER,
-            senderCredentials,
-            chainId,
-            privateFrom,
-            privateFor);
+        new PrivateTransactionManager.Builder(
+                node.privacy().getBesuClient(), senderCredentials, privateFrom)
+            .setPrivateFor(privateFor)
+            .setRestriction(restriction)
+            .build();
+
     try {
       final Method method =
           clazz.getMethod(

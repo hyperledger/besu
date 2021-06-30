@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -42,7 +42,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
   final String MOCK_ORION_KEY = "";
 
-  final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   RestrictedOffChainEeaSendRawTransaction method;
 
@@ -50,12 +50,13 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
   public void before() {
     method =
         new RestrictedOffChainEeaSendRawTransaction(
-            transactionPool, privacyController, enclavePublicKeyProvider);
+            transactionPool, privacyController, privacyIdProvider);
   }
 
   @Test
   public void validLegacyTransactionIsSentToTransactionPool() {
-    when(privacyController.sendTransaction(any(), any(), any())).thenReturn(MOCK_ORION_KEY);
+    when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
+        .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
