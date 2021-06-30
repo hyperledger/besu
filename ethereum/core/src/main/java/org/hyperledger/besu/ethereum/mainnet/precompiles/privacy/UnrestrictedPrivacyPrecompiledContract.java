@@ -53,7 +53,8 @@ public class UnrestrictedPrivacyPrecompiledContract extends PrivacyPrecompiledCo
         privacyParameters
             .getPrivacyService()
             .getUnrestrictedPayloadEncryptionProvider()
-            .decryptMarkerPayload(messageFrame.getBlockHeader().getNumber(), input);
+            .decryptMarkerPayload(
+                messageFrame.getBlockHeader().getNumber(), messageFrame.getTransaction());
 
     if (pluginPrivateTransaction.isEmpty()) {
       return Bytes.EMPTY;

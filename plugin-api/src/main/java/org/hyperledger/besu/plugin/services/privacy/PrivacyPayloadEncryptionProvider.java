@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.privacy;
 
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.Optional;
 
@@ -23,5 +24,5 @@ import org.apache.tuweni.bytes.Bytes;
 public interface PrivacyPayloadEncryptionProvider {
   Bytes encryptMarkerPayload(PrivateTransaction privateTransaction, String privacyUserId);
 
-  Optional<PrivateTransaction> decryptMarkerPayload(long blockNumber, Bytes payload);
+  Optional<PrivateTransaction> decryptMarkerPayload(long blockNumber, Transaction transaction);
 }

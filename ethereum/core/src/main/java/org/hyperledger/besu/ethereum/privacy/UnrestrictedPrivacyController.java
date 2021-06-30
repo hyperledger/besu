@@ -127,7 +127,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
     final Optional<org.hyperledger.besu.plugin.data.PrivateTransaction> pluginPrivateTransaction =
         privacyService
             .getUnrestrictedPayloadEncryptionProvider()
-            .decryptMarkerPayload(blockHeader.getNumber(), transaction.get().getPayload());
+            .decryptMarkerPayload(blockHeader.getNumber(), transaction.get());
 
     if (pluginPrivateTransaction.isEmpty()) {
       return Optional.empty();

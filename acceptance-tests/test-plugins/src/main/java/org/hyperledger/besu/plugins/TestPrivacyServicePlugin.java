@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
@@ -60,15 +61,16 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
 
             @Override
             public Optional<PrivateTransaction> decryptMarkerPayload(
-                final long blockNumber, final Bytes payload) {
+                final long blockNumber, final Transaction transaction) {
 
               LOG.info("decrypting payload in block " + blockNumber + " for " + prefix);
 
               final Bytes prefixBytes = Bytes.fromHexString(prefix);
-              if (payload.slice(0, prefixBytes.size()).equals(prefixBytes)) {
+              if (transaction.getPayload().slice(0, prefixBytes.size()).equals(prefixBytes)) {
                 LOG.info("processing payload for" + prefix);
                 final BytesValueRLPInput bytesValueRLPInput =
-                    new BytesValueRLPInput(payload.slice(prefixBytes.size()).copy(), false);
+                    new BytesValueRLPInput(
+                        transaction.getPayload().slice(prefixBytes.size()).copy(), false);
                 return Optional.of(readFrom(bytesValueRLPInput));
               } else {
                 LOG.info("Can not process payload for" + prefix);

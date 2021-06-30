@@ -150,7 +150,7 @@ public interface Transaction {
   Optional<Bytes> getInit();
 
   /**
-   * An unlimited size byte array specifying theinput data of the message call.
+   * An unlimited size byte array specifying the input data of the message call.
    *
    * <p>Only present if this is a message call transaction, which is only true if {@link #getTo} is
    * present.

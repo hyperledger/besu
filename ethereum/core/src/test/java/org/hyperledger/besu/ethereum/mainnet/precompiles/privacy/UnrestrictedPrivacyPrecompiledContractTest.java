@@ -135,7 +135,7 @@ public class UnrestrictedPrivacyPrecompiledContractTest {
 
     final Transaction transaction = Transaction.builder().payload(payload).build();
 
-    when(blockchain.getTransactionByHash(any())).thenReturn(Optional.of(transaction));
+    when(messageFrame.getTransaction()).thenReturn(transaction);
 
     final Bytes actual = contract.compute(payload, messageFrame);
 

@@ -39,8 +39,9 @@ public class UnencryptedPayloadEncryptionService implements PrivacyPayloadEncryp
 
   @Override
   public Optional<PrivateTransaction> decryptMarkerPayload(
-      final long blockNumber, final Bytes payload) {
-    final BytesValueRLPInput bytesValueRLPInput = new BytesValueRLPInput(payload, false);
+      final long blockNumber, final org.hyperledger.besu.plugin.data.Transaction transaction) {
+    final BytesValueRLPInput bytesValueRLPInput =
+        new BytesValueRLPInput(transaction.getPayload(), false);
     return Optional.of(readFrom(bytesValueRLPInput));
   }
 }
