@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
@@ -27,24 +24,26 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class EthMessages {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final Map<Integer, Subscribers<MessageCallback>> subscriptions =
+  private final Map<Integer, Subscribers<MessageCallback>> listenersByCode =
       new ConcurrentHashMap<>();
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
       new ConcurrentHashMap<>();
 
   void dispatch(final EthMessage message) {
     final int code = message.getData().getCode();
-    final Subscribers<MessageCallback> listeners = subscriptions.get(code);
-    if (listeners == null) {
-      return;
-    }
-    listeners.forEach(callback -> callback.exec(message));
+    Optional.ofNullable(listenersByCode.get(code))
+        .ifPresent(
+            listeners -> listeners.forEach(messageCallback -> messageCallback.exec(message)));
 
     try {
-      Optional.ofNullable(messageResponseConstructorsByCode.get(code).response(message.getData()))
+      Optional.ofNullable(messageResponseConstructorsByCode.get(code))
+          .map(messageResponseConstructor -> messageResponseConstructor.response(message.getData()))
           .ifPresent(
               messageData -> {
                 try {
@@ -66,6 +65,11 @@ public class EthMessages {
 
   public void subscribe(final int messageCode, final MessageCallback callback) {
     subscriptions.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
+  }
+
+  public void registerResponseConstructor(
+      final int messageCode, final MessageResponseConstructor messageResponseConstructor) {
+    messageResponseConstructorsByCode.put(messageCode, messageResponseConstructor);
   }
 
   public void registerResponseConstructor(
