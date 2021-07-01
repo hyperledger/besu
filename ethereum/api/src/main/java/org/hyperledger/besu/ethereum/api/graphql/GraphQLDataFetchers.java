@@ -297,7 +297,7 @@ public class GraphQLDataFetchers {
           Bytes.wrap(enclave.receive(transaction.getPayload().toBase64String()).getPayload());
     } catch (final Exception ex) {
       LOG.debug("An error occurred while retrieving the GoQuorum transaction payload: ", ex);
-      enclavePayload = null;
+      enclavePayload = Bytes.EMPTY;
     }
 
     // Return a new transaction containing the retrieved payload

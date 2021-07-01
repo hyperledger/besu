@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -60,8 +61,20 @@ public class GoQuorumEthGetQuorumPayload implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final GoQuorumReceiveResponse receive = enclave.receive(bytes.toBase64String());
-    return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), Bytes.wrap(receive.getPayload()).toHexString());
+
+    try {
+      final GoQuorumReceiveResponse receive = enclave.receive(bytes.toBase64String());
+      return new JsonRpcSuccessResponse(
+          requestContext.getRequest().getId(), Bytes.wrap(receive.getPayload()).toHexString());
+    } catch (final EnclaveClientException ex) {
+      if (ex.getStatusCode() == 404) {
+        return new JsonRpcSuccessResponse(
+            requestContext.getRequest().getId(), Bytes.EMPTY.toHexString());
+      } else {
+        LOG.debug("Error retrieving enclave payload: ", ex);
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+      }
+    }
   }
 }
