@@ -125,8 +125,6 @@ public class BonsaiWorldStateArchiveTest {
     final TrieLogLayer trieLogLayer = new TrieLogLayer();
     trieLogLayer.setBlockHash(blockHeader.getHash());
     trieLogLayer.writeTo(rlpLog);
-    when(keyValueStorage.get(blockHeader.getHash().toArrayUnsafe()))
-        .thenReturn(Optional.of(rlpLog.encoded().toArrayUnsafe()));
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
 
@@ -151,8 +149,6 @@ public class BonsaiWorldStateArchiveTest {
     final TrieLogLayer trieLogLayer = new TrieLogLayer();
     trieLogLayer.setBlockHash(blockHeader.getHash());
     trieLogLayer.writeTo(rlpLog);
-    when(keyValueStorage.get(blockHeader.getHash().toArrayUnsafe()))
-        .thenReturn(Optional.of(rlpLog.encoded().toArrayUnsafe()));
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeader));
