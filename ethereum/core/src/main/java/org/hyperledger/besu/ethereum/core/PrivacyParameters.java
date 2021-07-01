@@ -196,6 +196,14 @@ public class PrivacyParameters {
         goQuorumPrivacyParameters != null ? goQuorumPrivacyParameters : Optional.empty();
   }
 
+  private void setPrivacyService(final PrivacyService privacyService) {
+    this.privacyService = privacyService;
+  }
+
+  public PrivacyService getPrivacyService() {
+    return privacyService;
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{"
@@ -294,6 +302,18 @@ public class PrivacyParameters {
       return this;
     }
 
+    public Builder setPrivacyUserIdUsingFile(final File publicKeyFile) throws IOException {
+      this.enclavePublicKeyFile = publicKeyFile;
+      this.privacyUserId = Files.asCharSource(publicKeyFile, UTF_8).read();
+      validatePublicKey(publicKeyFile);
+      return this;
+    }
+
+    public Builder setPrivacyService(final PrivacyService privacyService) {
+      this.privacyService = privacyService;
+      return this;
+    }
+
     public PrivacyParameters build() {
       final PrivacyParameters config = new PrivacyParameters();
       if (enabled) {
@@ -347,12 +367,6 @@ public class PrivacyParameters {
       return config;
     }
 
-    public Builder setPrivacyUserIdUsingFile(final File publicKeyFile) throws IOException {
-      this.enclavePublicKeyFile = publicKeyFile;
-      this.privacyUserId = Files.asCharSource(publicKeyFile, UTF_8).read();
-      validatePublicKey(publicKeyFile);
-      return this;
-    }
 
     private void validatePublicKey(final File publicKeyFile) {
       if (publicKeyFile.length() != 44) {
@@ -362,18 +376,5 @@ public class PrivacyParameters {
       // throws exception if invalid base 64
       Base64.getDecoder().decode(this.privacyUserId);
     }
-
-    public Builder setPrivacyService(final PrivacyService privacyService) {
-      this.privacyService = privacyService;
-      return this;
-    }
-  }
-
-  private void setPrivacyService(final PrivacyService privacyService) {
-    this.privacyService = privacyService;
-  }
-
-  public PrivacyService getPrivacyService() {
-    return privacyService;
   }
 }
