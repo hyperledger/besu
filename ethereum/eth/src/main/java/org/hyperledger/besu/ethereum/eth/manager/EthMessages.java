@@ -14,30 +14,72 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EthMessages {
-  private final Map<Integer, Subscribers<MessageCallback>> listenersByCode =
+  private static final Logger LOG = LogManager.getLogger();
+
+  private final Map<Integer, Subscribers<MessageCallback>> subscriptions =
+      new ConcurrentHashMap<>();
+  private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
       new ConcurrentHashMap<>();
 
   void dispatch(final EthMessage message) {
-    final Subscribers<MessageCallback> listeners = listenersByCode.get(message.getData().getCode());
+    final int code = message.getData().getCode();
+    final Subscribers<MessageCallback> listeners = subscriptions.get(code);
     if (listeners == null) {
       return;
     }
-
     listeners.forEach(callback -> callback.exec(message));
+
+    try {
+      Optional.ofNullable(messageResponseConstructorsByCode.get(code).response(message.getData()))
+          .ifPresent(
+              messageData -> {
+                try {
+                  message.getPeer().send(messageData);
+                } catch (final PeerConnection.PeerNotConnected __) {
+                  // Peer disconnected before we could respond - nothing to do
+                }
+              });
+
+    } catch (final RLPException e) {
+      LOG.debug(
+          "Received malformed message {} , disconnecting: {}",
+          message.getData().getData(),
+          message.getPeer(),
+          e);
+      message.getPeer().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+    }
   }
 
   public void subscribe(final int messageCode, final MessageCallback callback) {
-    listenersByCode.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
+    subscriptions.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
+  }
+
+  public void registerResponseConstructor(
+      final int messageCode, final MessageResponseConstructor messageResponseConstructor) {
+    messageResponseConstructorsByCode.put(messageCode, messageResponseConstructor);
   }
 
   @FunctionalInterface
   public interface MessageCallback {
     void exec(EthMessage message);
+  }
+
+  @FunctionalInterface
+  public interface MessageResponseConstructor {
+    MessageData response(MessageData message);
   }
 }
