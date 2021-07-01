@@ -55,13 +55,16 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this(provider, blockchain, RETAINED_LAYERS, new HashMap<>());
   }
 
-  public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain,final long maxLayersToLoad) {
+  public BonsaiWorldStateArchive(
+      final StorageProvider provider, final Blockchain blockchain, final long maxLayersToLoad) {
     this(provider, blockchain, maxLayersToLoad, new HashMap<>());
   }
 
-
   public BonsaiWorldStateArchive(
-      final StorageProvider provider, final Blockchain blockchain, final long maxLayersToLoad , final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash) {
+      final StorageProvider provider,
+      final Blockchain blockchain,
+      final long maxLayersToLoad,
+      final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash) {
     this.blockchain = blockchain;
 
     this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
