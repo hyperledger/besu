@@ -37,11 +37,9 @@ public class EthMessages {
 
   void dispatch(final EthMessage message) {
     final int code = message.getData().getCode();
-    final Subscribers<MessageCallback> listeners = listenersByCode.get(code);
-    if (listeners == null) {
-      return;
-    }
-    listeners.forEach(callback -> callback.exec(message));
+    Optional.ofNullable(listenersByCode.get(code))
+        .ifPresent(
+            listeners -> listeners.forEach(messageCallback -> messageCallback.exec(message)));
 
     try {
       Optional.ofNullable(messageResponseConstructorsByCode.get(code))
