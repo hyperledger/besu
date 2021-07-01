@@ -30,14 +30,14 @@ import org.apache.logging.log4j.Logger;
 public class EthMessages {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final Map<Integer, Subscribers<MessageCallback>> subscriptions =
+  private final Map<Integer, Subscribers<MessageCallback>> listenersByCode =
       new ConcurrentHashMap<>();
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
       new ConcurrentHashMap<>();
 
   void dispatch(final EthMessage message) {
     final int code = message.getData().getCode();
-    final Subscribers<MessageCallback> listeners = subscriptions.get(code);
+    final Subscribers<MessageCallback> listeners = listenersByCode.get(code);
     if (listeners == null) {
       return;
     }
@@ -66,7 +66,7 @@ public class EthMessages {
   }
 
   public void subscribe(final int messageCode, final MessageCallback callback) {
-    subscriptions.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
+    listenersByCode.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
   }
 
   public void registerResponseConstructor(
