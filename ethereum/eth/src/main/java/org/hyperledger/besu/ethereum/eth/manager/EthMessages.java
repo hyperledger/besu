@@ -64,12 +64,7 @@ public class EthMessages {
   }
 
   public void subscribe(final int messageCode, final MessageCallback callback) {
-    subscriptions.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
-  }
-
-  public void registerResponseConstructor(
-      final int messageCode, final MessageResponseConstructor messageResponseConstructor) {
-    messageResponseConstructorsByCode.put(messageCode, messageResponseConstructor);
+    listenersByCode.computeIfAbsent(messageCode, key -> Subscribers.create()).subscribe(callback);
   }
 
   public void registerResponseConstructor(
