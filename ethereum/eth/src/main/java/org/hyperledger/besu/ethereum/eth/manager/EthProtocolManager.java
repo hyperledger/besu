@@ -35,13 +35,20 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -258,17 +265,50 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     }
 
-    // Dispatch eth message
-    final EthMessage ethMessage = new EthMessage(peer, message.getData());
-    if (!peer.validateReceivedMessage(ethMessage)) {
+    // if it's eth66, we need to pull the requestId out of the data
+    final Map.Entry<Optional<Long>, EthMessage> requestIdAndUnwrappedEthMessage;
+    if (cap.equals(EthProtocol.ETH66)) {
+      final Map.Entry<Long, MessageData> unwrappedMessage = unwrapRequestId(message);
+      requestIdAndUnwrappedEthMessage =
+          Map.entry(
+              Optional.of(unwrappedMessage.getKey()),
+              new EthMessage(peer, unwrappedMessage.getValue()));
+    } else {
+      requestIdAndUnwrappedEthMessage =
+          Map.entry(Optional.empty(), new EthMessage(peer, message.getData()));
+    }
+
+    if (!peer.validateReceivedMessage(requestIdAndUnwrappedEthMessage.getValue())) {
       LOG.debug("Unsolicited message received from, disconnecting: {}", peer);
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
+    // Dispatch eth message
+
     // This will handle responses
-    ethPeers.dispatchMessage(peer, ethMessage);
+    ethPeers.dispatchMessage(peer, requestIdAndUnwrappedEthMessage);
     // This will handle requests
-    ethMessages.dispatch(ethMessage);
+    ethMessages.dispatch(requestIdAndUnwrappedEthMessage);
+  }
+
+  public static MessageData wrapRequestId(final long requestId, final MessageData messageData) {
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    rlpOutput.startList();
+    rlpOutput.writeLongScalar(requestId);
+    rlpOutput.writeRaw(messageData.getData());
+    rlpOutput.endList();
+    return new RawMessage(messageData.getCode(), rlpOutput.encoded());
+  }
+
+  static Map.Entry<Long, MessageData> unwrapRequestId(final Message message) {
+    final RLPInput messageDataRLP = RLP.input(message.getData().getData());
+    messageDataRLP.enterList();
+    final long requestId = messageDataRLP.readLongScalar();
+    final Bytes unwrappedMessageData = messageDataRLP.readBytes();
+    messageDataRLP.leaveList();
+
+    return new AbstractMap.SimpleImmutableEntry<>(
+        requestId, new RawMessage(message.getData().getCode(), unwrappedMessageData));
   }
 
   @Override

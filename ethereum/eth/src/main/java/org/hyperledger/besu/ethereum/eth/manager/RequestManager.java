@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RequestManager {
+  // todo make this random so we don't leak uptime information
   private final AtomicLong requestIdCounter = new AtomicLong(0L);
   private final Map<Long, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
@@ -83,27 +84,6 @@ public class RequestManager {
     }
   }
 
-  public static MessageData wrapRequestId(final long requestId, final MessageData messageData) {
-    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    rlpOutput.startList();
-    rlpOutput.writeLongScalar(requestId);
-    rlpOutput.writeRaw(messageData.getData());
-    rlpOutput.endList();
-    return new RawMessage(messageData.getCode(), rlpOutput.encoded());
-  }
-
-  static Map.Entry<Long, EthMessage> unwrapRequestId(final EthMessage message) {
-    final RLPInput messageDataRLP = RLP.input(message.getData().getData());
-    messageDataRLP.enterList();
-    final long requestId = messageDataRLP.readLongScalar();
-    final Bytes unwrappedMessageData = messageDataRLP.readBytes();
-    messageDataRLP.leaveList();
-
-    return new AbstractMap.SimpleImmutableEntry<>(
-        requestId,
-        new EthMessage(
-            message.getPeer(), new RawMessage(message.getData().getCode(), unwrappedMessageData)));
-  }
 
   public void close() {
     closeOutstandingStreams(responseStreams.values());
