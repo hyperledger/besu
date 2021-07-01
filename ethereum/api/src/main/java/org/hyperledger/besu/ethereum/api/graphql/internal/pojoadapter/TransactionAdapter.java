@@ -186,8 +186,8 @@ public class TransactionAdapter extends AdapterBase {
     return results;
   }
 
-  public Optional<Boolean> getIsPrivate() {
-    return Optional.of(transactionWithMetadata.getTransaction().isGoQuorumPrivateTransaction());
+  public boolean getIsPrivate() {
+    return transactionWithMetadata.getTransaction().isGoQuorumPrivateTransaction();
   }
 
   public Optional<Bytes> getPrivateInputData() {
