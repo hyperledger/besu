@@ -289,32 +289,32 @@ public class GraphQLDataFetchers {
 
   private TransactionAdapter updatePrivatePayload(final Transaction transaction) {
     final GoQuorumEnclave enclave = goQuorumPrivacyParameters.get().enclave();
-    final Bytes enclavePayload;
+    Bytes enclavePayload;
 
     try {
       // Retrieve the payload from the enclave
       enclavePayload =
           Bytes.wrap(enclave.receive(transaction.getPayload().toBase64String()).getPayload());
-
-      // Return a new transaction containing the retrieved payload
-      return new TransactionAdapter(
-          new TransactionWithMetadata(
-              new Transaction(
-                  transaction.getNonce(),
-                  transaction.getGasPrice(),
-                  transaction.getMaxPriorityFeePerGas(),
-                  transaction.getMaxFeePerGas(),
-                  transaction.getGasLimit(),
-                  transaction.getTo(),
-                  transaction.getValue(),
-                  transaction.getSignature(),
-                  enclavePayload,
-                  transaction.getSender(),
-                  transaction.getChainId(),
-                  Optional.ofNullable(transaction.getV()))));
     } catch (final Exception ex) {
       LOG.debug("An error occurred while retrieving the GoQuorum transaction payload: ", ex);
-      return new TransactionAdapter(new TransactionWithMetadata(transaction));
+      enclavePayload = null;
     }
+
+    // Return a new transaction containing the retrieved payload
+    return new TransactionAdapter(
+        new TransactionWithMetadata(
+            new Transaction(
+                transaction.getNonce(),
+                transaction.getGasPrice(),
+                transaction.getMaxPriorityFeePerGas(),
+                transaction.getMaxFeePerGas(),
+                transaction.getGasLimit(),
+                transaction.getTo(),
+                transaction.getValue(),
+                transaction.getSignature(),
+                enclavePayload,
+                transaction.getSender(),
+                transaction.getChainId(),
+                Optional.ofNullable(transaction.getV()))));
   }
 }
