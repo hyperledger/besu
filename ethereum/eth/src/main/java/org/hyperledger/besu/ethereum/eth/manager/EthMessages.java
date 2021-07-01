@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
@@ -26,6 +23,9 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class EthMessages {
   private static final Logger LOG = LogManager.getLogger();
@@ -44,7 +44,8 @@ public class EthMessages {
     listeners.forEach(callback -> callback.exec(message));
 
     try {
-      Optional.ofNullable(messageResponseConstructorsByCode.get(code).response(message.getData()))
+      Optional.ofNullable(messageResponseConstructorsByCode.get(code))
+          .map(messageResponseConstructor -> messageResponseConstructor.response(message.getData()))
           .ifPresent(
               messageData -> {
                 try {
