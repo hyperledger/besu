@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.enclave.types.GoQuorumReceiveResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -129,5 +130,20 @@ public class GoQuorumEthGetQuorumPayloadTest {
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(response.toString()).contains("INVALID_PARAMS");
+  }
+
+  @Test
+  public void enclave404ReturnsEmptyBytesString() {
+    final String hexString = Bytes.wrap(new byte[64]).toHexString();
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_getQuorumPayload", new String[] {hexString}));
+
+    when(enclave.receive(any())).thenThrow(new EnclaveClientException(404, null));
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) response).getResult())
+        .isEqualTo(Bytes.EMPTY.toHexString());
   }
 }
