@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerRlpxPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.RlpxConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionInitializer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyTLSConnectionInitializer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -557,6 +559,7 @@ public class RlpxAgent {
     private PeerConnectionEvents connectionEvents;
     private boolean randomPeerPriority;
     private MetricsSystem metricsSystem;
+    private Optional<TLSConfiguration> p2pTLSConfiguration;
 
     private Builder() {}
 
@@ -567,9 +570,17 @@ public class RlpxAgent {
         connectionEvents = new PeerConnectionEvents(metricsSystem);
       }
       if (connectionInitializer == null) {
-        connectionInitializer =
-            new NettyConnectionInitializer(
-                nodeKey, config, localNode, connectionEvents, metricsSystem);
+        if (p2pTLSConfiguration.isPresent()) {
+          LOG.debug("TLS Configuration found using NettyTLSConnectionInitializer");
+          connectionInitializer =
+              new NettyTLSConnectionInitializer(
+                  nodeKey, config, localNode, connectionEvents, metricsSystem, p2pTLSConfiguration);
+        } else {
+          LOG.debug("Using default NettyConnectionInitializer");
+          connectionInitializer =
+              new NettyConnectionInitializer(
+                  nodeKey, config, localNode, connectionEvents, metricsSystem);
+        }
       }
 
       final PeerRlpxPermissions rlpxPermissions =
@@ -645,6 +656,11 @@ public class RlpxAgent {
 
     public Builder randomPeerPriority(final boolean randomPeerPriority) {
       this.randomPeerPriority = randomPeerPriority;
+      return this;
+    }
+
+    public Builder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
+      this.p2pTLSConfiguration = p2pTLSConfiguration;
       return this;
     }
   }
