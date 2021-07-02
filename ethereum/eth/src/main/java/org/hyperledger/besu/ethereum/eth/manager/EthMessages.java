@@ -35,19 +35,28 @@ public class EthMessages {
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
       new ConcurrentHashMap<>();
 
-  void dispatch(final EthMessage message) {
-    final int code = message.getData().getCode();
+  void dispatch(final Map.Entry<Optional<Long>, EthMessage> requestIdAndEthMessage) {
+    final EthMessage requestMessage = requestIdAndEthMessage.getValue();
+    final int code = requestMessage.getData().getCode();
     Optional.ofNullable(listenersByCode.get(code))
         .ifPresent(
-            listeners -> listeners.forEach(messageCallback -> messageCallback.exec(message)));
+            listeners ->
+                listeners.forEach(messageCallback -> messageCallback.exec(requestMessage)));
 
     try {
       Optional.ofNullable(messageResponseConstructorsByCode.get(code))
-          .map(messageResponseConstructor -> messageResponseConstructor.response(message.getData()))
+          .map(
+              messageResponseConstructor ->
+                  messageResponseConstructor.response(requestMessage.getData()))
           .ifPresent(
-              messageData -> {
+              responseMessageData -> {
                 try {
-                  message.getPeer().send(messageData);
+                  MessageData wrappedResponseData =
+                      requestIdAndEthMessage
+                          .getKey()
+                          .map(requestId -> RequestId.wrapRequestId(requestId, responseMessageData))
+                          .orElse(responseMessageData);
+                  requestMessage.getPeer().send(wrappedResponseData);
                 } catch (final PeerConnection.PeerNotConnected __) {
                   // Peer disconnected before we could respond - nothing to do
                 }
@@ -55,11 +64,11 @@ public class EthMessages {
 
     } catch (final RLPException e) {
       LOG.debug(
-          "Received malformed message {} , disconnecting: {}",
-          message.getData().getData(),
-          message.getPeer(),
+          "Received malformed requestMessage {} , disconnecting: {}",
+          requestMessage.getData().getData(),
+          requestMessage.getPeer(),
           e);
-      message.getPeer().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+      requestMessage.getPeer().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
     }
   }
 

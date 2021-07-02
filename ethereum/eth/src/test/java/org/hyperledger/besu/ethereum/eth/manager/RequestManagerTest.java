@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.manager.RequestId.unwrapRequestId;
 import static org.hyperledger.besu.ethereum.eth.manager.RequestManager.unwrapRequestId;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocol;

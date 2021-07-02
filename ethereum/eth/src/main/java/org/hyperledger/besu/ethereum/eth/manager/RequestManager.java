@@ -16,28 +16,22 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.AbstractMap;
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public class RequestManager {
-  // todo make this random so we don't leak uptime information
-  private final AtomicLong requestIdCounter = new AtomicLong(0L);
+  private final AtomicLong requestIdCounter = new AtomicLong(new Random().nextLong());
   private final Map<Long, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
   private final boolean supportsRequestId;
@@ -58,32 +52,35 @@ public class RequestManager {
     outstandingRequests.incrementAndGet();
     final long requestId = requestIdCounter.getAndIncrement();
     final ResponseStream stream = createStream(requestId);
-    sender.send(supportsRequestId ? wrapRequestId(requestId, messageData) : messageData);
+    sender.send(supportsRequestId ? RequestId.wrapRequestId(requestId, messageData) : messageData);
     return stream;
   }
 
-  public void dispatchResponse(final EthMessage message) {
+  public void dispatchResponse(final Map.Entry<Optional<Long>, EthMessage> requestIdAndEthMessage) {
+    final EthMessage message = requestIdAndEthMessage.getValue();
     final Collection<ResponseStream> streams = new ArrayList<>(responseStreams.values());
     final int count = outstandingRequests.decrementAndGet();
-    if (supportsRequestId) {
-      // If there's a requestId, find the specific stream it belongs to
-      final Map.Entry<Long, EthMessage> requestIdAndEthMessage = unwrapRequestId(message);
-      Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
-          .ifPresentOrElse(
-              responseStream ->
-                  responseStream.processMessage(requestIdAndEthMessage.getValue().getData()),
-              () -> peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL));
-    } else {
-      // otherwise iterate through all of them
-      streams.forEach(s -> s.processMessage(message.getData()));
-    }
+    requestIdAndEthMessage
+        .getKey()
+        .ifPresentOrElse(
+            requestId ->
+                // If there's a requestId, find the specific stream it belongs to
+                Optional.ofNullable(responseStreams.get(requestId))
+                    .ifPresentOrElse(
+                        responseStream ->
+                            responseStream.processMessage(
+                                requestIdAndEthMessage.getValue().getData()),
+                        // disconnect on incorrect requestIds
+                        () ->
+                            peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL)),
+            // otherwise iterate through all of them
+            () -> streams.forEach(stream -> stream.processMessage(message.getData())));
 
     if (count == 0) {
       // No possibility of any remaining outstanding messages
       closeOutstandingStreams(streams);
     }
   }
-
 
   public void close() {
     closeOutstandingStreams(responseStreams.values());

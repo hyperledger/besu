@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -281,27 +282,30 @@ public class EthPeer {
   /**
    * Routes messages originating from this peer to listeners.
    *
-   * @param message the message to dispatch
+   * @param requestIdAndEthMessage the requestIdAndEthMessage to dispatch
    */
-  void dispatch(final EthMessage message) {
-    checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
-    final int messageCode = message.getData().getCode();
+  void dispatch(final Map.Entry<Optional<Long>, EthMessage> requestIdAndEthMessage) {
+    final EthMessage ethMessage = requestIdAndEthMessage.getValue();
+    checkArgument(
+        ethMessage.getPeer().equals(this),
+        "Mismatched requestIdAndEthMessage sent to peer for dispatch");
+    final int messageCode = ethMessage.getData().getCode();
     reputation.resetTimeoutCount(messageCode);
     switch (messageCode) {
       case EthPV62.BLOCK_HEADERS:
-        headersRequestManager.dispatchResponse(message);
+        headersRequestManager.dispatchResponse(requestIdAndEthMessage);
         break;
       case EthPV62.BLOCK_BODIES:
-        bodiesRequestManager.dispatchResponse(message);
+        bodiesRequestManager.dispatchResponse(requestIdAndEthMessage);
         break;
       case EthPV63.RECEIPTS:
-        receiptsRequestManager.dispatchResponse(message);
+        receiptsRequestManager.dispatchResponse(requestIdAndEthMessage);
         break;
       case EthPV63.NODE_DATA:
-        nodeDataRequestManager.dispatchResponse(message);
+        nodeDataRequestManager.dispatchResponse(requestIdAndEthMessage);
         break;
       case EthPV65.POOLED_TRANSACTIONS:
-        pooledTransactionsRequestManager.dispatchResponse(message);
+        pooledTransactionsRequestManager.dispatchResponse(requestIdAndEthMessage);
         break;
       default:
         // Nothing to do
