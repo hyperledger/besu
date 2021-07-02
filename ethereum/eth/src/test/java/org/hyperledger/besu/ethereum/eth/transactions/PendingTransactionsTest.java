@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -756,10 +755,18 @@ public class PendingTransactionsTest {
                       .nonce(entries)
                       .createTransaction(attackerKp);
       attackTxs.add(t);
-      transactions.addRemoteTransaction(t);
+      transactions.addRemoteTransaction(t); //all but the first one of these should trigger a dropped tx.
     }
 
     //assert txpool contains 1st attack
+
+    long subsId = transactions.subscribeDroppedTransactions(new PendingTransactionDroppedListener() {
+      @Override
+      public void onTransactionDropped(final Transaction transaction) {
+        assertThat(transaction.getSender()).isEqualTo(attackerA);
+      }
+    });
+    assertThat(subsId).isNotZero();
     assertThat(transactions.getTransactionByHash(attackTxs.get(0).getHash())).isNotEmpty();
     //assert txpool does not contain rest of attack
     attackTxs.stream().skip(1L).forEach(t -> assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty());
