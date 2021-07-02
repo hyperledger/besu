@@ -92,8 +92,8 @@ public class PendingTransactions {
                           .get()
                           .getValue()
                           .longValue())
-              .thenComparing(TransactionInfo::getSequence)
               .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo))
+              .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
   private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
@@ -106,8 +106,8 @@ public class PendingTransactions {
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(TransactionInfo::getSequence)
               .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo))
+              .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
 
@@ -116,7 +116,8 @@ public class PendingTransactions {
     if(inPool == null || inPool.maybeNextNonce().isEmpty()) { //nothing in pool, you're next
       return 0L;
     }
-    return incomingTx.getNonce() - inPool.maybeNextNonce().getAsLong();
+    long minNonceForAccount = inPool.streamTransactionInfos().mapToLong(t -> t.getNonce()).min().getAsLong();
+    return incomingTx.getNonce() - minNonceForAccount;
   }
 
   private Optional<Long> baseFee;

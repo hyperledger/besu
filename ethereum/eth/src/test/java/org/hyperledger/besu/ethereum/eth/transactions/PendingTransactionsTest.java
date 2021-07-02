@@ -737,7 +737,7 @@ public class PendingTransactionsTest {
       KeyPair kp = SIGNATURE_ALGORITHM.get().generateKeyPair();
       Address a = Util.publicKeyToAddress(kp.getPublicKey());
       Transaction t =
-              new TransactionTestFixture().sender(a).value(Wei.of(2)).nonce(0).createTransaction(kp);
+              new TransactionTestFixture().sender(a).value(Wei.of(2)).nonce(entries).createTransaction(kp);
       transactions.addRemoteTransaction(t);
       toValidate.add(t);
     }
@@ -747,7 +747,7 @@ public class PendingTransactionsTest {
     KeyPair attackerKp = SIGNATURE_ALGORITHM.get().generateKeyPair();
     Address attackerA = Util.publicKeyToAddress(attackerKp.getPublicKey());
 
-    for (int entries = 1; entries < transactions.maxSize() + 1; entries++) {
+    for (int entries = 10; entries < transactions.maxSize() + 10; entries++) { //badguy nonces are 2 digits
       Transaction t =
               new TransactionTestFixture()
                       .sender(attackerA)
@@ -760,13 +760,14 @@ public class PendingTransactionsTest {
 
     //assert txpool contains 1st attack
 
-    long subsId = transactions.subscribeDroppedTransactions(new PendingTransactionDroppedListener() {
+    transactions.subscribeDroppedTransactions(new PendingTransactionDroppedListener() {
       @Override
       public void onTransactionDropped(final Transaction transaction) {
+        System.out.println("dropping transaction from "+ transaction.getSender().toHexString());
         assertThat(transaction.getSender()).isEqualTo(attackerA);
       }
     });
-    assertThat(subsId).isNotZero();
+
     assertThat(transactions.getTransactionByHash(attackTxs.get(0).getHash())).isNotEmpty();
     //assert txpool does not contain rest of attack
     attackTxs.stream().skip(1L).forEach(t -> assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty());
