@@ -92,7 +92,7 @@ public class PendingTransactions {
                           .get()
                           .getValue()
                           .longValue())
-              .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo))
+              .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo)).reversed()
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
@@ -106,7 +106,7 @@ public class PendingTransactions {
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo))
+              .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo)).reversed()
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 

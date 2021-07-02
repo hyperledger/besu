@@ -186,14 +186,17 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldStartDroppingLocalTransactionsWhenPoolIsFullOfLocalTransactions() {
-    final Transaction firstLocalTransaction = createTransaction(0);
-    transactions.addLocalTransaction(firstLocalTransaction);
+    transactions.subscribeDroppedTransactions(new PendingTransactionDroppedListener() {
+      @Override
+      public void onTransactionDropped(final Transaction transaction) {
+        assertTransactionNotPending(transaction);
+      }
+    });
 
-    for (int i = 1; i <= MAX_TRANSACTIONS; i++) {
+    for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
       transactions.addLocalTransaction(createTransaction(i));
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(firstLocalTransaction);
   }
 
   @Test
@@ -729,6 +732,8 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldIgnoreFutureNoncedTxs() {
+
+
     // create maxtx transaction with valid addresses/nonces
     // all addresses should be unique, chained txs will be checked in another test.
     // TODO: how do we test around reorgs? do we?
@@ -737,7 +742,12 @@ public class PendingTransactionsTest {
       KeyPair kp = SIGNATURE_ALGORITHM.get().generateKeyPair();
       Address a = Util.publicKeyToAddress(kp.getPublicKey());
       Transaction t =
-              new TransactionTestFixture().sender(a).value(Wei.of(2)).nonce(entries).createTransaction(kp);
+              new TransactionTestFixture()
+                      .sender(a)
+                      .value(Wei.of(2))
+                      .maxPriorityFeePerGas(Optional.of(Wei.of(2L)))
+                      .nonce(entries)
+                      .createTransaction(kp);
       transactions.addRemoteTransaction(t);
       toValidate.add(t);
     }
@@ -747,26 +757,27 @@ public class PendingTransactionsTest {
     KeyPair attackerKp = SIGNATURE_ALGORITHM.get().generateKeyPair();
     Address attackerA = Util.publicKeyToAddress(attackerKp.getPublicKey());
 
-    for (int entries = 10; entries < transactions.maxSize() + 10; entries++) { //badguy nonces are 2 digits
-      Transaction t =
-              new TransactionTestFixture()
-                      .sender(attackerA)
-                      .value(Wei.of(1)) // cheaper than the valid ones
-                      .nonce(entries)
-                      .createTransaction(attackerKp);
-      attackTxs.add(t);
-      transactions.addRemoteTransaction(t); //all but the first one of these should trigger a dropped tx.
-    }
-
-    //assert txpool contains 1st attack
-
     transactions.subscribeDroppedTransactions(new PendingTransactionDroppedListener() {
       @Override
       public void onTransactionDropped(final Transaction transaction) {
         System.out.println("dropping transaction from "+ transaction.getSender().toHexString());
-        assertThat(transaction.getSender()).isEqualTo(attackerA);
       }
     });
+
+    for (int entries = 10; entries < transactions.maxSize() + 10; entries++) { //badguy nonces are 2 digits
+      Transaction t =
+              new TransactionTestFixture()
+                      .sender(attackerA)
+                      .value(Wei.of(2))
+                      .nonce(entries)
+                      .maxPriorityFeePerGas(Optional.of(Wei.of(2L)))
+                      .createTransaction(attackerKp);
+      attackTxs.add(t);
+      transactions.addRemoteTransaction(t); //all but the last one of these should be dropped
+    }
+
+    //assert txpool contains 1st attack
+
 
     assertThat(transactions.getTransactionByHash(attackTxs.get(0).getHash())).isNotEmpty();
     //assert txpool does not contain rest of attack
