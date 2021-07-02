@@ -21,8 +21,9 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public interface PrivacyPayloadEncryptionProvider {
-  Bytes encryptMarkerPayload(PrivateTransaction privateTransaction, String privacyUserId);
+public interface PrivacyPluginPayloadProvider {
+  Bytes generateMarkerPayload(PrivateTransaction privateTransaction, String privacyUserId);
 
-  Optional<PrivateTransaction> decryptMarkerPayload(long blockNumber, Transaction transaction);
+  Optional<PrivateTransaction> getPrivateTransactionFromPayload(
+      long blockNumber, Transaction transaction);
 }

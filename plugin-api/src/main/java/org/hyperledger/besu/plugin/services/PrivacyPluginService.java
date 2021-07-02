@@ -12,24 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.plugin.services;
 
-import static picocli.CommandLine.Option;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 
-public class UnrestrictedPrivacyOptions {
+public interface PrivacyPluginService extends BesuService {
+  void setPayloadProvider(PrivacyPluginPayloadProvider privacyPluginPayloadProvider);
 
-  public static UnrestrictedPrivacyOptions create() {
-    return new UnrestrictedPrivacyOptions();
-  }
+  PrivacyPluginPayloadProvider getPayloadProvider();
 
-  @Option(
-      names = "--Xprivacy-unrestricted-enabled",
-      description =
-          "Enable unrestricted (stores payload onchain) privacy (default: ${DEFAULT-VALUE})",
-      hidden = true)
-  private final Boolean isUnrestrictedPrivacyEnabled = false;
+  void setPrivacyGroupAuthProvider(PrivacyGroupAuthProvider privacyGroupAuthProvider);
 
-  public boolean isUnrestrictedPrivacyEnabled() {
-    return isUnrestrictedPrivacyEnabled;
-  }
+  PrivacyGroupAuthProvider getPrivacyGroupAuthProvider();
 }

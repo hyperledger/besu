@@ -32,11 +32,11 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class UnrestrictedPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
+public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract {
   private static final Logger LOG = LogManager.getLogger();
   private final PrivacyParameters privacyParameters;
 
-  public UnrestrictedPrivacyPrecompiledContract(
+  public PrivacyPluginPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
     super(gasCalculator, privacyParameters, "UnrestrictedPrivacy");
     this.privacyParameters = privacyParameters;
@@ -52,8 +52,8 @@ public class UnrestrictedPrivacyPrecompiledContract extends PrivacyPrecompiledCo
     final Optional<org.hyperledger.besu.plugin.data.PrivateTransaction> pluginPrivateTransaction =
         privacyParameters
             .getPrivacyService()
-            .getUnrestrictedPayloadEncryptionProvider()
-            .decryptMarkerPayload(
+            .getPayloadProvider()
+            .getPrivateTransactionFromPayload(
                 messageFrame.getBlockHeader().getNumber(), messageFrame.getTransaction());
 
     if (pluginPrivateTransaction.isEmpty()) {

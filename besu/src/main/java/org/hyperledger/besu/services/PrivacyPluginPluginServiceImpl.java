@@ -14,26 +14,32 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.ethereum.core.UnencryptedPayloadEncryptionService;
-import org.hyperledger.besu.plugin.services.PrivacyService;
+import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
-import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 
-public class PrivacyServiceImpl implements PrivacyService {
-  private PrivacyPayloadEncryptionProvider privacyPayloadEncryptionProvider =
-      new UnencryptedPayloadEncryptionService();
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class PrivacyPluginPluginServiceImpl implements PrivacyPluginService {
+  private static final Logger LOG = LogManager.getLogger();
+
+  private PrivacyPluginPayloadProvider privacyPluginPayloadProvider;
+
   private PrivacyGroupAuthProvider privacyGroupAuthProvider =
       (privacyGroupId, privacyUserId, blockNumber) -> true;
 
   @Override
-  public void setUnrestrictedPayloadEncryptionProvider(
-      final PrivacyPayloadEncryptionProvider privacyPayloadEncryptionProvider) {
-    this.privacyPayloadEncryptionProvider = privacyPayloadEncryptionProvider;
+  public void setPayloadProvider(final PrivacyPluginPayloadProvider privacyPluginPayloadProvider) {
+    this.privacyPluginPayloadProvider = privacyPluginPayloadProvider;
   }
 
   @Override
-  public PrivacyPayloadEncryptionProvider getUnrestrictedPayloadEncryptionProvider() {
-    return privacyPayloadEncryptionProvider;
+  public PrivacyPluginPayloadProvider getPayloadProvider() {
+    if (privacyPluginPayloadProvider == null) {
+      LOG.error("You must register a privacy plugin");
+    }
+    return privacyPluginPayloadProvider;
   }
 
   @Override

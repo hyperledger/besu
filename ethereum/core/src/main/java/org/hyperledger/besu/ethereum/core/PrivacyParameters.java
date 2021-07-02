@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.plugin.services.PrivacyService;
+import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,14 +56,14 @@ public class PrivacyParameters {
   private PrivateStateStorage privateStateStorage;
   private boolean multiTenancyEnabled;
   private boolean onchainPrivacyGroupsEnabled;
-  private boolean unrestrictedPrivacyEnabled;
+  private boolean privacyPluginEnabled;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
-  private PrivacyService privacyService;
+  private PrivacyPluginService privacyPluginService;
 
   public Address getPrivacyAddress() {
-    if (isUnrestrictedPrivacyEnabled()) {
+    if (isPrivacyPluginEnabled()) {
       return Address.UNRESTRICTED_PRIVACY;
     } else if (isOnchainPrivacyGroupsEnabled()) {
       return Address.ONCHAIN_PRIVACY;
@@ -161,12 +161,12 @@ public class PrivacyParameters {
     return onchainPrivacyGroupsEnabled;
   }
 
-  private void setUnrestrictedPrivacyEnabled(final boolean unrestrictedPrivacyEnabled) {
-    this.unrestrictedPrivacyEnabled = unrestrictedPrivacyEnabled;
+  private void setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
+    this.privacyPluginEnabled = privacyPluginEnabled;
   }
 
-  public boolean isUnrestrictedPrivacyEnabled() {
-    return unrestrictedPrivacyEnabled;
+  public boolean isPrivacyPluginEnabled() {
+    return privacyPluginEnabled;
   }
 
   public PrivateStateRootResolver getPrivateStateRootResolver() {
@@ -196,12 +196,12 @@ public class PrivacyParameters {
         goQuorumPrivacyParameters != null ? goQuorumPrivacyParameters : Optional.empty();
   }
 
-  private void setPrivacyService(final PrivacyService privacyService) {
-    this.privacyService = privacyService;
+  private void setPrivacyService(final PrivacyPluginService privacyPluginService) {
+    this.privacyPluginService = privacyPluginService;
   }
 
-  public PrivacyService getPrivacyService() {
-    return privacyService;
+  public PrivacyPluginService getPrivacyService() {
+    return privacyPluginService;
   }
 
   @Override
@@ -212,13 +212,13 @@ public class PrivacyParameters {
         + ", multiTenancyEnabled = "
         + multiTenancyEnabled
         + ", unrestrictedPrivacyEnabled = "
-        + unrestrictedPrivacyEnabled
+        + privacyPluginEnabled
         + ", onchainPrivacyGroupsEnabled = "
         + onchainPrivacyGroupsEnabled
         + ", enclaveUri='"
         + enclaveUri
         + ", privatePayloadEncryptionService='"
-        + privacyService.getClass().getSimpleName()
+        + privacyPluginService.getClass().getSimpleName()
         + '\''
         + '}';
   }
@@ -237,9 +237,9 @@ public class PrivacyParameters {
     private Path privacyKeyStorePasswordFile;
     private Path privacyTlsKnownEnclaveFile;
     private boolean onchainPrivacyGroupsEnabled;
-    private boolean unrestrictedPrivacyEnabled;
+    private boolean privacyPluginEnabled;
     private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
-    private PrivacyService privacyService;
+    private PrivacyPluginService privacyPluginService;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -291,8 +291,8 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setUnrestrictedPrivacyEnabled(final boolean unrestrictedPrivacyEnabled) {
-      this.unrestrictedPrivacyEnabled = unrestrictedPrivacyEnabled;
+    public Builder setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
+      this.privacyPluginEnabled = privacyPluginEnabled;
       return this;
     }
 
@@ -309,8 +309,8 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setPrivacyService(final PrivacyService privacyService) {
-      this.privacyService = privacyService;
+    public Builder setPrivacyService(final PrivacyPluginService privacyPluginService) {
+      this.privacyPluginService = privacyPluginService;
       return this;
     }
 
@@ -335,7 +335,7 @@ public class PrivacyParameters {
 
         config.setPrivateWorldStateArchive(privateWorldStateArchive);
 
-        config.setPrivacyService(privacyService);
+        config.setPrivacyService(privacyPluginService);
 
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
@@ -362,11 +362,10 @@ public class PrivacyParameters {
       config.setEnabled(enabled);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
-      config.setUnrestrictedPrivacyEnabled(unrestrictedPrivacyEnabled);
+      config.setPrivacyPluginEnabled(privacyPluginEnabled);
       config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
       return config;
     }
-
 
     private void validatePublicKey(final File publicKeyFile) {
       if (publicKeyFile.length() != 44) {

@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTran
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.plugin.services.PrivacyService;
+import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class UnrestrictedPrivacyController implements PrivacyController {
+public class PluginPrivacyController implements PrivacyController {
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateStateRootResolver privateStateRootResolver;
@@ -50,9 +50,9 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   private final PrivateTransactionSimulator privateTransactionSimulator;
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivateWorldStateReader privateWorldStateReader;
-  private final PrivacyService privacyService;
+  private final PrivacyPluginService privacyPluginService;
 
-  public UnrestrictedPrivacyController(
+  public PluginPrivacyController(
       final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
@@ -67,7 +67,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
     this.privateNonceProvider = privateNonceProvider;
     this.privateWorldStateReader = privateWorldStateReader;
     this.privateStateRootResolver = privacyParameters.getPrivateStateRootResolver();
-    this.privacyService = privacyParameters.getPrivacyService();
+    this.privacyPluginService = privacyParameters.getPrivacyService();
   }
 
   @Override
@@ -76,9 +76,9 @@ public class UnrestrictedPrivacyController implements PrivacyController {
       final String privacyUserId,
       final Optional<PrivacyGroup> privacyGroup) {
 
-    return privacyService
-        .getUnrestrictedPayloadEncryptionProvider()
-        .encryptMarkerPayload(privateTransaction, privacyUserId)
+    return privacyPluginService
+        .getPayloadProvider()
+        .generateMarkerPayload(privateTransaction, privacyUserId)
         .toBase64String();
   }
 
@@ -125,9 +125,9 @@ public class UnrestrictedPrivacyController implements PrivacyController {
         blockchain.getBlockHeader(transactionLocation.getBlockHash()).orElseThrow();
 
     final Optional<org.hyperledger.besu.plugin.data.PrivateTransaction> pluginPrivateTransaction =
-        privacyService
-            .getUnrestrictedPayloadEncryptionProvider()
-            .decryptMarkerPayload(blockHeader.getNumber(), transaction.get());
+        privacyPluginService
+            .getPayloadProvider()
+            .getPrivateTransactionFromPayload(blockHeader.getNumber(), transaction.get());
 
     if (pluginPrivateTransaction.isEmpty()) {
       return Optional.empty();
@@ -312,7 +312,7 @@ public class UnrestrictedPrivacyController implements PrivacyController {
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber) {
-    if (!privacyService
+    if (!privacyPluginService
         .getPrivacyGroupAuthProvider()
         .canAccess(privacyGroupId, privacyUserId, blockNumber)) {
       throw new MultiTenancyValidationException(

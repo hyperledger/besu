@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
+import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
+import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.serialize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
@@ -32,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.UnencryptedPayloadEncryptionService;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -41,13 +42,14 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.plugin.services.PrivacyService;
+import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
-import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,13 +59,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 
-public class UnrestrictedPrivacyPrecompiledContractTest {
+public class PrivacyPluginPrecompiledContractTest {
   private final String DEFAULT_OUTPUT = "0x01";
   private final Blockchain blockchain = mock(Blockchain.class);
 
   MessageFrame messageFrame;
 
-  UnrestrictedPrivacyPrecompiledContract contract;
+  PrivacyPluginPrecompiledContract contract;
 
   @Before
   public void setup() {
@@ -90,22 +92,38 @@ public class UnrestrictedPrivacyPrecompiledContractTest {
     when(messageFrame.getBlockchain()).thenReturn(blockchain);
 
     contract =
-        new UnrestrictedPrivacyPrecompiledContract(
+        new PrivacyPluginPrecompiledContract(
             new SpuriousDragonGasCalculator(),
             new PrivacyParameters.Builder()
                 .setEnabled(true)
-                .setUnrestrictedPrivacyEnabled(true)
+                .setPrivacyPluginEnabled(true)
                 .setStorageProvider(new InMemoryPrivacyStorageProvider())
                 .setPrivacyService(
-                    new PrivacyService() {
+                    new PrivacyPluginService() {
                       @Override
-                      public void setUnrestrictedPayloadEncryptionProvider(
-                          final PrivacyPayloadEncryptionProvider provider) {}
+                      public void setPayloadProvider(final PrivacyPluginPayloadProvider provider) {}
 
                       @Override
-                      public PrivacyPayloadEncryptionProvider
-                          getUnrestrictedPayloadEncryptionProvider() {
-                        return new UnencryptedPayloadEncryptionService();
+                      public PrivacyPluginPayloadProvider getPayloadProvider() {
+                        return new PrivacyPluginPayloadProvider() {
+                          @Override
+                          public Bytes generateMarkerPayload(
+                              final org.hyperledger.besu.plugin.data.PrivateTransaction
+                                  privateTransaction,
+                              final String privacyUserId) {
+                            return serialize(privateTransaction).encoded();
+                          }
+
+                          @Override
+                          public Optional<org.hyperledger.besu.plugin.data.PrivateTransaction>
+                              getPrivateTransactionFromPayload(
+                                  final long blockNumber,
+                                  final org.hyperledger.besu.plugin.data.Transaction transaction) {
+                            final BytesValueRLPInput bytesValueRLPInput =
+                                new BytesValueRLPInput(transaction.getPayload(), false);
+                            return Optional.of(readFrom(bytesValueRLPInput));
+                          }
+                        };
                       }
 
                       @Override

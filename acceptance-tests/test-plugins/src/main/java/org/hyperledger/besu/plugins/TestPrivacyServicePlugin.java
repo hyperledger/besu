@@ -23,8 +23,8 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
-import org.hyperledger.besu.plugin.services.PrivacyService;
-import org.hyperledger.besu.plugin.services.privacy.PrivacyPayloadEncryptionProvider;
+import org.hyperledger.besu.plugin.services.PrivacyPluginService;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 
 import java.util.Optional;
 
@@ -38,54 +38,48 @@ import picocli.CommandLine.Option;
 public class TestPrivacyServicePlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
 
-  private PrivacyService service;
+  private PrivacyPluginService service;
 
   @Override
   public void register(final BesuContext context) {
     context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
-    service = context.getService(PrivacyService.class).get();
+    service = context.getService(PrivacyPluginService.class).get();
+
+    service.setPayloadProvider(
+        new PrivacyPluginPayloadProvider() {
+          @Override
+          public Bytes generateMarkerPayload(
+              final PrivateTransaction privateTransaction, final String privacyUserId) {
+
+            return Bytes.wrap(Bytes.fromHexString(prefix), serialize(privateTransaction).encoded());
+          }
+
+          @Override
+          public Optional<PrivateTransaction> getPrivateTransactionFromPayload(
+              final long blockNumber, final Transaction transaction) {
+
+            LOG.info("decrypting payload in block " + blockNumber + " for " + prefix);
+
+            final Bytes prefixBytes = Bytes.fromHexString(prefix);
+            if (transaction.getPayload().slice(0, prefixBytes.size()).equals(prefixBytes)) {
+              LOG.info("processing payload for" + prefix);
+              final BytesValueRLPInput bytesValueRLPInput =
+                  new BytesValueRLPInput(
+                      transaction.getPayload().slice(prefixBytes.size()).copy(), false);
+              return Optional.of(readFrom(bytesValueRLPInput));
+            } else {
+              LOG.info("Can not process payload for" + prefix);
+              return Optional.empty();
+            }
+          }
+        });
   }
 
   @Override
-  public void start() {
-    if (enabled) {
-      service.setUnrestrictedPayloadEncryptionProvider(
-          new PrivacyPayloadEncryptionProvider() {
-            @Override
-            public Bytes encryptMarkerPayload(
-                final PrivateTransaction privateTransaction, final String privacyUserId) {
-
-              return Bytes.wrap(
-                  Bytes.fromHexString(prefix), serialize(privateTransaction).encoded());
-            }
-
-            @Override
-            public Optional<PrivateTransaction> decryptMarkerPayload(
-                final long blockNumber, final Transaction transaction) {
-
-              LOG.info("decrypting payload in block " + blockNumber + " for " + prefix);
-
-              final Bytes prefixBytes = Bytes.fromHexString(prefix);
-              if (transaction.getPayload().slice(0, prefixBytes.size()).equals(prefixBytes)) {
-                LOG.info("processing payload for" + prefix);
-                final BytesValueRLPInput bytesValueRLPInput =
-                    new BytesValueRLPInput(
-                        transaction.getPayload().slice(prefixBytes.size()).copy(), false);
-                return Optional.of(readFrom(bytesValueRLPInput));
-              } else {
-                LOG.info("Can not process payload for" + prefix);
-                return Optional.empty();
-              }
-            }
-          });
-    }
-  }
+  public void start() {}
 
   @Override
   public void stop() {}
-
-  @Option(names = "--plugin-privacy-service-encryption-enabled")
-  boolean enabled = false;
 
   @Option(names = "--plugin-privacy-service-encryption-prefix")
   String prefix;
