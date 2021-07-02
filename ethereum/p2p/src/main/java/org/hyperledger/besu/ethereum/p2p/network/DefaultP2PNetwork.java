@@ -300,12 +300,15 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
   }
 
+  public static List<String> blackListedPeers = new ArrayList<>();
+
   @Override
   public boolean addMaintainConnectionPeer(final Peer peer) {
     if (localNode.isReady()
         && localNode.getPeer() != null
         && localNode.getPeer().getEnodeURL() != null
-        && peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())) {
+        && peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())
+        && blackListedPeers.contains(peer.getEnodeURL().toURIWithoutDiscoveryPort().toString())) {
       return false;
     }
     final boolean wasAdded = maintainedPeers.add(peer);

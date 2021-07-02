@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.p2p.network.DefaultP2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -52,6 +53,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class EthPeer {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
@@ -150,6 +152,11 @@ public class EthPeer {
   }
 
   public void disconnect(final DisconnectReason reason) {
+    if (!reason.equals(DisconnectReason.ALREADY_CONNECTED)
+        && !reason.equals(DisconnectReason.TOO_MANY_PEERS)) {
+      DefaultP2PNetwork.blackListedPeers.add(
+          connection.getRemoteEnode().toURIWithoutDiscoveryPort().toString());
+    }
     connection.disconnect(reason);
   }
 
