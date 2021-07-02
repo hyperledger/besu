@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -726,4 +727,45 @@ public class PendingTransactionsTest {
     when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
     return blockHeader;
   }
+
+  @Test
+  public void shouldIgnoreFutureNoncedTxs() {
+    // create maxtx transaction with valid addresses/nonces
+    // all addresses should be unique, chained txs will be checked in another test.
+    // TODO: how do we test around reorgs? do we?
+    List<Transaction> toValidate = new ArrayList<Transaction>((int) transactions.maxSize());
+    for (int entries = 1; entries <= transactions.maxSize(); entries++) {
+      KeyPair kp = SIGNATURE_ALGORITHM.get().generateKeyPair();
+      Address a = Util.publicKeyToAddress(kp.getPublicKey());
+      Transaction t =
+              new TransactionTestFixture().sender(a).value(Wei.of(2)).nonce(0).createTransaction(kp);
+      transactions.addRemoteTransaction(t);
+      toValidate.add(t);
+    }
+
+    // create maxtx transaction with nonces in the future, could be any volume though since pool already full
+    List<Transaction> attackTxs = new ArrayList<>();
+    KeyPair attackerKp = SIGNATURE_ALGORITHM.get().generateKeyPair();
+    Address attackerA = Util.publicKeyToAddress(attackerKp.getPublicKey());
+
+    for (int entries = 1; entries < transactions.maxSize() + 1; entries++) {
+      Transaction t =
+              new TransactionTestFixture()
+                      .sender(attackerA)
+                      .value(Wei.of(1)) // cheaper than the valid ones
+                      .nonce(entries)
+                      .createTransaction(attackerKp);
+      attackTxs.add(t);
+      transactions.addRemoteTransaction(t);
+    }
+
+    //assert txpool contains 1st attack
+    assertThat(transactions.getTransactionByHash(attackTxs.get(0).getHash())).isNotEmpty();
+    //assert txpool does not contain rest of attack
+    attackTxs.stream().skip(1L).forEach(t -> assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty());
+    //assert that only 1 of the valid batch was purged
+    assertThat(toValidate.isEmpty()).isFalse();
+  }
+
+  // TODO add test case for legit but out of order txs
 }

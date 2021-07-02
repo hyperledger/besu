@@ -93,6 +93,7 @@ public class PendingTransactions {
                           .getValue()
                           .longValue())
               .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo))
               .reversed());
 
   private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
@@ -106,7 +107,18 @@ public class PendingTransactions {
                           .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo))
               .reversed());
+
+
+  private Long distanceFromNextNonce(final TransactionInfo incomingTx) {
+    TransactionsForSenderInfo inPool = transactionsBySender.get(incomingTx.getSender());
+    if(inPool == null || inPool.maybeNextNonce().isEmpty()) { //nothing in pool, you're next
+      return 0L;
+    }
+    return incomingTx.getNonce() - inPool.maybeNextNonce().getAsLong();
+  }
+
   private Optional<Long> baseFee;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
