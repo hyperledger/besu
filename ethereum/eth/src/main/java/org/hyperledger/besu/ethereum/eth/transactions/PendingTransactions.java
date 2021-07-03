@@ -82,7 +82,7 @@ public class PendingTransactions {
    */
   private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
       new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(TransactionInfo::isReceivedFromLocalSource).reversed()
               .thenComparing(
                   transactionInfo ->
                       transactionInfo
@@ -98,7 +98,7 @@ public class PendingTransactions {
 
   private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(TransactionInfo::isReceivedFromLocalSource).reversed()
               .thenComparing(
                   transactionInfo ->
                       transactionInfo
@@ -113,10 +113,10 @@ public class PendingTransactions {
 
   private Long distanceFromNextNonce(final TransactionInfo incomingTx) {
     TransactionsForSenderInfo inPool = transactionsBySender.get(incomingTx.getSender());
-    if(inPool == null || inPool.maybeNextNonce().isEmpty()) { //nothing in pool, you're next
+    if(inPool == null) { //nothing in pool, you're next
       return 0L;
     }
-    long minNonceForAccount = inPool.streamTransactionInfos().mapToLong(t -> t.getNonce()).min().getAsLong();
+    long minNonceForAccount = inPool.streamTransactionInfos().mapToLong(TransactionInfo::getNonce).min().getAsLong();
     return incomingTx.getNonce() - minNonceForAccount;
   }
 

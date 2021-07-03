@@ -122,15 +122,27 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldDropOldestTransactionWhenLimitExceeded() {
-    final Transaction oldestTransaction = createTransaction(0);
+    final Transaction oldestTransaction = new TransactionTestFixture()
+                                                .value(Wei.of(1L))
+                                                .nonce(0L)
+                                                .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
     transactions.addRemoteTransaction(oldestTransaction);
     for (int i = 1; i < MAX_TRANSACTIONS; i++) {
-      transactions.addRemoteTransaction(createTransaction(i));
+      final Transaction newerTransaction = new TransactionTestFixture()
+              .value(Wei.of(1L))
+              .nonce(0L)
+              .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
+      transactions.addRemoteTransaction(newerTransaction);
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
 
-    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1));
+    final Transaction lastTransaction = new TransactionTestFixture()
+            .value(Wei.of(1L))
+            .nonce(MAX_TRANSACTIONS + 1)
+            .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
+
+    transactions.addRemoteTransaction(lastTransaction);
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(oldestTransaction);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
@@ -153,6 +165,14 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldPrioritizeLocalTransaction() {
+
+    transactions.subscribeDroppedTransactions(new PendingTransactionDroppedListener() {
+      @Override
+      public void onTransactionDropped(final Transaction transaction) {
+        assertThat(transactions.getLocalTransactions().contains(transaction)).isFalse();
+      }
+    });
+
     final Transaction localTransaction = createTransaction(0);
     transactions.addLocalTransaction(localTransaction);
 
@@ -165,9 +185,20 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+    transactions.subscribeDroppedTransactions(
+            new PendingTransactionDroppedListener() {
+              @Override
+              public void onTransactionDropped(final Transaction transaction) {
+                assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100);
+              }
+            }
+    );
     final List<Transaction> lowGasPriceTransactions =
         IntStream.range(0, MAX_TRANSACTIONS)
-            .mapToObj(i -> transactionWithNonceSenderAndGasPrice(i + 1, KEYS1, 10))
+            .mapToObj(
+                i ->
+                    transactionWithNonceSenderAndGasPrice(
+                        i + 1, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10))
             .collect(Collectors.toUnmodifiableList());
 
     // Fill the pool
@@ -175,7 +206,7 @@ public class PendingTransactionsTest {
 
     // This should kick the oldest tx with the low gas price out, namely the first one we added
     final Transaction highGasPriceTransaction =
-        transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 1, KEYS1, 100);
+        transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 10, SIGNATURE_ALGORITHM.get().generateKeyPair(), 100);
     transactions.addRemoteTransaction(highGasPriceTransaction);
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
@@ -684,7 +715,7 @@ public class PendingTransactionsTest {
   @Test
   public void assertThatCorrectNonceIsReturned() {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(1, 2, 4, 5);
+    addLocalTransactions(1,2,4,5);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
@@ -693,9 +724,12 @@ public class PendingTransactionsTest {
         .isPresent()
         .hasValue(6);
     addLocalTransactions(6, 10);
+    //We have a logic change here. Previous implementation intended for oldest tx (1) regardless of nonce to be dropped.
+    //Since nonce distance is considered before sequence (and it must, because sequences are global) in the new logic,
+    //nonce 6 gets dropped. Next nonce is expected to be 6.
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(7);
+        .hasValue(7); //i do believe 6 is the correct next nonce to return, however in reality 6 is gone and never coming back
   }
 
   @Test
@@ -723,6 +757,17 @@ public class PendingTransactionsTest {
       transactions.addLocalTransaction(createTransaction(nonce));
     }
   }
+/*
+  private void addLocalTransactionFrom(final Address from, final KeyPair kp, final long... nonces) {
+    for (final long nonce : nonces) {
+      final Transaction ltf = new TransactionTestFixture()
+                          .sender(from)
+                          .value(Wei.of(nonce))
+                          .nonce(nonce)
+                          .createTransaction(kp);
+      transactions.addLocalTransaction(ltf);
+    }
+  }*/
 
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
