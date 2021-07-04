@@ -769,7 +769,7 @@ public class PendingTransactionsTest {
   @Test
   public void shouldIgnoreFutureNoncedTxs() {
 
-    // create maxtx transaction with valid addresses/nonces
+    // create maxtx transactions with valid addresses/nonces
     // all addresses should be unique, chained txs will be checked in another test.
     // TODO: how do we test around reorgs? do we?
     List<Transaction> toValidate = new ArrayList<Transaction>((int) transactions.maxSize());
@@ -793,15 +793,6 @@ public class PendingTransactionsTest {
     KeyPair attackerKp = SIGNATURE_ALGORITHM.get().generateKeyPair();
     Address attackerA = Util.publicKeyToAddress(attackerKp.getPublicKey());
 
-    transactions.subscribeDroppedTransactions(
-        new PendingTransactionDroppedListener() {
-          @Override
-          public void onTransactionDropped(final Transaction transaction) {
-            System.out.println(
-                "dropping transaction from " + transaction.getSender().toHexString());
-          }
-        });
-
     for (int entries = 10;
         entries < transactions.maxSize() + 10;
         entries++) { // badguy nonces are 2 digits
@@ -824,8 +815,10 @@ public class PendingTransactionsTest {
         .skip(1L)
         .forEach(t -> assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty());
     // assert that only 1 of the valid batch was purged
-    assertThat(toValidate.isEmpty()).isFalse();
+    long droppedValidCount =
+        toValidate.stream()
+            .filter(t -> transactions.getTransactionByHash(t.getHash()).isEmpty())
+            .count();
+    assertThat(droppedValidCount).isEqualTo(1L);
   }
-
-  // TODO add test case for legit but out of order txs
 }
