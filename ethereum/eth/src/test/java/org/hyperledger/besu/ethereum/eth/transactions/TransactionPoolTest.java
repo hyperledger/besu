@@ -60,7 +60,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration.Builder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -151,7 +150,8 @@ public class TransactionPoolTest {
     return createTransactionPool(b -> {});
   }
 
-  private TransactionPool createTransactionPool(Consumer<Builder> configConsumer) {
+  private TransactionPool createTransactionPool(
+      final Consumer<ImmutableTransactionPoolConfiguration.Builder> configConsumer) {
     final ImmutableTransactionPoolConfiguration.Builder configBuilder =
         ImmutableTransactionPoolConfiguration.builder();
     configConsumer.accept(configBuilder);
@@ -1042,7 +1042,8 @@ public class TransactionPoolTest {
     when(protocolSchedule.getChainId()).thenReturn(Optional.empty());
   }
 
-  private void protocolSupportsTxReplayProtection(long chainId, boolean isSupportedAtCurrentBlock) {
+  private void protocolSupportsTxReplayProtection(
+      final long chainId, final boolean isSupportedAtCurrentBlock) {
     when(protocolSpec.isReplayProtectionSupported()).thenReturn(isSupportedAtCurrentBlock);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(chainId)));
   }
