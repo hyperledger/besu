@@ -20,6 +20,7 @@ package org.hyperledger.besu.ethereum.transaction;
 public enum TransactionInvalidReason {
   WRONG_CHAIN_ID,
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
+  REPLAY_PROTECTED_SIGNATURE_REQUIRED,
   INVALID_SIGNATURE,
   UPFRONT_COST_EXCEEDS_BALANCE,
   NONCE_TOO_LOW,
