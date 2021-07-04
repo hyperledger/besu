@@ -300,7 +300,7 @@ public class TransactionPoolTest {
 
   @Test
   public void addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured() {
-    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(1337)));
+    protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
     final Transaction tx = createTransactionWithoutChainId(1);
     givenTransactionIsValid(tx);
@@ -309,8 +309,19 @@ public class TransactionPoolTest {
   }
 
   @Test
+  public void
+      addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured_protectionNotSupportedAtCurrentBlock() {
+    protocolSupportsTxReplayProtection(1337, false);
+    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    final Transaction tx = createTransactionWithoutChainId(1);
+    givenTransactionIsValid(tx);
+
+    assertLocalTransactionValid(tx);
+  }
+
+  @Test
   public void addLocalTransaction_strictReplayProtectionOff_txWithoutChainId_chainIdIsConfigured() {
-    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(1337)));
+    protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(false));
     final Transaction tx = createTransactionWithoutChainId(1);
     givenTransactionIsValid(tx);
@@ -321,7 +332,7 @@ public class TransactionPoolTest {
   @Test
   public void
       addLocalTransaction_strictReplayProtectionOn_txWithoutChainId_chainIdIsNotConfigured() {
-    when(protocolSchedule.getChainId()).thenReturn(Optional.empty());
+    protocolDoesNotSupportTxReplayProtection();
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
     final Transaction tx = createTransactionWithoutChainId(1);
     givenTransactionIsValid(tx);
@@ -331,7 +342,7 @@ public class TransactionPoolTest {
 
   @Test
   public void addLocalTransaction_strictReplayProtectionOn_txWithChainId_chainIdIsConfigured() {
-    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(1337)));
+    protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
     final Transaction tx = createTransaction(1);
     givenTransactionIsValid(tx);
@@ -342,7 +353,7 @@ public class TransactionPoolTest {
   @Test
   public void
       addRemoteTransactions_strictReplayProtectionOn_txWithoutChainId_chainIdIsConfigured() {
-    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(1337)));
+    protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
     final Transaction tx = createTransactionWithoutChainId(1);
     givenTransactionIsValid(tx);
@@ -353,7 +364,7 @@ public class TransactionPoolTest {
   @Test
   public void
       addRemoteTransactions_strictReplayProtectionOff_txWithoutChainId_chainIdIsConfigured() {
-    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(1337)));
+    protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(false));
     final Transaction tx = createTransactionWithoutChainId(1);
     givenTransactionIsValid(tx);
@@ -364,7 +375,7 @@ public class TransactionPoolTest {
   @Test
   public void
       addRemoteTransactions_strictReplayProtectionOn_txWithoutChainId_chainIdIsNotConfigured() {
-    when(protocolSchedule.getChainId()).thenReturn(Optional.empty());
+    protocolDoesNotSupportTxReplayProtection();
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
     final Transaction tx = createTransactionWithoutChainId(1);
     givenTransactionIsValid(tx);
@@ -374,7 +385,7 @@ public class TransactionPoolTest {
 
   @Test
   public void addRemoteTransactions_strictReplayProtectionOn_txWithChainId_chainIdIsConfigured() {
-    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(1337)));
+    protocolSupportsTxReplayProtection(1337, true);
     transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
     final Transaction tx = createTransaction(1);
     givenTransactionIsValid(tx);
@@ -1025,6 +1036,15 @@ public class TransactionPoolTest {
         .nonce(transactionNumber)
         .gasLimit(0)
         .createTransaction(KEY_PAIR1);
+  }
+
+  private void protocolDoesNotSupportTxReplayProtection() {
+    when(protocolSchedule.getChainId()).thenReturn(Optional.empty());
+  }
+
+  private void protocolSupportsTxReplayProtection(long chainId, boolean isSupportedAtCurrentBlock) {
+    when(protocolSpec.isReplayProtectionSupported()).thenReturn(isSupportedAtCurrentBlock);
+    when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.valueOf(chainId)));
   }
 
   private void givenTransactionIsValid(final Transaction transaction) {

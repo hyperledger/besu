@@ -208,6 +208,10 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
+  public boolean isReplayProtectionSupported() {
+    return chainId.isPresent();
+  }
+
   public ValidationResult<TransactionInvalidReason> validateTransactionSignature(
       final Transaction transaction) {
     if (chainId.isPresent()

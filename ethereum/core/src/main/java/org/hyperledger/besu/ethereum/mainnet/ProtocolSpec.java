@@ -169,6 +169,10 @@ public class ProtocolSpec {
     return transactionValidator;
   }
 
+  public boolean isReplayProtectionSupported() {
+    return transactionValidator.isReplayProtectionSupported();
+  }
+
   /**
    * Returns the transaction processor used in this specification.
    *
