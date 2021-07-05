@@ -61,7 +61,7 @@ public class EIP1559 {
       final BigInteger target = BigInteger.valueOf(targetGasUsed);
       final BigInteger denominator = BigInteger.valueOf(feeMarket.getBasefeeMaxChangeDenominator());
       feeDelta = pBaseFee.multiply(gDelta).divide(target).divide(denominator).longValue();
-      baseFee = max(parentBaseFee - feeDelta,0);
+      baseFee = max(parentBaseFee - feeDelta, 0);
     }
     LOG.trace(
         "block #{} parentBaseFee: {} parentGasUsed: {} parentGasTarget: {} baseFee: {}",
