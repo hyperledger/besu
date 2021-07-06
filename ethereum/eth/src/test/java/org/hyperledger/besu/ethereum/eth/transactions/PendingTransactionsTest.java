@@ -720,18 +720,18 @@ public class PendingTransactionsTest {
   @Test
   public void assertThatCorrectNonceIsReturned() {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(1, 2, 4, 5);
+    addLocalTransactions(1, 2, 4);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
     addLocalTransactions(3);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(6);
-    addLocalTransactions(6, 10);
+        .hasValue(5);
+    addLocalTransactions(5);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(6); // Debateable
+        .hasValue(6);
   }
 
   @Test
