@@ -177,40 +177,39 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       return Optional.of(persistedState);
     } else {
       try {
-        Optional<BlockHeader> persistedHeader =
+
+        final Optional<BlockHeader> maybePersistedHeader =
             blockchain.getBlockHeader(persistedState.blockHash());
 
         final List<TrieLogLayer> rollBacks = new ArrayList<>();
         final List<TrieLogLayer> rollForwards = new ArrayList<>();
-        if (persistedHeader.isEmpty()) {
+        if (maybePersistedHeader.isEmpty()) {
           getTrieLogLayer(persistedState.blockHash()).ifPresent(rollBacks::add);
         } else {
           BlockHeader targetHeader = blockchain.getBlockHeader(blockHash).get();
-
+          BlockHeader persistedHeader = maybePersistedHeader.get();
           // roll back from persisted to even with target
-          while (persistedHeader.get().getNumber() > targetHeader.getNumber()) {
-            LOG.debug("Rollback {}", persistedHeader.get().getHash());
-            rollBacks.add(getTrieLogLayer(persistedHeader.get().getHash()).get());
-            persistedHeader =
-                Optional.of(blockchain.getBlockHeader(persistedHeader.get().getParentHash()).get());
+          while (persistedHeader.getNumber() > targetHeader.getNumber()) {
+            LOG.debug("Rollback {}", persistedHeader.getHash());
+            rollBacks.add(getTrieLogLayer(persistedHeader.getHash()).get());
+            persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
           }
           // roll forward to target
-          while (persistedHeader.get().getNumber() < targetHeader.getNumber()) {
+          while (persistedHeader.getNumber() < targetHeader.getNumber()) {
             LOG.debug("Rollforward {}", targetHeader.getHash());
             rollForwards.add(getTrieLogLayer(targetHeader.getHash()).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
           }
 
           // roll back in tandem until we hit a shared state
-          while (!persistedHeader.get().getHash().equals(targetHeader.getHash())) {
-            LOG.debug("Paired Rollback {}", persistedHeader.get().getHash());
+          while (!persistedHeader.getHash().equals(targetHeader.getHash())) {
+            LOG.debug("Paired Rollback {}", persistedHeader.getHash());
             LOG.debug("Paired Rollforward {}", targetHeader.getHash());
             rollForwards.add(getTrieLogLayer(targetHeader.getHash()).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
 
-            rollBacks.add(getTrieLogLayer(persistedHeader.get().getHash()).get());
-            persistedHeader =
-                Optional.of(blockchain.getBlockHeader(persistedHeader.get().getParentHash()).get());
+            rollBacks.add(getTrieLogLayer(persistedHeader.getHash()).get());
+            persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
           }
         }
 
