@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -170,12 +170,7 @@ public class PendingTransactionsTest {
   public void shouldPrioritizeLocalTransaction() {
 
     transactions.subscribeDroppedTransactions(
-        new PendingTransactionDroppedListener() {
-          @Override
-          public void onTransactionDropped(final Transaction transaction) {
-            assertThat(transactions.getLocalTransactions().contains(transaction)).isFalse();
-          }
-        });
+            transaction -> assertThat(transactions.getLocalTransactions().contains(transaction)).isFalse());
 
     final Transaction localTransaction = createTransaction(0);
     transactions.addLocalTransaction(localTransaction);
@@ -190,12 +185,7 @@ public class PendingTransactionsTest {
   @Test
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
     transactions.subscribeDroppedTransactions(
-        new PendingTransactionDroppedListener() {
-          @Override
-          public void onTransactionDropped(final Transaction transaction) {
-            assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100);
-          }
-        });
+            transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
     final List<Transaction> lowGasPriceTransactions =
         IntStream.range(0, MAX_TRANSACTIONS)
             .mapToObj(
@@ -221,13 +211,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldStartDroppingLocalTransactionsWhenPoolIsFullOfLocalTransactions() {
-    transactions.subscribeDroppedTransactions(
-        new PendingTransactionDroppedListener() {
-          @Override
-          public void onTransactionDropped(final Transaction transaction) {
-            assertTransactionNotPending(transaction);
-          }
-        });
+    transactions.subscribeDroppedTransactions(this::assertTransactionNotPending);
 
     for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
       transactions.addLocalTransaction(createTransaction(i));
@@ -256,7 +240,7 @@ public class PendingTransactionsTest {
 
     transactions.addRemoteTransaction(transaction2);
 
-    verifyZeroInteractions(listener);
+    verifyNoInteractions(listener);
   }
 
   @Test
@@ -316,7 +300,7 @@ public class PendingTransactionsTest {
 
     transactions.transactionAddedToBlock(transaction1);
 
-    verifyZeroInteractions(droppedListener);
+    verifyNoInteractions(droppedListener);
   }
 
   @Test
@@ -512,7 +496,7 @@ public class PendingTransactionsTest {
     assertTransactionNotPending(transaction1b);
     assertTransactionPending(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
-    verifyZeroInteractions(listener);
+    verifyNoInteractions(listener);
   }
 
   @Test
@@ -772,7 +756,7 @@ public class PendingTransactionsTest {
     // create maxtx transactions with valid addresses/nonces
     // all addresses should be unique, chained txs will be checked in another test.
     // TODO: how do we test around reorgs? do we?
-    List<Transaction> toValidate = new ArrayList<Transaction>((int) transactions.maxSize());
+    List<Transaction> toValidate = new ArrayList<>((int) transactions.maxSize());
     for (int entries = 1; entries <= transactions.maxSize(); entries++) {
       KeyPair kp = SIGNATURE_ALGORITHM.get().generateKeyPair();
       Address a = Util.publicKeyToAddress(kp.getPublicKey());
