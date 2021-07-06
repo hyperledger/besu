@@ -170,7 +170,8 @@ public class PendingTransactionsTest {
   public void shouldPrioritizeLocalTransaction() {
 
     transactions.subscribeDroppedTransactions(
-            transaction -> assertThat(transactions.getLocalTransactions().contains(transaction)).isFalse());
+        transaction ->
+            assertThat(transactions.getLocalTransactions().contains(transaction)).isFalse());
 
     final Transaction localTransaction = createTransaction(0);
     transactions.addLocalTransaction(localTransaction);
@@ -185,7 +186,7 @@ public class PendingTransactionsTest {
   @Test
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
     transactions.subscribeDroppedTransactions(
-            transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
+        transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
     final List<Transaction> lowGasPriceTransactions =
         IntStream.range(0, MAX_TRANSACTIONS)
             .mapToObj(
