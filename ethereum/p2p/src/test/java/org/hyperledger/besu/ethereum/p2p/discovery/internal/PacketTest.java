@@ -48,7 +48,7 @@ public class PacketTest {
                 "0x46896547d3b4259aa1a67bd26e7ec58ab4be650c5552ef0360caf9dae489d53b"));
     assertThat(packetData.getExpiration()).isEqualTo(1535585736);
     assertThat(packetData.getEnrSeq().isPresent()).isTrue();
-    assertThat(packetData.getEnrSeq().get()).isEqualTo(UInt64.valueOf(3L));
+    assertThat(packetData.getEnrSeq().get()).isEqualTo(3L);
     assertThat(packet.getNodeId())
         .isEqualTo(
             Bytes.fromHexString(

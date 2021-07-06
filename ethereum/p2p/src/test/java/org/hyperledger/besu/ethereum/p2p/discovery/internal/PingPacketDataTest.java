@@ -61,7 +61,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
 
     final Bytes serialized = out.encoded();
@@ -88,7 +88,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     // Add extra field
     out.writeLongScalar(11);
     out.endList();
@@ -117,7 +117,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
 
     final Bytes serialized = out.encoded();
@@ -144,7 +144,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
 
     final Bytes serialized = out.encoded();
