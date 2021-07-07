@@ -23,7 +23,7 @@ public class GenesisAllocation {
   private final String address;
   private final ObjectNode data;
 
-  GenesisAllocation(final String address, final ObjectNode data) {
+  public GenesisAllocation(final String address, final ObjectNode data) {
     this.address = address;
     this.data = data;
   }

@@ -430,6 +430,9 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater) {
     if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
+
+      // TODO: inject private state genesis
+
       // inject management
       final EvmAccount managementPrecompile =
           privateWorldStateUpdater.createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);

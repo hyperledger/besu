@@ -156,6 +156,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
+    // THINK ABOUT INJECTING PLUGIN STATE
+
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash, null).get();
 

@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigFile;
+import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
@@ -60,6 +62,7 @@ public class PrivacyParameters {
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
+  private PrivacyGenesisConfigOptions privacyGenesis;
   private PrivacyPluginService privacyPluginService;
 
   public Address getPrivacyAddress() {
@@ -204,6 +207,14 @@ public class PrivacyParameters {
     return privacyPluginService;
   }
 
+  private void setPrivacyGenesis(final PrivacyGenesisConfigOptions privacyGenesis) {
+    this.privacyGenesis = privacyGenesis;
+  }
+
+  public PrivacyGenesisConfigOptions getPrivacyGenesis() {
+    return privacyGenesis;
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{"
@@ -240,6 +251,7 @@ public class PrivacyParameters {
     private boolean privacyPluginEnabled;
     private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
     private PrivacyPluginService privacyPluginService;
+    private PrivacyGenesisConfigOptions privacyGenesis = PrivacyGenesisConfigFile.empty();
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -291,14 +303,14 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
-      this.privacyPluginEnabled = privacyPluginEnabled;
-      return this;
-    }
-
     public Builder setGoQuorumPrivacyParameters(
         final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
       this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
+      return this;
+    }
+
+    public Builder setPrivacyPluginEnabled(final Boolean privacyPluginEnabled) {
+      this.privacyPluginEnabled = privacyPluginEnabled;
       return this;
     }
 
@@ -311,6 +323,11 @@ public class PrivacyParameters {
 
     public Builder setPrivacyService(final PrivacyPluginService privacyPluginService) {
       this.privacyPluginService = privacyPluginService;
+      return this;
+    }
+
+    public Builder setPrivacyGenesis(final PrivacyGenesisConfigOptions privacyGenesis) {
+      this.privacyGenesis = privacyGenesis;
       return this;
     }
 
@@ -364,6 +381,7 @@ public class PrivacyParameters {
       config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
       config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
+      config.setPrivacyGenesis(privacyGenesis);
       return config;
     }
 

@@ -48,7 +48,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -100,7 +102,6 @@ import java.util.stream.Stream;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
@@ -112,6 +113,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 
 public class BesuCommandTest extends CommandTestAbstract {
@@ -144,6 +146,15 @@ public class BesuCommandTest extends CommandTestAbstract {
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "secp256k1"));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
+
+  private static final JsonObject PRIVATE_GENESIS_VALID_JSON =
+      (new JsonObject())
+          .put(
+              "alloc",
+              new JsonObject()
+                  .put(
+                      "fe3b557e8fb62b89f4916b721be55ceb828dbd73",
+                      new JsonObject().put("balance", "100")));
 
   private final String[] validENodeStrings = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
@@ -4313,6 +4324,37 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
     verify(mockLogger).info("Using LibEthPairings native alt bn128");
+  }
+
+  @Test
+  public void privateGenesisFileOptionsStoredAgainstPrivacyParameters() throws IOException {
+    final Path genesisFile = createFakeGenesisFile(PRIVATE_GENESIS_VALID_JSON);
+
+    parseCommand(
+        "--privacy-enabled",
+        "--Xprivacy-genesis-file",
+        genesisFile.toString(),
+        "--privacy-public-key-file",
+        ENCLAVE_PUBLIC_KEY_PATH,
+        "--min-gas-price",
+        "0");
+
+    assertThat(commandOutput.toString()).isEmpty();
+    assertThat(commandErrorOutput.toString()).isEmpty();
+
+    final ArgumentCaptor<PrivacyParameters> privacyParametersArgumentCaptor =
+        ArgumentCaptor.forClass(PrivacyParameters.class);
+
+    verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    final PrivacyGenesisConfigOptions privacyGenesis =
+        privacyParametersArgumentCaptor.getValue().getPrivacyGenesis();
+
+    assertThat(privacyGenesis.getAllocations().size()).isEqualTo(1);
+    final GenesisAllocation allocation =
+        privacyGenesis.getAllocations().get("fe3b557e8fb62b89f4916b721be55ceb828dbd73");
+    assertThat(allocation.getBalance()).isEqualTo("100");
   }
 
   @Test
