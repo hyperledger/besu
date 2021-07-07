@@ -64,7 +64,7 @@ public class EthMessages {
 
     } catch (final RLPException e) {
       LOG.debug(
-          "Received malformed requestMessage {} , disconnecting: {}",
+          "Received malformed message {} , disconnecting: {}",
           requestMessage.getData().getData(),
           requestMessage.getPeer(),
           e);
