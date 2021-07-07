@@ -51,7 +51,7 @@ public class EthMessages {
           .ifPresent(
               responseMessageData -> {
                 try {
-                  MessageData wrappedResponseData =
+                  final MessageData wrappedResponseData =
                       requestIdAndEthMessage
                           .getKey()
                           .map(requestId -> RequestId.wrapRequestId(requestId, responseMessageData))
