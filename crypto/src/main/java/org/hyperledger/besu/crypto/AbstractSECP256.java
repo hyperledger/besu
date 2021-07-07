@@ -215,7 +215,6 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
     return PROVIDER;
   }
 
-  @Override
   public abstract DSAKCalculator getKCalculator();
 
   // Decompress a compressed public key (x co-ord and low-bit of y-coord).

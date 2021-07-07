@@ -20,7 +20,6 @@ import java.util.function.UnaryOperator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.crypto.signers.DSAKCalculator;
 import org.bouncycastle.math.ec.ECPoint;
 
 public interface SignatureAlgorithm {
@@ -54,8 +53,6 @@ public interface SignatureAlgorithm {
   String getProvider();
 
   String getCurveName();
-
-  DSAKCalculator getKCalculator();
 
   SECPPrivateKey createPrivateKey(final BigInteger key);
 
