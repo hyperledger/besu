@@ -92,7 +92,7 @@ public class PendingTransactions {
                           .get()
                           .getValue()
                           .longValue())
-              .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo))
+              .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
@@ -106,13 +106,14 @@ public class PendingTransactions {
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(transactionInfo -> distanceFromNextNonce(transactionInfo))
+              .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
   private Long distanceFromNextNonce(final TransactionInfo incomingTx) {
-    TransactionsForSenderInfo inPool = transactionsBySender.get(incomingTx.getSender());
-    if (inPool == null) { // nothing in pool, you're next
+    final TransactionsForSenderInfo inPool = transactionsBySender.get(incomingTx.getSender());
+    if ((inPool == null)
+        || (inPool.streamTransactionInfos().count() < 1)) { // nothing in pool, you're next
       return 0L;
     }
     long minNonceForAccount =

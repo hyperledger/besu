@@ -231,6 +231,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldNotNotifyListenerAfterUnsubscribe() {
+
     final long id = transactions.subscribePendingTransactions(listener);
 
     transactions.addRemoteTransaction(transaction1);
@@ -238,10 +239,8 @@ public class PendingTransactionsTest {
     verify(listener).onTransactionAdded(transaction1);
 
     transactions.unsubscribePendingTransactions(id);
-
+    verifyNoMoreInteractions(listener);
     transactions.addRemoteTransaction(transaction2);
-
-    verifyNoInteractions(listener);
   }
 
   @Test
