@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 
@@ -74,18 +72,5 @@ public class PacketTest {
 
   private Packet decode(final String hexData) {
     return Packet.decode(Buffer.buffer(Hex.decode(hexData)));
-  }
-
-  @Test
-  public void encryptData() {
-    final Endpoint to = new Endpoint("180.181.122.26", 1025, Optional.of(30303));
-    final Endpoint from = new Endpoint("180.181.122.25", 1025, Optional.of(30303));
-
-    final UInt64 enrSeq = UInt64.valueOf(3L);
-
-    final PingPacketData ping = PingPacketData.create(from, to, enrSeq);
-    final NodeKey n = NodeKeyUtils.generate();
-    Packet rlpxd = Packet.create(PacketType.PING, ping, n);
-    System.out.println(Hex.toHexString(rlpxd.encode().getBytes()));
   }
 }
