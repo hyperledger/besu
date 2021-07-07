@@ -47,6 +47,10 @@ public class PeerReputationManager implements DisconnectCallback {
     }
   }
 
+  public PeerPermissionsDenylist getBlacklist() {
+    return blacklist;
+  }
+
   private boolean shouldBlock(final DisconnectReason reason, final boolean initiatedByPeer) {
     return (!initiatedByPeer && locallyTriggeredDisconnectReasons.contains(reason))
         || (initiatedByPeer && remotelyTriggeredDisconnectReasons.contains(reason));

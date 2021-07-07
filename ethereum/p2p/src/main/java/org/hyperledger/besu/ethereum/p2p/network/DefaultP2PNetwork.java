@@ -307,9 +307,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     if (localNode.isReady()
         && localNode.getPeer() != null
         && localNode.getPeer().getEnodeURL() != null
-        && peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())
-        && blackListedPeers.contains(peer.getEnodeURL().toURIWithoutDiscoveryPort().toString())) {
-      LOG.info("Refused blacklisted peer");
+        && peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())) {
+      return false;
+    }
+    if (DefaultP2PNetwork.blackListedPeers.contains(
+        peer.getEnodeURL().toURIWithoutDiscoveryPort().toString())) {
       return false;
     }
     final boolean wasAdded = maintainedPeers.add(peer);
