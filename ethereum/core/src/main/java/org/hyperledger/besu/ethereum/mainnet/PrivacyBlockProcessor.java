@@ -104,16 +104,14 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions) {
     transactions.stream()
-        .filter(
-            t ->
-                t.getTo().isPresent()
-                    && t.getTo().equals(Optional.of(Address.ONCHAIN_PRIVACY))
-                    && t.getPayload().size() == 64)
+        .filter(this::onChainAddToGroupPrivateMarkerTransactions)
         .forEach(
-            t -> {
-              final Bytes32 addKey = Bytes32.wrap(t.getPayload().slice(32, 32));
+            pmt -> {
+              final Bytes32 privateTransactionsLookupId =
+                  Bytes32.wrap(pmt.getPayload().slice(32, 32));
               try {
-                final ReceiveResponse receiveResponse = enclave.receive(addKey.toBase64String());
+                final ReceiveResponse receiveResponse =
+                    enclave.receive(privateTransactionsLookupId.toBase64String());
                 final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList =
                     PrivateTransactionWithMetadata.readListFromPayload(
                         Bytes.wrap(Base64.getDecoder().decode(receiveResponse.getPayload())));
@@ -125,15 +123,15 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                             .getPrivacyGroupId()
                             .get());
 
-                final List<PrivateTransactionWithMetadata> actualList =
-                    createActualList(
+                final List<PrivateTransactionWithMetadata> actualListToRehydrate =
+                    transactionsInGroupThatNeedToBeApplied(
                         blockHeader, privateTransactionWithMetadataList, privacyGroupId);
 
-                if (actualList.size() > 0) {
+                if (actualListToRehydrate.size() > 0) {
                   LOG.debug(
                       "Rehydrating privacy group {}, number of transactions to be rehydrated is {} out of a total number of {} transactions.",
                       privacyGroupId.toString(),
-                      actualList.size(),
+                      actualListToRehydrate.size(),
                       privateTransactionWithMetadataList.size());
                   final PrivateStateRehydration privateStateRehydration =
                       new PrivateStateRehydration(
@@ -143,8 +141,11 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                           publicWorldStateArchive,
                           privateWorldStateArchive,
                           privateStateRootResolver);
-                  privateStateRehydration.rehydrate(actualList);
-                  privateStateStorage.updater().putAddDataKey(privacyGroupId, addKey).commit();
+                  privateStateRehydration.rehydrate(actualListToRehydrate);
+                  privateStateStorage
+                      .updater()
+                      .putAddDataKey(privacyGroupId, privateTransactionsLookupId)
+                      .commit();
                 }
               } catch (final EnclaveClientException e) {
                 // we were not being added because we have not found the add blob
@@ -152,10 +153,17 @@ public class PrivacyBlockProcessor implements BlockProcessor {
             });
   }
 
-  private List<PrivateTransactionWithMetadata> createActualList(
+  private boolean onChainAddToGroupPrivateMarkerTransactions(final Transaction t) {
+    return t.getTo().isPresent()
+        && t.getTo().equals(Optional.of(Address.ONCHAIN_PRIVACY))
+        && t.getPayload().size() == 64;
+  }
+
+  private List<PrivateTransactionWithMetadata> transactionsInGroupThatNeedToBeApplied(
       final BlockHeader blockHeader,
       final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList,
       final Bytes32 privacyGroupId) {
+
     // if we are the member adding another member we do not have to rehydrate
     // if we have been removed from the group at some point we only need to rehydrate from where we
     // were removed
