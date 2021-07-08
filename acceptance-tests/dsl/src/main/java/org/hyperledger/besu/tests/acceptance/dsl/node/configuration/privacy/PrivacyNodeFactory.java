@@ -66,13 +66,13 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork,
       final boolean isOnchainPrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled)
+      final boolean isPrivacyPluginEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
             isOnchainPrivacyGroupEnabled,
             isMultitenancyEnabled,
-            isUnrestrictedEnabled,
+            isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -106,13 +106,13 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork,
       final boolean isOnchainPrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled)
+      final boolean isPrivacyPluginEnabled)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
             isOnchainPrivacyGroupEnabled,
             isMultitenancyEnabled,
-            isUnrestrictedEnabled,
+            isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .jsonRpcEnabled()
@@ -146,14 +146,14 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork,
       final boolean isOnchainPrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled,
+      final boolean isPrivacyPluginEnabled,
       final String unrestrictedPrefix)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
             isOnchainPrivacyGroupEnabled,
             isMultitenancyEnabled,
-            isUnrestrictedEnabled,
+            isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()
@@ -180,14 +180,14 @@ public class PrivacyNodeFactory {
       final Optional<Network> containerNetwork,
       final boolean isOnchainPrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
-      final boolean isUnrestrictedEnabled,
+      final boolean isPrivacyPluginEnabled,
       final String unrestrictedPrefix)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
             isOnchainPrivacyGroupEnabled,
             isMultitenancyEnabled,
-            isUnrestrictedEnabled,
+            isPrivacyPluginEnabled,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .miningEnabled()

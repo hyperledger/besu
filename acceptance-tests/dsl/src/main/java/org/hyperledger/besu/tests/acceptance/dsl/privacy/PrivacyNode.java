@@ -127,7 +127,7 @@ public class PrivacyNode implements AutoCloseable {
 
   public void testEnclaveConnection(final List<PrivacyNode> otherNodes) {
     if (this.isPrivacyPluginEnabled) {
-      LOG.info("Skipping as node has no enclave (isUnrestrictedEnabled=true)");
+      LOG.info("Skipping test as node has no enclave (isPrivacyPluginEnabled=true)");
       return;
     }
 
