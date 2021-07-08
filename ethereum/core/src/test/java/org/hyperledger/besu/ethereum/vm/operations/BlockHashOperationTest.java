@@ -90,7 +90,7 @@ public class BlockHashOperationTest {
 
   private void assertBlockHash(
       final long requestedBlock, final Bytes32 expectedOutput, final long currentBlockNumber) {
-    assertBlockHash(UInt256.valueOf(requestedBlock).toBytes(), expectedOutput, currentBlockNumber);
+    assertBlockHash(UInt256.valueOf(requestedBlock), expectedOutput, currentBlockNumber);
   }
 
   private void assertBlockHash(

@@ -117,8 +117,7 @@ public class ExtCodeHashOperationTest {
     account.setVersion(Account.DEFAULT_VERSION);
     final Bytes32 value =
         UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))
-            .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)))
-            .toBytes();
+            .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
     assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code));

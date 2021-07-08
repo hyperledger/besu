@@ -157,7 +157,7 @@ public class Create2OperationTest {
             .worldState(worldUpdater)
             .build();
     messageFrame.pushStackItem(Bytes32.fromHexString(salt));
-    messageFrame.pushStackItem(memoryLength.toBytes());
+    messageFrame.pushStackItem(memoryLength);
     messageFrame.pushStackItem(memoryOffset);
     messageFrame.pushStackItem(Bytes32.ZERO);
     messageFrame.expandMemory(UInt256.ZERO, UInt256.valueOf(500));

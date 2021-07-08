@@ -142,7 +142,7 @@ public class Stratum1Protocol implements StratumProtocol {
           jobIdSupplier.get(),
           Bytes.wrap(currentInput.getPrePowHash()).toHexString(),
           Bytes.wrap(dagSeed).toHexString(),
-          currentInput.getTarget().toBytes().toHexString(),
+          currentInput.getTarget().toHexString(),
           true
         };
     JsonRpcRequest req = new JsonRpcRequest("2.0", "mining.notify", params);
