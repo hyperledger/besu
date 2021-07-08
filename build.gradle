@@ -600,6 +600,7 @@ tasks.register("dockerDistUntar") {
       from tarTree(distTarFile)
       into(dockerBuildDir)
     }
+    project.delete(files("${dockerBuildDir}/besu"))
     file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/besu")
   }
 }
