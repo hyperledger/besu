@@ -31,6 +31,10 @@ This release contains the activation blocks for London across all supported test
 - GoQuorum-compatible privacy. This mode uses Tessera and is interoperable with GoQuorum.
   - Note: GoQuorum-compatible privacy is an early access feature pending community feedback.
 
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.0/besu-21.7.0.zip
+sha256sum 389465fdcc2cc5e5007a02dc2b8a2c43d577198867316bc5cc4392803ed71034
+
 ## 21.7.0-RC2
 
 ### Additions and Improvements
