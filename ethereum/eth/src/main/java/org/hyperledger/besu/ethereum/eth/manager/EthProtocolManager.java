@@ -261,9 +261,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     }
 
     // if it's eth66, we need to pull the requestId out of the data
+    // todo if we're going to have the overload, don't do the unwrap for some of them
     final Map.Entry<Optional<Long>, EthMessage> requestIdAndUnwrappedEthMessage;
     if (cap.equals(EthProtocol.ETH66)) {
-      final Map.Entry<Long, MessageData> unwrappedMessage = RequestId.unwrapRequestId(message);
+      final Map.Entry<Long, MessageData> unwrappedMessage =
+          RequestId.unwrapRequestId(message.getData());
       requestIdAndUnwrappedEthMessage =
           Map.entry(
               Optional.of(unwrappedMessage.getKey()),

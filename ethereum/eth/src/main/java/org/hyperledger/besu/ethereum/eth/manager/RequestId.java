@@ -12,7 +12,7 @@ import java.util.AbstractMap;
 import java.util.Map;
 
 public class RequestId {
-  static MessageData wrapRequestId(final long requestId, final MessageData messageData) {
+  public static MessageData wrapRequestId(final long requestId, final MessageData messageData) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
     rlpOutput.writeLongScalar(requestId);
@@ -21,14 +21,14 @@ public class RequestId {
     return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
 
-  static Map.Entry<Long, MessageData> unwrapRequestId(final Message message) {
-    final RLPInput messageDataRLP = RLP.input(message.getData().getData());
+  static Map.Entry<Long, MessageData> unwrapRequestId(final MessageData messageData) {
+    final RLPInput messageDataRLP = RLP.input(messageData.getData());
     messageDataRLP.enterList();
     final long requestId = messageDataRLP.readLongScalar();
     final Bytes unwrappedMessageData = messageDataRLP.readBytes();
     messageDataRLP.leaveList();
 
     return new AbstractMap.SimpleImmutableEntry<>(
-        requestId, new RawMessage(message.getData().getCode(), unwrappedMessageData));
+        requestId, new RawMessage(messageData.getCode(), unwrappedMessageData));
   }
 }

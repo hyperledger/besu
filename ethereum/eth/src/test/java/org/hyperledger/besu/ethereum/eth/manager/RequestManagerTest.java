@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.manager.RequestId.unwrapRequestId;
-import static org.hyperledger.besu.ethereum.eth.manager.RequestManager.unwrapRequestId;
 
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -30,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -68,7 +69,8 @@ public class RequestManagerTest {
       stream.then(responseHandler);
 
       // Dispatch message
-      final EthMessage mockMessage = mockMessage(peer, supportsRequestId);
+      final Map.Entry<Optional<Long>, EthMessage> mockMessage =
+          mockMessage(peer, supportsRequestId);
       requestManager.dispatchResponse(mockMessage);
 
       // Response handler should get message
@@ -103,7 +105,8 @@ public class RequestManagerTest {
       assertThat(sendCount.get()).isEqualTo(1);
 
       // Dispatch message
-      final EthMessage mockMessage = mockMessage(peer, supportsRequestId);
+      final Map.Entry<Optional<Long>, EthMessage> mockMessage =
+          mockMessage(peer, supportsRequestId);
       requestManager.dispatchResponse(mockMessage);
 
       // Response handler should get message
@@ -140,7 +143,7 @@ public class RequestManagerTest {
     assertThat(sendCount.get()).isEqualTo(2);
 
     // Dispatch first message
-    EthMessage mockMessage = mockMessage(peer, false);
+    Map.Entry<Optional<Long>, EthMessage> mockMessage = mockMessage(peer, false);
     requestManager.dispatchResponse(mockMessage);
 
     // Response handler should get messages sent before it is registered
@@ -197,7 +200,7 @@ public class RequestManagerTest {
     streamA.then(responseHandlerA);
 
     // Dispatch message
-    EthMessage mockMessage = mockMessage(peer, false);
+    Map.Entry<Optional<Long>, EthMessage> mockMessage = mockMessage(peer, false);
     requestManager.dispatchResponse(mockMessage);
 
     // Response handler A should get message
@@ -266,30 +269,37 @@ public class RequestManagerTest {
     streamB.then(responseHandlerB);
 
     // Dispatch message
-    EthMessage mockMessage = mockMessage(peer, true);
+    final Map.Entry<Optional<Long>, EthMessage> mockMessage = mockMessage(peer, true);
     requestManager.dispatchResponse(mockMessage);
 
     // Only handler A or B should get message
     assertThat(receivedMessagesA.size() + receivedMessagesB.size()).isEqualTo(1);
   }
 
-  private EthMessage mockMessage(final EthPeer peer, final boolean supportsRequestId) {
+  private Map.Entry<Optional<Long>, EthMessage> mockMessage(
+      final EthPeer peer, final boolean supportsRequestId) {
     if (!supportsRequestId) {
-      return new EthMessage(peer, new RawMessage(1, Bytes.EMPTY));
+      return Map.entry(Optional.empty(), new EthMessage(peer, new RawMessage(1, Bytes.EMPTY)));
     }
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
-    rlpOutput.writeLongScalar(requestIdCounter.getAndIncrement());
+    final long requestId = requestIdCounter.getAndIncrement();
+    rlpOutput.writeLongScalar(requestId);
     rlpOutput.writeBytes(Bytes.EMPTY);
     rlpOutput.endList();
-    return new EthMessage(peer, new RawMessage(1, rlpOutput.encoded()));
+    return Map.entry(
+        Optional.of(requestId), new EthMessage(peer, new RawMessage(1, rlpOutput.encoded())));
   }
 
   private void assertResponseCorrect(
-      final MessageData response, final EthMessage mockMessage, final boolean supportsRequestId) {
+      final MessageData response,
+      final Map.Entry<Optional<Long>, EthMessage> mockMessage,
+      final boolean supportsRequestId) {
     assertThat(response)
         .isEqualTo(
-            (supportsRequestId ? unwrapRequestId(mockMessage).getValue() : mockMessage).getData());
+            (supportsRequestId
+                ? unwrapRequestId(mockMessage.getValue().getData()).getValue()
+                : mockMessage));
   }
 
   private EthPeer createPeer() {
