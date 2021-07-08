@@ -23,7 +23,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistory;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -134,15 +135,17 @@ public class EthFeeHistory implements JsonRpcMethod {
                                 block))
                     .collect(toUnmodifiableList()));
 
-    final ImmutableFeeHistoryResult.Builder feeHistoryResultBuilder =
-        ImmutableFeeHistoryResult.builder()
-            .oldestBlock(oldestBlock)
-            .baseFeePerGas(
-                Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
-                    .collect(toUnmodifiableList()))
-            .gasUsedRatio(gasUsedRatios);
-    maybeRewards.ifPresent(feeHistoryResultBuilder::reward);
-    return new JsonRpcSuccessResponse(requestId, feeHistoryResultBuilder.build());
+    return new JsonRpcSuccessResponse(
+        requestId,
+        FeeHistory.FeeHistoryResult.from(
+            ImmutableFeeHistory.builder()
+                .oldestBlock(oldestBlock)
+                .baseFeePerGas(
+                    Stream.concat(explicitlyRequestedBaseFees.stream(), Stream.of(nextBaseFee))
+                        .collect(toUnmodifiableList()))
+                .gasUsedRatio(gasUsedRatios)
+                .reward(maybeRewards)
+                .build()));
   }
 
   private List<Long> computeRewards(final List<Double> rewardPercentiles, final Block block) {
