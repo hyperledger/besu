@@ -1,13 +1,9 @@
 # Changelog
 
-## 21.7.1
-
-### Additions and Improvements
-- `priv_call` now uses NO_TRACING OperationTracer implementation which improves memory usage [\#2482](https://github.com/hyperledger/besu/pull/2482)
-
 ## 21.7.0
 
 ### Additions and Improvements
+- `priv_call` now uses NO_TRACING OperationTracer implementation which improves memory usage [\#2482](https://github.com/hyperledger/besu/pull/2482)
 
 ### Bug Fixes
 - Ibft2 could create invalid RoundChange messages in some circumstances containing duplicate prepares [\#2449](https://github.com/hyperledger/besu/pull/2449)
@@ -19,7 +15,11 @@ This release contains the activation blocks for London across all supported test
   * Ropsten 10_499_401 (24 Jun 2021)
   * Goerli 5_062_605 (30 Jun 2021)
   * Rinkeby 8_897_988 (7 Jul 2021)
-
+- QBFT is a Byzantine Fault Tolerant consensus algorithm, building on the capabilities of IBFT and IBFT 2.0. It aims to provide performance improvements in cases of excess round change, and provides interoperability with other EEA compliant clients, such as GoQuorum.
+  - Note: QBFT currently only supports new networks. Existing networks using IBFT2.0 cannot migrate to QBFT. This will become available in a future release.
+  - Note: QBFT is an early access feature pending community feedback. Please make use of QBFT in new development networks and reach out in case of issues or concerns
+- GoQuorum-compatible privacy. This mode uses Tessera and is interoperable with GoQuorum.
+  - Note: GoQuorum-compatible privacy is an early access feature pending community feedback.
 
 ## 21.7.0-RC2
 
