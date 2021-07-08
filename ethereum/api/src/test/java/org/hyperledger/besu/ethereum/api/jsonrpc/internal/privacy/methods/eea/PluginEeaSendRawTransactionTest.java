@@ -62,6 +62,6 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
-        .createPrivateMarkerTransaction(any(), any(), eq(Address.UNRESTRICTED_PRIVACY));
+        .createPrivateMarkerTransaction(any(), any(), eq(Address.PLUGIN_PRIVACY));
   }
 }

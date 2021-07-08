@@ -173,7 +173,7 @@ public abstract class MainnetPrecompiledContractRegistries {
 
     if (precompiledContractConfiguration.getPrivacyParameters().isPrivacyPluginEnabled()) {
       registry.put(
-          Address.UNRESTRICTED_PRIVACY,
+          Address.PLUGIN_PRIVACY,
           accountVersion,
           new PrivacyPluginPrecompiledContract(
               precompiledContractConfiguration.getGasCalculator(),

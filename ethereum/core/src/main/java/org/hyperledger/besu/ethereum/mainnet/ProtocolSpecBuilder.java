@@ -310,8 +310,7 @@ public class ProtocolSpecBuilder {
       if (privacyParameters.isPrivacyPluginEnabled()) {
         final PrivacyPluginPrecompiledContract privacyPluginPrecompiledContract =
             (PrivacyPluginPrecompiledContract)
-                precompileContractRegistry.get(
-                    Address.UNRESTRICTED_PRIVACY, Account.DEFAULT_VERSION);
+                precompileContractRegistry.get(Address.PLUGIN_PRIVACY, Account.DEFAULT_VERSION);
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {

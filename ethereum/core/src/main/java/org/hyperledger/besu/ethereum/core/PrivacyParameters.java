@@ -64,7 +64,7 @@ public class PrivacyParameters {
 
   public Address getPrivacyAddress() {
     if (isPrivacyPluginEnabled()) {
-      return Address.UNRESTRICTED_PRIVACY;
+      return Address.PLUGIN_PRIVACY;
     } else if (isOnchainPrivacyGroupsEnabled()) {
       return Address.ONCHAIN_PRIVACY;
     } else {
