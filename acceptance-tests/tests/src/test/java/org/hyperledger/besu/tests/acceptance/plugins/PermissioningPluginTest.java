@@ -37,7 +37,7 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    BesuNodeConfigurationBuilder builder =
+    final BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
             .miningEnabled(false)
             .plugins(Collections.singletonList("testPlugins"))
@@ -86,9 +86,9 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
     final Account account = accounts.createAccount("account-one");
     final Amount balance = Amount.ether(20);
 
-    TransferTransaction tx = accountTransactions.createTransfer(account, balance);
+    final TransferTransaction tx = accountTransactions.createTransfer(account, balance);
 
-    Hash txHash = aliceNode.execute(tx);
+    final Hash txHash = aliceNode.execute(tx);
 
     aliceNode.verify(txPoolConditions.inTransactionPool(txHash));
     bobNode.verify(txPoolConditions.inTransactionPool(txHash));
