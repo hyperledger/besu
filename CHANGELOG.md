@@ -1,13 +1,9 @@
 # Changelog
 
-## 21.7.1
-
-### Additions and Improvements
-- `priv_call` now uses NO_TRACING OperationTracer implementation which improves memory usage [\#2482](https://github.com/hyperledger/besu/pull/2482)
-
 ## 21.7.0
 
 ### Additions and Improvements
+- `priv_call` now uses NO_TRACING OperationTracer implementation which improves memory usage [\#2482](https://github.com/hyperledger/besu/pull/2482)
 
 ### Bug Fixes
 - Ibft2 could create invalid RoundChange messages in some circumstances containing duplicate prepares [\#2449](https://github.com/hyperledger/besu/pull/2449)
