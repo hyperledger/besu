@@ -38,7 +38,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
 
   public PrivacyPluginPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    super(gasCalculator, privacyParameters, "UnrestrictedPrivacy");
+    super(gasCalculator, privacyParameters, "PluginPrivacy");
     this.privacyParameters = privacyParameters;
   }
 

@@ -153,7 +153,7 @@ public class PluginPrivacyController implements PrivacyController {
   @Override
   public ReceiveResponse retrieveTransaction(final String enclaveKey, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported when using PrivacyPlugin");
   }
 
   @Override
@@ -163,20 +163,20 @@ public class PluginPrivacyController implements PrivacyController {
       final String description,
       final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported when using PrivacyPlugin");
   }
 
   @Override
   public String deletePrivacyGroup(final String privacyGroupId, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported when using PrivacyPlugin");
   }
 
   @Override
   public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported when using PrivacyPlugin");
   }
 
   @Override
@@ -257,7 +257,7 @@ public class PluginPrivacyController implements PrivacyController {
       final Bytes32 privacyGroupId,
       final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy - you can not send a payload without it being on-chain");
+        "Method not supported when using PrivacyPlugin - you can not send a payload without it being on-chain");
   }
 
   @Override
@@ -276,8 +276,8 @@ public class PluginPrivacyController implements PrivacyController {
         new PrivacyGroup(
             privacyGroupId,
             PrivacyGroup.Type.LEGACY,
-            "Unrestricted",
-            "Unrestricted",
+            "PrivacyPlugin",
+            "PrivacyPlugin",
             Collections.emptyList()));
   }
 
@@ -285,7 +285,7 @@ public class PluginPrivacyController implements PrivacyController {
   public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
       final List<String> asList, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported when using PrivacyPlugin");
   }
 
   @Override
@@ -294,19 +294,19 @@ public class PluginPrivacyController implements PrivacyController {
       final String privacyUserId,
       final PrivateTransaction privateTransaction) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported when using PrivacyPlugin");
   }
 
   @Override
   public List<PrivateTransactionWithMetadata> retrieveAddBlob(final String addDataKey) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported when using PrivacyPlugin");
   }
 
   @Override
   public boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
     throw new PrivacyConfigurationNotSupportedException(
-        "Method not supported for UnrestrictedPrivacy");
+        "Method not supported when using PrivacyPlugin");
   }
 
   @Override
