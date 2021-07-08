@@ -54,9 +54,9 @@ public interface FeeHistory {
 
     static FeeHistoryResult from(final FeeHistory feeHistory) {
       return ImmutableFeeHistoryResult.of(
-          "0x" + Long.toHexString(feeHistory.getOldestBlock()),
+          Quantity.create(feeHistory.getOldestBlock()),
           feeHistory.getBaseFeePerGas().stream()
-              .map(baseFeePerGas -> "0x" + Long.toHexString(baseFeePerGas))
+              .map(Quantity::create)
               .collect(toUnmodifiableList()),
           feeHistory.getGasUsedRatio(),
           feeHistory
@@ -67,7 +67,7 @@ public interface FeeHistory {
                           .map(
                               innerList ->
                                   innerList.stream()
-                                      .map(gasUsedRatio -> "0x" + Long.toHexString(gasUsedRatio))
+                                      .map(Quantity::create)
                                       .collect(toUnmodifiableList()))
                           .collect(toUnmodifiableList()))
               .orElse(null));
