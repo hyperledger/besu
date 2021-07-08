@@ -37,7 +37,8 @@ public class PrivacyPluginPluginServiceImpl implements PrivacyPluginService {
   @Override
   public PrivacyPluginPayloadProvider getPayloadProvider() {
     if (privacyPluginPayloadProvider == null) {
-      LOG.error("You must register a privacy plugin");
+      LOG.error(
+          "You must register a PrivacyPluginService and register a PrivacyPluginPayloadProvider by calling setPayloadProvider when enabling privacy plugin!");
     }
     return privacyPluginPayloadProvider;
   }
