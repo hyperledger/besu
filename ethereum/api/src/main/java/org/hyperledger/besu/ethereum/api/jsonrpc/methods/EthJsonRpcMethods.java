@@ -119,7 +119,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthBlockNumber(blockchainQueries),
         new EthGetBalance(blockchainQueries),
         new EthGetBlockByHash(blockchainQueries, blockResult),
-        new EthGetBlockByNumber(blockchainQueries, blockResult),
+        new EthGetBlockByNumber(blockchainQueries, blockResult, synchronizer),
         new EthGetBlockTransactionCountByNumber(blockchainQueries),
         new EthGetBlockTransactionCountByHash(blockchainQueries),
         new EthCall(
@@ -129,7 +129,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule,
                 privacyParameters)),
-        new EthFeeHistory(protocolSchedule, blockchainQueries),
+        new EthFeeHistory(protocolSchedule, blockchainQueries.getBlockchain()),
         new EthGetCode(blockchainQueries, Optional.of(privacyParameters)),
         new EthGetLogs(blockchainQueries),
         new EthGetProof(blockchainQueries),

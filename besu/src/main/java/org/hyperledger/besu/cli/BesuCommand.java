@@ -2357,12 +2357,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // Loopback IP is used by default as this is how smokeTests require it to be
   // and it's probably a good security behaviour to default only on the localhost.
   private InetAddress autoDiscoverDefaultIP() {
-
-    if (autoDiscoveredDefaultIP != null) {
-      return autoDiscoveredDefaultIP;
-    }
-
-    autoDiscoveredDefaultIP = InetAddress.getLoopbackAddress();
+    autoDiscoveredDefaultIP =
+        Optional.ofNullable(autoDiscoveredDefaultIP).orElseGet(InetAddress::getLoopbackAddress);
 
     return autoDiscoveredDefaultIP;
   }
