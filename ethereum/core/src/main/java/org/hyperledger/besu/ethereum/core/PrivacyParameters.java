@@ -211,7 +211,7 @@ public class PrivacyParameters {
         + enabled
         + ", multiTenancyEnabled = "
         + multiTenancyEnabled
-        + ", unrestrictedPrivacyEnabled = "
+        + ", privacyPluginEnabled = "
         + privacyPluginEnabled
         + ", onchainPrivacyGroupsEnabled = "
         + onchainPrivacyGroupsEnabled
