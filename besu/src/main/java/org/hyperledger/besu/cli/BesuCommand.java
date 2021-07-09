@@ -49,6 +49,7 @@ import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
+import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
@@ -115,6 +116,7 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -216,6 +218,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
@@ -1098,6 +1101,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Specifies the URL to use for DNS discovery")
   private String discoveryDnsUrl = null;
 
+  @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1105,6 +1110,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
+  private Optional<TLSConfiguration> p2pTLSConfiguration;
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
@@ -1370,6 +1376,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     synchronize(
         besuController,
         p2pEnabled,
+        p2pTLSConfiguration,
         peerDiscoveryEnabled,
         ethNetworkConfig,
         maxPeers,
@@ -1435,12 +1442,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateOptions() {
     issueOptionWarnings();
-
     validateP2PInterface(p2pInterface);
     validateMiningParams();
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
+    p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -1588,6 +1595,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
     jsonRpcConfiguration = jsonRpcConfiguration();
+    p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration = webSocketConfiguration();
     apiConfiguration = apiConfiguration();
@@ -2297,6 +2305,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void synchronize(
       final BesuController controller,
       final boolean p2pEnabled,
+      final Optional<TLSConfiguration> p2pTLSConfiguration,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
       final int maxPeers,
@@ -2313,6 +2322,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Path pidPath) {
 
     checkNotNull(runnerBuilder);
+
+    p2pTLSConfiguration.ifPresent(runnerBuilder::p2pTLSConfiguration);
 
     final ObservableMetricsSystem metricsSystem = this.metricsSystem.get();
     final Runner runner =
