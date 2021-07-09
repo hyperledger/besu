@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -62,7 +63,7 @@ public class PrivacyParameters {
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
-  private PrivacyGenesisConfigOptions privacyGenesis;
+  private PrivateStateGenesis privateStateGenesis;
   private PrivacyPluginService privacyPluginService;
 
   public Address getPrivacyAddress() {
@@ -207,12 +208,12 @@ public class PrivacyParameters {
     return privacyPluginService;
   }
 
-  private void setPrivacyGenesis(final PrivacyGenesisConfigOptions privacyGenesis) {
-    this.privacyGenesis = privacyGenesis;
+  public PrivateStateGenesis getPrivateStateGenesis() {
+    return privateStateGenesis;
   }
 
-  public PrivacyGenesisConfigOptions getPrivacyGenesis() {
-    return privacyGenesis;
+  private void setPrivateStateGenesis(final PrivateStateGenesis privateStateGenesis) {
+    this.privateStateGenesis = privateStateGenesis;
   }
 
   @Override
@@ -250,8 +251,9 @@ public class PrivacyParameters {
     private boolean onchainPrivacyGroupsEnabled;
     private boolean privacyPluginEnabled;
     private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
+    private PrivacyGenesisConfigOptions privacyGenesisConfigOptions =
+        PrivacyGenesisConfigFile.empty();
     private PrivacyPluginService privacyPluginService;
-    private PrivacyGenesisConfigOptions privacyGenesis = PrivacyGenesisConfigFile.empty();
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -326,8 +328,9 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setPrivacyGenesis(final PrivacyGenesisConfigOptions privacyGenesis) {
-      this.privacyGenesis = privacyGenesis;
+    public Builder setPrivacyGenesisConfigOptions(
+        final PrivacyGenesisConfigOptions privacyGenesisConfigOptions) {
+      this.privacyGenesisConfigOptions = privacyGenesisConfigOptions;
       return this;
     }
 
@@ -381,7 +384,8 @@ public class PrivacyParameters {
       config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
       config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
-      config.setPrivacyGenesis(privacyGenesis);
+      config.setPrivateStateGenesis(
+          new PrivateStateGenesis(onchainPrivacyGroupsEnabled, privacyGenesisConfigOptions));
       return config;
     }
 

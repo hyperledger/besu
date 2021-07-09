@@ -50,7 +50,6 @@ import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -72,6 +71,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
@@ -4348,12 +4348,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).privacyParameters(privacyParametersArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
-    final PrivacyGenesisConfigOptions privacyGenesis =
-        privacyParametersArgumentCaptor.getValue().getPrivacyGenesis();
+    final PrivateStateGenesis privacyGenesis =
+        privacyParametersArgumentCaptor.getValue().getPrivateStateGenesis();
 
-    assertThat(privacyGenesis.getAllocations().size()).isEqualTo(1);
+    assertThat(privacyGenesis.getPrivacyGenesisConfigOptions().getAllocations().size())
+        .isEqualTo(1);
     final GenesisAllocation allocation =
-        privacyGenesis.getAllocations().get("fe3b557e8fb62b89f4916b721be55ceb828dbd73");
+        privacyGenesis
+            .getPrivacyGenesisConfigOptions()
+            .getAllocations()
+            .get("fe3b557e8fb62b89f4916b721be55ceb828dbd73");
     assertThat(allocation.getBalance()).isEqualTo("100");
   }
 

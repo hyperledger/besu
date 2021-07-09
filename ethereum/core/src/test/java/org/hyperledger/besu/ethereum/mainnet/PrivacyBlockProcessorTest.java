@@ -24,6 +24,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigFile;
+import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
@@ -37,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -64,6 +67,8 @@ public class PrivacyBlockProcessorTest {
   private Enclave enclave;
   private ProtocolSchedule protocolSchedule;
   private WorldStateArchive publicWorldStateArchive;
+  private final PrivacyGenesisConfigOptions privacyGenesisConfigOptions =
+      PrivacyGenesisConfigFile.empty();
 
   @Before
   public void setUp() {
@@ -79,7 +84,8 @@ public class PrivacyBlockProcessorTest {
             enclave,
             privateStateStorage,
             privateWorldStateArchive,
-            new PrivateStateRootResolver(privateStateStorage));
+            new PrivateStateRootResolver(privateStateStorage),
+            new PrivateStateGenesis(true, privacyGenesisConfigOptions));
     publicWorldStateArchive = mock(WorldStateArchive.class);
     privacyBlockProcessor.setPublicWorldStateArchive(publicWorldStateArchive);
   }

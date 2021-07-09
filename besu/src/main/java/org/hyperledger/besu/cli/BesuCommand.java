@@ -60,6 +60,7 @@ import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.PkiBlockCreationOptions;
+import org.hyperledger.besu.cli.options.unstable.PrivacyGenesisOptions;
 import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
@@ -264,6 +265,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
+  private final PrivacyGenesisOptions unstablePrivacyGenesisOptions = PrivacyGenesisOptions.create(commandLine);
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
 
   // stable CLI options
@@ -2174,6 +2176,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         } catch (final IllegalArgumentException e) {
           throw new ParameterException(
               commandLine, "Contents of privacy-public-key-file invalid: " + e.getMessage(), e);
+        }
+        if (unstablePrivacyGenesisOptions.hasPrivacyGenesisFile()) {
+          privacyParametersBuilder.setPrivacyGenesisConfigOptions(
+              unstablePrivacyGenesisOptions.readPrivacyGenesisConfigOptions());
         }
       }
 
