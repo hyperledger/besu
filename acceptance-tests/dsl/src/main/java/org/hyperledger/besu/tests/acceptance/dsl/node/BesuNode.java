@@ -118,6 +118,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> staticNodes;
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
+  private Optional<String> privateGenesisJson = Optional.empty();
 
   public BesuNode(
       final String name,
@@ -721,5 +722,13 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public void setExitCode(final int exitValue) {
     this.exitCode = Optional.of(exitValue);
+  }
+
+  public void setPrivateGenesisJson(final Optional<String> privateGenesisJson) {
+    this.privateGenesisJson = privateGenesisJson;
+  }
+
+  public Optional<String> getPrivateGenesisJson() {
+    return this.privateGenesisJson;
   }
 }

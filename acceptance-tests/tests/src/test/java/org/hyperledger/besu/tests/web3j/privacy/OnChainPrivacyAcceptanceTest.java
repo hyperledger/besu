@@ -62,8 +62,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
         .collect(Collectors.toList());
   }
 
-  protected static final long POW_CHAIN_ID = 1337;
-
   private PrivacyNode alice;
   private PrivacyNode bob;
   private PrivacyNode charlie;

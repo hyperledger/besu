@@ -14,16 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 
+import java.math.BigInteger;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -47,10 +53,41 @@ public class PrivateStateGenesis {
   public void applyGenesisToPrivateWorldState(
       final MutableWorldState disposablePrivateState, final WorldUpdater privateWorldStateUpdater) {
 
-    if (privacyGenesisConfigOptions.getAllocations().size() > 0) {
+    Map<String, GenesisAllocation> allocations = privacyGenesisConfigOptions.getAllocations();
+
+    if (allocations.size() > 0) {
       LOG.info(
           "Applying {} allocations onto private genesis",
           privacyGenesisConfigOptions.getAllocations().size());
+
+      allocations.forEach(
+          (address, allocation) -> {
+            final EvmAccount account =
+                privateWorldStateUpdater.createAccount(Address.fromHexString(address));
+
+            final MutableAccount mutablePrecompiled = account.getMutable();
+            if (allocation.getCode() != null) {
+              mutablePrecompiled.setCode(Bytes.fromHexString(allocation.getCode()));
+            }
+            if (allocation.getBalance() != null && allocation.getBalance().startsWith("0x")) {
+              mutablePrecompiled.setBalance(Wei.fromHexString(allocation.getBalance()));
+            } else {
+              mutablePrecompiled.setBalance(Wei.of(new BigInteger(allocation.getBalance())));
+            }
+
+            if (allocation.getStorage() != null) {
+              allocation
+                  .getStorage()
+                  .forEach(
+                      (key, value) -> {
+                        mutablePrecompiled.setStorageValue(
+                            UInt256.fromHexString(key), UInt256.fromHexString(value));
+                      });
+            }
+          });
+
+      privateWorldStateUpdater.commit();
+      disposablePrivateState.persist(null);
     }
 
     if (isOnchainPrivacyEnabled) {

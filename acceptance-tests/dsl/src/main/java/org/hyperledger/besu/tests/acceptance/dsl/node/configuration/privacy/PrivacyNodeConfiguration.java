@@ -17,11 +17,14 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfiguration;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 
+import java.util.Optional;
+
 public class PrivacyNodeConfiguration {
 
   private final boolean isOnchainPrivacyGroupEnabled;
   private final boolean isMultitenancyEnabled;
   private final boolean isPrivacyPluginEnabled;
+  private Optional<String> privateGenesisJson = Optional.empty();
   private final BesuNodeConfiguration besuConfig;
   private final EnclaveKeyConfiguration keyConfig;
 
@@ -37,6 +40,21 @@ public class PrivacyNodeConfiguration {
       final BesuNodeConfiguration besuConfig,
       final EnclaveKeyConfiguration keyConfig) {
     this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupEnabled;
+    this.besuConfig = besuConfig;
+    this.keyConfig = keyConfig;
+    this.isMultitenancyEnabled = isMultitenancyEnabled;
+    this.isPrivacyPluginEnabled = isPrivacyPluginEnabled;
+  }
+
+  PrivacyNodeConfiguration(
+      final boolean isOnchainPrivacyGroupEnabled,
+      final boolean isMultitenancyEnabled,
+      final boolean isPrivacyPluginEnabled,
+      final String privateGenesisJson,
+      final BesuNodeConfiguration besuConfig,
+      final EnclaveKeyConfiguration keyConfig) {
+    this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupEnabled;
+    this.privateGenesisJson = Optional.of(privateGenesisJson);
     this.besuConfig = besuConfig;
     this.keyConfig = keyConfig;
     this.isMultitenancyEnabled = isMultitenancyEnabled;
@@ -61,5 +79,9 @@ public class PrivacyNodeConfiguration {
 
   public EnclaveKeyConfiguration getKeyConfig() {
     return keyConfig;
+  }
+
+  public Optional<String> getPrivateGenesisJson() {
+    return privateGenesisJson;
   }
 }

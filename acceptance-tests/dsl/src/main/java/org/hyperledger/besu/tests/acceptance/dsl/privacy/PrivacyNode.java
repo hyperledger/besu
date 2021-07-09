@@ -77,6 +77,7 @@ public class PrivacyNode implements AutoCloseable {
   private final boolean isOnchainPrivacyEnabled;
   private final boolean isMultitenancyEnabled;
   private final boolean isPrivacyPluginEnabled;
+  private final Optional<String> privateGenesisJson;
 
   public PrivacyNode(
       final PrivacyNodeConfiguration privacyConfiguration,
@@ -95,6 +96,7 @@ public class PrivacyNode implements AutoCloseable {
     isOnchainPrivacyEnabled = privacyConfiguration.isOnchainPrivacyGroupEnabled();
     isMultitenancyEnabled = privacyConfiguration.isMultitenancyEnabled();
     isPrivacyPluginEnabled = privacyConfiguration.isPrivacyPluginEnabled();
+    privateGenesisJson = privacyConfiguration.getPrivateGenesisJson();
 
     this.besu =
         new BesuNode(
@@ -210,6 +212,7 @@ public class PrivacyNode implements AutoCloseable {
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
+    besu.setPrivateGenesisJson(privateGenesisJson);
     besu.setPrivacyParameters(privacyParameters);
     besu.start(runner);
   }
