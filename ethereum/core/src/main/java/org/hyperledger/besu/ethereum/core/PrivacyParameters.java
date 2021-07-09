@@ -348,6 +348,9 @@ public class PrivacyParameters {
         final PrivateStateRootResolver privateStateRootResolver =
             new PrivateStateRootResolver(privateStateStorage);
 
+        final PrivateStateGenesis privateStateGenesis =
+            new PrivateStateGenesis(onchainPrivacyGroupsEnabled, privacyGenesisConfigOptions);
+
         config.setPrivateStateRootResolver(privateStateRootResolver);
         config.setPrivateWorldStateReader(
             new PrivateWorldStateReader(
@@ -378,14 +381,13 @@ public class PrivacyParameters {
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPairUtil.load(privateKeyPath.toFile()));
         }
+        config.setPrivateStateGenesis(privateStateGenesis);
       }
       config.setEnabled(enabled);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
       config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
-      config.setPrivateStateGenesis(
-          new PrivateStateGenesis(onchainPrivacyGroupsEnabled, privacyGenesisConfigOptions));
       return config;
     }
 

@@ -47,7 +47,11 @@ public class PrivateStateGenesis {
   public void applyGenesisToPrivateWorldState(
       final MutableWorldState disposablePrivateState, final WorldUpdater privateWorldStateUpdater) {
 
-    LOG.info("Applying {} allocations ", privacyGenesisConfigOptions.getAllocations());
+    if (privacyGenesisConfigOptions.getAllocations().size() > 0) {
+      LOG.info(
+          "Applying {} allocations onto private genesis",
+          privacyGenesisConfigOptions.getAllocations().size());
+    }
 
     if (isOnchainPrivacyEnabled) {
       // inject management

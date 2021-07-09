@@ -153,12 +153,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
-    // TODO: APPLY GENESIS
-
     final MutableWorldState disposablePrivateState =
         privateWorldStateArchive.getMutable(lastRootHash, null).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
+
+    maybeApplyGenesisToPrivateWorldState(
+        lastRootHash, disposablePrivateState, privateWorldStateUpdater);
 
     final TransactionProcessingResult result =
         processPrivateTransaction(

@@ -26,7 +26,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigFile;
 import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
@@ -87,8 +86,9 @@ public class PrivacyPrecompiledContractTest {
   final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
-  private final PrivacyGenesisConfigOptions privacyGenesisConfigOptions =
-      PrivacyGenesisConfigFile.empty();
+
+  final PrivateStateGenesis privateStateGenesis =
+      new PrivateStateGenesis(false, mock(PrivacyGenesisConfigOptions.class));
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
       final TransactionProcessingResult result) {
@@ -290,7 +290,7 @@ public class PrivacyPrecompiledContractTest {
             enclave,
             worldStateArchive,
             privateStateRootResolver,
-            new PrivateStateGenesis(false, privacyGenesisConfigOptions),
+            privateStateGenesis,
             "RestrictedPrivacyTest");
 
     contract.setPrivateTransactionProcessor(
@@ -338,7 +338,7 @@ public class PrivacyPrecompiledContractTest {
         enclave,
         worldStateArchive,
         privateStateRootResolver,
-        new PrivateStateGenesis(false, privacyGenesisConfigOptions),
+        privateStateGenesis,
         "PrivacyTests");
   }
 }

@@ -21,12 +21,11 @@ import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.v
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigFile;
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveConfigurationException;
@@ -84,8 +83,8 @@ public class OnChainPrivacyPrecompiledContractTest {
   final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
-  private final PrivacyGenesisConfigOptions privacyGenesisConfigOptions =
-      PrivacyGenesisConfigFile.empty();
+
+  PrivateStateGenesis privateStateGenesis = mock(PrivateStateGenesis.class);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
       final TransactionProcessingResult result) {
@@ -144,6 +143,8 @@ public class OnChainPrivacyPrecompiledContractTest {
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap = mock(PrivacyGroupHeadBlockMap.class);
     when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap()).thenReturn(privacyGroupHeadBlockMap);
+
+    doNothing().when(privateStateGenesis).applyGenesisToPrivateWorldState(any(), any());
   }
 
   @Test
@@ -276,7 +277,7 @@ public class OnChainPrivacyPrecompiledContractTest {
             enclave,
             worldStateArchive,
             privateStateRootResolver,
-            new PrivateStateGenesis(true, privacyGenesisConfigOptions));
+            privateStateGenesis);
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
@@ -317,6 +318,6 @@ public class OnChainPrivacyPrecompiledContractTest {
         enclave,
         worldStateArchive,
         privateStateRootResolver,
-        new PrivateStateGenesis(true, privacyGenesisConfigOptions));
+        privateStateGenesis);
   }
 }

@@ -24,7 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigFile;
 import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -67,8 +66,6 @@ public class PrivacyBlockProcessorTest {
   private Enclave enclave;
   private ProtocolSchedule protocolSchedule;
   private WorldStateArchive publicWorldStateArchive;
-  private final PrivacyGenesisConfigOptions privacyGenesisConfigOptions =
-      PrivacyGenesisConfigFile.empty();
 
   @Before
   public void setUp() {
@@ -85,7 +82,7 @@ public class PrivacyBlockProcessorTest {
             privateStateStorage,
             privateWorldStateArchive,
             new PrivateStateRootResolver(privateStateStorage),
-            new PrivateStateGenesis(true, privacyGenesisConfigOptions));
+            new PrivateStateGenesis(true, mock(PrivacyGenesisConfigOptions.class)));
     publicWorldStateArchive = mock(WorldStateArchive.class);
     privacyBlockProcessor.setPublicWorldStateArchive(publicWorldStateArchive);
   }
