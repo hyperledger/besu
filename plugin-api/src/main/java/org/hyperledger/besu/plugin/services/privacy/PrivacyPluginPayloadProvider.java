@@ -24,6 +24,5 @@ import org.apache.tuweni.bytes.Bytes;
 public interface PrivacyPluginPayloadProvider {
   Bytes generateMarkerPayload(PrivateTransaction privateTransaction, String privacyUserId);
 
-  Optional<PrivateTransaction> getPrivateTransactionFromPayload(
-      long blockNumber, Transaction transaction);
+  Optional<PrivateTransaction> getPrivateTransactionFromPayload(Transaction transaction);
 }

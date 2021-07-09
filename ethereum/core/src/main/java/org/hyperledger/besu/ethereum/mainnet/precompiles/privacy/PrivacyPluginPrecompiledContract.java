@@ -53,8 +53,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         privacyParameters
             .getPrivacyService()
             .getPayloadProvider()
-            .getPrivateTransactionFromPayload(
-                messageFrame.getBlockHeader().getNumber(), messageFrame.getTransaction());
+            .getPrivateTransactionFromPayload(messageFrame.getTransaction());
 
     if (pluginPrivateTransaction.isEmpty()) {
       return Bytes.EMPTY;

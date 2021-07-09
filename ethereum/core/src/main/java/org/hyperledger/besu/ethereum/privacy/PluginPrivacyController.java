@@ -127,7 +127,7 @@ public class PluginPrivacyController implements PrivacyController {
     final Optional<org.hyperledger.besu.plugin.data.PrivateTransaction> pluginPrivateTransaction =
         privacyPluginService
             .getPayloadProvider()
-            .getPrivateTransactionFromPayload(blockHeader.getNumber(), transaction.get());
+            .getPrivateTransactionFromPayload(transaction.get());
 
     if (pluginPrivateTransaction.isEmpty()) {
       return Optional.empty();

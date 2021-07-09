@@ -56,9 +56,7 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
 
           @Override
           public Optional<PrivateTransaction> getPrivateTransactionFromPayload(
-              final long blockNumber, final Transaction transaction) {
-
-            LOG.info("decrypting payload in block " + blockNumber + " for " + prefix);
+              final Transaction transaction) {
 
             final Bytes prefixBytes = Bytes.fromHexString(prefix);
             if (transaction.getPayload().slice(0, prefixBytes.size()).equals(prefixBytes)) {
