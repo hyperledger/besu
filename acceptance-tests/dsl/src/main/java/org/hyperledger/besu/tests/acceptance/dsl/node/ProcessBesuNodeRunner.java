@@ -256,6 +256,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add(config.getKeyStorePath().toAbsolutePath().toString());
         params.add("--p2p-tls-keystore-password-file");
         params.add(config.getKeyStorePasswordPath().toAbsolutePath().toString());
+        params.add("--p2p-tls-crl-file");
+        params.add(config.getCrlPath().toAbsolutePath().toString());
         if (null != config.getTrustStoreType()) {
           params.add("--p2p-tls-truststore-type");
           params.add(config.getTrustStoreType());
