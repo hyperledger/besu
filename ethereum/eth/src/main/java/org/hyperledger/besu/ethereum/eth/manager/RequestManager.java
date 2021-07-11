@@ -57,8 +57,8 @@ public class RequestManager {
   }
 
   public void dispatchResponse(final Map.Entry<Optional<Long>, EthMessage> requestIdAndEthMessage) {
-    final EthMessage message = requestIdAndEthMessage.getValue();
-    final Collection<ResponseStream> streams = new ArrayList<>(responseStreams.values());
+    final EthMessage ethMessage = requestIdAndEthMessage.getValue();
+    final Collection<ResponseStream> streams = responseStreams.values();
     final int count = outstandingRequests.decrementAndGet();
     requestIdAndEthMessage
         .getKey()
@@ -67,15 +67,12 @@ public class RequestManager {
                 // If there's a requestId, find the specific stream it belongs to
                 Optional.ofNullable(responseStreams.get(requestId))
                     .ifPresentOrElse(
-                        responseStream ->
-                            responseStream.processMessage(
-                                requestIdAndEthMessage.getValue().getData()),
+                        responseStream -> responseStream.processMessage(ethMessage.getData()),
                         // disconnect on incorrect requestIds
                         () ->
                             peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL)),
             // otherwise iterate through all of them
-            () -> streams.forEach(stream -> stream.processMessage(message.getData())));
-
+            () -> streams.forEach(stream -> stream.processMessage(ethMessage.getData())));
     if (count == 0) {
       // No possibility of any remaining outstanding messages
       closeOutstandingStreams(streams);
