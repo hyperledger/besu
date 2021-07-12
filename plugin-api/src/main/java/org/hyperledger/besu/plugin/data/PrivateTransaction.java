@@ -14,25 +14,13 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.Unstable;
-
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * A transaction is a single cryptographically-signed instruction constructed by an actor externally
- * to the scope of Ethereum. While it is assumed that the ultimate external actor will be human in
- * nature, software tools will be used in its construction and dissemination.
- *
- * <p>There are two types of transactions: those which result in message calls and those which
- * result in the creation of new accounts with associated code (known informally as ‘contract
- * creation’). Message call transactions will have an address present in the {@link #getTo} method
- * whereas contract creation transactions will not.
- */
-public interface Transaction {
-
+public interface PrivateTransaction {
   /**
    * The Keccak 256-bit hash of this transaction.
    *
@@ -53,35 +41,14 @@ public interface Transaction {
    *
    * @return the quantity of Wei per gas unit paid.
    */
-  Optional<? extends Quantity> getGasPrice();
-
-  /**
-   * A scalar value equal to the number of Wei to be paid on top of base fee, as specified in
-   * EIP-1559.
-   *
-   * @return the quantity of Wei for max fee per gas
-   */
-  @Unstable
-  default Optional<? extends Quantity> getMaxPriorityFeePerGas() {
-    return Optional.empty();
-  }
-
-  /**
-   * A scalar value equal to the number of Wei to be paid in total, as specified in EIP-1559.
-   *
-   * @return the quantity of Wei for fee cap.
-   */
-  @Unstable
-  default Optional<? extends Quantity> getMaxFeePerGas() {
-    return Optional.empty();
-  }
+  Quantity getGasPrice();
 
   /**
    * A scalar value equal to the maximum amount of gas that should be used in executing this
    * transaction. This is paid up-front, before any computation is done and may not be increased
    * later.
    *
-   * @return the maximum amount of gas that should be used in executing this * transaction.
+   * @return the maximum amount of gas that should be used in executing this transaction.
    */
   long getGasLimit();
 
@@ -139,43 +106,44 @@ public interface Transaction {
   Optional<BigInteger> getChainId();
 
   /**
-   * An unlimited size byte array specifying the EVM-code for the account // initialisation
-   * procedure.
-   *
-   * <p>Only present if this is a contract creation transaction, which is only true if {@link
-   * #getTo} is empty.
-   *
-   * @return if present, the contract init code.
-   */
-  Optional<Bytes> getInit();
-
-  /**
-   * An unlimited size byte array specifying the input data of the message call.
-   *
-   * <p>Only present if this is a message call transaction, which is only true if {@link #getTo} is
-   * present.
-   *
-   * @return if present, the message call data
-   */
-  Optional<Bytes> getData();
-
-  /**
-   * The data payload of this transaction.
-   *
-   * <p>If this transaction is a message-call to an account (the {@link #getTo} field is present),
-   * this same value will be exposed by {@link #getData}. If instead this is a contract-creation
-   * transaction (the {@link #getTo} field is absent), the payload is also exposed by {@link
-   * #getInit}.
+   * The data payload of this private transaction. e.g compiled smart contract code or encoded
+   * method data.
    *
    * @return the transaction payload
    */
   Bytes getPayload();
 
   /**
-   * Returns the type of the transaction.
+   * The public key of the sender of this private transaction.
    *
-   * @return the type of the transaction
+   * @return public key of the sender
    */
-  @Unstable
-  TransactionType getType();
+  Bytes getPrivateFrom();
+
+  /**
+   * The public key of the recipients of this private transaction.
+   *
+   * <p>Only present if no privacy group {@link #getPrivacyGroupId} is present.
+   *
+   * @return public keys of the recipients
+   */
+  Optional<List<Bytes>> getPrivateFor();
+
+  /**
+   * The identifier for the group of participants.
+   *
+   * <p>Only present if no private for {@link #getPrivateFor} is present.
+   *
+   * @return public keys of the recipients
+   */
+  Optional<Bytes> getPrivacyGroupId();
+
+  /**
+   * The type of privacy restriction. If restricted, the private transaction is only distributed to
+   * members. If unrestricted, the transaction is distributed to everyone but only decipherable by
+   * members.
+   *
+   * @return privacy restriction unrestricted/restricted
+   */
+  Restriction getRestriction();
 }

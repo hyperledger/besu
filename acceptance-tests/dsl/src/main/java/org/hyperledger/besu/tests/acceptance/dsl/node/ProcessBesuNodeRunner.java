@@ -139,8 +139,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--privacy-onchain-groups-enabled");
       }
 
-      if (node.getPrivacyParameters().isUnrestrictedPrivacyEnabled()) {
-        params.add("--Xprivacy-unrestricted-enabled");
+      if (node.getPrivacyParameters().isPrivacyPluginEnabled()) {
+        params.add("--Xprivacy-plugin-enabled");
       }
     }
 

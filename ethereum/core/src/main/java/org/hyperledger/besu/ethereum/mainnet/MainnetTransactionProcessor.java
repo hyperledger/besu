@@ -324,6 +324,7 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .isPersistingPrivateState(isPersistingPrivateState)
               .transactionHash(transaction.getHash())
+              .transaction(transaction)
               .accessListWarmAddresses(gasAndAccessedState.getAccessListAddressSet())
               .accessListWarmStorage(gasAndAccessedState.getAccessListStorageByAddress())
               .privateMetadataUpdater(privateMetadataUpdater);

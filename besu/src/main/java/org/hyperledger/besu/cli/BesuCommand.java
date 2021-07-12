@@ -59,10 +59,10 @@ import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
+import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
-import org.hyperledger.besu.cli.options.unstable.UnrestrictedPrivacyOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -147,6 +147,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -159,6 +160,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.PrivacyPluginPluginServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
@@ -260,8 +262,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
-  private final UnrestrictedPrivacyOptions unstableUnrestrictedPrivacyOptions =
-      UnrestrictedPrivacyOptions.create();
+  private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
 
   // stable CLI options
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
@@ -272,6 +273,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
+  private final PrivacyPluginPluginServiceImpl privacyService;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -1141,7 +1143,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         environment,
         new StorageServiceImpl(),
         new SecurityModuleServiceImpl(),
-        new PermissioningServiceImpl());
+        new PermissioningServiceImpl(),
+        new PrivacyPluginPluginServiceImpl());
   }
 
   @VisibleForTesting
@@ -1156,7 +1159,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Map<String, String> environment,
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
-      final PermissioningServiceImpl permissioningService) {
+      final PermissioningServiceImpl permissioningService,
+      final PrivacyPluginPluginServiceImpl privacyService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1168,6 +1172,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
+    this.privacyService = privacyService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
@@ -1289,7 +1294,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("RPC", unstableRPCOptions)
             .put("DNS Configuration", unstableDnsOptions)
             .put("NAT Configuration", unstableNatOptions)
-            .put("Unrestricted Privacy Configuration", unstableUnrestrictedPrivacyOptions)
+            .put("Privacy Plugin Configuration", unstablePrivacyPluginOptions)
             .put("Synchronizer", unstableSynchronizerOptions)
             .put("TransactionPool", unstableTransactionPoolOptions)
             .put("Mining", unstableMiningOptions)
@@ -1307,6 +1312,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
+    besuPluginContext.addService(PrivacyPluginService.class, privacyService);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -2135,26 +2141,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
       }
 
-      if (unstableUnrestrictedPrivacyOptions.isUnrestrictedPrivacyEnabled()
-          && isPrivacyMultiTenancyEnabled) {
+      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
+          && privacyService.getPayloadProvider() == null) {
         throw new ParameterException(
-            commandLine,
-            "Privacy unrestricted privacy can not be used in multi-tenant environment");
+            commandLine, "Privacy Plugin must be registered when enabling privacy plugin!");
       }
 
-      if (unstableUnrestrictedPrivacyOptions.isUnrestrictedPrivacyEnabled()
-          && isFlexiblePrivacyGroupsEnabled) {
+      if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled() && isFlexiblePrivacyGroupsEnabled) {
         throw new ParameterException(
-            commandLine,
-            "Privacy unrestricted privacy can not be used with flexible (onchain) privacy groups");
+            commandLine, "Privacy Plugin can not be used with flexible (onchain) privacy groups");
       }
 
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setOnchainPrivacyGroupsEnabled(isFlexiblePrivacyGroupsEnabled);
-      privacyParametersBuilder.setUnrestrictedPrivacyEnabled(
-          unstableUnrestrictedPrivacyOptions.isUnrestrictedPrivacyEnabled());
+      privacyParametersBuilder.setPrivacyPluginEnabled(
+          unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
 
@@ -2217,7 +2220,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
-
+    privacyParametersBuilder.setPrivacyService(privacyService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
     if (isPrivacyEnabled) {
