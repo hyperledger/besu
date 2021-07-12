@@ -29,7 +29,7 @@ public class NumberOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final long number = frame.getBlockHeader().getNumber();
-    frame.pushStackItem(UInt256.valueOf(number).toBytes());
+    frame.pushStackItem(UInt256.valueOf(number));
 
     return successResponse;
   }
