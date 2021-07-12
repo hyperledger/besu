@@ -288,7 +288,7 @@ public class EthPeer {
   void dispatch(final EthMessage ethMessage) {
     checkArgument(
         ethMessage.getPeer().equals(this),
-        "Mismatched requestIdAndEthMessage sent to peer for dispatch");
+        "Mismatched Eth message sent to peer for dispatch");
     final int messageCode = ethMessage.getData().getCode();
     reputation.resetTimeoutCount(messageCode);
     switch (messageCode) {
