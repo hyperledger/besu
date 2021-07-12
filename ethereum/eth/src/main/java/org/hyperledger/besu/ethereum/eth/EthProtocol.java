@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -67,6 +68,21 @@ public class EthProtocol implements SubProtocol {
           .collect(toUnmodifiableList());
 
   private static final List<Integer> eth66Messages = eth65Messages;
+
+  public static boolean requestIdCompatible(final int code) {
+    return Set.of(
+            EthPV62.GET_BLOCK_HEADERS,
+            EthPV62.BLOCK_HEADERS,
+            EthPV62.GET_BLOCK_BODIES,
+            EthPV62.BLOCK_BODIES,
+            EthPV65.GET_POOLED_TRANSACTIONS,
+            EthPV65.POOLED_TRANSACTIONS,
+            EthPV63.GET_NODE_DATA,
+            EthPV63.NODE_DATA,
+            EthPV63.GET_RECEIPTS,
+            EthPV63.RECEIPTS)
+        .contains(code);
+  }
 
   @Override
   public String getName() {
