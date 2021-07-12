@@ -20,8 +20,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -33,13 +31,13 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class UnrestrictedEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
+public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
-  UnrestrictedEeaSendRawTransaction method;
+  PluginEeaSendRawTransaction method;
 
   @Before
   public void before() {
-    method = new UnrestrictedEeaSendRawTransaction(transactionPool, privacyController);
+    method = new PluginEeaSendRawTransaction(transactionPool, privacyController, (user) -> "");
   }
 
   @Test
@@ -64,31 +62,6 @@ public class UnrestrictedEeaSendRawTransactionTest extends BaseEeaSendRawTransac
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
-        .createPrivateMarkerTransaction(any(), any(), eq(Address.UNRESTRICTED_PRIVACY));
-  }
-
-  @Test
-  public void
-      transactionWithRestrictedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
-    final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
-            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
-
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-  }
-
-  @Test
-  public void
-      transactionWithUnsupportedTransactionTypeShouldReturnUnimplementedTransactionTypeError() {
-    final JsonRpcResponse actualResponse =
-        method.response(validUnsuportedPrivacyGroupTransactionRequest);
-
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
-            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
-
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+        .createPrivateMarkerTransaction(any(), any(), eq(Address.PLUGIN_PRIVACY));
   }
 }

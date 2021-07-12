@@ -69,7 +69,8 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
             Optional.of(containerNetwork),
             false,
             false,
-            false);
+            false,
+            "0xAA");
     bob =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node2",
@@ -79,7 +80,8 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
             Optional.of(containerNetwork),
             false,
             false,
-            false);
+            false,
+            "0xBB");
     privacyCluster.start(alice, bob);
 
     wrongPublicKey =

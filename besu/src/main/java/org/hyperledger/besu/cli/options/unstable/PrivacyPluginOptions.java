@@ -12,24 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.privacy;
+package org.hyperledger.besu.cli.options.unstable;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static picocli.CommandLine.Option;
 
-import org.apache.tuweni.bytes.Bytes;
+public class PrivacyPluginOptions {
 
-public enum Restriction {
-  RESTRICTED(Bytes.wrap("restricted".getBytes(UTF_8))),
-  UNRESTRICTED(Bytes.wrap("unrestricted".getBytes(UTF_8))),
-  UNSUPPORTED(Bytes.EMPTY);
-
-  private final Bytes bytes;
-
-  Restriction(final Bytes bytes) {
-    this.bytes = bytes;
+  public static PrivacyPluginOptions create() {
+    return new PrivacyPluginOptions();
   }
 
-  public Bytes getBytes() {
-    return bytes;
+  @Option(
+      names = "--Xprivacy-plugin-enabled",
+      description =
+          "Enables the use of a plugin to implement your own privacy strategy (default: ${DEFAULT-VALUE})",
+      hidden = true)
+  private final Boolean isPrivacyPluginEnabled = false;
+
+  public boolean isPrivacyPluginEnabled() {
+    return isPrivacyPluginEnabled;
   }
 }

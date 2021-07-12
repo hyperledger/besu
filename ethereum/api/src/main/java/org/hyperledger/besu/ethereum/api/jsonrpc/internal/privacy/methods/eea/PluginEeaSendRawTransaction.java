@@ -14,47 +14,52 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 
-public class UnrestrictedEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
+public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
   private final PrivacyController privacyController;
+  private final PrivacyIdProvider privacyIdProvider;
 
-  public UnrestrictedEeaSendRawTransaction(
-      final TransactionPool transactionPool, final PrivacyController privacyController) {
+  public PluginEeaSendRawTransaction(
+      final TransactionPool transactionPool,
+      final PrivacyController privacyController,
+      final PrivacyIdProvider privacyIdProvider) {
     super(transactionPool);
     this.privacyController = privacyController;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
   protected ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user) {
-    if (!privateTransaction.getRestriction().equals(Restriction.UNRESTRICTED)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
-    }
 
-    return privacyController.validatePrivateTransaction(privateTransaction, "");
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
+
+    return privacyController.validatePrivateTransaction(privateTransaction, privacyUserId);
   }
 
   @Override
   protected Transaction createPrivateMarkerTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user) {
-    final String encryptedRlpPayload =
+
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
+
+    final String payloadFromPlugin =
         privacyController.createPrivateMarkerTransactionPayload(
-            privateTransaction, "", Optional.empty());
+            privateTransaction, privacyUserId, Optional.empty());
 
     return privacyController.createPrivateMarkerTransaction(
-        encryptedRlpPayload, privateTransaction, Address.UNRESTRICTED_PRIVACY);
+        payloadFromPlugin, privateTransaction, Address.PLUGIN_PRIVACY);
   }
 }

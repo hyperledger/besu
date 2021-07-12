@@ -12,24 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.plugin.data;
 
-import static picocli.CommandLine.Option;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class UnrestrictedPrivacyOptions {
+import org.apache.tuweni.bytes.Bytes;
 
-  public static UnrestrictedPrivacyOptions create() {
-    return new UnrestrictedPrivacyOptions();
+public enum Restriction {
+  RESTRICTED(Bytes.wrap("restricted".getBytes(UTF_8))),
+  UNRESTRICTED(Bytes.wrap("unrestricted".getBytes(UTF_8))),
+  UNSUPPORTED(Bytes.EMPTY);
+
+  private final Bytes bytes;
+
+  Restriction(final Bytes bytes) {
+    this.bytes = bytes;
   }
 
-  @Option(
-      names = "--Xprivacy-unrestricted-enabled",
-      description =
-          "Enable unrestricted (stores payload onchain) privacy (default: ${DEFAULT-VALUE})",
-      hidden = true)
-  private final Boolean isUnrestrictedPrivacyEnabled = false;
-
-  public boolean isUnrestrictedPrivacyEnabled() {
-    return isUnrestrictedPrivacyEnabled;
+  public Bytes getBytes() {
+    return bytes;
   }
 }
