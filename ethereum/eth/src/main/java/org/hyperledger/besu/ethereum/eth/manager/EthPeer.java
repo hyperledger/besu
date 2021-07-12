@@ -282,10 +282,9 @@ public class EthPeer {
   /**
    * Routes messages originating from this peer to listeners.
    *
-   * @param requestIdAndEthMessage the requestIdAndEthMessage to dispatch
+   * @param ethMessage the Eth message to dispatch
    */
-  void dispatch(final Map.Entry<Optional<Long>, EthMessage> requestIdAndEthMessage) {
-    final EthMessage ethMessage = requestIdAndEthMessage.getValue();
+  void dispatch(final EthMessage ethMessage) {
     checkArgument(
         ethMessage.getPeer().equals(this),
         "Mismatched requestIdAndEthMessage sent to peer for dispatch");
@@ -293,19 +292,19 @@ public class EthPeer {
     reputation.resetTimeoutCount(messageCode);
     switch (messageCode) {
       case EthPV62.BLOCK_HEADERS:
-        headersRequestManager.dispatchResponse(requestIdAndEthMessage);
+        headersRequestManager.dispatchResponse(ethMessage);
         break;
       case EthPV62.BLOCK_BODIES:
-        bodiesRequestManager.dispatchResponse(requestIdAndEthMessage);
+        bodiesRequestManager.dispatchResponse(ethMessage);
         break;
       case EthPV63.RECEIPTS:
-        receiptsRequestManager.dispatchResponse(requestIdAndEthMessage);
+        receiptsRequestManager.dispatchResponse(ethMessage);
         break;
       case EthPV63.NODE_DATA:
-        nodeDataRequestManager.dispatchResponse(requestIdAndEthMessage);
+        nodeDataRequestManager.dispatchResponse(ethMessage);
         break;
       case EthPV65.POOLED_TRANSACTIONS:
-        pooledTransactionsRequestManager.dispatchResponse(requestIdAndEthMessage);
+        pooledTransactionsRequestManager.dispatchResponse(ethMessage);
         break;
       default:
         // Nothing to do

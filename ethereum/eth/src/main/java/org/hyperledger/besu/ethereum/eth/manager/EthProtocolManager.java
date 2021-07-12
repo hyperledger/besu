@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -260,32 +261,39 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     }
 
-    // if it's eth66, we need to pull the requestId out of the data
-    // todo if we're going to have the overload, don't do the unwrap for some of them
-    final Map.Entry<Optional<Long>, EthMessage> requestIdAndUnwrappedEthMessage;
-    if (cap.equals(EthProtocol.ETH66)) {
-      final Map.Entry<Long, MessageData> unwrappedMessage =
-          RequestId.unwrapRequestId(message.getData());
-      requestIdAndUnwrappedEthMessage =
-          Map.entry(
-              Optional.of(unwrappedMessage.getKey()),
-              new EthMessage(peer, unwrappedMessage.getValue()));
-    } else {
-      requestIdAndUnwrappedEthMessage =
-          Map.entry(Optional.empty(), new EthMessage(peer, message.getData()));
-    }
+    final EthMessage ethMessage = new EthMessage(peer, message.getData());
 
-    if (!peer.validateReceivedMessage(requestIdAndUnwrappedEthMessage.getValue())) {
+    if (!peer.validateReceivedMessage(ethMessage)) {
       LOG.debug("Unsolicited message received from, disconnecting: {}", peer);
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
-    // Dispatch eth message
 
     // This will handle responses
-    ethPeers.dispatchMessage(peer, requestIdAndUnwrappedEthMessage);
+    ethPeers.dispatchMessage(peer, ethMessage);
+
     // This will handle requests
-    ethMessages.dispatch(requestIdAndUnwrappedEthMessage);
+    final Optional<MessageData> maybeResponseData;
+    if (cap.getVersion() >= 66) {
+      final Map.Entry<Long, MessageData> requestIdAndEthMessage =
+          RequestId.unwrapRequestId(ethMessage.getData());
+      maybeResponseData =
+          ethMessages
+              .dispatch(new EthMessage(ethMessage.getPeer(), requestIdAndEthMessage.getValue()))
+              .map(
+                  responseData ->
+                      RequestId.wrapRequestId(requestIdAndEthMessage.getKey(), responseData));
+    } else {
+      maybeResponseData = ethMessages.dispatch(ethMessage);
+    }
+    maybeResponseData.ifPresent(
+        responseData -> {
+          try {
+            ethMessage.getPeer().send(responseData);
+          } catch (final PeerNotConnected __) {
+            // Peer disconnected before we could respond - nothing to do
+          }
+        });
   }
 
   @Override

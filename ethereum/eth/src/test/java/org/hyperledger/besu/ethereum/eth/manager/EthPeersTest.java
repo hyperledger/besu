@@ -266,9 +266,7 @@ public class EthPeersTest {
   }
 
   private void freeUpCapacity(final EthPeer ethPeer) {
-    ethPeers.dispatchMessage(
-        ethPeer,
-        Map.entry(Optional.empty(), new EthMessage(ethPeer, NodeDataMessage.create(emptyList()))));
+    ethPeers.dispatchMessage(ethPeer, new EthMessage(ethPeer, NodeDataMessage.create(emptyList())));
   }
 
   private void useAllAvailableCapacity(final EthPeer peer) throws PeerNotConnected {

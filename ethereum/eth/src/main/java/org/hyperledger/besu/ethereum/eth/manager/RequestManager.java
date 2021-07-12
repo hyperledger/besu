@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RequestManager {
-  private final AtomicLong requestIdCounter = new AtomicLong(new Random().nextLong());
+  private final AtomicLong requestIdCounter = new AtomicLong(0);
   private final Map<Long, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
   private final boolean supportsRequestId;
@@ -56,23 +56,22 @@ public class RequestManager {
     return stream;
   }
 
-  public void dispatchResponse(final Map.Entry<Optional<Long>, EthMessage> requestIdAndEthMessage) {
-    final EthMessage ethMessage = requestIdAndEthMessage.getValue();
+  public void dispatchResponse(final EthMessage ethMessage) {
     final Collection<ResponseStream> streams = responseStreams.values();
     final int count = outstandingRequests.decrementAndGet();
-    requestIdAndEthMessage
-        .getKey()
-        .ifPresentOrElse(
-            requestId ->
-                // If there's a requestId, find the specific stream it belongs to
-                Optional.ofNullable(responseStreams.get(requestId))
-                    .ifPresentOrElse(
-                        responseStream -> responseStream.processMessage(ethMessage.getData()),
-                        // disconnect on incorrect requestIds
-                        () ->
-                            peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL)),
-            // otherwise iterate through all of them
-            () -> streams.forEach(stream -> stream.processMessage(ethMessage.getData())));
+    if (supportsRequestId) {
+      // If there's a requestId, find the specific stream it belongs to
+      final Map.Entry<Long, MessageData> requestIdAndEthMessage =
+          RequestId.unwrapRequestId(ethMessage.getData());
+      Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
+          .ifPresentOrElse(
+              responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
+              // disconnect on incorrect requestIds
+              () -> peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL));
+    } else {
+      // otherwise iterate through all of them
+      streams.forEach(stream -> stream.processMessage(ethMessage.getData()));
+    }
     if (count == 0) {
       // No possibility of any remaining outstanding messages
       closeOutstandingStreams(streams);

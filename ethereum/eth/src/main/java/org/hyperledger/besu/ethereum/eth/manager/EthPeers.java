@@ -124,9 +124,8 @@ public class EthPeers {
     return pendingPeerRequest;
   }
 
-  public void dispatchMessage(
-      final EthPeer peer, final Map.Entry<Optional<Long>, EthMessage> requestIdAndEthMessage) {
-    peer.dispatch(requestIdAndEthMessage);
+  public void dispatchMessage(final EthPeer peer, final EthMessage ethMessage) {
+    peer.dispatch(ethMessage);
     if (peer.hasAvailableRequestCapacity()) {
       reattemptPendingPeerRequests();
     }

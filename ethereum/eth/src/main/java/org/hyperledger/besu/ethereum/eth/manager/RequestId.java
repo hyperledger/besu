@@ -10,6 +10,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class RequestId {
   public static MessageData wrapRequestId(final long requestId, final MessageData messageData) {

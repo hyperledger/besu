@@ -36,41 +36,32 @@ public class EthMessages {
   private final Map<Integer, MessageResponseConstructor> messageResponseConstructorsByCode =
       new ConcurrentHashMap<>();
 
-  void dispatch(final Map.Entry<Optional<Long>, EthMessage> requestIdAndEthMessage) {
-    final EthMessage requestMessage = requestIdAndEthMessage.getValue();
-    final int code = requestMessage.getData().getCode();
+  Optional<MessageData> dispatch(final EthMessage ethMessage) {
+    final int code = ethMessage.getData().getCode();
+
+    // trigger arbitrary side-effecting listeners
     Optional.ofNullable(listenersByCode.get(code))
         .ifPresent(
-            listeners ->
-                listeners.forEach(messageCallback -> messageCallback.exec(requestMessage)));
+            listeners -> listeners.forEach(messageCallback -> messageCallback.exec(ethMessage)));
 
-    try {
-      Optional.ofNullable(messageResponseConstructorsByCode.get(code))
-          .map(
-              messageResponseConstructor ->
-                  messageResponseConstructor.response(requestMessage.getData()))
-          .ifPresent(
-              responseMessageData -> {
-                try {
-                  final MessageData wrappedResponseData =
-                      requestIdAndEthMessage
-                          .getKey()
-                          .map(requestId -> RequestId.wrapRequestId(requestId, responseMessageData))
-                          .orElse(responseMessageData);
-                  requestMessage.getPeer().send(wrappedResponseData);
-                } catch (final PeerConnection.PeerNotConnected __) {
-                  // Peer disconnected before we could respond - nothing to do
-                }
-              });
+    return Optional.ofNullable(messageResponseConstructorsByCode.get(code))
+        .flatMap(
+            messageResponseConstructor -> {
+              try {
+                return Optional.of(messageResponseConstructor.response(ethMessage.getData()));
+              } catch (final RLPException e) {
+                LOG.debug(
+                    "Received malformed message {} , disconnecting: {}",
+                    ethMessage.getData().getData(),
+                    ethMessage.getPeer(),
+                    e);
 
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed message {} , disconnecting: {}",
-          requestMessage.getData().getData(),
-          requestMessage.getPeer(),
-          e);
-      requestMessage.getPeer().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
-    }
+                ethMessage
+                    .getPeer()
+                    .disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+                return Optional.empty();
+              }
+            });
   }
 
   public void subscribe(final int messageCode, final MessageCallback callback) {
