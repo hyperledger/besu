@@ -231,7 +231,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     checkArgument(
         getSupportedCapabilities().contains(cap),
         "Unsupported capability passed to processMessage(): " + cap);
-    LOG.trace("Process message {}, {}", cap, message.getData().getCode());
+    final MessageData messageData = message.getData();
+    final int code = messageData.getCode();
+    LOG.trace("Process message {}, {}", cap, code);
     final EthPeer peer = ethPeers.peer(message.getConnection());
     if (peer == null) {
       LOG.debug(
@@ -239,15 +241,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     }
 
-    if (message.getData().getSize() > 10 * 1_000_000 /*10MB*/) {
+    if (messageData.getSize() > 10 * 1_000_000 /*10MB*/) {
       LOG.debug("Received message over 10MB. Disconnecting from {}", peer);
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
 
     // Handle STATUS processing
-    if (message.getData().getCode() == EthPV62.STATUS) {
-      handleStatusMessage(peer, message.getData());
+    if (code == EthPV62.STATUS) {
+      handleStatusMessage(peer, messageData);
       return;
     } else if (!peer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
@@ -255,13 +257,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
           this.getClass().getSimpleName(),
           EthPV62.STATUS,
-          message.getData().getCode(),
+          code,
           peer);
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
 
-    final EthMessage ethMessage = new EthMessage(peer, message.getData());
+    final EthMessage ethMessage = new EthMessage(peer, messageData);
 
     if (!peer.validateReceivedMessage(ethMessage)) {
       LOG.debug("Unsolicited message received from, disconnecting: {}", peer);
@@ -274,7 +276,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     // This will handle requests
     final Optional<MessageData> maybeResponseData;
-    if (cap.getVersion() >= 66 && EthProtocol.requestIdCompatible(message.getData().getCode())) {
+    if (cap.getVersion() >= 66 && EthProtocol.requestIdCompatible(code)) {
       final Map.Entry<Long, MessageData> requestIdAndEthMessage =
           RequestId.unwrapRequestId(ethMessage.getData());
       maybeResponseData =
