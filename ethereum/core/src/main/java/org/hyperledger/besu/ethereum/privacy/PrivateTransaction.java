@@ -177,8 +177,8 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
     final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
 
     final Bytes privateFrom = input.readBytes();

@@ -108,7 +108,7 @@ public class BftBlockHashingTest {
             i ->
                 NodeKeyUtils.createFrom(
                     (signatureAlgorithm.createKeyPair(
-                        signatureAlgorithm.createPrivateKey(UInt256.valueOf(i).toBytes())))))
+                        signatureAlgorithm.createPrivateKey(UInt256.valueOf(i))))))
         .collect(Collectors.toList());
   }
 
