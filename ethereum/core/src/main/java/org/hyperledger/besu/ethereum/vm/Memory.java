@@ -122,7 +122,7 @@ public class Memory {
       // Note that this is one place where, while the result will fit UInt256, we should compute
       // without modulo for extreme cases.
       final BigInteger byteSize =
-          location.toBytes().toUnsignedBigInteger().add(numBytes.toBytes().toUnsignedBigInteger());
+          location.toUnsignedBigInteger().add(numBytes.toUnsignedBigInteger());
       final BigInteger[] result = byteSize.divideAndRemainder(BigInteger.valueOf(Bytes32.SIZE));
       BigInteger wordSize = result[0];
       if (!result[1].equals(BigInteger.ZERO)) {

@@ -81,7 +81,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
       LOG.info("Invalid block header: difficulty is 0");
       return false;
     }
-    final BigInteger difficulty = header.getDifficulty().toBytes().toUnsignedBigInteger();
+    final BigInteger difficulty = header.getDifficulty().toUnsignedBigInteger();
     final UInt256 target =
         difficulty.equals(BigInteger.ONE)
             ? UInt256.MAX_VALUE

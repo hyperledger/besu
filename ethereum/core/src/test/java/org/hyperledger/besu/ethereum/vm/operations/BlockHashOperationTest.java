@@ -99,7 +99,7 @@ public class BlockHashOperationTest {
         new MessageFrameTestFixture()
             .blockHashLookup(blockHashLookup)
             .blockHeader(new BlockHeaderTestFixture().number(currentBlockNumber).buildHeader())
-            .pushStackItem(input)
+            .pushStackItem(UInt256.fromBytes(input))
             .build();
     blockHashOperation.execute(frame, null);
     final Bytes32 result = frame.popStackItem();

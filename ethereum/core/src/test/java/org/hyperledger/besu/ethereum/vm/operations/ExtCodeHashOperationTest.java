@@ -115,7 +115,7 @@ public class ExtCodeHashOperationTest {
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
     account.setCode(code);
     account.setVersion(Account.DEFAULT_VERSION);
-    final Bytes32 value =
+    final UInt256 value =
         UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))
             .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
     final MessageFrame frame = createMessageFrame(value);
@@ -130,11 +130,11 @@ public class ExtCodeHashOperationTest {
   }
 
   private MessageFrame createMessageFrame(final Address requestedAddress) {
-    final Bytes32 stackItem = Words.fromAddress(requestedAddress);
+    final UInt256 stackItem = Words.fromAddress(requestedAddress);
     return createMessageFrame(stackItem);
   }
 
-  private MessageFrame createMessageFrame(final Bytes32 stackItem) {
+  private MessageFrame createMessageFrame(final UInt256 stackItem) {
     final BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     final MessageFrame frame =
         new MessageFrameTestFixture()
