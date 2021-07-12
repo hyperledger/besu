@@ -20,7 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class UnrestrictedCreateRandomPrivacyGroupIdTransaction implements Transaction<String> {
+public class PluginCreateRandomPrivacyGroupIdTransaction implements Transaction<String> {
 
   @Override
   public String execute(final NodeRequests node) {

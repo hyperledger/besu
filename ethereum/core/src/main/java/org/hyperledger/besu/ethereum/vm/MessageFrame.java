@@ -239,6 +239,7 @@ public class MessageFrame {
 
   // Privacy Execution Environment fields.
   private final Hash transactionHash;
+  private final Transaction transaction;
 
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
@@ -277,6 +278,7 @@ public class MessageFrame {
       final Boolean isPersistingPrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Hash transactionHash,
+      final Transaction transaction,
       final Optional<Bytes> revertReason,
       final int maxStackSize,
       final Set<Address> accessListWarmAddresses,
@@ -316,6 +318,7 @@ public class MessageFrame {
     this.isPersistingPrivateState = isPersistingPrivateState;
     this.privateMetadataUpdater = privateMetadataUpdater;
     this.transactionHash = transactionHash;
+    this.transaction = transaction;
     this.revertReason = revertReason;
 
     this.warmedUpAddresses = new HashSet<>(accessListWarmAddresses);
@@ -1057,6 +1060,10 @@ public class MessageFrame {
     return transactionHash;
   }
 
+  public Transaction getTransaction() {
+    return transaction;
+  }
+
   public void setCurrentOperation(final Operation currentOperation) {
     this.currentOperation = currentOperation;
   }
@@ -1109,6 +1116,7 @@ public class MessageFrame {
     private Boolean isPersistingPrivateState = false;
     private PrivateMetadataUpdater privateMetadataUpdater = null;
     private Hash transactionHash;
+    private Transaction transaction;
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
@@ -1239,6 +1247,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder transaction(final Transaction transaction) {
+      this.transaction = transaction;
+      return this;
+    }
+
     public Builder reason(final Bytes reason) {
       this.reason = Optional.ofNullable(reason);
       return this;
@@ -1306,6 +1319,7 @@ public class MessageFrame {
           isPersistingPrivateState,
           privateMetadataUpdater,
           transactionHash,
+          transaction,
           reason,
           maxStackSize,
           accessListWarmAddresses,

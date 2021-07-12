@@ -28,8 +28,8 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.UnrestrictedPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.vm.EVM;
@@ -307,12 +307,11 @@ public class ProtocolSpecBuilder {
               messageCallProcessor,
               privateTransactionValidator);
 
-      if (privacyParameters.isUnrestrictedPrivacyEnabled()) {
-        final UnrestrictedPrivacyPrecompiledContract unrestrictedPrivacyPrecompiledContract =
-            (UnrestrictedPrivacyPrecompiledContract)
-                precompileContractRegistry.get(
-                    Address.UNRESTRICTED_PRIVACY, Account.DEFAULT_VERSION);
-        unrestrictedPrivacyPrecompiledContract.setPrivateTransactionProcessor(
+      if (privacyParameters.isPrivacyPluginEnabled()) {
+        final PrivacyPluginPrecompiledContract privacyPluginPrecompiledContract =
+            (PrivacyPluginPrecompiledContract)
+                precompileContractRegistry.get(Address.PLUGIN_PRIVACY, Account.DEFAULT_VERSION);
+        privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
         final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =

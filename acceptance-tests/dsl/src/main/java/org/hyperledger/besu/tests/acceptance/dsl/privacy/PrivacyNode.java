@@ -76,7 +76,7 @@ public class PrivacyNode implements AutoCloseable {
   private final Vertx vertx;
   private final boolean isOnchainPrivacyEnabled;
   private final boolean isMultitenancyEnabled;
-  private final boolean isUnrestrictedEnabled;
+  private final boolean isPrivacyPluginEnabled;
 
   public PrivacyNode(
       final PrivacyNodeConfiguration privacyConfiguration,
@@ -94,7 +94,7 @@ public class PrivacyNode implements AutoCloseable {
 
     isOnchainPrivacyEnabled = privacyConfiguration.isOnchainPrivacyGroupEnabled();
     isMultitenancyEnabled = privacyConfiguration.isMultitenancyEnabled();
-    isUnrestrictedEnabled = privacyConfiguration.isUnrestrictedEnabled();
+    isPrivacyPluginEnabled = privacyConfiguration.isPrivacyPluginEnabled();
 
     this.besu =
         new BesuNode(
@@ -126,8 +126,8 @@ public class PrivacyNode implements AutoCloseable {
   }
 
   public void testEnclaveConnection(final List<PrivacyNode> otherNodes) {
-    if (this.isUnrestrictedEnabled) {
-      LOG.info("Skipping as node has no enclave (isUnrestrictedEnabled=true)");
+    if (this.isPrivacyPluginEnabled) {
+      LOG.info("Skipping test as node has no enclave (isPrivacyPluginEnabled=true)");
       return;
     }
 
@@ -204,7 +204,7 @@ public class PrivacyNode implements AutoCloseable {
               .setEnclaveFactory(new EnclaveFactory(vertx))
               .setOnchainPrivacyGroupsEnabled(isOnchainPrivacyEnabled)
               .setMultiTenancyEnabled(isMultitenancyEnabled)
-              .setUnrestrictedPrivacyEnabled(isUnrestrictedEnabled)
+              .setPrivacyPluginEnabled(isPrivacyPluginEnabled)
               .build();
     } catch (final IOException e) {
       throw new RuntimeException(e);
