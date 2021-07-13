@@ -63,8 +63,6 @@ public class TransactionCompleteResult implements TransactionResult {
 
   private final String from;
   private final String gas;
-
-  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String gasPrice;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -102,7 +100,8 @@ public class TransactionCompleteResult implements TransactionResult {
         tx.getTransaction().getMaxPriorityFeePerGas().map(q -> q.toShortHexString()).orElse(null);
     this.maxFeePerGas =
         tx.getTransaction().getMaxFeePerGas().map(q -> q.toShortHexString()).orElse(null);
-    this.gasPrice = transaction.getGasPrice().map(Quantity::create).orElse(null);
+
+    this.gasPrice = Quantity.create(transaction.getEffectivePriorityFeePerGas(tx.getBaseFee()));
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
