@@ -178,3 +178,13 @@ Xaltbn128-native-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
+
+#p2p over ssl
+p2p-tls-enabled=false
+p2p-tls-keystore-type="none"
+p2p-tls-keystore-file="none.file"
+p2p-tls-truststore-password-file="none"
+p2p-tls-truststore-type="none"
+p2p-tls-truststore-file="none.file"
+p2p-tls-keystore-password-file="none"
+p2p-tls-crl-file="none.file"

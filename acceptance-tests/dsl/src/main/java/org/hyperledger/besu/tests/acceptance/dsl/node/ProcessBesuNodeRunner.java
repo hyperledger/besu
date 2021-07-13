@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -246,6 +247,26 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       final List<String> networkConfigParams =
           NetworkingOptions.fromConfig(node.getNetworkingConfiguration()).getCLIOptions();
       params.addAll(networkConfigParams);
+      if (node.getTLSConfiguration().isPresent()) {
+        final TLSConfiguration config = node.getTLSConfiguration().get();
+        params.add("--p2p-tls-enabled");
+        params.add("--p2p-tls-keystore-type");
+        params.add(config.getKeyStoreType());
+        params.add("--p2p-tls-keystore-file");
+        params.add(config.getKeyStorePath().toAbsolutePath().toString());
+        params.add("--p2p-tls-keystore-password-file");
+        params.add(config.getKeyStorePasswordPath().toAbsolutePath().toString());
+        params.add("--p2p-tls-crl-file");
+        params.add(config.getCrlPath().toAbsolutePath().toString());
+        if (null != config.getTrustStoreType()) {
+          params.add("--p2p-tls-truststore-type");
+          params.add(config.getTrustStoreType());
+          params.add("--p2p-tls-truststore-file");
+          params.add(config.getTrustStorePath().toAbsolutePath().toString());
+          params.add("--p2p-tls-truststore-password-file");
+          params.add(config.getTrustStorePasswordPath().toAbsolutePath().toString());
+        }
+      }
     }
 
     if (node.isRevertReasonEnabled()) {

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -65,6 +66,7 @@ public class BesuNodeFactory {
         config.getNetwork(),
         config.getGenesisConfigProvider(),
         config.isP2pEnabled(),
+        config.getTLSConfiguration(),
         config.getNetworkingConfiguration(),
         config.isDiscoveryEnabled(),
         config.isBootnodeEligible(),
@@ -346,6 +348,31 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createIbft2NodeWithTLS(final String name, final String type) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .p2pTLSEnabled(name, type)
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(false))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(genesis::createIbft2GenesisConfig)
+            .build());
+  }
+
+  public BesuNode createIbft2NodeWithTLSJKS(final String name) throws IOException {
+    return createIbft2NodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS);
+  }
+
+  public BesuNode createIbft2NodeWithTLSPKCS12(final String name) throws IOException {
+    return createIbft2NodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS12);
+  }
+
+  public BesuNode createIbft2NodeWithTLSPKCS11(final String name) throws IOException {
+    return createIbft2NodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11);
+  }
+
   public BesuNode createQbftNode(final String name) throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
@@ -418,6 +445,39 @@ public class BesuNodeFactory {
                     node.createGenesisConfigForValidators(
                         asList(validators), nodes, genesis::createIbft2GenesisConfig))
             .build());
+  }
+
+  public BesuNode createIbft2TLSNodeWithValidators(
+      final String name, final String type, final String... validators) throws IOException {
+
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .p2pTLSEnabled(name, type)
+            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(false))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(
+                nodes ->
+                    node.createGenesisConfigForValidators(
+                        asList(validators), nodes, genesis::createIbft2GenesisConfig))
+            .build());
+  }
+
+  public BesuNode createIbft2TLSJKSNodeWithValidators(final String name, final String... validators)
+      throws IOException {
+    return createIbft2TLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS, validators);
+  }
+
+  public BesuNode createIbft2TLSPKCS12NodeWithValidators(
+      final String name, final String... validators) throws IOException {
+    return createIbft2TLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, validators);
+  }
+
+  public BesuNode createIbft2TLSPKCS11NodeWithValidators(
+      final String name, final String... validators) throws IOException {
+    return createIbft2TLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, validators);
   }
 
   public BesuNode createQbftNodeWithValidators(final String name, final String... validators)
