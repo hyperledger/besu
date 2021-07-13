@@ -12,29 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
+package org.hyperledger.besu.plugin.data;
 
-import java.util.List;
-import javax.annotation.Nullable;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.immutables.value.Value;
+import org.apache.tuweni.bytes.Bytes;
 
-@Value.Immutable
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public interface FeeHistoryResult {
+public enum Restriction {
+  RESTRICTED(Bytes.wrap("restricted".getBytes(UTF_8))),
+  UNRESTRICTED(Bytes.wrap("unrestricted".getBytes(UTF_8))),
+  UNSUPPORTED(Bytes.EMPTY);
 
-  @JsonProperty("oldestBlock")
-  long getOldestBlock();
+  private final Bytes bytes;
 
-  @JsonProperty("baseFeePerGas")
-  List<Long> getBaseFeePerGas();
+  Restriction(final Bytes bytes) {
+    this.bytes = bytes;
+  }
 
-  @JsonProperty("gasUsedRatio")
-  List<Double> getGasUsedRatio();
-
-  @Nullable
-  @JsonProperty("reward")
-  List<List<Long>> getReward();
+  public Bytes getBytes() {
+    return bytes;
+  }
 }

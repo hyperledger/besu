@@ -22,21 +22,24 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class UnrestrictedPrivacyPrecompiledContract extends PrivacyPrecompiledContract {
+public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract {
   private static final Logger LOG = LogManager.getLogger();
+  private final PrivacyParameters privacyParameters;
 
-  public UnrestrictedPrivacyPrecompiledContract(
+  public PrivacyPluginPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    super(gasCalculator, privacyParameters, "UnrestrictedPrivacy");
+    super(gasCalculator, privacyParameters, "PluginPrivacy");
+    this.privacyParameters = privacyParameters;
   }
 
   @Override
@@ -46,14 +49,21 @@ public class UnrestrictedPrivacyPrecompiledContract extends PrivacyPrecompiledCo
       return Bytes.EMPTY;
     }
 
-    final Hash pmtHash = messageFrame.getTransactionHash();
+    final Optional<org.hyperledger.besu.plugin.data.PrivateTransaction> pluginPrivateTransaction =
+        privacyParameters
+            .getPrivacyService()
+            .getPayloadProvider()
+            .getPrivateTransactionFromPayload(messageFrame.getTransaction());
 
-    final BytesValueRLPInput bytesValueRLPInput = new BytesValueRLPInput(input, false);
+    if (pluginPrivateTransaction.isEmpty()) {
+      return Bytes.EMPTY;
+    }
 
     final PrivateTransaction privateTransaction =
-        PrivateTransaction.readFrom(bytesValueRLPInput.readAsRlp());
+        PrivateTransaction.readFrom(pluginPrivateTransaction.get());
 
     final Bytes32 privacyGroupId = privateTransaction.determinePrivacyGroupId();
+    final Hash pmtHash = messageFrame.getTransactionHash();
 
     LOG.debug(
         "Processing unrestricted private transaction {} in privacy group {}",

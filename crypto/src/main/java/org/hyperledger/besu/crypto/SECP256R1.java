@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.crypto;
 
+import org.bouncycastle.crypto.signers.DSAKCalculator;
+import org.bouncycastle.crypto.signers.RandomDSAKCalculator;
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 
 public class SECP256R1 extends AbstractSECP256 {
@@ -30,6 +32,16 @@ public class SECP256R1 extends AbstractSECP256 {
   @Override
   public boolean isNative() {
     return false;
+  }
+
+  /**
+   * SECP256R1 is using the non-deterministic implementation of K calculation (standard)
+   *
+   * @return an instance of RandomDSAKCalculator
+   */
+  @Override
+  public DSAKCalculator getKCalculator() {
+    return new RandomDSAKCalculator();
   }
 
   @Override

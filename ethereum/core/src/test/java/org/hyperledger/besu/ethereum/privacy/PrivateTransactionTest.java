@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.privacy.Restriction.RESTRICTED;
-import static org.hyperledger.besu.ethereum.privacy.Restriction.UNRESTRICTED;
+import static org.hyperledger.besu.plugin.data.Restriction.RESTRICTED;
+import static org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
