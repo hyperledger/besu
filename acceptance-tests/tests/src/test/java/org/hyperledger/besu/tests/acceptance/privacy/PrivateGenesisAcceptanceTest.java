@@ -72,7 +72,7 @@ public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
   }
 
   @Test
-  public void privGetCodeReturnsDeployedContractBytecode() throws Exception {
+  public void canInteractWithPrivateGenesisPreCompile() throws Exception {
     final String privacyGroupId = createPrivacyGroup();
 
     final EventEmitter eventEmitter =

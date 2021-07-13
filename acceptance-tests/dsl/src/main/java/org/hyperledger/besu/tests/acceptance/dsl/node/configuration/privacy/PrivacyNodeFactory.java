@@ -202,7 +202,7 @@ public class PrivacyNodeFactory {
                 .enablePrivateTransactions()
                 .plugins(Collections.singletonList("testPlugins"))
                 .extraCLIOptions(
-                        List.of("--plugin-privacy-service-encryption-prefix=" + unrestrictedPrefix))
+                    List.of("--plugin-privacy-service-encryption-prefix=" + unrestrictedPrefix))
                 .build(),
             new EnclaveKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
@@ -249,7 +249,8 @@ public class PrivacyNodeFactory {
       final PrivacyAccount privacyAccount,
       final boolean multiTenancyEnabled,
       final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
+      final Optional<Network> containerNetwork,
+      final String privateGenesisJson)
       throws IOException, URISyntaxException {
     final BesuNodeConfigurationBuilder besuNodeConfigurationBuilder =
         new BesuNodeConfigurationBuilder();
@@ -262,6 +263,7 @@ public class PrivacyNodeFactory {
             true,
             multiTenancyEnabled,
             false,
+            privateGenesisJson,
             besuNodeConfigurationBuilder
                 .name(name)
                 .miningEnabled()
@@ -281,13 +283,15 @@ public class PrivacyNodeFactory {
       final PrivacyAccount privacyAccount,
       final boolean multiTenancyEnabled,
       final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
+      final Optional<Network> containerNetwork,
+      final String privateGenesisJson)
       throws IOException {
     return create(
         new PrivacyNodeConfiguration(
             true,
             multiTenancyEnabled,
             false,
+            privateGenesisJson,
             new BesuNodeConfigurationBuilder()
                 .name(name)
                 .jsonRpcEnabled()
