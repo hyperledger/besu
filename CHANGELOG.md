@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - `priv_call` now uses NO_TRACING OperationTracer implementation which improves memory usage [\#2482](https://github.com/hyperledger/besu/pull/2482)
+- Ping and Pong messages now support ENR encoding as scalars or bytes [\#2512](https://github.com/hyperledger/besu/pull/2512)
 
 ## 21.7.0
 
