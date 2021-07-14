@@ -58,7 +58,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
-    final ValidatorProvider rpcValidatorProvider =
+    final ValidatorProvider readOnlyValidatorProvider =
         createValidatorProvider(context, mutableBlockchain);
 
     return mapOf(
@@ -66,7 +66,7 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new QbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface),
         new QbftDiscardValidatorVote(validatorProvider),
         new QbftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface),
-        new QbftGetSignerMetrics(rpcValidatorProvider, blockInterface, blockchainQueries),
+        new QbftGetSignerMetrics(readOnlyValidatorProvider, blockInterface, blockchainQueries),
         new QbftGetPendingVotes(validatorProvider));
   }
 

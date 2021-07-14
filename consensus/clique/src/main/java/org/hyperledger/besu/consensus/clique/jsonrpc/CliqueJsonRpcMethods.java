@@ -57,16 +57,17 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
         context.getConsensusState(CliqueContext.class).getValidatorProvider();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
-    final ValidatorProvider rpcValidatorProvider = createValidatorProvider(context, blockchain);
+    final ValidatorProvider readOnlyValidatorProvider =
+        createValidatorProvider(context, blockchain);
 
     return mapOf(
-        new CliqueGetSigners(blockchainQueries, rpcValidatorProvider),
-        new CliqueGetSignersAtHash(blockchainQueries, rpcValidatorProvider),
+        new CliqueGetSigners(blockchainQueries, readOnlyValidatorProvider),
+        new CliqueGetSignersAtHash(blockchainQueries, readOnlyValidatorProvider),
         new Propose(validatorProvider),
         new Discard(validatorProvider),
         new CliqueProposals(validatorProvider),
         new CliqueGetSignerMetrics(
-            rpcValidatorProvider, new CliqueBlockInterface(), blockchainQueries));
+            readOnlyValidatorProvider, new CliqueBlockInterface(), blockchainQueries));
   }
 
   private ValidatorProvider createValidatorProvider(
