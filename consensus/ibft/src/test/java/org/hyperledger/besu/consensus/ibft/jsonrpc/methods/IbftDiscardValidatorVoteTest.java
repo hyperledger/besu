@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
+import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -32,7 +32,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 public class IbftDiscardValidatorVoteTest {
-  private final VoteProposer voteProposer = mock(VoteProposer.class);
+  private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
   private final String IBFT_METHOD = "ibft_discardValidatorVote";
   private final String JSON_RPC_VERSION = "2.0";
   private IbftDiscardValidatorVote method;
@@ -41,7 +41,7 @@ public class IbftDiscardValidatorVoteTest {
 
   @Before
   public void setup() {
-    method = new IbftDiscardValidatorVote(voteProposer);
+    method = new IbftDiscardValidatorVote(validatorProvider);
   }
 
   @Test
@@ -81,7 +81,7 @@ public class IbftDiscardValidatorVoteTest {
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
-    verify(voteProposer).discard(parameterAddress);
+    verify(validatorProvider).discard(parameterAddress);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

@@ -29,9 +29,9 @@ import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
+import org.hyperledger.besu.consensus.common.voting.VoteType;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -55,6 +55,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -76,8 +77,8 @@ public class CliqueBlockCreatorTest {
 
   private MutableBlockchain blockchain;
   private ProtocolContext protocolContext;
-  private VoteProposer voteProposer;
   private EpochManager epochManager;
+  private ValidatorProvider validatorProvider;
 
   @Before
   public void setup() {
@@ -88,11 +89,9 @@ public class CliqueBlockCreatorTest {
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    voteProposer = new VoteProposer();
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
 
     final Block genesis =
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
@@ -150,8 +149,9 @@ public class CliqueBlockCreatorTest {
     final Bytes extraData =
         CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Address.fromHexString("5");
-    voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
+    when(validatorProvider.getVoteAfterBlock(any(), any()))
+        .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
@@ -180,40 +180,6 @@ public class CliqueBlockCreatorTest {
   }
 
   @Test
-  public void insertsNoVoteWhenAuthInValidators() {
-    final Bytes extraData =
-        CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
-    final Address a1 = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
-    voteProposer.auth(a1);
-    final Address coinbase = AddressHelpers.ofValue(1);
-
-    final CliqueBlockCreator blockCreator =
-        new CliqueBlockCreator(
-            coinbase,
-            parent -> extraData,
-            new PendingTransactions(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                5,
-                5,
-                TestClock.fixed(),
-                metricsSystem,
-                blockchain::getChainHeadHeader,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
-            protocolContext,
-            protocolSchedule,
-            gasLimit -> gasLimit,
-            proposerNodeKey,
-            Wei.ZERO,
-            0.8,
-            blockchain.getChainHeadHeader(),
-            epochManager);
-
-    final Block createdBlock = blockCreator.createBlock(0L);
-    assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
-    assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
-  }
-
-  @Test
   public void insertsNoVoteWhenAtEpoch() {
     // ensure that the next block is epoch
     epochManager = new EpochManager(1);
@@ -221,8 +187,9 @@ public class CliqueBlockCreatorTest {
     final Bytes extraData =
         CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Address.fromHexString("5");
-    voteProposer.auth(a1);
     final Address coinbase = AddressHelpers.ofValue(1);
+    when(validatorProvider.getVoteAfterBlock(any(), any()))
+        .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(

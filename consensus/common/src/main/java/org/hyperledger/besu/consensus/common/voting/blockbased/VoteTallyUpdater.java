@@ -12,8 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.voting.blockbased;
 
+import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -28,14 +31,14 @@ import org.apache.logging.log4j.Logger;
  * Provides the logic to extract vote tally state from the blockchain and update it as blocks are
  * added.
  */
-public class VoteTallyUpdater {
+class VoteTallyUpdater {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final EpochManager epochManager;
   private final BlockInterface blockInterface;
 
-  public VoteTallyUpdater(final EpochManager epochManager, final BlockInterface blockInterface) {
+  VoteTallyUpdater(final EpochManager epochManager, final BlockInterface blockInterface) {
     this.epochManager = epochManager;
     this.blockInterface = blockInterface;
   }
@@ -46,7 +49,7 @@ public class VoteTallyUpdater {
    * @param blockchain the blockchain to load the current state from
    * @return a VoteTally reflecting the state of the blockchain head
    */
-  public VoteTally buildVoteTallyFromBlockchain(final Blockchain blockchain) {
+  VoteTally buildVoteTallyFromBlockchain(final Blockchain blockchain) {
     final long chainHeadBlockNumber = blockchain.getChainHeadBlockNumber();
     final long epochBlockNumber = epochManager.getLastEpochBlock(chainHeadBlockNumber);
     LOG.info("Loading validator voting state starting from block {}", epochBlockNumber);
@@ -67,7 +70,7 @@ public class VoteTallyUpdater {
    * @param header the header of the block being added
    * @param voteTally the vote tally to update
    */
-  public void updateForBlock(final BlockHeader header, final VoteTally voteTally) {
+  void updateForBlock(final BlockHeader header, final VoteTally voteTally) {
     if (epochManager.isEpochBlock(header.getNumber())) {
       voteTally.discardOutstandingVotes();
       return;

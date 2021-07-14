@@ -12,10 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.voting.blockbased;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -28,7 +30,7 @@ import java.util.concurrent.ExecutionException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
-public class VoteTallyCache {
+class VoteTallyCache {
 
   private final Blockchain blockchain;
   private final EpochManager epochManager;
@@ -38,7 +40,7 @@ public class VoteTallyCache {
       CacheBuilder.newBuilder().maximumSize(100).build();
   private final BlockInterface blockInterface;
 
-  public VoteTallyCache(
+  VoteTallyCache(
       final Blockchain blockchain,
       final VoteTallyUpdater voteTallyUpdater,
       final EpochManager epochManager,
@@ -54,7 +56,7 @@ public class VoteTallyCache {
     this.blockInterface = blockInterface;
   }
 
-  public VoteTally getVoteTallyAtHead() {
+  VoteTally getVoteTallyAtHead() {
     return getVoteTallyAfterBlock(blockchain.getChainHeadHeader());
   }
 
@@ -69,7 +71,7 @@ public class VoteTallyCache {
    * @return The Vote Tally (and therefore validators) following the application of all votes upto
    *     and including the requested header.
    */
-  public VoteTally getVoteTallyAfterBlock(final BlockHeader header) {
+  VoteTally getVoteTallyAfterBlock(final BlockHeader header) {
     try {
       return voteTallyCache.get(header.getHash(), () -> populateCacheUptoAndIncluding(header));
     } catch (final ExecutionException ex) {

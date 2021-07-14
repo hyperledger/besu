@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteType;
+import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -28,10 +28,10 @@ import org.apache.logging.log4j.Logger;
 
 public class IbftProposeValidatorVote implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
-  private final VoteProposer voteProposer;
+  private final ValidatorProvider validatorProvider;
 
-  public IbftProposeValidatorVote(final VoteProposer voteProposer) {
-    this.voteProposer = voteProposer;
+  public IbftProposeValidatorVote(final ValidatorProvider validatorProvider) {
+    this.validatorProvider = validatorProvider;
   }
 
   @Override
@@ -51,9 +51,9 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
         validatorAddress);
 
     if (add) {
-      voteProposer.auth(validatorAddress);
+      validatorProvider.auth(validatorAddress);
     } else {
-      voteProposer.drop(validatorAddress);
+      validatorProvider.drop(validatorAddress);
     }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
