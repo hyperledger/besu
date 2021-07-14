@@ -21,9 +21,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -50,6 +48,7 @@ import org.hyperledger.besu.consensus.common.bft.inttest.StubbedSynchronizerUpda
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
+import org.hyperledger.besu.consensus.common.voting.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
@@ -306,20 +305,15 @@ public class TestContextBuilder {
 
     final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
-    final VoteTallyCache voteTallyCache =
-        new VoteTallyCache(
-            blockChain,
-            new VoteTallyUpdater(epochManager, blockInterface),
-            epochManager,
-            new BftBlockInterface(BFT_EXTRA_DATA_ENCODER));
-
-    final VoteProposer voteProposer = new VoteProposer();
+    final ValidatorProvider validatorProvider =
+        BlockValidatorProvider.nonForkingValidatorProvider(
+            blockChain, epochManager, blockInterface);
 
     final ProtocolContext protocolContext =
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            new BftContext(voteTallyCache, voteProposer, epochManager, blockInterface));
+            new BftContext(validatorProvider, epochManager, blockInterface));
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -344,12 +338,12 @@ public class TestContextBuilder {
             BFT_EXTRA_DATA_ENCODER);
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockChain, blockInterface, true, voteTallyCache);
+        new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
 
     final BftExecutors bftExecutors = BftExecutors.create(new NoOpMetricsSystem());
     final BftFinalState finalState =
         new BftFinalState(
-            protocolContext.getConsensusState(BftContext.class).getVoteTallyCache(),
+            protocolContext.getConsensusState(BftContext.class).getValidatorProvider(),
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,

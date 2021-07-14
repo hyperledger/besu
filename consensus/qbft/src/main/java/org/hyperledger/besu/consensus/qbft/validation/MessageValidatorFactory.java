@@ -50,9 +50,8 @@ public class MessageValidatorFactory {
   private Collection<Address> getValidatorsAfterBlock(final BlockHeader parentHeader) {
     return protocolContext
         .getConsensusState(BftContext.class)
-        .getVoteTallyCache()
-        .getVoteTallyAfterBlock(parentHeader)
-        .getValidators();
+        .getValidatorProvider()
+        .getValidatorsAfterBlock(parentHeader);
   }
 
   public RoundChangeMessageValidator createRoundChangeMessageValidator(

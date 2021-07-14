@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteType;
+import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -25,15 +25,15 @@ import java.util.stream.Collectors;
 
 public class AbstractVoteProposerMethod {
 
-  private final VoteProposer voteProposer;
+  private final ValidatorProvider validatorProvider;
 
-  public AbstractVoteProposerMethod(final VoteProposer voteProposer) {
-    this.voteProposer = voteProposer;
+  public AbstractVoteProposerMethod(final ValidatorProvider validatorProvider) {
+    this.validatorProvider = validatorProvider;
   }
 
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Map<String, Boolean> proposals =
-        voteProposer.getProposals().entrySet().stream()
+        validatorProvider.getProposals().entrySet().stream()
             .collect(
                 Collectors.toMap(
                     proposal -> proposal.getKey().toString(),

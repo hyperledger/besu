@@ -12,14 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.voting.blockbased;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
+import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-public class ForkingVoteTallyCache extends VoteTallyCache {
+class ForkingVoteTallyCache extends VoteTallyCache {
 
   private final BftValidatorOverrides validatorOverrides;
 
