@@ -61,6 +61,33 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
+    out.writeLongScalar(enrSeq.toLong());
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).contains(from);
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void handlesLegacyENREncode() {
+    final int version = 4;
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final long time = System.currentTimeMillis();
+    final UInt64 enrSeq = UInt64.ONE;
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(version);
+    from.encodeStandalone(out);
+    to.encodeStandalone(out);
+    out.writeLongScalar(time);
     out.writeBytes(enrSeq.toBytes());
     out.endList();
 
@@ -88,7 +115,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     // Add extra field
     out.writeLongScalar(11);
     out.endList();
@@ -117,7 +144,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
 
     final Bytes serialized = out.encoded();
@@ -144,7 +171,7 @@ public class PingPacketDataTest {
     from.encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(time);
-    out.writeBytes(enrSeq.toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
 
     final Bytes serialized = out.encoded();
