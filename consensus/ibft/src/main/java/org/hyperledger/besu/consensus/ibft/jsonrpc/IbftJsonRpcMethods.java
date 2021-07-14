@@ -67,7 +67,7 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new IbftDiscardValidatorVote(validatorProvider),
         new IbftGetValidatorsByBlockHash(blockchain, blockInterface),
         new IbftGetSignerMetrics(rpcValidatorProvider, blockInterface, blockchainQueries),
-        new IbftGetPendingVotes(rpcValidatorProvider));
+        new IbftGetPendingVotes(validatorProvider));
   }
 
   private ValidatorProvider createValidatorProvider(
