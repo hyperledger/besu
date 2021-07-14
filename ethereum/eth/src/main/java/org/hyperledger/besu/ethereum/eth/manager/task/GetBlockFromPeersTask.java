@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +35,7 @@ public class GetBlockFromPeersTask extends AbstractEthTask<AbstractPeerTask.Peer
   private final List<EthPeer> peers;
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
-  private final Hash hash;
+  private final Optional<Hash> hash;
   private final long blockNumber;
   private final MetricsSystem metricsSystem;
 
@@ -42,7 +43,7 @@ public class GetBlockFromPeersTask extends AbstractEthTask<AbstractPeerTask.Peer
       final List<EthPeer> peers,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final Hash hash,
+      final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     super(metricsSystem);
@@ -58,7 +59,7 @@ public class GetBlockFromPeersTask extends AbstractEthTask<AbstractPeerTask.Peer
       final List<EthPeer> peers,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final Hash hash,
+      final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     return new GetBlockFromPeersTask(

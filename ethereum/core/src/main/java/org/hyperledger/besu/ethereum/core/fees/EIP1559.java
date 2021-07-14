@@ -73,11 +73,6 @@ public class EIP1559 {
     return baseFee;
   }
 
-  public boolean isValidBaseFee(final long parentBaseFee, final long baseFee) {
-    return Math.abs(baseFee - parentBaseFee)
-        <= Math.max(1, parentBaseFee / feeMarket.getBasefeeMaxChangeDenominator());
-  }
-
   public boolean isEIP1559(final long blockNumber) {
     return blockNumber >= initialForkBlknum;
   }

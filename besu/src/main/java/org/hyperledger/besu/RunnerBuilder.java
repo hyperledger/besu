@@ -568,7 +568,9 @@ public class RunnerBuilder {
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
     if (graphQLConfiguration.isEnabled()) {
-      final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
+      final GraphQLDataFetchers fetchers =
+          new GraphQLDataFetchers(
+              supportedCapabilities, privacyParameters.getGoQuorumPrivacyParameters());
       final GraphQLDataFetcherContextImpl dataFetcherContext =
           new GraphQLDataFetcherContextImpl(
               blockchainQueries,

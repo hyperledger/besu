@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransactionReceiptTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
@@ -29,8 +30,12 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.Priv
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivNewFilterTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivUninstallFilterTransaction;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.crypto.Credentials;
 import org.web3j.tx.Contract;
 
@@ -41,9 +46,9 @@ public class PrivacyTransactions {
     return new PrivGetTransactionReceiptTransaction(transactionHash);
   }
 
-  public CreatePrivacyGroupTransaction createPrivacyGroup(
+  public RestrictedCreatePrivacyGroupTransaction createPrivacyGroup(
       final String name, final String description, final PrivacyNode... nodes) {
-    return new CreatePrivacyGroupTransaction(name, description, nodes);
+    return new RestrictedCreatePrivacyGroupTransaction(name, description, nodes);
   }
 
   public CreateOnChainPrivacyGroupTransaction createOnChainPrivacyGroup(
@@ -141,5 +146,15 @@ public class PrivacyTransactions {
   public PrivDebugGetStateRoot debugGetStateRoot(
       final String privacyGroupId, final String blockParam) {
     return new PrivDebugGetStateRoot(privacyGroupId, blockParam);
+  }
+
+  public String getLegacyPrivacyGroupId(final String privateFrom, final String... privateFor) {
+
+    final Bytes32 privacyGroupId =
+        PrivacyGroupUtil.calculateEeaPrivacyGroupId(
+            Bytes.fromBase64String(privateFrom),
+            Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList()));
+
+    return privacyGroupId.toBase64String();
   }
 }

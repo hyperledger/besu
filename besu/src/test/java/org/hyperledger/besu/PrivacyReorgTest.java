@@ -49,15 +49,15 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
@@ -138,7 +138,7 @@ public class PrivacyReorgTest {
   private EnclaveTestHarness enclave;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivacyParameters privacyParameters;
-  private DefaultPrivacyController privacyController;
+  private RestrictedDefaultPrivacyController privacyController;
 
   @Before
   public void setUp() throws IOException {
@@ -160,8 +160,8 @@ public class PrivacyReorgTest {
             .setEnclaveUrl(enclave.clientUrl())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .build();
-    privacyParameters.setEnclavePublicKey(ENCLAVE_PUBLIC_KEY.toBase64String());
-    privacyController = mock(DefaultPrivacyController.class);
+    privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
+    privacyController = mock(RestrictedDefaultPrivacyController.class);
     when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
         .thenReturn(Optional.of(new PrivacyGroup()));
 
@@ -427,14 +427,14 @@ public class PrivacyReorgTest {
   private SendResponse sendRequest(
       final Enclave enclave,
       final PrivateTransaction privateTransaction,
-      final String enclavePublicKey) {
+      final String privacyUserId) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     privateTransaction.writeTo(rlpOutput);
     final String payload = rlpOutput.encoded().toBase64String();
 
     if (privateTransaction.getPrivacyGroupId().isPresent()) {
       return enclave.send(
-          payload, enclavePublicKey, privateTransaction.getPrivacyGroupId().get().toBase64String());
+          payload, privacyUserId, privateTransaction.getPrivacyGroupId().get().toBase64String());
     } else {
       final List<String> privateFor =
           privateTransaction.getPrivateFor().get().stream()

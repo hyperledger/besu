@@ -32,17 +32,17 @@ import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
-import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.crypto.signers.DSAKCalculator;
 import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
 
 public abstract class AbstractSECP256 implements SignatureAlgorithm {
+
   protected static final int PRIVATE_KEY_BYTE_LENGTH = 32;
   protected static final int PUBLIC_KEY_BYTE_LENGTH = 64;
   protected static final int SIGNATURE_BYTE_LENGTH = 65;
@@ -215,6 +215,8 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
     return PROVIDER;
   }
 
+  public abstract DSAKCalculator getKCalculator();
+
   // Decompress a compressed public key (x co-ord and low-bit of y-coord).
   protected ECPoint decompressKey(final BigInteger xBN, final boolean yBit) {
     final X9IntegerConverter x9 = new X9IntegerConverter();
@@ -305,7 +307,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
 
   @Override
   public SECPSignature sign(final Bytes32 dataHash, final KeyPair keyPair) {
-    final ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
+    final ECDSASigner signer = new ECDSASigner(getKCalculator());
 
     final ECPrivateKeyParameters privKey =
         new ECPrivateKeyParameters(

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
@@ -24,32 +25,48 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequ
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
 import org.junit.Test;
 import org.testcontainers.containers.Network;
+import org.web3j.utils.Restriction;
 
 public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
-  public PrivDebugGetStateRootOffchainGroupAcceptanceTest(final EnclaveType enclaveType) {
-    super(enclaveType);
-  }
 
-  private PrivacyNode aliceNode;
-  private PrivacyNode bobNode;
+  private final PrivacyNode aliceNode;
+  private final PrivacyNode bobNode;
 
-  @Before
-  public void setUp() throws IOException, URISyntaxException {
+  public PrivDebugGetStateRootOffchainGroupAcceptanceTest(
+      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
+
+    super(restriction, enclaveType);
+
     final Network containerNetwork = Network.newNetwork();
 
     aliceNode =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "alice-node", PrivacyAccountResolver.ALICE, enclaveType, Optional.of(containerNetwork));
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "alice-node",
+            PrivacyAccountResolver.ALICE,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            restriction == UNRESTRICTED,
+            "0xAA");
     bobNode =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
-            "bob-node", PrivacyAccountResolver.BOB, enclaveType, Optional.of(containerNetwork));
+        privacyBesu.createIbft2NodePrivacyEnabled(
+            "bob-node",
+            PrivacyAccountResolver.BOB,
+            false,
+            enclaveType,
+            Optional.of(containerNetwork),
+            false,
+            false,
+            restriction == UNRESTRICTED,
+            "0xBB");
+
     privacyCluster.start(aliceNode, bobNode);
   }
 
@@ -57,8 +74,7 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
   public void nodesInGroupShouldHaveSameStateRoot() {
     final String privacyGroupId =
         aliceNode.execute(
-            privacyTransactions.createPrivacyGroup(
-                "testGroup", "A group for everyone", aliceNode, bobNode));
+            createPrivacyGroup("testGroup", "A group for everyone", aliceNode, bobNode));
 
     final Hash aliceStateRootId =
         aliceNode
@@ -75,14 +91,16 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
 
   @Test
   public void unknownGroupShouldReturnError() {
-    final PrivacyRequestFactory.DebugGetStateRoot aliceResult =
-        aliceNode.execute(
-            privacyTransactions.debugGetStateRoot(
-                Hash.wrap(Bytes32.random()).toBase64String(), "latest"));
+    if (restriction != UNRESTRICTED) {
+      final PrivacyRequestFactory.DebugGetStateRoot aliceResult =
+          aliceNode.execute(
+              privacyTransactions.debugGetStateRoot(
+                  Hash.wrap(Bytes32.random()).toBase64String(), "latest"));
 
-    assertThat(aliceResult.getResult()).isNull();
-    assertThat(aliceResult.hasError()).isTrue();
-    assertThat(aliceResult.getError()).isNotNull();
-    assertThat(aliceResult.getError().getMessage()).contains("Error finding privacy group");
+      assertThat(aliceResult.getResult()).isNull();
+      assertThat(aliceResult.hasError()).isTrue();
+      assertThat(aliceResult.getError()).isNotNull();
+      assertThat(aliceResult.getError().getMessage()).contains("Error finding privacy group");
+    }
   }
 }

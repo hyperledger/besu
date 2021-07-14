@@ -30,19 +30,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistoryResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistory;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,7 +49,6 @@ import org.junit.Test;
 public class EthFeeHistoryTest {
   final BlockDataGenerator gen = new BlockDataGenerator();
   private MutableBlockchain blockchain;
-  private BlockchainQueries blockchainQueries;
   private EthFeeHistory method;
   private ProtocolSchedule protocolSchedule;
 
@@ -64,13 +59,7 @@ public class EthFeeHistoryTest {
     blockchain = createInMemoryBlockchain(genesisBlock);
     gen.blockSequence(genesisBlock, 10)
         .forEach(block -> blockchain.appendBlock(block, gen.receipts(block)));
-    blockchainQueries =
-        new BlockchainQueries(
-            blockchain,
-            new DefaultWorldStateArchive(
-                new WorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
-                new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage())));
-    method = new EthFeeHistory(protocolSchedule, blockchainQueries);
+    method = new EthFeeHistory(protocolSchedule, blockchain);
   }
 
   @Test
@@ -100,12 +89,13 @@ public class EthFeeHistoryTest {
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
                 .getResult())
         .isEqualTo(
-            ImmutableFeeHistoryResult.builder()
-                .oldestBlock(10)
-                .baseFeePerGas(List.of(25496L, 28683L))
-                .gasUsedRatio(List.of(0.9999999992132459))
-                .reward(List.of(List.of(1524763764L)))
-                .build());
+            FeeHistory.FeeHistoryResult.from(
+                ImmutableFeeHistory.builder()
+                    .oldestBlock(10)
+                    .baseFeePerGas(List.of(25496L, 28683L))
+                    .gasUsedRatio(List.of(0.9999999992132459))
+                    .reward(List.of(List.of(1524763764L)))
+                    .build()));
   }
 
   @Test
@@ -137,10 +127,10 @@ public class EthFeeHistoryTest {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(5)));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
-    final FeeHistoryResult result =
+    final FeeHistory.FeeHistoryResult result =
         (ImmutableFeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(20, "latest")).getResult();
-    assertThat(result.getOldestBlock()).isEqualTo(0);
+    assertThat(Long.decode(result.getOldestBlock())).isEqualTo(0);
     assertThat(result.getBaseFeePerGas()).hasSize(12);
     assertThat(result.getGasUsedRatio()).hasSize(11);
     assertThat(result.getReward()).isNull();
@@ -151,9 +141,10 @@ public class EthFeeHistoryTest {
     final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
     when(londonSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(11)));
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(londonSpec);
-    final FeeHistoryResult result =
-        (FeeHistoryResult) ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
-    assertThat(result.getBaseFeePerGas().get(1))
+    final FeeHistory.FeeHistoryResult result =
+        (FeeHistory.FeeHistoryResult)
+            ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
+    assertThat(Long.decode(result.getBaseFeePerGas().get(1)))
         .isEqualTo(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
   }
 
@@ -168,11 +159,11 @@ public class EthFeeHistoryTest {
     blockOptions.setBlockNumber(11);
     final Block emptyBlock = gen.block(blockOptions);
     blockchain.appendBlock(emptyBlock, gen.receipts(emptyBlock));
-    final FeeHistoryResult result =
-        (FeeHistoryResult)
+    final FeeHistory.FeeHistoryResult result =
+        (FeeHistory.FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest", new double[] {100.0}))
                 .getResult();
-    assertThat(result.getReward()).isEqualTo(List.of(List.of(0L)));
+    assertThat(result.getReward()).isEqualTo(List.of(List.of("0x0")));
   }
 
   private JsonRpcResponse feeHistoryRequest(final Object... params) {
