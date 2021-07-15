@@ -33,9 +33,7 @@ public abstract class Words {
    *     (Appendix H. of the Yellow paper)).
    */
   public static UInt256 fromAddress(final Address address) {
-    final MutableBytes32 bytes = MutableBytes32.create();
-    address.copyTo(bytes, Bytes32.SIZE - Address.SIZE);
-    return UInt256.fromBytes(bytes);
+    return UInt256.fromBytes(Bytes32.leftPad(address));
   }
 
   /**
@@ -46,7 +44,7 @@ public abstract class Words {
    *     VM specification (Appendix H. of the Yellow paper)).
    */
   public static Address toAddress(final Bytes32 bytes) {
-    return Address.wrap(bytes.slice(bytes.size() - Address.SIZE, Address.SIZE).copy());
+    return Address.wrap(bytes.slice(bytes.size() - Address.SIZE, Address.SIZE));
   }
 
   /**
