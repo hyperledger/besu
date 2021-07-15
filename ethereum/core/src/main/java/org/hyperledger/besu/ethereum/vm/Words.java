@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** Static utility methods to work with VM words (that is, {@link Bytes32} values). */
