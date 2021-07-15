@@ -45,23 +45,27 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
     final Network containerNetwork = Network.newNetwork();
 
     aliceNode =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
+        privacyBesu.createIbft2NodePrivacyEnabled(
             "alice-node",
             PrivacyAccountResolver.ALICE,
+            false,
             enclaveType,
             Optional.of(containerNetwork),
             false,
             false,
-            restriction == UNRESTRICTED);
+            restriction == UNRESTRICTED,
+            "0xAA");
     bobNode =
-        privacyBesu.createPrivateTransactionEnabledMinerNode(
+        privacyBesu.createIbft2NodePrivacyEnabled(
             "bob-node",
             PrivacyAccountResolver.BOB,
+            false,
             enclaveType,
             Optional.of(containerNetwork),
             false,
             false,
-            restriction == UNRESTRICTED);
+            restriction == UNRESTRICTED,
+            "0xBB");
 
     privacyCluster.start(aliceNode, bobNode);
   }

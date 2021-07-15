@@ -46,17 +46,18 @@ public class EIP1559BlockHeaderGasPriceValidationRule implements DetachedBlockHe
       final Long currentBaseFee =
           header.getBaseFee().orElseThrow(EIP1559MissingBaseFeeFromBlockHeader::new);
       final long targetGasUsed = eip1559.targetGasUsed(parent);
-      final long baseFee =
+      final long expectedBaseFee =
           eip1559.computeBaseFee(
               header.getNumber(), parentBaseFee, parent.getGasUsed(), targetGasUsed);
-      if (baseFee != header.getBaseFee().orElseThrow()) {
+      if (expectedBaseFee != currentBaseFee) {
         LOG.info(
             "Invalid block header: basefee {} does not equal expected basefee {}",
             header.getBaseFee().orElseThrow(),
-            baseFee);
+            expectedBaseFee);
         return false;
       }
-      return baseFee == currentBaseFee && eip1559.isValidBaseFee(parentBaseFee, currentBaseFee);
+
+      return true;
     } catch (final EIP1559MissingBaseFeeFromBlockHeader e) {
       LOG.info("Invalid block header: " + e.getMessage());
       return false;

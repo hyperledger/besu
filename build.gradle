@@ -600,6 +600,7 @@ tasks.register("dockerDistUntar") {
       from tarTree(distTarFile)
       into(dockerBuildDir)
     }
+    project.delete(files("${dockerBuildDir}/besu"))
     file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/besu")
   }
 }
@@ -660,14 +661,15 @@ task acceptanceTestsQuorum {
    * Basic tests for private and public tx: basic
    * Start a Besu/EthSigner/Tessera network with IBFT2: networks/typical-besu::ibft2
    *
+   * Filter only for spam tests supported by Besu: (spam && raw)
    * Not available features in Besu: privacy-enhancements-disabled, extension, mps
-   * Not available RPC methods in Besu: async, storage-root, get-quorum-payload, personal-api-signed
+   * Not available RPC methods in Besu: async, storage-root, personal-api-signed
    *
-   * Ignored for now (privacy-polishing): eth-api-signed, spam, nosupport
+   * Ignored for now (privacy-polishing): eth-api-signed, nosupport
    *
    * LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG -- enables HTTP JSON-RPC logging
    */
-  def tags = "(basic && !nosupport && !mps && !spam && !eth-api-signed && !privacy-enhancements-disabled && !async && !extension && !storage-root && !get-quorum-payload && !personal-api-signed) || networks/typical-besu::ibft2"
+  def tags = "(basic && !nosupport && !mps && !(spam && !raw) && !eth-api-signed && !privacy-enhancements-disabled && !async && !extension && !storage-root && !personal-api-signed) || networks/typical-besu::ibft2"
 
   doLast {
     exec {

@@ -12,24 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.plugin.services.privacy;
 
-import static picocli.CommandLine.Option;
+import org.hyperledger.besu.plugin.data.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.Transaction;
 
-public class UnrestrictedPrivacyOptions {
+import java.util.Optional;
 
-  public static UnrestrictedPrivacyOptions create() {
-    return new UnrestrictedPrivacyOptions();
-  }
+import org.apache.tuweni.bytes.Bytes;
 
-  @Option(
-      names = "--Xprivacy-unrestricted-enabled",
-      description =
-          "Enable unrestricted (stores payload onchain) privacy (default: ${DEFAULT-VALUE})",
-      hidden = true)
-  private final Boolean isUnrestrictedPrivacyEnabled = false;
+public interface PrivacyPluginPayloadProvider {
+  Bytes generateMarkerPayload(PrivateTransaction privateTransaction, String privacyUserId);
 
-  public boolean isUnrestrictedPrivacyEnabled() {
-    return isUnrestrictedPrivacyEnabled;
-  }
+  Optional<PrivateTransaction> getPrivateTransactionFromPayload(Transaction transaction);
 }
