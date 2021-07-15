@@ -31,7 +31,7 @@ public class GtOperation extends AbstractFixedCostOperation {
     final UInt256 value0 = frame.popStackItem();
     final UInt256 value1 = frame.popStackItem();
 
-    final UInt256 result = (value0.compareTo(value1) > 0 ? UInt256.valueOf(1) : UInt256.ZERO);
+    final UInt256 result = (value0.compareTo(value1) > 0 ? UInt256.ONE : UInt256.ZERO);
 
     frame.pushStackItem(result);
 
