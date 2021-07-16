@@ -118,8 +118,7 @@ public class ProofOfWorkValidationRuleTest {
 
   @Test
   public void failsWithMisMatchedMixHash() {
-    final Hash updateMixHash =
-        Hash.wrap(UInt256.fromBytes(blockHeader.getMixHash()).subtract(1L).toBytes());
+    final Hash updateMixHash = Hash.wrap(UInt256.fromBytes(blockHeader.getMixHash()).subtract(1L));
     final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
             .mixHash(updateMixHash)

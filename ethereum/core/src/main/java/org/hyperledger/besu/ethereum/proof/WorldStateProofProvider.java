@@ -74,7 +74,7 @@ public class WorldStateProofProvider {
         newAccountStorageTrie(accountHash, account.getStorageRoot());
     final NavigableMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
     accountStorageKeys.forEach(
-        key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key.toBytes()))));
+        key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key))));
     return storageProofs;
   }
 

@@ -149,6 +149,10 @@ downloadLicenses {
     (group('com.sun.mail')) : cddl,
     (group('javax.servlet')) : cddl,
     (group('javax.xml.bind')) : cddl,
+
+    // javax.persistence is dual licensed under EPL 1.0 and EDL 1.0.
+    // Explicitly declare that we are using the EPL 1.0 license
+    (group('javax.persistence')) : epl1,
   ]
 }
 

@@ -60,7 +60,7 @@ public class SLoadOperation extends AbstractOperation {
         return new OperationResult(
             optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
-        frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)).toBytes());
+        frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)));
 
         return slotIsWarm ? warmSuccess : coldSuccess;
       }

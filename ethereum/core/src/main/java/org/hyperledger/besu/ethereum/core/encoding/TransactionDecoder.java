@@ -116,8 +116,8 @@ public class TransactionDecoder {
       throw new RuntimeException(
           String.format("An unsupported encoded `v` value of %s was found", v));
     }
-    final BigInteger r = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toBytes().toUnsignedBigInteger();
+    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
     final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
 
     input.leaveList();
@@ -158,8 +158,8 @@ public class TransactionDecoder {
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(
-                        rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
-                        rlpInput.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        rlpInput.readUInt256Scalar().toUnsignedBigInteger(),
+                        rlpInput.readUInt256Scalar().toUnsignedBigInteger(),
                         recId))
             .build();
     rlpInput.leaveList();
@@ -198,8 +198,8 @@ public class TransactionDecoder {
                 SIGNATURE_ALGORITHM
                     .get()
                     .createSignature(
-                        input.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
-                        input.readUInt256Scalar().toBytes().toUnsignedBigInteger(),
+                        input.readUInt256Scalar().toUnsignedBigInteger(),
+                        input.readUInt256Scalar().toUnsignedBigInteger(),
                         recId))
             .build();
     input.leaveList();

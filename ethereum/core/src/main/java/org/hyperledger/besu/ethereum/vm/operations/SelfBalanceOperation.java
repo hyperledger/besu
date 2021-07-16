@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SelfBalanceOperation extends AbstractFixedCostOperation {
 
@@ -32,7 +32,7 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Address accountAddress = frame.getRecipientAddress();
     final Account account = frame.getWorldState().get(accountAddress);
-    frame.pushStackItem(account == null ? Bytes32.ZERO : account.getBalance().toBytes());
+    frame.pushStackItem(account == null ? UInt256.ZERO : account.getBalance().toUInt256());
 
     return successResponse;
   }
