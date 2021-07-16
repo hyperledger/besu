@@ -91,7 +91,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   @Override
   public Optional<Hash> getBlockHash(final long blockNumber) {
-    return get(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber).toBytes()).map(this::bytesToHash);
+    return get(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber)).map(this::bytesToHash);
   }
 
   @Override
@@ -154,12 +154,12 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     @Override
     public void putBlockHash(final long blockNumber, final Hash blockHash) {
-      set(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber).toBytes(), blockHash);
+      set(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber), blockHash);
     }
 
     @Override
     public void putTotalDifficulty(final Hash blockHash, final Difficulty totalDifficulty) {
-      set(TOTAL_DIFFICULTY_PREFIX, blockHash, totalDifficulty.toBytes());
+      set(TOTAL_DIFFICULTY_PREFIX, blockHash, totalDifficulty);
     }
 
     @Override
@@ -176,7 +176,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     @Override
     public void removeBlockHash(final long blockNumber) {
-      remove(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber).toBytes());
+      remove(BLOCK_HASH_PREFIX, UInt256.valueOf(blockNumber));
     }
 
     @Override

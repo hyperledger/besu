@@ -1373,7 +1373,7 @@ public class PeerDiscoveryControllerTest {
       template.setInt(template.size() - 4, i);
       final Bytes32 keccak = Bytes32.leftPad(template.copy());
       final MutableBytes id = MutableBytes.create(64);
-      UInt256.valueOf(i).toBytes().copyTo(id, id.size() - Bytes32.SIZE);
+      UInt256.valueOf(i).copyTo(id, id.size() - Bytes32.SIZE);
       final DiscoveryPeer peer =
           spy(
               DiscoveryPeer.fromEnode(

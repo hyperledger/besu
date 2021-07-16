@@ -3660,7 +3660,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void transactionPoolTxFeeCap() {
     final Wei txFeeCap = Wei.fromEth(2);
-    parseCommand("--rpc-tx-feecap", txFeeCap.toString());
+    parseCommand("--rpc-tx-feecap", txFeeCap.toDecimalString());
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
     assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);

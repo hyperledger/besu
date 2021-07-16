@@ -30,7 +30,7 @@ jar {
 dependencies {
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcpkix-jdk15on'
 
   testImplementation 'junit:junit'

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,8 +43,8 @@ public class RevertOperationTest {
   @Before
   public void setUp() {
     when(messageFrame.popStackItem())
-        .thenReturn(Bytes32.fromHexString("0x00"))
-        .thenReturn(Bytes32.fromHexString("0x0e"));
+        .thenReturn(UInt256.fromHexString("0x00"))
+        .thenReturn(UInt256.fromHexString("0x0e"));
     final UInt256 uint256_14 = UInt256.valueOf(0x0e);
     when(messageFrame.readMemory(UInt256.ZERO, uint256_14)).thenReturn(revertReasonBytes);
     when(messageFrame.memoryWordSize()).thenReturn(UInt256.ZERO);
