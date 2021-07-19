@@ -165,12 +165,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
 
   @Override
   public Transaction createPrivateMarkerTransaction(
-      final String privateTransactionLookupId, final PrivateTransaction privateTransaction) {
-    return privateMarkerTransactionFactory.create(privateTransactionLookupId, privateTransaction);
-  }
-
-  @Override
-  public Transaction createPrivateMarkerTransaction(
       final String transactionPayload,
       final PrivateTransaction privateTransaction,
       final Address privacyPrecompileAddress) {

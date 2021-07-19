@@ -50,9 +50,6 @@ public interface PrivacyController {
   PrivacyGroup[] findOffChainPrivacyGroupByMembers(List<String> addresses, String privacyUserId);
 
   Transaction createPrivateMarkerTransaction(
-      String privateMarkerTransactionPayload, PrivateTransaction privateTransaction);
-
-  Transaction createPrivateMarkerTransaction(
       String privateMarkerTransactionPayload,
       PrivateTransaction privateTransaction,
       Address privacyPrecompileAddress);

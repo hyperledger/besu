@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -110,15 +109,12 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       final BlockchainQueries blockchainQueries,
       final PendingTransactions pendingTransactions) {
 
-    final Address privateContractAddress = privacyParameters.getPrivacyAddress();
-
     if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
-          privateContractAddress,
           new LatestNonceProvider(blockchainQueries, pendingTransactions),
           privacyParameters.getSigningKeyPair().get());
     }
-    return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+    return new RandomSigningPrivateMarkerTransactionFactory();
   }
 
   private PrivacyController createPrivacyController(
