@@ -84,13 +84,6 @@ public class PluginPrivacyController implements PrivacyController {
 
   @Override
   public Transaction createPrivateMarkerTransaction(
-      final String unrestrictedTransactionPayload, final PrivateTransaction privateTransaction) {
-    return privateMarkerTransactionFactory.create(
-        unrestrictedTransactionPayload, privateTransaction);
-  }
-
-  @Override
-  public Transaction createPrivateMarkerTransaction(
       final String unrestrictedTransactionPayload,
       final PrivateTransaction privateTransaction,
       final Address privacyPrecompileAddress) {

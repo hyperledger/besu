@@ -51,9 +51,9 @@ public class RandomSigningPrivateMarkerTransactionFactoryTest {
     final Address precompiledAddress = Address.fromHexString("1");
 
     final RandomSigningPrivateMarkerTransactionFactory factory =
-        new RandomSigningPrivateMarkerTransactionFactory(precompiledAddress);
+        new RandomSigningPrivateMarkerTransactionFactory();
 
-    final Transaction transaction = factory.create(enclaveKey, privTransaction);
+    final Transaction transaction = factory.create(enclaveKey, privTransaction, precompiledAddress);
 
     assertThat(transaction.getNonce()).isEqualTo(0);
     assertThat(transaction.getGasLimit()).isEqualTo(privTransaction.getGasLimit());
@@ -63,7 +63,8 @@ public class RandomSigningPrivateMarkerTransactionFactoryTest {
     assertThat(transaction.getPayload())
         .isEqualTo(Bytes.wrap(Base64.getDecoder().decode(enclaveKey)));
 
-    final Transaction nextTransaction = factory.create("enclaveKey", privTransaction);
+    final Transaction nextTransaction =
+        factory.create("enclaveKey", privTransaction, precompiledAddress);
     assertThat(nextTransaction.getSender()).isNotEqualTo(transaction.getSender());
   }
 }

@@ -19,12 +19,12 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
-public class RandomSigningPrivateMarkerTransactionFactory extends PrivateMarkerTransactionFactory {
+import org.apache.tuweni.bytes.Bytes;
 
-  public RandomSigningPrivateMarkerTransactionFactory(final Address privacyPrecompileAddress) {
-    super(privacyPrecompileAddress);
-  }
+public class RandomSigningPrivateMarkerTransactionFactory
+    implements PrivateMarkerTransactionFactory {
 
   @Override
   public Transaction create(
@@ -32,7 +32,15 @@ public class RandomSigningPrivateMarkerTransactionFactory extends PrivateMarkerT
       final PrivateTransaction privateTransaction,
       final Address precompileAddress) {
     final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-    return create(
-        privateMarkerTransactionPayload, privateTransaction, 0, signingKey, precompileAddress);
+
+    return Transaction.builder()
+        .type(TransactionType.FRONTIER)
+        .nonce(0)
+        .gasPrice(privateTransaction.getGasPrice())
+        .gasLimit(privateTransaction.getGasLimit())
+        .to(precompileAddress)
+        .value(privateTransaction.getValue())
+        .payload(Bytes.fromBase64String(privateMarkerTransactionPayload))
+        .signAndBuild(signingKey);
   }
 }

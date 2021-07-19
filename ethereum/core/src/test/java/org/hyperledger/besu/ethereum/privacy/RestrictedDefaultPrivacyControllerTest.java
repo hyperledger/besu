@@ -173,8 +173,7 @@ public class RestrictedDefaultPrivacyControllerTest {
             privateStateStorage,
             enclave,
             privateTransactionValidator,
-            new FixedKeySigningPrivateMarkerTransactionFactory(
-                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
+            new FixedKeySigningPrivateMarkerTransactionFactory((address) -> 0, KEY_PAIR),
             privateTransactionSimulator,
             privateNonceProvider,
             privateWorldStateReader,
@@ -185,8 +184,7 @@ public class RestrictedDefaultPrivacyControllerTest {
             privateStateStorage,
             brokenMockEnclave(),
             privateTransactionValidator,
-            new FixedKeySigningPrivateMarkerTransactionFactory(
-                Address.DEFAULT_PRIVACY, (address) -> 0, KEY_PAIR),
+            new FixedKeySigningPrivateMarkerTransactionFactory((address) -> 0, KEY_PAIR),
             privateTransactionSimulator,
             privateNonceProvider,
             privateWorldStateReader,
@@ -205,7 +203,8 @@ public class RestrictedDefaultPrivacyControllerTest {
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivateMarkerTransaction(privateTransactionLookupId, transaction);
+        privacyController.createPrivateMarkerTransaction(
+            privateTransactionLookupId, transaction, Address.DEFAULT_PRIVACY);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -229,7 +228,8 @@ public class RestrictedDefaultPrivacyControllerTest {
         privacyController.validatePrivateTransaction(transaction, ENCLAVE_PUBLIC_KEY);
 
     final Transaction markerTransaction =
-        privacyController.createPrivateMarkerTransaction(privateTransactionLookupId, transaction);
+        privacyController.createPrivateMarkerTransaction(
+            privateTransactionLookupId, transaction, Address.DEFAULT_PRIVACY);
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());

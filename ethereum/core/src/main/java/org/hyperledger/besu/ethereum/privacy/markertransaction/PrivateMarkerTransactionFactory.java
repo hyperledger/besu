@@ -14,46 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.privacy.markertransaction;
 
-import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
-import org.apache.tuweni.bytes.Bytes;
-
-public abstract class PrivateMarkerTransactionFactory {
-
-  private final Address privacyPrecompileAddress;
-
-  protected PrivateMarkerTransactionFactory(final Address privacyPrecompileAddress) {
-    this.privacyPrecompileAddress = privacyPrecompileAddress;
-  }
-
-  public Transaction create(
-      final String privateMarkerTransactionPayload, final PrivateTransaction privateTransaction) {
-    return create(privateMarkerTransactionPayload, privateTransaction, privacyPrecompileAddress);
-  }
-
-  public abstract Transaction create(
+public interface PrivateMarkerTransactionFactory {
+  Transaction create(
       final String privateMarkerTransactionPayload,
       final PrivateTransaction privateTransaction,
       final Address precompileAddress);
-
-  protected Transaction create(
-      final String privateMarkerTransactionPayload,
-      final PrivateTransaction privateTransaction,
-      final long nonce,
-      final KeyPair signingKey,
-      final Address precompileAddress) {
-    return Transaction.builder()
-        .type(TransactionType.FRONTIER)
-        .nonce(nonce)
-        .gasPrice(privateTransaction.getGasPrice())
-        .gasLimit(privateTransaction.getGasLimit())
-        .to(precompileAddress)
-        .value(privateTransaction.getValue())
-        .payload(Bytes.fromBase64String(privateMarkerTransactionPayload))
-        .signAndBuild(signingKey);
-  }
 }

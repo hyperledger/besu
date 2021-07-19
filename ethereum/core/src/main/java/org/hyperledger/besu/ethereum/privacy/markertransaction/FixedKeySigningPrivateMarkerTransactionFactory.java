@@ -20,19 +20,19 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
+import org.hyperledger.besu.plugin.data.TransactionType;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class FixedKeySigningPrivateMarkerTransactionFactory
-    extends PrivateMarkerTransactionFactory {
+    implements PrivateMarkerTransactionFactory {
 
   private final NonceProvider nonceProvider;
   private final KeyPair signingKey;
   private final Address sender;
 
   public FixedKeySigningPrivateMarkerTransactionFactory(
-      final Address privacyPrecompileAddress,
-      final NonceProvider nonceProvider,
-      final KeyPair signingKey) {
-    super(privacyPrecompileAddress);
+      final NonceProvider nonceProvider, final KeyPair signingKey) {
     this.nonceProvider = nonceProvider;
     this.signingKey = signingKey;
     this.sender = Util.publicKeyToAddress(signingKey.getPublicKey());
@@ -43,11 +43,16 @@ public class FixedKeySigningPrivateMarkerTransactionFactory
       final String privateMarkerTransactionPayload,
       final PrivateTransaction privateTransaction,
       final Address precompileAddress) {
-    return create(
-        privateMarkerTransactionPayload,
-        privateTransaction,
-        nonceProvider.getNonce(sender),
-        signingKey,
-        precompileAddress);
+    final long nonce = nonceProvider.getNonce(sender);
+
+    return Transaction.builder()
+        .type(TransactionType.FRONTIER)
+        .nonce(nonce)
+        .gasPrice(privateTransaction.getGasPrice())
+        .gasLimit(privateTransaction.getGasLimit())
+        .to(precompileAddress)
+        .value(privateTransaction.getValue())
+        .payload(Bytes.fromBase64String(privateMarkerTransactionPayload))
+        .signAndBuild(signingKey);
   }
 }
