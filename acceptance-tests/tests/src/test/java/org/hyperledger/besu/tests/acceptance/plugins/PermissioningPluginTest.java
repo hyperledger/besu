@@ -41,7 +41,7 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
         new BesuNodeConfigurationBuilder()
             .miningEnabled(false)
             .plugins(List.of("testPlugins"))
-            .extraCLIOptions(List.of("--plugin-permissioning-enabled=true"))
+            .extraCLIOptions(List.of("--plugin-test-permissioning-enabled=true"))
             .jsonRpcEnabled()
             .jsonRpcTxPool()
             .jsonRpcAdmin();

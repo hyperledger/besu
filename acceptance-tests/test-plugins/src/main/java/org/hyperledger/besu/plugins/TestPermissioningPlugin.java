@@ -86,6 +86,6 @@ public class TestPermissioningPlugin implements BesuPlugin {
   @Override
   public void stop() {}
 
-  @Option(names = "--plugin-permissioning-enabled")
+  @Option(names = "--plugin-test-permissioning-enabled")
   boolean enabled = false;
 }
