@@ -273,7 +273,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
-  private final PrivacyPluginPluginServiceImpl privacyService;
+  private final PrivacyPluginPluginServiceImpl privacyPluginPluginService;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -1160,7 +1160,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
-      final PrivacyPluginPluginServiceImpl privacyService) {
+      final PrivacyPluginPluginServiceImpl privacyPluginPluginService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1172,7 +1172,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
-    this.privacyService = privacyService;
+    this.privacyPluginPluginService = privacyPluginPluginService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
@@ -1312,7 +1312,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
-    besuPluginContext.addService(PrivacyPluginService.class, privacyService);
+    besuPluginContext.addService(PrivacyPluginService.class, privacyPluginPluginService);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -2142,7 +2142,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && privacyService.getPayloadProvider() == null) {
+          && privacyPluginPluginService.getPayloadProvider() == null) {
         throw new ParameterException(
             commandLine, "Privacy Plugin must be registered when enabling privacy plugin!");
       }
@@ -2186,12 +2186,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privateMarkerTransactionSigningKeyPath == null) {
+        if (privateMarkerTransactionSigningKeyPath == null
+            && privacyPluginPluginService.getPrivateMarkerTransactionSigner() == null) {
           throw new ParameterException(
               commandLine,
               "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
         }
       }
+
+      //      if (privateMarkerTransactionSigningKeyPath != null
+      //          && privacyPluginPluginService != null
+      //          && privacyPluginPluginService.getPrivateMarkerTransactionSigner() != null) {
+      //        throw new ParameterException(
+      //            commandLine,
+      //            "--privacy-marker-transaction-signing-key-file can not be used in conjunction
+      // with a plugin that specifies a PrivateMarkerTransactionSigner");
+      //      }
 
       if (!Address.PRIVACY.equals(privacyPrecompiledAddress)) {
         logger.warn(
@@ -2220,7 +2230,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
-    privacyParametersBuilder.setPrivacyService(privacyService);
+    privacyParametersBuilder.setPrivacyService(privacyPluginPluginService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
     if (isPrivacyEnabled) {

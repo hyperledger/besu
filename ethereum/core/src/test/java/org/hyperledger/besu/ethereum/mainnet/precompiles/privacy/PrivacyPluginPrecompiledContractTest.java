@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionSigner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -133,6 +134,15 @@ public class PrivacyPluginPrecompiledContractTest {
                       public PrivacyGroupAuthProvider getPrivacyGroupAuthProvider() {
                         return (privacyGroupId, privacyUserId, blockNumber) -> true;
                       }
+
+                      @Override
+                      public PrivateMarkerTransactionSigner getPrivateMarkerTransactionSigner() {
+                        return null;
+                      }
+
+                      @Override
+                      public void setPrivateMarkerTransactionSigner(
+                          final PrivateMarkerTransactionSigner privateMarkerTransactionSigner) {}
                     })
                 .setEnclaveFactory(mock(EnclaveFactory.class))
                 .build());

@@ -62,7 +62,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
     when(privacyController.createPrivateMarkerTransaction(
-            any(String.class), any(PrivateTransaction.class), any(Address.class)))
+            any(String.class), any(PrivateTransaction.class), any(Address.class), any()))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
@@ -85,7 +85,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
-        .createPrivateMarkerTransaction(any(), any(), eq(Address.ONCHAIN_PRIVACY));
+        .createPrivateMarkerTransaction(any(), any(), eq(Address.ONCHAIN_PRIVACY), any());
   }
 
   @Test

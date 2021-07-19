@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivacyPluginSigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
 
@@ -90,8 +90,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final PrivateMarkerTransactionFactory markerTransactionFactory =
-        createPrivateMarkerTransactionFactory(
-            privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
+        createPrivateMarkerTransactionFactory();
     final PrivacyIdProvider enclavePublicProvider = PrivacyIdProvider.build(privacyParameters);
     final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
     return create(privacyController, enclavePublicProvider).entrySet().stream()
@@ -104,14 +103,15 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   protected abstract Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider);
 
-  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
-      final PrivacyParameters privacyParameters,
-      final BlockchainQueries blockchainQueries,
-      final PendingTransactions pendingTransactions) {
-
-    if (privacyParameters.getSigningKeyPair().isPresent()) {
+  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory() {
+    if (privacyParameters.getPrivacyService() != null
+        && privacyParameters.getPrivacyService().getPrivateMarkerTransactionSigner() != null) {
+      return new PrivacyPluginSigningPrivateMarkerTransactionFactory(
+          privacyParameters.getPrivacyService().getPrivateMarkerTransactionSigner(),
+          new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions()));
+    } else if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
-          new LatestNonceProvider(blockchainQueries, pendingTransactions),
+          new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions()),
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory();

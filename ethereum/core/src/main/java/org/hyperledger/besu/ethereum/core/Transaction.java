@@ -104,6 +104,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     return new Builder();
   }
 
+  public static Transaction readFrom(final Bytes rlpBytes) {
+    return readFrom(RLP.input(rlpBytes));
+  }
+
   public static Transaction readFrom(final RLPInput rlpInput) {
     return TransactionDecoder.decodeForWire(rlpInput);
   }

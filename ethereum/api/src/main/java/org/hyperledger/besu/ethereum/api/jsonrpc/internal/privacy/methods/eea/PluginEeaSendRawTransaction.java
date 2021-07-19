@@ -60,6 +60,6 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
             privateTransaction, privacyUserId, Optional.empty());
 
     return privacyController.createPrivateMarkerTransaction(
-        payloadFromPlugin, privateTransaction, Address.PLUGIN_PRIVACY);
+        payloadFromPlugin, privateTransaction, Address.PLUGIN_PRIVACY, privacyUserId);
   }
 }

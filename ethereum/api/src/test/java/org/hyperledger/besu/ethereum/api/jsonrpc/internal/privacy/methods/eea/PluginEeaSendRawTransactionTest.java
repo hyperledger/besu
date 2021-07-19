@@ -46,7 +46,7 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
         .thenReturn("");
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
+    when(privacyController.createPrivateMarkerTransaction(any(), any(), any(), any()))
         .thenReturn(PUBLIC_TRANSACTION);
 
     when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
@@ -62,6 +62,6 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
-        .createPrivateMarkerTransaction(any(), any(), eq(Address.PLUGIN_PRIVACY));
+        .createPrivateMarkerTransaction(any(), any(), eq(Address.PLUGIN_PRIVACY), any());
   }
 }
