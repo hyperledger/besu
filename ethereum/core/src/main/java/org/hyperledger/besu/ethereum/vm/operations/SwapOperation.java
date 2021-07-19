@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SwapOperation extends AbstractFixedCostOperation {
 
@@ -51,7 +51,7 @@ public class SwapOperation extends AbstractFixedCostOperation {
       return underflowResponse;
     }
 
-    final Bytes32 tmp = frame.getStackItem(0);
+    final UInt256 tmp = frame.getStackItem(0);
     frame.setStackItem(0, frame.getStackItem(index));
     frame.setStackItem(index, tmp);
 

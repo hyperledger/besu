@@ -2,6 +2,7 @@
 
 ## 21.7.2
 ### Additions and Improvements
+- Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
 
 ### Bug Fixes
 

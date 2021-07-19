@@ -95,9 +95,9 @@ public class DebugOperationTracerTest {
   @Test
   public void shouldRecordStackWhenEnabled() {
     final MessageFrame frame = validMessageFrame();
-    final Bytes32 stackItem1 = Bytes32.fromHexString("0x01");
-    final Bytes32 stackItem2 = Bytes32.fromHexString("0x02");
-    final Bytes32 stackItem3 = Bytes32.fromHexString("0x03");
+    final UInt256 stackItem1 = UInt256.fromHexString("0x01");
+    final UInt256 stackItem2 = UInt256.fromHexString("0x02");
+    final UInt256 stackItem3 = UInt256.fromHexString("0x03");
     frame.pushStackItem(stackItem1);
     frame.pushStackItem(stackItem2);
     frame.pushStackItem(stackItem3);

@@ -28,11 +28,11 @@ public class NotOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value = frame.popStackItem();
 
     final UInt256 result = value.not();
 
-    frame.pushStackItem(result.toBytes());
+    frame.pushStackItem(result);
 
     return successResponse;
   }

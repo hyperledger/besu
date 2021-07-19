@@ -41,8 +41,8 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 dataLocation = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 dataLocation = frame.popStackItem();
+    final UInt256 numBytes = frame.popStackItem();
 
     final Gas cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     final Optional<Gas> optionalCost = Optional.of(cost);
