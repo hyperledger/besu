@@ -94,9 +94,11 @@ import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
@@ -153,11 +155,13 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.query.EthQueryService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.EthQueryServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginPluginServiceImpl;
@@ -273,7 +277,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
-  private final PrivacyPluginPluginServiceImpl privacyService;
+  private final PrivacyPluginPluginServiceImpl privacyPluginPluginService;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -1160,7 +1164,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
-      final PrivacyPluginPluginServiceImpl privacyService) {
+      final PrivacyPluginPluginServiceImpl privacyPluginPluginService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1172,7 +1176,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
-    this.privacyService = privacyService;
+    this.privacyPluginPluginService = privacyPluginPluginService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
@@ -1312,7 +1316,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
-    besuPluginContext.addService(PrivacyPluginService.class, privacyService);
+    besuPluginContext.addService(PrivacyPluginService.class, privacyPluginPluginService);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -1408,6 +1412,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getTransactionPool(),
             besuController.getSyncState()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
+
+    final BlockchainQueries blockchainQueries =
+        new BlockchainQueries(
+            besuController.getProtocolContext().getBlockchain(),
+            besuController.getProtocolContext().getWorldStateArchive());
+
+    besuPluginContext.addService(
+        EthQueryService.class,
+        new EthQueryServiceImpl(
+            blockchainQueries,
+            new LatestNonceProvider(
+                blockchainQueries, besuController.getTransactionPool().getPendingTransactions())));
+
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
   }
@@ -2137,7 +2154,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && privacyService.getPayloadProvider() == null) {
+          && privacyPluginPluginService.getPayloadProvider() == null) {
         throw new ParameterException(
             commandLine, "Privacy Plugin must be registered when enabling privacy plugin!");
       }
@@ -2181,11 +2198,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privateMarkerTransactionSigningKeyPath == null) {
+        if (privateMarkerTransactionSigningKeyPath == null
+            && (privacyPluginPluginService == null
+                || privacyPluginPluginService.getPrivateMarkerTransactionFactory() == null)) {
           throw new ParameterException(
               commandLine,
               "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
         }
+      }
+
+      if (privateMarkerTransactionSigningKeyPath != null
+          && privacyPluginPluginService != null
+          && privacyPluginPluginService.getPrivateMarkerTransactionFactory() != null) {
+        throw new ParameterException(
+            commandLine,
+            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
       if (!Address.PRIVACY.equals(privacyPrecompiledAddress)) {
@@ -2215,7 +2242,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
-    privacyParametersBuilder.setPrivacyService(privacyService);
+    privacyParametersBuilder.setPrivacyService(privacyPluginPluginService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
     if (isPrivacyEnabled) {

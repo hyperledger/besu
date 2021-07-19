@@ -70,16 +70,16 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
   protected Transaction createPrivateMarkerTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user) {
 
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
+
     final Optional<PrivacyGroup> maybePrivacyGroup =
         findOffchainPrivacyGroup(
-            privacyController,
-            privateTransaction.getPrivacyGroupId(),
-            privacyIdProvider.getPrivacyUserId(user));
+            privacyController, privateTransaction.getPrivacyGroupId(), privacyUserId);
 
     final String privateTransactionLookupId =
         privacyController.createPrivateMarkerTransactionPayload(
-            privateTransaction, privacyIdProvider.getPrivacyUserId(user), maybePrivacyGroup);
+            privateTransaction, privacyUserId, maybePrivacyGroup);
     return privacyController.createPrivateMarkerTransaction(
-        privateTransactionLookupId, privateTransaction, Address.DEFAULT_PRIVACY);
+        privateTransactionLookupId, privateTransaction, Address.DEFAULT_PRIVACY, privacyUserId);
   }
 }

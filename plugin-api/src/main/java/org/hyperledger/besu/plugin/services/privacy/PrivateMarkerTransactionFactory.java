@@ -12,15 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.privacy.markertransaction;
+package org.hyperledger.besu.plugin.services.privacy;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.plugin.data.PrivateTransaction;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public interface PrivateMarkerTransactionFactory {
-  Transaction create(
+
+  Bytes create(
       final String privateMarkerTransactionPayload,
       final PrivateTransaction privateTransaction,
-      final Address precompileAddress);
+      final Address precompileAddress,
+      final String privacyUserId);
 }

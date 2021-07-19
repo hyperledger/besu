@@ -59,7 +59,8 @@ public class FixedKeySigningPrivateMarkerTransactionFactoryTest {
     final FixedKeySigningPrivateMarkerTransactionFactory factory =
         new FixedKeySigningPrivateMarkerTransactionFactory((address) -> providedNonce, signingKeys);
 
-    final Transaction transaction = factory.create(enclaveKey, privTransaction, precompiledAddress);
+    final Transaction transaction =
+        Transaction.readFrom(factory.create(enclaveKey, privTransaction, precompiledAddress, ""));
 
     assertThat(transaction.getNonce()).isEqualTo(providedNonce);
     assertThat(transaction.getGasLimit()).isEqualTo(privTransaction.getGasLimit());
@@ -72,7 +73,7 @@ public class FixedKeySigningPrivateMarkerTransactionFactoryTest {
         .isEqualTo(Bytes.wrap(Base64.getDecoder().decode(enclaveKey)));
 
     final Transaction nextTransaction =
-        factory.create("enclaveKey", privTransaction, precompiledAddress);
+        Transaction.readFrom(factory.create("enclaveKey", privTransaction, precompiledAddress, ""));
     assertThat(nextTransaction.getSender()).isEqualTo(transaction.getSender());
   }
 }

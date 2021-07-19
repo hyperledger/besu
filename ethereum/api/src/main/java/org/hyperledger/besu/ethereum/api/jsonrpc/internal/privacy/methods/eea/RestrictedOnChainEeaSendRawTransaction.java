@@ -91,7 +91,8 @@ public class RestrictedOnChainEeaSendRawTransaction extends AbstractEeaSendRawTr
     return privacyController.createPrivateMarkerTransaction(
         buildCompoundLookupId(privateTransactionLookupId, addPayloadPrivateTransactionLookupId),
         privateTransaction,
-        Address.ONCHAIN_PRIVACY);
+        Address.ONCHAIN_PRIVACY,
+        privacyUserId);
   }
 
   private String buildCompoundLookupId(

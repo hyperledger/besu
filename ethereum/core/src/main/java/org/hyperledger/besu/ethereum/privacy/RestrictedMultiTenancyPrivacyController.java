@@ -131,9 +131,10 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
   public Transaction createPrivateMarkerTransaction(
       final String privateTransactionLookupId,
       final PrivateTransaction privateTransaction,
-      final Address privacyPrecompileAddress) {
+      final Address privacyPrecompileAddress,
+      final String privacyUserId) {
     return privacyController.createPrivateMarkerTransaction(
-        privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
+        privateTransactionLookupId, privateTransaction, privacyPrecompileAddress, privacyUserId);
   }
 
   @Override

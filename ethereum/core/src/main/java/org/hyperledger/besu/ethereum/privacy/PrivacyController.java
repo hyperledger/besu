@@ -52,7 +52,8 @@ public interface PrivacyController {
   Transaction createPrivateMarkerTransaction(
       String privateMarkerTransactionPayload,
       PrivateTransaction privateTransaction,
-      Address privacyPrecompileAddress);
+      Address privacyPrecompileAddress,
+      String privacyUserId);
 
   ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       PrivateTransaction privateTransaction, String privacyUserId);

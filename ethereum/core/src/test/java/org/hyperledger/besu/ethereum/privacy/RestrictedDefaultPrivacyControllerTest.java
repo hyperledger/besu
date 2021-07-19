@@ -204,7 +204,7 @@ public class RestrictedDefaultPrivacyControllerTest {
 
     final Transaction markerTransaction =
         privacyController.createPrivateMarkerTransaction(
-            privateTransactionLookupId, transaction, Address.DEFAULT_PRIVACY);
+            privateTransactionLookupId, transaction, Address.DEFAULT_PRIVACY, "");
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -229,7 +229,7 @@ public class RestrictedDefaultPrivacyControllerTest {
 
     final Transaction markerTransaction =
         privacyController.createPrivateMarkerTransaction(
-            privateTransactionLookupId, transaction, Address.DEFAULT_PRIVACY);
+            privateTransactionLookupId, transaction, Address.DEFAULT_PRIVACY, "");
 
     assertThat(validationResult).isEqualTo(ValidationResult.valid());
     assertThat(markerTransaction.contractAddress()).isEqualTo(PUBLIC_TRANSACTION.contractAddress());
@@ -470,7 +470,7 @@ public class RestrictedDefaultPrivacyControllerTest {
 
     final Transaction onChainPrivateMarkerTransaction =
         privacyController.createPrivateMarkerTransaction(
-            privateTransactionLookupId, transaction, Address.ONCHAIN_PRIVACY);
+            privateTransactionLookupId, transaction, Address.ONCHAIN_PRIVACY, "");
 
     assertThat(onChainPrivateMarkerTransaction.contractAddress())
         .isEqualTo(PUBLIC_TRANSACTION.contractAddress());

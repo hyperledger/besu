@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
@@ -42,6 +41,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -167,9 +167,12 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   public Transaction createPrivateMarkerTransaction(
       final String transactionPayload,
       final PrivateTransaction privateTransaction,
-      final Address privacyPrecompileAddress) {
-    return privateMarkerTransactionFactory.create(
-        transactionPayload, privateTransaction, privacyPrecompileAddress);
+      final Address privacyPrecompileAddress,
+      final String privacyUserId) {
+    return Transaction.readFrom(
+        RLP.input(
+            privateMarkerTransactionFactory.create(
+                transactionPayload, privateTransaction, privacyPrecompileAddress, privacyUserId)));
   }
 
   @Override

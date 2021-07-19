@@ -59,7 +59,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
+    when(privacyController.createPrivateMarkerTransaction(any(), any(), any(), any()))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 
@@ -73,7 +73,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
-        .createPrivateMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY));
+        .createPrivateMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY), any());
   }
 
   @Test
@@ -88,7 +88,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
     when(privacyController.findOffChainPrivacyGroupByGroupId(any(), any()))
         .thenReturn(pantheonPrivacyGroup);
-    when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
+    when(privacyController.createPrivateMarkerTransaction(any(), any(), any(), any()))
         .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 
@@ -102,7 +102,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
     verify(privacyController)
-        .createPrivateMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY));
+        .createPrivateMarkerTransaction(any(), any(), eq(Address.DEFAULT_PRIVACY), any());
   }
 
   @Test

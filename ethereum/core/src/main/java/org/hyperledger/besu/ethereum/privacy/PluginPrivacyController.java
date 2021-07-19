@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -86,9 +86,15 @@ public class PluginPrivacyController implements PrivacyController {
   public Transaction createPrivateMarkerTransaction(
       final String unrestrictedTransactionPayload,
       final PrivateTransaction privateTransaction,
-      final Address privacyPrecompileAddress) {
-    return privateMarkerTransactionFactory.create(
-        unrestrictedTransactionPayload, privateTransaction, privacyPrecompileAddress);
+      final Address privacyPrecompileAddress,
+      final String privacyUserId) {
+
+    return Transaction.readFrom(
+        privateMarkerTransactionFactory.create(
+            unrestrictedTransactionPayload,
+            privateTransaction,
+            privacyPrecompileAddress,
+            privacyUserId));
   }
 
   @Override

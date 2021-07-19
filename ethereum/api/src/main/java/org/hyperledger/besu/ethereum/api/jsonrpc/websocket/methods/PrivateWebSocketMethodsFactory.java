@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -73,8 +73,9 @@ public class PrivateWebSocketMethodsFactory {
   }
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory() {
-
-    if (privacyParameters.getSigningKeyPair().isPresent()) {
+    if (privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory() != null) {
+      return privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory();
+    } else if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
           new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions()),
           privacyParameters.getSigningKeyPair().get());
