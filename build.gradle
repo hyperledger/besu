@@ -28,6 +28,7 @@ plugins {
   id 'me.champeau.gradle.jmh' version '0.5.0' apply false
   id 'net.ltgt.errorprone' version '1.3.0'
   id 'maven-publish'
+  id 'org.ajoberstar.grgit' version '4.1.0'
 }
 
 if (!JavaVersion.current().java11Compatible) {
@@ -80,7 +81,7 @@ allprojects {
   apply from: "${rootDir}/gradle/versions.gradle"
   apply from: "${rootDir}/gradle/check-licenses.gradle"
 
-  version = rootProject.version
+  version = bumpVersion()
 
   jacoco {
     toolVersion = '0.8.6'
@@ -608,7 +609,7 @@ tasks.register("dockerDistUntar") {
 task distDocker {
   dependsOn dockerDistUntar
   inputs.dir("build/docker-besu/")
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${project.version}"
   def dockerBuildDir = "build/docker-besu/"
   def imageName = "hyperledger/besu"
 
@@ -691,7 +692,7 @@ task acceptanceTestsQuorum {
 
 task dockerUpload {
   dependsOn distDocker
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${project.version}"
   def imageName = "hyperledger/besu"
   def azureImageName = "hyperledger.azurecr.io/besu"
   def image = "${imageName}:${dockerBuildVersion}"
@@ -790,11 +791,38 @@ def buildTime() {
 // with the git commit version.
 @Memoized
 def calculateVersion() {
-  String version = rootProject.version
+  String version = project.version
   if (version.endsWith("-SNAPSHOT")) {
     version = version.replace("-SNAPSHOT", "-dev-" + getCheckedOutGitCommitHash())
   }
   return version
+}
+
+def bumpVersion() {
+  String version = grgit.describe(tags: true)
+  if (version == null) {
+    throw new Exception("Tag not found")
+  }
+  def versionPattern = /^(?<lastVersion>.*)-(?<devVersion>[0-9]+-g[a-z0-9]+)$/
+  def matcher = version =~ versionPattern
+  if (matcher.find()) {
+    def isReleaseBranch = grgit.branch.current().name.startsWith('release-')
+    return "${incrementVersion(matcher.group("lastVersion"), rootProject.isReleaseCandidate.toBoolean())}${isReleaseBranch?"":"-SNAPSHOT"}"
+  }
+
+  throw new Exception("Invalid version detected")
+}
+
+import java.text.SimpleDateFormat
+def incrementVersion(version, isRC) {
+  def (major, minor, patch) = version.tokenize('.')
+  if(!isRC) {
+    int newPatch = patch.toInteger() + 1
+    return major + "." + minor + "." + newPatch
+  } else {
+    def sdf = new SimpleDateFormat("yy.M.0")
+    return "${sdf.format(new Date())}${version.contains("RC")?"-RC2":"-RC1"}"
+  }
 }
 
 def getCheckedOutGitCommitHash() {
