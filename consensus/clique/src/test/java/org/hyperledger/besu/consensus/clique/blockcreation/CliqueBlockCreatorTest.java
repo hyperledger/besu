@@ -29,8 +29,9 @@ import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
+import org.hyperledger.besu.consensus.common.voting.VoteProvider;
 import org.hyperledger.besu.consensus.common.voting.VoteType;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -79,6 +80,7 @@ public class CliqueBlockCreatorTest {
   private ProtocolContext protocolContext;
   private EpochManager epochManager;
   private ValidatorProvider validatorProvider;
+  private VoteProvider voteProvider;
 
   @Before
   public void setup() {
@@ -90,6 +92,8 @@ public class CliqueBlockCreatorTest {
     validatorList.add(otherAddress);
 
     validatorProvider = mock(ValidatorProvider.class);
+    voteProvider = mock(VoteProvider.class);
+    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
 
@@ -150,7 +154,7 @@ public class CliqueBlockCreatorTest {
         CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Address.fromHexString("5");
     final Address coinbase = AddressHelpers.ofValue(1);
-    when(validatorProvider.getVoteAfterBlock(any(), any()))
+    when(voteProvider.getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
     final CliqueBlockCreator blockCreator =
@@ -188,7 +192,7 @@ public class CliqueBlockCreatorTest {
         CliqueExtraData.createWithoutProposerSeal(Bytes.wrap(new byte[32]), validatorList);
     final Address a1 = Address.fromHexString("5");
     final Address coinbase = AddressHelpers.ofValue(1);
-    when(validatorProvider.getVoteAfterBlock(any(), any()))
+    when(validatorProvider.getVoteProvider().get().getVoteAfterBlock(any(), any()))
         .thenReturn(Optional.of(new ValidatorVote(VoteType.ADD, coinbase, a1)));
 
     final CliqueBlockCreator blockCreator =

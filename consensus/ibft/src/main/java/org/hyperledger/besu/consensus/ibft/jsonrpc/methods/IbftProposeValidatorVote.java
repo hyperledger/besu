@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.voting.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -51,9 +51,9 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
         validatorAddress);
 
     if (add) {
-      validatorProvider.auth(validatorAddress);
+      validatorProvider.getVoteProvider().get().auth(validatorAddress);
     } else {
-      validatorProvider.drop(validatorAddress);
+      validatorProvider.getVoteProvider().get().drop(validatorAddress);
     }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);

@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -40,10 +42,16 @@ public class QbftDiscardValidatorVote implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
-    LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
-    validatorProvider.discard(validatorAddress);
+    if (validatorProvider.getVoteProvider().isPresent()) {
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
+      final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
+      LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
+      validatorProvider.getVoteProvider().get().discard(validatorAddress);
+
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
+    } else {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.METHOD_UNIMPLEMENTED);
+    }
   }
 }

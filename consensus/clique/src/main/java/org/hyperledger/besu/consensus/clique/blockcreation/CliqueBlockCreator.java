@@ -105,8 +105,13 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       return Optional.empty();
     } else {
       final CliqueContext cliqueContext = protocolContext.getConsensusState(CliqueContext.class);
+      if (cliqueContext.getValidatorProvider().getVoteProvider().isEmpty()) {
+        throw new IllegalStateException("Clique requires a vote provider");
+      }
       return cliqueContext
           .getValidatorProvider()
+          .getVoteProvider()
+          .get()
           .getVoteAfterBlock(parentHeader, Util.publicKeyToAddress(nodeKey.getPublicKey()));
     }
   }

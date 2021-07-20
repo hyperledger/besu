@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.voting.VoteType;
 import org.hyperledger.besu.consensus.common.voting.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -64,7 +64,7 @@ public class DiscardTest {
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
-    assertThat(validatorProvider.getProposals().get(a0)).isNull();
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
   }
 
   @Test
@@ -72,11 +72,11 @@ public class DiscardTest {
     final Discard discard = new Discard(validatorProvider);
     final Address a0 = Address.fromHexString("0");
 
-    validatorProvider.auth(a0);
+    validatorProvider.getVoteProvider().get().auth(a0);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
-    assertThat(validatorProvider.getProposals().get(a0)).isNull();
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -87,11 +87,11 @@ public class DiscardTest {
     final Discard discard = new Discard(validatorProvider);
     final Address a0 = Address.fromHexString("0");
 
-    validatorProvider.drop(a0);
+    validatorProvider.getVoteProvider().get().drop(a0);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
-    assertThat(validatorProvider.getProposals().get(a0)).isNull();
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -103,13 +103,14 @@ public class DiscardTest {
     final Address a0 = Address.fromHexString("0");
     final Address a1 = Address.fromHexString("1");
 
-    validatorProvider.auth(a0);
-    validatorProvider.auth(a1);
+    validatorProvider.getVoteProvider().get().auth(a0);
+    validatorProvider.getVoteProvider().get().auth(a1);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
-    assertThat(validatorProvider.getProposals().get(a0)).isNull();
-    assertThat(validatorProvider.getProposals().get(a1)).isEqualTo(VoteType.ADD);
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
+        .isEqualTo(VoteType.ADD);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);

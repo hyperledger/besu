@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.PoaContext;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 
 /** Holds the BFT specific mutable state. */
 public class BftContext implements PoaContext {

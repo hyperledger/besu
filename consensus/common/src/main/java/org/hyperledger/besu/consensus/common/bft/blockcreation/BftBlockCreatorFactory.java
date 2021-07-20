@@ -15,11 +15,11 @@
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
@@ -102,8 +102,12 @@ public class BftBlockCreatorFactory {
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
+    if (validatorProvider.getVoteProvider().isEmpty()) {
+      throw new IllegalStateException("Bft requires a vote provider");
+    }
     final Optional<ValidatorVote> proposal =
-        validatorProvider.getVoteAfterBlock(parentHeader, localAddress);
+        validatorProvider.getVoteProvider().get().getVoteAfterBlock(parentHeader, localAddress);
+
     final List<Address> validators =
         new ArrayList<>(validatorProvider.getValidatorsAfterBlock(parentHeader));
 

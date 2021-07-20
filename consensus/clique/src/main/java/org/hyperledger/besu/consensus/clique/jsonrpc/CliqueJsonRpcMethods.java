@@ -23,7 +23,7 @@ import org.hyperledger.besu.consensus.clique.jsonrpc.methods.CliqueProposals;
 import org.hyperledger.besu.consensus.clique.jsonrpc.methods.Discard;
 import org.hyperledger.besu.consensus.clique.jsonrpc.methods.Propose;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.voting.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;

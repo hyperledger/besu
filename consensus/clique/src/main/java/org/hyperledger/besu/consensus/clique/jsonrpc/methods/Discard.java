@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -37,7 +37,7 @@ public class Discard implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Address address = requestContext.getRequiredParameter(0, Address.class);
-    validatorProvider.discard(address);
+    validatorProvider.getVoteProvider().get().discard(address);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
   }
 }
