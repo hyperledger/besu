@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -46,6 +47,17 @@ public class BftExtraData implements ParsedExtraData {
     this.validators = validators;
     this.vote = vote;
     this.round = round;
+  }
+
+  public BftExtraData(
+      final Bytes vanityData, final Collection<SECPSignature> seals, final int round) {
+    checkNotNull(vanityData);
+    checkNotNull(seals);
+    this.vanityData = vanityData;
+    this.seals = seals;
+    this.round = round;
+    this.validators = Collections.emptyList();
+    this.vote = Optional.empty();
   }
 
   public Bytes getVanityData() {

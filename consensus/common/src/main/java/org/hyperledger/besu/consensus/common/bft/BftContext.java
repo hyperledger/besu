@@ -30,7 +30,6 @@ public class BftContext implements PoaContext {
       final EpochManager epochManager,
       final BftBlockInterface blockInterface) {
     this.validatorProvider = validatorProvider;
-
     this.epochManager = epochManager;
     this.blockInterface = blockInterface;
   }

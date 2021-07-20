@@ -296,7 +296,7 @@ public class TestContextBuilder {
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
             genesisConfigOptions,
-            QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+            QbftBlockHeaderValidationRulesetFactory::blockBasedBlockHeaderValidator,
             BFT_EXTRA_DATA_ENCODER);
 
     /////////////////////////////////////////////////////////////////////////////////////

@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCoinbaseValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftCommitSealsValidationRule;
 import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValidatorsValidationRule;
+import org.hyperledger.besu.consensus.qbft.headervalidationrules.QbftContractValidationRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
@@ -38,21 +39,39 @@ public class QbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
-  public static BlockHeaderValidator.Builder blockHeaderValidator(final long secondsBetweenBlocks) {
-    return new BlockHeaderValidator.Builder()
-        .addRule(new AncestryValidationRule())
-        .addRule(new GasUsageValidationRule())
-        .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
-        .addRule(new TimestampBoundedByFutureParameter(1))
-        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-        .addRule(new BftValidatorsValidationRule())
-        .addRule(new BftCoinbaseValidationRule())
-        .addRule(new BftCommitSealsValidationRule());
+  public static BlockHeaderValidator.Builder blockBasedBlockHeaderValidator(
+      final long secondsBetweenBlocks) {
+    return createBlockHeaderRules(secondsBetweenBlocks, false);
+  }
+
+  public static BlockHeaderValidator.Builder validatorContractBlockHeaderValidator(
+      final long secondsBetweenBlocks) {
+    return createBlockHeaderRules(secondsBetweenBlocks, true);
+  }
+
+  private static BlockHeaderValidator.Builder createBlockHeaderRules(
+      final long secondsBetweenBlocks, final boolean useValidatorContract) {
+    final BlockHeaderValidator.Builder builder =
+        new BlockHeaderValidator.Builder()
+            .addRule(new AncestryValidationRule())
+            .addRule(new GasUsageValidationRule())
+            .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
+            .addRule(new TimestampBoundedByFutureParameter(1))
+            .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
+            .addRule(
+                new ConstantFieldValidationRule<>(
+                    "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
+            .addRule(
+                new ConstantFieldValidationRule<>(
+                    "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
+            .addRule(new BftCoinbaseValidationRule())
+            .addRule(new BftCommitSealsValidationRule());
+
+    if (useValidatorContract) {
+      builder.addRule(new QbftContractValidationRule());
+    } else {
+      builder.addRule(new BftValidatorsValidationRule());
+    }
+    return builder;
   }
 }
