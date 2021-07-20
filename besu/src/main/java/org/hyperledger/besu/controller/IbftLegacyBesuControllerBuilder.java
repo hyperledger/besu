@@ -81,7 +81,9 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected IbftLegacyContext createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     final IbftLegacyConfigOptions ibftConfig =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getIbftLegacyConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());

@@ -71,6 +71,7 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.tuweni:bytes'
   implementation 'org.apache.tuweni:units'
+  implementation 'org.web3j:abi:5.0.0'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')

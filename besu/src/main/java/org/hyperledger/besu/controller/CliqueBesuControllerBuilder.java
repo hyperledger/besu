@@ -129,7 +129,9 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected CliqueContext createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     return new CliqueContext(
         BlockValidatorProvider.nonForkingValidatorProvider(
             blockchain, epochManager, blockInterface),

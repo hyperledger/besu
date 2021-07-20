@@ -74,7 +74,9 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected Void createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     return null;
   }
 
