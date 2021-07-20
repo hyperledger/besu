@@ -16,9 +16,9 @@ package org.hyperledger.besu.consensus.ibft.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.voting.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftDiscardValidatorVote;
 import org.hyperledger.besu.consensus.ibft.jsonrpc.methods.IbftGetPendingVotes;

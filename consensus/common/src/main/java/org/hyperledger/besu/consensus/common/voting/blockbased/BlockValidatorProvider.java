@@ -17,9 +17,8 @@ package org.hyperledger.besu.consensus.common.voting.blockbased;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
-import org.hyperledger.besu.consensus.common.voting.VoteType;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.VoteProvider;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,7 +32,7 @@ import java.util.Optional;
 public class BlockValidatorProvider implements ValidatorProvider {
 
   private final VoteTallyCache voteTallyCache;
-  private final VoteProposer voteProposer;
+  private final VoteProvider voteProvider;
 
   public static ValidatorProvider forkingValidatorProvider(
       final Blockchain blockchain,
@@ -57,6 +56,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
       final BlockInterface blockInterface,
       final Map<Long, List<Address>> validatorForkMap) {
     final VoteTallyUpdater voteTallyUpdater = new VoteTallyUpdater(epochManager, blockInterface);
+    final VoteProposer voteProposer = new VoteProposer();
     this.voteTallyCache =
         new ForkingVoteTallyCache(
             blockchain,
@@ -64,7 +64,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
             epochManager,
             blockInterface,
             new BftValidatorOverrides(validatorForkMap));
-    this.voteProposer = new VoteProposer();
+    this.voteProvider = new BlockVoteProvider(voteTallyCache, voteProposer);
   }
 
   @Override
@@ -78,29 +78,7 @@ public class BlockValidatorProvider implements ValidatorProvider {
   }
 
   @Override
-  public Optional<ValidatorVote> getVoteAfterBlock(
-      final BlockHeader header, final Address localAddress) {
-    final VoteTally voteTally = voteTallyCache.getVoteTallyAfterBlock(header);
-    return voteProposer.getVote(localAddress, voteTally);
-  }
-
-  @Override
-  public void auth(final Address address) {
-    voteProposer.auth(address);
-  }
-
-  @Override
-  public void drop(final Address address) {
-    voteProposer.drop(address);
-  }
-
-  @Override
-  public void discard(final Address address) {
-    voteProposer.discard(address);
-  }
-
-  @Override
-  public Map<Address, VoteType> getProposals() {
-    return voteProposer.getProposals();
+  public Optional<VoteProvider> getVoteProvider() {
+    return Optional.of(voteProvider);
   }
 }

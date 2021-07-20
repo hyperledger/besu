@@ -17,14 +17,18 @@ package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.VoteProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
+
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -33,6 +37,7 @@ import org.junit.rules.ExpectedException;
 
 public class QbftDiscardValidatorVoteTest {
   private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+  private final VoteProvider voteProvider = mock(VoteProvider.class);
   private final String QBFT_METHOD = "qbft_discardValidatorVote";
   private final String JSON_RPC_VERSION = "2.0";
   private QbftDiscardValidatorVote method;
@@ -42,6 +47,7 @@ public class QbftDiscardValidatorVoteTest {
   @Before
   public void setup() {
     method = new QbftDiscardValidatorVote(validatorProvider);
+    when(validatorProvider.getVoteProvider()).thenReturn(Optional.of(voteProvider));
   }
 
   @Test
@@ -81,7 +87,7 @@ public class QbftDiscardValidatorVoteTest {
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
-    verify(validatorProvider).discard(parameterAddress);
+    verify(voteProvider).discard(parameterAddress);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

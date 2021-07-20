@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.voting.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
@@ -32,13 +34,18 @@ public class AbstractVoteProposerMethod {
   }
 
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Map<String, Boolean> proposals =
-        validatorProvider.getProposals().entrySet().stream()
-            .collect(
-                Collectors.toMap(
-                    proposal -> proposal.getKey().toString(),
-                    proposal -> proposal.getValue() == VoteType.ADD));
+    if (validatorProvider.getVoteProvider().isPresent()) {
+      final Map<String, Boolean> proposals =
+          validatorProvider.getVoteProvider().get().getProposals().entrySet().stream()
+              .collect(
+                  Collectors.toMap(
+                      proposal -> proposal.getKey().toString(),
+                      proposal -> proposal.getValue() == VoteType.ADD));
 
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), proposals);
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), proposals);
+    } else {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+    }
   }
 }
