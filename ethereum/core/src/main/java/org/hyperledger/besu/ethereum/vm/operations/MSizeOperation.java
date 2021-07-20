@@ -28,7 +28,7 @@ public class MSizeOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(UInt256.valueOf(frame.memoryByteSize()).toBytes());
+    frame.pushStackItem(UInt256.valueOf(frame.memoryByteSize()));
 
     return successResponse;
   }

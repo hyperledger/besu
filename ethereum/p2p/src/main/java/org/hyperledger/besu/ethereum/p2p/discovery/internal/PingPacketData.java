@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.rlp.MalformedRLPInputException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -77,7 +78,11 @@ public class PingPacketData implements PacketData {
     final long expiration = in.readLongScalar();
     UInt64 enrSeq = null;
     if (!in.isEndOfCurrentList()) {
-      enrSeq = UInt64.fromBytes(in.readBytes());
+      try {
+        enrSeq = UInt64.valueOf(in.readLongScalar());
+      } catch (MalformedRLPInputException malformed) {
+        enrSeq = UInt64.fromBytes(in.readBytes());
+      }
     }
     in.leaveListLenient();
     return new PingPacketData(from, to, expiration, enrSeq);
@@ -95,13 +100,7 @@ public class PingPacketData implements PacketData {
         .encodeStandalone(out);
     to.encodeStandalone(out);
     out.writeLongScalar(expiration);
-    out.writeBytes(
-        getEnrSeq()
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Attempting to serialize invalid PING packet. Missing 'enrSeq' field"))
-            .toBytes());
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
   }
 

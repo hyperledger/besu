@@ -55,7 +55,7 @@ public class BlockHashOperationBenchmark {
 
   @Benchmark
   public Bytes32 executeOperation() {
-    frame.pushStackItem(UInt256.valueOf(blockNumber).toBytes());
+    frame.pushStackItem(UInt256.valueOf(blockNumber));
     operation.execute(frame, null);
     return frame.popStackItem();
   }
@@ -67,7 +67,7 @@ public class BlockHashOperationBenchmark {
             .createMessageFrameBuilder()
             .blockHashLookup(new BlockHashLookup(frame.getBlockHeader(), frame.getBlockchain()))
             .build();
-    cleanFrame.pushStackItem(UInt256.valueOf(blockNumber).toBytes());
+    cleanFrame.pushStackItem(UInt256.valueOf(blockNumber));
     operation.execute(cleanFrame, null);
     return cleanFrame.popStackItem();
   }

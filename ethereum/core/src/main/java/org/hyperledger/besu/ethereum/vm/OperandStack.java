@@ -16,11 +16,11 @@
 
 package org.hyperledger.besu.ethereum.vm;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
-public class OperandStack extends FixedStack<Bytes32> {
+public class OperandStack extends FixedStack<UInt256> {
 
   public OperandStack(final int maxSize) {
-    super(maxSize, Bytes32.class);
+    super(maxSize, UInt256.class);
   }
 }

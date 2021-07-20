@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import java.math.BigInteger;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SLtOperation extends AbstractFixedCostOperation {
@@ -31,13 +30,13 @@ public class SLtOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes32 value0 = frame.popStackItem();
-    final Bytes32 value1 = frame.popStackItem();
+    final UInt256 value0 = frame.popStackItem();
+    final UInt256 value1 = frame.popStackItem();
 
-    final BigInteger b0 = value0.toBigInteger();
-    final BigInteger b1 = value1.toBigInteger();
+    final BigInteger b0 = value0.toSignedBigInteger();
+    final BigInteger b1 = value1.toSignedBigInteger();
 
-    final Bytes32 result = b0.compareTo(b1) < 0 ? UInt256.ONE.toBytes() : UInt256.ZERO.toBytes();
+    final UInt256 result = b0.compareTo(b1) < 0 ? UInt256.ONE : UInt256.ZERO;
 
     frame.pushStackItem(result);
 

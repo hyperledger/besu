@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BlockHashOperation extends AbstractFixedCostOperation {
@@ -43,11 +42,11 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 blockArg = frame.popStackItem();
 
     // Short-circuit if value is unreasonably large
     if (!blockArg.fitsLong()) {
-      frame.pushStackItem(Bytes32.ZERO);
+      frame.pushStackItem(UInt256.ZERO);
       return successResponse;
     }
 
@@ -61,11 +60,11 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     if (currentBlockNumber == BlockHeader.GENESIS_BLOCK_NUMBER
         || soughtBlock < (mostRecentBlockNumber - MAX_RELATIVE_BLOCK)
         || soughtBlock > mostRecentBlockNumber) {
-      frame.pushStackItem(Bytes32.ZERO);
+      frame.pushStackItem(UInt256.ZERO);
     } else {
       final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
       final Hash blockHash = blockHashLookup.getBlockHash(soughtBlock);
-      frame.pushStackItem(blockHash);
+      frame.pushStackItem(UInt256.fromBytes(blockHash));
     }
 
     return successResponse;

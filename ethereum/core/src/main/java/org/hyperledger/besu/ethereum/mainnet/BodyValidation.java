@@ -40,7 +40,7 @@ public final class BodyValidation {
   }
 
   private static Bytes indexKey(final int i) {
-    return RLP.encodeOne(UInt256.valueOf(i).toBytes().trimLeadingZeros());
+    return RLP.encodeOne(UInt256.valueOf(i).trimLeadingZeros());
   }
 
   private static MerklePatriciaTrie<Bytes, Bytes> trie() {
