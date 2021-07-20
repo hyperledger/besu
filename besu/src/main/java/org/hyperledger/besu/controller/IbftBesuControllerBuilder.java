@@ -241,7 +241,9 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected BftContext createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     final GenesisConfigOptions configOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides);
     final BftConfigOptions ibftConfig = configOptions.getBftConfigOptions();
