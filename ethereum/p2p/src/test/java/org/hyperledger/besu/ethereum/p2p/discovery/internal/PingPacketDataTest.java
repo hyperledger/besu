@@ -75,6 +75,30 @@ public class PingPacketDataTest {
   }
 
   @Test
+  public void handlesNullEnr() {
+    final int version = 4;
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final long time = System.currentTimeMillis();
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeIntScalar(version);
+    from.encodeStandalone(out);
+    to.encodeStandalone(out);
+    out.writeLongScalar(time);
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).contains(from);
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isFalse();
+  }
+
+  @Test
   public void handlesLegacyENREncode() {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));

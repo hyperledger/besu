@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PingPacketData implements PacketData {
 
@@ -41,6 +43,7 @@ public class PingPacketData implements PacketData {
 
   /* Current sequence number of the sending node’s record */
   private final UInt64 enrSeq;
+  private static final Logger LOG = LoggerFactory.getLogger(PingPacketData.class);
 
   private PingPacketData(
       final Optional<Endpoint> maybeFrom,
@@ -80,7 +83,9 @@ public class PingPacketData implements PacketData {
     if (!in.isEndOfCurrentList()) {
       try {
         enrSeq = UInt64.valueOf(in.readLongScalar());
+        LOG.debug("read PING enr as long scalar");
       } catch (MalformedRLPInputException malformed) {
+        LOG.debug("failed to read PING enr as scalar, trying to read bytes instead");
         enrSeq = UInt64.fromBytes(in.readBytes());
       }
     }

@@ -23,6 +23,8 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PongPacketData implements PacketData {
 
@@ -37,6 +39,7 @@ public class PongPacketData implements PacketData {
 
   /* Current sequence number of the sending node’s record */
   private final UInt64 enrSeq;
+  private static final Logger LOG = LoggerFactory.getLogger(PongPacketData.class);
 
   private PongPacketData(
       final Endpoint to, final Bytes pingHash, final long expiration, final UInt64 enrSeq) {
@@ -60,7 +63,9 @@ public class PongPacketData implements PacketData {
     if (!in.isEndOfCurrentList()) {
       try {
         enrSeq = UInt64.valueOf(in.readLongScalar());
+        LOG.debug("read PONG enr from scalar");
       } catch (MalformedRLPInputException malformed) {
+        LOG.debug("failed to read PONG enr from scalar, trying as byte array");
         enrSeq = UInt64.fromBytes(in.readBytes());
       }
     }
