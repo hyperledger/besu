@@ -32,7 +32,8 @@ import picocli.CommandLine.ParameterException;
 
 public class P2PTLSConfigOptions {
   @Option(
-      names = {"--p2p-tls-enabled"},
+      names = {"--Xp2p-tls-enabled"},
+      hidden = true,
       description = "Enable P2P TLS functionality (default: ${DEFAULT-VALUE})")
   private final Boolean p2pTLSEnabled = false;
 
@@ -41,19 +42,22 @@ public class P2PTLSConfigOptions {
     "FieldMayBeFinal"
   }) // p2pTLSKeyStoreType requires non-final Strings.
   @Option(
-      names = {"--p2p-tls-keystore-type"},
+      names = {"--Xp2p-tls-keystore-type"},
+      hidden = true,
       paramLabel = "<NAME>",
       description = "P2P service keystore type. Required if P2P TLS is enabled.")
   private String p2pTLSKeyStoreType = DEFAULT_KEYSTORE_TYPE;
 
   @Option(
-      names = {"--p2p-tls-keystore-file"},
+      names = {"--Xp2p-tls-keystore-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description = "Keystore containing key/certificate for the P2P service.")
   private final Path p2pTLSKeyStoreFile = null;
 
   @Option(
-      names = {"--p2p-tls-keystore-password-file"},
+      names = {"--Xp2p-tls-keystore-password-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
           "File containing password to unlock keystore for the P2P service. Required if P2P TLS is enabled.")
@@ -64,25 +68,29 @@ public class P2PTLSConfigOptions {
     "FieldMayBeFinal"
   }) // p2pTLSTrustStoreType requires non-final Strings.
   @Option(
-      names = {"--p2p-tls-truststore-type"},
+      names = {"--Xp2p-tls-truststore-type"},
+      hidden = true,
       paramLabel = "<NAME>",
       description = "P2P service truststore type.")
   private String p2pTLSTrustStoreType = DEFAULT_KEYSTORE_TYPE;
 
   @Option(
-      names = {"--p2p-tls-truststore-file"},
+      names = {"--Xp2p-tls-truststore-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description = "Truststore containing trusted certificates for the P2P service.")
   private final Path p2pTLSTrustStoreFile = null;
 
   @Option(
-      names = {"--p2p-tls-truststore-password-file"},
+      names = {"--Xp2p-tls-truststore-password-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description = "File containing password to unlock truststore for the P2P service.")
   private final Path p2pTLSTrustStorePasswordFile = null;
 
   @Option(
-      names = {"--p2p-tls-crl-file"},
+      names = {"--Xp2p-tls-crl-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description = "Certificate revocation list for the P2P service.")
   private final Path p2pCrlFile = null;
@@ -124,8 +132,8 @@ public class P2PTLSConfigOptions {
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
-        "--p2p-tls-enabled",
+        "--Xp2p-tls-enabled",
         !p2pTLSEnabled,
-        asList("--p2p-tls-keystore-type", "--p2p-tls-keystore-password-file"));
+        asList("--Xp2p-tls-keystore-type", "--Xp2p-tls-keystore-password-file"));
   }
 }

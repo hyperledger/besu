@@ -249,21 +249,21 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.addAll(networkConfigParams);
       if (node.getTLSConfiguration().isPresent()) {
         final TLSConfiguration config = node.getTLSConfiguration().get();
-        params.add("--p2p-tls-enabled");
-        params.add("--p2p-tls-keystore-type");
+        params.add("--Xp2p-tls-enabled");
+        params.add("--Xp2p-tls-keystore-type");
         params.add(config.getKeyStoreType());
-        params.add("--p2p-tls-keystore-file");
+        params.add("--Xp2p-tls-keystore-file");
         params.add(config.getKeyStorePath().toAbsolutePath().toString());
-        params.add("--p2p-tls-keystore-password-file");
+        params.add("--Xp2p-tls-keystore-password-file");
         params.add(config.getKeyStorePasswordPath().toAbsolutePath().toString());
-        params.add("--p2p-tls-crl-file");
+        params.add("--Xp2p-tls-crl-file");
         params.add(config.getCrlPath().toAbsolutePath().toString());
         if (null != config.getTrustStoreType()) {
-          params.add("--p2p-tls-truststore-type");
+          params.add("--Xp2p-tls-truststore-type");
           params.add(config.getTrustStoreType());
-          params.add("--p2p-tls-truststore-file");
+          params.add("--Xp2p-tls-truststore-file");
           params.add(config.getTrustStorePath().toAbsolutePath().toString());
-          params.add("--p2p-tls-truststore-password-file");
+          params.add("--Xp2p-tls-truststore-password-file");
           params.add(config.getTrustStorePasswordPath().toAbsolutePath().toString());
         }
       }
