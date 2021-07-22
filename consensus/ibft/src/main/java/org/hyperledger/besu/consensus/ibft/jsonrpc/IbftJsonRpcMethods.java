@@ -59,15 +59,16 @@ public class IbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
         context.getConsensusState(BftContext.class).getValidatorProvider();
 
     // Must create our own voteTallyCache as using this would pollute the main voteTallyCache
-    final ValidatorProvider rpcValidatorProvider = createValidatorProvider(context, blockchain);
+    final ValidatorProvider readOnlyValidatorProvider =
+        createValidatorProvider(context, blockchain);
 
     return mapOf(
         new IbftProposeValidatorVote(validatorProvider),
         new IbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface),
         new IbftDiscardValidatorVote(validatorProvider),
         new IbftGetValidatorsByBlockHash(blockchain, blockInterface),
-        new IbftGetSignerMetrics(rpcValidatorProvider, blockInterface, blockchainQueries),
-        new IbftGetPendingVotes(rpcValidatorProvider));
+        new IbftGetSignerMetrics(readOnlyValidatorProvider, blockInterface, blockchainQueries),
+        new IbftGetPendingVotes(validatorProvider));
   }
 
   private ValidatorProvider createValidatorProvider(
