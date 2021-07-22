@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public class PingPacketData implements PacketData {
 
   /* Fixed value that represents we're using v5 of the P2P discovery protocol. */
-  private static final int VERSION = 5;
+  private static final int VERSION = 4;
 
   /* Source. If the field is garbage this is empty and we might need to recover it another way. From our bonded peers, for example. */
   private final Optional<Endpoint> maybeFrom;
@@ -76,7 +76,9 @@ public class PingPacketData implements PacketData {
     in.enterList();
     // The first element signifies the "version", but this value is ignored as of EIP-8
     in.readBigIntegerScalar();
-    final Optional<Endpoint> from = Endpoint.maybeDecodeStandalone(in);
+    //final Optional<Endpoint> from = Endpoint.maybeDecodeStandalone(in);
+    final Optional<Endpoint> from = Optional.empty();
+    in.skipNext();
     final Endpoint to = Endpoint.decodeStandalone(in);
     final long expiration = in.readLongScalar();
     UInt64 enrSeq = null;

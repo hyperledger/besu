@@ -48,7 +48,7 @@ public class EthNetworkConfig {
   public static final BigInteger RINKEBY_NETWORK_ID = BigInteger.valueOf(4);
   public static final BigInteger GOERLI_NETWORK_ID = BigInteger.valueOf(5);
   public static final BigInteger CALAVERAS_NETWORK_ID = BigInteger.valueOf(123);
-  public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(2018);
+  public static final BigInteger DEV_NETWORK_ID = BigInteger.valueOf(20110330);
   public static final BigInteger ECIP1049_DEV_NETWORK_ID = BigInteger.valueOf(2021);
   public static final BigInteger CLASSIC_NETWORK_ID = BigInteger.valueOf(1);
   public static final BigInteger KOTTI_NETWORK_ID = BigInteger.valueOf(6);
