@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractGetSignerMetricsMethod;
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;

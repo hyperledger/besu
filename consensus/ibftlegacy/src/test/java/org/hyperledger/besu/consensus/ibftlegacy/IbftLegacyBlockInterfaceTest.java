@@ -16,10 +16,10 @@ package org.hyperledger.besu.consensus.ibftlegacy;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.voting.VoteType.ADD;
-import static org.hyperledger.besu.consensus.common.voting.VoteType.DROP;
+import static org.hyperledger.besu.consensus.common.validatorprovider.VoteType.ADD;
+import static org.hyperledger.besu.consensus.common.validatorprovider.VoteType.DROP;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorVote;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;

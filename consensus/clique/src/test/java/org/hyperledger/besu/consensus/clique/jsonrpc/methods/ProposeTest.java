@@ -19,9 +19,9 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.voting.VoteType;
-import org.hyperledger.besu.consensus.common.voting.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
+import org.hyperledger.besu.consensus.common.validatorprovider.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -109,7 +109,7 @@ public class ProposeTest {
     final Propose propose = new Propose(validatorProvider);
     final Address a1 = Address.fromHexString("1");
 
-    validatorProvider.getVoteProvider().get().auth(a1);
+    validatorProvider.getVoteProvider().get().authVote(a1);
     final JsonRpcResponse response = propose.response(requestWithParams(a1, true));
 
     assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
@@ -124,7 +124,7 @@ public class ProposeTest {
     final Propose propose = new Propose(validatorProvider);
     final Address a1 = Address.fromHexString("1");
 
-    validatorProvider.getVoteProvider().get().drop(a1);
+    validatorProvider.getVoteProvider().get().dropVote(a1);
     final JsonRpcResponse response = propose.response(requestWithParams(a1, false));
 
     assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
@@ -139,7 +139,7 @@ public class ProposeTest {
     final Propose propose = new Propose(validatorProvider);
     final Address a1 = Address.fromHexString("1");
 
-    validatorProvider.getVoteProvider().get().drop(a1);
+    validatorProvider.getVoteProvider().get().dropVote(a1);
     final JsonRpcResponse response = propose.response(requestWithParams(a1, true));
 
     assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
@@ -154,7 +154,7 @@ public class ProposeTest {
     final Propose propose = new Propose(validatorProvider);
     final Address a0 = Address.fromHexString("1");
 
-    validatorProvider.getVoteProvider().get().auth(a0);
+    validatorProvider.getVoteProvider().get().authVote(a0);
     final JsonRpcResponse response = propose.response(requestWithParams(a0, false));
 
     assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0))

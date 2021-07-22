@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.voting.VoteType;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -53,9 +53,9 @@ public class QbftProposeValidatorVote implements JsonRpcMethod {
           validatorAddress);
 
       if (add) {
-        validatorProvider.getVoteProvider().get().auth(validatorAddress);
+        validatorProvider.getVoteProvider().get().authVote(validatorAddress);
       } else {
-        validatorProvider.getVoteProvider().get().drop(validatorAddress);
+        validatorProvider.getVoteProvider().get().dropVote(validatorAddress);
       }
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } else {

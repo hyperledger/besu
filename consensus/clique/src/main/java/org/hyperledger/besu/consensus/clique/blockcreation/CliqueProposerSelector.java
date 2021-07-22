@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 

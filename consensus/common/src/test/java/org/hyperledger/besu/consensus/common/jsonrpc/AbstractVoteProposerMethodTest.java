@@ -18,9 +18,9 @@ import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.voting.VoteProvider;
-import org.hyperledger.besu.consensus.common.voting.VoteType;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorVote;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 

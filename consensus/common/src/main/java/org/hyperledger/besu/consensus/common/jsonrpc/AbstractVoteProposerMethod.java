@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.voting.VoteType;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;

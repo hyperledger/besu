@@ -12,11 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.voting.blockbased;
+package org.hyperledger.besu.consensus.common.validatorprovider.blockbased;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
-import org.hyperledger.besu.consensus.common.voting.VoteProvider;
-import org.hyperledger.besu.consensus.common.voting.VoteType;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorVote;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -41,17 +41,17 @@ public class BlockVoteProvider implements VoteProvider {
   }
 
   @Override
-  public void auth(final Address address) {
+  public void authVote(final Address address) {
     voteProposer.auth(address);
   }
 
   @Override
-  public void drop(final Address address) {
+  public void dropVote(final Address address) {
     voteProposer.drop(address);
   }
 
   @Override
-  public void discard(final Address address) {
+  public void discardVote(final Address address) {
     voteProposer.discard(address);
   }
 

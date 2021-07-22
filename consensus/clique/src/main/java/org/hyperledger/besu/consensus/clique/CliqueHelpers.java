@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.clique;
 
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueProposerSelector;
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;

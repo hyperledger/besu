@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.voting.ValidatorVote;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorVote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;

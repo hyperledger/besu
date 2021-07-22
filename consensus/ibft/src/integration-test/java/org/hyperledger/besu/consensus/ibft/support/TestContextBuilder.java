@@ -46,8 +46,8 @@ import org.hyperledger.besu.consensus.common.bft.inttest.StubbedSynchronizerUpda
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.voting.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;

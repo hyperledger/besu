@@ -19,8 +19,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.voting.VoteProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -106,7 +106,7 @@ public class QbftProposeValidatorVoteTest {
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
-    verify(voteProvider).auth(parameterAddress);
+    verify(voteProvider).authVote(parameterAddress);
   }
 
   @Test
@@ -120,7 +120,7 @@ public class QbftProposeValidatorVoteTest {
 
     assertThat(response).isEqualToComparingFieldByField(expectedResponse);
 
-    verify(voteProvider).drop(parameterAddress);
+    verify(voteProvider).dropVote(parameterAddress);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

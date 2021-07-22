@@ -21,7 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ProposerSelector;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.Address;
 

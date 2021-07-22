@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft;
 
-import org.hyperledger.besu.consensus.common.voting.VoteType;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Objects;

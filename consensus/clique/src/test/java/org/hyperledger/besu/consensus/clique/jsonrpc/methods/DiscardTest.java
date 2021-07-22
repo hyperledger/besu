@@ -20,9 +20,9 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.voting.VoteType;
-import org.hyperledger.besu.consensus.common.voting.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
+import org.hyperledger.besu.consensus.common.validatorprovider.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -72,7 +72,7 @@ public class DiscardTest {
     final Discard discard = new Discard(validatorProvider);
     final Address a0 = Address.fromHexString("0");
 
-    validatorProvider.getVoteProvider().get().auth(a0);
+    validatorProvider.getVoteProvider().get().authVote(a0);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
@@ -87,7 +87,7 @@ public class DiscardTest {
     final Discard discard = new Discard(validatorProvider);
     final Address a0 = Address.fromHexString("0");
 
-    validatorProvider.getVoteProvider().get().drop(a0);
+    validatorProvider.getVoteProvider().get().dropVote(a0);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 
@@ -103,8 +103,8 @@ public class DiscardTest {
     final Address a0 = Address.fromHexString("0");
     final Address a1 = Address.fromHexString("1");
 
-    validatorProvider.getVoteProvider().get().auth(a0);
-    validatorProvider.getVoteProvider().get().auth(a1);
+    validatorProvider.getVoteProvider().get().authVote(a0);
+    validatorProvider.getVoteProvider().get().authVote(a1);
 
     final JsonRpcResponse response = discard.response(requestWithParams(a0));
 

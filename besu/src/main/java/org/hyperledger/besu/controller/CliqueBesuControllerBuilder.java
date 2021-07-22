@@ -25,7 +25,7 @@ import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinat
 import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.voting.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;

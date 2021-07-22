@@ -15,7 +15,7 @@
 package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -47,9 +47,9 @@ public class Propose implements JsonRpcMethod {
     }
 
     if (auth) {
-      validatorProvider.getVoteProvider().get().auth(address);
+      validatorProvider.getVoteProvider().get().authVote(address);
     } else {
-      validatorProvider.getVoteProvider().get().drop(address);
+      validatorProvider.getVoteProvider().get().dropVote(address);
     }
     // Return true regardless, the vote is always recorded
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
-import org.hyperledger.besu.consensus.common.voting.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
