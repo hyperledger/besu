@@ -14,54 +14,22 @@
  */
 package org.hyperledger.besu.consensus.qbft;
 
-import static org.hyperledger.besu.consensus.common.bft.Vote.ADD_BYTE_VALUE;
-import static org.hyperledger.besu.consensus.common.bft.Vote.DROP_BYTE_VALUE;
-
-import org.hyperledger.besu.consensus.common.VoteType;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.ImmutableBiMap;
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * Represents the data structure stored in the extraData field of the BlockHeader used when
- * operating under an BFT consensus mechanism.
- */
-public class QbftExtraDataCodec extends BftExtraDataCodec {
-  private static final ImmutableBiMap<VoteType, Byte> voteToValue =
-      ImmutableBiMap.of(
-          VoteType.ADD, ADD_BYTE_VALUE,
-          VoteType.DROP, DROP_BYTE_VALUE);
-
-  public static Bytes encodeFromAddresses(final Collection<Address> addresses) {
-    return new QbftExtraDataCodec()
-        .encode(
-            new BftExtraData(
-                Bytes.wrap(new byte[EXTRA_VANITY_LENGTH]),
-                Collections.emptyList(),
-                Optional.empty(),
-                0,
-                addresses));
-  }
-
-  public static String createGenesisExtraDataString(final List<Address> validators) {
-    return encodeFromAddresses(validators).toString();
-  }
+public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
   @Override
   public BftExtraData decodeRaw(final Bytes input) {
@@ -87,9 +55,20 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     final List<SECPSignature> seals =
         rlpInput.readList(
             rlp -> SignatureAlgorithmFactory.getInstance().decodeSignature(rlp.readBytes()));
+
+    final Optional<Bytes> cms;
+    if (rlpInput.nextIsList() && rlpInput.nextSize() == 0) {
+      cms = Optional.empty();
+      rlpInput.skipNext();
+    } else {
+      rlpInput.enterList();
+      cms = Optional.of(rlpInput.readBytes());
+      rlpInput.leaveList();
+    }
+
     rlpInput.leaveList();
 
-    return new BftExtraData(vanityData, seals, vote, round, validators);
+    return new BftExtraData(vanityData, seals, vote, round, validators, cms);
   }
 
   @Override
@@ -117,40 +96,23 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
       encoder.writeIntScalar(0);
       encoder.writeEmptyList();
     }
+
+    // TODO-lucas think about these rules
+    if (encodingType == EncodingType.ALL) {
+      if (bftExtraData.getCms().isPresent()) {
+        Bytes cmsBytes = bftExtraData.getCms().get();
+        encoder.startList();
+        encoder.writeBytes(cmsBytes);
+        encoder.endList();
+      } else {
+        encoder.writeEmptyList();
+      }
+    } else {
+      encoder.writeEmptyList();
+    }
+
     encoder.endList();
 
     return encoder.encoded();
-  }
-
-  protected void encodeVote(final RLPOutput rlpOutput, final Vote vote) {
-    final VoteType voteType = vote.isAuth() ? VoteType.ADD : VoteType.DROP;
-    rlpOutput.startList();
-    rlpOutput.writeBytes(vote.getRecipient());
-    if (voteType == VoteType.ADD) {
-      rlpOutput.writeByte(ADD_BYTE_VALUE);
-    } else {
-      rlpOutput.writeNull();
-    }
-    rlpOutput.endList();
-  }
-
-  protected Vote decodeVote(final RLPInput rlpInput) {
-    rlpInput.enterList();
-    final Address recipient = Address.readFrom(rlpInput);
-
-    final VoteType vote;
-    if (rlpInput.nextSize() == 0) {
-      rlpInput.skipNext();
-      vote = VoteType.DROP;
-    } else {
-      vote = voteToValue.inverse().get(rlpInput.readByte());
-    }
-
-    if (vote == null) {
-      throw new RLPException("Vote field was of an incorrect binary value.");
-    }
-    rlpInput.leaveList();
-
-    return new Vote(recipient, vote);
   }
 }
