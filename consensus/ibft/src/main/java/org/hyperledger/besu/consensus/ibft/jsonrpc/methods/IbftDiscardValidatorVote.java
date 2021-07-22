@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -40,6 +42,7 @@ public class IbftDiscardValidatorVote implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    checkState(validatorProvider.getVoteProvider().isPresent(), "Ibft requires a vote provider");
     final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
     LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
     validatorProvider.getVoteProvider().get().discardVote(validatorAddress);

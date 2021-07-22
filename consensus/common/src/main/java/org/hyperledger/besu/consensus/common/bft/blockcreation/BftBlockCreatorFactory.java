@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
@@ -102,9 +104,7 @@ public class BftBlockCreatorFactory {
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
-    if (validatorProvider.getVoteProvider().isEmpty()) {
-      throw new IllegalStateException("Bft requires a vote provider");
-    }
+    checkState(validatorProvider.getVoteProvider().isPresent(), "Bft requires a vote provider");
     final Optional<ValidatorVote> proposal =
         validatorProvider.getVoteProvider().get().getVoteAfterBlock(parentHeader, localAddress);
 

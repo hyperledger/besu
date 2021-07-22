@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.consensus.clique.CliqueBlockHashing;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
@@ -105,9 +107,9 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       return Optional.empty();
     } else {
       final CliqueContext cliqueContext = protocolContext.getConsensusState(CliqueContext.class);
-      if (cliqueContext.getValidatorProvider().getVoteProvider().isEmpty()) {
-        throw new IllegalStateException("Clique requires a vote provider");
-      }
+      checkState(
+          cliqueContext.getValidatorProvider().getVoteProvider().isPresent(),
+          "Clique requires a vote provider");
       return cliqueContext
           .getValidatorProvider()
           .getVoteProvider()
