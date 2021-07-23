@@ -24,24 +24,31 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   PluginEeaSendRawTransaction method;
+  @Mock private PrivateMarkerTransactionFactory factory;
 
   @Before
   public void before() {
-    method = new PluginEeaSendRawTransaction(transactionPool, privacyController, (user) -> "");
+    method =
+        new PluginEeaSendRawTransaction(transactionPool, privacyController, factory, (user) -> "");
   }
 
   @Test
   public void validUnrestrictedTransactionIsSentToTransactionPool() {
+    when(factory.getSender(any(), any()))
+        .thenReturn(Address.fromHexString("0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5"));
+
     when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
         .thenReturn("");
     when(privacyController.validatePrivateTransaction(any(), any()))

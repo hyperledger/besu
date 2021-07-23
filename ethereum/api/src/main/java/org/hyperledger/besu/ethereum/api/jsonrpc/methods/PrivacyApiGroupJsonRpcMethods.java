@@ -92,7 +92,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         createPrivateMarkerTransactionFactory();
     final PrivacyIdProvider enclavePublicProvider = PrivacyIdProvider.build(privacyParameters);
     final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
-    return create(privacyController, enclavePublicProvider).entrySet().stream()
+    return create(privacyController, enclavePublicProvider, markerTransactionFactory).entrySet()
+        .stream()
         .collect(
             Collectors.toMap(
                 Map.Entry::getKey,
@@ -100,10 +101,13 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   }
 
   protected abstract Map<String, JsonRpcMethod> create(
-      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider);
+      final PrivacyController privacyController,
+      final PrivacyIdProvider privacyIdProvider,
+      PrivateMarkerTransactionFactory markerTransactionFactory);
 
   private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory() {
-    if (privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory() != null) {
+    if (privacyParameters.getPrivacyService() != null
+        && privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory() != null) {
       return privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory();
     } else if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(

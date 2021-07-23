@@ -29,12 +29,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -45,12 +47,16 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   RestrictedOffChainEeaSendRawTransaction method;
+  @Mock PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
 
   @Before
   public void before() {
+    when(privateMarkerTransactionFactory.getSender(any(), any()))
+        .thenReturn(Address.fromHexString("0xEA674fdDe714fd979de3EdF0F56AA9716B898ec8"));
+
     method =
         new RestrictedOffChainEeaSendRawTransaction(
-            transactionPool, privacyController, privacyIdProvider);
+            transactionPool, privacyController, privateMarkerTransactionFactory, privacyIdProvider);
   }
 
   @Test

@@ -65,4 +65,10 @@ public class FixedKeySigningPrivateMarkerTransactionFactory
     transaction.writeTo(out);
     return out.encoded();
   }
+
+  @Override
+  public Address getSender(
+      final PrivateTransaction privateTransaction, final String privacyUserId) {
+    return this.sender;
+  }
 }

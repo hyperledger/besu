@@ -69,7 +69,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
-import org.hyperledger.besu.services.PrivacyPluginPluginServiceImpl;
+import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -382,7 +382,7 @@ public abstract class CommandTestAbstract {
           storageService,
           securityModuleService,
           new PermissioningServiceImpl(),
-          new PrivacyPluginPluginServiceImpl());
+          new PrivacyPluginServiceImpl());
       this.mockNodeKey = mockNodeKey;
       this.keyPair = keyPair;
     }

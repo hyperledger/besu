@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -33,9 +34,13 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
+import java.math.BigInteger;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
 
+import com.google.common.util.concurrent.Striped;
 import io.vertx.ext.auth.User;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -43,9 +48,18 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   private static final Logger LOG = getLogger();
   private final TransactionPool transactionPool;
+  private final PrivacyIdProvider privacyIdProvider;
+  private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
+  private static final int POOL_SIZE = 10;
+  private final Striped<Lock> stripedLock = Striped.lock(POOL_SIZE);
 
-  protected AbstractEeaSendRawTransaction(final TransactionPool transactionPool) {
+  protected AbstractEeaSendRawTransaction(
+      final TransactionPool transactionPool,
+      final PrivacyIdProvider privacyIdProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
     this.transactionPool = transactionPool;
+    this.privacyIdProvider = privacyIdProvider;
+    this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
   }
 
   @Override
@@ -56,6 +70,7 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Object id = requestContext.getRequest().getId();
+    Optional<User> user = requestContext.getUser();
     final String rawPrivateTransaction = requestContext.getRequiredParameter(0, String.class);
 
     try {
@@ -63,22 +78,31 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
           PrivateTransaction.readFrom(RLP.input(Bytes.fromHexString(rawPrivateTransaction)));
 
       final ValidationResult<TransactionInvalidReason> validationResult =
-          validatePrivateTransaction(privateTransaction, requestContext.getUser());
+          validatePrivateTransaction(privateTransaction, user);
 
       if (!validationResult.isValid()) {
         return new JsonRpcErrorResponse(
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
       }
 
-      final Transaction privateMarkerTransaction =
-          createPrivateMarkerTransaction(privateTransaction, requestContext.getUser());
+      org.hyperledger.besu.plugin.data.Address sender =
+          privateMarkerTransactionFactory.getSender(
+              privateTransaction, privacyIdProvider.getPrivacyUserId(user));
+      Lock lock = stripedLock.get(sender.toBigInteger().mod(BigInteger.valueOf(POOL_SIZE)));
+      lock.lock();
+      try {
 
-      return transactionPool
-          .addLocalTransaction(privateMarkerTransaction)
-          .either(
-              () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
-              errorReason -> getJsonRpcErrorResponse(id, errorReason));
+        final Transaction privateMarkerTransaction =
+            createPrivateMarkerTransaction(privateTransaction, user);
 
+        return transactionPool
+            .addLocalTransaction(privateMarkerTransaction)
+            .either(
+                () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
+                errorReason -> getJsonRpcErrorResponse(id, errorReason));
+      } finally {
+        lock.unlock();
+      }
     } catch (final JsonRpcErrorResponseException e) {
       return new JsonRpcErrorResponse(id, e.getJsonRpcError());
     } catch (final IllegalArgumentException | RLPException e) {

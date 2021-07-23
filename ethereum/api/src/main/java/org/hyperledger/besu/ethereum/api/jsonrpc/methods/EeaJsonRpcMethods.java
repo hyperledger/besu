@@ -27,10 +27,13 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
 
 public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
+
+  private final PrivacyParameters privacyParameters;
 
   public EeaJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -38,26 +41,38 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+    this.privacyParameters = privacyParameters;
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create(
-      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
+      final PrivacyController privacyController,
+      final PrivacyIdProvider privacyIdProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
 
-    if (getPrivacyParameters().isPrivacyPluginEnabled()) {
+    if (privacyParameters.isPrivacyPluginEnabled()) {
       return mapOf(
           new PluginEeaSendRawTransaction(
-              getTransactionPool(), privacyController, privacyIdProvider),
+              getTransactionPool(),
+              privacyController,
+              privateMarkerTransactionFactory,
+              privacyIdProvider),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     } else if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
       return mapOf(
           new RestrictedOnChainEeaSendRawTransaction(
-              getTransactionPool(), privacyController, privacyIdProvider),
+              getTransactionPool(),
+              privacyController,
+              privateMarkerTransactionFactory,
+              privacyIdProvider),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     } else { // off chain privacy
       return mapOf(
           new RestrictedOffChainEeaSendRawTransaction(
-              getTransactionPool(), privacyController, privacyIdProvider),
+              getTransactionPool(),
+              privacyController,
+              privateMarkerTransactionFactory,
+              privacyIdProvider),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     }
   }

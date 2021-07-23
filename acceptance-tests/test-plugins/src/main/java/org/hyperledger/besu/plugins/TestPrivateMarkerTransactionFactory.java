@@ -12,22 +12,33 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.privacy.markertransaction;
+package org.hyperledger.besu.plugins;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
+import org.hyperledger.besu.plugin.services.query.EthQueryService;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class RandomSigningPrivateMarkerTransactionFactory
-    implements PrivateMarkerTransactionFactory {
+public class TestPrivateMarkerTransactionFactory implements PrivateMarkerTransactionFactory {
+  final KeyPair randomFixedSigningKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
+
+  final Address sender =
+      org.hyperledger.besu.ethereum.core.Address.extract(
+          Hash.hash(randomFixedSigningKey.getPublicKey().getEncodedBytes()));
+  private final EthQueryService ethQueryService;
+
+  public TestPrivateMarkerTransactionFactory(final EthQueryService ethQueryService) {
+
+    this.ethQueryService = ethQueryService;
+  }
 
   @Override
   public Bytes create(
@@ -35,29 +46,27 @@ public class RandomSigningPrivateMarkerTransactionFactory
       final PrivateTransaction privateTransaction,
       final Address precompileAddress,
       final String privacyUserId) {
-    final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
-    final Transaction transaction =
-        Transaction.builder()
+    final long nonce = ethQueryService.getTransactionCount(sender);
+    final org.hyperledger.besu.ethereum.core.Transaction privacyMarkerTransaction =
+        org.hyperledger.besu.ethereum.core.Transaction.builder()
             .type(TransactionType.FRONTIER)
-            .nonce(0)
+            .nonce(nonce)
             .gasPrice(Wei.fromQuantity(privateTransaction.getGasPrice()))
             .gasLimit(privateTransaction.getGasLimit())
             .to(org.hyperledger.besu.ethereum.core.Address.fromPlugin(precompileAddress))
             .value(Wei.fromQuantity(privateTransaction.getValue()))
             .payload(Bytes.fromBase64String(privateMarkerTransactionPayload))
-            .signAndBuild(signingKey);
+            .signAndBuild(randomFixedSigningKey);
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
+    privacyMarkerTransaction.writeTo(out);
     return out.encoded();
   }
 
   @Override
   public Address getSender(
       final PrivateTransaction privateTransaction, final String privacyUserId) {
-    // Note the address here is only used as a key to lock nonce generation for the same address
-    final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-    return org.hyperledger.besu.ethereum.core.Address.extract(signingKey.getPublicKey());
+    return sender;
   }
 }

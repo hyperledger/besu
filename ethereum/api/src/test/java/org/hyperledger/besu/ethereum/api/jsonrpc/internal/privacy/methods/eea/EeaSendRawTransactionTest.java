@@ -31,14 +31,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -59,11 +62,16 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   RestrictedOffChainEeaSendRawTransaction method;
 
+  @Mock PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
+
   @Before
   public void before() {
+    when(privateMarkerTransactionFactory.getSender(any(), any()))
+        .thenReturn(Address.fromHexString("0xEA674fdDe714fd979de3EdF0F56AA9716B898ec8"));
+
     method =
         new RestrictedOffChainEeaSendRawTransaction(
-            transactionPool, privacyController, privacyIdProvider);
+            transactionPool, privacyController, privateMarkerTransactionFactory, privacyIdProvider);
   }
 
   @Test

@@ -17,18 +17,11 @@ package org.hyperledger.besu.plugins;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.serialize;
 
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.Transaction;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
@@ -46,38 +39,15 @@ import picocli.CommandLine.Option;
 public class TestPrivacyServicePlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
 
+  PrivacyPluginService pluginService;
+  BesuContext context;
+
   @Override
   public void register(final BesuContext context) {
+    this.context = context;
+
     context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
-
-    final KeyPair randomFixedSigningKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-
-    final Address sender =
-        org.hyperledger.besu.ethereum.core.Address.extract(
-            Hash.hash(randomFixedSigningKey.getPublicKey().getEncodedBytes()));
-
-    final PrivacyPluginService pluginService = context.getService(PrivacyPluginService.class).get();
-
-    pluginService.setPrivateMarkerTransactionFactory(
-        (privateMarkerTransactionPayload, privateTransaction, precompileAddress, privacyUserId) -> {
-          final EthQueryService ethQueryService = context.getService(EthQueryService.class).get();
-
-          final long nonce = ethQueryService.getTransactionCount(sender);
-          final org.hyperledger.besu.ethereum.core.Transaction privacyMarkerTransaction =
-              org.hyperledger.besu.ethereum.core.Transaction.builder()
-                  .type(TransactionType.FRONTIER)
-                  .nonce(nonce)
-                  .gasPrice(Wei.fromQuantity(privateTransaction.getGasPrice()))
-                  .gasLimit(privateTransaction.getGasLimit())
-                  .to(org.hyperledger.besu.ethereum.core.Address.fromPlugin(precompileAddress))
-                  .value(Wei.fromQuantity(privateTransaction.getValue()))
-                  .payload(Bytes.fromBase64String(privateMarkerTransactionPayload))
-                  .signAndBuild(randomFixedSigningKey);
-
-          final BytesValueRLPOutput out = new BytesValueRLPOutput();
-          privacyMarkerTransaction.writeTo(out);
-          return out.encoded();
-        });
+    pluginService = context.getService(PrivacyPluginService.class).get();
 
     pluginService.setPayloadProvider(
         new PrivacyPluginPayloadProvider() {
@@ -108,11 +78,19 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   }
 
   @Override
-  public void start() {}
+  public void start() {
+    if (signingEnabled) {
+      pluginService.setPrivateMarkerTransactionFactory(
+          new TestPrivateMarkerTransactionFactory(context.getService(EthQueryService.class).get()));
+    }
+  }
 
   @Override
   public void stop() {}
 
   @Option(names = "--plugin-privacy-service-encryption-prefix")
   String prefix;
+
+  @Option(names = "--plugin-privacy-service-signing-enabled")
+  boolean signingEnabled = false;
 }

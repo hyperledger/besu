@@ -26,4 +26,6 @@ public interface PrivateMarkerTransactionFactory {
       final PrivateTransaction privateTransaction,
       final Address precompileAddress,
       final String privacyUserId);
+
+  Address getSender(PrivateTransaction privateTransaction, String privacyUserId);
 }

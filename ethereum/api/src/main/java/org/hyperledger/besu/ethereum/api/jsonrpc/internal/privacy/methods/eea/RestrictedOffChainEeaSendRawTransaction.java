@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.Restriction;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Optional;
 
@@ -41,8 +42,9 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
   public RestrictedOffChainEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyController privacyController,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivacyIdProvider privacyIdProvider) {
-    super(transactionPool);
+    super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
   }

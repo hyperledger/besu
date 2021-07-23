@@ -22,7 +22,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PrivacyPluginPluginServiceImpl implements PrivacyPluginService {
+public class PrivacyPluginServiceImpl implements PrivacyPluginService {
   private static final Logger LOG = LogManager.getLogger();
 
   private PrivacyPluginPayloadProvider privacyPluginPayloadProvider;
