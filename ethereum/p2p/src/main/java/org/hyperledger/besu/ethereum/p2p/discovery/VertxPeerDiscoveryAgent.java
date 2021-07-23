@@ -232,7 +232,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             handleIncomingPacket(endpoint, event.result());
           } else {
             if (event.cause() instanceof PeerDiscoveryPacketDecodingException) {
-              LOG.info(
+              LOG.debug(
                   "Discarding invalid peer discovery packet: {}, {}",
                   event.cause().getMessage(),
                   event.cause());
