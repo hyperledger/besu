@@ -15,13 +15,14 @@
 package org.hyperledger.besu.plugin.services.privacy;
 
 import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.Transaction;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public interface PrivateMarkerTransactionSigner {
 
-  Address getSender(String privacyUserId);
+  Address getSender(PrivateTransaction privateTransaction, String privacyUserId);
 
   Bytes signPrivacyMarkerTransaction(Transaction privacyMarkerTransaction, String privacyUserId);
 }

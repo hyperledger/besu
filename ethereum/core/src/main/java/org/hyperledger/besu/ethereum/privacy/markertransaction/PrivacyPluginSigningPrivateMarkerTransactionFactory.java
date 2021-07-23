@@ -46,8 +46,9 @@ public class PrivacyPluginSigningPrivateMarkerTransactionFactory
       final String privacyUserId) {
 
     final Address sender =
-        Address.fromPlugin(privateMarkerTransactionSigner.getSender(privacyUserId));
-    long nonce = nonceProvider.getNonce(sender);
+        Address.fromPlugin(
+            privateMarkerTransactionSigner.getSender(privateTransaction, privacyUserId));
+    final long nonce = nonceProvider.getNonce(sender);
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
