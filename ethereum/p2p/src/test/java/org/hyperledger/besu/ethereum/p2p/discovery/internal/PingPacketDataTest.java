@@ -127,8 +127,6 @@ public class PingPacketDataTest {
 
   @Test
   public void handleOptionalSourceIP() {
-    // final int version = 4;
-    // final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
 
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final long time = System.currentTimeMillis();
@@ -138,14 +136,6 @@ public class PingPacketDataTest {
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     anon.writeTo(out);
-    /*out.startList();
-        out.writeIntScalar(version);
-        from.encodeStandalone(out);
-        to.encodeStandalone(out);
-        out.writeLongScalar(time);
-        out.writeBytes(enrSeq.toBytes());
-        out.endList();
-    */
     final Bytes serialized = out.encoded();
     System.out.println(serialized.toHexString());
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
