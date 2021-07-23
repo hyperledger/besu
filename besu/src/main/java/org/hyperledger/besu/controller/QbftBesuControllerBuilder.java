@@ -17,7 +17,6 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -177,11 +176,11 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final FutureMessageBuffer futureMessageBuffer =
         new FutureMessageBuffer(
-            bftConfig.getFutureMessagesMaxDistance(),
-            bftConfig.getFutureMessagesLimit(),
+            qbftConfig.getFutureMessagesMaxDistance(),
+            qbftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber());
     final MessageTracker duplicateMessageTracker =
-        new MessageTracker(bftConfig.getDuplicateMessageLimit());
+        new MessageTracker(qbftConfig.getDuplicateMessageLimit());
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 

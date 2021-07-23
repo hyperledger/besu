@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+@FunctionalInterface
 public interface ConsensusContextFactory {
 
   Object create(
