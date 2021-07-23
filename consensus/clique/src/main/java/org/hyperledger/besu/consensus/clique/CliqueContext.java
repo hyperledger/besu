@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.clique;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.PoaContext;
-import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 
 /**
  * Holds the data which lives "in parallel" with the importation of blocks etc. when using the

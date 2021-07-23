@@ -12,12 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.validatorprovider.blockbased;
+package org.hyperledger.besu.consensus.common.validator.blockbased;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorVote;
-import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
+import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Arrays;

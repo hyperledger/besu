@@ -20,7 +20,7 @@ import static org.hyperledger.besu.consensus.common.bft.Vote.DROP_BYTE_VALUE;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
-import org.hyperledger.besu.consensus.common.validatorprovider.VoteType;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;

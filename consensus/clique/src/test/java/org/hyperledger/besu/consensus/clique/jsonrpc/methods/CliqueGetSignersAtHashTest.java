@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.core.Address.fromHexString;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.clique.CliqueBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.common.validatorprovider.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
