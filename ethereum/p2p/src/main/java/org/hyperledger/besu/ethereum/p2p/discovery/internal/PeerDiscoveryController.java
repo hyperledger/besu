@@ -467,7 +467,7 @@ public class PeerDiscoveryController {
         interaction -> {
           final PingPacketData data =
               PingPacketData.create(
-                  localPeer.getEndpoint(),
+                  Optional.of(localPeer.getEndpoint()),
                   peer.getEndpoint(),
                   localPeer.getNodeRecord().map(NodeRecord::getSeq).orElse(null));
           createPacket(

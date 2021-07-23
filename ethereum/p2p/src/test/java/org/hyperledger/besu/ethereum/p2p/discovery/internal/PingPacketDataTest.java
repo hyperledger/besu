@@ -36,7 +36,7 @@ public class PingPacketDataTest {
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final UInt64 enrSeq = UInt64.ONE;
-    final PingPacketData packet = PingPacketData.create(from, to, enrSeq);
+    final PingPacketData packet = PingPacketData.create(Optional.of(from), to, enrSeq);
     final Bytes serialized = RLP.encode(packet::writeTo);
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
@@ -119,6 +119,38 @@ public class PingPacketDataTest {
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getFrom()).contains(from);
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void handleOptionalSourceIP() {
+    // final int version = 4;
+    // final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final long time = System.currentTimeMillis();
+    final UInt64 enrSeq = UInt64.ONE;
+
+    final PingPacketData anon = PingPacketData.create(Optional.empty(), to, time, enrSeq);
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    anon.writeTo(out);
+    /*out.startList();
+        out.writeIntScalar(version);
+        from.encodeStandalone(out);
+        to.encodeStandalone(out);
+        out.writeLongScalar(time);
+        out.writeBytes(enrSeq.toBytes());
+        out.endList();
+    */
+    final Bytes serialized = out.encoded();
+    System.out.println(serialized.toHexString());
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).isEmpty();
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
     assertThat(deserialized.getEnrSeq().isPresent()).isTrue();

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public class PingPacketData implements PacketData {
 
   /* Fixed value that represents we're using v5 of the P2P discovery protocol. */
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
 
   /* Source. If the field is garbage this is empty and we might need to recover it another way. From our bonded peers, for example. */
   private final Optional<Endpoint> maybeFrom;
@@ -59,27 +59,40 @@ public class PingPacketData implements PacketData {
     this.enrSeq = enrSeq;
   }
 
-  public static PingPacketData create(final Endpoint from, final Endpoint to, final UInt64 enrSeq) {
+  public static PingPacketData create(
+      final Optional<Endpoint> from, final Endpoint to, final UInt64 enrSeq) {
     checkArgument(
         enrSeq != null && UInt64.ZERO.compareTo(enrSeq) < 0, "enrSeq cannot be null or negative");
     return create(from, to, PacketData.defaultExpiration(), enrSeq);
   }
 
   static PingPacketData create(
-      final Endpoint from, final Endpoint to, final long expirationSec, final UInt64 enrSeq) {
+      final Optional<Endpoint> from,
+      final Endpoint to,
+      final long expirationSec,
+      final UInt64 enrSeq) {
     checkArgument(
         enrSeq != null && UInt64.ZERO.compareTo(enrSeq) < 0, "enrSeq cannot be null or negative");
-    return new PingPacketData(Optional.of(from), to, expirationSec, enrSeq);
+    return new PingPacketData(from, to, expirationSec, enrSeq);
   }
 
   public static PingPacketData readFrom(final RLPInput in) {
     in.enterList();
     // The first element signifies the "version", but this value is ignored as of EIP-8
     in.readBigIntegerScalar();
-    //final Optional<Endpoint> from = Endpoint.maybeDecodeStandalone(in);
-    final Optional<Endpoint> from = Optional.empty();
-    in.skipNext();
-    final Endpoint to = Endpoint.decodeStandalone(in);
+    Optional<Endpoint> from = Optional.empty();
+    Optional<Endpoint> to = Optional.empty();
+    if (in.nextIsList()) {
+      to = Endpoint.maybeDecodeStandalone(in);
+      // https://github.com/ethereum/devp2p/blob/master/discv4.md#ping-packet-0x01
+      if (in.nextIsList()) { // if there are two, the first is the from address, next is the to
+        // address
+        from = to;
+        to = Endpoint.maybeDecodeStandalone(in);
+      }
+    } else {
+      throw new DevP2PException("missing address in ping packet");
+    }
     final long expiration = in.readLongScalar();
     UInt64 enrSeq = null;
     if (!in.isEndOfCurrentList()) {
@@ -92,19 +105,16 @@ public class PingPacketData implements PacketData {
       }
     }
     in.leaveListLenient();
-    return new PingPacketData(from, to, expiration, enrSeq);
+    return new PingPacketData(from, to.get(), expiration, enrSeq);
   }
 
   @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
     out.writeIntScalar(VERSION);
-    maybeFrom
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    "Attempting to serialize invalid PING packet. Missing 'from' field"))
-        .encodeStandalone(out);
+    if (maybeFrom.isPresent()) {
+      maybeFrom.get().encodeStandalone(out);
+    }
     to.encodeStandalone(out);
     out.writeLongScalar(expiration);
     out.writeLongScalar(enrSeq.toLong());
