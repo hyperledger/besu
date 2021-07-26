@@ -65,6 +65,7 @@ dependencies {
   implementation project(':ethereum:eth')
   implementation project(':ethereum:p2p')
   implementation project(':ethereum:rlp')
+  implementation project(':pki')
   implementation project(':services:kvstore')
 
   implementation 'com.google.guava:guava'

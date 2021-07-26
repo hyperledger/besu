@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import java.util.Optional;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -70,6 +71,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.HashMap;
@@ -88,10 +90,19 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
+  //TODO initialize this in BesuCommand as part of the PKI setup (will be done in a follow up PR)
+  private Optional<KeyStoreWrapper> keyStoreWrapper = Optional.empty();
 
   @Override
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
-    return Suppliers.memoize(QbftExtraDataCodec::new);
+    return Suppliers.memoize(() -> {
+      if (keyStoreWrapper.isPresent()) {
+        //TODO-lucas return PkiQbftExtraData
+        return null;
+      } else {
+        return new QbftExtraDataCodec();
+      }
+    });
   }
 
   @Override
