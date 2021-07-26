@@ -12,34 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
+package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-public class FeeMarketConfig implements FeeMarket {
-  private final long basefeeMaxChangeDenominator;
-  private final long initialBasefee;
-  private final long slackCoefficient;
+public class LondonFeeMarket implements FeeMarket {
 
-  public FeeMarketConfig(
-      final long basefeeMaxChangeDenominator,
-      final long initialBasefee,
-      final long slackCoefficient) {
-    this.basefeeMaxChangeDenominator = basefeeMaxChangeDenominator;
-    this.initialBasefee = initialBasefee;
-    this.slackCoefficient = slackCoefficient;
-  }
+  private final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
+
+  private final Long BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
+
+  private final Long SLACK_COEFFICIENT = 2L;
 
   @Override
   public long getBasefeeMaxChangeDenominator() {
-    return basefeeMaxChangeDenominator;
+    return BASEFEE_MAX_CHANGE_DENOMINATOR;
   }
 
   @Override
   public long getInitialBasefee() {
-    return initialBasefee;
+    return EIP1559_BASEFEE_DEFAULT_VALUE;
   }
 
   @Override
   public long getSlackCoefficient() {
-    return slackCoefficient;
+    return SLACK_COEFFICIENT;
   }
 }

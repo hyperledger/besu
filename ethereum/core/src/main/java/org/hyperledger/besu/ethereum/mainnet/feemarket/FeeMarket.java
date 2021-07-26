@@ -12,9 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
-
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 public interface FeeMarket {
 
@@ -24,10 +22,7 @@ public interface FeeMarket {
 
   long getSlackCoefficient();
 
-  static FeeMarket eip1559() {
-    return new FeeMarketConfig(
-        ExperimentalEIPs.basefeeMaxChangeDenominator,
-        ExperimentalEIPs.initialBasefee,
-        ExperimentalEIPs.slackCoefficient);
+  static FeeMarket london() {
+    return new LondonFeeMarket();
   }
 }

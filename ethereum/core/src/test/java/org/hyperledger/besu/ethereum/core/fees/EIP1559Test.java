@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+
 import org.junit.Test;
 
 public class EIP1559Test {

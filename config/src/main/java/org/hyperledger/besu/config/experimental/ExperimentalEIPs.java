@@ -14,31 +14,8 @@
  */
 package org.hyperledger.besu.config.experimental;
 
-import picocli.CommandLine.Option;
-
 /**
  * Flags defined in this class must be used with caution, and strictly reserved to experimental
  * EIPs.
  */
-public class ExperimentalEIPs {
-  // To make it easier for tests to reset the value to default
-  public static final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
-
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-basefee-max-change-denominator"},
-      arity = "1")
-  public static Long basefeeMaxChangeDenominator = 8L;
-
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-initial-base-fee"},
-      arity = "1")
-  public static Long initialBasefee = EIP1559_BASEFEE_DEFAULT_VALUE;
-
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-slack-coefficient"},
-      arity = "1")
-  public static Long slackCoefficient = 2L;
-}
+public class ExperimentalEIPs {}
