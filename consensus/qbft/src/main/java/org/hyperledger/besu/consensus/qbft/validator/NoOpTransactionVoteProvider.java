@@ -1,4 +1,4 @@
-package org.hyperledger.besu.consensus.qbft.voting;
+package org.hyperledger.besu.consensus.qbft.validator;
 /*
  * Copyright ConsenSys AG.
  *

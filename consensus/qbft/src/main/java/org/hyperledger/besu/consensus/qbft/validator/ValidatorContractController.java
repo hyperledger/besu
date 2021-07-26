@@ -12,10 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.voting;
+package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -33,13 +32,13 @@ import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 
-public class ValidatorSmartContractController {
+public class ValidatorContractController {
 
   private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;
   private final Function getValidatorsFunction;
 
-  public ValidatorSmartContractController(
+  public ValidatorContractController(
       final Address contractAddress, final TransactionSimulator transactionSimulator) {
     this.contractAddress = contractAddress;
     this.transactionSimulator = transactionSimulator;
@@ -52,7 +51,7 @@ public class ValidatorSmartContractController {
     }
   }
 
-  public Collection<Address> getValidators(final BlockHeader header) {
+  public Collection<Address> getValidators(final long blockNumber) {
     final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(getValidatorsFunction));
     final CallParameter callParams =
         new CallParameter(null, contractAddress, -1, null, null, payload);
@@ -61,7 +60,7 @@ public class ValidatorSmartContractController {
             callParams,
             TransactionValidationParams.transactionSimulator(),
             OperationTracer.NO_TRACING,
-            header)
+            blockNumber)
         .map(this::parseResult)
         .orElse(Collections.emptyList());
   }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -51,8 +52,8 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFa
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
-import org.hyperledger.besu.consensus.qbft.voting.TransactionValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.voting.ValidatorSmartContractController;
+import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -257,9 +258,12 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final Map<Long, List<Address>> bftValidatorForkMap =
         convertBftForks(configOptions.getTransitions().getQbftForks());
+    final BftValidatorOverrides bftValidatorOverrides =
+        new BftValidatorOverrides(bftValidatorForkMap);
 
     // TODO make the validator provider switchable
     if (qbftConfig.getValidatorContractAddress().isEmpty()) {
+      // TODO use bftValidatorOverrides instead passing in map
       return new BftContext(
           BlockValidatorProvider.forkingValidatorProvider(
               blockchain, epochManager, blockInterface, bftValidatorForkMap),
@@ -270,11 +274,11 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
           Address.fromHexString(qbftConfig.getValidatorContractAddress().get());
       final TransactionSimulator transactionSimulator =
           new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
-      final ValidatorSmartContractController validatorSmartContractController =
-          new ValidatorSmartContractController(contractAddress, transactionSimulator);
+      final ValidatorContractController validatorContractController =
+          new ValidatorContractController(contractAddress, transactionSimulator);
       final ValidatorProvider validatorProvider =
           new TransactionValidatorProvider(
-              blockchain, validatorSmartContractController, bftValidatorForkMap);
+              blockchain, validatorContractController, bftValidatorOverrides);
       return new BftContext(validatorProvider, epochManager, blockInterface);
     }
   }

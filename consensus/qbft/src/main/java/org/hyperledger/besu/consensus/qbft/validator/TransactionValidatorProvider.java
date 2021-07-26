@@ -12,8 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft.voting;
+package org.hyperledger.besu.consensus.qbft.validator;
 
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -21,33 +22,46 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 public class TransactionValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
-  private final ValidatorSmartContractController validatorSmartContractController;
-  // TODO cache results
-  // TODO use fork map to override
+  private final ValidatorContractController validatorContractController;
+  private final BftValidatorOverrides validatorOverrides;
+  private final Cache<Long, Collection<Address>> validatorCache =
+      CacheBuilder.newBuilder().maximumSize(100).build();
 
   public TransactionValidatorProvider(
       final Blockchain blockchain,
-      final ValidatorSmartContractController validatorSmartContractController,
-      final Map<Long, List<Address>> bftValidatorForkMap) {
+      final ValidatorContractController validatorContractController,
+      final BftValidatorOverrides validatorOverrides) {
     this.blockchain = blockchain;
-    this.validatorSmartContractController = validatorSmartContractController;
+    this.validatorContractController = validatorContractController;
+    this.validatorOverrides = validatorOverrides;
   }
 
   @Override
   public Collection<Address> getValidatorsAtHead() {
-    return validatorSmartContractController.getValidators(blockchain.getChainHeadHeader());
+    return getValidatorsAfterBlock(blockchain.getChainHeadHeader());
   }
 
   @Override
   public Collection<Address> getValidatorsAfterBlock(final BlockHeader header) {
-    return validatorSmartContractController.getValidators(header);
+    final long blockNumber = header.getNumber();
+    try {
+      return validatorOverrides
+          .getForBlock(blockNumber + 1L)
+          .orElse(
+              validatorCache.get(
+                  blockNumber, () -> validatorContractController.getValidators(blockNumber)));
+    } catch (ExecutionException e) {
+      throw new RuntimeException("Unable to determine a validators for the requested block.");
+    }
   }
 
   @Override
