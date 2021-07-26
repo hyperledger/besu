@@ -141,7 +141,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, blockInterface, true, validatorProvider);
+        new ProposerSelector(blockchain, bftBlockInterface().get(), true, validatorProvider);
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
