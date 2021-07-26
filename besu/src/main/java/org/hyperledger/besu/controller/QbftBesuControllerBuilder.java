@@ -18,6 +18,10 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
+import org.hyperledger.besu.consensus.common.VoteProposer;
+import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
@@ -73,19 +77,24 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class QbftBesuControllerBuilder extends BesuControllerBuilder {
+public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
   private BftConfigOptions bftConfig;
   private ValidatorPeers peers;
-  private final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
-  private final BftBlockInterface blockInterface = new BftBlockInterface(bftExtraDataCodec);
+
+  @Override
+  protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
+    return Suppliers.memoize(QbftExtraDataCodec::new);
+  }
 
   @Override
   protected void prepForBuild() {
@@ -134,13 +143,13 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             miningParameters,
             localAddress,
             bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
-            bftExtraDataCodec);
+            bftExtraDataCodec().get());
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, blockInterface, true, validatorProvider);
+        new ProposerSelector(blockchain, bftBlockInterface().get(), true, validatorProvider);
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
@@ -165,7 +174,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final MessageValidatorFactory messageValidatorFactory =
         new MessageValidatorFactory(
-            proposerSelector, protocolSchedule, protocolContext, bftExtraDataCodec);
+            proposerSelector, protocolSchedule, protocolContext, bftExtraDataCodec().get());
 
     final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
     minedBlockObservers.subscribe(ethProtocolManager);
@@ -194,7 +203,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     minedBlockObservers,
                     messageValidatorFactory,
                     messageFactory,
-                    bftExtraDataCodec),
+                    bftExtraDataCodec().get()),
                 messageValidatorFactory,
                 messageFactory),
             gossiper,
@@ -220,7 +229,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new BftQueryPluginServiceFactory(blockchain, bftExtraDataCodec, nodeKey, "qbft");
+    return new BftQueryPluginServiceFactory(blockchain, bftExtraDataCodec().get(), nodeKey, "qbft");
   }
 
   @Override
@@ -230,14 +239,14 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
-        bftExtraDataCodec);
+        bftExtraDataCodec().get());
   }
 
   @Override
   protected void validateContext(final ProtocolContext context) {
     final BlockHeader genesisBlockHeader = context.getBlockchain().getGenesisBlock().getHeader();
 
-    if (blockInterface.validatorsInBlock(genesisBlockHeader).isEmpty()) {
+    if (bftBlockInterface().get().validatorsInBlock(genesisBlockHeader).isEmpty()) {
       LOG.warn("Genesis block contains no signers - chain will not progress.");
     }
   }
@@ -255,9 +264,9 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     return new BftContext(
         BlockValidatorProvider.forkingValidatorProvider(
-            blockchain, epochManager, blockInterface, bftValidatorForkMap),
+            blockchain, epochManager, bftBlockInterface().get(), bftValidatorForkMap),
         epochManager,
-        blockInterface);
+        bftBlockInterface().get());
   }
 
   private Map<Long, List<Address>> convertBftForks(final List<BftFork> bftForks) {

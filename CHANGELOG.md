@@ -5,6 +5,7 @@
 - Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
 
 ### Bug Fixes
+- consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
 
 ### Early Access Features
 

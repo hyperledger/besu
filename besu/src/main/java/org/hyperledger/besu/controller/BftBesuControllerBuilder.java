@@ -12,21 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+package org.hyperledger.besu.controller;
 
-import java.util.Optional;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 
-@FunctionalInterface
-public interface TransactionPoolReplacementRule {
+import java.util.function.Supplier;
 
-  boolean shouldReplace(
-      TransactionInfo existingTransactionInfo,
-      TransactionInfo newTransactionInfo,
-      Optional<Long> baseFee);
+import com.google.common.base.Suppliers;
 
-  default boolean isNotGasPriced(final TransactionInfo tInfo) {
-    return tInfo.getTransaction().getType().supports1559FeeMarket();
+public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
+
+  protected abstract Supplier<BftExtraDataCodec> bftExtraDataCodec();
+
+  protected Supplier<BftBlockInterface> bftBlockInterface() {
+    return Suppliers.memoize(() -> new BftBlockInterface(bftExtraDataCodec().get()));
   }
 }
