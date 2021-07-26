@@ -24,7 +24,7 @@ public interface ValidatorProvider {
 
   Collection<Address> getValidatorsAtHead();
 
-  Collection<Address> getValidatorsAfterBlock(final BlockHeader header);
+  Collection<Address> getValidatorsAfterBlock(BlockHeader header);
 
   Optional<VoteProvider> getVoteProvider();
 }

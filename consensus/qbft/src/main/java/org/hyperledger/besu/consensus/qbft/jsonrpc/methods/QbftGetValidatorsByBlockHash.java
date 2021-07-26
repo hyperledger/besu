@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -29,17 +29,18 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.AbstractBytes;
 
 public class QbftGetValidatorsByBlockHash implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Blockchain blockchain;
-  private final BlockInterface blockInterface;
+  private final ValidatorProvider validatorProvider;
 
   public QbftGetValidatorsByBlockHash(
-      final Blockchain blockchain, final BlockInterface blockInterface) {
+      final Blockchain blockchain, final ValidatorProvider validatorProvider) {
     this.blockchain = blockchain;
-    this.blockInterface = blockInterface;
+    this.validatorProvider = validatorProvider;
   }
 
   @Override
@@ -60,8 +61,8 @@ public class QbftGetValidatorsByBlockHash implements JsonRpcMethod {
     return blockHeader
         .map(
             header ->
-                blockInterface.validatorsInBlock(header).stream()
-                    .map(validator -> validator.toString())
+                validatorProvider.getValidatorsAfterBlock(header).stream()
+                    .map(AbstractBytes::toString)
                     .collect(Collectors.toList()))
         .orElse(null);
   }
