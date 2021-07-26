@@ -19,10 +19,10 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.util.NonceProvider;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -30,45 +30,41 @@ import org.apache.tuweni.bytes.Bytes;
 public class FixedKeySigningPrivateMarkerTransactionFactory
     implements PrivateMarkerTransactionFactory {
 
-  private final NonceProvider nonceProvider;
   private final KeyPair signingKey;
   private final Address sender;
 
-  public FixedKeySigningPrivateMarkerTransactionFactory(
-      final NonceProvider nonceProvider, final KeyPair signingKey) {
-    this.nonceProvider = nonceProvider;
+  public FixedKeySigningPrivateMarkerTransactionFactory(final KeyPair signingKey) {
     this.signingKey = signingKey;
     this.sender = Util.publicKeyToAddress(signingKey.getPublicKey());
-  }
-
-  @Override
-  public Bytes create(
-      final String privateMarkerTransactionPayload,
-      final PrivateTransaction privateTransaction,
-      final Address precompileAddress,
-      final String privacyUserId) {
-    final long nonce =
-        nonceProvider.getNonce(org.hyperledger.besu.ethereum.core.Address.fromPlugin(sender));
-
-    final Transaction transaction =
-        Transaction.builder()
-            .type(TransactionType.FRONTIER)
-            .nonce(nonce)
-            .gasPrice(Wei.fromQuantity(privateTransaction.getGasPrice()))
-            .gasLimit(privateTransaction.getGasLimit())
-            .to(org.hyperledger.besu.ethereum.core.Address.fromPlugin(precompileAddress))
-            .value(Wei.fromQuantity(privateTransaction.getValue()))
-            .payload(Bytes.fromBase64String(privateMarkerTransactionPayload))
-            .signAndBuild(signingKey);
-
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    return out.encoded();
   }
 
   @Override
   public Address getSender(
       final PrivateTransaction privateTransaction, final String privacyUserId) {
     return this.sender;
+  }
+
+  @Override
+  public Bytes create(
+      final UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
+      final PrivateTransaction privateTransaction,
+      final String privacyUserId) {
+    final Transaction transaction =
+        Transaction.builder()
+            .type(TransactionType.FRONTIER)
+            .nonce(unsignedPrivateMarkerTransaction.getNonce())
+            .gasPrice(
+                unsignedPrivateMarkerTransaction.getGasPrice().map(Wei::fromQuantity).orElse(null))
+            .gasLimit(unsignedPrivateMarkerTransaction.getGasLimit())
+            .to(
+                org.hyperledger.besu.ethereum.core.Address.fromPlugin(
+                    unsignedPrivateMarkerTransaction.getTo().get()))
+            .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
+            .payload(unsignedPrivateMarkerTransaction.getPayload())
+            .signAndBuild(signingKey);
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    transaction.writeTo(out);
+    return out.encoded();
   }
 }

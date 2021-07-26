@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -22,6 +23,8 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.util.NonceProvider;
+import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Optional;
@@ -36,8 +39,17 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
       final TransactionPool transactionPool,
       final PrivacyController privacyController,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
-      final PrivacyIdProvider privacyIdProvider) {
-    super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory);
+      final PrivacyIdProvider privacyIdProvider,
+      final BlockchainQueries blockchainQueries,
+      final NonceProvider publicNonceProvider,
+      final GasCalculator gasCalculator) {
+    super(
+        transactionPool,
+        privacyIdProvider,
+        privateMarkerTransactionFactory,
+        blockchainQueries,
+        publicNonceProvider,
+        gasCalculator);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
   }
@@ -61,7 +73,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
         privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, privacyUserId, Optional.empty());
 
-    return privacyController.createPrivateMarkerTransaction(
-        payloadFromPlugin, privateTransaction, Address.PLUGIN_PRIVACY, privacyUserId);
+    return createPrivateMarkerTransaction(
+        Address.PLUGIN_PRIVACY, payloadFromPlugin, privateTransaction, privacyUserId);
   }
 }

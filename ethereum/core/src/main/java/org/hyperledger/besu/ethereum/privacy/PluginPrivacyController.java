@@ -43,7 +43,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class PluginPrivacyController implements PrivacyController {
-  private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateStateRootResolver privateStateRootResolver;
   private final Blockchain blockchain;
@@ -60,7 +59,6 @@ public class PluginPrivacyController implements PrivacyController {
       final PrivateTransactionSimulator privateTransactionSimulator,
       final PrivateNonceProvider privateNonceProvider,
       final PrivateWorldStateReader privateWorldStateReader) {
-    this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
     this.privateTransactionValidator = new PrivateTransactionValidator(chainId);
     this.blockchain = blockchain;
     this.privateTransactionSimulator = privateTransactionSimulator;
@@ -80,21 +78,6 @@ public class PluginPrivacyController implements PrivacyController {
         .getPayloadProvider()
         .generateMarkerPayload(privateTransaction, privacyUserId)
         .toBase64String();
-  }
-
-  @Override
-  public Transaction createPrivateMarkerTransaction(
-      final String unrestrictedTransactionPayload,
-      final PrivateTransaction privateTransaction,
-      final Address privacyPrecompileAddress,
-      final String privacyUserId) {
-
-    return Transaction.readFrom(
-        privateMarkerTransactionFactory.create(
-            unrestrictedTransactionPayload,
-            privateTransaction,
-            privacyPrecompileAddress,
-            privacyUserId));
   }
 
   @Override

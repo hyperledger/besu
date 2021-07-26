@@ -220,7 +220,7 @@ public abstract class CommandTestAbstract {
     when(mockEthProtocolManager.getBlockBroadcaster()).thenReturn(mockBlockBroadcaster);
 
     when(mockProtocolContext.getBlockchain()).thenReturn(mockMutableBlockchain);
-    when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
+    lenient().when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockController.getTransactionPool()).thenReturn(mockTransactionPool);
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);

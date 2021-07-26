@@ -25,7 +25,6 @@ import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
-import org.hyperledger.besu.plugin.services.query.EthQueryService;
 
 import java.util.Optional;
 
@@ -81,7 +80,7 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   public void start() {
     if (signingEnabled) {
       pluginService.setPrivateMarkerTransactionFactory(
-          new TestPrivateMarkerTransactionFactory(context.getService(EthQueryService.class).get()));
+          new TestPrivateMarkerTransactionFactory(signingKey));
     }
   }
 
@@ -93,4 +92,7 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
 
   @Option(names = "--plugin-privacy-service-signing-enabled")
   boolean signingEnabled = false;
+
+  @Option(names = "--plugin-privacy-service-signing-key")
+  String signingKey;
 }

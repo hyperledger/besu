@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyRpcMethod;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
@@ -86,6 +86,12 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return privacyParameters;
   }
 
+  public GasCalculator getGasCalculator() {
+    return protocolSchedule
+        .getByBlockNumber(blockchainQueries.headBlockNumber())
+        .getGasCalculator();
+  }
+
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final PrivateMarkerTransactionFactory markerTransactionFactory =
@@ -111,7 +117,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
       return privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory();
     } else if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
-          new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions()),
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory();
@@ -136,7 +141,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
               getBlockchainQueries().getBlockchain(),
               privacyParameters,
               chainId,
-              markerTransactionFactory,
               createPrivateTransactionSimulator(),
               privateNonceProvider,
               privacyParameters.getPrivateWorldStateReader());

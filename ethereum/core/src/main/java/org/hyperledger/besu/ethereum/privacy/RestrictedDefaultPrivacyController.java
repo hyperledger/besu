@@ -41,7 +41,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -66,7 +65,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   private final PrivateStateStorage privateStateStorage;
   private final Enclave enclave;
   private final PrivateTransactionValidator privateTransactionValidator;
-  private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final PrivateTransactionSimulator privateTransactionSimulator;
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivateWorldStateReader privateWorldStateReader;
@@ -77,7 +75,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
       final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
       final PrivateNonceProvider privateNonceProvider,
       final PrivateWorldStateReader privateWorldStateReader) {
@@ -86,7 +83,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
         privacyParameters.getPrivateStateStorage(),
         privacyParameters.getEnclave(),
         new PrivateTransactionValidator(chainId),
-        privateMarkerTransactionFactory,
         privateTransactionSimulator,
         privateNonceProvider,
         privateWorldStateReader,
@@ -98,7 +94,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
       final PrivateStateStorage privateStateStorage,
       final Enclave enclave,
       final PrivateTransactionValidator privateTransactionValidator,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
       final PrivateNonceProvider privateNonceProvider,
       final PrivateWorldStateReader privateWorldStateReader,
@@ -107,7 +102,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
     this.privateStateStorage = privateStateStorage;
     this.enclave = enclave;
     this.privateTransactionValidator = privateTransactionValidator;
-    this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
     this.privateTransactionSimulator = privateTransactionSimulator;
     this.privateNonceProvider = privateNonceProvider;
     this.privateWorldStateReader = privateWorldStateReader;
@@ -161,18 +155,6 @@ public class RestrictedDefaultPrivacyController implements PrivacyController {
   public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
       final List<String> addresses, final String privacyUserId) {
     return enclave.findPrivacyGroup(addresses);
-  }
-
-  @Override
-  public Transaction createPrivateMarkerTransaction(
-      final String transactionPayload,
-      final PrivateTransaction privateTransaction,
-      final Address privacyPrecompileAddress,
-      final String privacyUserId) {
-    return Transaction.readFrom(
-        RLP.input(
-            privateMarkerTransactionFactory.create(
-                transactionPayload, privateTransaction, privacyPrecompileAddress, privacyUserId)));
   }
 
   @Override

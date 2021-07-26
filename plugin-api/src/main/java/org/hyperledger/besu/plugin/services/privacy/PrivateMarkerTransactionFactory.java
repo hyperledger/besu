@@ -16,16 +16,16 @@ package org.hyperledger.besu.plugin.services.privacy;
 
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public interface PrivateMarkerTransactionFactory {
 
-  Bytes create(
-      final String privateMarkerTransactionPayload,
-      final PrivateTransaction privateTransaction,
-      final Address precompileAddress,
-      final String privacyUserId);
-
   Address getSender(PrivateTransaction privateTransaction, String privacyUserId);
+
+  Bytes create(
+      UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
+      PrivateTransaction privateTransaction,
+      String privacyUserId);
 }

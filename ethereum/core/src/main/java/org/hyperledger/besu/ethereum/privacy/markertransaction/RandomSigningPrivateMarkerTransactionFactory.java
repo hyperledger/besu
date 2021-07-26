@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -30,10 +31,17 @@ public class RandomSigningPrivateMarkerTransactionFactory
     implements PrivateMarkerTransactionFactory {
 
   @Override
+  public Address getSender(
+      final PrivateTransaction privateTransaction, final String privacyUserId) {
+    // Note the address here is only used as a key to lock nonce generation for the same address
+    final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
+    return org.hyperledger.besu.ethereum.core.Address.extract(signingKey.getPublicKey());
+  }
+
+  @Override
   public Bytes create(
-      final String privateMarkerTransactionPayload,
+      final UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
       final PrivateTransaction privateTransaction,
-      final Address precompileAddress,
       final String privacyUserId) {
     final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
@@ -41,23 +49,18 @@ public class RandomSigningPrivateMarkerTransactionFactory
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(0)
-            .gasPrice(Wei.fromQuantity(privateTransaction.getGasPrice()))
-            .gasLimit(privateTransaction.getGasLimit())
-            .to(org.hyperledger.besu.ethereum.core.Address.fromPlugin(precompileAddress))
-            .value(Wei.fromQuantity(privateTransaction.getValue()))
-            .payload(Bytes.fromBase64String(privateMarkerTransactionPayload))
+            .gasPrice(
+                unsignedPrivateMarkerTransaction.getGasPrice().map(Wei::fromQuantity).orElse(null))
+            .gasLimit(unsignedPrivateMarkerTransaction.getGasLimit())
+            .to(
+                org.hyperledger.besu.ethereum.core.Address.fromPlugin(
+                    unsignedPrivateMarkerTransaction.getTo().get()))
+            .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
+            .payload(unsignedPrivateMarkerTransaction.getPayload())
             .signAndBuild(signingKey);
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     transaction.writeTo(out);
     return out.encoded();
-  }
-
-  @Override
-  public Address getSender(
-      final PrivateTransaction privateTransaction, final String privacyUserId) {
-    // Note the address here is only used as a key to lock nonce generation for the same address
-    final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-    return org.hyperledger.besu.ethereum.core.Address.extract(signingKey.getPublicKey());
   }
 }

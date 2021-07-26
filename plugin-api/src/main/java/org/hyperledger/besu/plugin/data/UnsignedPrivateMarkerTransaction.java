@@ -12,13 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.query;
+package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.plugin.data.Address;
-import org.hyperledger.besu.plugin.services.BesuService;
+import java.util.Optional;
 
-public interface EthQueryService extends BesuService {
-  long getTransactionCount(final Address address);
+import org.apache.tuweni.bytes.Bytes;
 
-  long blockNumber(final Address address);
+public interface UnsignedPrivateMarkerTransaction {
+
+  TransactionType getType();
+
+  long getNonce();
+
+  Optional<? extends Quantity> getGasPrice();
+
+  long getGasLimit();
+
+  Optional<? extends Address> getTo();
+
+  Quantity getValue();
+
+  Bytes getPayload();
 }

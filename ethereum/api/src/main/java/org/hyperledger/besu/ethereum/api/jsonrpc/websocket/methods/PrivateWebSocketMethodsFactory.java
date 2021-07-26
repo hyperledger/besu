@@ -14,14 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
@@ -45,19 +43,16 @@ public class PrivateWebSocketMethodsFactory {
   private final SubscriptionManager subscriptionManager;
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
-  private final TransactionPool transactionPool;
 
   public PrivateWebSocketMethodsFactory(
       final PrivacyParameters privacyParameters,
       final SubscriptionManager subscriptionManager,
       final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries blockchainQueries,
-      final TransactionPool transactionPool) {
+      final BlockchainQueries blockchainQueries) {
     this.privacyParameters = privacyParameters;
     this.subscriptionManager = subscriptionManager;
     this.protocolSchedule = protocolSchedule;
     this.blockchainQueries = blockchainQueries;
-    this.transactionPool = transactionPool;
   }
 
   public Collection<JsonRpcMethod> methods() {
@@ -77,7 +72,6 @@ public class PrivateWebSocketMethodsFactory {
       return privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory();
     } else if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
-          new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions()),
           privacyParameters.getSigningKeyPair().get());
     }
     return new RandomSigningPrivateMarkerTransactionFactory();
@@ -100,7 +94,6 @@ public class PrivateWebSocketMethodsFactory {
               blockchainQueries.getBlockchain(),
               privacyParameters,
               chainId,
-              createPrivateMarkerTransactionFactory(),
               createPrivateTransactionSimulator(),
               createPrivateNonceProvider(),
               privacyParameters.getPrivateWorldStateReader());

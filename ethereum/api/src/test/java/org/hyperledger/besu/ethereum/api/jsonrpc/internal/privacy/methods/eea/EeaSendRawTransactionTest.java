@@ -31,17 +31,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
+
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -58,20 +57,22 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
   final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
-  final String MOCK_ORION_KEY = "";
 
   RestrictedOffChainEeaSendRawTransaction method;
 
-  @Mock PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
-
   @Before
   public void before() {
-    when(privateMarkerTransactionFactory.getSender(any(), any()))
-        .thenReturn(Address.fromHexString("0xEA674fdDe714fd979de3EdF0F56AA9716B898ec8"));
+    when(blockchainQueries.gasPrice()).thenReturn(Optional.of(10L));
 
     method =
         new RestrictedOffChainEeaSendRawTransaction(
-            transactionPool, privacyController, privateMarkerTransactionFactory, privacyIdProvider);
+            transactionPool,
+            privacyController,
+            factory,
+            privacyIdProvider,
+            blockchainQueries,
+            address -> 0,
+            gasCalculator);
   }
 
   @Test
@@ -225,8 +226,6 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), anyString()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.createPrivateMarkerTransaction(any(), any(), any(), any()))
-        .thenReturn(PUBLIC_TRANSACTION);
     when(transactionPool.addLocalTransaction(any()))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 
