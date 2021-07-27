@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -161,7 +159,7 @@ public class GenesisConfigFileTest {
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isNotPresent();
     assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas()).isPresent();
     assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas().get())
-        .isEqualTo(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+        .isEqualTo(FeeMarketConfigOptions.FEE_MARKET_BASEFEE_INITIAL_VALUE);
   }
 
   @Test

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.FeeMarketConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -136,11 +136,11 @@ public class TestSetChainParams implements JsonRpcMethod {
 
     if (params.containsKey("londonForkBlock")) {
       JsonObject genesisConfig = chainParamsJson.getJsonObject("genesis", new JsonObject());
-      ExperimentalEIPs.initialBasefee =
+      FeeMarketConfigOptions.initialBasefee =
           Optional.ofNullable(
                   genesisConfig.getString("baseFeePerGas", genesisConfig.getString("baseFee")))
               .map(Long::decode)
-              .orElse(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+              .orElse(FeeMarketConfigOptions.FEE_MARKET_BASEFEE_INITIAL_VALUE);
     }
 
     maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");

@@ -19,7 +19,7 @@ import static org.hyperledger.besu.cli.subcommands.RetestethSubCommand.COMMAND_N
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.FeeMarketConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethService;
@@ -53,7 +53,7 @@ public class RetestethSubCommand implements Runnable {
    */
   public static final int RETESTETH_PORT = 47710;
 
-  @Mixin private final ExperimentalEIPs experimentalEIPs = new ExperimentalEIPs();
+  @Mixin private final FeeMarketConfigOptions feeMarketConfig = new FeeMarketConfigOptions();
 
   @Option(
       names = {"--data-path"},

@@ -14,11 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.FeeMarketConfigOptions;
 
 public interface FeeMarket {
-
-  long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
 
   long getBasefeeMaxChangeDenominator();
 
@@ -27,6 +25,6 @@ public interface FeeMarket {
   long getSlackCoefficient();
 
   static FeeMarket london() {
-    return new LondonFeeMarket(ExperimentalEIPs.initialBasefee);
+    return new LondonFeeMarket(FeeMarketConfigOptions.initialBasefee);
   }
 }
