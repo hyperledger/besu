@@ -32,9 +32,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class PoWSolver {
 
-  private static final long POW_JOB_TTL = 1000 * 60 * 5; // 5 minutes
   private static final int MAX_OMMER_DEPTH = 8;
   private static final Logger LOG = getLogger();
+  private final long powJobTimeToLive;
 
   public static class PoWSolverJob {
 
@@ -91,19 +91,22 @@ public class PoWSolver {
       final PoWHasher poWHasher,
       final Boolean stratumMiningEnabled,
       final Subscribers<PoWObserver> ethHashObservers,
-      final EpochCalculator epochCalculator) {
+      final EpochCalculator epochCalculator,
+      final long powJobTimeToLive) {
     this.nonceGenerator = nonceGenerator;
     this.poWHasher = poWHasher;
     this.stratumMiningEnabled = stratumMiningEnabled;
     this.ethHashObservers = ethHashObservers;
     ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
     this.epochCalculator = epochCalculator;
+    this.powJobTimeToLive = powJobTimeToLive;
   }
 
   public PoWSolution solveFor(final PoWSolverJob job)
       throws InterruptedException, ExecutionException {
     currentJob = Optional.of(job);
-    currentJobs.put(job.getInputs().getPrePowHash(), job, System.currentTimeMillis() + POW_JOB_TTL);
+    currentJobs.put(
+        job.getInputs().getPrePowHash(), job, System.currentTimeMillis() + powJobTimeToLive);
     if (stratumMiningEnabled) {
       ethHashObservers.forEach(observer -> observer.newJob(job.inputs));
     } else {
