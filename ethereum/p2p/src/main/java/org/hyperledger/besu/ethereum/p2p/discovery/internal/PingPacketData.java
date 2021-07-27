@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.rlp.MalformedRLPInputException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
