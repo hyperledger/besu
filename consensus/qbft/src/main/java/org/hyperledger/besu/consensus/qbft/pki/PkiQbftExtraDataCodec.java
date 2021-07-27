@@ -12,10 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.qbft;
+package org.hyperledger.besu.consensus.qbft.pki;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -68,27 +69,33 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
     rlpInput.leaveList();
 
-    return new BftExtraData(vanityData, seals, vote, round, validators, cms);
+    return new PkiQbftExtraData(vanityData, seals, vote, round, validators, cms);
   }
 
   @Override
   protected Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
+    if (!(bftExtraData instanceof PkiQbftExtraData)) {
+      throw new IllegalStateException(
+          "PkiQbftExtraDataCodec must be used only with PkiQbftExtraData");
+    }
+    final PkiQbftExtraData extraData = (PkiQbftExtraData) bftExtraData;
+
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
-    encoder.writeBytes(bftExtraData.getVanityData());
-    encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeBytes(extraData.getVanityData());
+    encoder.writeList(extraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
 
-    if (bftExtraData.getVote().isPresent()) {
-      encodeVote(encoder, bftExtraData.getVote().get());
+    if (extraData.getVote().isPresent()) {
+      encodeVote(encoder, extraData.getVote().get());
     } else {
       encoder.writeList(Collections.emptyList(), (o, rlpOutput) -> {});
     }
 
     if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
-      encoder.writeIntScalar(bftExtraData.getRound());
+      encoder.writeIntScalar(extraData.getRound());
       if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
         encoder.writeList(
-            bftExtraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
+            extraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
       } else {
         encoder.writeEmptyList();
       }
@@ -97,10 +104,9 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
       encoder.writeEmptyList();
     }
 
-    // TODO-lucas think about these rules
     if (encodingType == EncodingType.ALL) {
-      if (bftExtraData.getCms().isPresent()) {
-        Bytes cmsBytes = bftExtraData.getCms().get();
+      if (extraData.getCms().isPresent()) {
+        Bytes cmsBytes = extraData.getCms().get();
         encoder.startList();
         encoder.writeBytes(cmsBytes);
         encoder.endList();

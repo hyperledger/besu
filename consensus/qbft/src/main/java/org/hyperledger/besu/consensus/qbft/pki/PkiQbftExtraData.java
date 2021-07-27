@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.consensus.qbft;
+package org.hyperledger.besu.consensus.qbft.pki;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
@@ -40,7 +40,6 @@ public class PkiQbftExtraData extends BftExtraData {
     this.cms = cms;
   }
 
-  @Override
   public Optional<Bytes> getCms() {
     return cms;
   }
