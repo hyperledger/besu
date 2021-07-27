@@ -521,7 +521,8 @@ public class RunnerBuilder {
                   miningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
-                  miningParameters.getStratumExtranonce()));
+                  miningParameters.getStratumExtranonce(),
+                  metricsSystem));
       miningCoordinator.addEthHashObserver(stratumServer.get());
     }
 
