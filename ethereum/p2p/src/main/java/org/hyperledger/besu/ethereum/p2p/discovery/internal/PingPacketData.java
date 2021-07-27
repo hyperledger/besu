@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.rlp.MalformedRLPInputException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
@@ -97,7 +98,7 @@ public class PingPacketData implements PacketData {
     UInt64 enrSeq = null;
     if (!in.isEndOfCurrentList()) {
       try {
-        enrSeq = UInt64.valueOf(in.readLongScalar());
+        enrSeq = UInt64.valueOf(in.readBigIntegerScalar());
         LOG.debug("read PING enr as long scalar");
       } catch (MalformedRLPInputException malformed) {
         LOG.debug("failed to read PING enr as scalar, trying to read bytes instead");
@@ -106,6 +107,22 @@ public class PingPacketData implements PacketData {
     }
     in.leaveListLenient();
     return new PingPacketData(from, to.get(), expiration, enrSeq);
+  }
+
+  @Deprecated
+  public static PingPacketData legacyReadFrom(final RLPInput in) { // only for testing, do not use
+    in.enterList();
+    // The first element signifies the "version", but this value is ignored as of EIP-8
+    in.readBigIntegerScalar();
+    final Optional<Endpoint> from = Endpoint.maybeDecodeStandalone(in);
+    final Endpoint to = Endpoint.decodeStandalone(in);
+    final long expiration = in.readLongScalar();
+    UInt64 enrSeq = null;
+    if (!in.isEndOfCurrentList()) {
+      enrSeq = UInt64.fromBytes(in.readBytes());
+    }
+    in.leaveListLenient();
+    return new PingPacketData(from, to, expiration, enrSeq);
   }
 
   @Override
@@ -117,7 +134,29 @@ public class PingPacketData implements PacketData {
     }
     to.encodeStandalone(out);
     out.writeLongScalar(expiration);
-    out.writeLongScalar(enrSeq.toLong());
+    out.writeBigIntegerScalar(enrSeq.toBigInteger());
+    out.endList();
+  }
+
+  @Deprecated
+  public void legacyWriteTo(final RLPOutput out) { // legacy use for testing do not use
+    out.startList();
+    out.writeIntScalar(VERSION);
+    maybeFrom
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Attempting to serialize invalid PING packet. Missing 'from' field"))
+        .encodeStandalone(out);
+    to.encodeStandalone(out);
+    out.writeLongScalar(expiration);
+    out.writeBytes(
+        getEnrSeq()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Attempting to serialize invalid PING packet. Missing 'enrSeq' field"))
+            .toBytes());
     out.endList();
   }
 

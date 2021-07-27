@@ -148,6 +148,24 @@ public class PingPacketDataTest {
   }
 
   @Test
+  public void legacyHandlesScalarEncode() {
+    final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final UInt64 enrSeq = UInt64.MAX_VALUE;
+    final PingPacketData ping = PingPacketData.create(Optional.of(from), to, enrSeq);
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    ping.writeTo(out);
+
+    final PingPacketData legacyPing = PingPacketData.legacyReadFrom(RLP.input(out.encoded()));
+
+    assertThat(legacyPing.getFrom().get()).isEqualTo(from);
+    assertThat(legacyPing.getTo()).isEqualTo(to);
+    assertThat(legacyPing.getEnrSeq().isPresent()).isTrue();
+    assertThat(legacyPing.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
   public void readFrom_withExtraFields() {
     final int version = 4;
     final Endpoint from = new Endpoint("127.0.0.1", 30303, Optional.of(30303));

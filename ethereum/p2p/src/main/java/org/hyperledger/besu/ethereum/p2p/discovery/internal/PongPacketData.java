@@ -62,7 +62,7 @@ public class PongPacketData implements PacketData {
     UInt64 enrSeq = null;
     if (!in.isEndOfCurrentList()) {
       try {
-        enrSeq = UInt64.valueOf(in.readLongScalar());
+        enrSeq = UInt64.valueOf(in.readBigIntegerScalar());
         LOG.debug("read PONG enr from scalar");
       } catch (MalformedRLPInputException malformed) {
         LOG.debug("failed to read PONG enr from scalar, trying as byte array");
@@ -79,7 +79,37 @@ public class PongPacketData implements PacketData {
     to.encodeStandalone(out);
     out.writeBytes(pingHash);
     out.writeLongScalar(expiration);
-    out.writeLongScalar(enrSeq.toLong());
+    out.writeBigIntegerScalar(enrSeq.toBigInteger());
+    out.endList();
+  }
+
+  @Deprecated
+  public static PongPacketData legacyReadFrom(final RLPInput in) {
+    in.enterList();
+    final Endpoint to = Endpoint.decodeStandalone(in);
+    final Bytes hash = in.readBytes();
+    final long expiration = in.readLongScalar();
+    UInt64 enrSeq = null;
+    if (!in.isEndOfCurrentList()) {
+      enrSeq = UInt64.fromBytes(in.readBytes());
+    }
+    in.leaveListLenient();
+    return new PongPacketData(to, hash, expiration, enrSeq);
+  }
+
+  @Deprecated
+  public void legacyWriteTo(final RLPOutput out) {
+    out.startList();
+    to.encodeStandalone(out);
+    out.writeBytes(pingHash);
+    out.writeLongScalar(expiration);
+    out.writeBytes(
+        getEnrSeq()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Attempting to serialize invalid PONG packet. Missing 'enrSeq' field"))
+            .toBytes());
     out.endList();
   }
 
