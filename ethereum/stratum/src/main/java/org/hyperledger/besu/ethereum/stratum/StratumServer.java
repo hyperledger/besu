@@ -70,6 +70,7 @@ public class StratumServer implements PoWObserver {
     this.networkInterface = networkInterface;
     protocols =
         new StratumProtocol[] {
+          new GetWorkProtocol(miningCoordinator),
           new Stratum1Protocol(extraNonce, miningCoordinator),
           new Stratum1EthProxyProtocol(miningCoordinator)
         };
@@ -122,7 +123,7 @@ public class StratumServer implements PoWObserver {
     socket.handler(conn::handleBuffer);
     socket.closeHandler(
         (aVoid) -> {
-          conn.close(aVoid);
+          conn.close();
           numberOfMiners.decrementAndGet();
           disconnectionsCount.inc();
         });

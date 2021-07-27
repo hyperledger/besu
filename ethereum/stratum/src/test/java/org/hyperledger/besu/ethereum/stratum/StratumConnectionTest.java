@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
@@ -171,5 +172,42 @@ public class StratumConnectionTest {
     assertThat(called.get()).isFalse();
 
     assertThat(message.get()).isEqualTo("{\"jsonrpc\":\"2.0\",\"id\":23,\"result\":true}\n");
+  }
+
+  @Test
+  public void testHttpMessage() {
+    AtomicBoolean called = new AtomicBoolean(false);
+
+    AtomicReference<String> received = new AtomicReference<>();
+
+    GetWorkProtocol protocol = new GetWorkProtocol(miningCoordinator);
+    protocol.setCurrentWorkTask(new PoWSolverInputs(UInt256.ZERO, Bytes32.random(), 123L));
+    StratumConnection conn =
+        new StratumConnection(
+            new StratumProtocol[] {protocol}, () -> called.set(true), received::set);
+    String message =
+        "POST / HTTP/1.1\r\nHost: 127.0.0.1:8008\r\nConnection: keep-alive\r\nAccept-Encoding: gzip, deflate\r\nContent-Length: 31\r\n\r\n{\"id\":1,\"method\":\"eth_getWork\"}";
+    conn.handleBuffer(Buffer.buffer(message));
+    assertThat(called.get()).isFalse();
+    assertThat(received.get()).contains("\"jsonrpc\":\"2.0\",\"id\":1,\"result\"");
+  }
+
+  @Test
+  public void testHttpMessageChunks() {
+    AtomicBoolean called = new AtomicBoolean(false);
+
+    AtomicReference<String> received = new AtomicReference<>();
+
+    GetWorkProtocol protocol = new GetWorkProtocol(miningCoordinator);
+    StratumConnection conn =
+        new StratumConnection(
+            new StratumProtocol[] {protocol}, () -> called.set(true), received::set);
+    String message =
+        "POST / HTTP/1.1\r\nHost: 127.0.0.1:8008\r\nConnection: keep-alive\r\nAccept-Encoding: gzip, deflate\r\nContent-Length: 31\r\n\r\n{\"id";
+    String secondMessage = "\":1,\"method\":\"eth_getWork\"}";
+    conn.handleBuffer(Buffer.buffer(message));
+    conn.handleBuffer(Buffer.buffer(secondMessage));
+    assertThat(called.get()).isFalse();
+    assertThat(received.get()).contains("\"jsonrpc\":\"2.0\",\"id\":1,\"result\"");
   }
 }
