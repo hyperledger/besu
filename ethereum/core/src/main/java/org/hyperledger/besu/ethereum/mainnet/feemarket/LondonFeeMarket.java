@@ -15,12 +15,15 @@
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 public class LondonFeeMarket implements FeeMarket {
-
-  private final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
-
   private final Long BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
 
   private final Long SLACK_COEFFICIENT = 2L;
+
+  private final Long initialBaseFee;
+
+  public LondonFeeMarket(final Long initialBaseFee) {
+    this.initialBaseFee = initialBaseFee;
+  }
 
   @Override
   public long getBasefeeMaxChangeDenominator() {
@@ -29,7 +32,7 @@ public class LondonFeeMarket implements FeeMarket {
 
   @Override
   public long getInitialBasefee() {
-    return EIP1559_BASEFEE_DEFAULT_VALUE;
+    return initialBaseFee;
   }
 
   @Override
