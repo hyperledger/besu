@@ -28,9 +28,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -67,16 +64,6 @@ public class PrivateWebSocketMethodsFactory {
             subscriptionManager, subscriptionRequestMapper, privacyController, privacyIdProvider));
   }
 
-  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory() {
-    if (privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory() != null) {
-      return privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory();
-    } else if (privacyParameters.getSigningKeyPair().isPresent()) {
-      return new FixedKeySigningPrivateMarkerTransactionFactory(
-          privacyParameters.getSigningKeyPair().get());
-    }
-    return new RandomSigningPrivateMarkerTransactionFactory();
-  }
-
   private PrivacyController createPrivacyController() {
     final Optional<BigInteger> chainId = protocolSchedule.getChainId();
     if (privacyParameters.isPrivacyPluginEnabled()) {
@@ -84,7 +71,6 @@ public class PrivateWebSocketMethodsFactory {
           blockchainQueries.getBlockchain(),
           privacyParameters,
           chainId,
-          createPrivateMarkerTransactionFactory(),
           createPrivateTransactionSimulator(),
           createPrivateNonceProvider(),
           privacyParameters.getPrivateWorldStateReader());

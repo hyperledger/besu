@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
-import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 
@@ -59,8 +58,9 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
   private final NonceProvider publicNonceProvider;
   private final GasCalculator gasCalculator;
-  private static final int POOL_SIZE = 10;
-  private final Striped<Lock> stripedLock = Striped.lock(POOL_SIZE);
+  private static final int MAX_CONCURRENT_PMT_SIGNATURE_REQUESTS = 10;
+  private final Striped<Lock> stripedLock =
+      Striped.lazyWeakLock(MAX_CONCURRENT_PMT_SIGNATURE_REQUESTS);
 
   protected AbstractEeaSendRawTransaction(
       final TransactionPool transactionPool,
@@ -103,7 +103,7 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
       final org.hyperledger.besu.plugin.data.Address sender =
           privateMarkerTransactionFactory.getSender(
               privateTransaction, privacyIdProvider.getPrivacyUserId(user));
-      final Lock lock = stripedLock.get(sender.toBigInteger().mod(BigInteger.valueOf(POOL_SIZE)));
+      final Lock lock = stripedLock.get(sender.toShortHexString());
       lock.lock();
       try {
 

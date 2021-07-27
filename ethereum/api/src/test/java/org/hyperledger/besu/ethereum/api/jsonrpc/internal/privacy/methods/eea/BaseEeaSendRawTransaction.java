@@ -46,14 +46,14 @@ public class BaseEeaSendRawTransaction {
 
   final String MOCK_ORION_KEY = "bW9ja2tleQ==";
 
-  final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+  final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM_SUPPLIER =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   final KeyPair keyPair =
-      SIGNATURE_ALGORITHM
+      SIGNATURE_ALGORITHM_SUPPLIER
           .get()
           .createKeyPair(
-              SIGNATURE_ALGORITHM
+              SIGNATURE_ALGORITHM_SUPPLIER
                   .get()
                   .createPrivateKey(
                       new BigInteger(
@@ -61,8 +61,9 @@ public class BaseEeaSendRawTransaction {
 
   @Mock BlockchainQueries blockchainQueries;
 
-  final PrivateMarkerTransactionFactory factory =
+  final PrivateMarkerTransactionFactory privateMarkerTransactionFactory =
       new FixedKeySigningPrivateMarkerTransactionFactory(keyPair);
+
   final GasCalculator gasCalculator = new BerlinGasCalculator();
 
   final Transaction PUBLIC_ONCHAIN_TRANSACTION =
@@ -72,7 +73,7 @@ public class BaseEeaSendRawTransaction {
           53112L,
           Optional.of(Address.ONCHAIN_PRIVACY),
           Wei.ZERO,
-          SIGNATURE_ALGORITHM
+          SIGNATURE_ALGORITHM_SUPPLIER
               .get()
               .createSignature(
                   new BigInteger(
@@ -91,7 +92,7 @@ public class BaseEeaSendRawTransaction {
           53112L,
           Optional.of(Address.PLUGIN_PRIVACY),
           Wei.ZERO,
-          SIGNATURE_ALGORITHM
+          SIGNATURE_ALGORITHM_SUPPLIER
               .get()
               .createSignature(
                   new BigInteger(
@@ -110,7 +111,7 @@ public class BaseEeaSendRawTransaction {
           53112L,
           Optional.of(Address.DEFAULT_PRIVACY),
           Wei.ZERO,
-          SIGNATURE_ALGORITHM
+          SIGNATURE_ALGORITHM_SUPPLIER
               .get()
               .createSignature(
                   new BigInteger(

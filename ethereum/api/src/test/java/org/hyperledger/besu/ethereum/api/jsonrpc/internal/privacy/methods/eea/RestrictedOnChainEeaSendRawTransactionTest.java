@@ -52,7 +52,7 @@ public class RestrictedOnChainEeaSendRawTransactionTest extends BaseEeaSendRawTr
         new RestrictedOnChainEeaSendRawTransaction(
             transactionPool,
             privacyController,
-            factory,
+            privateMarkerTransactionFactory,
             privacyIdProvider,
             blockchainQueries,
             address -> 0,

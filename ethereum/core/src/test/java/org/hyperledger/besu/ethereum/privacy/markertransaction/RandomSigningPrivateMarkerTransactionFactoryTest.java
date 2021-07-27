@@ -38,7 +38,7 @@ public class RandomSigningPrivateMarkerTransactionFactoryTest {
     final Wei gasPrice = Wei.of(100);
     final long gasLimit = 500;
     final String enclaveKey = "enclaveKey";
-    final long providedNonce = 101;
+    final long providedNonce = 0;
 
     final Address precompiledAddress = Address.fromHexString("1");
 

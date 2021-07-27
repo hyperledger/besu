@@ -15,20 +15,16 @@
 package org.hyperledger.besu.ethereum.privacy.markertransaction;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class FixedKeySigningPrivateMarkerTransactionFactory
-    implements PrivateMarkerTransactionFactory {
+    extends SigningPrivateMarkerTransactionFactory implements PrivateMarkerTransactionFactory {
 
   private final KeyPair signingKey;
   private final Address sender;
@@ -49,22 +45,6 @@ public class FixedKeySigningPrivateMarkerTransactionFactory
       final UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
       final PrivateTransaction privateTransaction,
       final String privacyUserId) {
-    final Transaction transaction =
-        Transaction.builder()
-            .type(TransactionType.FRONTIER)
-            .nonce(unsignedPrivateMarkerTransaction.getNonce())
-            .gasPrice(
-                unsignedPrivateMarkerTransaction.getGasPrice().map(Wei::fromQuantity).orElse(null))
-            .gasLimit(unsignedPrivateMarkerTransaction.getGasLimit())
-            .to(
-                org.hyperledger.besu.ethereum.core.Address.fromPlugin(
-                    unsignedPrivateMarkerTransaction.getTo().get()))
-            .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
-            .payload(unsignedPrivateMarkerTransaction.getPayload())
-            .signAndBuild(signingKey);
-
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    return out.encoded();
+    return signAndBuild(unsignedPrivateMarkerTransaction, signingKey);
   }
 }

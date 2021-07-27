@@ -51,7 +51,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
         new RestrictedOffChainEeaSendRawTransaction(
             transactionPool,
             privacyController,
-            factory,
+            privateMarkerTransactionFactory,
             privacyIdProvider,
             blockchainQueries,
             address -> 0,

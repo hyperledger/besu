@@ -15,26 +15,28 @@
 package org.hyperledger.besu.ethereum.privacy.markertransaction;
 
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RandomSigningPrivateMarkerTransactionFactory
-    implements PrivateMarkerTransactionFactory {
+    extends SigningPrivateMarkerTransactionFactory implements PrivateMarkerTransactionFactory {
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM_SUPPLIER =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @Override
   public Address getSender(
       final PrivateTransaction privateTransaction, final String privacyUserId) {
     // Note the address here is only used as a key to lock nonce generation for the same address
-    final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
+    final KeyPair signingKey = SIGNATURE_ALGORITHM_SUPPLIER.get().generateKeyPair();
     return org.hyperledger.besu.ethereum.core.Address.extract(signingKey.getPublicKey());
   }
 
@@ -43,24 +45,8 @@ public class RandomSigningPrivateMarkerTransactionFactory
       final UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
       final PrivateTransaction privateTransaction,
       final String privacyUserId) {
-    final KeyPair signingKey = SignatureAlgorithmFactory.getInstance().generateKeyPair();
+    final KeyPair signingKey = SIGNATURE_ALGORITHM_SUPPLIER.get().generateKeyPair();
 
-    final Transaction transaction =
-        Transaction.builder()
-            .type(TransactionType.FRONTIER)
-            .nonce(0)
-            .gasPrice(
-                unsignedPrivateMarkerTransaction.getGasPrice().map(Wei::fromQuantity).orElse(null))
-            .gasLimit(unsignedPrivateMarkerTransaction.getGasLimit())
-            .to(
-                org.hyperledger.besu.ethereum.core.Address.fromPlugin(
-                    unsignedPrivateMarkerTransaction.getTo().get()))
-            .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
-            .payload(unsignedPrivateMarkerTransaction.getPayload())
-            .signAndBuild(signingKey);
-
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    transaction.writeTo(out);
-    return out.encoded();
+    return signAndBuild(unsignedPrivateMarkerTransaction, signingKey);
   }
 }

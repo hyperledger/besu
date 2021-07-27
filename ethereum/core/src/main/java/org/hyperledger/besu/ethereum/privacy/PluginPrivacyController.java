@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
-import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -55,7 +54,6 @@ public class PluginPrivacyController implements PrivacyController {
       final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
       final PrivateNonceProvider privateNonceProvider,
       final PrivateWorldStateReader privateWorldStateReader) {

@@ -97,7 +97,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     final PrivateMarkerTransactionFactory markerTransactionFactory =
         createPrivateMarkerTransactionFactory();
     final PrivacyIdProvider enclavePublicProvider = PrivacyIdProvider.build(privacyParameters);
-    final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
+    final PrivacyController privacyController = createPrivacyController();
     return create(privacyController, enclavePublicProvider, markerTransactionFactory).entrySet()
         .stream()
         .collect(
@@ -122,8 +122,7 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return new RandomSigningPrivateMarkerTransactionFactory();
   }
 
-  private PrivacyController createPrivacyController(
-      final PrivateMarkerTransactionFactory markerTransactionFactory) {
+  private PrivacyController createPrivacyController() {
     final Optional<BigInteger> chainId = protocolSchedule.getChainId();
 
     if (privacyParameters.isPrivacyPluginEnabled()) {
@@ -131,7 +130,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           getBlockchainQueries().getBlockchain(),
           privacyParameters,
           chainId,
-          markerTransactionFactory,
           createPrivateTransactionSimulator(),
           privateNonceProvider,
           privacyParameters.getPrivateWorldStateReader());

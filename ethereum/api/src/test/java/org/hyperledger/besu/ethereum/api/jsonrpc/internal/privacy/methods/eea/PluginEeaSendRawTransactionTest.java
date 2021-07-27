@@ -43,7 +43,7 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
         new PluginEeaSendRawTransaction(
             transactionPool,
             privacyController,
-            factory,
+            privateMarkerTransactionFactory,
             (user) -> "",
             blockchainQueries,
             address -> 0,

@@ -80,7 +80,7 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   public void start() {
     if (signingEnabled) {
       pluginService.setPrivateMarkerTransactionFactory(
-          new TestPrivateMarkerTransactionFactory(signingKey));
+          new TestSigningPrivateMarkerTransactionFactory(signingKey));
     }
   }
 

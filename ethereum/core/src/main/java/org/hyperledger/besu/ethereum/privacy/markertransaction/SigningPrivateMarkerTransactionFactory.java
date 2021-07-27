@@ -12,51 +12,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugins;
-
-import static org.apache.logging.log4j.LogManager.getLogger;
-import static org.hyperledger.besu.ethereum.core.Address.extract;
+package org.hyperledger.besu.ethereum.privacy.markertransaction;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.plugin.data.Address;
-import org.hyperledger.besu.plugin.data.PrivateTransaction;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
-import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
-public class TestPrivateMarkerTransactionFactory implements PrivateMarkerTransactionFactory {
+public class SigningPrivateMarkerTransactionFactory {
 
-  private static final Logger LOG = getLogger();
-
-  final KeyPair aliceFixedSigningKey;
-  final Address sender;
-
-  public TestPrivateMarkerTransactionFactory(final String privateMarkerTransactionSigningKey) {
-    final SignatureAlgorithm algorithm = SignatureAlgorithmFactory.getInstance();
-    final SECPPrivateKey privateKey =
-        algorithm.createPrivateKey(Bytes32.fromHexString(privateMarkerTransactionSigningKey));
-
-    aliceFixedSigningKey = algorithm.createKeyPair(privateKey);
-    sender = extract(Hash.hash(aliceFixedSigningKey.getPublicKey().getEncodedBytes()));
-  }
-
-  @Override
-  public Bytes create(
+  protected Bytes signAndBuild(
       final UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
-      final PrivateTransaction privateTransaction,
-      final String privacyUserId) {
-
+      final KeyPair signingKey) {
     final Transaction transaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
@@ -69,18 +40,10 @@ public class TestPrivateMarkerTransactionFactory implements PrivateMarkerTransac
                     unsignedPrivateMarkerTransaction.getTo().get()))
             .value(Wei.fromQuantity(unsignedPrivateMarkerTransaction.getValue()))
             .payload(unsignedPrivateMarkerTransaction.getPayload())
-            .signAndBuild(aliceFixedSigningKey);
-
-    LOG.info("Signing PMT from " + sender);
+            .signAndBuild(signingKey);
 
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     transaction.writeTo(out);
     return out.encoded();
-  }
-
-  @Override
-  public Address getSender(
-      final PrivateTransaction privateTransaction, final String privacyUserId) {
-    return sender;
   }
 }
