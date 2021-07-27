@@ -46,6 +46,7 @@ dependencies {
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-concurrent'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
