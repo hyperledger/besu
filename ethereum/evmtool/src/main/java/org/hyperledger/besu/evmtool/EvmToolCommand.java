@@ -18,7 +18,7 @@ package org.hyperledger.besu.evmtool;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.FeeMarketConfigOptions;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -160,7 +160,7 @@ public class EvmToolCommand implements Runnable {
     final CommandLine commandLine = new CommandLine(this);
     commandLine.addMixin("Dagger Options", daggerOptions);
     // Usage of static command line flags is strictly reserved for experimental EIPs
-    commandLine.addMixin("Experimental EIPs", ExperimentalEIPs.class);
+    commandLine.addMixin("feeMarketConfigs", FeeMarketConfigOptions.class);
 
     // add sub commands here
 

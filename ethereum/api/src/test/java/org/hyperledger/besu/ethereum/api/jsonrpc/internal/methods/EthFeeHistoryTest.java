@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.config.FeeMarketConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -145,7 +145,7 @@ public class EthFeeHistoryTest {
         (FeeHistory.FeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest(1, "latest")).getResult();
     assertThat(Long.decode(result.getBaseFeePerGas().get(1)))
-        .isEqualTo(ExperimentalEIPs.EIP1559_BASEFEE_DEFAULT_VALUE);
+        .isEqualTo(FeeMarketConfigOptions.FEE_MARKET_BASEFEE_INITIAL_VALUE);
   }
 
   @Test
