@@ -3,6 +3,7 @@
 ## 21.7.2
 ### Additions and Improvements
 - Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
+- \[EXPERIMENTAL\] Added support for DevP2P-over-TLS [#2536](https://github.com/hyperledger/besu/pull/2536)
 
 ### Bug Fixes
 - consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
@@ -130,7 +131,7 @@ sha256: f415c9b67d26819caeb9940324b2b1b9ce6e872c9181052739438545e84e2531
 * Implemented [EIP-3541](https://eips.ethereum.org/EIPS/eip-3541): Reject new contracts starting with the 0xEF byte [\#2243](https://github.com/hyperledger/besu/pull/2243)
 * Implemented [EIP-3529](https://eips.ethereum.org/EIPS/eip-3529): Reduction in refunds [\#2238](https://github.com/hyperledger/besu/pull/2238)
 * Implemented [EIP-3554](https://eips.ethereum.org/EIPS/eip-3554): Difficulty Bomb Delay [\#2289](https://github.com/hyperledger/besu/pull/2289)
-
+* \[EXPERIMENTAL\] Added support for secp256r1 keys. [#2008](https://github.com/hyperledger/besu/pull/2008)
 
 ### Bug Fixes
 
