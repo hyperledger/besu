@@ -42,7 +42,7 @@ public class BaseFee {
     Optional<Long> minBaseFeeInNextBlock = Optional.empty();
     if (baseFee.isPresent()) {
       minBaseFeeInNextBlock =
-          Optional.of(new BaseFee(FeeMarket.eip1559(), baseFee.get()).getMinNextValue());
+          Optional.of(new BaseFee(FeeMarket.london(), baseFee.get()).getMinNextValue());
     }
     return calculator.price(transaction, minBaseFeeInNextBlock);
   }
