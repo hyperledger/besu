@@ -30,7 +30,7 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
   private static final long FORK_BLOCK = 800L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
   private EIP1559BlockHeaderGasPriceValidationRule validationRule;
-  private final FeeMarket feeMarket = FeeMarket.eip1559();
+  private final FeeMarket feeMarket = FeeMarket.london();
 
   @Before
   public void setUp() {
