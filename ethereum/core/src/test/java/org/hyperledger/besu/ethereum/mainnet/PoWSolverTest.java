@@ -50,7 +50,8 @@ public class PoWSolverTest {
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     assertThat(solver.hashesPerSecond()).isEqualTo(Optional.empty());
     assertThat(solver.getWorkDefinition()).isEqualTo(Optional.empty());
@@ -84,7 +85,8 @@ public class PoWSolverTest {
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     final Stopwatch operationTimer = Stopwatch.createStarted();
     final PoWSolverInputs inputs = new PoWSolverInputs(UInt256.ONE, Bytes.EMPTY, 5);
@@ -150,7 +152,8 @@ public class PoWSolverTest {
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     PoWSolution soln = solver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(firstInputs));
     assertThat(soln.getMixHash()).isEqualTo(expectedFirstOutput.getMixHash());
@@ -209,7 +212,8 @@ public class PoWSolverTest {
             true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();
     CompletableFuture<PoWSolution> soln2 = new CompletableFuture<>();
@@ -289,7 +293,8 @@ public class PoWSolverTest {
             true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();
     CompletableFuture<PoWSolution> soln2 = new CompletableFuture<>();
@@ -379,7 +384,8 @@ public class PoWSolverTest {
             true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();
     CompletableFuture<PoWSolution> soln2 = new CompletableFuture<>();
@@ -471,7 +477,8 @@ public class PoWSolverTest {
             true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();
     CompletableFuture<PoWSolution> soln2 = new CompletableFuture<>();

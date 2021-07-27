@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.subcommands.blocks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.COMMAND_NAME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_MAX_OMMERS_DEPTH;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POW_JOB_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
@@ -271,7 +272,8 @@ public class BlocksSubCommand implements Runnable {
           0.0,
           DEFAULT_REMOTE_SEALERS_LIMIT,
           DEFAULT_REMOTE_SEALERS_TTL,
-          DEFAULT_POW_JOB_TTL);
+          DEFAULT_POW_JOB_TTL,
+          DEFAULT_MAX_OMMERS_DEPTH);
     }
 
     private void importJsonBlocks(final BesuController controller, final Path path)

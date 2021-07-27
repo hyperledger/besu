@@ -1718,7 +1718,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 minBlockOccupancyRatio,
                 unstableMiningOptions.getRemoteSealersLimit(),
                 unstableMiningOptions.getRemoteSealersTimeToLive(),
-                unstableMiningOptions.getPowJobTimeToLive()))
+                unstableMiningOptions.getPowJobTimeToLive(),
+                unstableMiningOptions.getMaxOmmersDepth()))
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())

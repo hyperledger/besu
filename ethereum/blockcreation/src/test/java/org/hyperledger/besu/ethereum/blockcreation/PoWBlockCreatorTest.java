@@ -86,7 +86,8 @@ public class PoWBlockCreatorTest {
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -146,7 +147,8 @@ public class PoWBlockCreatorTest {
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -201,7 +203,8 @@ public class PoWBlockCreatorTest {
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -272,7 +275,8 @@ public class PoWBlockCreatorTest {
             false,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

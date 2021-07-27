@@ -28,6 +28,8 @@ public class MiningParameters {
 
   public static final long DEFAULT_POW_JOB_TTL = Duration.ofMinutes(5).toMillis();
 
+  public static final int DEFAULT_MAX_OMMERS_DEPTH = 8;
+
   private final Optional<Address> coinbase;
   private final Wei minTransactionGasPrice;
   private final Bytes extraData;
@@ -41,6 +43,7 @@ public class MiningParameters {
   private final int remoteSealersLimit;
   private final long remoteSealersTimeToLive;
   private final long powJobTimeToLive;
+  private final int maxOmmerDepth;
 
   public MiningParameters(
       final Address coinbase,
@@ -60,7 +63,8 @@ public class MiningParameters {
         0.8,
         DEFAULT_REMOTE_SEALERS_LIMIT,
         DEFAULT_REMOTE_SEALERS_TTL,
-        DEFAULT_POW_JOB_TTL);
+        DEFAULT_POW_JOB_TTL,
+        DEFAULT_MAX_OMMERS_DEPTH);
   }
 
   public MiningParameters(
@@ -76,7 +80,8 @@ public class MiningParameters {
       final Double minBlockOccupancyRatio,
       final int remoteSealersLimit,
       final long remoteSealersTimeToLive,
-      final long powJobTimeToLive) {
+      final long powJobTimeToLive,
+      final int maxOmmerDepth) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
@@ -90,6 +95,7 @@ public class MiningParameters {
     this.remoteSealersLimit = remoteSealersLimit;
     this.remoteSealersTimeToLive = remoteSealersTimeToLive;
     this.powJobTimeToLive = powJobTimeToLive;
+    this.maxOmmerDepth = maxOmmerDepth;
   }
 
   public Optional<Address> getCoinbase() {
@@ -142,6 +148,10 @@ public class MiningParameters {
 
   public long getPowJobTimeToLive() {
     return powJobTimeToLive;
+  }
+
+  public int getMaxOmmerDepth() {
+    return maxOmmerDepth;
   }
 
   @Override

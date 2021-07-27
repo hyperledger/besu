@@ -60,7 +60,8 @@ public class PoWMinerExecutorTest {
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
             GasLimitCalculator.constant(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
         .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
@@ -90,7 +91,8 @@ public class PoWMinerExecutorTest {
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
             GasLimitCalculator.constant(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000);
+            1000,
+            8);
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))
