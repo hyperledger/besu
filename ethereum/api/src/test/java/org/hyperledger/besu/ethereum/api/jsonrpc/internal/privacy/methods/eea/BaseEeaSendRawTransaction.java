@@ -19,7 +19,6 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -59,8 +58,6 @@ public class BaseEeaSendRawTransaction {
                       new BigInteger(
                           "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)));
 
-  @Mock BlockchainQueries blockchainQueries;
-
   final PrivateMarkerTransactionFactory privateMarkerTransactionFactory =
       new FixedKeySigningPrivateMarkerTransactionFactory(keyPair);
 
@@ -69,18 +66,18 @@ public class BaseEeaSendRawTransaction {
   final Transaction PUBLIC_ONCHAIN_TRANSACTION =
       new Transaction(
           0L,
-          Wei.of(10),
-          53112L,
+          Wei.of(1),
+          21000L,
           Optional.of(Address.ONCHAIN_PRIVACY),
           Wei.ZERO,
           SIGNATURE_ALGORITHM_SUPPLIER
               .get()
               .createSignature(
                   new BigInteger(
-                      "50758026553589882805766983929273855101221905798412082519492083555127819310349"),
+                      "104310573331543561412661001400556426894275857431274618344686100036716947434951"),
                   new BigInteger(
-                      "9530450080360267411370951841468649653272877590170696539371969233272943560187"),
-                  Byte.parseByte("0")),
+                      "33080506591748900530090726168809539464160321639149722208454899701475015405641"),
+                  Byte.parseByte("1")),
           Bytes.fromBase64String(MOCK_ORION_KEY),
           Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty());
@@ -88,18 +85,18 @@ public class BaseEeaSendRawTransaction {
   final Transaction PUBLIC_PLUGIN_TRANSACTION =
       new Transaction(
           0L,
-          Wei.of(10),
-          53112L,
+          Wei.of(1),
+          21112L,
           Optional.of(Address.PLUGIN_PRIVACY),
           Wei.ZERO,
           SIGNATURE_ALGORITHM_SUPPLIER
               .get()
               .createSignature(
                   new BigInteger(
-                      "65616314945166426659201091304539863078210238223429712354301511970648788041537"),
+                      "111331907905663242841915789134040957461022579868467291368609335839524284474080"),
                   new BigInteger(
-                      "34139684103235825171704381364252972544895368328418359844709930806514113448401"),
-                  Byte.parseByte("1")),
+                      "16338460226177675602590882211136457396059831699034102939076916361204709826919"),
+                  Byte.parseByte("0")),
           Bytes.fromBase64String(MOCK_ORION_KEY),
           Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),
           Optional.empty());
@@ -107,17 +104,17 @@ public class BaseEeaSendRawTransaction {
   final Transaction PUBLIC_OFF_CHAIN_TRANSACTION =
       new Transaction(
           0L,
-          Wei.of(10),
-          53112L,
+          Wei.of(1),
+          21000L,
           Optional.of(Address.DEFAULT_PRIVACY),
           Wei.ZERO,
           SIGNATURE_ALGORITHM_SUPPLIER
               .get()
               .createSignature(
                   new BigInteger(
-                      "53595641940080695160110221582574037191723037145759311497025720763411433093184"),
+                      "45331864585825234947874751069766983839005678711670143534492294352090223768785"),
                   new BigInteger(
-                      "24054190246794487145514519423479743885622463911750079416987334020216197302717"),
+                      "32813839561238589140263096892921088101761344639911577803805398248765156383629"),
                   Byte.parseByte("1")),
           Bytes.fromBase64String(MOCK_ORION_KEY),
           Address.wrap(Bytes.fromHexString("0x8411b12666f68ef74cace3615c9d5a377729d03f")),

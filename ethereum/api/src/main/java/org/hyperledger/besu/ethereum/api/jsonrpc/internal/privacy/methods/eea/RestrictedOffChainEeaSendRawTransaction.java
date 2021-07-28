@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil.findOffchai
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -28,7 +27,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
@@ -44,21 +42,13 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
 
   public RestrictedOffChainEeaSendRawTransaction(
       final TransactionPool transactionPool,
-      final PrivacyController privacyController,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivacyIdProvider privacyIdProvider,
-      final BlockchainQueries blockchainQueries,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
-      final GasCalculator gasCalculator) {
-    super(
-        transactionPool,
-        privacyIdProvider,
-        privateMarkerTransactionFactory,
-        blockchainQueries,
-        publicNonceProvider,
-        gasCalculator);
-    this.privacyController = privacyController;
+      final PrivacyController privacyController) {
+    super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
     this.privacyIdProvider = privacyIdProvider;
+    this.privacyController = privacyController;
   }
 
   @Override
@@ -95,5 +85,10 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
 
     return createPrivateMarkerTransaction(
         Address.DEFAULT_PRIVACY, privateTransactionLookupId, privateTransaction, privacyUserId);
+  }
+
+  @Override
+  protected long getGasLimit(final PrivateTransaction privateTransaction, final String pmtPayload) {
+    return privateTransaction.getGasLimit();
   }
 }

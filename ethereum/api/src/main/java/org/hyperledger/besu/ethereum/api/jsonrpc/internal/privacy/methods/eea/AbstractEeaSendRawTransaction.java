@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -38,7 +37,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.NonceProvider;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
@@ -55,9 +53,7 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   private final TransactionPool transactionPool;
   private final PrivacyIdProvider privacyIdProvider;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
-  private final BlockchainQueries blockchainQueries;
   private final NonceProvider publicNonceProvider;
-  private final GasCalculator gasCalculator;
   private static final int MAX_CONCURRENT_PMT_SIGNATURE_REQUESTS = 10;
   private final Striped<Lock> stripedLock =
       Striped.lazyWeakLock(MAX_CONCURRENT_PMT_SIGNATURE_REQUESTS);
@@ -66,15 +62,11 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
-      final BlockchainQueries blockchainQueries,
-      final NonceProvider publicNonceProvider,
-      final GasCalculator gasCalculator) {
+      final NonceProvider publicNonceProvider) {
     this.transactionPool = transactionPool;
     this.privacyIdProvider = privacyIdProvider;
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
-    this.blockchainQueries = blockchainQueries;
     this.publicNonceProvider = publicNonceProvider;
-    this.gasCalculator = gasCalculator;
   }
 
   @Override
@@ -103,12 +95,21 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
       final org.hyperledger.besu.plugin.data.Address sender =
           privateMarkerTransactionFactory.getSender(
               privateTransaction, privacyIdProvider.getPrivacyUserId(user));
+
+      // We lock by sender address so that we can send multiple requests from the same address
+      // the request will be blocked until the nonce for that sender has been calculated and the
+      // transaction
+      // has completed submission to the transaction pool
+
       final Lock lock = stripedLock.get(sender.toShortHexString());
       lock.lock();
       try {
 
         final Transaction privateMarkerTransaction =
             createPrivateMarkerTransaction(privateTransaction, user);
+
+        LOG.error("CHEESE");
+        LOG.error(privateMarkerTransaction.getHash());
 
         return transactionPool
             .addLocalTransaction(privateMarkerTransaction)
@@ -154,21 +155,12 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
 
     final long nonce = publicNonceProvider.getNonce(sender);
 
-    final Optional<Wei> gasPrice = blockchainQueries.gasPrice().map(Wei::of);
-
-    final long gasLimit =
-        gasCalculator
-            .transactionIntrinsicGasCostAndAccessedState(
-                new Transaction.Builder().payload(Bytes.fromBase64String(pmtPayload)).build())
-            .getGas()
-            .toLong();
-
     final Transaction unsignedPrivateMarkerTransaction =
         new Transaction.Builder()
             .type(TransactionType.FRONTIER)
             .nonce(nonce)
-            .gasPrice(gasPrice.orElse(privateTransaction.getGasPrice()))
-            .gasLimit(gasLimit)
+            .gasPrice(privateTransaction.getGasPrice())
+            .gasLimit(getGasLimit(privateTransaction, pmtPayload))
             .to(privacyPrecompileAddress)
             .value(Wei.ZERO)
             .payload(Bytes.fromBase64String(pmtPayload))
@@ -179,4 +171,6 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
             unsignedPrivateMarkerTransaction, privateTransaction, privacyUserId);
     return Transaction.readFrom(rlpBytes);
   }
+
+  protected abstract long getGasLimit(PrivateTransaction privateTransaction, String pmtPayload);
 }

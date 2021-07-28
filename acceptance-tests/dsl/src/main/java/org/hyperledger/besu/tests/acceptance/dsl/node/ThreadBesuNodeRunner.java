@@ -175,7 +175,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
             besuController.getSyncState()));
-
     besuPluginContext.startPlugins();
 
     final Runner runner =

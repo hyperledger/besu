@@ -36,8 +36,6 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,17 +60,14 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   @Before
   public void before() {
-    when(blockchainQueries.gasPrice()).thenReturn(Optional.of(10L));
 
     method =
         new RestrictedOffChainEeaSendRawTransaction(
             transactionPool,
-            privacyController,
-            privateMarkerTransactionFactory,
             privacyIdProvider,
-            blockchainQueries,
+            privateMarkerTransactionFactory,
             address -> 0,
-            gasCalculator);
+            privacyController);
   }
 
   @Test

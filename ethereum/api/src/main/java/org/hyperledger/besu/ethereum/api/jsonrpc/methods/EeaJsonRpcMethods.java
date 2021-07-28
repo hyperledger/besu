@@ -35,7 +35,6 @@ import java.util.Map;
 
 public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
-  private final BlockchainQueries blockchainQueries;
   private final TransactionPool transactionPool;
   private final PrivacyParameters privacyParameters;
   private final NonceProvider nonceProvider;
@@ -46,7 +45,6 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
-    this.blockchainQueries = blockchainQueries;
     this.transactionPool = transactionPool;
     this.privacyParameters = privacyParameters;
     this.nonceProvider =
@@ -63,34 +61,29 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       return mapOf(
           new PluginEeaSendRawTransaction(
               transactionPool,
-              privacyController,
-              privateMarkerTransactionFactory,
               privacyIdProvider,
-              blockchainQueries,
+              privateMarkerTransactionFactory,
               nonceProvider,
+              privacyController,
               getGasCalculator()),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     } else if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
       return mapOf(
           new RestrictedOnChainEeaSendRawTransaction(
               transactionPool,
-              privacyController,
-              privateMarkerTransactionFactory,
               privacyIdProvider,
-              blockchainQueries,
+              privateMarkerTransactionFactory,
               nonceProvider,
-              getGasCalculator()),
+              privacyController),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     } else { // off chain privacy
       return mapOf(
           new RestrictedOffChainEeaSendRawTransaction(
               transactionPool,
-              privacyController,
-              privateMarkerTransactionFactory,
               privacyIdProvider,
-              blockchainQueries,
+              privateMarkerTransactionFactory,
               nonceProvider,
-              getGasCalculator()),
+              privacyController),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     }
   }

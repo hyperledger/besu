@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -30,28 +29,24 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
+  private final GasCalculator gasCalculator;
 
   public PluginEeaSendRawTransaction(
       final TransactionPool transactionPool,
-      final PrivacyController privacyController,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivacyIdProvider privacyIdProvider,
-      final BlockchainQueries blockchainQueries,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final NonceProvider publicNonceProvider,
+      final PrivacyController privacyController,
       final GasCalculator gasCalculator) {
-    super(
-        transactionPool,
-        privacyIdProvider,
-        privateMarkerTransactionFactory,
-        blockchainQueries,
-        publicNonceProvider,
-        gasCalculator);
+    super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
+    this.gasCalculator = gasCalculator;
   }
 
   @Override
@@ -75,5 +70,22 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
     return createPrivateMarkerTransaction(
         Address.PLUGIN_PRIVACY, payloadFromPlugin, privateTransaction, privacyUserId);
+  }
+
+  @Override
+  protected long getGasLimit(final PrivateTransaction privateTransaction, final String pmtPayload) {
+    // The gas limit can not be determined by the sender because the payload could be changed by the
+    // plugin
+    // choose the highest of the two options
+    return Math.max(
+        privateTransaction.getGasLimit(),
+        gasCalculator
+            .transactionIntrinsicGasCostAndAccessedState(
+                new Transaction.Builder()
+                    .to(Address.PLUGIN_PRIVACY)
+                    .payload(Bytes.fromBase64String(pmtPayload))
+                    .build())
+            .getGas()
+            .toLong());
   }
 }

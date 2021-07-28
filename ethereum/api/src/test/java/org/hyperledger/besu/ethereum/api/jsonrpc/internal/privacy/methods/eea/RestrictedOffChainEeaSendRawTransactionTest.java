@@ -45,17 +45,13 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
   @Before
   public void before() {
-    when(blockchainQueries.gasPrice()).thenReturn(Optional.of(10L));
-
     method =
         new RestrictedOffChainEeaSendRawTransaction(
             transactionPool,
-            privacyController,
-            privateMarkerTransactionFactory,
             privacyIdProvider,
-            blockchainQueries,
+            privateMarkerTransactionFactory,
             address -> 0,
-            gasCalculator);
+            privacyController);
   }
 
   @Test
@@ -69,7 +65,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             validPrivateForTransactionRequest.getRequest().getId(),
-            "0x5b523f316c7768b110733a6526b5435c4c9bb8b376109cbaf534fcfc4496f59e");
+            "0x7f14b1aaa2fdddf918350d99801bf00a0eb1a1441b21b8c147f42db5ea675590");
 
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 
@@ -96,7 +92,7 @@ public class RestrictedOffChainEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            "0x5b523f316c7768b110733a6526b5435c4c9bb8b376109cbaf534fcfc4496f59e");
+            "0x7f14b1aaa2fdddf918350d99801bf00a0eb1a1441b21b8c147f42db5ea675590");
 
     final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
 

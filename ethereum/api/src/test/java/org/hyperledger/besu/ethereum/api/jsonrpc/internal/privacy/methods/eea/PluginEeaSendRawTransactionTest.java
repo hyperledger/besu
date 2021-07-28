@@ -23,8 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
-import java.util.Optional;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,16 +35,13 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   @Before
   public void before() {
-    when(blockchainQueries.gasPrice()).thenReturn(Optional.of(10L));
-
     method =
         new PluginEeaSendRawTransaction(
             transactionPool,
-            privacyController,
+            user -> "",
             privateMarkerTransactionFactory,
-            (user) -> "",
-            blockchainQueries,
             address -> 0,
+            privacyController,
             gasCalculator);
   }
 
@@ -63,7 +58,7 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            "0xb793b592a1c584517e0811f0c4d53153528c634769f3de018de53423abe9c521");
+            "0x8d84a2d2158c9be3c18a8e6d064fd085e440d117294ba2e7f909e36bf192ffbd");
 
     final JsonRpcResponse actualResponse =
         method.response(validUnrestrictedPrivacyGroupTransactionRequest);

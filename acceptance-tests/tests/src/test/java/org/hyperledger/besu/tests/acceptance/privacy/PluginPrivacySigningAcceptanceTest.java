@@ -89,7 +89,7 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
         minerNode
             .execute(
                 ethTransactions.getTransactionReceipt(
-                    "0x00f742c9effc033a387d383975b8fd7496327bb21b85d6a44b75571d9586f142"))
+                    "0x5586b8321e26cdabd68e0139955b90f97c0fc082519d07e1c0b9db26862ff2ff"))
             .get();
 
     assertThat(pmtReceipt.getStatus()).isEqualTo("0x1");
