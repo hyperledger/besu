@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -64,6 +65,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   @Before
   public void setup() {
     when(rpcMethod.getName()).thenReturn("priv_method");
+
     privacyApiGroupJsonRpcMethods =
         new TestPrivacyApiGroupJsonRpcMethods(
             blockchainQueries, protocolSchedule, transactionPool, privacyParameters, rpcMethod);
@@ -178,7 +180,9 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
 
     @Override
     protected Map<String, JsonRpcMethod> create(
-        final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
+        final PrivacyController privacyController,
+        final PrivacyIdProvider privacyIdProvider,
+        final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
       this.privacyController = privacyController;
       this.privacyIdProvider = privacyIdProvider;
       return mapOf(rpcMethod);

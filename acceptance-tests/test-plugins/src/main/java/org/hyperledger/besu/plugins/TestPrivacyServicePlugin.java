@@ -38,14 +38,17 @@ import picocli.CommandLine.Option;
 public class TestPrivacyServicePlugin implements BesuPlugin {
   private static final Logger LOG = LogManager.getLogger();
 
-  private PrivacyPluginService service;
+  PrivacyPluginService pluginService;
+  BesuContext context;
 
   @Override
   public void register(final BesuContext context) {
-    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
-    service = context.getService(PrivacyPluginService.class).get();
+    this.context = context;
 
-    service.setPayloadProvider(
+    context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
+    pluginService = context.getService(PrivacyPluginService.class).get();
+
+    pluginService.setPayloadProvider(
         new PrivacyPluginPayloadProvider() {
           @Override
           public Bytes generateMarkerPayload(
@@ -74,11 +77,22 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   }
 
   @Override
-  public void start() {}
+  public void start() {
+    if (signingEnabled) {
+      pluginService.setPrivateMarkerTransactionFactory(
+          new TestSigningPrivateMarkerTransactionFactory(signingKey));
+    }
+  }
 
   @Override
   public void stop() {}
 
   @Option(names = "--plugin-privacy-service-encryption-prefix")
   String prefix;
+
+  @Option(names = "--plugin-privacy-service-signing-enabled")
+  boolean signingEnabled = false;
+
+  @Option(names = "--plugin-privacy-service-signing-key")
+  String signingKey;
 }

@@ -55,7 +55,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
                 clock),
             gasLimitCalculator,
             epochCalculator,
-            miningParameters.getPowJobTimeToLive());
+            miningParameters.getPowJobTimeToLive(),
+            miningParameters.getMaxOmmerDepth());
 
     final PoWMiningCoordinator miningCoordinator =
         new PoWMiningCoordinator(

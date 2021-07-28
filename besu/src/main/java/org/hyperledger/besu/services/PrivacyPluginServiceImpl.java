@@ -17,14 +17,16 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class PrivacyPluginPluginServiceImpl implements PrivacyPluginService {
+public class PrivacyPluginServiceImpl implements PrivacyPluginService {
   private static final Logger LOG = LogManager.getLogger();
 
   private PrivacyPluginPayloadProvider privacyPluginPayloadProvider;
+  private PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
 
   private PrivacyGroupAuthProvider privacyGroupAuthProvider =
       (privacyGroupId, privacyUserId, blockNumber) -> true;
@@ -51,5 +53,16 @@ public class PrivacyPluginPluginServiceImpl implements PrivacyPluginService {
   @Override
   public PrivacyGroupAuthProvider getPrivacyGroupAuthProvider() {
     return privacyGroupAuthProvider;
+  }
+
+  @Override
+  public PrivateMarkerTransactionFactory getPrivateMarkerTransactionFactory() {
+    return privateMarkerTransactionFactory;
+  }
+
+  @Override
+  public void setPrivateMarkerTransactionFactory(
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
+    this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
   }
 }
