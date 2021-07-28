@@ -52,7 +52,7 @@ public class StratumServer implements PoWObserver {
   private final String networkInterface;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicLong numberOfMiners = new AtomicLong(0);
-  private final AtomicDouble difficultyGauge = new AtomicDouble(0.0);
+  private final AtomicDouble currentDifficulty = new AtomicDouble(0.0);
   private final StratumProtocol[] protocols;
   private final Counter connectionsCount;
   private final Counter disconnectionsCount;
@@ -79,7 +79,7 @@ public class StratumServer implements PoWObserver {
         BesuMetricCategory.STRATUM,
         "difficulty",
         "Current mining difficulty",
-        difficultyGauge::get);
+        currentDifficulty::get);
     this.connectionsCount =
         metricsSystem.createCounter(
             BesuMetricCategory.STRATUM, "connections", "Number of connections over time");
@@ -159,7 +159,7 @@ public class StratumServer implements PoWObserver {
       protocol.setCurrentWorkTask(poWSolverInputs);
     }
     UInt256 difficulty = poWSolverInputs.getTarget().divide(DIFFICULTY_1_TARGET);
-    difficultyGauge.set(difficulty.toUnsignedBigInteger().doubleValue());
+    currentDifficulty.set(difficulty.toUnsignedBigInteger().doubleValue());
   }
 
   @Override
