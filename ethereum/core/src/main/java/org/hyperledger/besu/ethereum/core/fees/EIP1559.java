@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.fees;
 import static java.lang.Math.max;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.math.BigInteger;
 
@@ -28,7 +29,7 @@ public class EIP1559 {
 
   private final long initialForkBlknum;
 
-  private final FeeMarket feeMarket = FeeMarket.eip1559();
+  private final FeeMarket feeMarket = FeeMarket.london();
 
   public EIP1559(final long forkBlockNumber) {
     initialForkBlknum = forkBlockNumber;

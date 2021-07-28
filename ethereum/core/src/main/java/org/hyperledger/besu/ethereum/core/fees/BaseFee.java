@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -41,7 +42,7 @@ public class BaseFee {
     Optional<Long> minBaseFeeInNextBlock = Optional.empty();
     if (baseFee.isPresent()) {
       minBaseFeeInNextBlock =
-          Optional.of(new BaseFee(FeeMarket.eip1559(), baseFee.get()).getMinNextValue());
+          Optional.of(new BaseFee(FeeMarket.london(), baseFee.get()).getMinNextValue());
     }
     return calculator.price(transaction, minBaseFeeInNextBlock);
   }

@@ -26,6 +26,8 @@ public class MiningParameters {
 
   public static final long DEFAULT_REMOTE_SEALERS_TTL = Duration.ofMinutes(10).toMinutes();
 
+  public static final long DEFAULT_POW_JOB_TTL = Duration.ofMinutes(5).toMillis();
+
   private final Optional<Address> coinbase;
   private final Wei minTransactionGasPrice;
   private final Bytes extraData;
@@ -38,6 +40,7 @@ public class MiningParameters {
   private final Double minBlockOccupancyRatio;
   private final int remoteSealersLimit;
   private final long remoteSealersTimeToLive;
+  private final long powJobTimeToLive;
 
   public MiningParameters(
       final Address coinbase,
@@ -56,7 +59,8 @@ public class MiningParameters {
         Optional.empty(),
         0.8,
         DEFAULT_REMOTE_SEALERS_LIMIT,
-        DEFAULT_REMOTE_SEALERS_TTL);
+        DEFAULT_REMOTE_SEALERS_TTL,
+        DEFAULT_POW_JOB_TTL);
   }
 
   public MiningParameters(
@@ -71,7 +75,8 @@ public class MiningParameters {
       final Optional<Iterable<Long>> maybeNonceGenerator,
       final Double minBlockOccupancyRatio,
       final int remoteSealersLimit,
-      final long remoteSealersTimeToLive) {
+      final long remoteSealersTimeToLive,
+      final long powJobTimeToLive) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.extraData = extraData;
@@ -84,6 +89,7 @@ public class MiningParameters {
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.remoteSealersLimit = remoteSealersLimit;
     this.remoteSealersTimeToLive = remoteSealersTimeToLive;
+    this.powJobTimeToLive = powJobTimeToLive;
   }
 
   public Optional<Address> getCoinbase() {
@@ -134,6 +140,10 @@ public class MiningParameters {
     return remoteSealersTimeToLive;
   }
 
+  public long getPowJobTimeToLive() {
+    return powJobTimeToLive;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -149,7 +159,8 @@ public class MiningParameters {
         && Objects.equals(stratumExtranonce, that.stratumExtranonce)
         && Objects.equals(minBlockOccupancyRatio, that.minBlockOccupancyRatio)
         && Objects.equals(remoteSealersTimeToLive, that.remoteSealersTimeToLive)
-        && Objects.equals(remoteSealersLimit, that.remoteSealersLimit);
+        && Objects.equals(remoteSealersLimit, that.remoteSealersLimit)
+        && Objects.equals(powJobTimeToLive, that.powJobTimeToLive);
   }
 
   @Override
@@ -165,7 +176,8 @@ public class MiningParameters {
         stratumExtranonce,
         minBlockOccupancyRatio,
         remoteSealersLimit,
-        remoteSealersTimeToLive);
+        remoteSealersTimeToLive,
+        powJobTimeToLive);
   }
 
   @Override
@@ -197,6 +209,8 @@ public class MiningParameters {
         + remoteSealersLimit
         + ", remoteSealersTimeToLive="
         + remoteSealersTimeToLive
+        + ", powJobTimeToLive="
+        + powJobTimeToLive
         + '}';
   }
 }
