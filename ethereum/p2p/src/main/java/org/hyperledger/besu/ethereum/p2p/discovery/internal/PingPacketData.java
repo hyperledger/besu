@@ -108,9 +108,7 @@ public class PingPacketData implements PacketData {
     return new PingPacketData(from, to.get(), expiration, enrSeq);
   }
 
-  /**
-   * @deprecated Only to be used by internal tests to confirm backward compatibility.
-   */
+  /** @deprecated Only to be used by internal tests to confirm backward compatibility. */
   @Deprecated
   public static PingPacketData legacyReadFrom(final RLPInput in) { // only for testing, do not use
     in.enterList();
@@ -140,9 +138,7 @@ public class PingPacketData implements PacketData {
     out.endList();
   }
 
-  /**
-   * @deprecated Only to be used by internal tests to confirm backward compatibility.
-   */
+  /** @deprecated Only to be used by internal tests to confirm backward compatibility. */
   @Deprecated
   public void legacyWriteTo(final RLPOutput out) {
     out.startList();

@@ -145,7 +145,7 @@ public class Endpoint {
       InetAddress hostAddress = InetAddresses.forString(host.get());
       if (hostAddress != null) {
         out.writeInetAddress(hostAddress);
-      } else { //present, but not a parseable IP address
+      } else { // present, but not a parseable IP address
         out.writeNull();
       }
     } else {
