@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.junit.Test;
 
 public class PingPacketDataTest {
@@ -141,6 +142,41 @@ public class PingPacketDataTest {
     final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getFrom()).isEmpty();
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void handleSourcePortNullHost() {
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    final UInt64 enrSeq = UInt64.MAX_VALUE;
+    final long time = System.currentTimeMillis();
+
+    out.startList();
+    out.writeIntScalar(4);
+
+    ((RLPOutput) out).startList();
+    out.writeNull();
+    out.writeIntScalar(30303);
+    out.writeNull();
+    ((RLPOutput) out).endList();
+
+    to.encodeStandalone(out);
+    out.writeLongScalar(time);
+    out.writeBigIntegerScalar(enrSeq.toBigInteger());
+    out.endList();
+
+    final Bytes serialized = out.encoded();
+    final PingPacketData deserialized = PingPacketData.readFrom(RLP.input(serialized));
+
+    assertThat(deserialized.getFrom()).isPresent();
+    assertThat(deserialized.getFrom().get().getUdpPort()).isEqualTo(30303);
+    assertThat(deserialized.getFrom().get().getHost().isEmpty()).isTrue();
+    assertThat(deserialized.getFrom().get().getTcpPort().isEmpty()).isTrue();
+
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
     assertThat(deserialized.getEnrSeq().isPresent()).isTrue();

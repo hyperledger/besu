@@ -83,6 +83,9 @@ public class PongPacketData implements PacketData {
     out.endList();
   }
 
+  /**
+   * @deprecated Only to be used by internal tests to confirm backward compatibility.
+   */
   @Deprecated
   public static PongPacketData legacyReadFrom(final RLPInput in) {
     in.enterList();
@@ -97,6 +100,9 @@ public class PongPacketData implements PacketData {
     return new PongPacketData(to, hash, expiration, enrSeq);
   }
 
+  /**
+   * @deprecated Only to be used by internal tests to confirm backward compatibility.
+   */
   @Deprecated
   public void legacyWriteTo(final RLPOutput out) {
     out.startList();

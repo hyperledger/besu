@@ -43,7 +43,7 @@ public class Endpoint {
     checkPort(udpPort, "UDP");
     tcpPort.ifPresent(port -> checkPort(port, "TCP"));
 
-    this.host = Optional.of(host);
+    this.host = Optional.ofNullable(host);
     this.udpPort = udpPort;
     this.tcpPort = tcpPort;
   }
@@ -70,7 +70,7 @@ public class Endpoint {
   }
 
   public String getHost() {
-    return host.isPresent() ? host.get() : "";
+    return host.orElse("");
   }
 
   public int getUdpPort() {
@@ -142,7 +142,12 @@ public class Endpoint {
    */
   public void encodeInline(final RLPOutput out) {
     if (host.isPresent()) {
-      out.writeInetAddress(InetAddresses.forString(host.get()));
+      InetAddress hostAddress = InetAddresses.forString(host.get());
+      if (hostAddress != null) {
+        out.writeInetAddress(hostAddress);
+      } else { //present, but not a parseable IP address
+        out.writeNull();
+      }
     } else {
       out.writeNull();
     }
@@ -165,7 +170,7 @@ public class Endpoint {
         "Invalid number of components in RLP representation of an endpoint: expected 2 or 3 elements but got %s",
         fieldCount);
 
-    String hostAddress = "";
+    String hostAddress = null;
     if (!in.nextIsNull()) {
       InetAddress addr = in.readInetAddress();
       hostAddress = addr.getHostAddress();
