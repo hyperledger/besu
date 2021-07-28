@@ -143,13 +143,13 @@ public class MiningParameters {
         && Objects.equals(coinbase, that.coinbase)
         && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
         && Objects.equals(extraData, that.extraData)
-        && Objects.equals(enabled, that.enabled)
-        && Objects.equals(stratumMiningEnabled, that.stratumMiningEnabled)
+        && enabled == that.enabled
+        && stratumMiningEnabled == that.stratumMiningEnabled
         && Objects.equals(stratumNetworkInterface, that.stratumNetworkInterface)
         && Objects.equals(stratumExtranonce, that.stratumExtranonce)
         && Objects.equals(minBlockOccupancyRatio, that.minBlockOccupancyRatio)
-        && Objects.equals(remoteSealersTimeToLive, that.remoteSealersTimeToLive)
-        && Objects.equals(remoteSealersLimit, that.remoteSealersLimit);
+        && remoteSealersTimeToLive == that.remoteSealersTimeToLive
+        && remoteSealersLimit == that.remoteSealersLimit;
   }
 
   @Override

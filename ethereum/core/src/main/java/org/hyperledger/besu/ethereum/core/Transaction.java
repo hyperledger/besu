@@ -768,11 +768,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
     final Transaction that = (Transaction) other;
     return Objects.equals(this.chainId, that.chainId)
-        && Objects.equals(this.gasLimit, that.gasLimit)
+        && this.gasLimit == that.gasLimit
         && Objects.equals(this.gasPrice, that.gasPrice)
         && Objects.equals(this.maxPriorityFeePerGas, that.maxPriorityFeePerGas)
         && Objects.equals(this.maxFeePerGas, that.maxFeePerGas)
-        && Objects.equals(this.nonce, that.nonce)
+        && this.nonce == that.nonce
         && Objects.equals(this.payload, that.payload)
         && Objects.equals(this.signature, that.signature)
         && Objects.equals(this.to, that.to)
