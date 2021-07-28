@@ -12,14 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.plugin.services.privacy;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.plugin.data.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
 
-import java.util.Collection;
+import org.apache.tuweni.bytes.Bytes;
 
-public interface ValidatorProvider {
+public interface PrivateMarkerTransactionFactory {
 
-  // Returns the current list of validators
-  Collection<Address> getValidators();
+  Address getSender(PrivateTransaction privateTransaction, String privacyUserId);
+
+  Bytes create(
+      UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
+      PrivateTransaction privateTransaction,
+      String privacyUserId);
 }

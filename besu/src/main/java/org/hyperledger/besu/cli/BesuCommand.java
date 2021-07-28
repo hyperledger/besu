@@ -160,7 +160,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
-import org.hyperledger.besu.services.PrivacyPluginPluginServiceImpl;
+import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
@@ -273,7 +273,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final StorageServiceImpl storageService;
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
-  private final PrivacyPluginPluginServiceImpl privacyService;
+  private final PrivacyPluginServiceImpl privacyPluginPluginService;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -1144,7 +1144,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new StorageServiceImpl(),
         new SecurityModuleServiceImpl(),
         new PermissioningServiceImpl(),
-        new PrivacyPluginPluginServiceImpl());
+        new PrivacyPluginServiceImpl());
   }
 
   @VisibleForTesting
@@ -1160,7 +1160,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
-      final PrivacyPluginPluginServiceImpl privacyService) {
+      final PrivacyPluginServiceImpl privacyPluginPluginService) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1172,7 +1172,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.storageService = storageService;
     this.securityModuleService = securityModuleService;
     this.permissioningService = permissioningService;
-    this.privacyService = privacyService;
+    this.privacyPluginPluginService = privacyPluginPluginService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
   }
@@ -1312,7 +1312,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
-    besuPluginContext.addService(PrivacyPluginService.class, privacyService);
+    besuPluginContext.addService(PrivacyPluginService.class, privacyPluginPluginService);
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
@@ -1408,6 +1408,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getTransactionPool(),
             besuController.getSyncState()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
+
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
   }
@@ -1558,18 +1559,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !isMiningEnabled,
         asList(
             "--miner-coinbase",
+            "--min-gas-price",
             "--min-block-occupancy-ratio",
             "--miner-extra-data",
             "--miner-stratum-enabled",
             "--Xminer-remote-sealers-limit",
             "--Xminer-remote-sealers-hashrate-ttl"));
-
-    CommandLineUtils.checkMultiOptionDependencies(
-        logger,
-        commandLine,
-        "--min-gas-price ignored because none of --miner-enabled or isQuorum (in genesis file) was defined.",
-        List.of(!isMiningEnabled, !isGoQuorumCompatibilityMode),
-        singletonList("--min-gas-price"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1710,19 +1705,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
         .miningParameters(
-            new MiningParameters(
-                coinbase,
-                minTransactionGasPrice,
-                extraData,
-                isMiningEnabled,
-                iStratumMiningEnabled,
-                stratumNetworkInterface,
-                stratumPort,
-                unstableMiningOptions.getStratumExtranonce(),
-                Optional.empty(),
-                minBlockOccupancyRatio,
-                unstableMiningOptions.getRemoteSealersLimit(),
-                unstableMiningOptions.getRemoteSealersTimeToLive()))
+            new MiningParameters.Builder()
+                .coinbase(coinbase)
+                .minTransactionGasPrice(minTransactionGasPrice)
+                .extraData(extraData)
+                .enabled(isMiningEnabled)
+                .stratumMiningEnabled(iStratumMiningEnabled)
+                .stratumNetworkInterface(stratumNetworkInterface)
+                .stratumPort(stratumPort)
+                .stratumExtranonce(unstableMiningOptions.getStratumExtranonce())
+                .minBlockOccupancyRatio(minBlockOccupancyRatio)
+                .remoteSealersLimit(unstableMiningOptions.getRemoteSealersLimit())
+                .remoteSealersTimeToLive(unstableMiningOptions.getRemoteSealersTimeToLive())
+                .powJobTimeToLive(unstableMiningOptions.getPowJobTimeToLive())
+                .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
+                .build())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
@@ -2142,7 +2139,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && privacyService.getPayloadProvider() == null) {
+          && privacyPluginPluginService.getPayloadProvider() == null) {
         throw new ParameterException(
             commandLine, "Privacy Plugin must be registered when enabling privacy plugin!");
       }
@@ -2186,11 +2183,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privateMarkerTransactionSigningKeyPath == null) {
+        if (privateMarkerTransactionSigningKeyPath == null
+            && (privacyPluginPluginService == null
+                || privacyPluginPluginService.getPrivateMarkerTransactionFactory() == null)) {
           throw new ParameterException(
               commandLine,
               "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
         }
+      }
+
+      if (privateMarkerTransactionSigningKeyPath != null
+          && privacyPluginPluginService != null
+          && privacyPluginPluginService.getPrivateMarkerTransactionFactory() != null) {
+        throw new ParameterException(
+            commandLine,
+            "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
       if (!Address.PRIVACY.equals(privacyPrecompiledAddress)) {
@@ -2220,7 +2227,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && (rpcHttpApis.contains(RpcApis.GOQUORUM) || rpcWsApis.contains(RpcApis.GOQUORUM))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
-    privacyParametersBuilder.setPrivacyService(privacyService);
+    privacyParametersBuilder.setPrivacyService(privacyPluginPluginService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
     if (isPrivacyEnabled) {

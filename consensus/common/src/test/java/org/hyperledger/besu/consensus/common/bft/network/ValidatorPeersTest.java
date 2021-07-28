@@ -22,8 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -52,7 +51,7 @@ public class ValidatorPeersTest {
   private final List<SECPPublicKey> publicKeys = newArrayList();
 
   private final List<PeerConnection> peerConnections = newArrayList();
-  @Mock private VoteTallyCache voteTallyCache;
+  @Mock ValidatorProvider validatorProvider;
 
   @Before
   public void setup() {
@@ -66,9 +65,7 @@ public class ValidatorPeersTest {
       peerConnections.add(peerConnection);
     }
 
-    final VoteTally validatorProvider = mock(VoteTally.class);
-    when(voteTallyCache.getVoteTallyAtHead()).thenReturn(validatorProvider);
-    when(validatorProvider.getValidators()).thenReturn(validators);
+    when(validatorProvider.getValidatorsAtHead()).thenReturn(validators);
   }
 
   private PeerConnection mockPeerConnection(final Address address) {
@@ -84,7 +81,7 @@ public class ValidatorPeersTest {
     // Only add the first Peer's address to the validators.
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, PROTOCOL_NAME);
+    final ValidatorPeers peers = new ValidatorPeers(validatorProvider, PROTOCOL_NAME);
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }
@@ -104,7 +101,7 @@ public class ValidatorPeersTest {
     validators.add(peer0Address);
     final PeerConnection duplicatePeer = mockPeerConnection(peer0Address);
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, PROTOCOL_NAME);
+    final ValidatorPeers peers = new ValidatorPeers(validatorProvider, PROTOCOL_NAME);
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }
@@ -126,7 +123,7 @@ public class ValidatorPeersTest {
     validators.add(peer0Address);
     final PeerConnection duplicatePeer = mockPeerConnection(peer0Address);
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, PROTOCOL_NAME);
+    final ValidatorPeers peers = new ValidatorPeers(validatorProvider, PROTOCOL_NAME);
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }
@@ -147,7 +144,7 @@ public class ValidatorPeersTest {
   public void doesntSendToValidatorsWhichAreNotDirectlyConnected() throws PeerNotConnected {
     validators.add(Util.publicKeyToAddress(publicKeys.get(0)));
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, PROTOCOL_NAME);
+    final ValidatorPeers peers = new ValidatorPeers(validatorProvider, PROTOCOL_NAME);
 
     // only add peer connections 1, 2 & 3, none of which should be invoked.
     newArrayList(1, 2, 3).forEach(i -> peers.add(peerConnections.get(i)));
@@ -168,7 +165,7 @@ public class ValidatorPeersTest {
     validators.add(validatorAddress);
     validators.add(Util.publicKeyToAddress(publicKeys.get(1)));
 
-    final ValidatorPeers peers = new ValidatorPeers(voteTallyCache, PROTOCOL_NAME);
+    final ValidatorPeers peers = new ValidatorPeers(validatorProvider, PROTOCOL_NAME);
     for (final PeerConnection peer : peerConnections) {
       peers.add(peer);
     }
