@@ -26,19 +26,7 @@ public class ExperimentalEIPs {
 
   @Option(
       hidden = true,
-      names = {"--Xeip1559-basefee-max-change-denominator"},
-      arity = "1")
-  public static Long basefeeMaxChangeDenominator = 8L;
-
-  @Option(
-      hidden = true,
       names = {"--Xeip1559-initial-base-fee"},
       arity = "1")
   public static Long initialBasefee = EIP1559_BASEFEE_DEFAULT_VALUE;
-
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-slack-coefficient"},
-      arity = "1")
-  public static Long slackCoefficient = 2L;
 }
