@@ -293,7 +293,7 @@ public class PoWSolverTest {
             true,
             Subscribers.none(),
             new EpochCalculator.DefaultEpochCalculator(),
-            1000,
+            10000,
             8);
 
     CompletableFuture<PoWSolution> soln1 = new CompletableFuture<>();

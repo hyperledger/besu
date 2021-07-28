@@ -45,29 +45,7 @@ public class MiningParameters {
   private final long powJobTimeToLive;
   private final int maxOmmerDepth;
 
-  public MiningParameters(
-      final Address coinbase,
-      final Wei minTransactionGasPrice,
-      final Bytes extraData,
-      final boolean enabled) {
-    this(
-        coinbase,
-        minTransactionGasPrice,
-        extraData,
-        enabled,
-        false,
-        "0.0.0.0",
-        8008,
-        "080c",
-        Optional.empty(),
-        0.8,
-        DEFAULT_REMOTE_SEALERS_LIMIT,
-        DEFAULT_REMOTE_SEALERS_TTL,
-        DEFAULT_POW_JOB_TTL,
-        DEFAULT_MAX_OMMERS_DEPTH);
-  }
-
-  public MiningParameters(
+  private MiningParameters(
       final Address coinbase,
       final Wei minTransactionGasPrice,
       final Bytes extraData,
@@ -222,5 +200,111 @@ public class MiningParameters {
         + ", powJobTimeToLive="
         + powJobTimeToLive
         + '}';
+  }
+
+  public static class Builder {
+
+    private Address coinbase = null;
+    private Wei minTransactionGasPrice = Wei.ZERO;
+    private Bytes extraData = Bytes.EMPTY;
+    private boolean enabled = false;
+    private boolean stratumMiningEnabled = false;
+    private String stratumNetworkInterface = "0.0.0.0";
+    private int stratumPort = 8008;
+    private String stratumExtranonce = "080c";
+    private Iterable<Long> maybeNonceGenerator;
+    private Double minBlockOccupancyRatio = 0.8;
+    private int remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
+    private long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
+    private long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
+    private int maxOmmerDepth = DEFAULT_MAX_OMMERS_DEPTH;
+
+    public Builder coinbase(final Address address) {
+      this.coinbase = address;
+      return this;
+    }
+
+    public Builder minTransactionGasPrice(final Wei minTransactionGasPrice) {
+      this.minTransactionGasPrice = minTransactionGasPrice;
+      return this;
+    }
+
+    public Builder extraData(final Bytes extraData) {
+      this.extraData = extraData;
+      return this;
+    }
+
+    public Builder enabled(final boolean enabled) {
+      this.enabled = enabled;
+      return this;
+    }
+
+    public Builder stratumMiningEnabled(final boolean stratumMiningEnabled) {
+      this.stratumMiningEnabled = stratumMiningEnabled;
+      return this;
+    }
+
+    public Builder stratumNetworkInterface(final String stratumNetworkInterface) {
+      this.stratumNetworkInterface = stratumNetworkInterface;
+      return this;
+    }
+
+    public Builder stratumPort(final int stratumPort) {
+      this.stratumPort = stratumPort;
+      return this;
+    }
+
+    public Builder stratumExtranonce(final String stratumExtranonce) {
+      this.stratumExtranonce = stratumExtranonce;
+      return this;
+    }
+
+    public Builder maybeNonceGenerator(final Iterable<Long> maybeNonceGenerator) {
+      this.maybeNonceGenerator = maybeNonceGenerator;
+      return this;
+    }
+
+    public Builder minBlockOccupancyRatio(final Double minBlockOccupancyRatio) {
+      this.minBlockOccupancyRatio = minBlockOccupancyRatio;
+      return this;
+    }
+
+    public Builder remoteSealersLimit(final int remoteSealersLimit) {
+      this.remoteSealersLimit = remoteSealersLimit;
+      return this;
+    }
+
+    public Builder remoteSealersTimeToLive(final long remoteSealersTimeToLive) {
+      this.remoteSealersTimeToLive = remoteSealersTimeToLive;
+      return this;
+    }
+
+    public Builder powJobTimeToLive(final long powJobTimeToLive) {
+      this.powJobTimeToLive = powJobTimeToLive;
+      return this;
+    }
+
+    public Builder maxOmmerDepth(final int maxOmmerDepth) {
+      this.maxOmmerDepth = maxOmmerDepth;
+      return this;
+    }
+
+    public MiningParameters build() {
+      return new MiningParameters(
+          coinbase,
+          minTransactionGasPrice,
+          extraData,
+          enabled,
+          stratumMiningEnabled,
+          stratumNetworkInterface,
+          stratumPort,
+          stratumExtranonce,
+          Optional.ofNullable(maybeNonceGenerator),
+          minBlockOccupancyRatio,
+          remoteSealersLimit,
+          remoteSealersTimeToLive,
+          powJobTimeToLive,
+          maxOmmerDepth);
+    }
   }
 }

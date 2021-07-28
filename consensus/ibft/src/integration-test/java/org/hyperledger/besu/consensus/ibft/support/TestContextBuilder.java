@@ -283,11 +283,12 @@ public class TestContextBuilder {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     final MiningParameters miningParams =
-        new MiningParameters(
-            AddressHelpers.ofValue(1),
-            Wei.ZERO,
-            Bytes.wrap("Ibft Int tests".getBytes(UTF_8)),
-            true);
+        new MiningParameters.Builder()
+            .coinbase(AddressHelpers.ofValue(1))
+            .minTransactionGasPrice(Wei.ZERO)
+            .extraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
+            .enabled(true)
+            .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
