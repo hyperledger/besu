@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteTally;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -112,12 +112,13 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         ConsensusHelpers.zeroLeftPad(extraData, CliqueExtraData.EXTRA_VANITY_LENGTH);
     // Building ON TOP of canonical head, if the next block is epoch, include validators.
     if (epochManager.isEpochBlock(parentHeader.getNumber() + 1)) {
-      final VoteTally voteTally =
+
+      final Collection<Address> storedValidators =
           protocolContext
               .getConsensusState(CliqueContext.class)
-              .getVoteTallyCache()
-              .getVoteTallyAfterBlock(parentHeader);
-      validators.addAll(voteTally.getValidators());
+              .getValidatorProvider()
+              .getValidatorsAfterBlock(parentHeader);
+      validators.addAll(storedValidators);
     }
 
     return CliqueExtraData.encodeUnsealed(vanityDataToInsert, validators);

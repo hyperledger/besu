@@ -12,22 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+package org.hyperledger.besu.controller;
 
-public interface FeeMarket {
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 
-  long getBasefeeMaxChangeDenominator();
+import java.util.function.Supplier;
 
-  long getInitialBasefee();
+import com.google.common.base.Suppliers;
 
-  long getSlackCoefficient();
+public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
 
-  static FeeMarket eip1559() {
-    return new FeeMarketConfig(
-        ExperimentalEIPs.basefeeMaxChangeDenominator,
-        ExperimentalEIPs.initialBasefee,
-        ExperimentalEIPs.slackCoefficient);
+  protected abstract Supplier<BftExtraDataCodec> bftExtraDataCodec();
+
+  protected Supplier<BftBlockInterface> bftBlockInterface() {
+    return Suppliers.memoize(() -> new BftBlockInterface(bftExtraDataCodec().get()));
   }
 }

@@ -15,9 +15,13 @@
 package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteType;
+import org.hyperledger.besu.consensus.common.BlockInterface;
+import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -25,25 +29,36 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 
-import java.util.Optional;
-
+import org.junit.Before;
 import org.junit.Test;
 
 public class ProposeTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String METHOD = "clique_propose";
+  private ValidatorProvider validatorProvider;
+
+  @Before
+  public void setup() {
+    final Blockchain blockchain = mock(Blockchain.class);
+    final EpochManager epochManager = mock(EpochManager.class);
+    final BlockInterface blockInterface = mock(BlockInterface.class);
+    validatorProvider =
+        BlockValidatorProvider.nonForkingValidatorProvider(
+            blockchain, epochManager, blockInterface);
+  }
 
   @Test
   public void testAuth() {
-    final VoteProposer proposer = new VoteProposer();
-    final Propose propose = new Propose(proposer);
+    final Propose propose = new Propose(validatorProvider);
     final Address a1 = Address.fromHexString("1");
 
     final JsonRpcResponse response = propose.response(requestWithParams(a1, true));
 
-    assertThat(proposer.get(a1)).isEqualTo(Optional.of(VoteType.ADD));
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
+        .isEqualTo(VoteType.ADD);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -51,13 +66,12 @@ public class ProposeTest {
 
   @Test
   public void testAuthWithAddressZeroResultsInError() {
-    final VoteProposer proposer = new VoteProposer();
-    final Propose propose = new Propose(proposer);
+    final Propose propose = new Propose(validatorProvider);
     final Address a0 = Address.fromHexString("0");
 
     final JsonRpcResponse response = propose.response(requestWithParams(a0, true));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.empty());
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.INVALID_REQUEST);
@@ -65,13 +79,13 @@ public class ProposeTest {
 
   @Test
   public void testDrop() {
-    final VoteProposer proposer = new VoteProposer();
-    final Propose propose = new Propose(proposer);
+    final Propose propose = new Propose(validatorProvider);
     final Address a1 = Address.fromHexString("1");
 
     final JsonRpcResponse response = propose.response(requestWithParams(a1, false));
 
-    assertThat(proposer.get(a1)).isEqualTo(Optional.of(VoteType.DROP));
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
+        .isEqualTo(VoteType.DROP);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -79,13 +93,12 @@ public class ProposeTest {
 
   @Test
   public void testDropWithAddressZeroResultsInError() {
-    final VoteProposer proposer = new VoteProposer();
-    final Propose propose = new Propose(proposer);
+    final Propose propose = new Propose(validatorProvider);
     final Address a0 = Address.fromHexString("0");
 
     final JsonRpcResponse response = propose.response(requestWithParams(a0, false));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.empty());
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0)).isNull();
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.INVALID_REQUEST);
@@ -93,14 +106,14 @@ public class ProposeTest {
 
   @Test
   public void testRepeatAuth() {
-    final VoteProposer proposer = new VoteProposer();
-    final Propose propose = new Propose(proposer);
+    final Propose propose = new Propose(validatorProvider);
     final Address a1 = Address.fromHexString("1");
 
-    proposer.auth(a1);
+    validatorProvider.getVoteProvider().get().authVote(a1);
     final JsonRpcResponse response = propose.response(requestWithParams(a1, true));
 
-    assertThat(proposer.get(a1)).isEqualTo(Optional.of(VoteType.ADD));
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
+        .isEqualTo(VoteType.ADD);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -108,14 +121,14 @@ public class ProposeTest {
 
   @Test
   public void testRepeatDrop() {
-    final VoteProposer proposer = new VoteProposer();
-    final Propose propose = new Propose(proposer);
+    final Propose propose = new Propose(validatorProvider);
     final Address a1 = Address.fromHexString("1");
 
-    proposer.drop(a1);
+    validatorProvider.getVoteProvider().get().dropVote(a1);
     final JsonRpcResponse response = propose.response(requestWithParams(a1, false));
 
-    assertThat(proposer.get(a1)).isEqualTo(Optional.of(VoteType.DROP));
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
+        .isEqualTo(VoteType.DROP);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -123,14 +136,14 @@ public class ProposeTest {
 
   @Test
   public void testChangeToAuth() {
-    final VoteProposer proposer = new VoteProposer();
-    final Propose propose = new Propose(proposer);
+    final Propose propose = new Propose(validatorProvider);
     final Address a1 = Address.fromHexString("1");
 
-    proposer.drop(a1);
+    validatorProvider.getVoteProvider().get().dropVote(a1);
     final JsonRpcResponse response = propose.response(requestWithParams(a1, true));
 
-    assertThat(proposer.get(a1)).isEqualTo(Optional.of(VoteType.ADD));
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a1))
+        .isEqualTo(VoteType.ADD);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
@@ -138,14 +151,14 @@ public class ProposeTest {
 
   @Test
   public void testChangeToDrop() {
-    final VoteProposer proposer = new VoteProposer();
-    final Propose propose = new Propose(proposer);
+    final Propose propose = new Propose(validatorProvider);
     final Address a0 = Address.fromHexString("1");
 
-    proposer.auth(a0);
+    validatorProvider.getVoteProvider().get().authVote(a0);
     final JsonRpcResponse response = propose.response(requestWithParams(a0, false));
 
-    assertThat(proposer.get(a0)).isEqualTo(Optional.of(VoteType.DROP));
+    assertThat(validatorProvider.getVoteProvider().get().getProposals().get(a0))
+        .isEqualTo(VoteType.DROP);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);

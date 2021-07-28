@@ -12,13 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-/**
- * Determines if a validator vote is indicating that they should be added, or removed. This does not
- * attempt to determine how said vote should be serialised/deserialised.
- */
-public enum VoteType {
-  ADD,
-  DROP;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
+public interface FeeMarket {
+
+  long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
+
+  long getBasefeeMaxChangeDenominator();
+
+  long getInitialBasefee();
+
+  long getSlackCoefficient();
+
+  static FeeMarket london() {
+    return new LondonFeeMarket(ExperimentalEIPs.initialBasefee);
+  }
 }
