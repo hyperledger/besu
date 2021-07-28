@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigFile;
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
@@ -32,12 +30,14 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -63,7 +63,6 @@ public class PrivacyParameters {
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
-  private PrivateStateGenesis privateStateGenesis;
   private PrivacyPluginService privacyPluginService;
 
   public Address getPrivacyAddress() {
@@ -209,11 +208,20 @@ public class PrivacyParameters {
   }
 
   public PrivateStateGenesis getPrivateStateGenesis() {
-    return privateStateGenesis;
+    // Note: the order of plugin registration may cause issues here.
+    // This is why it's instantiated on get. It's needed in the privacy pre-compile constructors
+    // but privacy parameters is built before the plugin has had a chance to register a provider
+    // and have cli options instantiated
+    return new PrivateStateGenesis(onchainPrivacyGroupsEnabled, createPrivateGenesisProvider());
   }
 
-  private void setPrivateStateGenesis(final PrivateStateGenesis privateStateGenesis) {
-    this.privateStateGenesis = privateStateGenesis;
+  private PrivacyGroupGenesisProvider createPrivateGenesisProvider() {
+    if (privacyPluginService != null
+        && privacyPluginService.getPrivacyGroupGenesisProvider() != null) {
+      return privacyPluginService.getPrivacyGroupGenesisProvider();
+    } else {
+      return (privacyGroupId, blockNumber) -> Collections::emptyList;
+    }
   }
 
   @Override
@@ -251,8 +259,6 @@ public class PrivacyParameters {
     private boolean onchainPrivacyGroupsEnabled;
     private boolean privacyPluginEnabled;
     private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
-    private PrivacyGenesisConfigOptions privacyGenesisConfigOptions =
-        PrivacyGenesisConfigFile.empty();
     private PrivacyPluginService privacyPluginService;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
@@ -305,14 +311,14 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setGoQuorumPrivacyParameters(
-        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
-      this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
+    public Builder setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
+      this.privacyPluginEnabled = privacyPluginEnabled;
       return this;
     }
 
-    public Builder setPrivacyPluginEnabled(final Boolean privacyPluginEnabled) {
-      this.privacyPluginEnabled = privacyPluginEnabled;
+    public Builder setGoQuorumPrivacyParameters(
+        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
+      this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
       return this;
     }
 
@@ -325,12 +331,6 @@ public class PrivacyParameters {
 
     public Builder setPrivacyService(final PrivacyPluginService privacyPluginService) {
       this.privacyPluginService = privacyPluginService;
-      return this;
-    }
-
-    public Builder setPrivacyGenesisConfigOptions(
-        final PrivacyGenesisConfigOptions privacyGenesisConfigOptions) {
-      this.privacyGenesisConfigOptions = privacyGenesisConfigOptions;
       return this;
     }
 
@@ -347,9 +347,6 @@ public class PrivacyParameters {
         final PrivateStateStorage privateStateStorage = storageProvider.createPrivateStateStorage();
         final PrivateStateRootResolver privateStateRootResolver =
             new PrivateStateRootResolver(privateStateStorage);
-
-        final PrivateStateGenesis privateStateGenesis =
-            new PrivateStateGenesis(onchainPrivacyGroupsEnabled, privacyGenesisConfigOptions);
 
         config.setPrivateStateRootResolver(privateStateRootResolver);
         config.setPrivateWorldStateReader(
@@ -381,7 +378,6 @@ public class PrivacyParameters {
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPairUtil.load(privateKeyPath.toFile()));
         }
-        config.setPrivateStateGenesis(privateStateGenesis);
       }
       config.setEnabled(enabled);
       config.setMultiTenancyEnabled(multiTenancyEnabled);

@@ -159,7 +159,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
     maybeApplyGenesisToPrivateWorldState(
-        lastRootHash, disposablePrivateState, privateWorldStateUpdater);
+        lastRootHash,
+        disposablePrivateState,
+        privateWorldStateUpdater,
+        privacyGroupId,
+        messageFrame.getBlockHeader().getNumber());
 
     final TransactionProcessingResult result =
         processPrivateTransaction(
@@ -191,10 +195,12 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   protected void maybeApplyGenesisToPrivateWorldState(
       final Hash lastRootHash,
       final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater) {
+      final WorldUpdater privateWorldStateUpdater,
+      final Bytes32 privacyGroupId,
+      final long blockNumber) {
     if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
       this.privateStateGenesis.applyGenesisToPrivateWorldState(
-          disposablePrivateState, privateWorldStateUpdater);
+          disposablePrivateState, privateWorldStateUpdater, privacyGroupId, blockNumber);
     }
   }
 

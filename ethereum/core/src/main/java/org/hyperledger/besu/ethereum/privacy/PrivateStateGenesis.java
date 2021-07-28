@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.config.GenesisAllocation;
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
@@ -23,9 +21,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
-
-import java.math.BigInteger;
-import java.util.Map;
+import org.hyperledger.besu.plugin.data.PrivacyGenesis;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,66 +34,53 @@ public class PrivateStateGenesis {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Boolean isOnchainPrivacyEnabled;
-  private final PrivacyGenesisConfigOptions privacyGenesisConfigOptions;
+  private final PrivacyGroupGenesisProvider privacyGroupGenesisProvider;
 
   public PrivateStateGenesis(
       final Boolean isOnchainPrivacyEnabled,
-      final PrivacyGenesisConfigOptions privacyGenesisConfigOptions) {
+      final PrivacyGroupGenesisProvider privacyGroupGenesisProvider) {
     this.isOnchainPrivacyEnabled = isOnchainPrivacyEnabled;
-    this.privacyGenesisConfigOptions = privacyGenesisConfigOptions;
-  }
-
-  public PrivacyGenesisConfigOptions getPrivacyGenesisConfigOptions() {
-    return this.privacyGenesisConfigOptions;
+    this.privacyGroupGenesisProvider = privacyGroupGenesisProvider;
   }
 
   public void applyGenesisToPrivateWorldState(
-      final MutableWorldState disposablePrivateState, final WorldUpdater privateWorldStateUpdater) {
+      final MutableWorldState disposablePrivateState,
+      final WorldUpdater privateWorldStateUpdater,
+      final Bytes privacyGroupId,
+      final long blockNumber) {
 
-    Map<String, GenesisAllocation> allocations = privacyGenesisConfigOptions.getAllocations();
+    final PrivacyGenesis genesis =
+        privacyGroupGenesisProvider.getPrivacyGenesis(privacyGroupId, blockNumber);
 
-    if (allocations.size() > 0) {
-      LOG.info(
-          "Applying {} allocations onto private genesis",
-          privacyGenesisConfigOptions.getAllocations().size());
+    if (genesis.getAccounts().size() > 0) {
+      LOG.info("Applying {} privacy accounts onto private genesis", genesis.getAccounts().size());
 
-      allocations.forEach(
-          (address, allocation) -> {
-            final EvmAccount account =
-                privateWorldStateUpdater.createAccount(Address.fromHexString(address));
+      genesis
+          .getAccounts()
+          .forEach(
+              (genesisAccount) -> {
+                final MutableAccount account =
+                    privateWorldStateUpdater
+                        .createAccount(Address.fromPlugin(genesisAccount.getAddress()))
+                        .getMutable();
 
-            final MutableAccount mutablePrecompiled = account.getMutable();
-            if (allocation.getCode() != null) {
-              mutablePrecompiled.setCode(Bytes.fromHexString(allocation.getCode()));
-            }
-            if (allocation.getBalance() != null && allocation.getBalance().startsWith("0x")) {
-              mutablePrecompiled.setBalance(Wei.fromHexString(allocation.getBalance()));
-            } else {
-              mutablePrecompiled.setBalance(Wei.of(new BigInteger(allocation.getBalance())));
-            }
+                account.setNonce(genesisAccount.getNonce());
+                account.setBalance(Wei.fromQuantity(genesisAccount.getBalance()));
+                account.setCode(genesisAccount.getCode());
+                account.setVersion(genesisAccount.getVersion());
 
-            if (allocation.getStorage() != null) {
-              allocation
-                  .getStorage()
-                  .forEach(
-                      (key, value) -> {
-                        mutablePrecompiled.setStorageValue(
-                            UInt256.fromHexString(key), UInt256.fromHexString(value));
-                      });
-            }
-          });
-
-      privateWorldStateUpdater.commit();
-      disposablePrivateState.persist(null);
+                genesisAccount.getStorage().forEach(account::setStorageValue);
+              });
     }
 
     if (isOnchainPrivacyEnabled) {
       // inject management
-      final EvmAccount managementPrecompile =
-          privateWorldStateUpdater.createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
-      final MutableAccount mutableManagementPrecompiled = managementPrecompile.getMutable();
+      final MutableAccount managementPrecompile =
+          privateWorldStateUpdater
+              .createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)
+              .getMutable();
       // this is the code for the simple management contract
-      mutableManagementPrecompiled.setCode(
+      managementPrecompile.setCode(
           OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy

@@ -108,9 +108,6 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
         final Transaction privateMarkerTransaction =
             createPrivateMarkerTransaction(privateTransaction, user);
 
-        LOG.error("CHEESE");
-        LOG.error(privateMarkerTransaction.getHash());
-
         return transactionPool
             .addLocalTransaction(privateMarkerTransaction)
             .either(

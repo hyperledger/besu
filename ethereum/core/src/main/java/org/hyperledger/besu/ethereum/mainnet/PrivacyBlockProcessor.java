@@ -168,7 +168,6 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<PrivateTransactionWithMetadata> privateTransactionWithMetadataList,
       final Bytes32 privacyGroupId) {
-
     // if we are the member adding another member we do not have to rehydrate
     // if we have been removed from the group at some point we only need to rehydrate from where we
     // were removed

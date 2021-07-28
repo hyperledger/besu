@@ -79,7 +79,7 @@ public class OnChainMultiTenancyAcceptanceTest extends OnChainPrivacyAcceptanceT
   public void setUp() throws Exception {
     alice =
         privacyBesu.createOnChainPrivacyGroupEnabledMinerNode(
-            "node1", PrivacyAccountResolver.MULTI_TENANCY, true, enclaveType, Optional.empty(), "");
+            "node1", PrivacyAccountResolver.MULTI_TENANCY, true, enclaveType, Optional.empty());
     final BesuNode aliceBesu = alice.getBesu();
     privacyCluster.startNodes(alice);
     final String alice1Token =

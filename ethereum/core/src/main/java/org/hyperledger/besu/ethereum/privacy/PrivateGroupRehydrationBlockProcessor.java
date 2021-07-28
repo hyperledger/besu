@@ -126,7 +126,10 @@ public class PrivateGroupRehydrationBlockProcessor {
 
         if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
           privateStateGenesis.applyGenesisToPrivateWorldState(
-              disposablePrivateState, privateWorldStateUpdater);
+              disposablePrivateState,
+              privateWorldStateUpdater,
+              privacyGroupId,
+              blockHeader.getNumber());
         }
 
         LOG.debug(

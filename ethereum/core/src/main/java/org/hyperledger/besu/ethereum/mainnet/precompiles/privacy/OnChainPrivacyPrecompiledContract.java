@@ -167,7 +167,11 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
     maybeApplyGenesisToPrivateWorldState(
-        lastRootHash, disposablePrivateState, privateWorldStateUpdater);
+        lastRootHash,
+        disposablePrivateState,
+        privateWorldStateUpdater,
+        privacyGroupId,
+        currentBlockHeader.getNumber());
 
     final WorldUpdater publicWorldState = messageFrame.getWorldState();
     final Blockchain blockchain = messageFrame.getBlockchain();

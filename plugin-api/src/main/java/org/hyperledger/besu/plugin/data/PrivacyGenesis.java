@@ -12,12 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config.experimental;
+package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.config.GenesisAllocation;
+import java.util.List;
 
-import java.util.Map;
-
-public interface PrivacyGenesisConfigOptions {
-  Map<String, GenesisAllocation> getAllocations();
+/** An interface to return the private state genesis. */
+public interface PrivacyGenesis {
+  /**
+   * A list of pre-compiled wallets with associated information.
+   *
+   * @return The list of addresses, possibly empty. Should never be null.
+   */
+  List<PrivacyGenesisAccount> getAccounts();
 }

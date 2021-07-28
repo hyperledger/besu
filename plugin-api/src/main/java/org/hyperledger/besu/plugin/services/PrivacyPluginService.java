@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
@@ -26,6 +27,10 @@ public interface PrivacyPluginService extends BesuService {
   void setPrivacyGroupAuthProvider(PrivacyGroupAuthProvider privacyGroupAuthProvider);
 
   PrivacyGroupAuthProvider getPrivacyGroupAuthProvider();
+
+  void setPrivacyGroupGenesisProvider(PrivacyGroupGenesisProvider privacyGroupAuthProvider);
+
+  PrivacyGroupGenesisProvider getPrivacyGroupGenesisProvider();
 
   PrivateMarkerTransactionFactory getPrivateMarkerTransactionFactory();
 

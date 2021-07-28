@@ -142,14 +142,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       if (node.getPrivacyParameters().isPrivacyPluginEnabled()) {
         params.add("--Xprivacy-plugin-enabled");
       }
-
-      node.getPrivateGenesisJson()
-          .ifPresent(
-              json -> {
-                final Path genesisFile = createGenesisFile(node, json);
-                params.add("--Xprivacy-genesis-file");
-                params.add(genesisFile.toAbsolutePath().toString());
-              });
     }
 
     params.add("--bootnodes");

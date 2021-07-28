@@ -21,7 +21,6 @@ import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.PrivacyGenesisConfigOptions;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
@@ -52,6 +51,7 @@ import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.OrionTestHarness;
 import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -195,7 +195,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
             enclave,
             worldStateArchive,
             new PrivateStateRootResolver(privateStateStorage),
-            new PrivateStateGenesis(false, mock(PrivacyGenesisConfigOptions.class)),
+            new PrivateStateGenesis(false, (privacyGroupId, blockNumber) -> Collections::emptyList),
             "IntegrationTest");
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
