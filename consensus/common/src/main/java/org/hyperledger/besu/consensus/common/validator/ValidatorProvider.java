@@ -12,13 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.validator;
 
-/**
- * Determines if a validator vote is indicating that they should be added, or removed. This does not
- * attempt to determine how said vote should be serialised/deserialised.
- */
-public enum VoteType {
-  ADD,
-  DROP;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+
+import java.util.Collection;
+import java.util.Optional;
+
+public interface ValidatorProvider {
+
+  Collection<Address> getValidatorsAtHead();
+
+  Collection<Address> getValidatorsAfterBlock(final BlockHeader header);
+
+  Optional<VoteProvider> getVoteProvider();
 }

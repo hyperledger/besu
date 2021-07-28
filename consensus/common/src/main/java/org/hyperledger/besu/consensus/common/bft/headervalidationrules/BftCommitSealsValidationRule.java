@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
 import static org.hyperledger.besu.consensus.common.bft.BftHelpers.calculateRequiredValidatorQuorum;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -45,8 +44,8 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
     final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
-    final ValidatorProvider validatorProvider =
-        bftContext.getVoteTallyCache().getVoteTallyAfterBlock(parent);
+    final Collection<Address> storedValidators =
+        bftContext.getValidatorProvider().getValidatorsAfterBlock(parent);
 
     final List<Address> committers = bftContext.getBlockInterface().getCommitters(header);
     final List<Address> committersWithoutDuplicates = new ArrayList<>(new HashSet<>(committers));
@@ -56,7 +55,7 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
       return false;
     }
 
-    return validateCommitters(committersWithoutDuplicates, validatorProvider.getValidators());
+    return validateCommitters(committersWithoutDuplicates, storedValidators);
   }
 
   private boolean validateCommitters(
