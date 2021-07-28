@@ -169,14 +169,16 @@ public class RetestethContext {
                 false,
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator(),
-                1000)
+                1000,
+                8)
             : new PoWSolver(
                 nonceGenerator,
                 PoWHasher.ETHASH_LIGHT,
                 false,
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator(),
-                1000);
+                1000,
+                8);
 
     blockReplay =
         new BlockReplay(

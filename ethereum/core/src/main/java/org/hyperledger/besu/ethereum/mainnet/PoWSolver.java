@@ -32,7 +32,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class PoWSolver {
 
-  private static final int MAX_OMMER_DEPTH = 8;
+  private final int maxOmmerDepth;
   private static final Logger LOG = getLogger();
   private final long powJobTimeToLive;
 
@@ -92,7 +92,8 @@ public class PoWSolver {
       final Boolean stratumMiningEnabled,
       final Subscribers<PoWObserver> ethHashObservers,
       final EpochCalculator epochCalculator,
-      final long powJobTimeToLive) {
+      final long powJobTimeToLive,
+      final int maxOmmerDepth) {
     this.nonceGenerator = nonceGenerator;
     this.poWHasher = poWHasher;
     this.stratumMiningEnabled = stratumMiningEnabled;
@@ -100,6 +101,7 @@ public class PoWSolver {
     ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
     this.epochCalculator = epochCalculator;
     this.powJobTimeToLive = powJobTimeToLive;
+    this.maxOmmerDepth = maxOmmerDepth;
   }
 
   public PoWSolution solveFor(final PoWSolverJob job)
@@ -179,7 +181,7 @@ public class PoWSolver {
             solution.getPowHash(),
             ommerCandidate.getInputs().getBlockNumber(),
             distanceToHead);
-        if (distanceToHead <= MAX_OMMER_DEPTH) {
+        if (distanceToHead <= maxOmmerDepth) {
           jobToTestWith = ommerCandidate;
         } else {
           LOG.debug("Discarded ommer solution as too far from head {}", distanceToHead);
