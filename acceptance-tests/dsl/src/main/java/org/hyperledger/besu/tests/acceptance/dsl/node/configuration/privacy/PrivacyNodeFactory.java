@@ -41,7 +41,7 @@ public class PrivacyNodeFactory {
     this.vertx = vertx;
   }
 
-  private PrivacyNode create(
+  public PrivacyNode create(
       final PrivacyNodeConfiguration privacyNodeConfig,
       final EnclaveType enclaveType,
       final Optional<Network> containerNetwork)

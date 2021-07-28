@@ -15,39 +15,36 @@
 package org.hyperledger.besu.ethereum.privacy.markertransaction;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
-import org.hyperledger.besu.ethereum.util.NonceProvider;
+import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.plugin.data.PrivateTransaction;
+import org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class FixedKeySigningPrivateMarkerTransactionFactory
-    extends PrivateMarkerTransactionFactory {
+    extends SigningPrivateMarkerTransactionFactory implements PrivateMarkerTransactionFactory {
 
-  private final NonceProvider nonceProvider;
   private final KeyPair signingKey;
   private final Address sender;
 
-  public FixedKeySigningPrivateMarkerTransactionFactory(
-      final Address privacyPrecompileAddress,
-      final NonceProvider nonceProvider,
-      final KeyPair signingKey) {
-    super(privacyPrecompileAddress);
-    this.nonceProvider = nonceProvider;
+  public FixedKeySigningPrivateMarkerTransactionFactory(final KeyPair signingKey) {
     this.signingKey = signingKey;
     this.sender = Util.publicKeyToAddress(signingKey.getPublicKey());
   }
 
   @Override
-  public Transaction create(
-      final String privateMarkerTransactionPayload,
+  public Address getSender(
+      final PrivateTransaction privateTransaction, final String privacyUserId) {
+    return this.sender;
+  }
+
+  @Override
+  public Bytes create(
+      final UnsignedPrivateMarkerTransaction unsignedPrivateMarkerTransaction,
       final PrivateTransaction privateTransaction,
-      final Address precompileAddress) {
-    return create(
-        privateMarkerTransactionPayload,
-        privateTransaction,
-        nonceProvider.getNonce(sender),
-        signingKey,
-        precompileAddress);
+      final String privacyUserId) {
+    return signAndBuild(unsignedPrivateMarkerTransaction, signingKey);
   }
 }

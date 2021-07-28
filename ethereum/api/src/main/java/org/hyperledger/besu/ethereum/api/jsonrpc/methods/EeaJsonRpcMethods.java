@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -27,10 +28,16 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.util.NonceProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
 
 public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
+
+  private final TransactionPool transactionPool;
+  private final PrivacyParameters privacyParameters;
+  private final NonceProvider nonceProvider;
 
   public EeaJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -38,26 +45,45 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
+    this.transactionPool = transactionPool;
+    this.privacyParameters = privacyParameters;
+    this.nonceProvider =
+        new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions());
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create(
-      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
+      final PrivacyController privacyController,
+      final PrivacyIdProvider privacyIdProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
 
-    if (getPrivacyParameters().isPrivacyPluginEnabled()) {
+    if (privacyParameters.isPrivacyPluginEnabled()) {
       return mapOf(
           new PluginEeaSendRawTransaction(
-              getTransactionPool(), privacyController, privacyIdProvider),
+              transactionPool,
+              privacyIdProvider,
+              privateMarkerTransactionFactory,
+              nonceProvider,
+              privacyController,
+              getGasCalculator()),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     } else if (getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
       return mapOf(
           new RestrictedOnChainEeaSendRawTransaction(
-              getTransactionPool(), privacyController, privacyIdProvider),
+              transactionPool,
+              privacyIdProvider,
+              privateMarkerTransactionFactory,
+              nonceProvider,
+              privacyController),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     } else { // off chain privacy
       return mapOf(
           new RestrictedOffChainEeaSendRawTransaction(
-              getTransactionPool(), privacyController, privacyIdProvider),
+              transactionPool,
+              privacyIdProvider,
+              privateMarkerTransactionFactory,
+              nonceProvider,
+              privacyController),
           new PrivGetEeaTransactionCount(privacyController, privacyIdProvider));
     }
   }
