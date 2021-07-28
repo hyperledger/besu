@@ -84,6 +84,8 @@ public class PongPacketData implements PacketData {
   }
 
   /**
+   * Used by test classes to read legacy encodes of Pongs which used a byte array for the ENR field
+   *
    * @deprecated Only to be used by internal tests to confirm backward compatibility.
    * @param in input stream being read from
    * @return PongPacketData parsed from input, using legacy encode

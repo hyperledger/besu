@@ -109,6 +109,8 @@ public class PingPacketData implements PacketData {
   }
 
   /**
+   * Used by test classes to read legacy encodes of Pings which used a byte array for the ENR field
+   *
    * @deprecated Only to be used by internal tests to confirm backward compatibility.
    * @param in input stream to read from
    * @return PingPacketData parsed from input, using legacy encode.
