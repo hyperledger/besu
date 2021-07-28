@@ -1558,18 +1558,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !isMiningEnabled,
         asList(
             "--miner-coinbase",
+            "--min-gas-price",
             "--min-block-occupancy-ratio",
             "--miner-extra-data",
             "--miner-stratum-enabled",
             "--Xminer-remote-sealers-limit",
             "--Xminer-remote-sealers-hashrate-ttl"));
-
-    CommandLineUtils.checkMultiOptionDependencies(
-        logger,
-        commandLine,
-        "--min-gas-price ignored because none of --miner-enabled or isQuorum (in genesis file) was defined.",
-        List.of(!isMiningEnabled, !isGoQuorumCompatibilityMode),
-        singletonList("--min-gas-price"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,

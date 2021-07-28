@@ -3003,8 +3003,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void minGasPriceRequiresMainOption() {
     parseCommand("--min-gas-price", "0");
 
-    verifyMultiOptionsConstraintLoggerCall(
-        "--min-gas-price ignored because none of --miner-enabled or isQuorum (in genesis file) was defined.");
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
