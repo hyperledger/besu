@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockP
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.AbstractBytes;
 
 public class QbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
     implements JsonRpcMethod {
@@ -56,7 +56,7 @@ public class QbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
         .map(
             header ->
                 validatorProvider.getValidatorsAfterBlock(header).stream()
-                    .map(AbstractBytes::toString)
+                    .map(Address::toString)
                     .collect(Collectors.toList()))
         .orElse(null);
   }

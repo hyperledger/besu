@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 
@@ -29,7 +30,6 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.AbstractBytes;
 
 public class QbftGetValidatorsByBlockHash implements JsonRpcMethod {
   private static final Logger LOG = LogManager.getLogger();
@@ -62,7 +62,7 @@ public class QbftGetValidatorsByBlockHash implements JsonRpcMethod {
         .map(
             header ->
                 validatorProvider.getValidatorsAfterBlock(header).stream()
-                    .map(AbstractBytes::toString)
+                    .map(Address::toString)
                     .collect(Collectors.toList()))
         .orElse(null);
   }
