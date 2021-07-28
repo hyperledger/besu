@@ -277,8 +277,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
       final ValidatorContractController validatorContractController =
           new ValidatorContractController(contractAddress, transactionSimulator);
       final ValidatorProvider validatorProvider =
-          new TransactionValidatorProvider(
-              blockchain, validatorContractController, bftValidatorOverrides);
+          new TransactionValidatorProvider(blockchain, validatorContractController);
       return new BftContext(validatorProvider, epochManager, blockInterface);
     }
   }

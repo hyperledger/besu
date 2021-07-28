@@ -1,65 +1,136 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
-import org.hyperledger.besu.consensus.common.validator.blockbased.VoteTallyCacheTestBase;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.Before;
 import org.junit.Test;
 
-public class TransactionValidatorProviderTest extends VoteTallyCacheTestBase {
-  final ValidatorContractController validatorContractController =
+public class TransactionValidatorProviderTest {
+  private final ValidatorContractController validatorContractController =
       mock(ValidatorContractController.class);
 
-  @Test
-  public void validatorFromForkAreReturnedRatherThanPriorBlock() {
+  protected MutableBlockchain blockChain;
+  protected Block genesisBlock;
+  protected Block block_1;
+  protected Block block_2;
+  private Block block_3;
 
-    final List<Address> forkedValidators =
+  protected final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+
+  @Before
+  public void setup() {
+    genesisBlock = createEmptyBlock(0, Hash.ZERO);
+    blockChain = createInMemoryBlockchain(genesisBlock);
+    headerBuilder.extraData(Bytes.wrap(new byte[32]));
+
+    block_1 = createEmptyBlock(1, genesisBlock.getHeader().getHash());
+    block_2 = createEmptyBlock(2, block_1.getHeader().getHash());
+    block_3 = createEmptyBlock(3, block_2.getHeader().getHash());
+
+    blockChain.appendBlock(block_1, org.assertj.core.util.Lists.emptyList());
+    blockChain.appendBlock(block_2, org.assertj.core.util.Lists.emptyList());
+    blockChain.appendBlock(block_3, org.assertj.core.util.Lists.emptyList());
+  }
+
+  protected Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
+    headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
+    return new Block(
+        headerBuilder.buildHeader(),
+        new BlockBody(
+            org.assertj.core.util.Lists.emptyList(), org.assertj.core.util.Lists.emptyList()));
+  }
+
+  @Test
+  public void validatorsAfterBlockAreRetrievedUsingContractController() {
+    final List<Address> validatorsAt2 =
         Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
-    final Map<Long, List<Address>> forkingValidatorMap = new HashMap<>();
-    forkingValidatorMap.put(3L, forkedValidators);
+    final List<Address> validatorsAt3 =
+        Lists.newArrayList(
+            Address.fromHexString("5"), Address.fromHexString("6"), Address.fromHexString("7"));
+    when(validatorContractController.getValidators(2)).thenReturn(validatorsAt2);
+    when(validatorContractController.getValidators(3)).thenReturn(validatorsAt3);
 
     final TransactionValidatorProvider validatorProvider =
-        new TransactionValidatorProvider(
-            blockChain,
-            validatorContractController,
-            new BftValidatorOverrides(forkingValidatorMap));
+        new TransactionValidatorProvider(blockChain, validatorContractController);
+
+    final Collection<Address> resultAt2 =
+        validatorProvider.getValidatorsAfterBlock(block_2.getHeader());
+    assertThat(resultAt2).containsExactlyElementsOf(validatorsAt2);
+    verify(validatorContractController).getValidators(2);
+
+    final Collection<Address> resultAt3 =
+        validatorProvider.getValidatorsAfterBlock(block_3.getHeader());
+    assertThat(resultAt3).containsExactlyElementsOf(resultAt3);
+    verify(validatorContractController).getValidators(3);
+  }
+
+  @Test
+  public void validatorsAtHeadAreRetrievedUsingContractController() {
+    final List<Address> validators =
+        Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
+    when(validatorContractController.getValidators(3)).thenReturn(validators);
+
+    final TransactionValidatorProvider validatorProvider =
+        new TransactionValidatorProvider(blockChain, validatorContractController);
+
+    final Collection<Address> result = validatorProvider.getValidatorsAtHead();
+    assertThat(result).containsExactlyElementsOf(validators);
+    verify(validatorContractController).getValidators(3);
+  }
+
+  @Test
+  public void validatorsAtHeadContractCallIsCached() {
+    final List<Address> validators =
+        Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
+    when(validatorContractController.getValidators(3)).thenReturn(validators);
+
+    final TransactionValidatorProvider validatorProvider =
+        new TransactionValidatorProvider(blockChain, validatorContractController);
+
+    final Collection<Address> result = validatorProvider.getValidatorsAtHead();
+    assertThat(result).containsExactlyElementsOf(validators);
+    verify(validatorContractController).getValidators(3);
+
+    final Collection<Address> resultCached = validatorProvider.getValidatorsAtHead();
+    assertThat(resultCached).containsExactlyElementsOf(validators);
+    verifyNoMoreInteractions(validatorContractController);
+  }
+
+  @Test
+  public void validatorsAfterBlockContractCallIsCached() {
+    final List<Address> validators =
+        Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
+    when(validatorContractController.getValidators(2)).thenReturn(validators);
+
+    final TransactionValidatorProvider validatorProvider =
+        new TransactionValidatorProvider(blockChain, validatorContractController);
 
     final Collection<Address> result =
         validatorProvider.getValidatorsAfterBlock(block_2.getHeader());
+    assertThat(result).containsExactlyElementsOf(validators);
+    verify(validatorContractController).getValidators(2);
 
-    assertThat(result).containsExactlyElementsOf(forkedValidators);
-  }
-
-  // TODO
-  // emptyForkingValidatorMapResultsInValidatorsBeingReadFromPreviousHeader
-
-  // TODO
-  // validatorsInForkUsedIfForkDirectlyFollowsEpoch
-
-  @Test
-  public void atHeadApiOperatesIdenticallyToUnderlyingApi() {
-    final List<Address> forkedValidators =
-        Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
-    final Map<Long, List<Address>> forkingValidatorMap = new HashMap<>();
-    forkingValidatorMap.put(3L, forkedValidators);
-
-    final TransactionValidatorProvider validatorProvider =
-        new TransactionValidatorProvider(
-            blockChain,
-            validatorContractController,
-            new BftValidatorOverrides(forkingValidatorMap));
-
-    final Collection<Address> result = validatorProvider.getValidatorsAtHead();
-
-    assertThat(result).containsExactlyElementsOf(forkedValidators);
+    final Collection<Address> resultCached =
+        validatorProvider.getValidatorsAfterBlock(block_2.getHeader());
+    assertThat(resultCached).containsExactlyElementsOf(validators);
+    verifyNoMoreInteractions(validatorContractController);
   }
 }

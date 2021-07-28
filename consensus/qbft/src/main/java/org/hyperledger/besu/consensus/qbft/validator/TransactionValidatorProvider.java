@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.validator;
 
-import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -32,17 +31,13 @@ public class TransactionValidatorProvider implements ValidatorProvider {
 
   private final Blockchain blockchain;
   private final ValidatorContractController validatorContractController;
-  private final BftValidatorOverrides validatorOverrides;
   private final Cache<Long, Collection<Address>> validatorCache =
       CacheBuilder.newBuilder().maximumSize(100).build();
 
   public TransactionValidatorProvider(
-      final Blockchain blockchain,
-      final ValidatorContractController validatorContractController,
-      final BftValidatorOverrides validatorOverrides) {
+      final Blockchain blockchain, final ValidatorContractController validatorContractController) {
     this.blockchain = blockchain;
     this.validatorContractController = validatorContractController;
-    this.validatorOverrides = validatorOverrides;
   }
 
   @Override
@@ -54,11 +49,8 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   public Collection<Address> getValidatorsAfterBlock(final BlockHeader header) {
     final long blockNumber = header.getNumber();
     try {
-      return validatorOverrides
-          .getForBlock(blockNumber + 1L)
-          .orElse(
-              validatorCache.get(
-                  blockNumber, () -> validatorContractController.getValidators(blockNumber)));
+      return validatorCache.get(
+          blockNumber, () -> validatorContractController.getValidators(blockNumber));
     } catch (ExecutionException e) {
       throw new RuntimeException("Unable to determine a validators for the requested block.");
     }
