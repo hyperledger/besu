@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.crypto;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 import org.hyperledger.besu.nativelib.secp256r1.LibSECP256R1;
 import org.hyperledger.besu.nativelib.secp256r1.Signature;
 
 import java.math.BigInteger;
 import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 
 public class SECP256R1 extends AbstractSECP256 {
 
@@ -58,7 +59,7 @@ public class SECP256R1 extends AbstractSECP256 {
   @Override
   public boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
     if (useNative) {
-      return libSECP256R1.verify(data.toArrayUnsafe(), signature.getR().toByteArray(), signature.getS().toByteArray(), pub.getEncoded());
+      return verifyNative(data, signature, pub);
     } else {
       return super.verify(data, signature, pub);
     }
@@ -68,31 +69,50 @@ public class SECP256R1 extends AbstractSECP256 {
   public Optional<SECPPublicKey> recoverPublicKeyFromSignature(
       final Bytes32 dataHash, final SECPSignature signature) {
     if (useNative) {
-      return recoverFromSignatureNative(dataHash, signature);
+      return recoverPublicKeyFromSignatureNative(dataHash, signature);
     } else {
       return super.recoverPublicKeyFromSignature(dataHash, signature);
     }
   }
 
   private SECPSignature signNative(final Bytes32 dataHash, final KeyPair keyPair) {
-    Signature nativeSignature = libSECP256R1.sign(dataHash.toArrayUnsafe(), keyPair.getPrivateKey().getEncoded(), keyPair.getPublicKey().getEncoded());
+    Signature nativeSignature =
+        libSECP256R1.sign(
+            dataHash.toArrayUnsafe(),
+            keyPair.getPrivateKey().getEncoded(),
+            keyPair.getPublicKey().getEncoded());
 
     return new SECPSignature(
         new BigInteger(nativeSignature.getR()),
         new BigInteger(nativeSignature.getS()),
-        nativeSignature.getV()
-    );
+        nativeSignature.getV());
   }
 
-  private Optional<SECPPublicKey> recoverFromSignatureNative(final Bytes32 dataHash, final SECPSignature signature) {
+  private Optional<SECPPublicKey> recoverPublicKeyFromSignatureNative(
+      final Bytes32 dataHash, final SECPSignature signature) {
     byte[] recoveredKey;
 
     try {
-      recoveredKey = libSECP256R1.keyRecovery(dataHash.toArrayUnsafe(), signature.getR().toByteArray(), signature.getS().toByteArray(), signature.getRecId());
+      recoveredKey =
+          libSECP256R1.keyRecovery(
+              dataHash.toArrayUnsafe(),
+              signature.getR().toByteArray(),
+              signature.getS().toByteArray(),
+              signature.getRecId());
     } catch (IllegalArgumentException e) {
       return Optional.empty();
     }
 
     return Optional.of(SECPPublicKey.create(Bytes.of(recoveredKey), ALGORITHM));
+  }
+
+  private boolean verifyNative(
+      final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
+
+    return libSECP256R1.verify(
+        data.toArrayUnsafe(),
+        signature.getR().toByteArray(),
+        signature.getS().toByteArray(),
+        pub.getEncoded());
   }
 }
