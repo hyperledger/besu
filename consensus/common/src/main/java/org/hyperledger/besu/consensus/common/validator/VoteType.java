@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.validator;
 
 /**
  * Determines if a validator vote is indicating that they should be added, or removed. This does not

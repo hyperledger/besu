@@ -12,22 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.validator;
 
-import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
-public interface BlockInterface {
+public interface VoteProvider {
 
-  Address getProposerOfBlock(final org.hyperledger.besu.ethereum.core.BlockHeader header);
+  Optional<ValidatorVote> getVoteAfterBlock(final BlockHeader header, final Address localAddress);
 
-  Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header);
+  void authVote(final Address address);
 
-  Optional<ValidatorVote> extractVoteFromHeader(final BlockHeader header);
+  void dropVote(final Address address);
 
-  Collection<Address> validatorsInBlock(final BlockHeader header);
+  void discardVote(final Address address);
+
+  Map<Address, VoteType> getProposals();
 }

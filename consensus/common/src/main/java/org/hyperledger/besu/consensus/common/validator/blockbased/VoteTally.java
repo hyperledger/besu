@@ -12,8 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.validator.blockbased;
 
+import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.Collection;
@@ -29,14 +30,14 @@ import java.util.TreeSet;
 import com.google.common.collect.Maps;
 
 /** Tracks the current list of validators and votes to add or drop validators. */
-public class VoteTally implements ValidatorProvider {
+class VoteTally {
 
   private final NavigableSet<Address> currentValidators;
 
   private final Map<Address, Set<Address>> addVotesBySubject;
   private final Map<Address, Set<Address>> removeVotesBySubject;
 
-  public VoteTally(final Collection<Address> initialValidators) {
+  VoteTally(final Collection<Address> initialValidators) {
     this(new TreeSet<>(initialValidators), new HashMap<>(), new HashMap<>());
   }
 
@@ -55,7 +56,7 @@ public class VoteTally implements ValidatorProvider {
    *
    * @param validatorVote The vote which was cast in a block header.
    */
-  public void addVote(final ValidatorVote validatorVote) {
+  void addVote(final ValidatorVote validatorVote) {
     final Set<Address> addVotesForSubject =
         addVotesBySubject.computeIfAbsent(validatorVote.getRecipient(), target -> new HashSet<>());
     final Set<Address> removeVotesForSubject =
@@ -88,11 +89,11 @@ public class VoteTally implements ValidatorProvider {
     removeVotesBySubject.remove(subject);
   }
 
-  public Set<Address> getOutstandingAddVotesFor(final Address subject) {
+  Set<Address> getOutstandingAddVotesFor(final Address subject) {
     return Optional.ofNullable(addVotesBySubject.get(subject)).orElse(Collections.emptySet());
   }
 
-  public Set<Address> getOutstandingRemoveVotesFor(final Address subject) {
+  Set<Address> getOutstandingRemoveVotesFor(final Address subject) {
     return Optional.ofNullable(removeVotesBySubject.get(subject)).orElse(Collections.emptySet());
   }
 
@@ -104,7 +105,7 @@ public class VoteTally implements ValidatorProvider {
    * Reset the outstanding vote tallies as required at each epoch. The current validator list is
    * unaffected.
    */
-  public void discardOutstandingVotes() {
+  void discardOutstandingVotes() {
     addVotesBySubject.clear();
   }
 
@@ -112,12 +113,11 @@ public class VoteTally implements ValidatorProvider {
    * @return The collection of validators after the voting at the most recent block has been
    *     finalised.
    */
-  @Override
-  public Collection<Address> getValidators() {
+  Collection<Address> getValidators() {
     return currentValidators;
   }
 
-  public VoteTally copy() {
+  VoteTally copy() {
     final Map<Address, Set<Address>> addVotesBySubject = Maps.newHashMap();
     final Map<Address, Set<Address>> removeVotesBySubject = Maps.newHashMap();
 

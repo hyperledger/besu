@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.consensus.clique.CliqueBlockHashing;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.ValidatorVote;
-import org.hyperledger.besu.consensus.common.VoteTally;
+import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
@@ -106,11 +107,14 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       return Optional.empty();
     } else {
       final CliqueContext cliqueContext = protocolContext.getConsensusState(CliqueContext.class);
-      final VoteTally voteTally =
-          cliqueContext.getVoteTallyCache().getVoteTallyAfterBlock(parentHeader);
+      checkState(
+          cliqueContext.getValidatorProvider().getVoteProvider().isPresent(),
+          "Clique requires a vote provider");
       return cliqueContext
-          .getVoteProposer()
-          .getVote(Util.publicKeyToAddress(nodeKey.getPublicKey()), voteTally);
+          .getValidatorProvider()
+          .getVoteProvider()
+          .get()
+          .getVoteAfterBlock(parentHeader, Util.publicKeyToAddress(nodeKey.getPublicKey()));
     }
   }
 
