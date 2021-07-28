@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.NetServer;
@@ -44,15 +45,14 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class StratumServer implements PoWObserver {
 
   private static final Logger logger = getLogger();
-  private static final UInt256 divisor =
-      UInt256.fromHexString("10000000000000000000000000000000000000000000000000000000000000000");
+  private static final UInt256 DIFFICULTY_1_TARGET = UInt256.valueOf(2).pow(256);
 
   private final Vertx vertx;
   private final int port;
   private final String networkInterface;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicLong numberOfMiners = new AtomicLong(0);
-  private final AtomicLong difficultyGauge = new AtomicLong(0);
+  private final AtomicDouble difficultyGauge = new AtomicDouble(0.0);
   private final StratumProtocol[] protocols;
   private final Counter connectionsCount;
   private final Counter disconnectionsCount;
@@ -75,7 +75,7 @@ public class StratumServer implements PoWObserver {
         };
     metricsSystem.createLongGauge(
         BesuMetricCategory.STRATUM, "miners", "Number of miners connected", numberOfMiners::get);
-    metricsSystem.createLongGauge(
+    metricsSystem.createGauge(
         BesuMetricCategory.STRATUM,
         "difficulty",
         "Current mining difficulty",
@@ -158,12 +158,8 @@ public class StratumServer implements PoWObserver {
     for (StratumProtocol protocol : protocols) {
       protocol.setCurrentWorkTask(poWSolverInputs);
     }
-    UInt256 difficulty = poWSolverInputs.getTarget().divide(divisor);
-    if (!difficulty.fitsLong()) {
-      difficultyGauge.set(Long.MAX_VALUE);
-    } else {
-      difficultyGauge.set(difficulty.toLong());
-    }
+    UInt256 difficulty = poWSolverInputs.getTarget().divide(DIFFICULTY_1_TARGET);
+    difficultyGauge.set(difficulty.toUnsignedBigInteger().doubleValue());
   }
 
   @Override
