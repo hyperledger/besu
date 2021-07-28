@@ -101,7 +101,12 @@ public class CliqueMinerExecutorTest {
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(vanityData)
+                .enabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             GasLimitCalculator.constant());
@@ -141,7 +146,12 @@ public class CliqueMinerExecutorTest {
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(vanityData)
+                .enabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             GasLimitCalculator.constant());
@@ -181,7 +191,12 @@ public class CliqueMinerExecutorTest {
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, initialVanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(initialVanityData)
+                .enabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             GasLimitCalculator.constant());

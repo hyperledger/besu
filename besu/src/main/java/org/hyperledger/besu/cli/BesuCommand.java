@@ -1705,20 +1705,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .dataDirectory(dataDir())
         .miningParameters(
-            new MiningParameters(
-                coinbase,
-                minTransactionGasPrice,
-                extraData,
-                isMiningEnabled,
-                iStratumMiningEnabled,
-                stratumNetworkInterface,
-                stratumPort,
-                unstableMiningOptions.getStratumExtranonce(),
-                Optional.empty(),
-                minBlockOccupancyRatio,
-                unstableMiningOptions.getRemoteSealersLimit(),
-                unstableMiningOptions.getRemoteSealersTimeToLive(),
-                unstableMiningOptions.getPowJobTimeToLive()))
+            new MiningParameters.Builder()
+                .coinbase(coinbase)
+                .minTransactionGasPrice(minTransactionGasPrice)
+                .extraData(extraData)
+                .enabled(isMiningEnabled)
+                .stratumMiningEnabled(iStratumMiningEnabled)
+                .stratumNetworkInterface(stratumNetworkInterface)
+                .stratumPort(stratumPort)
+                .stratumExtranonce(unstableMiningOptions.getStratumExtranonce())
+                .minBlockOccupancyRatio(minBlockOccupancyRatio)
+                .remoteSealersLimit(unstableMiningOptions.getRemoteSealersLimit())
+                .remoteSealersTimeToLive(unstableMiningOptions.getRemoteSealersTimeToLive())
+                .powJobTimeToLive(unstableMiningOptions.getPowJobTimeToLive())
+                .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
+                .build())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(buildNodeKey())
         .metricsSystem(metricsSystem.get())
