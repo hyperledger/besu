@@ -73,6 +73,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   @Override
   protected void executeTask() {
+    LOG.traceEntry();
     if (result.isDone()) {
       // Return if task is done
       return;
@@ -93,9 +94,11 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 if (!isEmptyResponse.test(peerResult)) {
                   retryCount = 0;
                 }
+                LOG.info("retrying");
                 executeTaskTimed();
               }
             });
+    LOG.traceEntry();
   }
 
   protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);

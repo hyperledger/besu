@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
@@ -27,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RequestManager {
+  private static final Logger LOG = LogManager.getLogger();
   private final AtomicLong responseStreamId = new AtomicLong(0L);
   private final Map<Long, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;

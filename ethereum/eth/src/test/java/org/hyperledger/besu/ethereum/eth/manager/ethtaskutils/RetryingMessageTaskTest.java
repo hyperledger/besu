@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -191,6 +193,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
 
   @Test
   public void failsWhenPeersSendEmptyResponses() {
+    Configurator.setAllLevels("", Level.TRACE);
     // Setup a unresponsive peer
     final RespondingEthPeer.Responder responder = RespondingEthPeer.emptyResponder();
     final RespondingEthPeer respondingPeer =
