@@ -21,11 +21,11 @@ import java.text.SimpleDateFormat
 
 plugins {
   id 'com.diffplug.spotless' version '5.14.2'
-  id 'com.github.ben-manes.versions' version '0.36.0'
-  id 'com.github.hierynomus.license' version '0.15.0'
-  id 'com.jfrog.artifactory' version '4.20.0'
+  id 'com.github.ben-manes.versions' version '0.39.0'
+  id 'com.github.hierynomus.license' version '0.16.1'
+  id 'com.jfrog.artifactory' version '4.24.14'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-  id 'me.champeau.gradle.jmh' version '0.5.0' apply false
+  id 'me.champeau.gradle.jmh' version '0.5.3' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
 }
@@ -96,14 +96,13 @@ allprojects {
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
-    from javadoc.destinationDir
+    from javadoc.outputDirectory
   }
 
   sourceCompatibility = 11
   targetCompatibility = 11
 
   repositories {
-    jcenter()
     mavenCentral()
     maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
@@ -510,7 +509,7 @@ startScripts {
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
-  mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
+  mainClass = 'org.hyperledger.besu.evmtool.EvmTool'
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'evm'
@@ -759,8 +758,8 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   classDirectories.from files(subprojects.sourceSets.main.output)
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
-    xml.enabled true
-    csv.enabled true
+    xml.required = true
+    csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }

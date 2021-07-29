@@ -189,14 +189,62 @@ public class PrivateTransactionManager extends TransactionManager {
   }
 
   @Override
+  public EthSendTransaction sendEIP1559Transaction(
+      final long chainId,
+      final BigInteger maxPriorityFeePerGas,
+      final BigInteger maxFeePerGas,
+      final BigInteger gasLimit,
+      final String to,
+      final String data,
+      final BigInteger value,
+      final boolean constructor)
+      throws IOException {
+    final BigInteger nonce =
+        besu.privGetTransactionCount(credentials.getAddress(), privacyGroupId)
+            .send()
+            .getTransactionCount();
+
+    final RawPrivateTransaction transaction;
+    if (privateFor != null) {
+      transaction =
+          RawPrivateTransaction.createTransaction(
+              chainId,
+              nonce,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+              gasLimit,
+              to,
+              data,
+              privateFrom,
+              privateFor,
+              restriction);
+    } else {
+      transaction =
+          RawPrivateTransaction.createTransaction(
+              chainId,
+              nonce,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+              gasLimit,
+              to,
+              data,
+              privateFrom,
+              privacyGroupId,
+              restriction);
+    }
+
+    return signAndSend(transaction);
+  }
+
+  @Override
   public String sendCall(
       final String to, final String data, final DefaultBlockParameter defaultBlockParameter)
       throws IOException {
     final EthCall ethCall =
         besu.privCall(
+                privacyGroupId.toString(),
                 Transaction.createEthCallTransaction(getFromAddress(), to, data),
-                defaultBlockParameter,
-                privacyGroupId.toString())
+                defaultBlockParameter)
             .send();
 
     return ethCall.getValue();
