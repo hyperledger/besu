@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
+import java.time.Clock;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static Clock blockchainClock = Clock.systemUTC();
   private final long acceptableClockDriftSeconds;
 
   public TimestampBoundedByFutureParameter(final long acceptableClockDriftSeconds) {
@@ -46,7 +48,7 @@ public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderVal
 
   private boolean validateHeaderNotAheadOfCurrentSystemTime(final long timestamp) {
     final long timestampMargin =
-        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+        TimeUnit.SECONDS.convert(blockchainClock.millis(), TimeUnit.MILLISECONDS)
             + acceptableClockDriftSeconds;
     if (Long.compareUnsigned(timestamp, timestampMargin) > 0) {
       LOG.info(
@@ -56,5 +58,9 @@ public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderVal
       return false;
     }
     return true;
+  }
+
+  protected static void setBlockchainClock(final Clock blockchainClock) {
+    TimestampBoundedByFutureParameter.blockchainClock = blockchainClock;
   }
 }

@@ -125,7 +125,7 @@ public class RetestethContext {
     final ObjectNode genesisConfig =
         normalizeKeys(JsonUtil.objectNodeFromString(genesisConfigString));
 
-    retestethClock = new RetestethClock();
+    retestethClock = new RetestethClock().setTimestampRuleClock();
     clockTime.ifPresent(retestethClock::resetTime);
     final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 

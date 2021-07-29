@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.retesteth;
 
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -56,5 +58,25 @@ public class RetestethClock extends Clock {
 
   public void advanceSeconds(final long seconds) {
     fixedInstant = Optional.of(Instant.ofEpochSecond(instant().getEpochSecond() + seconds));
+  }
+
+  public RetestethClock setTimestampRuleClock() {
+    RetestethTimestampBounded.setTimestampRuleClock(this);
+    return this;
+  }
+
+  /**
+   * Private static subclass of TimestampBoundedByFutureParameter rule to enable using
+   * RetestethClock for blockheader time calculations.
+   */
+  private static class RetestethTimestampBounded extends TimestampBoundedByFutureParameter {
+
+    static void setTimestampRuleClock(final Clock clock) {
+      setBlockchainClock(clock);
+    }
+
+    public RetestethTimestampBounded(final long acceptableClockDriftSeconds) {
+      super(acceptableClockDriftSeconds);
+    }
   }
 }
