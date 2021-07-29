@@ -19,6 +19,8 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.base.Splitter;
 import io.vertx.core.buffer.Buffer;
@@ -32,12 +34,16 @@ final class StratumConnection {
   private static final Logger LOG = getLogger();
 
   private String incompleteMessage = "";
+  private boolean httpDetected = false;
 
   private final StratumProtocol[] protocols;
   private final Runnable closeHandle;
   private final Consumer<String> sender;
 
   private StratumProtocol protocol;
+
+  private static final Pattern contentLengthPattern =
+      Pattern.compile("\r\nContent-Length: (\\d+)\r\n");
 
   StratumConnection(
       final StratumProtocol[] protocols,
@@ -50,8 +56,6 @@ final class StratumConnection {
 
   void handleBuffer(final Buffer buffer) {
     LOG.trace("Buffer received {}", buffer);
-    Splitter splitter = Splitter.on('\n');
-    boolean firstMessage = false;
     String messagesString;
     try {
       messagesString = buffer.toString(StandardCharsets.UTF_8);
@@ -60,23 +64,49 @@ final class StratumConnection {
       closeHandle.run();
       return;
     }
-    Iterator<String> messages = splitter.split(messagesString).iterator();
-    while (messages.hasNext()) {
-      String message = messages.next();
-      if (!firstMessage) {
-        message = incompleteMessage + message;
-        firstMessage = true;
+
+    if (httpDetected) {
+      httpDetected = false;
+      messagesString = incompleteMessage + messagesString;
+    }
+    Matcher match = contentLengthPattern.matcher(messagesString);
+    if (match.find()) {
+      try {
+        int contentLength = Integer.parseInt(match.group(1));
+        String body = messagesString.substring(messagesString.indexOf("\r\n\r\n") + 4);
+        if (body.length() < contentLength) {
+          incompleteMessage = messagesString;
+          httpDetected = true;
+          return;
+        }
+      } catch (NumberFormatException e) {
+        close();
+        return;
       }
-      if (!messages.hasNext()) {
-        incompleteMessage = message;
-      } else {
-        LOG.trace("Dispatching message {}", message);
-        handleMessage(message);
+
+      LOG.trace("Dispatching HTTP message {}", messagesString);
+      handleMessage(messagesString);
+    } else {
+      boolean firstMessage = false;
+      Splitter splitter = Splitter.on('\n');
+      Iterator<String> messages = splitter.split(messagesString).iterator();
+      while (messages.hasNext()) {
+        String message = messages.next();
+        if (!firstMessage) {
+          message = incompleteMessage + message;
+          firstMessage = true;
+        }
+        if (!messages.hasNext()) {
+          incompleteMessage = message;
+        } else {
+          LOG.trace("Dispatching message {}", message);
+          handleMessage(message);
+        }
       }
     }
   }
 
-  void close(final Void aVoid) {
+  void close() {
     if (protocol != null) {
       protocol.onClose(this);
     }
@@ -85,7 +115,7 @@ final class StratumConnection {
   private void handleMessage(final String message) {
     if (protocol == null) {
       for (StratumProtocol protocol : protocols) {
-        if (protocol.canHandle(message, this)) {
+        if (protocol.maybeHandle(message, this)) {
           this.protocol = protocol;
         }
       }
