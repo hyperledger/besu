@@ -47,8 +47,7 @@ public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderVal
   }
 
   private boolean validateHeaderNotAheadOfCurrentSystemTime(final long timestamp) {
-    final long timestampMargin =
-        TimeUnit.SECONDS.convert(blockchainClock.millis(), TimeUnit.MILLISECONDS)
+    final long timestampMargin = blockchainClock.instant().getEpochSecond()
             + acceptableClockDriftSeconds;
     if (Long.compareUnsigned(timestamp, timestampMargin) > 0) {
       LOG.info(
