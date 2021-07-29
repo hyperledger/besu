@@ -58,11 +58,24 @@ public class TestSetChainParams implements JsonRpcMethod {
       LOG.trace("ChainParams {}", chainParamsAsString);
       final String genesisFileAsString = modifyGenesisFile(chainParamsAsString);
       LOG.trace("Genesis {}", genesisFileAsString);
+      final Optional<Long> genesisTimestamp =
+          chainParamsAsJson.stream()
+              .filter(z -> z.getKey().equals("genesis"))
+              .map(Map.Entry::getValue)
+              .map(JsonObject.class::cast)
+              .flatMap(JsonObject::stream)
+              .filter(z -> z.getKey().equalsIgnoreCase("timestamp"))
+              .map(Map.Entry::getValue)
+              .map(Object::toString)
+              .map(Long::decode)
+              .findAny();
+      LOG.trace("Genesis timestamp {}", genesisTimestamp);
+
       final boolean result =
           context.resetContext(
               genesisFileAsString,
               chainParamsAsJson.getString("sealEngine", "NoProof"),
-              Optional.empty());
+              genesisTimestamp);
 
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } catch (final Exception e) {
