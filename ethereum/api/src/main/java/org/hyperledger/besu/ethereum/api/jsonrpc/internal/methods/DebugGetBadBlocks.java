@@ -49,8 +49,11 @@ public class DebugGetBadBlocks implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final List<BadBlockResult> response =
-        protocolSchedule.getByBlockNumber(blockchain.headBlockNumber()).getBadBlocksManager()
-            .getBadBlocks().stream()
+        protocolSchedule
+            .getByBlockNumber(blockchain.headBlockNumber())
+            .getBadBlocksManager()
+            .getBadBlocks()
+            .stream()
             .map(block -> BadBlockResult.from(blockResultFactory.transactionComplete(block), block))
             .collect(Collectors.toList());
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);

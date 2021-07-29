@@ -102,9 +102,7 @@ public class AllowlistPersistor {
             Collectors.toMap(
                 o -> o.getKey(),
                 o ->
-                    o.getValue()
-                        .toList()
-                        .parallelStream()
+                    o.getValue().toList().parallelStream()
                         .map(Object::toString)
                         .collect(Collectors.toList())));
   }
@@ -112,9 +110,7 @@ public class AllowlistPersistor {
   @VisibleForTesting
   void removeExistingConfigItem(final ALLOWLIST_TYPE allowlistType) throws IOException {
     List<String> otherConfigItems =
-        existingConfigItems(configurationFile.toPath())
-            .entrySet()
-            .parallelStream()
+        existingConfigItems(configurationFile.toPath()).entrySet().parallelStream()
             .filter(listType -> !listType.getKey().equals(allowlistType))
             .map(keyVal -> valueListToTomlArray(keyVal.getKey(), keyVal.getValue()))
             .collect(Collectors.toList());
@@ -153,8 +149,7 @@ public class AllowlistPersistor {
     return String.format(
         "%s=[%s]",
         allowlistType.getTomlKey(),
-        allowlistValues
-            .parallelStream()
+        allowlistValues.parallelStream()
             .map(uri -> String.format("\"%s\"", uri))
             .collect(Collectors.joining(",")));
   }
