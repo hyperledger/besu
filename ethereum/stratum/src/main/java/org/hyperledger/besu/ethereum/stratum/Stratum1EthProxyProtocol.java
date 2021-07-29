@@ -63,7 +63,7 @@ public class Stratum1EthProxyProtocol implements StratumProtocol {
   }
 
   @Override
-  public boolean canHandle(final String initialMessage, final StratumConnection conn) {
+  public boolean maybeHandle(final String initialMessage, final StratumConnection conn) {
     JsonRpcRequest req;
     try {
       req = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);

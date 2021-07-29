@@ -41,7 +41,7 @@ public class GetWorkProtocolTest {
     MiningCoordinator coordinator = mock(PoWMiningCoordinator.class);
     GetWorkProtocol protocol = new GetWorkProtocol(coordinator);
     assertThat(
-            protocol.canHandle(
+            protocol.maybeHandle(
                 message, new StratumConnection(new StratumProtocol[0], () -> {}, (msg) -> {})))
         .isTrue();
   }
@@ -53,7 +53,7 @@ public class GetWorkProtocolTest {
     MiningCoordinator coordinator = mock(PoWMiningCoordinator.class);
     GetWorkProtocol protocol = new GetWorkProtocol(coordinator);
     assertThat(
-            protocol.canHandle(
+            protocol.maybeHandle(
                 message, new StratumConnection(new StratumProtocol[0], () -> {}, (msg) -> {})))
         .isTrue();
   }
@@ -65,7 +65,7 @@ public class GetWorkProtocolTest {
     MiningCoordinator coordinator = mock(PoWMiningCoordinator.class);
     GetWorkProtocol protocol = new GetWorkProtocol(coordinator);
     assertThat(
-            protocol.canHandle(
+            protocol.maybeHandle(
                 message, new StratumConnection(new StratumProtocol[0], () -> {}, (msg) -> {})))
         .isFalse();
   }
@@ -76,7 +76,7 @@ public class GetWorkProtocolTest {
     MiningCoordinator coordinator = mock(PoWMiningCoordinator.class);
     GetWorkProtocol protocol = new GetWorkProtocol(coordinator);
     assertThat(
-            protocol.canHandle(
+            protocol.maybeHandle(
                 message, new StratumConnection(new StratumProtocol[0], () -> {}, (msg) -> {})))
         .isFalse();
   }
@@ -87,7 +87,7 @@ public class GetWorkProtocolTest {
     MiningCoordinator coordinator = mock(PoWMiningCoordinator.class);
     GetWorkProtocol protocol = new GetWorkProtocol(coordinator);
     assertThat(
-            protocol.canHandle(
+            protocol.maybeHandle(
                 message, new StratumConnection(new StratumProtocol[0], () -> {}, (msg) -> {})))
         .isFalse();
   }
@@ -130,7 +130,7 @@ public class GetWorkProtocolTest {
     String submitWork =
         "POST / HTTP/1.1\r\nHost: localhost:8000\r\nContent-Type:application/json\r\n\r\n {\"method\":\"eth_submitWork\",\"id\":1,\"params\":[\"0xdeadbeefdeadbeef\", \"0x0000000000000000000000000000000000000000000000000000000000000000\", \"0x0000000000000000000000000000000000000000000000000000000000000000\"]}";
     assertThat(
-            protocol.canHandle(
+            protocol.maybeHandle(
                 submitWork, new StratumConnection(new StratumProtocol[0], () -> {}, (msg) -> {})))
         .isTrue();
     protocol.handle(connection, submitWork);

@@ -96,7 +96,7 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public boolean canHandle(final String initialMessage, final StratumConnection conn) {
+  public boolean maybeHandle(final String initialMessage, final StratumConnection conn) {
     final JsonRpcRequest requestBody;
     try {
       requestBody = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);

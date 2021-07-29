@@ -115,7 +115,7 @@ final class StratumConnection {
   private void handleMessage(final String message) {
     if (protocol == null) {
       for (StratumProtocol protocol : protocols) {
-        if (protocol.canHandle(message, this)) {
+        if (protocol.maybeHandle(message, this)) {
           this.protocol = protocol;
         }
       }

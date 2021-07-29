@@ -70,7 +70,7 @@ public class GetWorkProtocol implements StratumProtocol {
   }
 
   @Override
-  public boolean canHandle(final String initialMessage, final StratumConnection conn) {
+  public boolean maybeHandle(final String initialMessage, final StratumConnection conn) {
     JsonNode message = readMessage(initialMessage);
     if (message == null) {
       return false;

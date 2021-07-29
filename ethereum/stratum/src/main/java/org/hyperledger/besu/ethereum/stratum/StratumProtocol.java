@@ -36,12 +36,13 @@ public interface StratumProtocol {
 
   /**
    * Checks if the protocol can handle a TCP connection, based on the initial message.
+   * If the protocol can handle the message, it will consume it and handle it.
    *
    * @param initialMessage the initial message sent over the TCP connection.
    * @param conn the connection itself
    * @return true if the protocol can handle this connection
    */
-  boolean canHandle(String initialMessage, StratumConnection conn);
+  boolean maybeHandle(String initialMessage, StratumConnection conn);
 
   /**
    * Callback when a stratum connection is closed.
