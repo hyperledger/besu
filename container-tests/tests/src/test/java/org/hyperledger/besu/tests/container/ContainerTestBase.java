@@ -114,7 +114,7 @@ public class ContainerTestBase {
 
   @Rule
   public final GenericContainer goQuorumContainer =
-      buildGoQuorumContainer(ipcDirPath, ipcBindDir, containerIpcPath);;
+      buildGoQuorumContainer(ipcDirPath, ipcBindDir, containerIpcPath);
 
   @Before
   public void setUp() throws IOException, InterruptedException {

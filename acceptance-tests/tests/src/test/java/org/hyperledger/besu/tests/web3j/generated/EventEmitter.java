@@ -67,7 +67,7 @@ public class EventEmitter extends Contract {
       new Event(
           "stored",
           Arrays.<TypeReference<?>>asList(
-              new TypeReference<Address>() {}, new TypeReference<Uint256>() {}));;
+              new TypeReference<Address>() {}, new TypeReference<Uint256>() {}));
 
   @Deprecated
   protected EventEmitter(
