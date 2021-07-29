@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import java.time.Clock;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,8 +46,8 @@ public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderVal
   }
 
   private boolean validateHeaderNotAheadOfCurrentSystemTime(final long timestamp) {
-    final long timestampMargin = blockchainClock.instant().getEpochSecond()
-            + acceptableClockDriftSeconds;
+    final long timestampMargin =
+        blockchainClock.instant().getEpochSecond() + acceptableClockDriftSeconds;
     if (Long.compareUnsigned(timestamp, timestampMargin) > 0) {
       LOG.info(
           "Invalid block header: timestamp {} is greater than the timestamp margin {}",
