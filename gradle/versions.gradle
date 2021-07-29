@@ -76,10 +76,10 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.10'
 
-    dependency 'io.prometheus:simpleclient:0.11.0'
-    dependency 'io.prometheus:simpleclient_common:0.11.0'
-    dependency 'io.prometheus:simpleclient_hotspot:0.11.0'
-    dependency 'io.prometheus:simpleclient_pushgateway:0.11.0'
+    dependency 'io.prometheus:simpleclient:0.9.0'
+    dependency 'io.prometheus:simpleclient_common:0.9.0'
+    dependency 'io.prometheus:simpleclient_hotspot:0.9.0'
+    dependency 'io.prometheus:simpleclient_pushgateway:0.9.0'
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
