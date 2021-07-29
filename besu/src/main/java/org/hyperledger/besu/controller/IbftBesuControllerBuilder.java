@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
@@ -143,12 +142,6 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockchain, bftBlockInterface().get(), true, validatorProvider);
-
-    final ValidatorProvider validatorProvider =
-        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
-
-    final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, blockInterface, true, validatorProvider);
 
     // NOTE: peers should not be used for accessing the network as it does not enforce the
     // "only send once" filter applied by the UniqueMessageMulticaster.
