@@ -35,8 +35,8 @@ import org.apache.tuweni.bytes.Bytes;
 public interface StratumProtocol {
 
   /**
-   * Checks if the protocol can handle a TCP connection, based on the initial message.
-   * If the protocol can handle the message, it will consume it and handle it.
+   * Checks if the protocol can handle a TCP connection, based on the initial message. If the
+   * protocol can handle the message, it will consume it and handle it.
    *
    * @param initialMessage the initial message sent over the TCP connection.
    * @param conn the connection itself
