@@ -521,7 +521,8 @@ public class RunnerBuilder {
                   miningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
-                  miningParameters.getStratumExtranonce()));
+                  miningParameters.getStratumExtranonce(),
+                  metricsSystem));
       miningCoordinator.addEthHashObserver(stratumServer.get());
     }
 
@@ -659,8 +660,7 @@ public class RunnerBuilder {
                   webSocketsJsonRpcMethods,
                   privacyParameters,
                   protocolSchedule,
-                  blockchainQueries,
-                  transactionPool));
+                  blockchainQueries));
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
     }
@@ -943,8 +943,7 @@ public class RunnerBuilder {
       final Map<String, JsonRpcMethod> jsonRpcMethods,
       final PrivacyParameters privacyParameters,
       final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries blockchainQueries,
-      final TransactionPool transactionPool) {
+      final BlockchainQueries blockchainQueries) {
 
     final WebSocketMethodsFactory websocketMethodsFactory =
         new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
@@ -952,11 +951,7 @@ public class RunnerBuilder {
     if (privacyParameters.isEnabled()) {
       final PrivateWebSocketMethodsFactory privateWebSocketMethodsFactory =
           new PrivateWebSocketMethodsFactory(
-              privacyParameters,
-              subscriptionManager,
-              protocolSchedule,
-              blockchainQueries,
-              transactionPool);
+              privacyParameters, subscriptionManager, protocolSchedule, blockchainQueries);
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }

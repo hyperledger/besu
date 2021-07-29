@@ -92,4 +92,8 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
   public String toShortHexString() {
     return super.isZero() ? "0x0" : super.toShortHexString();
   }
+
+  public static Wei fromQuantity(final Quantity quantity) {
+    return Wei.of(quantity.getAsBigInteger());
+  }
 }

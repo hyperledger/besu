@@ -12,21 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config.experimental;
 
-import picocli.CommandLine.Option;
+package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
-/**
- * Flags defined in this class must be used with caution, and strictly reserved to experimental
- * EIPs.
- */
-public class ExperimentalEIPs {
-  // To make it easier for tests to reset the value to default
-  public static final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
-
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-initial-base-fee"},
-      arity = "1")
-  public static Long initialBasefee = EIP1559_BASEFEE_DEFAULT_VALUE;
+public class DevP2PException extends RuntimeException {
+  public DevP2PException(final String reason) {
+    super(reason);
+  }
 }

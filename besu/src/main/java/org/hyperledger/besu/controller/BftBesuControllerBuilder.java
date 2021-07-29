@@ -12,21 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config.experimental;
 
-import picocli.CommandLine.Option;
+package org.hyperledger.besu.controller;
 
-/**
- * Flags defined in this class must be used with caution, and strictly reserved to experimental
- * EIPs.
- */
-public class ExperimentalEIPs {
-  // To make it easier for tests to reset the value to default
-  public static final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-initial-base-fee"},
-      arity = "1")
-  public static Long initialBasefee = EIP1559_BASEFEE_DEFAULT_VALUE;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+
+public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
+
+  protected abstract Supplier<BftExtraDataCodec> bftExtraDataCodec();
+
+  protected Supplier<BftBlockInterface> bftBlockInterface() {
+    return Suppliers.memoize(() -> new BftBlockInterface(bftExtraDataCodec().get()));
+  }
 }

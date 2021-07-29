@@ -97,6 +97,25 @@ public class PongPacketDataTest {
   }
 
   @Test
+  public void legacyHandlesScalar() {
+
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final UInt64 enrSeq = UInt64.MAX_VALUE;
+    final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
+    final PongPacketData pong = PongPacketData.create(to, hash, enrSeq);
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    pong.writeTo(out);
+
+    final PongPacketData legacyPong = PongPacketData.legacyReadFrom(RLP.input(out.encoded()));
+
+    assertThat(legacyPong.getTo()).isEqualTo(to);
+    assertThat(legacyPong.getPingHash()).isEqualTo(hash);
+    assertThat(legacyPong.getEnrSeq().isPresent()).isTrue();
+    assertThat(legacyPong.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
   public void readFrom_withExtraFields() {
     final long time = System.currentTimeMillis();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
