@@ -69,7 +69,7 @@ public class QbftGetValidatorsByBlockNumberTest {
     when(blockchainQueries.getBlockHeaderByNumber(12)).thenReturn(Optional.of(blockHeader));
     final List<Address> addresses = Collections.singletonList(Address.ID);
     final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
-    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(addresses);
+    when(validatorProvider.getValidatorsForBlock(any())).thenReturn(addresses);
     Object result = method.resultByBlockNumber(request, 12);
     assertThat(result).isEqualTo(expectedOutput);
   }

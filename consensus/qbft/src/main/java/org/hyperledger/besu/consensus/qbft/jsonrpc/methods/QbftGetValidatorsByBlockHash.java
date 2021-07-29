@@ -61,7 +61,7 @@ public class QbftGetValidatorsByBlockHash implements JsonRpcMethod {
     return blockHeader
         .map(
             header ->
-                validatorProvider.getValidatorsAfterBlock(header).stream()
+                validatorProvider.getValidatorsForBlock(header).stream()
                     .map(Address::toString)
                     .collect(Collectors.toList()))
         .orElse(null);
