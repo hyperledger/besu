@@ -175,7 +175,7 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
-    return streamAvailablePeers().filter(matchesCriteria::test).max(BEST_CHAIN);
+    return streamAvailablePeers().filter(matchesCriteria).max(BEST_CHAIN);
   }
 
   @FunctionalInterface
