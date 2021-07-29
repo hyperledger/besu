@@ -55,6 +55,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
 
   @Override
   protected final void executeTask() {
+    LOG.traceExit();
     final CompletableFuture<R> promise = new CompletableFuture<>();
     responseStream = sendRequest();
     responseStream.then(
@@ -83,6 +84,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
             result.complete(new PeerTaskResult<>(responseStream.get().getPeer(), r));
           }
         });
+    LOG.traceExit();
   }
 
   public PendingPeerRequest sendRequestToPeer(
@@ -95,6 +97,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       final boolean streamClosed,
       final MessageData message,
       final EthPeer peer) {
+    LOG.traceEntry();
     if (promise.isDone()) {
       // We've already got our response, don't pass on the stream closed event.
       return;
@@ -108,12 +111,15 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       promise.completeExceptionally(new PeerBreachedProtocolException());
     }
+    LOG.traceExit();
   }
 
   @Override
   protected void cleanup() {
+    LOG.traceEntry();
     super.cleanup();
     responseStream.abort().ifPresent(RequestManager.ResponseStream::close);
+    LOG.traceExit();
   }
 
   protected abstract PendingPeerRequest sendRequest();

@@ -163,11 +163,15 @@ public class Cluster implements AutoCloseable {
   public void stop() {
     // stops nodes but do not shutdown besuNodeRunner
     for (final RunnableNode node : nodes.values()) {
-      if (node instanceof BesuNode) {
-        besuNodeRunner.stopNode((BesuNode) node); // besuNodeRunner.stopNode also calls node.stop
-      } else {
-        node.stop();
-      }
+      stopNode(node);
+    }
+  }
+
+  public void stopNode(final RunnableNode node) {
+    if (node instanceof BesuNode) {
+      besuNodeRunner.stopNode((BesuNode) node); // besuNodeRunner.stopNode also calls node.stop
+    } else {
+      node.stop();
     }
   }
 

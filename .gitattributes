@@ -14,5 +14,7 @@
 *.ico binary
 *.ttf binary
 *.woff binary
+*.p12 binary
+*.db binary
 *.woff2 binary
 goss-linux-amd64 binary

@@ -20,12 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.number.Percentage;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -34,29 +36,49 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class TransactionReplacementByPriceRuleTest {
+public class TransactionReplacementRulesTest {
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
+          // TransactionReplacementByGasPriceRule
+          //   basefee absent
           {frontierTx(5L), frontierTx(6L), empty(), 0, true},
           {frontierTx(5L), frontierTx(5L), empty(), 0, false},
           {frontierTx(5L), frontierTx(4L), empty(), 0, false},
-          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(1L), 0, false},
-          {frontierTx(5L), eip1559Tx(3L, 5L), Optional.of(3L), 0, false},
-          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(3L), 0, true},
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 6L), Optional.of(3L), 0, false},
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(3L), 0, false},
-          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(4L), 0, true},
-          {eip1559Tx(3L, 8L), frontierTx(7L), Optional.of(4L), 0, false},
-          {eip1559Tx(3L, 8L), frontierTx(8L), Optional.of(4L), 0, true},
           {frontierTx(100L), frontierTx(105L), empty(), 10, false},
           {frontierTx(100L), frontierTx(110L), empty(), 10, false},
           {frontierTx(100L), frontierTx(111L), empty(), 10, true},
+          //   basefee present
+          {frontierTx(5L), frontierTx(6L), Optional.of(3L), 0, true},
+          {frontierTx(5L), frontierTx(5L), Optional.of(3L), 0, false},
+          {frontierTx(5L), frontierTx(4L), Optional.of(3L), 0, false},
+          {frontierTx(100L), frontierTx(105L), Optional.of(3L), 10, false},
+          {frontierTx(100L), frontierTx(110L), Optional.of(3L), 10, false},
+          {frontierTx(100L), frontierTx(111L), Optional.of(3L), 10, true},
+
+          // TransactionReplacementByFeeMarketRule
+          //  eip1559 replacing frontier
+          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(1L), 0, false},
+          {frontierTx(5L), eip1559Tx(3L, 5L), Optional.of(3L), 0, false},
+          {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(3L), 0, true},
+          //  frontier replacing 1559
+          {eip1559Tx(3L, 8L), frontierTx(7L), Optional.of(4L), 0, false},
+          {eip1559Tx(3L, 8L), frontierTx(8L), Optional.of(4L), 0, true},
+          //  eip1559 replacing eip1559
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 6L), Optional.of(3L), 0, false},
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(3L), 0, false},
+          {eip1559Tx(3L, 6L), eip1559Tx(3L, 7L), Optional.of(4L), 0, true},
           {eip1559Tx(10L, 200L), eip1559Tx(10L, 200L), Optional.of(90L), 10, false},
           {eip1559Tx(10L, 200L), eip1559Tx(15L, 200L), Optional.of(90L), 10, false},
           {eip1559Tx(10L, 200L), eip1559Tx(21L, 200L), Optional.of(90L), 10, true},
+          //  pathological, priority fee > max fee
+          {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.of(3L), 0, false},
+          {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.of(4L), 0, true},
+          //  pathological, eip1559 without basefee
+          {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.empty(), 0, false},
+          {eip1559Tx(8L, 6L), eip1559Tx(3L, 7L), Optional.empty(), 0, false},
         });
   }
 
@@ -66,7 +88,7 @@ public class TransactionReplacementByPriceRuleTest {
   private final int priceBump;
   private final boolean expected;
 
-  public TransactionReplacementByPriceRuleTest(
+  public TransactionReplacementRulesTest(
       final TransactionInfo oldTx,
       final TransactionInfo newTx,
       final Optional<Long> baseFee,
@@ -81,29 +103,38 @@ public class TransactionReplacementByPriceRuleTest {
 
   @Test
   public void shouldReplace() {
+    BlockHeader mockHeader = mock(BlockHeader.class);
+    when(mockHeader.getBaseFee()).thenReturn(baseFee);
+
     assertThat(
-            new TransactionReplacementByPriceRule(Percentage.fromInt(priceBump))
-                .shouldReplace(oldTx, newTx, baseFee))
+            new TransactionPoolReplacementHandler(Percentage.fromInt(priceBump))
+                .shouldReplace(oldTx, newTx, mockHeader))
         .isEqualTo(expected);
   }
 
   private static TransactionInfo frontierTx(final long price) {
     final TransactionInfo transactionInfo = mock(TransactionInfo.class);
-    final Transaction transaction = mock(Transaction.class);
-    when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
-    when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.of(price)));
+    final Transaction transaction =
+        Transaction.builder()
+            .chainId(BigInteger.ZERO)
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.of(price))
+            .build();
     when(transactionInfo.getTransaction()).thenReturn(transaction);
+    when(transactionInfo.getGasPrice()).thenReturn(Wei.of(price));
     return transactionInfo;
   }
 
   private static TransactionInfo eip1559Tx(
       final long maxPriorityFeePerGas, final long maxFeePerGas) {
     final TransactionInfo transactionInfo = mock(TransactionInfo.class);
-    final Transaction transaction = mock(Transaction.class);
-    when(transaction.getType()).thenReturn(TransactionType.EIP1559);
-    when(transaction.getMaxPriorityFeePerGas())
-        .thenReturn(Optional.of(Wei.of(maxPriorityFeePerGas)));
-    when(transaction.getMaxFeePerGas()).thenReturn(Optional.of(Wei.of(maxFeePerGas)));
+    final Transaction transaction =
+        Transaction.builder()
+            .chainId(BigInteger.ZERO)
+            .type(TransactionType.EIP1559)
+            .maxPriorityFeePerGas(Wei.of(maxPriorityFeePerGas))
+            .maxFeePerGas(Wei.of(maxFeePerGas))
+            .build();
     when(transactionInfo.getTransaction()).thenReturn(transaction);
     return transactionInfo;
   }

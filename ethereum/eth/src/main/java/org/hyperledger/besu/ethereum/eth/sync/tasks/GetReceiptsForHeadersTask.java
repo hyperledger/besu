@@ -89,7 +89,8 @@ public class GetReceiptsForHeadersTask
   @Override
   protected CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
-    return requestReceipts(assignedPeer).thenCompose(this::processResponse);
+    LOG.traceEntry();
+    return LOG.traceExit(requestReceipts(assignedPeer).thenCompose(this::processResponse));
   }
 
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> requestReceipts(

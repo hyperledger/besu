@@ -14,23 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Optional;
 
-public class TransactionReplacementByPriceRule implements TransactionPoolReplacementRule {
-  private static final TransactionPriceCalculator FRONTIER_CALCULATOR =
-      TransactionPriceCalculator.frontier();
-  private static final TransactionPriceCalculator EIP1559_CALCULATOR =
-      TransactionPriceCalculator.eip1559();
+public class TransactionReplacementByGasPriceRule implements TransactionPoolReplacementRule {
   private final Percentage priceBump;
 
-  public TransactionReplacementByPriceRule(final Percentage priceBump) {
+  public TransactionReplacementByGasPriceRule(final Percentage priceBump) {
     this.priceBump = priceBump;
   }
 
@@ -41,19 +34,14 @@ public class TransactionReplacementByPriceRule implements TransactionPoolReplace
       final Optional<Long> baseFee) {
     assert existingTransactionInfo.getTransaction() != null
         && newTransactionInfo.getTransaction() != null;
-    final Wei replacementThreshold =
-        priceOf(existingTransactionInfo.getTransaction(), baseFee)
-            .multiply(100 + priceBump.getValue())
-            .divide(100);
-    return priceOf(newTransactionInfo.getTransaction(), baseFee).compareTo(replacementThreshold)
-        > 0;
-  }
 
-  private Wei priceOf(final Transaction transaction, final Optional<Long> baseFee) {
-    final TransactionPriceCalculator transactionPriceCalculator =
-        transaction.getType().equals(TransactionType.EIP1559)
-            ? EIP1559_CALCULATOR
-            : FRONTIER_CALCULATOR;
-    return transactionPriceCalculator.price(transaction, baseFee);
+    // return false if either transaction supports 1559 fee market
+    if (isNotGasPriced(existingTransactionInfo) || isNotGasPriced(newTransactionInfo)) {
+      return false;
+    }
+
+    final Wei replacementThreshold =
+        existingTransactionInfo.getGasPrice().multiply(100 + priceBump.getValue()).divide(100);
+    return newTransactionInfo.getGasPrice().compareTo(replacementThreshold) > 0;
   }
 }
