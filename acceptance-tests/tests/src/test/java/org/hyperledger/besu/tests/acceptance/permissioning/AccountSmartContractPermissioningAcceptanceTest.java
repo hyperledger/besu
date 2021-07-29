@@ -16,7 +16,9 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTransaction;
 
+import java.math.BigInteger;
 import java.util.Collections;
 
 import org.junit.Before;
@@ -60,7 +62,16 @@ public class AccountSmartContractPermissioningAcceptanceTest
     node.execute(forbidAccount(allowedSender));
     node.verify(accountIsForbidden(allowedSender));
 
-    node.execute(accountTransactions.createTransfer(allowedSender, otherAccount, 5));
-    node.verify(otherAccount.balanceDoesNotChange(0));
+    verifyTransferForbidden(allowedSender, otherAccount);
+  }
+
+  private void verifyTransferForbidden(final Account sender, final Account beneficiary) {
+    final BigInteger nonce = node.execute(ethTransactions.getTransactionCount(sender.getAddress()));
+    final TransferTransaction transfer =
+        accountTransactions.createTransfer(sender, beneficiary, 1, nonce);
+    node.verify(
+        eth.sendRawTransactionExceptional(
+            transfer.signedTransactionData(),
+            "Sender account not authorized to send transactions"));
   }
 }
