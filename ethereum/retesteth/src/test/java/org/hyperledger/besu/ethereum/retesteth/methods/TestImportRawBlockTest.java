@@ -45,6 +45,7 @@ public class TestImportRawBlockTest {
     test_importRawBlock = new TestImportRawBlock(context);
     test_rewindToBlock = new TestRewindToBlock(context);
     final TestSetChainParams test_setChainParams = new TestSetChainParams(context);
+    final TestModifyTimestamp test_modifyTimestamp = new TestModifyTimestamp(context);
     final String chainParamsJsonString =
         Resources.toString(
             TestSetChainParamsTest.class.getResource("multimpleBalanceInstructionChainParams.json"),
@@ -58,6 +59,15 @@ public class TestImportRawBlockTest {
 
     assertThat(test_setChainParams.response(request))
         .isEqualTo(new JsonRpcSuccessResponse(null, true));
+
+    final JsonRpcRequestContext requestSetTimestamp =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", TestModifyTimestamp.METHOD_NAME, new Object[] {System.currentTimeMillis()}));
+
+    assertThat(test_modifyTimestamp.response(requestSetTimestamp))
+        .isEqualTo(new JsonRpcSuccessResponse(null, true));
+
   }
 
   @Test

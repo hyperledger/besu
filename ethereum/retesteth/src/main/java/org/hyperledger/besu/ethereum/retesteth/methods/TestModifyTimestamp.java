@@ -24,13 +24,15 @@ public class TestModifyTimestamp implements JsonRpcMethod {
 
   private final RetestethContext context;
 
+  public static final String METHOD_NAME = "test_modifyTimestamp";
+
   public TestModifyTimestamp(final RetestethContext context) {
     this.context = context;
   }
 
   @Override
   public String getName() {
-    return "test_modifyTimestamp";
+    return METHOD_NAME;
   }
 
   @Override
