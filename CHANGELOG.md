@@ -4,6 +4,10 @@
 ### Additions and Improvements
 - Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
 - \[EXPERIMENTAL\] Added support for DevP2P-over-TLS [#2536](https://github.com/hyperledger/besu/pull/2536)
+- `eth_getWork`, `eth_submitWork` support over the Stratum port [#2581](https://github.com/hyperledger/besu/pull/2581)
+- Stratum metrics [#2583](https://github.com/hyperledger/besu/pull/2583)
+- Support for mining ommers [#2576](https://github.com/hyperledger/besu/pull/2576)
+
 
 ### Bug Fixes
 - consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
