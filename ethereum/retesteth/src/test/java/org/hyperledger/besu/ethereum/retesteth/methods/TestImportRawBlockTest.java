@@ -67,7 +67,6 @@ public class TestImportRawBlockTest {
 
     assertThat(test_modifyTimestamp.response(requestSetTimestamp))
         .isEqualTo(new JsonRpcSuccessResponse(null, true));
-
   }
 
   @Test
