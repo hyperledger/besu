@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -56,6 +57,8 @@ public class BftQueryServiceImplTest {
 
   @Mock private BftBlockInterface bftBlockInterface;
 
+  @Mock private ValidatorProvider validatorProvider;
+
   private final List<NodeKey> validatorKeys =
       Lists.newArrayList(NodeKeyUtils.generate(), NodeKeyUtils.generate());
 
@@ -76,7 +79,7 @@ public class BftQueryServiceImplTest {
   @Test
   public void roundNumberFromBlockIsReturned() {
     final BftQueryService service =
-        new BftQueryServiceImpl(bftBlockInterface, blockchain, null, null);
+        new BftQueryServiceImpl(bftBlockInterface, blockchain, validatorProvider, null, null);
     final int roundNumberInBlock = 5;
     final BftExtraData extraData =
         new BftExtraData(Bytes.EMPTY, List.of(), Optional.empty(), roundNumberInBlock, List.of());
@@ -90,7 +93,8 @@ public class BftQueryServiceImplTest {
     final NonBesuBlockHeader header = new NonBesuBlockHeader(Hash.EMPTY, Bytes.EMPTY);
 
     final BftQueryService service =
-        new BftQueryServiceImpl(new BftBlockInterface(bftExtraDataCodec), blockchain, null, null);
+        new BftQueryServiceImpl(
+            new BftBlockInterface(bftExtraDataCodec), blockchain, validatorProvider, null, null);
     assertThatExceptionOfType(NoSuchElementException.class)
         .isThrownBy(() -> service.getRoundNumberFrom(header));
   }
@@ -98,7 +102,7 @@ public class BftQueryServiceImplTest {
   @Test
   public void getSignersReturnsAddressesOfSignersInBlock() {
     final BftQueryService service =
-        new BftQueryServiceImpl(bftBlockInterface, blockchain, null, null);
+        new BftQueryServiceImpl(bftBlockInterface, blockchain, validatorProvider, null, null);
 
     final List<Address> signers =
         signingKeys.stream()
@@ -114,7 +118,7 @@ public class BftQueryServiceImplTest {
     final NonBesuBlockHeader header = new NonBesuBlockHeader(Hash.EMPTY, Bytes.EMPTY);
 
     final BftQueryService service =
-        new BftQueryServiceImpl(bftBlockInterface, blockchain, null, null);
+        new BftQueryServiceImpl(bftBlockInterface, blockchain, validatorProvider, null, null);
     assertThatExceptionOfType(NoSuchElementException.class)
         .isThrownBy(() -> service.getSignersFrom(header));
   }
@@ -123,7 +127,25 @@ public class BftQueryServiceImplTest {
   public void consensusMechanismNameReturnedIsSameAsThatPassedDuringCreation() {
     final BftQueryService service =
         new BftQueryServiceImpl(
-            new BftBlockInterface(bftExtraDataCodec), blockchain, null, "consensusMechanism");
+            new BftBlockInterface(bftExtraDataCodec),
+            blockchain,
+            validatorProvider,
+            null,
+            "consensusMechanism");
     assertThat(service.getConsensusMechanismName()).isEqualTo("consensusMechanism");
+  }
+
+  @Test
+  public void getValidatorsReturnsAddresses() {
+    final BftQueryService service =
+        new BftQueryServiceImpl(bftBlockInterface, blockchain, validatorProvider, null, null);
+
+    final List<Address> validators =
+        signingKeys.stream()
+            .map(nodeKey -> Util.publicKeyToAddress(nodeKey.getPublicKey()))
+            .collect(Collectors.toList());
+    when(validatorProvider.getValidatorsAtHead()).thenReturn(validators);
+
+    assertThat(service.getValidatorsForLatestBlock()).containsExactlyElementsOf(validators);
   }
 }
