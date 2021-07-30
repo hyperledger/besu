@@ -63,9 +63,9 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
     return mapOf(
         new QbftProposeValidatorVote(validatorProvider),
-        new QbftGetValidatorsByBlockNumber(blockchainQueries, blockInterface),
+        new QbftGetValidatorsByBlockNumber(blockchainQueries, readOnlyValidatorProvider),
         new QbftDiscardValidatorVote(validatorProvider),
-        new QbftGetValidatorsByBlockHash(context.getBlockchain(), blockInterface),
+        new QbftGetValidatorsByBlockHash(context.getBlockchain(), readOnlyValidatorProvider),
         new QbftGetSignerMetrics(readOnlyValidatorProvider, blockInterface, blockchainQueries),
         new QbftGetPendingVotes(validatorProvider));
   }
