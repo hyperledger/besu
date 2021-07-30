@@ -177,7 +177,7 @@ public class EthScheduler {
   public ScheduledFuture<?> scheduleFutureTaskWithFixedDelay(
       final Runnable command, final Duration initialDelay, final Duration duration) {
     return scheduler.scheduleWithFixedDelay(
-        command::run, initialDelay.toMillis(), duration.toMillis(), TimeUnit.MILLISECONDS);
+        command, initialDelay.toMillis(), duration.toMillis(), TimeUnit.MILLISECONDS);
   }
 
   public <T> CompletableFuture<T> scheduleFutureTask(

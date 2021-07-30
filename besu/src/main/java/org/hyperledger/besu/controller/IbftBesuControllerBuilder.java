@@ -270,7 +270,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     for (final BftFork fork : bftForks) {
       fork.getValidators()
-          .map(
+          .ifPresent(
               validators ->
                   result.put(
                       fork.getForkBlock(),

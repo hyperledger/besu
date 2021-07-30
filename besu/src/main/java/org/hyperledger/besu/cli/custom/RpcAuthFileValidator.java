@@ -80,9 +80,7 @@ public class RpcAuthFileValidator {
     int configuredUsers = tomlParseResult.getTable("Users").keySet().size();
 
     int usersWithPasswords =
-        tomlParseResult
-            .keyPathSet()
-            .parallelStream()
+        tomlParseResult.keyPathSet().parallelStream()
             .filter(
                 keySet ->
                     keySet.contains("Users")
@@ -95,9 +93,7 @@ public class RpcAuthFileValidator {
   }
 
   private static boolean verifyAllEntriesHaveValues(final TomlParseResult tomlParseResult) {
-    return tomlParseResult
-        .dottedKeySet()
-        .parallelStream()
+    return tomlParseResult.dottedKeySet().parallelStream()
         .filter(keySet -> !keySet.contains("password"))
         .allMatch(dottedKey -> verifyEntry(dottedKey, tomlParseResult));
   }

@@ -437,7 +437,7 @@ public interface GasCalculator {
 
   default long getMaxRefundQuotient() {
     return 2;
-  };
+  }
 
   // what would be the gas for a PMT with hash of all non-zeros
   Gas getMaximumPmtCost();

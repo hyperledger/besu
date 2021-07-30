@@ -101,5 +101,5 @@ public class TransactionReceiptWithMetadata {
 
   public Optional<Long> getBaseFee() {
     return baseFee;
-  };
+  }
 }
