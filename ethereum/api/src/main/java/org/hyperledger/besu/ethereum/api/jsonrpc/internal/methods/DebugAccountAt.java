@@ -86,9 +86,12 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
     }
 
     final Optional<TransactionTrace> transactionTrace =
-        blockTracerSupplier.get()
+        blockTracerSupplier
+            .get()
             .trace(blockHash, new DebugOperationTracer(new TraceOptions(false, true, true)))
-            .map(BlockTrace::getTransactionTraces).orElse(Collections.emptyList()).stream()
+            .map(BlockTrace::getTransactionTraces)
+            .orElse(Collections.emptyList())
+            .stream()
             .filter(
                 trxTrace ->
                     trxTrace

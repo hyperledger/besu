@@ -220,8 +220,12 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   @Override
-  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain, bftBlockInterface().get(), nodeKey);
+  protected PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain, final ProtocolContext protocolContext) {
+    final ValidatorProvider validatorProvider =
+        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
+    return new IbftQueryPluginServiceFactory(
+        blockchain, bftBlockInterface().get(), validatorProvider, nodeKey);
   }
 
   @Override
