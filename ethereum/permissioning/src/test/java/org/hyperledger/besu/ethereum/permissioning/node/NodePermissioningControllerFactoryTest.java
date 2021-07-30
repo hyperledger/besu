@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
@@ -52,7 +51,6 @@ public class NodePermissioningControllerFactoryTest {
   @Mock private Synchronizer synchronizer;
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private Blockchain blockchain;
-  @Mock private BesuContext besuContext;
 
   private final String enode =
       "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1111";

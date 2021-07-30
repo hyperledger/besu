@@ -98,7 +98,8 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         createPrivateMarkerTransactionFactory();
     final PrivacyIdProvider enclavePublicProvider = PrivacyIdProvider.build(privacyParameters);
     final PrivacyController privacyController = createPrivacyController();
-    return create(privacyController, enclavePublicProvider, markerTransactionFactory).entrySet()
+    return create(privacyController, enclavePublicProvider, markerTransactionFactory)
+        .entrySet()
         .stream()
         .collect(
             Collectors.toMap(

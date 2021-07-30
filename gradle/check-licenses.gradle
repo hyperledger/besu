@@ -62,7 +62,7 @@ downloadLicenses {
     // only used for static analysis, not actually shipped
     'com.google.code.findbugs:jFormatString:3.0.0',
     'com.google.errorprone:javac:.*',
-    'org.checkerframework:dataflow-shaded:3.1.2',
+    'org.checkerframework:dataflow-shaded:.*',
   ]
 
   ext.apache = license('Apache License, Version 2.0', 'http://opensource.org/licenses/Apache-2.0')
@@ -97,6 +97,7 @@ downloadLicenses {
       'BSD 3-Clause',
       'BSD Licence 3',
       'Eclipse Distribution License - v 1.0',
+      'Eclipse Distribution License (New BSD License)',
       'EDL 1.0',
       'New BSD License',
       'The BSD 3-Clause License',
