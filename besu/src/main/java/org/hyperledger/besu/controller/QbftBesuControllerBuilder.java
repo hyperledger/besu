@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.controller;
 
-import java.util.Optional;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -47,6 +46,8 @@ import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftContext;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
@@ -75,6 +76,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -88,19 +90,19 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private BftEventQueue bftEventQueue;
   private QbftConfigOptions qbftConfig;
   private ValidatorPeers peers;
-  //TODO initialize this in BesuCommand as part of the PKI setup (will be done in a follow up PR)
-  private Optional<KeyStoreWrapper> keyStoreWrapper = Optional.empty();
+  // TODO initialize this in BesuCommand as part of the PKI setup (will be done in a follow up PR)
+  private final Optional<KeyStoreWrapper> pkiKeyStore = Optional.empty();
 
   @Override
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
-    return Suppliers.memoize(() -> {
-      if (keyStoreWrapper.isPresent()) {
-        //TODO-lucas return PkiQbftExtraData
-        return null;
-      } else {
-        return new QbftExtraDataCodec();
-      }
-    });
+    return Suppliers.memoize(
+        () -> {
+          if (pkiKeyStore.isPresent()) {
+            return new PkiQbftExtraDataCodec();
+          } else {
+            return new QbftExtraDataCodec();
+          }
+        });
   }
 
   @Override
@@ -273,11 +275,20 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final Map<Long, List<Address>> bftValidatorForkMap =
         convertBftForks(configOptions.getTransitions().getQbftForks());
 
-    return new BftContext(
-        BlockValidatorProvider.forkingValidatorProvider(
-            blockchain, epochManager, bftBlockInterface().get(), bftValidatorForkMap),
-        epochManager,
-        bftBlockInterface().get());
+    if (pkiKeyStore.isPresent()) {
+      return new PkiQbftContext(
+          BlockValidatorProvider.forkingValidatorProvider(
+              blockchain, epochManager, bftBlockInterface().get(), bftValidatorForkMap),
+          epochManager,
+          bftBlockInterface().get(),
+          pkiKeyStore.get());
+    } else {
+      return new BftContext(
+          BlockValidatorProvider.forkingValidatorProvider(
+              blockchain, epochManager, bftBlockInterface().get(), bftValidatorForkMap),
+          epochManager,
+          bftBlockInterface().get());
+    }
   }
 
   private Map<Long, List<Address>> convertBftForks(final List<BftFork> bftForks) {

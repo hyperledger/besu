@@ -16,22 +16,21 @@
 package org.hyperledger.besu.consensus.qbft.pki;
 
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
 public class PkiQbftContext extends BftContext {
 
   private final KeyStoreWrapper keyStoreWrapper;
 
-  public PkiQbftContext(final VoteTallyCache voteTallyCache,
-      final VoteProposer voteProposer,
+  public PkiQbftContext(
+      final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
       final BftBlockInterface blockInterface,
       final KeyStoreWrapper keyStoreWrapper) {
-    super(voteTallyCache, voteProposer, epochManager, blockInterface);
+    super(validatorProvider, epochManager, blockInterface);
     this.keyStoreWrapper = keyStoreWrapper;
   }
 
