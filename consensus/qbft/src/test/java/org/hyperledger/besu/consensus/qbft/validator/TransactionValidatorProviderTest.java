@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.validator;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ public class TransactionValidatorProviderTest {
   protected Block block_2;
   private Block block_3;
 
-  protected final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
+  private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
   @Before
   public void setup() {
@@ -59,17 +60,14 @@ public class TransactionValidatorProviderTest {
     block_2 = createEmptyBlock(2, block_1.getHeader().getHash());
     block_3 = createEmptyBlock(3, block_2.getHeader().getHash());
 
-    blockChain.appendBlock(block_1, org.assertj.core.util.Lists.emptyList());
-    blockChain.appendBlock(block_2, org.assertj.core.util.Lists.emptyList());
-    blockChain.appendBlock(block_3, org.assertj.core.util.Lists.emptyList());
+    blockChain.appendBlock(block_1, emptyList());
+    blockChain.appendBlock(block_2, emptyList());
+    blockChain.appendBlock(block_3, emptyList());
   }
 
-  protected Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
+  private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
-    return new Block(
-        headerBuilder.buildHeader(),
-        new BlockBody(
-            org.assertj.core.util.Lists.emptyList(), org.assertj.core.util.Lists.emptyList()));
+    return new Block(headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList()));
   }
 
   @Test

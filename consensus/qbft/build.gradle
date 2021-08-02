@@ -93,6 +93,7 @@ dependencies {
   integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
+  integrationTestImplementation project(':crypto')
 
   integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
