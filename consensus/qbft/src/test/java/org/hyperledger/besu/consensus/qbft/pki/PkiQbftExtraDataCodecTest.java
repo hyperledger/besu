@@ -43,24 +43,24 @@ public class PkiQbftExtraDataCodecTest {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private final String EMPTY_CMS_RAW_HEX_ENCODING_STRING =
-      "0xf8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000"
-          + "000000000000000000000001940000000000000000000000000000000000000002d7940000000000000000"
-          + "00000000000000000000000181ff83fedcbaf886b841000000000000000000000000000000000000000000"
-          + "0000000000000000000001000000000000000000000000000000000000000000000000000000000000000a"
-          + "00b841000000000000000000000000000000000000000000000000000000000000000a0000000000000000"
-          + "00000000000000000000000000000000000000000000000100c0";
+      "0xf8f3f8f0a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea94000000000000"
+          + "0000000000000000000000000001940000000000000000000000000000000000000002d794000000000000"
+          + "000000000000000000000000000181ff83fedcbaf886b84100000000000000000000000000000000000000"
+          + "00000000000000000000000001000000000000000000000000000000000000000000000000000000000000"
+          + "000a00b841000000000000000000000000000000000000000000000000000000000000000a000000000000"
+          + "000000000000000000000000000000000000000000000000000100c0";
 
   // Arbitrary bytes representing a non-empty CMS
   private final Bytes cms = Bytes.fromHexString("0x01");
 
   // Raw hex-encoded extra data with arbitrary CMS data (0x01)
   private final String RAW_HEX_ENCODING_STRING =
-      "0xf8f2a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000"
-          + "000000000000000000000001940000000000000000000000000000000000000002d7940000000000000000"
-          + "00000000000000000000000181ff83fedcbaf886b841000000000000000000000000000000000000000000"
-          + "0000000000000000000001000000000000000000000000000000000000000000000000000000000000000a"
-          + "00b841000000000000000000000000000000000000000000000000000000000000000a0000000000000000"
-          + "00000000000000000000000000000000000000000000000100c101";
+      "0xf8f4f8f0a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea94000000000000"
+          + "0000000000000000000000000001940000000000000000000000000000000000000002d794000000000000"
+          + "000000000000000000000000000181ff83fedcbaf886b84100000000000000000000000000000000000000"
+          + "00000000000000000000000001000000000000000000000000000000000000000000000000000000000000"
+          + "000a00b841000000000000000000000000000000000000000000000000000000000000000a000000000000"
+          + "000000000000000000000000000000000000000000000000000100c101";
 
   private final PkiQbftExtraDataCodec bftExtraDataCodec = new PkiQbftExtraDataCodec();
 
@@ -80,24 +80,29 @@ public class PkiQbftExtraDataCodecTest {
     final Bytes vanity_data = Bytes.wrap(vanity_bytes);
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
-    encoder.startList(); // This is required to create a "root node" for all RLP'd data
-    encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.startList(); // start envelope list
 
-    // encoded vote
+    encoder.startList(); // start extra data list
+    // vanity data
+    encoder.writeBytes(vanity_data);
+    // validators
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    // votes
     encoder.startList();
     encoder.writeBytes(Address.fromHexString("1"));
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
-
+    // rounds
     encoder.writeIntScalar(round);
+    // committer seals
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
+    encoder.endList(); // end extra data list
 
-    encoder.startList();
+    encoder.startList(); // start cms list
     encoder.writeBytes(cms);
-    encoder.endList();
+    encoder.endList(); // end cms list
 
-    encoder.endList();
+    encoder.endList(); // end envelope list
 
     final Bytes bufferToInject = encoder.encoded();
 

@@ -40,6 +40,16 @@ public class PkiQbftExtraData extends BftExtraData {
     this.cms = cms;
   }
 
+  PkiQbftExtraData(final BftExtraData bftExtraData, final Optional<Bytes> cms) {
+    this(
+        bftExtraData.getVanityData(),
+        bftExtraData.getSeals(),
+        bftExtraData.getVote(),
+        bftExtraData.getRound(),
+        bftExtraData.getValidators(),
+        cms);
+  }
+
   public Optional<Bytes> getCms() {
     return cms;
   }

@@ -15,21 +15,20 @@
 package org.hyperledger.besu.consensus.qbft.pki;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
-import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
-import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/*
+ The PkiQbftExtraData encoding format is different from the "regular" QbftExtraData encoding.
+ We have an "envelope" list, with two elements: the extra data and the cms message.
+ The RLP encoding format is as follows: ["extra_data", ["cms"]]
+*/
 public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
   @Override
@@ -39,37 +38,22 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
     }
 
     final RLPInput rlpInput = new BytesValueRLPInput(input, false);
+    rlpInput.enterList();
 
-    rlpInput.enterList(); // This accounts for the "root node" which contains BFT data items.
-    final Bytes vanityData = rlpInput.readBytes();
-    final List<Address> validators = rlpInput.readList(Address::readFrom);
-
-    final Optional<Vote> vote;
-    if (rlpInput.nextIsList() && rlpInput.nextSize() == 0) {
-      vote = Optional.empty();
-      rlpInput.skipNext();
-    } else {
-      vote = Optional.of(decodeVote(rlpInput));
-    }
-
-    final int round = rlpInput.readIntScalar();
-    final List<SECPSignature> seals =
-        rlpInput.readList(
-            rlp -> SignatureAlgorithmFactory.getInstance().decodeSignature(rlp.readBytes()));
+    // Consume all the ExtraData input from the envelope list, and decode it using the QBFT decoder
+    final Bytes extraDataListAsBytes = rlpInput.currentListAsBytes();
+    final BftExtraData bftExtraData = super.decodeRaw(extraDataListAsBytes);
 
     final Optional<Bytes> cms;
     if (rlpInput.nextIsList() && rlpInput.nextSize() == 0) {
       cms = Optional.empty();
-      rlpInput.skipNext();
     } else {
       rlpInput.enterList();
       cms = Optional.of(rlpInput.readBytes());
       rlpInput.leaveList();
     }
 
-    rlpInput.leaveList();
-
-    return new PkiQbftExtraData(vanityData, seals, vote, round, validators, cms);
+    return new PkiQbftExtraData(bftExtraData, cms);
   }
 
   @Override
@@ -81,28 +65,10 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
     final PkiQbftExtraData extraData = (PkiQbftExtraData) bftExtraData;
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
-    encoder.startList();
-    encoder.writeBytes(extraData.getVanityData());
-    encoder.writeList(extraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.startList(); // start envelope list
 
-    if (extraData.getVote().isPresent()) {
-      encodeVote(encoder, extraData.getVote().get());
-    } else {
-      encoder.writeList(Collections.emptyList(), (o, rlpOutput) -> {});
-    }
-
-    if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
-      encoder.writeIntScalar(extraData.getRound());
-      if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
-        encoder.writeList(
-            extraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
-      } else {
-        encoder.writeEmptyList();
-      }
-    } else {
-      encoder.writeIntScalar(0);
-      encoder.writeEmptyList();
-    }
+    final Bytes encodedQbftExtraData = super.encode(bftExtraData, encodingType);
+    encoder.writeRaw(encodedQbftExtraData);
 
     if (encodingType == EncodingType.ALL) {
       if (extraData.getCms().isPresent()) {
@@ -117,7 +83,7 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
       encoder.writeEmptyList();
     }
 
-    encoder.endList();
+    encoder.endList(); // end envelope list
 
     return encoder.encoded();
   }
