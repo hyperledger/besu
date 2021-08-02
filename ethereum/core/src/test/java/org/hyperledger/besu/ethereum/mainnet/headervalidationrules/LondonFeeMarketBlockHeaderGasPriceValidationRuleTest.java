@@ -25,16 +25,16 @@ import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 
-public class EIP1559BlockHeaderGasPriceValidationRuleTest {
+public class LondonFeeMarketBlockHeaderGasPriceValidationRuleTest {
 
   private static final long FORK_BLOCK = 800L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
-  private EIP1559BlockHeaderGasPriceValidationRule validationRule;
+  private LondonFeeMarketBlockHeaderGasPriceValidationRule validationRule;
   private final FeeMarket feeMarket = FeeMarket.london();
 
   @Before
   public void setUp() {
-    validationRule = new EIP1559BlockHeaderGasPriceValidationRule(eip1559);
+    validationRule = new LondonFeeMarketBlockHeaderGasPriceValidationRule(eip1559);
   }
 
   @Test

@@ -21,7 +21,8 @@ public class LondonFeeMarketException extends Exception {
   }
 
   public static LondonFeeMarketException BaseFeePresentBeforeForkBlock() {
-    return new LondonFeeMarketException("Invalid block header: basefee should not be present before London fork block");
+    return new LondonFeeMarketException(
+        "Invalid block header: basefee should not be present before London fork block");
   }
 
   private LondonFeeMarketException(final String reason) {

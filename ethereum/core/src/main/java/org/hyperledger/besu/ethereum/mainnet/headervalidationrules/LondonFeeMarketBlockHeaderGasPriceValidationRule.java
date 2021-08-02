@@ -24,11 +24,12 @@ import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class EIP1559BlockHeaderGasPriceValidationRule implements DetachedBlockHeaderValidationRule {
+public class LondonFeeMarketBlockHeaderGasPriceValidationRule
+    implements DetachedBlockHeaderValidationRule {
   private static final Logger LOG = LogManager.getLogger();
   private final EIP1559 eip1559;
 
-  public EIP1559BlockHeaderGasPriceValidationRule(final EIP1559 eip1559) {
+  public LondonFeeMarketBlockHeaderGasPriceValidationRule(final EIP1559 eip1559) {
     this.eip1559 = eip1559;
   }
 
