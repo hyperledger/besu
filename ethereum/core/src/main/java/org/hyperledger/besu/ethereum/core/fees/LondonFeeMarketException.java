@@ -14,8 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.core.fees;
 
-public class EIP1559MissingBaseFeeFromBlockHeader extends Exception {
-  public EIP1559MissingBaseFeeFromBlockHeader() {
-    super("Invalid block header: basefee should be specified");
+public class LondonFeeMarketException extends Exception {
+
+  public static LondonFeeMarketException MissingBaseFeeFromBlockHeader() {
+    return new LondonFeeMarketException("Invalid block header: basefee should be specified");
+  }
+
+  public static LondonFeeMarketException BaseFeePresentBeforeForkBlock() {
+    return new LondonFeeMarketException(
+        "Invalid block header: basefee should not be present before London fork block");
+  }
+
+  private LondonFeeMarketException(final String reason) {
+    super(reason);
   }
 }
