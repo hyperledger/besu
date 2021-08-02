@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
@@ -83,7 +84,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   private static final Logger LOG = LogManager.getLogger();
   private BftEventQueue bftEventQueue;
-  private BftConfigOptions bftConfig;
+  private QbftConfigOptions qbftConfig;
   private ValidatorPeers peers;
 
   @Override
@@ -93,8 +94,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
-    bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
+    qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
+    bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
   }
 
   @Override
@@ -137,7 +138,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             protocolSchedule,
             miningParameters,
             localAddress,
-            bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
+            qbftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
             bftExtraDataCodec().get());
 
     final ValidatorProvider validatorProvider =
@@ -151,7 +152,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     peers = new ValidatorPeers(validatorProvider, Istanbul100SubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
-        new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
+        new UniqueMessageMulticaster(peers, qbftConfig.getGossipedHistoryLimit());
 
     final QbftGossip gossiper = new QbftGossip(uniqueMessageMulticaster);
 
@@ -162,8 +163,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
             uniqueMessageMulticaster,
-            new RoundTimer(bftEventQueue, bftConfig.getRequestTimeoutSeconds(), bftExecutors),
-            new BlockTimer(bftEventQueue, bftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
+            new RoundTimer(bftEventQueue, qbftConfig.getRequestTimeoutSeconds(), bftExecutors),
+            new BlockTimer(bftEventQueue, qbftConfig.getBlockPeriodSeconds(), bftExecutors, clock),
             blockCreatorFactory,
             clock);
 
@@ -177,11 +178,11 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     final FutureMessageBuffer futureMessageBuffer =
         new FutureMessageBuffer(
-            bftConfig.getFutureMessagesMaxDistance(),
-            bftConfig.getFutureMessagesLimit(),
+            qbftConfig.getFutureMessagesMaxDistance(),
+            qbftConfig.getFutureMessagesLimit(),
             blockchain.getChainHeadBlockNumber());
     final MessageTracker duplicateMessageTracker =
-        new MessageTracker(bftConfig.getDuplicateMessageLimit());
+        new MessageTracker(qbftConfig.getDuplicateMessageLimit());
 
     final MessageFactory messageFactory = new MessageFactory(nodeKey);
 
