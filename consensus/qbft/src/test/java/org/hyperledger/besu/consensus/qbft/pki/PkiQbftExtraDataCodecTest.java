@@ -50,7 +50,7 @@ public class PkiQbftExtraDataCodecTest {
           + "00b841000000000000000000000000000000000000000000000000000000000000000a0000000000000000"
           + "00000000000000000000000000000000000000000000000100c0";
 
-  // Arbitrary bytes representing an non-empty CMS
+  // Arbitrary bytes representing a non-empty CMS
   private final Bytes cms = Bytes.fromHexString("0x01");
 
   // Raw hex-encoded extra data with arbitrary CMS data (0x01)
