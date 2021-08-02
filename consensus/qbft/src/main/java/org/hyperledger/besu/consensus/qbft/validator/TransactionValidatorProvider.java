@@ -47,6 +47,12 @@ public class TransactionValidatorProvider implements ValidatorProvider {
 
   @Override
   public Collection<Address> getValidatorsAfterBlock(final BlockHeader header) {
+    // For the validator contract we determine the vote from the previous block
+    return getValidatorsForBlock(header);
+  }
+
+  @Override
+  public Collection<Address> getValidatorsForBlock(final BlockHeader header) {
     final long blockNumber = header.getNumber();
     try {
       return validatorCache.get(
