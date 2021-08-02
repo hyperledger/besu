@@ -44,6 +44,12 @@ public class EIP1559BlockHeaderGasPriceValidationRuleTest {
   }
 
   @Test
+  public void shouldReturnFalseBeforeFork() {
+    assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.of(10L)), null))
+        .isFalse();
+  }
+
+  @Test
   public void shouldReturnTrueIfInitialBaseFeeAtForkBlock() {
     assertThat(
             validationRule.validate(
