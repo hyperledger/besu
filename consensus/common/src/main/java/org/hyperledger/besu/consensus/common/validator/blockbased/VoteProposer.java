@@ -12,8 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.validator.blockbased;
 
+import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Container for pending votes and selecting a vote for new blocks */
-public class VoteProposer {
+class VoteProposer {
 
   private final Map<Address, VoteType> proposals = new ConcurrentHashMap<>();
   private final AtomicInteger votePosition = new AtomicInteger(0);
@@ -59,10 +61,6 @@ public class VoteProposer {
 
   public Map<Address, VoteType> getProposals() {
     return proposals;
-  }
-
-  public Optional<VoteType> get(final Address address) {
-    return Optional.ofNullable(proposals.get(address));
   }
 
   private boolean voteNotYetCast(

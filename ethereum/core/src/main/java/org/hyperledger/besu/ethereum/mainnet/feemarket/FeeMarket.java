@@ -12,10 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
+package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-public class EIP1559MissingBaseFeeFromBlockHeader extends Exception {
-  public EIP1559MissingBaseFeeFromBlockHeader() {
-    super("Invalid block header: basefee should be specified");
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+
+public interface FeeMarket {
+
+  long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
+
+  long getBasefeeMaxChangeDenominator();
+
+  long getInitialBasefee();
+
+  long getSlackCoefficient();
+
+  static FeeMarket london() {
+    return new LondonFeeMarket(ExperimentalEIPs.initialBasefee);
   }
 }

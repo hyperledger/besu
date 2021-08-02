@@ -77,8 +77,10 @@ public class KubernetesNatManager extends AbstractNatManager {
       final CoreV1Api api = new CoreV1Api();
       // invokes the CoreV1Api client
       final V1Service service =
-          api.listServiceForAllNamespaces(null, null, null, null, null, null, null, null, null)
-              .getItems().stream()
+          api
+              .listServiceForAllNamespaces(null, null, null, null, null, null, null, null, null)
+              .getItems()
+              .stream()
               .filter(
                   v1Service -> v1Service.getMetadata().getName().contains(besuServiceNameFilter))
               .findFirst()

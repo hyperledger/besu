@@ -63,6 +63,10 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
 
     if (eip1559.isPresent() && eip1559.get().isForkBlock(header.getNumber())) {
       parentGasLimit = parent.getGasLimit() * eip1559.get().getFeeMarket().getSlackCoefficient();
+    } else if (eip1559.isEmpty() && header.getBaseFee().isPresent()) {
+      LOG.info(
+          "Invalid block header: basefee should not be present in a block without a fee market");
+      return false;
     }
 
     final long difference = Math.abs(parentGasLimit - gasLimit);

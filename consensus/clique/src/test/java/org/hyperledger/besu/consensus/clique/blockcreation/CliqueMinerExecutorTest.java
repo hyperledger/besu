@@ -27,9 +27,7 @@ import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -78,12 +76,10 @@ public class CliqueMinerExecutorTest {
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddress, 2));
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddress, 3));
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
@@ -105,7 +101,12 @@ public class CliqueMinerExecutorTest {
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(vanityData)
+                .enabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             GasLimitCalculator.constant());
@@ -145,7 +146,12 @@ public class CliqueMinerExecutorTest {
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(vanityData)
+                .enabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             GasLimitCalculator.constant());
@@ -185,7 +191,12 @@ public class CliqueMinerExecutorTest {
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, initialVanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(initialVanityData)
+                .enabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
             new EpochManager(EPOCH_LENGTH),
             GasLimitCalculator.constant());

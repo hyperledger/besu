@@ -85,7 +85,9 @@ public class PoWBlockCreatorTest {
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -144,7 +146,9 @@ public class PoWBlockCreatorTest {
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -198,7 +202,9 @@ public class PoWBlockCreatorTest {
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -268,7 +274,9 @@ public class PoWBlockCreatorTest {
             PoWHasher.ETHASH_LIGHT,
             false,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(

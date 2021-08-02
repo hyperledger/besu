@@ -12,22 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
+package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import java.util.Optional;
 
-public interface FeeMarket {
+import org.apache.tuweni.bytes.Bytes;
 
-  long getBasefeeMaxChangeDenominator();
+public interface UnsignedPrivateMarkerTransaction {
 
-  long getInitialBasefee();
+  TransactionType getType();
 
-  long getSlackCoefficient();
+  long getNonce();
 
-  static FeeMarket eip1559() {
-    return new FeeMarketConfig(
-        ExperimentalEIPs.basefeeMaxChangeDenominator,
-        ExperimentalEIPs.initialBasefee,
-        ExperimentalEIPs.slackCoefficient);
-  }
+  Optional<? extends Quantity> getGasPrice();
+
+  long getGasLimit();
+
+  Optional<? extends Address> getTo();
+
+  Quantity getValue();
+
+  Bytes getPayload();
 }

@@ -19,7 +19,6 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -125,22 +124,6 @@ public class RestrictedMultiTenancyPrivacyController implements PrivacyControlle
     return Arrays.stream(resultantGroups)
         .filter(g -> g.getMembers().contains(privacyUserId))
         .toArray(PrivacyGroup[]::new);
-  }
-
-  @Override
-  public Transaction createPrivateMarkerTransaction(
-      final String privateTransactionLookupId, final PrivateTransaction privateTransaction) {
-    return privacyController.createPrivateMarkerTransaction(
-        privateTransactionLookupId, privateTransaction);
-  }
-
-  @Override
-  public Transaction createPrivateMarkerTransaction(
-      final String privateTransactionLookupId,
-      final PrivateTransaction privateTransaction,
-      final Address privacyPrecompileAddress) {
-    return privacyController.createPrivateMarkerTransaction(
-        privateTransactionLookupId, privateTransaction, privacyPrecompileAddress);
   }
 
   @Override
