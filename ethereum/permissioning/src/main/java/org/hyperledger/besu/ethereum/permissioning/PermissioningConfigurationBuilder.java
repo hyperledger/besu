@@ -77,9 +77,7 @@ public class PermissioningConfigurationBuilder {
 
       if (nodeAllowlistTomlArray != null) {
         List<EnodeURL> nodesAllowlistToml =
-            nodeAllowlistTomlArray
-                .toList()
-                .parallelStream()
+            nodeAllowlistTomlArray.toList().parallelStream()
                 .map(Object::toString)
                 .map(
                     url ->
@@ -114,9 +112,7 @@ public class PermissioningConfigurationBuilder {
 
       if (accountAllowlistTomlArray != null) {
         List<String> accountsAllowlistToml =
-            accountAllowlistTomlArray
-                .toList()
-                .parallelStream()
+            accountAllowlistTomlArray.toList().parallelStream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
 

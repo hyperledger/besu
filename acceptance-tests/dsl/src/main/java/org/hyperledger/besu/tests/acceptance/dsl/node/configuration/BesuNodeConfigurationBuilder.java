@@ -23,9 +23,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -51,7 +52,11 @@ public class BesuNodeConfigurationBuilder {
   private String name;
   private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
-      new MiningParametersTestBuilder().enabled(false).build();
+      new MiningParameters.Builder()
+          .enabled(false)
+          .coinbase(AddressHelpers.ofValue(1))
+          .minTransactionGasPrice(Wei.of(1000))
+          .build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
@@ -98,7 +103,8 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
-    this.miningParameters = new MiningParametersTestBuilder().enabled(enabled).build();
+    this.miningParameters =
+        new MiningParameters.Builder().enabled(enabled).coinbase(AddressHelpers.ofValue(1)).build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
     return this;
   }

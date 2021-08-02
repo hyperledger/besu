@@ -26,10 +26,12 @@ dependencyManagement {
     dependency 'com.google.dagger:dagger-compiler:2.30.1'
     dependency 'com.google.dagger:dagger:2.30.1'
 
-    dependency 'com.google.errorprone:error_prone_annotation:2.4.0'
-    dependency 'com.google.errorprone:error_prone_check_api:2.4.0'
-    dependency 'com.google.errorprone:error_prone_core:2.4.0'
-    dependency 'com.google.errorprone:error_prone_test_helpers:2.4.0'
+    dependencySet(group: 'com.google.errorprone', version: '2.7.1') {
+      entry 'error_prone_annotation'
+      entry 'error_prone_check_api'
+      entry 'error_prone_core'
+      entry 'error_prone_test_helpers'
+    }
 
     dependency 'com.google.guava:guava:30.1-jre'
 
@@ -102,6 +104,7 @@ dependencyManagement {
 
     dependency 'org.apache.tuweni:tuweni-bytes:2.0.0'
     dependency 'org.apache.tuweni:tuweni-config:2.0.0'
+    dependency 'org.apache.tuweni:tuweni-concurrent:2.0.0'
     dependency 'org.apache.tuweni:tuweni-crypto:2.0.0'
     dependency 'org.apache.tuweni:tuweni-devp2p:2.0.0'
     dependency 'org.apache.tuweni:tuweni-dns-discovery:2.0.0'

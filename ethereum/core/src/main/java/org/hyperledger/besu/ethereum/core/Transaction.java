@@ -43,7 +43,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** An operation submitted by an external actor to be applied to the system. */
-public class Transaction implements org.hyperledger.besu.plugin.data.Transaction {
+public class Transaction
+    implements org.hyperledger.besu.plugin.data.Transaction,
+        org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -102,6 +104,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public static Transaction readFrom(final Bytes rlpBytes) {
+    return readFrom(RLP.input(rlpBytes));
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
@@ -768,11 +774,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
     final Transaction that = (Transaction) other;
     return Objects.equals(this.chainId, that.chainId)
-        && Objects.equals(this.gasLimit, that.gasLimit)
+        && this.gasLimit == that.gasLimit
         && Objects.equals(this.gasPrice, that.gasPrice)
         && Objects.equals(this.maxPriorityFeePerGas, that.maxPriorityFeePerGas)
         && Objects.equals(this.maxFeePerGas, that.maxFeePerGas)
-        && Objects.equals(this.nonce, that.nonce)
+        && this.nonce == that.nonce
         && Objects.equals(this.payload, that.payload)
         && Objects.equals(this.signature, that.signature)
         && Objects.equals(this.to, that.to)

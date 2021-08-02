@@ -843,11 +843,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters(
-                Address.fromHexString(expectedCoinbase),
-                DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
-                DefaultCommandValues.DEFAULT_EXTRA_DATA,
-                false));
+            new MiningParameters.Builder()
+                .coinbase(Address.fromHexString(expectedCoinbase))
+                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+                .enabled(false)
+                .build());
   }
 
   @Test
@@ -859,11 +860,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters(
-                Address.fromHexString(expectedCoinbase),
-                DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
-                DefaultCommandValues.DEFAULT_EXTRA_DATA,
-                false));
+            new MiningParameters.Builder()
+                .coinbase(Address.fromHexString(expectedCoinbase))
+                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+                .enabled(false)
+                .build());
   }
 
   @Test
@@ -3003,8 +3005,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void minGasPriceRequiresMainOption() {
     parseCommand("--min-gas-price", "0");
 
-    verifyMultiOptionsConstraintLoggerCall(
-        "--min-gas-price ignored because none of --miner-enabled or isQuorum (in genesis file) was defined.");
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();

@@ -38,7 +38,7 @@ import org.apache.logging.log4j.Logger;
 public class NetworkRunner implements AutoCloseable {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final CountDownLatch shutdown = new CountDownLatch(1);;
+  private final CountDownLatch shutdown = new CountDownLatch(1);
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 

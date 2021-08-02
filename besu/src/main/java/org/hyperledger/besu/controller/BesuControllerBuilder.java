@@ -351,7 +351,7 @@ public abstract class BesuControllerBuilder {
             ethProtocolManager);
 
     final PluginServiceFactory additionalPluginServices =
-        createAdditionalPluginServices(blockchain);
+        createAdditionalPluginServices(blockchain, protocolContext);
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager);
@@ -482,5 +482,5 @@ public abstract class BesuControllerBuilder {
   }
 
   protected abstract PluginServiceFactory createAdditionalPluginServices(
-      final Blockchain blockchain);
+      final Blockchain blockchain, final ProtocolContext protocolContext);
 }

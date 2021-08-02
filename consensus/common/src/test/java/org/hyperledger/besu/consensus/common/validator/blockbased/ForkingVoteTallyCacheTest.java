@@ -12,11 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common;
+package org.hyperledger.besu.consensus.common.validator.blockbased;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
+import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.ethereum.core.Address;
 
 import java.util.HashMap;

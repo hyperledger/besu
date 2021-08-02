@@ -18,29 +18,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.blockHeader;
 
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class EIP1559BlockHeaderGasPriceValidationRuleTest {
+public class LondonFeeMarketBlockHeaderGasPriceValidationRuleTest {
 
   private static final long FORK_BLOCK = 800L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
-  private EIP1559BlockHeaderGasPriceValidationRule validationRule;
-  private final FeeMarket feeMarket = FeeMarket.eip1559();
+  private LondonFeeMarketBlockHeaderGasPriceValidationRule validationRule;
+  private final FeeMarket feeMarket = FeeMarket.london();
 
   @Before
   public void setUp() {
-    validationRule = new EIP1559BlockHeaderGasPriceValidationRule(eip1559);
+    validationRule = new LondonFeeMarketBlockHeaderGasPriceValidationRule(eip1559);
   }
 
   @Test
   public void shouldReturnTrueBeforeFork() {
     assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
         .isTrue();
+  }
+
+  @Test
+  public void shouldReturnFalseBeforeFork() {
+    assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.of(10L)), null))
+        .isFalse();
   }
 
   @Test

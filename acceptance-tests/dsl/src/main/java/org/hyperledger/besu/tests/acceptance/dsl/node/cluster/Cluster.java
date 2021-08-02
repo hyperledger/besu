@@ -85,8 +85,7 @@ public class Cluster implements AutoCloseable {
 
     final Optional<? extends RunnableNode> bootnode = selectAndStartBootnode(nodes);
 
-    nodes
-        .parallelStream()
+    nodes.parallelStream()
         .filter(
             node -> {
               LOG.info("starting non-bootnode {}", node.getName());
