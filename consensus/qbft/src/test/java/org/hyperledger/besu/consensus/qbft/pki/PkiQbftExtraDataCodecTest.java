@@ -18,7 +18,6 @@ package org.hyperledger.besu.consensus.qbft.pki;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.qbft.QbftExtraDataCodecTestUtils.createNonEmptyVanityData;
 
-import org.hyperledger.besu.consensus.common.VoteType;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -110,8 +109,6 @@ public class PkiQbftExtraDataCodecTest {
         (PkiQbftExtraData) bftExtraDataCodec.decodeRaw(bufferToInject);
 
     assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
-    assertThat(extraData.getVote())
-        .isEqualTo(Optional.of(new Vote(Address.fromHexString("1"), VoteType.ADD)));
     assertThat(extraData.getRound()).isEqualTo(round);
     assertThat(extraData.getSeals()).isEqualTo(committerSeals);
     assertThat(extraData.getValidators()).isEqualTo(validators);
