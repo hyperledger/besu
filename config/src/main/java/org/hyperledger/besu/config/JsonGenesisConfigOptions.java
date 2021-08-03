@@ -155,6 +155,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public QbftConfigOptions getQbftConfigOptions() {
+    return JsonUtil.getObjectNode(configRoot, QBFT_CONFIG_KEY)
+        .map(QbftConfigOptions::new)
+        .orElse(QbftConfigOptions.DEFAULT);
+  }
+
+  @Override
   public CliqueConfigOptions getCliqueConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, CLIQUE_CONFIG_KEY)
         .map(CliqueConfigOptions::new)

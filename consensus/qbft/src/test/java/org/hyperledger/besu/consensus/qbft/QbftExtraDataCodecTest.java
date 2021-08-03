@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.consensus.qbft.QbftExtraDataCodecTestUtils.createNonEmptyVanityData;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
@@ -497,13 +498,5 @@ public class QbftExtraDataCodecTest {
     assertThatThrownBy(() -> bftExtraDataCodec.decodeRaw(bufferToInject))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid Bytes supplied - Bft Extra Data required.");
-  }
-
-  private static byte[] createNonEmptyVanityData() {
-    final byte[] vanity_bytes = new byte[32];
-    for (int i = 0; i < vanity_bytes.length; i++) {
-      vanity_bytes[i] = (byte) (i + 1);
-    }
-    return vanity_bytes;
   }
 }
