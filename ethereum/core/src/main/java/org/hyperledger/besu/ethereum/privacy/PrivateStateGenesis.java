@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -23,6 +22,8 @@ import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
+
+import java.math.BigInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,6 +66,10 @@ public class PrivateStateGenesis {
           .forEach(
               (genesisAccount) -> {
                 Address address = Address.fromPlugin(genesisAccount.getAddress());
+                if (address.toBigInteger().compareTo(BigInteger.valueOf(Byte.MAX_VALUE)) < 0) {
+                  LOG.warn(
+                      "Genesis address {} is in reserved range and may be overwritten", address);
+                }
 
                 final MutableAccount account =
                     privateWorldStateUpdater.createAccount(address).getMutable();
@@ -82,22 +87,22 @@ public class PrivateStateGenesis {
 
     if (isOnchainPrivacyEnabled) {
       // inject management
-      final MutableAccount managementPrecompile =
+      final MutableAccount managementContract =
           privateWorldStateUpdater
               .createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)
               .getMutable();
+
       // this is the code for the simple management contract
-      managementPrecompile.setCode(
-          OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
+      managementContract.setCode(OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
-      final EvmAccount proxyPrecompile =
-          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY);
-      final MutableAccount mutableProxyPrecompiled = proxyPrecompile.getMutable();
+      final MutableAccount procyContract =
+          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY).getMutable();
+
       // this is the code for the proxy contract
-      mutableProxyPrecompiled.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
+      procyContract.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
       // manually set the management contract address so the proxy can trust it
-      mutableProxyPrecompiled.setStorageValue(
+      procyContract.setStorageValue(
           UInt256.ZERO,
           UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
     }
