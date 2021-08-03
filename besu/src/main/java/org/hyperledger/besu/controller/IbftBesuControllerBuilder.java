@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
@@ -257,17 +258,17 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final BftConfigOptions ibftConfig = configOptions.getBftConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
-    final Map<Long, List<Address>> bftValidatorForkMap =
+    final BftValidatorOverrides validatorOverrides =
         convertIbftForks(configOptions.getTransitions().getIbftForks());
 
     return new BftContext(
         BlockValidatorProvider.forkingValidatorProvider(
-            blockchain, epochManager, bftBlockInterface().get(), bftValidatorForkMap),
+            blockchain, epochManager, bftBlockInterface().get(), validatorOverrides),
         epochManager,
         bftBlockInterface().get());
   }
 
-  private Map<Long, List<Address>> convertIbftForks(final List<BftFork> bftForks) {
+  private BftValidatorOverrides convertIbftForks(final List<BftFork> bftForks) {
     final Map<Long, List<Address>> result = new HashMap<>();
 
     for (final BftFork fork : bftForks) {
@@ -281,7 +282,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
                           .collect(Collectors.toList())));
     }
 
-    return result;
+    return new BftValidatorOverrides(result);
   }
 
   private static MinedBlockObserver blockLogger(
