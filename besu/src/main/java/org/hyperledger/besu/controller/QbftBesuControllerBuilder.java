@@ -275,19 +275,15 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final Map<Long, List<Address>> bftValidatorForkMap =
         convertBftForks(configOptions.getTransitions().getQbftForks());
 
+    final ValidatorProvider validatorProvider =
+        BlockValidatorProvider.forkingValidatorProvider(
+            blockchain, epochManager, bftBlockInterface().get(), bftValidatorForkMap);
+
     if (pkiKeyStore.isPresent()) {
       return new PkiQbftContext(
-          BlockValidatorProvider.forkingValidatorProvider(
-              blockchain, epochManager, bftBlockInterface().get(), bftValidatorForkMap),
-          epochManager,
-          bftBlockInterface().get(),
-          pkiKeyStore.get());
+          validatorProvider, epochManager, bftBlockInterface().get(), pkiKeyStore.get());
     } else {
-      return new BftContext(
-          BlockValidatorProvider.forkingValidatorProvider(
-              blockchain, epochManager, bftBlockInterface().get(), bftValidatorForkMap),
-          epochManager,
-          bftBlockInterface().get());
+      return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
     }
   }
 
