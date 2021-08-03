@@ -956,13 +956,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final File privacyPublicKeyFile = null;
 
   @Option(
-      names = {"--privacy-precompiled-address"},
-      description =
-          "The address to which the privacy pre-compiled contract will be mapped (default: ${DEFAULT-VALUE})",
-      hidden = true)
-  private final Integer privacyPrecompiledAddress = Address.PRIVACY;
-
-  @Option(
       names = {"--privacy-marker-transaction-signing-key-file"},
       description =
           "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
@@ -2198,11 +2191,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(
             commandLine,
             "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
-      }
-
-      if (!Address.PRIVACY.equals(privacyPrecompiledAddress)) {
-        logger.warn(
-            "--privacy-precompiled-address option is deprecated. This address is derived, based on --privacy-onchain-groups-enabled.");
       }
 
       privacyParametersBuilder.setPrivateKeyPath(privateMarkerTransactionSigningKeyPath);

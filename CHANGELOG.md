@@ -8,6 +8,7 @@
 - Stratum metrics [#2583](https://github.com/hyperledger/besu/pull/2583)
 - Support for mining ommers [#2576](https://github.com/hyperledger/besu/pull/2576)
 - Updated onchain permissioning to validate permissions on transaction submission [\#2595](https://github.com/hyperledger/besu/pull/2595)
+- Removed deprecated CLI option `--privacy-precompiled-address` [#2605](https://github.com/hyperledger/besu/pull/2605)
 
 ### Bug Fixes
 - Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
