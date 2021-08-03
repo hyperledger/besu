@@ -713,7 +713,7 @@ task dockerUpload {
   def image = "${imageName}:${dockerBuildVersion}"
   def additionalTags = []
 
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+  if (project.hasProperty('branch') && project.property('branch') == 'main') {
     additionalTags.add('develop')
   }
 
