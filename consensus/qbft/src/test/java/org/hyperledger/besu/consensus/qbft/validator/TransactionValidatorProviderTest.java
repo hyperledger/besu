@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -83,15 +84,29 @@ public class TransactionValidatorProviderTest {
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController);
 
-    final Collection<Address> resultAt2 =
-        validatorProvider.getValidatorsAfterBlock(block_2.getHeader());
-    assertThat(resultAt2).containsExactlyElementsOf(validatorsAt2);
-    verify(validatorContractController).getValidators(2);
+    assertThat(validatorProvider.getValidatorsAfterBlock(block_2.getHeader()))
+        .containsExactlyElementsOf(validatorsAt2);
+    assertThat(validatorProvider.getValidatorsAfterBlock(block_3.getHeader()))
+        .containsExactlyElementsOf(validatorProvider.getValidatorsAfterBlock(block_3.getHeader()));
+  }
 
-    final Collection<Address> resultAt3 =
-        validatorProvider.getValidatorsAfterBlock(block_3.getHeader());
-    assertThat(resultAt3).containsExactlyElementsOf(resultAt3);
-    verify(validatorContractController).getValidators(3);
+  @Test
+  public void validatorsForBlockAreRetrievedUsingContractController() {
+    final List<Address> validatorsAt2 =
+        Lists.newArrayList(Address.fromHexString("5"), Address.fromHexString("6"));
+    final List<Address> validatorsAt3 =
+        Lists.newArrayList(
+            Address.fromHexString("5"), Address.fromHexString("6"), Address.fromHexString("7"));
+    when(validatorContractController.getValidators(2)).thenReturn(validatorsAt2);
+    when(validatorContractController.getValidators(3)).thenReturn(validatorsAt3);
+
+    final TransactionValidatorProvider validatorProvider =
+        new TransactionValidatorProvider(blockChain, validatorContractController);
+
+    assertThat(validatorProvider.getValidatorsForBlock(block_2.getHeader()))
+        .containsExactlyElementsOf(validatorsAt2);
+    assertThat(validatorProvider.getValidatorsForBlock(block_3.getHeader()))
+        .containsExactlyElementsOf(validatorProvider.getValidatorsForBlock(block_3.getHeader()));
   }
 
   @Test
@@ -103,9 +118,7 @@ public class TransactionValidatorProviderTest {
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController);
 
-    final Collection<Address> result = validatorProvider.getValidatorsAtHead();
-    assertThat(result).containsExactlyElementsOf(validators);
-    verify(validatorContractController).getValidators(3);
+    assertThat(validatorProvider.getValidatorsAtHead()).containsExactlyElementsOf(validators);
   }
 
   @Test
@@ -117,13 +130,8 @@ public class TransactionValidatorProviderTest {
     final TransactionValidatorProvider validatorProvider =
         new TransactionValidatorProvider(blockChain, validatorContractController);
 
-    final Collection<Address> result = validatorProvider.getValidatorsAtHead();
-    assertThat(result).containsExactlyElementsOf(validators);
-    verify(validatorContractController).getValidators(3);
-
-    final Collection<Address> resultCached = validatorProvider.getValidatorsAtHead();
-    assertThat(resultCached).containsExactlyElementsOf(validators);
-    verifyNoMoreInteractions(validatorContractController);
+    assertThat(validatorProvider.getValidatorsAtHead()).containsExactlyElementsOf(validators);
+    assertThat(validatorProvider.getValidatorsAtHead()).containsExactlyElementsOf(validators);
   }
 
   @Test
@@ -144,5 +152,21 @@ public class TransactionValidatorProviderTest {
         validatorProvider.getValidatorsAfterBlock(block_2.getHeader());
     assertThat(resultCached).containsExactlyElementsOf(validators);
     verifyNoMoreInteractions(validatorContractController);
+  }
+
+  @Test
+  public void validatorsMustBeSorted() {
+    final List<Address> validators =
+        Lists.newArrayList(
+            Address.fromHexString("9"), Address.fromHexString("8"), Address.fromHexString("7"));
+    when(validatorContractController.getValidators(3)).thenReturn(validators);
+
+    final TransactionValidatorProvider validatorProvider =
+        new TransactionValidatorProvider(blockChain, validatorContractController);
+
+    final Collection<Address> result = validatorProvider.getValidatorsAtHead();
+    final List<Address> expectedValidators =
+        validators.stream().sorted().collect(Collectors.toList());
+    assertThat(result).containsExactlyElementsOf(expectedValidators);
   }
 }

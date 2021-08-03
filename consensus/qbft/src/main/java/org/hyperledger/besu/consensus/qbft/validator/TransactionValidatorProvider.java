@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -42,7 +43,7 @@ public class TransactionValidatorProvider implements ValidatorProvider {
 
   @Override
   public Collection<Address> getValidatorsAtHead() {
-    return getValidatorsAfterBlock(blockchain.getChainHeadHeader());
+    return getValidatorsForBlock(blockchain.getChainHeadHeader());
   }
 
   @Override
@@ -56,7 +57,11 @@ public class TransactionValidatorProvider implements ValidatorProvider {
     final long blockNumber = header.getNumber();
     try {
       return validatorCache.get(
-          blockNumber, () -> validatorContractController.getValidators(blockNumber));
+          blockNumber,
+          () ->
+              validatorContractController.getValidators(blockNumber).stream()
+                  .sorted()
+                  .collect(Collectors.toList()));
     } catch (final ExecutionException e) {
       throw new RuntimeException("Unable to determine a validators for the requested block.");
     }
