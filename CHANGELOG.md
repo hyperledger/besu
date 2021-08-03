@@ -7,10 +7,10 @@
 - `eth_getWork`, `eth_submitWork` support over the Stratum port [#2581](https://github.com/hyperledger/besu/pull/2581)
 - Stratum metrics [#2583](https://github.com/hyperledger/besu/pull/2583)
 - Support for mining ommers [#2576](https://github.com/hyperledger/besu/pull/2576)
-
+- Updated onchain permissioning to validate permissions on transaction submission [\#2595](https://github.com/hyperledger/besu/pull/2595)
 
 ### Bug Fixes
-- consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
+- Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
 
 ### Early Access Features
 

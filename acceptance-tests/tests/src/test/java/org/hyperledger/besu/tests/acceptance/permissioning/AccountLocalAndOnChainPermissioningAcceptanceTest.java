@@ -99,9 +99,8 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
     // verify senderC is forbidden because it is not on OnChain allowlist
     node.verify(accountIsForbidden(senderC));
 
-    // sender C should not be able to send Tx as well
-    node.execute(accountTransactions.createTransfer(senderC, receiverAccount, 1));
-    node.verify(receiverAccount.balanceDoesNotChange(0));
+    // sender C should not be able to send Tx
+    verifyTransferForbidden(node, senderC, accounts.getSecondaryBenefactor());
 
     // final check, other account should be able to send tx
     node.execute(
@@ -111,8 +110,8 @@ public class AccountLocalAndOnChainPermissioningAcceptanceTest
 
   private void verifyTransferForbidden(
       final Node node, final Account sender, final Account beneficiary) {
-    BigInteger nonce = node.execute(ethTransactions.getTransactionCount(sender.getAddress()));
-    TransferTransaction transfer =
+    final BigInteger nonce = node.execute(ethTransactions.getTransactionCount(sender.getAddress()));
+    final TransferTransaction transfer =
         accountTransactions.createTransfer(sender, beneficiary, 1, nonce);
     node.verify(
         eth.sendRawTransactionExceptional(
