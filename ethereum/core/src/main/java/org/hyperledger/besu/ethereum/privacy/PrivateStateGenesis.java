@@ -53,16 +53,23 @@ public class PrivateStateGenesis {
         privacyGroupGenesisProvider.getPrivacyGenesis(privacyGroupId, blockNumber);
 
     if (genesis.getAccounts().size() > 0) {
-      LOG.info("Applying {} privacy accounts onto private genesis", genesis.getAccounts().size());
+
+      LOG.debug(
+          "Applying {} privacy accounts onto {} private state genesis at {}",
+          genesis.getAccounts().size(),
+          privacyGroupId,
+          blockNumber);
 
       genesis
           .getAccounts()
           .forEach(
               (genesisAccount) -> {
+                Address address = Address.fromPlugin(genesisAccount.getAddress());
+
                 final MutableAccount account =
-                    privateWorldStateUpdater
-                        .createAccount(Address.fromPlugin(genesisAccount.getAddress()))
-                        .getMutable();
+                    privateWorldStateUpdater.createAccount(address).getMutable();
+
+                LOG.debug("{} applied to genesis", address.toHexString());
 
                 account.setNonce(genesisAccount.getNonce());
                 account.setBalance(Wei.fromQuantity(genesisAccount.getBalance()));
