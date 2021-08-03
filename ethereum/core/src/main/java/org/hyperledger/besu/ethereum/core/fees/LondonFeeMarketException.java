@@ -12,21 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.validator;
+package org.hyperledger.besu.ethereum.core.fees;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+public class LondonFeeMarketException extends Exception {
 
-import java.util.Collection;
-import java.util.Optional;
+  public static LondonFeeMarketException MissingBaseFeeFromBlockHeader() {
+    return new LondonFeeMarketException("Invalid block header: basefee should be specified");
+  }
 
-public interface ValidatorProvider {
+  public static LondonFeeMarketException BaseFeePresentBeforeForkBlock() {
+    return new LondonFeeMarketException(
+        "Invalid block header: basefee should not be present before London fork block");
+  }
 
-  Collection<Address> getValidatorsAtHead();
-
-  Collection<Address> getValidatorsAfterBlock(BlockHeader header);
-
-  Collection<Address> getValidatorsForBlock(BlockHeader header);
-
-  Optional<VoteProvider> getVoteProvider();
+  private LondonFeeMarketException(final String reason) {
+    super(reason);
+  }
 }

@@ -12,10 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
 
-public class EIP1559MissingBaseFeeFromBlockHeader extends Exception {
-  public EIP1559MissingBaseFeeFromBlockHeader() {
-    super("Invalid block header: basefee should be specified");
+package org.hyperledger.besu.consensus.qbft;
+
+public class QbftExtraDataCodecTestUtils {
+
+  public static byte[] createNonEmptyVanityData() {
+    final byte[] vanity_bytes = new byte[32];
+    for (int i = 0; i < vanity_bytes.length; i++) {
+      vanity_bytes[i] = (byte) (i + 1);
+    }
+    return vanity_bytes;
   }
 }
