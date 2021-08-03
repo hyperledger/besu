@@ -122,7 +122,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     return encoder.encoded();
   }
 
-  private void encodeVote(final RLPOutput rlpOutput, final Vote vote) {
+  protected void encodeVote(final RLPOutput rlpOutput, final Vote vote) {
     final VoteType voteType = vote.isAuth() ? VoteType.ADD : VoteType.DROP;
     rlpOutput.startList();
     rlpOutput.writeBytes(vote.getRecipient());
@@ -134,7 +134,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     rlpOutput.endList();
   }
 
-  private Vote decodeVote(final RLPInput rlpInput) {
+  protected Vote decodeVote(final RLPInput rlpInput) {
     rlpInput.enterList();
     final Address recipient = Address.readFrom(rlpInput);
 
