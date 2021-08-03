@@ -88,7 +88,7 @@ public class TransactionValidationParamsTest {
   public void transactionPool() {
     final TransactionValidationParams params = TransactionValidationParams.transactionPool();
     assertThat(params.isAllowFutureNonce()).isTrue();
-    assertThat(params.checkOnchainPermissions()).isFalse();
+    assertThat(params.checkOnchainPermissions()).isTrue();
     assertThat(params.checkLocalPermissions()).isTrue();
   }
 
