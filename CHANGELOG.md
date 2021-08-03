@@ -4,6 +4,7 @@
 ### Additions and Improvements
 - Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
 - \[EXPERIMENTAL\] Added support for DevP2P-over-TLS [#2536](https://github.com/hyperledger/besu/pull/2536)
+- Removed deprecated CLI option `--privacy-precompiled-address`
 
 ### Bug Fixes
 - consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
