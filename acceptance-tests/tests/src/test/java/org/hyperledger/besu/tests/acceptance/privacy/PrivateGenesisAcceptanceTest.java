@@ -83,7 +83,7 @@ public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
     assertThat(new BigInteger(value.substring(2), 16)).isEqualByComparingTo(BigInteger.valueOf(42));
   }
 
-  public String createPrivacyGroup() {
+  private String createPrivacyGroup() {
     if (restriction == RESTRICTED) {
       return alice.execute(privacyTransactions.createPrivacyGroup("name", "description", alice));
     } else if (restriction == UNRESTRICTED) {
