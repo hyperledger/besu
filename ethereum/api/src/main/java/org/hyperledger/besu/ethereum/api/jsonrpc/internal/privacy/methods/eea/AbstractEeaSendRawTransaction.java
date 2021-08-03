@@ -106,7 +106,7 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
       try {
 
         final Transaction privateMarkerTransaction =
-            createPrivateMarkerTransaction(privateTransaction, user);
+            createPrivateMarkerTransaction(Address.fromPlugin(sender), privateTransaction, user);
 
         return transactionPool
             .addLocalTransaction(privateMarkerTransaction)
@@ -138,23 +138,21 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
       final PrivateTransaction privateTransaction, final Optional<User> user);
 
   protected abstract Transaction createPrivateMarkerTransaction(
-      final PrivateTransaction privateTransaction, final Optional<User> user);
+      final Address sender, final PrivateTransaction privateTransaction, final Optional<User> user);
 
   protected Transaction createPrivateMarkerTransaction(
+      final Address sender,
       final Address privacyPrecompileAddress,
       final String pmtPayload,
       final PrivateTransaction privateTransaction,
       final String privacyUserId) {
-
-    final Address sender =
-        Address.fromPlugin(
-            privateMarkerTransactionFactory.getSender(privateTransaction, privacyUserId));
 
     final long nonce = publicNonceProvider.getNonce(sender);
 
     final Transaction unsignedPrivateMarkerTransaction =
         new Transaction.Builder()
             .type(TransactionType.FRONTIER)
+            .sender(sender)
             .nonce(nonce)
             .gasPrice(privateTransaction.getGasPrice())
             .gasLimit(getGasLimit(privateTransaction, pmtPayload))
