@@ -50,7 +50,7 @@ public class ValidatorContractController {
               GET_VALIDATORS,
               List.of(),
               List.of(new TypeReference<DynamicArray<org.web3j.abi.datatypes.Address>>() {}));
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException("Error creating smart contract function", e);
     }
   }

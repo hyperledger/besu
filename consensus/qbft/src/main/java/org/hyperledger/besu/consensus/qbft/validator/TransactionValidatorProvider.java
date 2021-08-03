@@ -57,7 +57,7 @@ public class TransactionValidatorProvider implements ValidatorProvider {
     try {
       return validatorCache.get(
           blockNumber, () -> validatorContractController.getValidators(blockNumber));
-    } catch (ExecutionException e) {
+    } catch (final ExecutionException e) {
       throw new RuntimeException("Unable to determine a validators for the requested block.");
     }
   }
