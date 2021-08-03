@@ -15,13 +15,11 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,6 +34,7 @@ import org.web3j.abi.datatypes.Type;
 
 public class ValidatorContractController {
   public static final String GET_VALIDATORS = "getValidators";
+  public static final String CONTRACT_ERROR_MSG = "Failed validator smart contract call";
   private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;
   private final Function getValidatorsFunction;
@@ -59,7 +58,7 @@ public class ValidatorContractController {
   public Collection<Address> getValidators(final long blockNumber) {
     return callFunction(blockNumber, getValidatorsFunction)
         .map(this::parseGetValidatorsResult)
-        .orElse(Collections.emptyList());
+        .orElseThrow(() -> new IllegalStateException(CONTRACT_ERROR_MSG));
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
@@ -83,14 +82,11 @@ public class ValidatorContractController {
   @SuppressWarnings("rawtypes")
   private List<Type> decodeResult(
       final TransactionSimulatorResult result, final Function function) {
-    final Status status = result.getResult().getStatus();
-    if (status.equals(Status.INVALID)) {
-      throw new IllegalStateException("Invalid validator smart contract call");
-    } else if (status.equals(Status.FAILED)) {
+    if (result.isSuccessful()) {
+      return DefaultFunctionReturnDecoder.decode(
+          result.getResult().getOutput().toHexString(), function.getOutputParameters());
+    } else {
       throw new IllegalStateException("Failed validator smart contract call");
     }
-
-    return DefaultFunctionReturnDecoder.decode(
-        result.getResult().getOutput().toHexString(), function.getOutputParameters());
   }
 }
