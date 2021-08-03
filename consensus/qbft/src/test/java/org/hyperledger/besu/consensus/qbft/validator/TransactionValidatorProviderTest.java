@@ -131,7 +131,10 @@ public class TransactionValidatorProviderTest {
         new TransactionValidatorProvider(blockChain, validatorContractController);
 
     assertThat(validatorProvider.getValidatorsAtHead()).containsExactlyElementsOf(validators);
+    verify(validatorContractController).getValidators(3);
+
     assertThat(validatorProvider.getValidatorsAtHead()).containsExactlyElementsOf(validators);
+    verifyNoMoreInteractions(validatorContractController);
   }
 
   @Test
