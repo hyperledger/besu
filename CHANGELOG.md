@@ -1,11 +1,11 @@
 # Changelog
 
 ## 21.7.2
-### Additions and Improvements
-
 ### Bug Fixes
+- hotfix for private transaction identification for mainnet transactions [#2609](https://github.com/hyperledger/besu/pull/2609)
 
-### Early Access Features
+### Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.1/besu-21.7.2.zip \
 
 ## 21.7.1
 
