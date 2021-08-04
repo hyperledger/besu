@@ -47,7 +47,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -236,7 +235,7 @@ public class TransactionPool implements BlockAddedObserver {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
 
     // Check whether it's a GoQuorum transaction
-    if (isGoQuorumPrivateTransaction(transaction)) {
+    if (transaction.isGoQuorumPrivateTransaction()) {
       final Optional<Wei> weiValue = ofNullable(transaction.getValue());
       if (weiValue.isPresent() && !weiValue.get().isZero()) {
         return ValidationResult.invalid(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
@@ -289,11 +288,6 @@ public class TransactionPool implements BlockAddedObserver {
   private BlockHeader getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
-  }
-
-  private boolean isGoQuorumPrivateTransaction(final Transaction transaction) {
-    return (transaction.getV().equals(BigInteger.valueOf(37))
-        || (transaction.getV().equals(BigInteger.valueOf(38))));
   }
 
   public interface TransactionBatchAddedListener {

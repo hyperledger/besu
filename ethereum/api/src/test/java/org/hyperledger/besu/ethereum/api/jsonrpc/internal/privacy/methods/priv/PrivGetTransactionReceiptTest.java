@@ -28,7 +28,7 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionReceiptResult;
@@ -68,7 +68,7 @@ public class PrivGetTransactionReceiptTest {
   private final User user =
       new JWTUser(
           new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()), "");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider =
+  private final PrivacyIdProvider privacyIdProvider =
       (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
 
   @Before
@@ -79,8 +79,7 @@ public class PrivGetTransactionReceiptTest {
         .thenReturn(Optional.of(receipt));
 
     privGetTransactionReceipt =
-        new PrivGetTransactionReceipt(
-            privateStateStorage, privacyController, enclavePublicKeyProvider);
+        new PrivGetTransactionReceipt(privateStateStorage, privacyController, privacyIdProvider);
   }
 
   @Test

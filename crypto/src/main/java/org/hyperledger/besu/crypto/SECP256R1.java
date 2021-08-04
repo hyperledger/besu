@@ -24,6 +24,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+
+import org.bouncycastle.crypto.signers.DSAKCalculator;
+import org.bouncycastle.crypto.signers.RandomDSAKCalculator;
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 
 public class SECP256R1 extends AbstractSECP256 {
@@ -38,8 +41,23 @@ public class SECP256R1 extends AbstractSECP256 {
   }
 
   @Override
-  public void enableNative() {
-    LOG.warn("Native secp256r1 requested but not available");
+  public void disableNative() {
+    useNative = false;
+  }
+
+  @Override
+  public boolean isNative() {
+    return useNative;
+  }
+
+  /**
+   * SECP256R1 is using the non-deterministic implementation of K calculation (standard)
+   *
+   * @return an instance of RandomDSAKCalculator
+   */
+  @Override
+  public DSAKCalculator getKCalculator() {
+    return new RandomDSAKCalculator();
   }
 
   @Override

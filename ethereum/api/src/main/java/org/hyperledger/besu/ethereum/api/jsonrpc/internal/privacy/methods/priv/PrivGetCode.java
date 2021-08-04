@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -28,15 +28,15 @@ import org.apache.tuweni.bytes.Bytes;
 public class PrivGetCode extends AbstractBlockParameterMethod {
 
   private final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
 
   public PrivGetCode(
       final BlockchainQueries blockchainQueries,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     super(blockchainQueries);
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -55,14 +55,14 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final Address address = request.getRequiredParameter(1, Address.class);
 
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
     return getBlockchainQueries()
         .getBlockHashByNumber(blockNumber)
         .flatMap(
             blockHash ->
                 privacyController.getContractCode(
-                    privacyGroupId, address, blockHash, enclavePublicKey))
+                    privacyGroupId, address, blockHash, privacyUserId))
         .map(Bytes::toString)
         .orElse(null);
   }

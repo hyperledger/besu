@@ -142,7 +142,7 @@ public class SECP256R1Test {
   }
 
   @Test
-  public void signatureGeneration() {
+  public void signatureGenerationAndVerification() {
     signTestVectors.forEach(
         signTestVector -> {
           final SECPPrivateKey privateKey =
@@ -156,20 +156,6 @@ public class SECP256R1Test {
           final SECPSignature signature = secp256R1.sign(dataHash, keyPair);
           assertThat(secp256R1.verify(dataHash, signature, publicKey)).isTrue();
         });
-  }
-
-  @Test
-  public void signatureVerification() {
-    final SECPPrivateKey privateKey =
-        secp256R1.createPrivateKey(
-            new BigInteger("a7e8b16ad7ffa26fce80be2b0e00008018aadf1b16dea4ecc913b8c1c4f18531", 16));
-    final KeyPair keyPair = secp256R1.createKeyPair(privateKey);
-
-    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
-    final Bytes32 dataHash = keccak256(data);
-
-    final SECPSignature signature = secp256R1.sign(dataHash, keyPair);
-    assertThat(secp256R1.verify(data, signature, keyPair.getPublicKey(), Hash::keccak256)).isTrue();
   }
 
   @Test(expected = IllegalArgumentException.class)

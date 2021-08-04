@@ -24,24 +24,26 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /** Downloads a block from a peer. Will complete exceptionally if block cannot be downloaded. */
 public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private static final Logger LOG = LogManager.getLogger();
 
   private final ProtocolSchedule protocolSchedule;
-  private final Hash hash;
+  private final Optional<Hash> hash;
   private final long blockNumber;
   private final MetricsSystem metricsSystem;
 
   protected GetBlockFromPeerTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final Hash hash,
+      final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, metricsSystem);
@@ -54,7 +56,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   public static GetBlockFromPeerTask create(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final Hash hash,
+      final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     return new GetBlockFromPeerTask(protocolSchedule, ethContext, hash, blockNumber, metricsSystem);
@@ -62,9 +64,10 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
 
   @Override
   protected void executeTask() {
+    final String blockIdentifier = hash.map(Bytes::toHexString).orElse(Long.toString(blockNumber));
     LOG.debug(
         "Downloading block {} from peer {}.",
-        hash,
+        blockIdentifier,
         assignedPeer.map(EthPeer::toString).orElse("<any>"));
     downloadHeader()
         .thenCompose(this::completeBlock)
@@ -73,14 +76,15 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
               if (t != null) {
                 LOG.info(
                     "Failed to download block {} from peer {}.",
-                    hash,
+                    blockIdentifier,
                     assignedPeer.map(EthPeer::toString).orElse("<any>"));
                 result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
-                LOG.info("Failed to download block {} from peer {}.", hash, r.getPeer());
+                LOG.info("Failed to download block {} from peer {}.", blockIdentifier, r.getPeer());
                 result.completeExceptionally(new IncompleteResultsException());
               } else {
-                LOG.debug("Successfully downloaded block {} from peer {}.", hash, r.getPeer());
+                LOG.debug(
+                    "Successfully downloaded block {} from peer {}.", blockIdentifier, r.getPeer());
                 result.complete(new PeerTaskResult<>(r.getPeer(), r.getResult().get(0)));
               }
             });
@@ -89,9 +93,16 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeader() {
     return executeSubTask(
         () -> {
-          final AbstractGetHeadersFromPeerTask task =
-              GetHeadersFromPeerByHashTask.forSingleHash(
-                  protocolSchedule, ethContext, hash, blockNumber, metricsSystem);
+          final AbstractGetHeadersFromPeerTask task;
+          task =
+              hash.map(
+                      value ->
+                          GetHeadersFromPeerByHashTask.forSingleHash(
+                              protocolSchedule, ethContext, value, blockNumber, metricsSystem))
+                  .orElseGet(
+                      () ->
+                          GetHeadersFromPeerByNumberTask.forSingleNumber(
+                              protocolSchedule, ethContext, blockNumber, metricsSystem));
           assignedPeer.ifPresent(task::assignPeer);
           return task.run();
         });

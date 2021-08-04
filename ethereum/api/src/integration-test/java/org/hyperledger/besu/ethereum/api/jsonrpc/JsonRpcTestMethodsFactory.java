@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -63,30 +62,67 @@ public class JsonRpcTestMethodsFactory {
   private static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
 
   private final BlockchainImporter importer;
+  private final MutableBlockchain blockchain;
+  private final WorldStateArchive stateArchive;
+  private final ProtocolContext context;
+  private final BlockchainQueries blockchainQueries;
+  private final Synchronizer synchronizer;
 
   public JsonRpcTestMethodsFactory(final BlockchainImporter importer) {
     this.importer = importer;
-  }
+    this.blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
+    this.stateArchive = createInMemoryWorldStateArchive();
+    this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
+    this.context = new ProtocolContext(blockchain, stateArchive, null);
 
-  public Map<String, JsonRpcMethod> methods() {
-    final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
-
-    importer.getGenesisState().writeStateTo(stateArchive.getMutable());
-
-    final MutableBlockchain blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
-    final ProtocolContext context = new ProtocolContext(blockchain, stateArchive, null);
+    final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
+    this.synchronizer = mock(Synchronizer.class);
 
     for (final Block block : importer.getBlocks()) {
-      final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
+    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+  }
 
-    final BlockchainQueries blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+  public JsonRpcTestMethodsFactory(
+      final BlockchainImporter importer,
+      final MutableBlockchain blockchain,
+      final WorldStateArchive stateArchive,
+      final ProtocolContext context) {
+    this.importer = importer;
+    this.blockchain = blockchain;
+    this.stateArchive = stateArchive;
+    this.context = context;
+    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+    this.synchronizer = mock(Synchronizer.class);
+  }
 
-    final Synchronizer synchronizer = mock(Synchronizer.class);
+  public JsonRpcTestMethodsFactory(
+      final BlockchainImporter importer,
+      final MutableBlockchain blockchain,
+      final WorldStateArchive stateArchive,
+      final ProtocolContext context,
+      final Synchronizer synchronizer) {
+    this.importer = importer;
+    this.blockchain = blockchain;
+    this.stateArchive = stateArchive;
+    this.context = context;
+    this.synchronizer = synchronizer;
+    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+  }
+
+  public BlockchainQueries getBlockchainQueries() {
+    return blockchainQueries;
+  }
+
+  public WorldStateArchive getStateArchive() {
+    return stateArchive;
+  }
+
+  public Map<String, JsonRpcMethod> methods() {
     final P2PNetwork peerDiscovery = mock(P2PNetwork.class);
     final EthPeers ethPeers = mock(EthPeers.class);
     final TransactionPool transactionPool = mock(TransactionPool.class);
@@ -127,7 +163,7 @@ public class JsonRpcTestMethodsFactory {
             peerDiscovery,
             blockchainQueries,
             synchronizer,
-            ProtocolScheduleFixture.MAINNET,
+            importer.getProtocolSchedule(),
             filterManager,
             transactionPool,
             miningCoordinator,

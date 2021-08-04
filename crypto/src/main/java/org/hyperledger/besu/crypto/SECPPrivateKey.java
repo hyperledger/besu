@@ -35,7 +35,7 @@ public class SECPPrivateKey implements java.security.PrivateKey {
 
   public static SECPPrivateKey create(final BigInteger key, final String algorithm) {
     checkNotNull(key);
-    return create(UInt256.valueOf(key).toBytes(), algorithm);
+    return create(UInt256.valueOf(key), algorithm);
   }
 
   public static SECPPrivateKey create(final Bytes32 key, final String algorithm) {

@@ -23,7 +23,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTransaction;
 
-import java.util.Collections;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,10 +37,11 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    BesuNodeConfigurationBuilder builder =
+    final BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
             .miningEnabled(false)
-            .plugins(Collections.singletonList("testPlugins"))
+            .plugins(List.of("testPlugins"))
+            .extraCLIOptions(List.of("--plugin-permissioning-test-enabled=true"))
             .jsonRpcEnabled()
             .jsonRpcTxPool()
             .jsonRpcAdmin();
@@ -86,9 +87,9 @@ public class PermissioningPluginTest extends AcceptanceTestBase {
     final Account account = accounts.createAccount("account-one");
     final Amount balance = Amount.ether(20);
 
-    TransferTransaction tx = accountTransactions.createTransfer(account, balance);
+    final TransferTransaction tx = accountTransactions.createTransfer(account, balance);
 
-    Hash txHash = aliceNode.execute(tx);
+    final Hash txHash = aliceNode.execute(tx);
 
     aliceNode.verify(txPoolConditions.inTransactionPool(txHash));
     bobNode.verify(txPoolConditions.inTransactionPool(txHash));

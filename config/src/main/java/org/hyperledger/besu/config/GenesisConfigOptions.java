@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.config;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +42,8 @@ public interface GenesisConfigOptions {
   CliqueConfigOptions getCliqueConfigOptions();
 
   BftConfigOptions getBftConfigOptions();
+
+  QbftConfigOptions getQbftConfigOptions();
 
   EthashConfigOptions getEthashConfigOptions();
 
@@ -75,14 +75,6 @@ public interface GenesisConfigOptions {
   OptionalLong getAleutBlockNumber();
 
   OptionalLong getEIP1559BlockNumber();
-
-  default Optional<Long> getGenesisBaseFeePerGas() {
-    return getEIP1559BlockNumber().stream()
-        .boxed()
-        .filter(g -> g.equals(0L))
-        .map(g -> ExperimentalEIPs.initialBasefee)
-        .findAny();
-  }
 
   List<Long> getForks();
 

@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -204,10 +205,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final int configuredRlpxPort = config.getRlpx().getBindPort();
     if (config.getDiscovery().getDNSDiscoveryURL() != null) {
       LOG.info("Starting DNS discovery with URL {}", config.getDiscovery().getDNSDiscoveryURL());
-      dnsDaemon = new DNSDaemon(config.getDiscovery().getDNSDiscoveryURL());
-      dnsDaemon
-          .getListeners()
-          .add(
+      dnsDaemon =
+          new DNSDaemon(
+              config.getDiscovery().getDNSDiscoveryURL(),
               (seq, records) -> {
                 List<DiscoveryPeer> peers = new ArrayList<>();
                 for (EthereumNodeRecord enr : records) {
@@ -223,7 +223,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
                   rlpxAgent.connect(peer);
                 }
                 dnsPeers.set(peers);
-                return null;
               });
     }
 
@@ -455,6 +454,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
     private Supplier<List<Bytes>> forkIdSupplier;
+    private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
 
     public P2PNetwork build() {
       validate();
@@ -521,6 +521,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .localNode(localNode)
           .metricsSystem(metricsSystem)
           .randomPeerPriority(randomPeerPriority)
+          .p2pTLSConfiguration(p2pTLSConfiguration)
           .build();
     }
 
@@ -603,6 +604,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
       checkNotNull(forkIdSupplier);
       this.forkIdSupplier = forkIdSupplier;
+      return this;
+    }
+
+    public Builder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
+      checkNotNull(p2pTLSConfiguration);
+      this.p2pTLSConfiguration = p2pTLSConfiguration;
       return this;
     }
   }

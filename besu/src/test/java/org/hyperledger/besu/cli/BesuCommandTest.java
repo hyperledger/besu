@@ -26,7 +26,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.MULTI_DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
@@ -66,6 +65,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -76,7 +76,6 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.util.StringUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -134,9 +133,9 @@ public class BesuCommandTest extends CommandTestAbstract {
       (new JsonObject())
           .put(
               "config",
-              new JsonObject().put("isquorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
+              new JsonObject().put("isQuorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET =
-      (new JsonObject()).put("config", new JsonObject().put("isquorum", true));
+      (new JsonObject()).put("config", new JsonObject().put("isQuorum", true));
   private static final JsonObject INVALID_GENESIS_EC_CURVE =
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "abcd"));
   private static final JsonObject VALID_GENESIS_EC_CURVE =
@@ -844,11 +843,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters(
-                Address.fromHexString(expectedCoinbase),
-                DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
-                DefaultCommandValues.DEFAULT_EXTRA_DATA,
-                false));
+            new MiningParameters.Builder()
+                .coinbase(Address.fromHexString(expectedCoinbase))
+                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+                .enabled(false)
+                .build());
   }
 
   @Test
@@ -860,11 +860,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters(
-                Address.fromHexString(expectedCoinbase),
-                DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
-                DefaultCommandValues.DEFAULT_EXTRA_DATA,
-                false));
+            new MiningParameters.Builder()
+                .coinbase(Address.fromHexString(expectedCoinbase))
+                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+                .enabled(false)
+                .build());
   }
 
   @Test
@@ -1618,7 +1619,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void launcherOptionIsParsedCorrectly() {
-    TestBesuCommand besuCommand = parseCommand("--Xlauncher", "true", "--Xlauncher-force", "true");
+    final TestBesuCommand besuCommand =
+        parseCommand("--Xlauncher", "true", "--Xlauncher-force", "true");
 
     assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isTrue();
     assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
@@ -1974,7 +1976,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcHttpMaxActiveConnectionsPropertyMustBeUsed() {
-    int maxConnections = 99;
+    final int maxConnections = 99;
     parseCommand("--rpc-http-max-active-connections", String.valueOf(maxConnections));
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
@@ -1989,7 +1991,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcWsMaxActiveConnectionsPropertyMustBeUsed() {
-    int maxConnections = 99;
+    final int maxConnections = 99;
     parseCommand("--rpc-ws-max-active-connections", String.valueOf(maxConnections));
 
     verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
@@ -3003,15 +3005,14 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void minGasPriceRequiresMainOption() {
     parseCommand("--min-gas-price", "0");
 
-    verifyMultiOptionsConstraintLoggerCall(
-        List.of("--miner-enabled", "--goquorum-compatibility-enabled"), "--min-gas-price");
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
   @Test
-  public void miningParametersAreCaptured() throws Exception {
+  public void miningParametersAreCaptured() {
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     final String extraDataString =
         "0x1122334455667788990011223344556677889900112233445566778899001122";
@@ -3321,7 +3322,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(enclaveArg.getValue().isEnabled()).isEqualTo(true);
     assertThat(enclaveArg.getValue().getEnclaveUri()).isEqualTo(URI.create(ENCLAVE_URI));
-    assertThat(enclaveArg.getValue().getEnclavePublicKey()).isEqualTo(ENCLAVE_PUBLIC_KEY);
+    assertThat(enclaveArg.getValue().getPrivacyUserId()).isEqualTo(ENCLAVE_PUBLIC_KEY);
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3336,9 +3337,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
     verifyMultiOptionsConstraintLoggerCall(
-        List.of("--privacy-enabled", "--goquorum-compatibility-enabled"),
-        "--privacy-url",
-        "--privacy-public-key-file");
+        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3552,25 +3551,10 @@ public class BesuCommandTest extends CommandTestAbstract {
    * <p>Here we check the calls to logger and not the result of the log line as we don't test the
    * logger itself but the fact that we call it.
    *
-   * @param dependentOptions the string representing the list of dependent options names
-   * @param mainOptions the main option names
+   * @param stringToLog the string that is logged
    */
-  private void verifyMultiOptionsConstraintLoggerCall(
-      final List<String> mainOptions, final String... dependentOptions) {
-    verify(mockLogger, atLeast(1))
-        .warn(
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture(),
-            stringArgumentCaptor.capture());
-    assertThat(stringArgumentCaptor.getAllValues().get(0)).isEqualTo(MULTI_DEPENDENCY_WARNING_MSG);
-
-    for (final String option : dependentOptions) {
-      assertThat(stringArgumentCaptor.getAllValues().get(1)).contains(option);
-    }
-
-    final String joinedOptions =
-        StringUtils.joiningWithLastDelimiter(", ", " or ").apply(mainOptions);
-    assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(joinedOptions);
+  private void verifyMultiOptionsConstraintLoggerCall(final String stringToLog) {
+    verify(mockLogger, atLeast(1)).warn(stringToLog);
   }
 
   @Test
@@ -3594,26 +3578,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand(
-        "--goquorum-compatibility-enabled",
-        "--privacy-enabled",
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "0");
+        "--privacy-enabled", "--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
 
     assertThat(commandErrorOutput.toString())
         .contains("GoQuorum mode cannot be enabled with privacy.");
-    assertThat(commandOutput.toString()).isEmpty();
-  }
-
-  @Test
-  public void goQuorumGenesisFileWithoutGoQuorumCompatibilityMustError() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString());
-
-    assertThat(commandErrorOutput.toString())
-        .contains("Cannot use GoQuorum genesis file without GoQuorum privacy enabled");
     assertThat(commandOutput.toString()).isEmpty();
   }
 
@@ -3693,7 +3661,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void transactionPoolTxFeeCap() {
     final Wei txFeeCap = Wei.fromEth(2);
-    parseCommand("--rpc-tx-feecap", txFeeCap.toString());
+    parseCommand("--rpc-tx-feecap", txFeeCap.toDecimalString());
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
     assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);
@@ -4151,10 +4119,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void quorumInteropDisabledDoesNotEnforceZeroGasPrice() throws IOException {
+  public void quorumInteropNotDefinedInGenesisDoesNotEnforceZeroGasPrice() throws IOException {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    parseCommand(
-        "--goquorum-compatibility-enabled=false", "--genesis-file", genesisFile.toString());
+    parseCommand("--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString()).isEmpty();
   }
 
@@ -4162,25 +4129,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--goquorum-compatibility-enabled", "--genesis-file", genesisFile.toString());
+    parseCommand("--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString())
         .contains(
-            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
   }
 
   @Test
   public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--goquorum-compatibility-enabled",
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "1");
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
     assertThat(commandErrorOutput.toString())
         .contains(
-            "--min-gas-price must be set to zero if GoQuorum compatibility is enabled in the genesis config.");
+            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
   }
 
   @Test
@@ -4188,7 +4150,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand(
-        "--goquorum-compatibility-enabled",
         "--genesis-file",
         genesisFile.toString(),
         "--min-gas-price",
@@ -4203,7 +4164,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
     parseCommand(
-        "--goquorum-compatibility-enabled",
         "--genesis-file",
         genesisFile.toString(),
         "--min-gas-price",
@@ -4211,57 +4171,31 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-public-key-file",
         "ThisFileDoesNotExist");
     assertThat(commandErrorOutput.toString())
-        .contains(
-            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
+        .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
   }
 
   @Test
   public void quorumInteropEnabledFailsIfEnclaveKeyFileIsNotSet() throws IOException {
     final Path genesisFile =
         createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--goquorum-compatibility-enabled",
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "0");
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
     assertThat(commandErrorOutput.toString())
-        .contains(
-            "--privacy-public-key-file must be set when --goquorum-compatibility-enabled is set to true.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsIfGenesisFileNotSet() {
-    parseCommand("--goquorum-compatibility-enabled");
-    assertThat(commandErrorOutput.toString())
-        .contains("--genesis-file must be specified if GoQuorum compatibility mode is enabled.");
+        .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
   }
 
   @Test
   public void quorumInteropEnabledFailsWithMainnetDefaultNetwork() throws IOException {
     final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET);
-    parseCommand(
-        "--goquorum-compatibility-enabled",
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "0");
-    assertThat(commandErrorOutput.toString())
-        .contains("GoQuorum compatibility mode (enabled) cannot be used on Mainnet");
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
+    assertThat(commandErrorOutput.toString()).contains("isQuorum mode cannot be used on Mainnet.");
   }
 
   @Test
   public void quorumInteropEnabledFailsWithMainnetChainId() throws IOException {
     final Path genesisFile =
         createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET.put("chainId", "1"));
-    parseCommand(
-        "--goquorum-compatibility-enabled",
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "0");
-    assertThat(commandErrorOutput.toString())
-        .contains("GoQuorum compatibility mode (enabled) cannot be used on Mainnet");
+    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
+    assertThat(commandErrorOutput.toString()).contains("isQuorum mode cannot be used on Mainnet.");
   }
 
   @Test
@@ -4345,5 +4279,37 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand("--genesis-file", genesisFile.toString());
     assertThat(commandErrorOutput.toString()).isEmpty();
+  }
+
+  @Test
+  public void nativeSecp256IsDisabled() {
+    SignatureAlgorithmFactory.resetInstance();
+    parseCommand("--Xsecp256k1-native-enabled", "false");
+
+    verify(mockLogger).info("Using the Java implementation of secp256k1");
+    assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isFalse();
+  }
+
+  @Test
+  public void nativeAltBn128IsDisabled() {
+    // it is necessary to reset it, because the tested variable
+    // is static and it will stay true if it has been set in another test
+    // AbstractAltBnPrecompiledContract.resetNative();
+
+    parseCommand("--Xaltbn128-native-enabled", "false");
+
+    verify(mockLogger).info("Using the Java implementation of alt bn128");
+    assertThat(AbstractAltBnPrecompiledContract.isNative()).isFalse();
+  }
+
+  @Test
+  public void nativeLibrariesAreEnabledByDefault() {
+    parseCommand();
+
+    assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isTrue();
+    verify(mockLogger).info("Using native secp256k1");
+
+    assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
+    verify(mockLogger).info("Using LibEthPairings native alt bn128");
   }
 }

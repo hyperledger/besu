@@ -78,7 +78,7 @@ public interface RLPOutput {
    * @param v The scalar to write.
    */
   default void writeUInt256Scalar(final UInt256Value<?> v) {
-    writeBytes(v.toBytes().trimLeadingZeros());
+    writeBytes(v.trimLeadingZeros());
   }
 
   /**

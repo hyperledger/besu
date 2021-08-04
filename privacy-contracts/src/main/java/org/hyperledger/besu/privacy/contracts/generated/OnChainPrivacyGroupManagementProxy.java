@@ -83,7 +83,7 @@ public class OnChainPrivacyGroupManagementProxy extends Contract {
 
   public static final Event PARTICIPANTREMOVED_EVENT =
       new Event(
-          "ParticipantRemoved", Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>() {}));;
+          "ParticipantRemoved", Arrays.<TypeReference<?>>asList(new TypeReference<Bytes32>() {}));
 
   @Deprecated
   protected OnChainPrivacyGroupManagementProxy(

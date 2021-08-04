@@ -318,12 +318,25 @@ public class BlockTransactionSelectorTest {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(300);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final PendingTransactions pendingTransactions1559 =
+        new PendingTransactions(
+            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
+            5,
+            5,
+            TestClock.fixed(),
+            metricsSystem,
+            () -> {
+              final BlockHeader mockBlockHeader = mock(BlockHeader.class);
+              when(mockBlockHeader.getBaseFee()).thenReturn(Optional.of(1L));
+              return mockBlockHeader;
+            },
+            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             transactionProcessor,
             blockchain,
             worldState,
-            pendingTransactions,
+            pendingTransactions1559,
             blockHeader,
             this::createReceipt,
             Wei.of(6),
@@ -366,8 +379,8 @@ public class BlockTransactionSelectorTest {
             TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
-    pendingTransactions.addRemoteTransaction(fillingLegacyTx);
-    pendingTransactions.addRemoteTransaction(extraEIP1559Tx);
+    pendingTransactions1559.addRemoteTransaction(fillingLegacyTx);
+    pendingTransactions1559.addRemoteTransaction(extraEIP1559Tx);
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 

@@ -77,7 +77,7 @@ public class RetestethContext {
   private static final Logger LOG = LogManager.getLogger();
   private static final PoWHasher NO_WORK_HASHER =
       (final long nonce, final long number, EpochCalculator epochCalc, final Bytes headerHash) ->
-          new PoWSolution(nonce, Hash.ZERO, UInt256.ZERO.toBytes(), Hash.ZERO);
+          new PoWSolution(nonce, Hash.ZERO, UInt256.ZERO, Hash.ZERO);
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
@@ -168,13 +168,17 @@ public class RetestethContext {
                 NO_WORK_HASHER,
                 false,
                 Subscribers.none(),
-                new EpochCalculator.DefaultEpochCalculator())
+                new EpochCalculator.DefaultEpochCalculator(),
+                1000,
+                8)
             : new PoWSolver(
                 nonceGenerator,
                 PoWHasher.ETHASH_LIGHT,
                 false,
                 Subscribers.none(),
-                new EpochCalculator.DefaultEpochCalculator());
+                new EpochCalculator.DefaultEpochCalculator(),
+                1000,
+                8);
 
     blockReplay =
         new BlockReplay(

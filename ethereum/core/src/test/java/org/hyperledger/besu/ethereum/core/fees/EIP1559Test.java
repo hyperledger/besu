@@ -16,20 +16,22 @@ package org.hyperledger.besu.ethereum.core.fees;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+
 import org.junit.Test;
 
 public class EIP1559Test {
 
   private static final long FORK_BLOCK = 783L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
-  private final FeeMarket feeMarket = FeeMarket.eip1559();
+  private final FeeMarket feeMarket = FeeMarket.london();
   private static final long TARGET_GAS_USED = 10000000L;
 
   @Test
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                FORK_BLOCK,
+                FORK_BLOCK + 1,
                 feeMarket.getInitialBasefee(),
                 TARGET_GAS_USED - 1000000L,
                 TARGET_GAS_USED))
@@ -41,7 +43,7 @@ public class EIP1559Test {
   public void assertThatBaseFeeIncreasesWhenAboveTargetGasUsed() {
     assertThat(
             eip1559.computeBaseFee(
-                FORK_BLOCK,
+                FORK_BLOCK + 1,
                 feeMarket.getInitialBasefee(),
                 TARGET_GAS_USED + 1000000L,
                 TARGET_GAS_USED))

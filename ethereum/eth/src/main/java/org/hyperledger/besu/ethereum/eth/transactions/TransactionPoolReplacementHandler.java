@@ -28,7 +28,10 @@ public class TransactionPoolReplacementHandler {
   private final List<TransactionPoolReplacementRule> rules;
 
   public TransactionPoolReplacementHandler(final Percentage priceBump) {
-    this(asList(new TransactionReplacementByPriceRule(priceBump)));
+    this(
+        asList(
+            new TransactionReplacementByGasPriceRule(priceBump),
+            new TransactionReplacementByFeeMarketRule(priceBump)));
   }
 
   @VisibleForTesting

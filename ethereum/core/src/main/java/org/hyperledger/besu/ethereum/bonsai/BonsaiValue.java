@@ -32,6 +32,12 @@ public class BonsaiValue<T> {
     this.cleared = false;
   }
 
+  BonsaiValue(final T prior, final T updated, final boolean cleared) {
+    this.prior = prior;
+    this.updated = updated;
+    this.cleared = cleared;
+  }
+
   public T getPrior() {
     return prior;
   }

@@ -18,6 +18,8 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.X509CRL;
+import java.util.Collection;
 
 public interface KeyStoreWrapper {
 
@@ -36,4 +38,6 @@ public interface KeyStoreWrapper {
   Certificate getCertificate(String certificateAlias);
 
   Certificate[] getCertificateChain(String certificateAlias);
+
+  Collection<X509CRL> getCRLs();
 }

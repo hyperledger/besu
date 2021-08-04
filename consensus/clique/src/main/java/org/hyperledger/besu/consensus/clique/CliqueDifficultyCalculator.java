@@ -38,7 +38,7 @@ public class CliqueDifficultyCalculator implements DifficultyCalculator {
 
     final Address nextProposer =
         CliqueHelpers.getProposerForBlockAfter(
-            parent, context.getConsensusState(CliqueContext.class).getVoteTallyCache());
+            parent, context.getConsensusState(CliqueContext.class).getValidatorProvider());
     return nextProposer.equals(localAddress) ? IN_TURN_DIFFICULTY : OUT_OF_TURN_DIFFICULTY;
   }
 }

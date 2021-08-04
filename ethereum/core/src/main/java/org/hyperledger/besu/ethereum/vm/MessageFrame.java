@@ -239,6 +239,7 @@ public class MessageFrame {
 
   // Privacy Execution Environment fields.
   private final Hash transactionHash;
+  private final Transaction transaction;
 
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
@@ -277,6 +278,7 @@ public class MessageFrame {
       final Boolean isPersistingPrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Hash transactionHash,
+      final Transaction transaction,
       final Optional<Bytes> revertReason,
       final int maxStackSize,
       final Set<Address> accessListWarmAddresses,
@@ -316,6 +318,7 @@ public class MessageFrame {
     this.isPersistingPrivateState = isPersistingPrivateState;
     this.privateMetadataUpdater = privateMetadataUpdater;
     this.transactionHash = transactionHash;
+    this.transaction = transaction;
     this.revertReason = revertReason;
 
     this.warmedUpAddresses = new HashSet<>(accessListWarmAddresses);
@@ -325,16 +328,13 @@ public class MessageFrame {
 
     // the warmed up addresses will always be a superset of the address keys in the warmed up
     // storage so we can do both warm ups in one pass
-    accessListWarmAddresses
-        .parallelStream()
+    accessListWarmAddresses.parallelStream()
         .forEach(
             address ->
                 Optional.ofNullable(worldState.get(address))
                     .ifPresent(
                         account ->
-                            warmedUpStorage
-                                .get(address)
-                                .parallelStream()
+                            warmedUpStorage.get(address).parallelStream()
                                 .forEach(
                                     storageKeyBytes ->
                                         account.getStorageValue(
@@ -453,7 +453,7 @@ public class MessageFrame {
    * @return The item at the specified offset in the stack
    * @throws UnderflowException if the offset is out of range
    */
-  public Bytes32 getStackItem(final int offset) {
+  public UInt256 getStackItem(final int offset) {
     return stack.get(offset);
   }
 
@@ -463,7 +463,7 @@ public class MessageFrame {
    * @return the item at the top of the stack
    * @throws UnderflowException if the stack is empty
    */
-  public Bytes32 popStackItem() {
+  public UInt256 popStackItem() {
     return stack.pop();
   }
 
@@ -481,7 +481,7 @@ public class MessageFrame {
    *
    * @param value The value to push onto the stack.
    */
-  public void pushStackItem(final Bytes32 value) {
+  public void pushStackItem(final UInt256 value) {
     stack.push(value);
   }
 
@@ -492,7 +492,7 @@ public class MessageFrame {
    * @param value The value to set the stack item to
    * @throws IllegalStateException if the stack is too small
    */
-  public void setStackItem(final int offset, final Bytes32 value) {
+  public void setStackItem(final int offset, final UInt256 value) {
     stack.set(offset, value);
   }
 
@@ -1057,6 +1057,10 @@ public class MessageFrame {
     return transactionHash;
   }
 
+  public Transaction getTransaction() {
+    return transaction;
+  }
+
   public void setCurrentOperation(final Operation currentOperation) {
     this.currentOperation = currentOperation;
   }
@@ -1109,6 +1113,7 @@ public class MessageFrame {
     private Boolean isPersistingPrivateState = false;
     private PrivateMetadataUpdater privateMetadataUpdater = null;
     private Hash transactionHash;
+    private Transaction transaction;
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
@@ -1239,6 +1244,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder transaction(final Transaction transaction) {
+      this.transaction = transaction;
+      return this;
+    }
+
     public Builder reason(final Bytes reason) {
       this.reason = Optional.ofNullable(reason);
       return this;
@@ -1306,6 +1316,7 @@ public class MessageFrame {
           isPersistingPrivateState,
           privateMetadataUpdater,
           transactionHash,
+          transaction,
           reason,
           maxStackSize,
           accessListWarmAddresses,

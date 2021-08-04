@@ -18,10 +18,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterChanges;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterLogs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivUninstallFilter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivCreatePrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivDebugGetStateRoot;
@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Map;
 
@@ -65,41 +66,38 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
 
     final Map<String, JsonRpcMethod> RPC_METHODS =
         mapOf(
-            new PrivCall(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
-            new PrivDebugGetStateRoot(
-                getBlockchainQueries(), enclavePublicKeyProvider, privacyController),
+            new PrivCall(getBlockchainQueries(), privacyController, privacyIdProvider),
+            new PrivDebugGetStateRoot(getBlockchainQueries(), privacyIdProvider, privacyController),
             new PrivDistributeRawTransaction(
                 privacyController,
-                enclavePublicKeyProvider,
+                privacyIdProvider,
                 getPrivacyParameters().isOnchainPrivacyGroupsEnabled()),
-            new PrivGetCode(getBlockchainQueries(), privacyController, enclavePublicKeyProvider),
+            new PrivGetCode(getBlockchainQueries(), privacyController, privacyIdProvider),
             new PrivGetLogs(
-                getBlockchainQueries(),
-                getPrivacyQueries(),
-                privacyController,
-                enclavePublicKeyProvider),
-            new PrivGetPrivateTransaction(privacyController, enclavePublicKeyProvider),
+                getBlockchainQueries(), getPrivacyQueries(), privacyController, privacyIdProvider),
+            new PrivGetPrivateTransaction(privacyController, privacyIdProvider),
             new PrivGetPrivacyPrecompileAddress(getPrivacyParameters()),
-            new PrivGetTransactionCount(privacyController, enclavePublicKeyProvider),
+            new PrivGetTransactionCount(privacyController, privacyIdProvider),
             new PrivGetTransactionReceipt(
                 getPrivacyParameters().getPrivateStateStorage(),
                 privacyController,
-                enclavePublicKeyProvider),
-            new PrivGetFilterLogs(filterManager, privacyController, enclavePublicKeyProvider),
-            new PrivGetFilterChanges(filterManager, privacyController, enclavePublicKeyProvider),
-            new PrivNewFilter(filterManager, privacyController, enclavePublicKeyProvider),
-            new PrivUninstallFilter(filterManager, privacyController, enclavePublicKeyProvider));
+                privacyIdProvider),
+            new PrivGetFilterLogs(filterManager, privacyController, privacyIdProvider),
+            new PrivGetFilterChanges(filterManager, privacyController, privacyIdProvider),
+            new PrivNewFilter(filterManager, privacyController, privacyIdProvider),
+            new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider));
 
     if (!getPrivacyParameters().isOnchainPrivacyGroupsEnabled()) {
       final Map<String, JsonRpcMethod> OFFCHAIN_METHODS =
           mapOf(
-              new PrivCreatePrivacyGroup(privacyController, enclavePublicKeyProvider),
-              new PrivDeletePrivacyGroup(privacyController, enclavePublicKeyProvider),
-              new PrivFindPrivacyGroup(privacyController, enclavePublicKeyProvider));
+              new PrivCreatePrivacyGroup(privacyController, privacyIdProvider),
+              new PrivDeletePrivacyGroup(privacyController, privacyIdProvider),
+              new PrivFindPrivacyGroup(privacyController, privacyIdProvider));
       OFFCHAIN_METHODS.forEach(
           (key, jsonRpcMethod) ->
               RPC_METHODS.merge(key, jsonRpcMethod, (oldVal, newVal) -> newVal));

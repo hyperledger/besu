@@ -1,0 +1,45 @@
+{
+  "request": {
+    "id": 28,
+    "jsonrpc": "2.0",
+    "method": "eth_feeHistory",
+    "params": [
+      2,
+      "latest",
+      [
+        0.0,
+        100.0,
+        4.0
+      ]
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "result": {
+      "oldestBlock": "0x1f",
+      "baseFeePerGas": [
+        "0x0",
+        "0x0",
+        "0x0"
+      ],
+      "gasUsedRatio": [
+        0.00773588677333021,
+        0.007545537421791245
+      ],
+      "reward": [
+        [
+          "0x1",
+          "0x1",
+          "0x1"
+        ],
+        [
+          "0x1",
+          "0x1",
+          "0x1"
+        ]
+      ]
+    }
+  },
+  "statusCode": 200
+}

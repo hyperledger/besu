@@ -50,5 +50,5 @@ public interface JsonRpcMethod {
     permissions.add(this.getName().substring(0, this.getName().indexOf('_')) + ":*");
     permissions.add(this.getName().replace('_', ':'));
     return permissions;
-  };
+  }
 }

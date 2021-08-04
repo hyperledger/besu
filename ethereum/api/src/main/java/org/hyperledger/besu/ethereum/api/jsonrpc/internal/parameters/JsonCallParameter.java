@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import static java.lang.Boolean.FALSE;
-
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -31,10 +29,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 
-@JsonIgnoreProperties({"nonce", "privateFor"})
+@JsonIgnoreProperties({"nonce", "privateFor", "timestamp"})
 public class JsonCallParameter extends CallParameter {
 
-  private final boolean strict;
+  private final Optional<Boolean> strict;
 
   @JsonCreator
   public JsonCallParameter(
@@ -57,10 +55,10 @@ public class JsonCallParameter extends CallParameter {
         Optional.ofNullable(maxFeePerGas),
         value,
         payload);
-    this.strict = Optional.ofNullable(strict).orElse(FALSE);
+    this.strict = Optional.ofNullable(strict);
   }
 
-  public boolean isStrict() {
+  public Optional<Boolean> isMaybeStrict() {
     return strict;
   }
 }

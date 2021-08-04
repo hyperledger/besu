@@ -34,7 +34,7 @@ dependencies {
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
+  implementation 'org.apache.tuweni:tuweni-bytes'
 
   implementation project(':consensus:clique')
   implementation project(':config')

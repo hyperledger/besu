@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BaseFeeOperation extends AbstractFixedCostOperation {
 
@@ -42,6 +43,7 @@ public class BaseFeeOperation extends AbstractFixedCostOperation {
             .getBaseFee()
             .map(Bytes::ofUnsignedLong)
             .map(Bytes32::leftPad)
+            .map(UInt256::fromBytes)
             .orElseThrow());
     return successResponse;
   }

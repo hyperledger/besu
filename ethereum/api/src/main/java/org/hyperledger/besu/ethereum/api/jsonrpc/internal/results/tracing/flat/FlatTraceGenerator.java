@@ -448,7 +448,7 @@ public class FlatTraceGenerator {
         .getMaybeCode()
         .map(Code::getBytes)
         .map(Bytes::toHexString)
-        .map(subTraceActionBuilder::init);
+        .ifPresent(subTraceActionBuilder::init);
 
     final FlatTrace.Context currentContext =
         new FlatTrace.Context(subTraceBuilder.actionBuilder(subTraceActionBuilder));
