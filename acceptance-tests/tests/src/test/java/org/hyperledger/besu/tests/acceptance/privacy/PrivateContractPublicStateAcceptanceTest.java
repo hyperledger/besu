@@ -82,7 +82,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey()));
 
     final RemoteFunctionCall<BigInteger> remoteFunctionCall =
@@ -99,7 +98,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             (privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey())));
 
     final TransactionReceipt receipt = privateEventEmitter.store(BigInteger.valueOf(12)).send();
@@ -119,7 +117,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =
@@ -141,7 +138,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =
@@ -162,7 +158,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             privateContractTransactions.createSmartContract(
                 CrossContractReader.class,
                 transactionNode.getTransactionSigningKey(),
-                restriction,
                 transactionNode.getEnclaveKey()));
 
     final CrossContractReader publicReader =

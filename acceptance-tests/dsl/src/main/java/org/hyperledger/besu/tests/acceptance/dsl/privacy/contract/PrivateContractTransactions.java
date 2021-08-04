@@ -51,31 +51,16 @@ public class PrivateContractTransactions {
       final String privateFrom,
       final String... privateFor) {
     return createSmartContract(
-        clazz,
-        transactionSigningKey,
-        Restriction.RESTRICTED,
-        privateFrom,
-        Arrays.asList(privateFor));
+        clazz, transactionSigningKey, privateFrom, Arrays.asList(privateFor));
   }
 
   public <T extends Contract> DeployPrivateSmartContractTransaction<T> createSmartContract(
       final Class<T> clazz,
       final String transactionSigningKey,
-      final Restriction restriction,
-      final String privateFrom,
-      final String... privateFor) {
-    return createSmartContract(
-        clazz, transactionSigningKey, restriction, privateFrom, Arrays.asList(privateFor));
-  }
-
-  public <T extends Contract> DeployPrivateSmartContractTransaction<T> createSmartContract(
-      final Class<T> clazz,
-      final String transactionSigningKey,
-      final Restriction restriction,
       final String privateFrom,
       final List<String> privateFor) {
     return new DeployPrivateSmartContractTransaction<>(
-        clazz, transactionSigningKey, restriction, privateFrom, privateFor);
+        clazz, transactionSigningKey, privateFrom, privateFor);
   }
 
   public CallPrivateSmartContractFunction callSmartContract(

@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.math.BigInteger;
 
 import org.web3j.crypto.Credentials;
+import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
 public class CallOnChainPermissioningPrivateSmartContractFunction implements Transaction<String> {
 
@@ -51,10 +53,9 @@ public class CallOnChainPermissioningPrivateSmartContractFunction implements Tra
   @Override
   public String execute(final NodeRequests node) {
     final PrivateTransactionManager privateTransactionManager =
-        new PrivateTransactionManager.Builder(
-                node.privacy().getBesuClient(), senderCredentials, privateFrom)
-            .setPrivacyGroupId(privacyGroupId)
-            .build();
+        node.privacy()
+            .getTransactionManager(
+                senderCredentials, privateFrom, privacyGroupId, Restriction.RESTRICTED);
 
     try {
       return privateTransactionManager

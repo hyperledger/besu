@@ -16,7 +16,6 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver.BOB;
-import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy.PrivacyNodeConfiguration;
@@ -77,7 +76,6 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
             privateContractTransactions.createSmartContract(
                 EventEmitter.class,
                 minerNode.getTransactionSigningKey(),
-                UNRESTRICTED,
                 minerNode.getEnclaveKey()));
 
     privateContractVerifier
