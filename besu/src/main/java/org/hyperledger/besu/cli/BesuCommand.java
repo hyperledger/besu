@@ -59,6 +59,7 @@ import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
+import org.hyperledger.besu.cli.options.unstable.PkiBlockCreationOptions;
 import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
@@ -78,6 +79,8 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationSupplier;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
@@ -140,6 +143,7 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -1097,6 +1101,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
+  @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1114,6 +1120,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
   private Boolean isGoQuorumCompatibilityMode = false;
+  private Optional<PkiKeyStoreConfiguration> pkiBlockCreationKeyStoreConfig;
 
   public BesuCommand(
       final Logger logger,
@@ -1613,6 +1620,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     logger.info("Security Module: {}", securityModuleName);
     instantiateSignatureAlgorithmFactory();
+
+    pkiBlockCreationKeyStoreConfig = pkiBlockCreationOptions.asDomainConfig(commandLine);
+    pkiBlockCreationKeyStoreConfig.ifPresent(PkiBlockCreationConfigurationSupplier::load);
   }
 
   private GoQuorumPrivacyParameters configureGoQuorumPrivacy(
