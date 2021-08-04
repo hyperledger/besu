@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -83,7 +83,8 @@ public class OnChainPrivacyPrecompiledContractTest {
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
 
-  PrivateStateGenesis privateStateGenesis = mock(PrivateStateGenesis.class);
+  PrivateStateGenesisAllocator privateStateGenesisAllocator =
+      mock(PrivateStateGenesisAllocator.class);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
       final TransactionProcessingResult result) {
@@ -274,7 +275,7 @@ public class OnChainPrivacyPrecompiledContractTest {
             enclave,
             worldStateArchive,
             privateStateRootResolver,
-            privateStateGenesis);
+            privateStateGenesisAllocator);
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
@@ -315,6 +316,6 @@ public class OnChainPrivacyPrecompiledContractTest {
         enclave,
         worldStateArchive,
         privateStateRootResolver,
-        privateStateGenesis);
+        privateStateGenesisAllocator);
   }
 }

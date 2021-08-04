@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
@@ -86,13 +86,13 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
-      final PrivateStateGenesis privateStateGenesis) {
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
     super(
         gasCalculator,
         enclave,
         worldStateArchive,
         privateStateRootResolver,
-        privateStateGenesis,
+        privateStateGenesisAllocator,
         "OnChainPrivacy");
   }
 

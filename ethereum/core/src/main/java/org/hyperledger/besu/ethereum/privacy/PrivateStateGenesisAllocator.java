@@ -31,13 +31,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class PrivateStateGenesis {
+public class PrivateStateGenesisAllocator {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Boolean isOnchainPrivacyEnabled;
   private final PrivacyGroupGenesisProvider privacyGroupGenesisProvider;
 
-  public PrivateStateGenesis(
+  public PrivateStateGenesisAllocator(
       final Boolean isOnchainPrivacyEnabled,
       final PrivacyGroupGenesisProvider privacyGroupGenesisProvider) {
     this.isOnchainPrivacyEnabled = isOnchainPrivacyEnabled;

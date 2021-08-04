@@ -20,7 +20,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -207,12 +207,13 @@ public class PrivacyParameters {
     return privacyPluginService;
   }
 
-  public PrivateStateGenesis getPrivateStateGenesis() {
+  public PrivateStateGenesisAllocator getPrivateStateGenesis() {
     // Note: the order of plugin registration may cause issues here.
     // This is why it's instantiated on get. It's needed in the privacy pre-compile constructors
     // but privacy parameters is built before the plugin has had a chance to register a provider
     // and have cli options instantiated
-    return new PrivateStateGenesis(onchainPrivacyGroupsEnabled, createPrivateGenesisProvider());
+    return new PrivateStateGenesisAllocator(
+        onchainPrivacyGroupsEnabled, createPrivateGenesisProvider());
   }
 
   private PrivacyGroupGenesisProvider createPrivateGenesisProvider() {

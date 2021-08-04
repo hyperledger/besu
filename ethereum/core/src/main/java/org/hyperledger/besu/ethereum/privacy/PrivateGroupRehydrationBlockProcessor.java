@@ -59,7 +59,7 @@ public class PrivateGroupRehydrationBlockProcessor {
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   final Wei blockReward;
   private final boolean skipZeroBlockRewards;
-  private final PrivateStateGenesis privateStateGenesis;
+  private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
   public PrivateGroupRehydrationBlockProcessor(
@@ -69,14 +69,14 @@ public class PrivateGroupRehydrationBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final PrivateStateGenesis privateStateGenesis) {
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
     this.transactionProcessor = transactionProcessor;
     this.privateTransactionProcessor = privateTransactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
-    this.privateStateGenesis = privateStateGenesis;
+    this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
   public AbstractBlockProcessor.Result processBlock(
@@ -125,7 +125,7 @@ public class PrivateGroupRehydrationBlockProcessor {
         final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
         if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
-          privateStateGenesis.applyGenesisToPrivateWorldState(
+          privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
               disposablePrivateState,
               privateWorldStateUpdater,
               privacyGroupId,

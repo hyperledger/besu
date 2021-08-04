@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRehydration;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionWithMetadata;
@@ -54,7 +54,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateRootResolver privateStateRootResolver;
-  private final PrivateStateGenesis privateStateGenesis;
+  private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   private WorldStateArchive publicWorldStateArchive;
 
   public PrivacyBlockProcessor(
@@ -64,14 +64,14 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
-      final PrivateStateGenesis privateStateGenesis) {
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
     this.blockProcessor = blockProcessor;
     this.protocolSchedule = protocolSchedule;
     this.enclave = enclave;
     this.privateStateStorage = privateStateStorage;
     this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
-    this.privateStateGenesis = privateStateGenesis;
+    this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
   public void setPublicWorldStateArchive(final WorldStateArchive publicWorldStateArchive) {
@@ -145,7 +145,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                           publicWorldStateArchive,
                           privateWorldStateArchive,
                           privateStateRootResolver,
-                          privateStateGenesis);
+                          privateStateGenesisAllocator);
                   privateStateRehydration.rehydrate(actualListToRehydrate);
                   privateStateStorage
                       .updater()

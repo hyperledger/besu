@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -195,7 +195,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
             enclave,
             worldStateArchive,
             new PrivateStateRootResolver(privateStateStorage),
-            new PrivateStateGenesis(false, (privacyGroupId, blockNumber) -> Collections::emptyList),
+            new PrivateStateGenesisAllocator(
+                false, (privacyGroupId, blockNumber) -> Collections::emptyList),
             "IntegrationTest");
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());

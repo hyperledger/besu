@@ -41,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
-public class PrivateStateGenesisTest {
+public class PrivateStateGenesisAllocatorTest {
   public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
 
   private final MutableWorldState worldState =
@@ -88,20 +88,24 @@ public class PrivateStateGenesisTest {
 
   @Test
   public void whenOnChainDisabledAndNoAccountsProvidedNoGenesisIsApplied() {
-    PrivateStateGenesis privateStateGenesis =
-        new PrivateStateGenesis(false, (privacyGroupId, blockNumber) -> Collections::emptyList);
+    PrivateStateGenesisAllocator privateStateGenesisAllocator =
+        new PrivateStateGenesisAllocator(
+            false, (privacyGroupId, blockNumber) -> Collections::emptyList);
 
-    privateStateGenesis.applyGenesisToPrivateWorldState(worldState, updater, Bytes.EMPTY, 0);
+    privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
+        worldState, updater, Bytes.EMPTY, 0);
 
     assertThat(worldState.frontierRootHash()).isEqualTo(EMPTY_ROOT_HASH);
   }
 
   @Test
   public void whenOnChainEnabledAndNoAccountsProvidedPrivacyManagementContractIsApplied() {
-    PrivateStateGenesis privateStateGenesis =
-        new PrivateStateGenesis(true, (privacyGroupId, blockNumber) -> Collections::emptyList);
+    PrivateStateGenesisAllocator privateStateGenesisAllocator =
+        new PrivateStateGenesisAllocator(
+            true, (privacyGroupId, blockNumber) -> Collections::emptyList);
 
-    privateStateGenesis.applyGenesisToPrivateWorldState(worldState, updater, Bytes.EMPTY, 0);
+    privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
+        worldState, updater, Bytes.EMPTY, 0);
 
     assertThat(worldState.frontierRootHash()).isNotEqualTo(EMPTY_ROOT_HASH);
 
@@ -110,10 +114,11 @@ public class PrivateStateGenesisTest {
 
   @Test
   public void whenOnChainEnabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
-    PrivateStateGenesis privateStateGenesis =
-        new PrivateStateGenesis(true, (privacyGroupId, blockNumber) -> privacyGenesis);
+    PrivateStateGenesisAllocator privateStateGenesisAllocator =
+        new PrivateStateGenesisAllocator(true, (privacyGroupId, blockNumber) -> privacyGenesis);
 
-    privateStateGenesis.applyGenesisToPrivateWorldState(worldState, updater, Bytes.EMPTY, 0);
+    privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
+        worldState, updater, Bytes.EMPTY, 0);
 
     assertThat(worldState.frontierRootHash()).isNotEqualTo(EMPTY_ROOT_HASH);
 
@@ -123,10 +128,11 @@ public class PrivateStateGenesisTest {
 
   @Test
   public void whenOnChainDisabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
-    PrivateStateGenesis privateStateGenesis =
-        new PrivateStateGenesis(false, (privacyGroupId, blockNumber) -> privacyGenesis);
+    PrivateStateGenesisAllocator privateStateGenesisAllocator =
+        new PrivateStateGenesisAllocator(false, (privacyGroupId, blockNumber) -> privacyGenesis);
 
-    privateStateGenesis.applyGenesisToPrivateWorldState(worldState, updater, Bytes.EMPTY, 0);
+    privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
+        worldState, updater, Bytes.EMPTY, 0);
 
     assertThat(worldState.frontierRootHash()).isNotEqualTo(EMPTY_ROOT_HASH);
 

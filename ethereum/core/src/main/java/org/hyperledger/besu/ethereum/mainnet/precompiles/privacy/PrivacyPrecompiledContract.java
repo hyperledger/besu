@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
-import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesis;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -54,7 +54,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
-  private final PrivateStateGenesis privateStateGenesis;
+  private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LogManager.getLogger();
@@ -77,13 +77,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
-      final PrivateStateGenesis privateStateGenesis,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator,
       final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
-    this.privateStateGenesis = privateStateGenesis;
+    this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
   public void setPrivateTransactionProcessor(
@@ -199,7 +199,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final Bytes32 privacyGroupId,
       final long blockNumber) {
     if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
-      this.privateStateGenesis.applyGenesisToPrivateWorldState(
+      this.privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
           disposablePrivateState, privateWorldStateUpdater, privacyGroupId, blockNumber);
     }
   }
