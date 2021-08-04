@@ -15,14 +15,17 @@
 
 package org.hyperledger.besu.cli.options.unstable;
 
+import static java.util.Arrays.asList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 
+import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 
 import java.nio.file.Path;
 import java.util.Optional;
 
+import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
@@ -30,32 +33,37 @@ import picocli.CommandLine.ParameterException;
 public class PkiBlockCreationOptions {
 
   @Option(
-      names = {"--pki-block-creation-enabled"},
+      names = {"--Xpki-block-creation-enabled"},
+      hidden = true,
       description = "Enable PKI integration (default: ${DEFAULT-VALUE})")
   Boolean enabled = false;
 
   @Option(
-      names = {"--pki-block-creation-keystore-type"},
+      names = {"--Xpki-block-creation-keystore-type"},
+      hidden = true,
       paramLabel = "<NAME>",
-      description = "PKI service keystore type. Required if PKI Integration is enabled.")
+      description = "PKI service keystore type. Required if PKI Block Creation is enabled.")
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   String keyStoreType = PkiKeyStoreConfiguration.DEFAULT_KEYSTORE_TYPE;
 
   @Option(
-      names = {"--pki-block-creation-keystore-file"},
+      names = {"--Xpki-block-creation-keystore-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Keystore containing key/certificate for PKI Integration.")
+      description = "Keystore containing key/certificate for PKI PKI Block Creation.")
   Path keyStoreFile = null;
 
   @Option(
-      names = {"--pki-block-creation-keystore-password-file"},
+      names = {"--Xpki-block-creation-keystore-password-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "File containing password to unlock keystore for PKI Integration. Required if PKI Integration is enabled.")
+          "File containing password to unlock keystore for PKI Integration. Required if PKI PKI Block Creation is enabled.")
   Path keyStorePasswordFile = null;
 
   @Option(
-      names = {"--pki-block-creation-keystore-certificate-alias"},
+      names = {"--Xpki-block-creation-keystore-certificate-alias"},
+      hidden = true,
       paramLabel = "<NAME>",
       description =
           "Alias of the certificate that will be included in the blocks proposed by this validator.")
@@ -63,28 +71,32 @@ public class PkiBlockCreationOptions {
   String certificateAlias = PkiKeyStoreConfiguration.DEFAULT_CERTIFICATE_ALIAS;
 
   @Option(
-      names = {"--pki-block-creation-truststore-type"},
+      names = {"--Xpki-block-creation-truststore-type"},
+      hidden = true,
       paramLabel = "<NAME>",
       description = "PKI Integration truststore type.")
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   String trustStoreType = PkiKeyStoreConfiguration.DEFAULT_KEYSTORE_TYPE;
 
   @Option(
-      names = {"--pki-block-creation-truststore-file"},
+      names = {"--Xpki-block-creation-truststore-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Truststore containing trusted certificates for PKI Integration.")
+      description = "Truststore containing trusted certificates for PKI PKI Block Creation.")
   Path trustStoreFile = null;
 
   @Option(
-      names = {"--pki-block-creation-truststore-password-file"},
+      names = {"--Xpki-block-creation-truststore-password-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "File containing password to unlock truststore for PKI Integration.")
+      description = "File containing password to unlock truststore for PKI PKI Block Creation.")
   Path trustStorePasswordFile = null;
 
   @Option(
-      names = {"--pki-block-creation-crl-file"},
+      names = {"--Xpki-block-creation-crl-file"},
+      hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Certificate revocation list for the PKI Integration.")
+      description = "Certificate revocation list for the PKI PKI Block Creation.")
   Path crlFile = null;
 
   public Optional<PkiKeyStoreConfiguration> asDomainConfig(final CommandLine commandLine) {
@@ -92,15 +104,15 @@ public class PkiBlockCreationOptions {
       return Optional.empty();
     }
 
-    if (keyStoreType == null) {
+    if (keyStoreFile == null) {
       throw new ParameterException(
-          commandLine, "Keystore type is required when p2p SSL is enabled");
+          commandLine, "KeyStore file is required when PKI Block Creation is enabled");
     }
 
     if (keyStorePasswordFile == null) {
       throw new ParameterException(
           commandLine,
-          "File containing password to unlock keystore is required when p2p SSL is enabled");
+          "File containing password to unlock keystore is required when PKI Block Creation is enabled");
     }
 
     return Optional.of(
@@ -117,5 +129,16 @@ public class PkiBlockCreationOptions {
                     : new FileBasedPasswordProvider(trustStorePasswordFile))
             .withCrlFilePath(crlFile)
             .build());
+  }
+
+  public void checkPkiBlockCreationOptionsDependencies(
+      final Logger logger, final CommandLine commandLine) {
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--Xpki-block-creation-enabled",
+        !enabled,
+        asList(
+            "--Xpki-block-creation-keystore-file", "--Xpki-block-creation-keystore-password-file"));
   }
 }

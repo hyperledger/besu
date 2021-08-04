@@ -80,7 +80,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationSupplier;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
@@ -143,7 +143,6 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -290,6 +289,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
+  private final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider;
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -1120,7 +1120,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
   private Boolean isGoQuorumCompatibilityMode = false;
-  private Optional<PkiKeyStoreConfiguration> pkiBlockCreationKeyStoreConfig;
 
   public BesuCommand(
       final Logger logger,
@@ -1143,7 +1142,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new StorageServiceImpl(),
         new SecurityModuleServiceImpl(),
         new PermissioningServiceImpl(),
-        new PrivacyPluginServiceImpl());
+        new PrivacyPluginServiceImpl(),
+        new PkiBlockCreationConfigurationProvider());
   }
 
   @VisibleForTesting
@@ -1159,7 +1159,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
-      final PrivacyPluginServiceImpl privacyPluginPluginService) {
+      final PrivacyPluginServiceImpl privacyPluginPluginService,
+      final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1174,6 +1175,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.privacyPluginPluginService = privacyPluginPluginService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
+    this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
   }
 
   public void parse(
@@ -1448,6 +1450,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNetStatsParams();
     validateDnsOptionsParams();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
+    pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -1621,8 +1624,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     logger.info("Security Module: {}", securityModuleName);
     instantiateSignatureAlgorithmFactory();
 
-    pkiBlockCreationKeyStoreConfig = pkiBlockCreationOptions.asDomainConfig(commandLine);
-    pkiBlockCreationKeyStoreConfig.ifPresent(PkiBlockCreationConfigurationSupplier::load);
+    pkiBlockCreationOptions
+        .asDomainConfig(commandLine)
+        .ifPresent(pkiBlockCreationConfigProvider::load);
   }
 
   private GoQuorumPrivacyParameters configureGoQuorumPrivacy(
