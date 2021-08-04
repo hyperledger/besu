@@ -160,6 +160,22 @@ public class TransactionPoolTest {
   }
 
   @Test
+  public void mainNetValueTransferSucceeds() {
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .value(Wei.ONE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
   public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate() {
     final Transaction localTransaction0 = createTransaction(0);
     transactions.addLocalTransaction(localTransaction0);

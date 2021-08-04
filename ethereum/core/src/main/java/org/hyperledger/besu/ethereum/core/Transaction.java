@@ -620,11 +620,15 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   /**
    * Returns whether or not the transaction is a GoQuorum private transaction. <br>
    * <br>
-   * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38.
+   * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38, and does not contain a
+   * chainId.
    *
    * @return true if GoQuorum private transaction, false otherwise
    */
   public boolean isGoQuorumPrivateTransaction() {
+    if (chainId.isPresent()) {
+      return false;
+    }
     return v.map(
             value ->
                 GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN.equals(value)
