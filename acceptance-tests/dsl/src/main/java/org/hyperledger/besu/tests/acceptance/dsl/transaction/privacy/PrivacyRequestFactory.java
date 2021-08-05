@@ -74,7 +74,7 @@ public class PrivacyRequestFactory {
     return new PrivateTransactionManager(
         getBesuClient(),
         credentials,
-        new PollingPrivateTransactionReceiptProcessor(getBesuClient(), 1000, 15),
+        new PollingPrivateTransactionReceiptProcessor(getBesuClient(), 1000, 20),
         ChainIdLong.NONE,
         privateFrom,
         privateFor,
