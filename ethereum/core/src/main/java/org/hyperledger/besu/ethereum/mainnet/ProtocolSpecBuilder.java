@@ -342,7 +342,7 @@ public class ProtocolSpecBuilder {
               privacyParameters.getPrivateStateStorage(),
               privacyParameters.getPrivateWorldStateArchive(),
               privacyParameters.getPrivateStateRootResolver(),
-              privacyParameters.getPrivateStateGenesis());
+              privacyParameters.getPrivateStateGenesisAllocator());
     }
 
     final BlockValidator blockValidator =

@@ -207,7 +207,7 @@ public class PrivacyParameters {
     return privacyPluginService;
   }
 
-  public PrivateStateGenesisAllocator getPrivateStateGenesis() {
+  public PrivateStateGenesisAllocator getPrivateStateGenesisAllocator() {
     // Note: the order of plugin registration may cause issues here.
     // This is why it's instantiated on get. It's needed in the privacy pre-compile constructors
     // but privacy parameters is built before the plugin has had a chance to register a provider

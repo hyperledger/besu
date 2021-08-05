@@ -68,7 +68,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
-        privacyParameters.getPrivateStateGenesis(),
+        privacyParameters.getPrivateStateGenesisAllocator(),
         name);
   }
 

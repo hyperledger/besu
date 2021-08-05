@@ -65,7 +65,7 @@ public class PrivateStateGenesisAllocator {
           .getAccounts()
           .forEach(
               (genesisAccount) -> {
-                Address address = Address.fromPlugin(genesisAccount.getAddress());
+                final Address address = Address.fromPlugin(genesisAccount.getAddress());
                 if (address.toBigInteger().compareTo(BigInteger.valueOf(Byte.MAX_VALUE)) < 0) {
                   LOG.warn(
                       "Genesis address {} is in reserved range and may be overwritten", address);

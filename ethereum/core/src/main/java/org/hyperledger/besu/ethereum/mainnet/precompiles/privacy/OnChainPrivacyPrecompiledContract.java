@@ -103,7 +103,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
-        privacyParameters.getPrivateStateGenesis());
+        privacyParameters.getPrivateStateGenesisAllocator());
   }
 
   public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {
