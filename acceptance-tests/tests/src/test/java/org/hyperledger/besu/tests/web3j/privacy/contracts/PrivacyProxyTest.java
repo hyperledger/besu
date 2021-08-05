@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
@@ -85,7 +84,6 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
                 .encodeFunctionCall());
   }
 
-  @Ignore("return 0x which causes web3j to throw exception instead of return empty list")
   @Test
   public void deploysWithNoParticipant() throws Exception {
     final List<byte[]> participants = onChainPrivacyGroupManagementProxy.getParticipants().send();

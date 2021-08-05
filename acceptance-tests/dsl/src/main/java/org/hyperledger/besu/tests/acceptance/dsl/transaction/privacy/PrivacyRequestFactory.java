@@ -90,7 +90,7 @@ public class PrivacyRequestFactory {
         getBesuClient(),
         credentials,
         new PollingPrivateTransactionReceiptProcessor(getBesuClient(), 1000, 15),
-        1337,
+        ChainIdLong.NONE,
         privateFrom,
         privacyGroupId,
         restriction);
