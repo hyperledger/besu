@@ -57,8 +57,11 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFa
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -70,17 +73,23 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -91,6 +100,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterables;
@@ -99,6 +109,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class TestContextBuilder {
 
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private boolean useValidatorContract;
 
   private static class ControllerAndState {
 
@@ -107,18 +118,21 @@ public class TestContextBuilder {
     private final BftFinalState finalState;
     private final EventMultiplexer eventMultiplexer;
     private final MessageFactory messageFactory;
+    private final ValidatorProvider validatorProvider;
 
     public ControllerAndState(
         final BftExecutors bftExecutors,
         final BftEventHandler eventHandler,
         final BftFinalState finalState,
         final EventMultiplexer eventMultiplexer,
-        final MessageFactory messageFactory) {
+        final MessageFactory messageFactory,
+        final ValidatorProvider validatorProvider) {
       this.bftExecutors = bftExecutors;
       this.eventHandler = eventHandler;
       this.finalState = finalState;
       this.eventMultiplexer = eventMultiplexer;
       this.messageFactory = messageFactory;
+      this.validatorProvider = validatorProvider;
     }
 
     public BftExecutors getBftExecutors() {
@@ -140,6 +154,10 @@ public class TestContextBuilder {
     public MessageFactory getMessageFactory() {
       return messageFactory;
     }
+
+    public ValidatorProvider getValidatorProvider() {
+      return validatorProvider;
+    }
   }
 
   public static final int EPOCH_LENGTH = 10_000;
@@ -150,6 +168,8 @@ public class TestContextBuilder {
   public static final int DUPLICATE_MESSAGE_LIMIT = 100;
   public static final int FUTURE_MESSAGES_MAX_DISTANCE = 10;
   public static final int FUTURE_MESSAGES_LIMIT = 1000;
+  public static final Address VALIDATOR_CONTRACT_ADDRESS =
+      Address.fromHexString("0x0000000000000000000000000000000000008888");
   private static final BftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new QbftExtraDataCodec();
 
   private Clock clock = Clock.fixed(Instant.MIN, ZoneId.of("UTC"));
@@ -157,6 +177,8 @@ public class TestContextBuilder {
   private int validatorCount = 4;
   private int indexOfFirstLocallyProposedBlock = 0; // Meaning first block is from remote peer.
   private boolean useGossip = false;
+  private Optional<String> genesisFile = Optional.empty();
+  private List<NodeParams> nodeParams = Collections.emptyList();
 
   public TestContextBuilder clock(final Clock clock) {
     this.clock = clock;
@@ -179,19 +201,61 @@ public class TestContextBuilder {
     return this;
   }
 
+  public TestContextBuilder nodeParams(final List<NodeParams> nodeParams) {
+    this.nodeParams = nodeParams;
+    return this;
+  }
+
   public TestContextBuilder useGossip(final boolean useGossip) {
     this.useGossip = useGossip;
     return this;
   }
 
-  public TestContext build() {
-    final NetworkLayout networkNodes =
-        NetworkLayout.createNetworkLayout(validatorCount, indexOfFirstLocallyProposedBlock);
+  public TestContextBuilder genesisFile(final String genesisFile) {
+    this.genesisFile = Optional.of(genesisFile);
+    return this;
+  }
 
-    final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
-    final MutableBlockchain blockChain =
-        createInMemoryBlockchain(
-            genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(BFT_EXTRA_DATA_ENCODER));
+  public TestContextBuilder useValidatorContract(final boolean useValidatorContract) {
+    this.useValidatorContract = useValidatorContract;
+    return this;
+  }
+
+  public TestContext build() {
+    final NetworkLayout networkNodes;
+    if (nodeParams.isEmpty()) {
+      networkNodes =
+          NetworkLayout.createNetworkLayout(validatorCount, indexOfFirstLocallyProposedBlock);
+    } else {
+      final TreeMap<Address, NodeParams> addressKeyMap = new TreeMap<>();
+      for (NodeParams params : nodeParams) {
+        addressKeyMap.put(params.getAddress(), params);
+      }
+      final NodeParams localNode =
+          Iterables.get(addressKeyMap.values(), indexOfFirstLocallyProposedBlock);
+      networkNodes = new NetworkLayout(localNode, addressKeyMap);
+    }
+
+    final MutableBlockchain blockChain;
+    final DefaultWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+
+    if (genesisFile.isPresent()) {
+      try {
+        final GenesisState genesisState = createGenesisBlock(genesisFile.get());
+        blockChain =
+            createInMemoryBlockchain(
+                genesisState.getBlock(),
+                BftBlockHeaderFunctions.forOnChainBlock(BFT_EXTRA_DATA_ENCODER));
+        genesisState.writeStateTo(worldStateArchive.getMutable());
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
+    } else {
+      final Block genesisBlock = createGenesisBlock(networkNodes.getValidatorAddresses());
+      blockChain =
+          createInMemoryBlockchain(
+              genesisBlock, BftBlockHeaderFunctions.forOnChainBlock(BFT_EXTRA_DATA_ENCODER));
+    }
 
     // Use a stubbed version of the multicaster, to prevent creating PeerConnections etc.
     final StubValidatorMulticaster multicaster = new StubValidatorMulticaster();
@@ -205,12 +269,14 @@ public class TestContextBuilder {
     final ControllerAndState controllerAndState =
         createControllerAndFinalState(
             blockChain,
+            worldStateArchive,
             multicaster,
             networkNodes.getLocalNode().getNodeKey(),
             clock,
             bftEventQueue,
             gossiper,
-            synchronizerUpdater);
+            synchronizerUpdater,
+            useValidatorContract);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
     // NOTE: the remotePeers needs to be ordered based on Address (as this is used to determine
@@ -242,6 +308,7 @@ public class TestContextBuilder {
         controllerAndState.getFinalState(),
         controllerAndState.getEventMultiplexer(),
         controllerAndState.getMessageFactory(),
+        controllerAndState.getValidatorProvider(),
         BFT_EXTRA_DATA_ENCODER);
   }
 
@@ -272,16 +339,21 @@ public class TestContextBuilder {
         genesisHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
   }
 
+  private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
+    final String json = Files.readString(Path.of(genesisFile));
+    return GenesisState.fromJson(json, ProtocolScheduleFixture.MAINNET);
+  }
+
   private static ControllerAndState createControllerAndFinalState(
       final MutableBlockchain blockChain,
+      final WorldStateArchive worldStateArchive,
       final StubValidatorMulticaster multicaster,
       final NodeKey nodeKey,
       final Clock clock,
       final BftEventQueue bftEventQueue,
       final Gossiper gossiper,
-      final SynchronizerUpdater synchronizerUpdater) {
-
-    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
+      final SynchronizerUpdater synchronizerUpdater,
+      final boolean useValidatorContract) {
 
     final MiningParameters miningParams =
         new MiningParameters.Builder()
@@ -306,9 +378,18 @@ public class TestContextBuilder {
 
     final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
-    final ValidatorProvider validatorProvider =
-        BlockValidatorProvider.nonForkingValidatorProvider(
-            blockChain, epochManager, blockInterface);
+    final ValidatorProvider validatorProvider;
+    if (useValidatorContract) {
+      final TransactionSimulator transactionSimulator =
+          new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
+      final ValidatorContractController validatorContractController =
+          new ValidatorContractController(VALIDATOR_CONTRACT_ADDRESS, transactionSimulator);
+      validatorProvider = new TransactionValidatorProvider(blockChain, validatorContractController);
+    } else {
+      validatorProvider =
+          BlockValidatorProvider.nonForkingValidatorProvider(
+              blockChain, epochManager, blockInterface);
+    }
 
     final ProtocolContext protocolContext =
         new ProtocolContext(
@@ -394,6 +475,11 @@ public class TestContextBuilder {
     //////////////////////////// END IBFT BesuController ////////////////////////////
 
     return new ControllerAndState(
-        bftExecutors, qbftController, finalState, eventMultiplexer, messageFactory);
+        bftExecutors,
+        qbftController,
+        finalState,
+        eventMultiplexer,
+        messageFactory,
+        validatorProvider);
   }
 }

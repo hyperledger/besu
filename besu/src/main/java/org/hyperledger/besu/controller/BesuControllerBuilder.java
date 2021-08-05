@@ -253,7 +253,11 @@ public abstract class BesuControllerBuilder {
         createWorldStateArchive(worldStateStorage, blockchain);
     final ProtocolContext protocolContext =
         ProtocolContext.init(
-            blockchain, worldStateArchive, genesisState, this::createConsensusContext);
+            blockchain,
+            worldStateArchive,
+            genesisState,
+            protocolSchedule,
+            this::createConsensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -408,7 +412,9 @@ public abstract class BesuControllerBuilder {
   protected void validateContext(final ProtocolContext context) {}
 
   protected abstract Object createConsensusContext(
-      Blockchain blockchain, WorldStateArchive worldStateArchive);
+      Blockchain blockchain,
+      WorldStateArchive worldStateArchive,
+      ProtocolSchedule protocolSchedule);
 
   protected String getSupportedProtocol() {
     return EthProtocol.NAME;
