@@ -49,7 +49,7 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
 
   private static final String RAW_GET_PARTICIPANTS = "0x5aa68ac0";
   private static final String RAW_ADD_PARTICIPANT =
-      "0xb4926e2500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000";
+      "0xb4926e2500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001f772b2ee55f016431cefe724a05814324bb96e9afdb73e338665a693d4653678";
 
   private BesuNode minerNode;
   private DefaultOnChainPrivacyGroupManagementContract defaultOnChainPrivacyGroupManagementContract;
@@ -77,10 +77,11 @@ public class PrivacyProxyTest extends AcceptanceTestBase {
         .verify(onChainPrivacyGroupManagementProxy);
     assertThat(RAW_GET_PARTICIPANTS)
         .isEqualTo(onChainPrivacyGroupManagementProxy.getParticipants().encodeFunctionCall());
+
     assertThat(RAW_ADD_PARTICIPANT)
         .isEqualTo(
             onChainPrivacyGroupManagementProxy
-                .addParticipants(Collections.emptyList())
+                .addParticipants(List.of(firstParticipant.raw()))
                 .encodeFunctionCall());
   }
 
