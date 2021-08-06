@@ -103,7 +103,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Provides EVMs supporting the appropriate operations for mainnet hard forks. */
-abstract class MainnetEvmRegistries {
+public abstract class MainnetEvmRegistries {
 
   static EVM frontier(final GasCalculator gasCalculator) {
     final OperationRegistry registry = new OperationRegistry();
@@ -145,7 +145,7 @@ abstract class MainnetEvmRegistries {
     return new EVM(registry, gasCalculator);
   }
 
-  static EVM london(final GasCalculator gasCalculator, final BigInteger chainId) {
+  public static EVM london(final GasCalculator gasCalculator, final BigInteger chainId) {
     final OperationRegistry registry = new OperationRegistry();
 
     registerLondonOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);

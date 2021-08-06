@@ -29,7 +29,7 @@ public class LondonGasCalculator extends BerlinGasCalculator {
   // redefinitions for EIP-3529
   private static final int NEW_MAX_REFUND_QUOTIENT = 5;
 
-  protected LondonGasCalculator() {}
+  public LondonGasCalculator() {}
 
   // Redefined refund amount from EIP-3529
   @Override

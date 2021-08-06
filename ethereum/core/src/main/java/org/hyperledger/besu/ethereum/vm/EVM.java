@@ -143,4 +143,9 @@ public class EVM {
       return operation;
     }
   }
+
+  public OperationRegistry getOperations() {
+    return operations;
+  }
+
 }

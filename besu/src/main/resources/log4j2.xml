@@ -7,13 +7,22 @@
 
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout alwaysWriteExceptions="false" pattern='{"timestamp":"%d{ISO8601}","level":"%level","thread":"%t","class":"%c{1}","message":"%msg","throwable":"%enc{%throwable}{JSON}"}%n'/>
+            <PatternLayout alwaysWriteExceptions="false" pattern='%d{ISO8601}-%level-%t-%c{1}: %msg %enc{%throwable}{JSON}%n'/>
         </Console>
+        <RollingFile name="LogToRollingFile" fileName="besu.log"
+                     filePattern="besu.%i.log.gz">
+            <PatternLayout alwaysWriteExceptions="false" pattern='{"timestamp":"%d{ISO8601}","level":"%level","thread":"%t","class":"%c{1}","message":"%msg","throwable":"%enc{%throwable}{JSON}"}%n'/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 KB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
     </Appenders>
 
     <Loggers>
         <Root level="${sys:root.log.level}">
             <AppenderRef ref="Console" />
+            <AppenderRef ref="LogToRollingFile"/>
         </Root>
     </Loggers>
 

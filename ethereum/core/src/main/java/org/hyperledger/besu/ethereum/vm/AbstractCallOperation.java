@@ -19,10 +19,13 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A skeleton class for implementing call operations.
@@ -35,6 +38,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+
+  private final Map<Account, Code>  codeCache = new HashMap<Account,Code>();
 
   protected AbstractCallOperation(
       final int opcode,
@@ -201,7 +206,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
               .sender(sender(frame))
               .value(value(frame))
               .apparentValue(apparentValue(frame))
-              .code(new Code(contract != null ? contract.getCode() : Bytes.EMPTY))
+              .code(codeForContract(contract))
               .blockHeader(frame.getBlockHeader())
               .depth(frame.getMessageStackDepth() + 1)
               .isStatic(isStatic(frame))
@@ -217,6 +222,26 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.setState(MessageFrame.State.CODE_SUSPENDED);
     }
     return new OperationResult(optionalCost, Optional.empty());
+  }
+
+  @NotNull
+  public Code codeForContract(final Account contract) {
+    if(this.codeCache.containsKey(contract)) {
+      return loadFromCache(contract);
+    } else {
+      return createAndCache(contract);
+    }
+  }
+
+  @NotNull
+  public Code createAndCache(final Account contract) {
+    Code unseen = new Code(contract.getCode());
+    this.codeCache.put(contract, unseen);
+    return unseen;
+  }
+
+  public Code loadFromCache(final Account contract) {
+    return this.codeCache.get(contract);
   }
 
   protected abstract Gas cost(final MessageFrame frame);
