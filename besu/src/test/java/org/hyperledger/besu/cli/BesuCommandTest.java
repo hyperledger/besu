@@ -100,6 +100,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
@@ -111,7 +112,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 
 public class BesuCommandTest extends CommandTestAbstract {
