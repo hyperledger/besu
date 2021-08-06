@@ -75,7 +75,6 @@ import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
-import org.hyperledger.besu.config.FeeMarketConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
@@ -1181,7 +1180,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .setCaseInsensitiveEnumValuesAllowed(true);
 
     handleStableOptions();
-    enableFeeMarketOptions();
     addSubCommands(resultHandler, in);
     registerConverters();
     handleUnstableOptions();
@@ -1226,10 +1224,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
-  }
-
-  private void enableFeeMarketOptions() {
-    commandLine.addMixin("feeMarketConfigs", FeeMarketConfigOptions.class);
   }
 
   private void addSubCommands(

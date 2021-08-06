@@ -148,8 +148,6 @@ public class GenesisConfigFileTest {
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0},\"baseFeePerGas\":\"0xa\"}");
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isPresent();
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas().get()).isEqualTo(10L);
-    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas()).isPresent();
-    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas().get()).isEqualTo(10L);
   }
 
   @Test
@@ -157,15 +155,11 @@ public class GenesisConfigFileTest {
     GenesisConfigFile withBaseFeeAtGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":0}}");
     assertThat(withBaseFeeAtGenesis.getBaseFeePerGas()).isNotPresent();
-    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas()).isPresent();
-    assertThat(withBaseFeeAtGenesis.getGenesisBaseFeePerGas().get())
-        .isEqualTo(FeeMarketConfigOptions.FEE_MARKET_BASEFEE_INITIAL_VALUE);
   }
 
   @Test
   public void shouldNotGetBaseFeeAtGenesis() {
     assertThat(EMPTY_CONFIG.getBaseFeePerGas()).isNotPresent();
-    assertThat(EMPTY_CONFIG.getGenesisBaseFeePerGas()).isNotPresent();
   }
 
   @Test

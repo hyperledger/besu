@@ -127,11 +127,6 @@ public class GenesisConfigFile {
         .map(baseFeeStr -> parseLong("baseFeePerGas", baseFeeStr));
   }
 
-  public Optional<Long> getGenesisBaseFeePerGas() {
-    return Optional.of(getBaseFeePerGas().orElse(FeeMarketConfigOptions.initialBasefee))
-        .filter(z -> 0L == getConfigOptions().getEIP1559BlockNumber().orElse(-1L));
-  }
-
   public String getMixHash() {
     return JsonUtil.getString(configRoot, "mixhash", "");
   }

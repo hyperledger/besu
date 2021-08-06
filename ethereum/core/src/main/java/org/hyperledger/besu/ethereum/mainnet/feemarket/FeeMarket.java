@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.config.FeeMarketConfigOptions;
-
 public interface FeeMarket {
 
   long getBasefeeMaxChangeDenominator();
@@ -25,6 +23,6 @@ public interface FeeMarket {
   long getSlackCoefficient();
 
   static FeeMarket london() {
-    return new LondonFeeMarket(FeeMarketConfigOptions.initialBasefee);
+    return new LondonFeeMarket();
   }
 }

@@ -12,16 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config;
+package org.hyperledger.besu.ethereum.core.fees;
 
-import picocli.CommandLine;
+public class FeeMarketException extends Exception {
 
-public class FeeMarketConfigOptions {
-  public static final long FEE_MARKET_BASEFEE_INITIAL_VALUE = 1000000000L;
+  public static FeeMarketException MissingBaseFeeFromBlockHeader() {
+    return new FeeMarketException("Invalid block header: basefee should be specified");
+  }
 
-  @CommandLine.Option(
-      hidden = true,
-      names = {"--fee-market-initial-base-fee"},
-      arity = "1")
-  public static Long initialBasefee = FEE_MARKET_BASEFEE_INITIAL_VALUE;
+  public static FeeMarketException BaseFeePresentBeforeForkBlock() {
+    return new FeeMarketException(
+        "Invalid block header: basefee should not be present before fee market fork block");
+  }
+
+  private FeeMarketException(final String reason) {
+    super(reason);
+  }
 }
