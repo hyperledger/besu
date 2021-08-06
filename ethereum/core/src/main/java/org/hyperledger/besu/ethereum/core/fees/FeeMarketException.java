@@ -12,21 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config.experimental;
+package org.hyperledger.besu.ethereum.core.fees;
 
-import picocli.CommandLine.Option;
+public class FeeMarketException extends Exception {
 
-/**
- * Flags defined in this class must be used with caution, and strictly reserved to experimental
- * EIPs.
- */
-public class ExperimentalEIPs {
-  // To make it easier for tests to reset the value to default
-  public static final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
+  public static FeeMarketException MissingBaseFeeFromBlockHeader() {
+    return new FeeMarketException("Invalid block header: basefee should be specified");
+  }
 
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-initial-base-fee"},
-      arity = "1")
-  public static Long initialBasefee = EIP1559_BASEFEE_DEFAULT_VALUE;
+  public static FeeMarketException BaseFeePresentBeforeForkBlock() {
+    return new FeeMarketException(
+        "Invalid block header: basefee should not be present before fee market fork block");
+  }
+
+  private FeeMarketException(final String reason) {
+    super(reason);
+  }
 }

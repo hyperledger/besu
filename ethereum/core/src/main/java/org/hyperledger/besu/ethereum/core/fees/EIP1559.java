@@ -29,10 +29,11 @@ public class EIP1559 {
 
   private final long initialForkBlknum;
 
-  private final FeeMarket feeMarket = FeeMarket.london();
+  private final FeeMarket feeMarket;
 
   public EIP1559(final long forkBlockNumber) {
-    initialForkBlknum = forkBlockNumber;
+    this.initialForkBlknum = forkBlockNumber;
+    this.feeMarket = FeeMarket.london();
   }
 
   public long computeBaseFee(

@@ -25,7 +25,7 @@ public interface ProtocolSchedule {
 
   ProtocolSpec getByBlockNumber(long number);
 
-  public Stream<Long> streamMilestoneBlocks();
+  Stream<Long> streamMilestoneBlocks();
 
   Optional<BigInteger> getChainId();
 

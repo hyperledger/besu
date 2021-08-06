@@ -78,7 +78,6 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
@@ -1181,7 +1180,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .setCaseInsensitiveEnumValuesAllowed(true);
 
     handleStableOptions();
-    enableExperimentalEIPs();
     addSubCommands(resultHandler, in);
     registerConverters();
     handleUnstableOptions();
@@ -1226,11 +1224,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
-  }
-
-  private void enableExperimentalEIPs() {
-    // Usage of static command line flags is strictly reserved for experimental EIPs
-    commandLine.addMixin("experimentalEIPs", ExperimentalEIPs.class);
   }
 
   private void addSubCommands(

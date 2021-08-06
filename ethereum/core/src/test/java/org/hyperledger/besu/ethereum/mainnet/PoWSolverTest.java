@@ -327,8 +327,8 @@ public class PoWSolverTest {
     Thread.sleep(200);
     assertThat(solver.submitSolution(expectedSecondOutput)).isTrue();
 
-    PoWSolution result1 = soln1.get(1, TimeUnit.SECONDS);
-    PoWSolution result2 = soln2.get(1, TimeUnit.SECONDS);
+    PoWSolution result1 = soln1.get(3, TimeUnit.SECONDS);
+    PoWSolution result2 = soln2.get(3, TimeUnit.SECONDS);
 
     assertThat(result1.getMixHash()).isEqualTo(expectedFirstOutput.getMixHash());
     assertThat(result2.getMixHash()).isEqualTo(expectedSecondOutput.getMixHash());
