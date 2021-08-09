@@ -14,16 +14,26 @@
  */
 package org.hyperledger.besu.consensus.qbft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftContext;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
+import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.pki.cms.CmsValidator;
+import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
+import java.security.cert.CertStore;
+import java.security.cert.CollectionCertStoreParameters;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -74,6 +84,11 @@ public class ProposalPayloadValidator {
       return false;
     }
 
+    // Validate the CMS in the extraData (only for PKI-mode)
+    if (!validateCms(block)) {
+      return false;
+    }
+
     return true;
   }
 
@@ -85,6 +100,53 @@ public class ProposalPayloadValidator {
     if (validationResult.isEmpty()) {
       LOG.info("{}: block did not pass validation.", ERROR_PREFIX);
       return false;
+    }
+
+    return true;
+  }
+
+  /*
+    Validate CMS in block header (only for PKI-mode)
+  */
+  private boolean validateCms(final Block block) {
+    final PkiQbftContext pkiQbftContext = protocolContext.getConsensusState(PkiQbftContext.class);
+
+    final BftExtraData extraData =
+        pkiQbftContext.getBlockInterface().getExtraData(block.getHeader());
+    final PkiQbftExtraData pkiExtraData = (PkiQbftExtraData) extraData;
+    final KeyStoreWrapper trustStore =
+        pkiQbftContext.getPkiBlockCreationConfiguration().getTrustStore();
+
+    if (pkiExtraData.getCms().isPresent()) {
+      // TODO-lucas Do we need to do this or could I just use 'block.getHeader().getHash()'
+      final Hash proposedBlockHash =
+          BftBlockHeaderFunctions.forOnChainBlock(new PkiQbftExtraDataCodec())
+              .hash(block.getHeader());
+
+      LOG.info(">>> Validating CMS for block {}", proposedBlockHash);
+
+      CertStore crlCertStore = null;
+      if (trustStore.getCRLs() != null) {
+        try {
+          crlCertStore =
+              CertStore.getInstance(
+                  "Collection", new CollectionCertStoreParameters(trustStore.getCRLs()));
+        } catch (final Exception e) {
+          throw new RuntimeException("Error reading PKI Block Creation TrustStore CRL file", e);
+        }
+      }
+
+      final CmsValidator cmsValidator = new CmsValidator(trustStore, crlCertStore);
+
+      if (!cmsValidator.validate(pkiExtraData.getCms().get(), proposedBlockHash)) {
+        LOG.info(">>> CMS Validation INVALID for block {}", proposedBlockHash);
+        return false;
+      } else {
+        LOG.info(">>> CMS Validation VALID for block {}", proposedBlockHash);
+        return true;
+      }
+    } else {
+      LOG.info(">>> Skipping CMS Validation for block {}", block.getHeader().getHash());
     }
 
     return true;
