@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-import static org.hyperledger.besu.ethereum.core.fees.LondonFeeMarketException.MissingBaseFeeFromBlockHeader;
+import static org.hyperledger.besu.ethereum.core.fees.FeeMarketException.MissingBaseFeeFromBlockHeader;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.LondonFeeMarketException;
+import org.hyperledger.besu.ethereum.core.fees.FeeMarketException;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import org.apache.logging.log4j.LogManager;
@@ -38,7 +38,7 @@ public class LondonFeeMarketBlockHeaderGasPriceValidationRule
     try {
       if (!eip1559.isEIP1559(header.getNumber())) {
         if (header.getBaseFee().isPresent()) {
-          throw LondonFeeMarketException.BaseFeePresentBeforeForkBlock();
+          throw FeeMarketException.BaseFeePresentBeforeForkBlock();
         }
         return true;
       }
@@ -64,7 +64,7 @@ public class LondonFeeMarketBlockHeaderGasPriceValidationRule
       }
 
       return true;
-    } catch (final LondonFeeMarketException e) {
+    } catch (final FeeMarketException e) {
       LOG.info("Invalid block header: " + e.getMessage());
       return false;
     }

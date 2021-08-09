@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
@@ -68,6 +69,7 @@ public class ProtocolSpecBuilder {
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
   private TransactionPriceCalculator transactionPriceCalculator =
       TransactionPriceCalculator.frontier();
+  private Optional<FeeMarket> feeMarket = Optional.empty();
   private Optional<EIP1559> eip1559 = Optional.empty();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -221,6 +223,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder feeMarket(final Optional<FeeMarket> feeMarket) {
+    this.feeMarket = feeMarket;
+    return this;
+  }
+
   public ProtocolSpecBuilder eip1559(final Optional<EIP1559> eip1559) {
     this.eip1559 = eip1559;
     return this;
@@ -260,6 +267,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(transactionPriceCalculator, "Missing transaction price calculator");
+    checkNotNull(feeMarket, "Missing fee market optional wrapper");
     checkNotNull(eip1559, "Missing eip1559 optional wrapper");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
 
@@ -365,6 +373,7 @@ public class ProtocolSpecBuilder {
         skipZeroBlockRewards,
         gasCalculator,
         transactionPriceCalculator,
+        feeMarket,
         eip1559,
         badBlockManager,
         Optional.ofNullable(powHasher));
