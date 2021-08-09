@@ -19,22 +19,21 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
 public class PkiQbftContext extends BftContext {
 
-  private final KeyStoreWrapper keyStoreWrapper;
+  private final PkiBlockCreationConfiguration pkiBlockCreationConfiguration;
 
   public PkiQbftContext(
       final ValidatorProvider validatorProvider,
       final EpochManager epochManager,
       final BftBlockInterface blockInterface,
-      final KeyStoreWrapper keyStoreWrapper) {
+      final PkiBlockCreationConfiguration pkiBlockCreationConfiguration) {
     super(validatorProvider, epochManager, blockInterface);
-    this.keyStoreWrapper = keyStoreWrapper;
+    this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
   }
 
-  public KeyStoreWrapper getKeyStoreWrapper() {
-    return keyStoreWrapper;
+  public PkiBlockCreationConfiguration getPkiBlockCreationConfiguration() {
+    return pkiBlockCreationConfiguration;
   }
 }

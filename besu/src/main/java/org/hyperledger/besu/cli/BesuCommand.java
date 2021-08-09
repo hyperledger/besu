@@ -79,6 +79,7 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -1622,10 +1623,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     logger.info("Security Module: {}", securityModuleName);
     instantiateSignatureAlgorithmFactory();
-
-    pkiBlockCreationOptions
-        .asDomainConfig(commandLine)
-        .ifPresent(pkiBlockCreationConfigProvider::load);
   }
 
   private GoQuorumPrivacyParameters configureGoQuorumPrivacy(
@@ -1724,6 +1721,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters(storageProvider))
+        .pkiBlockCreationConfiguration(maybePkiBlockCreationConfiguration())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
         .storageProvider(storageProvider)
@@ -2280,6 +2278,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               .build();
     }
     return this.keyValueStorageProvider;
+  }
+
+  private Optional<PkiBlockCreationConfiguration> maybePkiBlockCreationConfiguration() {
+    return pkiBlockCreationOptions
+        .asDomainConfig(commandLine)
+        .map(pkiBlockCreationConfigProvider::load);
   }
 
   private SynchronizerConfiguration buildSyncConfig() {

@@ -31,23 +31,19 @@ public class PkiBlockCreationConfigurationProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final PkiKeyStoreConfiguration pkiKeyStoreConfiguration;
   private final KeyStoreWrapperProvider keyStoreWrapperProvider;
 
-  public PkiBlockCreationConfigurationProvider(
-      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration) {
-    this(pkiKeyStoreConfiguration, SoftwareKeyStoreWrapper::new);
+  public PkiBlockCreationConfigurationProvider() {
+    this(SoftwareKeyStoreWrapper::new);
   }
 
   @VisibleForTesting
-  PkiBlockCreationConfigurationProvider(
-      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration,
-      final KeyStoreWrapperProvider keyStoreWrapperProvider) {
-    this.pkiKeyStoreConfiguration = checkNotNull(pkiKeyStoreConfiguration);
+  PkiBlockCreationConfigurationProvider(final KeyStoreWrapperProvider keyStoreWrapperProvider) {
     this.keyStoreWrapperProvider = checkNotNull(keyStoreWrapperProvider);
   }
 
-  public PkiBlockCreationConfiguration load() {
+  public PkiBlockCreationConfiguration load(
+      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration) {
     KeyStoreWrapper keyStore;
     try {
       keyStore =

@@ -37,6 +37,7 @@ import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -159,6 +160,7 @@ public abstract class CommandTestAbstract {
   protected Logger mockLogger;
 
   @Mock protected PkiBlockCreationConfigurationProvider mockPkiBlockCreationConfigProvider;
+  @Mock protected PkiBlockCreationConfiguration mockPkiBlockCreationConfiguration;
 
   @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
@@ -293,7 +295,7 @@ public abstract class CommandTestAbstract {
         .thenReturn(Optional.of(storageService));
 
     lenient()
-        .doNothing()
+        .doReturn(mockPkiBlockCreationConfiguration)
         .when(mockPkiBlockCreationConfigProvider)
         .load(pkiKeyStoreConfigurationArgumentCaptor.capture());
   }
