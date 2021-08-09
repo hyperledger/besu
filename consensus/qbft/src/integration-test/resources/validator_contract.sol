@@ -12,17 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet.feemarket;
+pragma solidity >= 0.5.3;
 
-public interface FeeMarket {
+contract Validators {
+    address[] validators;
 
-  long getBasefeeMaxChangeDenominator();
+    constructor() {}
 
-  long getInitialBasefee();
+    function getValidators() public view returns (address[] memory) {
+        return validators;
+    }
 
-  long getSlackCoefficient();
-
-  static FeeMarket london() {
-    return new LondonFeeMarket();
-  }
 }

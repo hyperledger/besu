@@ -24,9 +24,6 @@ import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class BlockValidatorProvider implements ValidatorProvider {
@@ -39,32 +36,34 @@ public class BlockValidatorProvider implements ValidatorProvider {
       final Blockchain blockchain,
       final EpochManager epochManager,
       final BlockInterface blockInterface,
-      final Map<Long, List<Address>> validatorForkMap) {
-    return new BlockValidatorProvider(blockchain, epochManager, blockInterface, validatorForkMap);
+      final BftValidatorOverrides bftValidatorOverrides) {
+    return new BlockValidatorProvider(
+        blockchain, epochManager, blockInterface, Optional.of(bftValidatorOverrides));
   }
 
   public static ValidatorProvider nonForkingValidatorProvider(
       final Blockchain blockchain,
       final EpochManager epochManager,
       final BlockInterface blockInterface) {
-    return new BlockValidatorProvider(
-        blockchain, epochManager, blockInterface, Collections.emptyMap());
+    return new BlockValidatorProvider(blockchain, epochManager, blockInterface, Optional.empty());
   }
 
   private BlockValidatorProvider(
       final Blockchain blockchain,
       final EpochManager epochManager,
       final BlockInterface blockInterface,
-      final Map<Long, List<Address>> validatorForkMap) {
+      final Optional<BftValidatorOverrides> bftValidatorOverrides) {
     final VoteTallyUpdater voteTallyUpdater = new VoteTallyUpdater(epochManager, blockInterface);
     final VoteProposer voteProposer = new VoteProposer();
     this.voteTallyCache =
-        new ForkingVoteTallyCache(
-            blockchain,
-            voteTallyUpdater,
-            epochManager,
-            blockInterface,
-            new BftValidatorOverrides(validatorForkMap));
+        bftValidatorOverrides.isPresent()
+            ? new ForkingVoteTallyCache(
+                blockchain,
+                voteTallyUpdater,
+                epochManager,
+                blockInterface,
+                bftValidatorOverrides.get())
+            : new VoteTallyCache(blockchain, voteTallyUpdater, epochManager, blockInterface);
     this.voteProvider = new BlockVoteProvider(voteTallyCache, voteProposer);
     this.blockInterface = blockInterface;
   }

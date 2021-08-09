@@ -1,6 +1,6 @@
 # Changelog
 
-## 21.7.2
+## 21.7.3
 ### Additions and Improvements
 - Migration to Apache Tuweni 2.0 [\#2376](https://github.com/hyperledger/besu/pull/2376)
 - \[EXPERIMENTAL\] Added support for DevP2P-over-TLS [#2536](https://github.com/hyperledger/besu/pull/2536)
@@ -14,6 +14,19 @@
 - Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
 
 ### Early Access Features
+
+## 21.7.2
+
+### Additions and Improvements
+This release contains improvements and bugfixes for optimum compatibility with other London client versions.
+
+## Bug Fixes
+- hotfix for private transaction identification for mainnet transactions [#2609](https://github.com/hyperledger/besu/pull/2609)
+
+## Download Link
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/21.7.2/besu-21.7.2.zip \
+db47fd9ba33b36436ed6798d2474f7621c733353fd04f49d6defffd12e3b6e14
+
 
 ## 21.7.1
 

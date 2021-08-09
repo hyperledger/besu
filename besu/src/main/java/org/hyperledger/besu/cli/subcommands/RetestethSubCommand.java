@@ -19,7 +19,6 @@ import static org.hyperledger.besu.cli.subcommands.RetestethSubCommand.COMMAND_N
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethService;
@@ -32,7 +31,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(
@@ -52,8 +50,6 @@ public class RetestethSubCommand implements Runnable {
    * "Besu."
    */
   public static final int RETESTETH_PORT = 47710;
-
-  @Mixin private final ExperimentalEIPs experimentalEIPs = new ExperimentalEIPs();
 
   @Option(
       names = {"--data-path"},

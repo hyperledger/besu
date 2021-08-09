@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
@@ -26,7 +25,6 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
-import java.util.Optional;
 
 public class TransactionPoolFactory {
 
@@ -38,8 +36,7 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState,
       final Wei minTransactionGasPrice,
-      final TransactionPoolConfiguration transactionPoolConfiguration,
-      final Optional<EIP1559> eip1559) {
+      final TransactionPoolConfiguration transactionPoolConfiguration) {
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -72,8 +69,7 @@ public class TransactionPoolFactory {
         transactionTracker,
         transactionsMessageSender,
         pendingTransactionTracker,
-        pendingTransactionsMessageSender,
-        eip1559);
+        pendingTransactionsMessageSender);
   }
 
   static TransactionPool createTransactionPool(
@@ -88,8 +84,7 @@ public class TransactionPoolFactory {
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final PeerPendingTransactionTracker pendingTransactionTracker,
-      final PendingTransactionsMessageSender pendingTransactionsMessageSender,
-      final Optional<EIP1559> eip1559) {
+      final PendingTransactionsMessageSender pendingTransactionsMessageSender) {
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
@@ -104,7 +99,6 @@ public class TransactionPoolFactory {
             pendingTransactionTracker,
             minTransactionGasPrice,
             metricsSystem,
-            eip1559,
             transactionPoolConfiguration);
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
