@@ -58,11 +58,10 @@ public class PkiBlockCreationConfigurationProviderTest {
             .build();
 
     final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider =
-        new PkiBlockCreationConfigurationProvider(
-            pkiKeyStoreConfiguration, keyStoreWrapperProvider);
+        new PkiBlockCreationConfigurationProvider(keyStoreWrapperProvider);
 
     final PkiBlockCreationConfiguration pkiBlockCreationConfiguration =
-        pkiBlockCreationConfigProvider.load();
+        pkiBlockCreationConfigProvider.load(pkiKeyStoreConfiguration);
 
     assertThat(pkiBlockCreationConfiguration).isNotNull();
     assertThat(pkiBlockCreationConfiguration.getKeyStore()).isNotNull();
