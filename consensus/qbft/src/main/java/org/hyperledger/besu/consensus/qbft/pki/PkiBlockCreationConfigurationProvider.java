@@ -15,12 +15,13 @@
 
 package org.hyperledger.besu.consensus.qbft.pki;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.pki.keystore.SoftwareKeyStoreWrapper;
 
 import java.nio.file.Path;
-import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
@@ -30,32 +31,32 @@ public class PkiBlockCreationConfigurationProvider {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static PkiBlockCreationConfiguration pkiBlockCreationConfig;
-
+  private final PkiKeyStoreConfiguration pkiKeyStoreConfiguration;
   private final KeyStoreWrapperProvider keyStoreWrapperProvider;
 
-  public PkiBlockCreationConfigurationProvider() {
-    this(SoftwareKeyStoreWrapper::new);
+  public PkiBlockCreationConfigurationProvider(
+      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration) {
+    this(pkiKeyStoreConfiguration, SoftwareKeyStoreWrapper::new);
   }
 
   @VisibleForTesting
-  PkiBlockCreationConfigurationProvider(final KeyStoreWrapperProvider keyStoreWrapperProvider) {
-    this.keyStoreWrapperProvider = keyStoreWrapperProvider;
+  PkiBlockCreationConfigurationProvider(
+      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration,
+      final KeyStoreWrapperProvider keyStoreWrapperProvider) {
+    this.pkiKeyStoreConfiguration = checkNotNull(pkiKeyStoreConfiguration);
+    this.keyStoreWrapperProvider = checkNotNull(keyStoreWrapperProvider);
   }
 
-  /*
-   This method is only called once during the application startup.
-  */
-  public void load(final PkiKeyStoreConfiguration configuration) {
+  public PkiBlockCreationConfiguration load() {
     KeyStoreWrapper keyStore;
     try {
       keyStore =
           keyStoreWrapperProvider.apply(
-              configuration.getKeyStoreType(),
-              configuration.getKeyStorePath(),
-              configuration.getKeyStorePassword(),
+              pkiKeyStoreConfiguration.getKeyStoreType(),
+              pkiKeyStoreConfiguration.getKeyStorePath(),
+              pkiKeyStoreConfiguration.getKeyStorePassword(),
               null);
-      LOG.info("Loaded PKI Block Creation KeyStore {}", configuration.getKeyStorePath());
+      LOG.info("Loaded PKI Block Creation KeyStore {}", pkiKeyStoreConfiguration.getKeyStorePath());
     } catch (Exception e) {
       final String message = "Error loading PKI Block Creation KeyStore";
       LOG.error(message, e);
@@ -66,24 +67,20 @@ public class PkiBlockCreationConfigurationProvider {
     try {
       trustStore =
           keyStoreWrapperProvider.apply(
-              configuration.getTrustStoreType(),
-              configuration.getTrustStorePath(),
-              configuration.getTrustStorePassword(),
-              configuration.getCrlFilePath().orElse(null));
-      LOG.info("Loaded PKI Block Creation TrustStore {}", configuration.getTrustStorePath());
+              pkiKeyStoreConfiguration.getTrustStoreType(),
+              pkiKeyStoreConfiguration.getTrustStorePath(),
+              pkiKeyStoreConfiguration.getTrustStorePassword(),
+              pkiKeyStoreConfiguration.getCrlFilePath().orElse(null));
+      LOG.info(
+          "Loaded PKI Block Creation TrustStore {}", pkiKeyStoreConfiguration.getTrustStorePath());
     } catch (Exception e) {
       final String message = "Error loading PKI Block Creation TrustStore";
       LOG.error(message, e);
       throw new RuntimeException(message, e);
     }
 
-    pkiBlockCreationConfig =
-        new PkiBlockCreationConfiguration(
-            keyStore, trustStore, configuration.getCertificateAlias());
-  }
-
-  public static Optional<PkiBlockCreationConfiguration> getIfLoaded() {
-    return Optional.ofNullable(pkiBlockCreationConfig);
+    return new PkiBlockCreationConfiguration(
+        keyStore, trustStore, pkiKeyStoreConfiguration.getCertificateAlias());
   }
 
   @FunctionalInterface

@@ -26,11 +26,9 @@ import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -40,8 +38,6 @@ public class PkiBlockCreationConfigurationProviderTest {
   @Mock KeyStoreWrapperProvider keyStoreWrapperProvider;
   @Mock KeyStoreWrapper keyStoreWrapper;
   @Mock KeyStoreWrapper trustStoreWrapper;
-
-  @InjectMocks private PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider;
 
   @Test
   public void pkiBlockCreationConfigurationIsLoadedCorrectly() {
@@ -61,14 +57,14 @@ public class PkiBlockCreationConfigurationProviderTest {
             .withCrlFilePath(Path.of("/tmp/crl"))
             .build();
 
-    pkiBlockCreationConfigProvider.load(pkiKeyStoreConfiguration);
-
-    final Optional<PkiBlockCreationConfiguration> maybePkiBlockCreationConfiguration =
-        PkiBlockCreationConfigurationProvider.getIfLoaded();
-    assertThat(maybePkiBlockCreationConfiguration).isPresent();
+    final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider =
+        new PkiBlockCreationConfigurationProvider(
+            pkiKeyStoreConfiguration, keyStoreWrapperProvider);
 
     final PkiBlockCreationConfiguration pkiBlockCreationConfiguration =
-        maybePkiBlockCreationConfiguration.get();
+        pkiBlockCreationConfigProvider.load();
+
+    assertThat(pkiBlockCreationConfiguration).isNotNull();
     assertThat(pkiBlockCreationConfiguration.getKeyStore()).isNotNull();
     assertThat(pkiBlockCreationConfiguration.getTrustStore()).isNotNull();
     assertThat(pkiBlockCreationConfiguration.getCertificateAlias()).isEqualTo("anAlias");
