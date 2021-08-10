@@ -50,7 +50,7 @@ public class PkiBlockCreationOptions {
       names = {"--Xpki-block-creation-keystore-file"},
       hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Keystore containing key/certificate for PKI PKI Block Creation.")
+      description = "Keystore containing key/certificate for PKI Block Creation.")
   Path keyStoreFile = null;
 
   @Option(
@@ -58,7 +58,7 @@ public class PkiBlockCreationOptions {
       hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description =
-          "File containing password to unlock keystore for PKI Integration. Required if PKI PKI Block Creation is enabled.")
+          "File containing password to unlock keystore for PKI Integration. Required if PKI Block Creation is enabled.")
   Path keyStorePasswordFile = null;
 
   @Option(
@@ -82,21 +82,21 @@ public class PkiBlockCreationOptions {
       names = {"--Xpki-block-creation-truststore-file"},
       hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Truststore containing trusted certificates for PKI PKI Block Creation.")
+      description = "Truststore containing trusted certificates for PKI Block Creation.")
   Path trustStoreFile = null;
 
   @Option(
       names = {"--Xpki-block-creation-truststore-password-file"},
       hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "File containing password to unlock truststore for PKI PKI Block Creation.")
+      description = "File containing password to unlock truststore for PKI Block Creation.")
   Path trustStorePasswordFile = null;
 
   @Option(
       names = {"--Xpki-block-creation-crl-file"},
       hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Certificate revocation list for the PKI PKI Block Creation.")
+      description = "Certificate revocation list for the PKI Block Creation.")
   Path crlFile = null;
 
   public Optional<PkiKeyStoreConfiguration> asDomainConfig(final CommandLine commandLine) {
