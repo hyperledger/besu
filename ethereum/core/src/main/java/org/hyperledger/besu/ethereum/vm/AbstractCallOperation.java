@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.Weigher;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
@@ -39,7 +43,35 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       new OperationResult(
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
-  private final Map<Account, Code>  codeCache = new HashMap<Account,Code>();
+  private static class CodeLoader extends CacheLoader<Account, Code> {
+    @Override
+    public Code load(final Account key) throws Exception {
+      if(!key.hasCode()) {
+        throw new IllegalArgumentException("account "+key+" has no executable code");
+      }
+      return new Code(key.getCode());
+    }
+  }
+
+  private static class CodeScale implements Weigher<Account, Code> {
+    @Override
+    public int weigh(final Account key, final Code value) {
+      return value.getSize();
+    }
+  }
+
+  private final CodeLoader loader = new CodeLoader();
+
+  public CodeLoader getLoader() {
+    return loader;
+  }
+
+  private final CodeScale scale = new CodeScale();
+
+  private final LoadingCache<Account, Code> codeCache = CacheBuilder.newBuilder()
+          .maximumWeight(1024L * 1024L)
+          .weigher(this.scale)
+           .build(this.loader);
 
   protected AbstractCallOperation(
       final int opcode,
@@ -175,6 +207,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
       final Address to = to(frame);
       final Account contract = frame.getWorldState().get(to);
+      final Code contractCode = this.codeCache.getUnchecked(contract);
 
       final Account account = frame.getWorldState().get(frame.getRecipientAddress());
       final Wei balance = account.getBalance();
@@ -206,7 +239,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
               .sender(sender(frame))
               .value(value(frame))
               .apparentValue(apparentValue(frame))
-              .code(codeForContract(contract))
+              .code(contractCode)
               .blockHeader(frame.getBlockHeader())
               .depth(frame.getMessageStackDepth() + 1)
               .isStatic(isStatic(frame))
@@ -224,24 +257,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     return new OperationResult(optionalCost, Optional.empty());
   }
 
-  @NotNull
-  public Code codeForContract(final Account contract) {
-    if(this.codeCache.containsKey(contract)) {
-      return loadFromCache(contract);
-    } else {
-      return createAndCache(contract);
-    }
-  }
-
-  @NotNull
-  public Code createAndCache(final Account contract) {
-    Code unseen = new Code(contract.getCode());
-    this.codeCache.put(contract, unseen);
-    return unseen;
-  }
-
-  public Code loadFromCache(final Account contract) {
-    return this.codeCache.get(contract);
+  public LoadingCache<Account, Code> getCodeCache() {
+    return codeCache;
   }
 
   protected abstract Gas cost(final MessageFrame frame);
