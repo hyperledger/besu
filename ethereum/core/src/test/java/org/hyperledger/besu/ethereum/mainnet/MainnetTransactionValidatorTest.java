@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -242,7 +243,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
-            Optional.of(TransactionPriceCalculator.eip1559()),
+            FeeMarket.london(),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.values()),
@@ -325,7 +326,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator frontierValidator =
         new MainnetTransactionValidator(
             gasCalculator,
-            Optional.of(transactionPriceCalculator),
+            FeeMarket.legacy(),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER),
@@ -334,7 +335,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator eip1559Validator =
         new MainnetTransactionValidator(
             gasCalculator,
-            Optional.of(transactionPriceCalculator),
+            FeeMarket.london(),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
@@ -367,7 +368,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
-            Optional.of(transactionPriceCalculator),
+            FeeMarket.london(),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
@@ -390,7 +391,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
-            Optional.of(transactionPriceCalculator),
+            FeeMarket.london(),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
@@ -398,7 +399,7 @@ public class MainnetTransactionValidatorTest {
     final Transaction transaction =
         new TransactionTestFixture()
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
-            .maxFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(150000L)))
             .type(TransactionType.EIP1559)
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
@@ -416,7 +417,7 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
-            Optional.of(TransactionPriceCalculator.eip1559()),
+            FeeMarket.london(),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),

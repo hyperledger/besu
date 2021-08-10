@@ -16,40 +16,22 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.BaseFee;
 import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class LondonFeeMarket implements BaseFeeMarket {
-  static final Long DEFAULT_BASEFEE_INITIAL_VALUE = 1000000000L;
-  static final Long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
-  static final Long DEFAULT_SLACK_COEFFICIENT = 2L;
+public class LegacyFeeMarket implements FeeMarket {
+
   private final TransactionPriceCalculator txPriceCalculator;
 
-  public LondonFeeMarket() {
-    this.txPriceCalculator = TransactionPriceCalculator.eip1559();
-  }
-
-  @Override
-  public long getBasefeeMaxChangeDenominator() {
-    return DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR;
-  }
-
-  @Override
-  public long getInitialBasefee() {
-    return DEFAULT_BASEFEE_INITIAL_VALUE;
-  }
-
-  @Override
-  public long getSlackCoefficient() {
-    return DEFAULT_SLACK_COEFFICIENT;
+  public LegacyFeeMarket() {
+    this.txPriceCalculator = TransactionPriceCalculator.frontier();
   }
 
   @Override
   public boolean implementsBaseFee() {
-    return true;
+    return false;
   }
 
   @Override
@@ -60,10 +42,6 @@ public class LondonFeeMarket implements BaseFeeMarket {
   @Override
   public Wei minTransactionPriceInNextBlock(
       final Transaction transaction, final Supplier<Optional<Long>> baseFeeSupplier) {
-    final Optional<Long> baseFee = baseFeeSupplier.get();
-    Optional<Long> minBaseFeeInNextBlock =
-        baseFee.map(bf -> new BaseFee(this, bf).getMinNextValue());
-
-    return this.getTransactionPriceCalculator().price(transaction, minBaseFeeInNextBlock);
+    return txPriceCalculator.price(transaction, Optional.empty());
   }
 }

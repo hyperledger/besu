@@ -28,9 +28,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.BaseFee;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -41,7 +38,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -80,10 +76,10 @@ public class TransactionPool implements BlockAddedObserver {
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
   private final PeerPendingTransactionTracker peerPendingTransactionTracker;
-  private final TransactionPriceCalculator frontierPriceCalculator =
-      TransactionPriceCalculator.frontier();
-  private final TransactionPriceCalculator eip1559PriceCalculator =
-      TransactionPriceCalculator.eip1559();
+  //  private final TransactionPriceCalculator frontierPriceCalculator =
+  //      TransactionPriceCalculator.frontier();
+  //  private final TransactionPriceCalculator eip1559PriceCalculator =
+  //      TransactionPriceCalculator.eip1559();
   private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
@@ -297,20 +293,9 @@ public class TransactionPool implements BlockAddedObserver {
 
   private Wei minTransactionGasPrice(final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
-    // Compute transaction price using EIP-1559 rules if chain head is after fork
-    ProtocolSpec spec = protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber());
-    Optional<FeeMarket> feeMarket = spec.getFeeMarket();
-    // TODO: remove once eip1559 is part of FeeMarket
-    Optional<EIP1559> eip1559 = spec.getEip1559();
-
-    if (feeMarket
-        .flatMap(fm -> eip1559.map(e -> e.isEIP1559(chainHeadBlockHeader.getNumber())))
-        .orElse(Boolean.FALSE)) {
-      // TODO: remove eip1559PriceCalculator once it is rolled into fee market
-      return BaseFee.minTransactionPriceInNextBlock(
-          transaction, feeMarket.get(), eip1559PriceCalculator, chainHeadBlockHeader::getBaseFee);
-    } else { // Use frontier rules otherwise
-      return frontierPriceCalculator.price(transaction, Optional.empty());
-    }
+    return protocolSchedule
+        .getByBlockNumber(chainHeadBlockHeader.getNumber())
+        .getFeeMarket()
+        .minTransactionPriceInNextBlock(transaction, chainHeadBlockHeader::getBaseFee);
   }
 }
