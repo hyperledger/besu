@@ -109,7 +109,14 @@ public class ProposalPayloadValidator {
     Validate CMS in block header (only for PKI-mode)
   */
   private boolean validateCms(final Block block) {
-    final PkiQbftContext pkiQbftContext = protocolContext.getConsensusState(PkiQbftContext.class);
+    final PkiQbftContext pkiQbftContext;
+    try {
+      pkiQbftContext = protocolContext.getConsensusState(PkiQbftContext.class);
+    } catch (final ClassCastException e) {
+      // TODO-lucas Do we have a better way of doing this?
+      // Not running on PKI-enabled mode
+      return true;
+    }
 
     final BftExtraData extraData =
         pkiQbftContext.getBlockInterface().getExtraData(block.getHeader());
