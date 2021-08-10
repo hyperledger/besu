@@ -14,24 +14,17 @@
  */
 package org.hyperledger.besu.plugins;
 
-import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
-import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.serialize;
-
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
-import org.hyperledger.besu.plugin.data.PrivateTransaction;
-import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
-import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
-
-import java.util.Optional;
+import org.hyperledger.besu.plugins.privacy.TestPrivacyGroupGenesisProvider;
+import org.hyperledger.besu.plugins.privacy.TestPrivacyPluginPayloadProvider;
+import org.hyperledger.besu.plugins.privacy.TestSigningPrivateMarkerTransactionFactory;
 
 import com.google.auto.service.AutoService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Option;
 
 @AutoService(BesuPlugin.class)
@@ -41,6 +34,12 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   PrivacyPluginService pluginService;
   BesuContext context;
 
+  TestPrivacyPluginPayloadProvider payloadProvider = new TestPrivacyPluginPayloadProvider();
+  TestPrivacyGroupGenesisProvider privacyGroupGenesisProvider =
+      new TestPrivacyGroupGenesisProvider();
+  TestSigningPrivateMarkerTransactionFactory privateMarkerTransactionFactory =
+      new TestSigningPrivateMarkerTransactionFactory();
+
   @Override
   public void register(final BesuContext context) {
     this.context = context;
@@ -48,39 +47,25 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
     context.getService(PicoCLIOptions.class).get().addPicoCLIOptions("privacy-service", this);
     pluginService = context.getService(PrivacyPluginService.class).get();
 
-    pluginService.setPayloadProvider(
-        new PrivacyPluginPayloadProvider() {
-          @Override
-          public Bytes generateMarkerPayload(
-              final PrivateTransaction privateTransaction, final String privacyUserId) {
+    pluginService.setPayloadProvider(payloadProvider);
+    pluginService.setPrivacyGroupGenesisProvider(privacyGroupGenesisProvider);
 
-            return Bytes.wrap(Bytes.fromHexString(prefix), serialize(privateTransaction).encoded());
-          }
-
-          @Override
-          public Optional<PrivateTransaction> getPrivateTransactionFromPayload(
-              final Transaction transaction) {
-
-            final Bytes prefixBytes = Bytes.fromHexString(prefix);
-            if (transaction.getPayload().slice(0, prefixBytes.size()).equals(prefixBytes)) {
-              LOG.info("processing payload for" + prefix);
-              final BytesValueRLPInput bytesValueRLPInput =
-                  new BytesValueRLPInput(
-                      transaction.getPayload().slice(prefixBytes.size()).copy(), false);
-              return Optional.of(readFrom(bytesValueRLPInput));
-            } else {
-              LOG.info("Can not process payload for" + prefix);
-              return Optional.empty();
-            }
-          }
-        });
+    LOG.info("Registering Plugins with options " + this);
   }
 
   @Override
   public void start() {
+    LOG.info("Start Plugins with options " + this);
+
+    payloadProvider.setPluginPayloadPrefix(prefix);
+
+    if (genesisEnabled) {
+      privacyGroupGenesisProvider.setGenesisEnabled();
+    }
+
     if (signingEnabled) {
-      pluginService.setPrivateMarkerTransactionFactory(
-          new TestSigningPrivateMarkerTransactionFactory(signingKey));
+      pluginService.setPrivateMarkerTransactionFactory(privateMarkerTransactionFactory);
+      privateMarkerTransactionFactory.setSigningKeyEnbaled(signingKey);
     }
   }
 
@@ -90,9 +75,28 @@ public class TestPrivacyServicePlugin implements BesuPlugin {
   @Option(names = "--plugin-privacy-service-encryption-prefix")
   String prefix;
 
+  @Option(names = "--plugin-privacy-service-genesis-enabled")
+  boolean genesisEnabled = false;
+
   @Option(names = "--plugin-privacy-service-signing-enabled")
   boolean signingEnabled = false;
 
   @Option(names = "--plugin-privacy-service-signing-key")
   String signingKey;
+
+  @Override
+  public String toString() {
+    return "TestPrivacyServicePlugin{"
+        + "prefix='"
+        + prefix
+        + '\''
+        + ", signingEnabled="
+        + signingEnabled
+        + ", genesisEnabled="
+        + genesisEnabled
+        + ", signingKey='"
+        + signingKey
+        + '\''
+        + '}';
+  }
 }

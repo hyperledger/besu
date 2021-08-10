@@ -41,9 +41,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
 
-import com.google.common.util.concurrent.Striped;
 import io.vertx.ext.auth.User;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -54,9 +52,6 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   private final PrivacyIdProvider privacyIdProvider;
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final NonceProvider publicNonceProvider;
-  private static final int MAX_CONCURRENT_PMT_SIGNATURE_REQUESTS = 10;
-  private final Striped<Lock> stripedLock =
-      Striped.lazyWeakLock(MAX_CONCURRENT_PMT_SIGNATURE_REQUESTS);
 
   protected AbstractEeaSendRawTransaction(
       final TransactionPool transactionPool,
@@ -96,29 +91,14 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
           privateMarkerTransactionFactory.getSender(
               privateTransaction, privacyIdProvider.getPrivacyUserId(user));
 
-      // We lock by sender address so that we can send multiple requests from the same address
-      // the request will be blocked until the nonce for that sender has been calculated and the
-      // transaction
-      // has completed submission to the transaction pool
+      final Transaction privateMarkerTransaction =
+          createPrivateMarkerTransaction(Address.fromPlugin(sender), privateTransaction, user);
 
-      final Lock lock = stripedLock.get(sender.toShortHexString());
-      lock.lock();
-      try {
-
-        final Transaction privateMarkerTransaction =
-            createPrivateMarkerTransaction(privateTransaction, user);
-
-        LOG.error("CHEESE");
-        LOG.error(privateMarkerTransaction.getHash());
-
-        return transactionPool
-            .addLocalTransaction(privateMarkerTransaction)
-            .either(
-                () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
-                errorReason -> getJsonRpcErrorResponse(id, errorReason));
-      } finally {
-        lock.unlock();
-      }
+      return transactionPool
+          .addLocalTransaction(privateMarkerTransaction)
+          .either(
+              () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
+              errorReason -> getJsonRpcErrorResponse(id, errorReason));
     } catch (final JsonRpcErrorResponseException e) {
       return new JsonRpcErrorResponse(id, e.getJsonRpcError());
     } catch (final IllegalArgumentException | RLPException e) {
@@ -141,23 +121,21 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
       final PrivateTransaction privateTransaction, final Optional<User> user);
 
   protected abstract Transaction createPrivateMarkerTransaction(
-      final PrivateTransaction privateTransaction, final Optional<User> user);
+      final Address sender, final PrivateTransaction privateTransaction, final Optional<User> user);
 
   protected Transaction createPrivateMarkerTransaction(
+      final Address sender,
       final Address privacyPrecompileAddress,
       final String pmtPayload,
       final PrivateTransaction privateTransaction,
       final String privacyUserId) {
-
-    final Address sender =
-        Address.fromPlugin(
-            privateMarkerTransactionFactory.getSender(privateTransaction, privacyUserId));
 
     final long nonce = publicNonceProvider.getNonce(sender);
 
     final Transaction unsignedPrivateMarkerTransaction =
         new Transaction.Builder()
             .type(TransactionType.FRONTIER)
+            .sender(sender)
             .nonce(nonce)
             .gasPrice(privateTransaction.getGasPrice())
             .gasLimit(getGasLimit(privateTransaction, pmtPayload))

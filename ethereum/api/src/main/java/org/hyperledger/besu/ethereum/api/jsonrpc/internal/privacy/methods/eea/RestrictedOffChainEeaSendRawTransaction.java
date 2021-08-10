@@ -71,7 +71,9 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
 
   @Override
   protected Transaction createPrivateMarkerTransaction(
-      final PrivateTransaction privateTransaction, final Optional<User> user) {
+      final Address sender,
+      final PrivateTransaction privateTransaction,
+      final Optional<User> user) {
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
@@ -84,7 +86,11 @@ public class RestrictedOffChainEeaSendRawTransaction extends AbstractEeaSendRawT
             privateTransaction, privacyUserId, maybePrivacyGroup);
 
     return createPrivateMarkerTransaction(
-        Address.DEFAULT_PRIVACY, privateTransactionLookupId, privateTransaction, privacyUserId);
+        sender,
+        Address.DEFAULT_PRIVACY,
+        privateTransactionLookupId,
+        privateTransaction,
+        privacyUserId);
   }
 
   @Override
