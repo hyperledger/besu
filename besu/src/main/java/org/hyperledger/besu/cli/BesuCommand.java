@@ -59,6 +59,7 @@ import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
+import org.hyperledger.besu.cli.options.unstable.PkiBlockCreationOptions;
 import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
@@ -78,6 +79,8 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
@@ -286,6 +289,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
+  private final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider;
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -1097,6 +1101,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
+  @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1136,7 +1142,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new StorageServiceImpl(),
         new SecurityModuleServiceImpl(),
         new PermissioningServiceImpl(),
-        new PrivacyPluginServiceImpl());
+        new PrivacyPluginServiceImpl(),
+        new PkiBlockCreationConfigurationProvider());
   }
 
   @VisibleForTesting
@@ -1152,7 +1159,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final StorageServiceImpl storageService,
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
-      final PrivacyPluginServiceImpl privacyPluginPluginService) {
+      final PrivacyPluginServiceImpl privacyPluginPluginService,
+      final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1167,6 +1175,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.privacyPluginPluginService = privacyPluginPluginService;
     pluginCommonConfiguration = new BesuCommandConfigurationService();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
+    this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
   }
 
   public void parse(
@@ -1441,6 +1450,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNetStatsParams();
     validateDnsOptionsParams();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
+    pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -1711,6 +1721,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters(storageProvider))
+        .pkiBlockCreationConfiguration(maybePkiBlockCreationConfiguration())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
         .storageProvider(storageProvider)
@@ -2267,6 +2278,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               .build();
     }
     return this.keyValueStorageProvider;
+  }
+
+  private Optional<PkiBlockCreationConfiguration> maybePkiBlockCreationConfiguration() {
+    return pkiBlockCreationOptions
+        .asDomainConfig(commandLine)
+        .map(pkiBlockCreationConfigProvider::load);
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
