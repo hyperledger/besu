@@ -96,7 +96,7 @@ public class PkiBlockCreationOptions {
       names = {"--Xpki-block-creation-crl-file"},
       hidden = true,
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Certificate revocation list for the PKI Block Creation.")
+      description = "File with all CRLs for PKI Block Creation.")
   Path crlFile = null;
 
   public Optional<PkiKeyStoreConfiguration> asDomainConfig(final CommandLine commandLine) {
