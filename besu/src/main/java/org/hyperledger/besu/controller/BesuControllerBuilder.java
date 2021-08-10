@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -91,6 +92,8 @@ public abstract class BesuControllerBuilder {
   protected MiningParameters miningParameters;
   protected ObservableMetricsSystem metricsSystem;
   protected PrivacyParameters privacyParameters;
+  protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
+      Optional.empty();
   protected Path dataDirectory;
   protected Clock clock;
   protected NodeKey nodeKey;
@@ -157,6 +160,12 @@ public abstract class BesuControllerBuilder {
 
   public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = privacyParameters;
+    return this;
+  }
+
+  public BesuControllerBuilder pkiBlockCreationConfiguration(
+      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
+    this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
     return this;
   }
 

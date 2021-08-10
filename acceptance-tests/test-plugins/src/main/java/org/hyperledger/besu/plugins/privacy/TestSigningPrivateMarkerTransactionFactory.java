@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugins;
+package org.hyperledger.besu.plugins.privacy;
 
 import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.core.Address.extract;
@@ -39,11 +39,10 @@ public class TestSigningPrivateMarkerTransactionFactory implements PrivateMarker
 
   private static final Logger LOG = getLogger();
 
-  final KeyPair aliceFixedSigningKey;
-  final Address sender;
+  KeyPair aliceFixedSigningKey;
+  Address sender;
 
-  public TestSigningPrivateMarkerTransactionFactory(
-      final String privateMarkerTransactionSigningKey) {
+  public void setSigningKeyEnbaled(final String privateMarkerTransactionSigningKey) {
     final SignatureAlgorithm algorithm = SignatureAlgorithmFactory.getInstance();
     final SECPPrivateKey privateKey =
         algorithm.createPrivateKey(Bytes32.fromHexString(privateMarkerTransactionSigningKey));

@@ -14,20 +14,19 @@
  */
 package org.hyperledger.besu.plugin.services.privacy;
 
-import java.util.Optional;
+import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 
-/**
- * When in a multi-tenant environment you need to decided if an authz user can access a privacyGroup
- */
+import org.apache.tuweni.bytes.Bytes;
+
+/** A way to initiate private state with a genesis */
 @FunctionalInterface
-public interface PrivacyGroupAuthProvider {
+public interface PrivacyGroupGenesisProvider {
   /**
-   * Should this privacyUserId be able to access this privacyGroupId at this blockNumber
+   * Allows you to specify a custom private genesis to apply when initialising a privacy group
    *
    * @param privacyGroupId the privacyGroupId
-   * @param privacyUserId the authz privacyUserId when in a multi-tenant environment
-   * @param blockNumber the block height it's happening at
-   * @return if the can access that privacyUserId
+   * @param blockNumber the block height
+   * @return the privacy genesis to apply
    */
-  boolean canAccess(String privacyGroupId, String privacyUserId, Optional<Long> blockNumber);
+  PrivacyGenesis getPrivacyGenesis(Bytes privacyGroupId, long blockNumber);
 }

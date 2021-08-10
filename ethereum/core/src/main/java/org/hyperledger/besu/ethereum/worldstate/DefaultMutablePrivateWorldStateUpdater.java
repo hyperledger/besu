@@ -40,7 +40,7 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
 
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    return privateWorldUpdater.createAccount(address);
+    return privateWorldUpdater.createAccount(address, nonce, balance);
   }
 
   @Override

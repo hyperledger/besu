@@ -90,4 +90,5 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'commons-io:commons-io'
 }

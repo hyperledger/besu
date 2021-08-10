@@ -73,13 +73,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -93,14 +91,12 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private BftEventQueue bftEventQueue;
   private QbftConfigOptions qbftConfig;
   private ValidatorPeers peers;
-  // TODO initialize this in BesuCommand as part of the PKI setup (will be done in a follow up PR)
-  private final Optional<KeyStoreWrapper> pkiKeyStore = Optional.empty();
 
   @Override
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
     return Suppliers.memoize(
         () -> {
-          if (pkiKeyStore.isPresent()) {
+          if (pkiBlockCreationConfiguration.isPresent()) {
             return new PkiQbftExtraDataCodec();
           } else {
             return new QbftExtraDataCodec();
@@ -295,9 +291,12 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
       validatorProvider = new TransactionValidatorProvider(blockchain, validatorContractController);
     }
 
-    if (pkiKeyStore.isPresent()) {
+    if (pkiBlockCreationConfiguration.isPresent()) {
       return new PkiQbftContext(
-          validatorProvider, epochManager, bftBlockInterface().get(), pkiKeyStore.get());
+          validatorProvider,
+          epochManager,
+          bftBlockInterface().get(),
+          pkiBlockCreationConfiguration.get());
     } else {
       return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
     }
