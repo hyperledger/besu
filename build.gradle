@@ -116,16 +116,14 @@ allprojects {
   spotless {
     java {
       // This path needs to be relative to each project
-      target fileTree('.') {
-        include '**/src/*/java/**/*.java'
-        exclude '**/generalstate/GeneralStateReferenceTest*.java'
-        exclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
-        exclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
-        exclude '**/blockchain/BlockchainReferenceTest*.java'
-        exclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
-        exclude '**/reference-test/resources/docker_interop/**'
-        exclude '**/.gradle/**'
-      }
+      target '**/src/*/java/**/*.java'
+      targetExclude '**/generalstate/GeneralStateReferenceTest*.java'
+      targetExclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
+      targetExclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
+      targetExclude '**/blockchain/BlockchainReferenceTest*.java'
+      targetExclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
+      targetExclude '**/reference-test/resources/docker_interop/**'
+      targetExclude '**/.gradle/**'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
       importOrder 'org.hyperledger', 'java', ''
