@@ -12,14 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.pki;
+package org.hyperledger.besu.pki.config;
 
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.function.Supplier;
 
-public class PkiConfiguration {
+public class PkiKeyStoreConfiguration {
 
   public static String DEFAULT_KEYSTORE_TYPE = "PKCS12";
   public static String DEFAULT_CERTIFICATE_ALIAS = "validator";
@@ -31,15 +32,17 @@ public class PkiConfiguration {
   private final String trustStoreType;
   private final Path trustStorePath;
   private final Supplier<String> trustStorePasswordSupplier;
+  private final Optional<Path> crlFilePath;
 
-  public PkiConfiguration(
+  public PkiKeyStoreConfiguration(
       final String keyStoreType,
       final Path keyStorePath,
       final Supplier<String> keyStorePasswordSupplier,
       final String certificateAlias,
       final String trustStoreType,
       final Path trustStorePath,
-      final Supplier<String> trustStorePasswordSupplier) {
+      final Supplier<String> trustStorePasswordSupplier,
+      final Optional<Path> crlFilePath) {
     this.keyStoreType = keyStoreType;
     this.keyStorePath = keyStorePath;
     this.keyStorePasswordSupplier = keyStorePasswordSupplier;
@@ -47,6 +50,7 @@ public class PkiConfiguration {
     this.trustStoreType = trustStoreType;
     this.trustStorePath = trustStorePath;
     this.trustStorePasswordSupplier = trustStorePasswordSupplier;
+    this.crlFilePath = crlFilePath;
   }
 
   public String getKeyStoreType() {
@@ -77,6 +81,10 @@ public class PkiConfiguration {
     return trustStorePasswordSupplier.get();
   }
 
+  public Optional<Path> getCrlFilePath() {
+    return crlFilePath;
+  }
+
   public static final class Builder {
 
     private String keyStoreType = DEFAULT_KEYSTORE_TYPE;
@@ -86,6 +94,7 @@ public class PkiConfiguration {
     private String trustStoreType = DEFAULT_KEYSTORE_TYPE;
     private Path trustStorePath;
     private Supplier<String> trustStorePasswordSupplier;
+    private Path crlFilePath;
 
     public Builder() {}
 
@@ -125,17 +134,23 @@ public class PkiConfiguration {
       return this;
     }
 
-    public PkiConfiguration build() {
+    public Builder withCrlFilePath(final Path filePath) {
+      this.crlFilePath = filePath;
+      return this;
+    }
+
+    public PkiKeyStoreConfiguration build() {
       requireNonNull(keyStoreType, "Key Store Type must not be null");
       requireNonNull(keyStorePasswordSupplier, "Key Store password supplier must not be null");
-      return new PkiConfiguration(
+      return new PkiKeyStoreConfiguration(
           keyStoreType,
           keyStorePath,
           keyStorePasswordSupplier,
           certificateAlias,
           trustStoreType,
           trustStorePath,
-          trustStorePasswordSupplier);
+          trustStorePasswordSupplier,
+          Optional.ofNullable(crlFilePath));
     }
   }
 }
