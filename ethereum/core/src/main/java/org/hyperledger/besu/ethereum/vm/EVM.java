@@ -147,5 +147,4 @@ public class EVM {
   public OperationRegistry getOperations() {
     return operations;
   }
-
 }

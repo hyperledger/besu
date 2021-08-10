@@ -14,22 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.Weigher;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Wei;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.Weigher;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A skeleton class for implementing call operations.
@@ -43,11 +40,11 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       new OperationResult(
           Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
-  private static class CodeLoader extends CacheLoader<Account, Code> {
+  public static class CodeLoader extends CacheLoader<Account, Code> {
     @Override
     public Code load(final Account key) throws Exception {
-      if(!key.hasCode()) {
-        throw new IllegalArgumentException("account "+key+" has no executable code");
+      if (!key.hasCode()) {
+        throw new IllegalArgumentException("account " + key + " has no executable code");
       }
       return new Code(key.getCode());
     }
@@ -60,18 +57,25 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
   }
 
-  private final CodeLoader loader = new CodeLoader();
+  private CodeLoader loader = new CodeLoader();
 
   public CodeLoader getLoader() {
     return loader;
   }
 
+  public void setLoader(final CodeLoader cacheLoader) {
+    this.loader = cacheLoader;
+    this.codeCache =
+        CacheBuilder.newBuilder()
+            .maximumWeight(1024L * 1024L)
+            .weigher(this.scale)
+            .build(this.loader);
+  }
+
   private final CodeScale scale = new CodeScale();
 
-  private final LoadingCache<Account, Code> codeCache = CacheBuilder.newBuilder()
-          .maximumWeight(1024L * 1024L)
-          .weigher(this.scale)
-           .build(this.loader);
+  private LoadingCache<Account, Code> codeCache =
+      CacheBuilder.newBuilder().maximumWeight(1024L * 1024L).weigher(this.scale).build(this.loader);
 
   protected AbstractCallOperation(
       final int opcode,
