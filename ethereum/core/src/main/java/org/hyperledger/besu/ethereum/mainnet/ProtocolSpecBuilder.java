@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
@@ -67,9 +66,7 @@ public class ProtocolSpecBuilder {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
-  private TransactionPriceCalculator transactionPriceCalculator =
-      TransactionPriceCalculator.frontier();
-  private Optional<FeeMarket> feeMarket = Optional.empty();
+  private FeeMarket feeMarket = FeeMarket.legacy();
   private Optional<EIP1559> eip1559 = Optional.empty();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -217,13 +214,7 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder transactionPriceCalculator(
-      final TransactionPriceCalculator transactionPriceCalculator) {
-    this.transactionPriceCalculator = transactionPriceCalculator;
-    return this;
-  }
-
-  public ProtocolSpecBuilder feeMarket(final Optional<FeeMarket> feeMarket) {
+  public ProtocolSpecBuilder feeMarket(final FeeMarket feeMarket) {
     this.feeMarket = feeMarket;
     return this;
   }
@@ -266,7 +257,6 @@ public class ProtocolSpecBuilder {
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(privacyParameters, "Missing privacy parameters");
-    checkNotNull(transactionPriceCalculator, "Missing transaction price calculator");
     checkNotNull(feeMarket, "Missing fee market optional wrapper");
     checkNotNull(eip1559, "Missing eip1559 optional wrapper");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
@@ -373,7 +363,6 @@ public class ProtocolSpecBuilder {
         precompileContractRegistry,
         skipZeroBlockRewards,
         gasCalculator,
-        transactionPriceCalculator,
         feeMarket,
         eip1559,
         badBlockManager,
