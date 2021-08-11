@@ -21,22 +21,22 @@ import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public interface FeeMarket {
+public class LegacyFeeMarket implements FeeMarket {
 
-  default boolean implementsBaseFee() {
-    return false;
+  private final TransactionPriceCalculator txPriceCalculator;
+
+  public LegacyFeeMarket() {
+    this.txPriceCalculator = TransactionPriceCalculator.frontier();
   }
 
-  TransactionPriceCalculator getTransactionPriceCalculator();
-
-  Wei minTransactionPriceInNextBlock(
-      Transaction transaction, Supplier<Optional<Long>> baseFeeSupplier);
-
-  static BaseFeeMarket london() {
-    return new LondonFeeMarket();
+  @Override
+  public TransactionPriceCalculator getTransactionPriceCalculator() {
+    return txPriceCalculator;
   }
 
-  static FeeMarket legacy() {
-    return new LegacyFeeMarket();
+  @Override
+  public Wei minTransactionPriceInNextBlock(
+      final Transaction transaction, final Supplier<Optional<Long>> baseFeeSupplier) {
+    return txPriceCalculator.price(transaction, Optional.empty());
   }
 }
