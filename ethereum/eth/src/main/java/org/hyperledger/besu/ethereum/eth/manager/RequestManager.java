@@ -14,27 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
-import javax.swing.text.html.Option;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RequestManager {
-  private static final Logger LOG = LogManager.getLogger();
   private final AtomicLong requestIdCounter = new AtomicLong(0);
   private final Map<Long, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
@@ -159,7 +153,6 @@ public class RequestManager {
     }
 
     public void close() {
-      new Exception().printStackTrace();
       if (closed) {
         return;
       }
