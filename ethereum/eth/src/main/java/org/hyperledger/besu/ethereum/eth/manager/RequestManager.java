@@ -158,6 +158,7 @@ public class RequestManager {
     }
 
     public void close() {
+      new Exception().printStackTrace();
       if (closed) {
         return;
       }
