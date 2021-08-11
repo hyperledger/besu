@@ -118,7 +118,8 @@ public class CallOperationTest {
             .apparentValue(Wei.ZERO)
             .blockHeader(mock(BlockHeader.class))
             .depth(1)
-            .completer(new Consumer<MessageFrame>() {
+            .completer(
+                new Consumer<MessageFrame>() {
                   @Override
                   public void accept(final MessageFrame messageFrame) {
                     System.out.println(messageFrame);
@@ -145,5 +146,4 @@ public class CallOperationTest {
       fail("didn't cache code right", e);
     }
   }
-
 }
