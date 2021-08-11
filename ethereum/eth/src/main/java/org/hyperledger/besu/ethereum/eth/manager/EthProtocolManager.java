@@ -276,7 +276,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     // This will handle requests
     final Optional<MessageData> maybeResponseData;
     if (cap.getVersion() >= 66 && EthProtocol.requestIdCompatible(code)) {
-      final Map.Entry<Long, MessageData> requestIdAndEthMessage =
+      final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
           RequestId.unwrapRequestId(ethMessage.getData());
       maybeResponseData =
           ethMessages

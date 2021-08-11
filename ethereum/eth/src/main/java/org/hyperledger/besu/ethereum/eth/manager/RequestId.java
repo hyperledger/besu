@@ -20,29 +20,31 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.math.BigInteger;
 import java.util.AbstractMap;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class RequestId {
-  public static MessageData wrapRequestId(final long requestId, final MessageData messageData) {
+  public static MessageData wrapRequestId(
+      final BigInteger requestId, final MessageData messageData) {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     rlpOutput.startList();
-    rlpOutput.writeLongScalar(requestId);
+    rlpOutput.writeBigIntegerScalar(requestId);
     rlpOutput.writeRaw(messageData.getData());
     rlpOutput.endList();
     return new RawMessage(messageData.getCode(), rlpOutput.encoded());
   }
 
-  static Map.Entry<Long, MessageData> unwrapRequestId(final MessageData messageData) {
+  static Map.Entry<BigInteger, MessageData> unwrapRequestId(final MessageData messageData) {
     final RLPInput messageDataRLP = RLP.input(messageData.getData());
     messageDataRLP.enterList();
-    final long requestId = messageDataRLP.readLongScalar();
-    final Bytes unwrappedMessageData = messageDataRLP.readBytes();
+    final BigInteger requestId = messageDataRLP.readBigIntegerScalar();
+    final RLPInput unwrappedMessageRLP = messageDataRLP.readAsRlp();
     messageDataRLP.leaveList();
 
     return new AbstractMap.SimpleImmutableEntry<>(
-        requestId, new RawMessage(messageData.getCode(), unwrappedMessageData));
+        requestId, new RawMessage(messageData.getCode(), unwrappedMessageRLP.raw()));
   }
 }

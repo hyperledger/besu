@@ -64,7 +64,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 GetBlockHeadersMessage.create(
                     Hash.fromHexString(
                         "0x00000000000000000000000000000000000000000000000000000000deadc0de"),
@@ -80,7 +80,8 @@ public class RequestIdMessageTest {
     final var testJson = parseTestFile("GetBlockHeadersPacket66-1.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
-        wrapRequestId(1111, GetBlockHeadersMessage.create(9999, 5, 5, false)).getData();
+        wrapRequestId(BigInteger.valueOf(1111), GetBlockHeadersMessage.create(9999, 5, 5, false))
+            .getData();
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -90,7 +91,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 BlockHeadersMessage.create(
                     Arrays.asList(
                         objectMapper.treeToValue(
@@ -106,7 +107,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 GetBlockBodiesMessage.create(
                     Stream.of(
                             "0x00000000000000000000000000000000000000000000000000000000deadc0de",
@@ -123,7 +124,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 BlockBodiesMessage.create(
                     Arrays.asList(
                         objectMapper.treeToValue(
@@ -138,7 +139,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 GetNodeDataMessage.create(
                     Stream.of(
                             "0x00000000000000000000000000000000000000000000000000000000deadc0de",
@@ -155,7 +156,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 NodeDataMessage.create(
                     Stream.of("0xdeadc0de", "0xfeedbeef")
                         .map(Bytes::fromHexString)
@@ -170,7 +171,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 GetReceiptsMessage.create(
                     Stream.of(
                             "0x00000000000000000000000000000000000000000000000000000000deadc0de",
@@ -187,7 +188,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 ReceiptsMessage.create(
                     singletonList(
                         singletonList(
@@ -223,7 +224,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 GetPooledTransactionsMessage.create(
                     Stream.of(
                             "0x00000000000000000000000000000000000000000000000000000000deadc0de",
@@ -240,7 +241,7 @@ public class RequestIdMessageTest {
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final Bytes actual =
         wrapRequestId(
-                1111,
+                BigInteger.valueOf(1111),
                 PooledTransactionsMessage.create(
                     Arrays.asList(
                         objectMapper.treeToValue(

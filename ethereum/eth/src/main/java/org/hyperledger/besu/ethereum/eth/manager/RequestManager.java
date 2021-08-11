@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class RequestManager {
   private final AtomicLong requestIdCounter = new AtomicLong(0);
-  private final Map<Long, ResponseStream> responseStreams = new ConcurrentHashMap<>();
+  private final Map<BigInteger, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
   private final boolean supportsRequestId;
 
@@ -48,7 +49,7 @@ public class RequestManager {
   public ResponseStream dispatchRequest(final RequestSender sender, final MessageData messageData)
       throws PeerNotConnected {
     outstandingRequests.incrementAndGet();
-    final long requestId = requestIdCounter.getAndIncrement();
+    final BigInteger requestId = BigInteger.valueOf(requestIdCounter.getAndIncrement());
     final ResponseStream stream = createStream(requestId);
     sender.send(supportsRequestId ? RequestId.wrapRequestId(requestId, messageData) : messageData);
     return stream;
@@ -59,7 +60,7 @@ public class RequestManager {
     final int count = outstandingRequests.decrementAndGet();
     if (supportsRequestId) {
       // If there's a requestId, find the specific stream it belongs to
-      final Map.Entry<Long, MessageData> requestIdAndEthMessage =
+      final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
           RequestId.unwrapRequestId(ethMessage.getData());
       Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
           .ifPresentOrElse(
@@ -80,7 +81,7 @@ public class RequestManager {
     closeOutstandingStreams(responseStreams.values());
   }
 
-  private ResponseStream createStream(final long requestId) {
+  private ResponseStream createStream(final BigInteger requestId) {
     final ResponseStream stream = new ResponseStream(peer, () -> deregisterStream(requestId));
     responseStreams.put(requestId, stream);
     return stream;
@@ -91,7 +92,7 @@ public class RequestManager {
     outstandingStreams.forEach(ResponseStream::close);
   }
 
-  private void deregisterStream(final long id) {
+  private void deregisterStream(final BigInteger id) {
     responseStreams.remove(id);
   }
 
