@@ -16,6 +16,11 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 public interface BaseFeeMarket extends FeeMarket {
 
+  @Override
+  default boolean implementsBaseFee() {
+    return true;
+  }
+
   long getBasefeeMaxChangeDenominator();
 
   long getInitialBasefee();

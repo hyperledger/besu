@@ -30,11 +30,6 @@ public class LegacyFeeMarket implements FeeMarket {
   }
 
   @Override
-  public boolean implementsBaseFee() {
-    return false;
-  }
-
-  @Override
   public TransactionPriceCalculator getTransactionPriceCalculator() {
     return txPriceCalculator;
   }

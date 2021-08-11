@@ -23,7 +23,9 @@ import java.util.function.Supplier;
 
 public interface FeeMarket {
 
-  boolean implementsBaseFee();
+  default boolean implementsBaseFee() {
+    return false;
+  }
 
   TransactionPriceCalculator getTransactionPriceCalculator();
 

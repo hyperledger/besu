@@ -48,11 +48,6 @@ public class LondonFeeMarket implements BaseFeeMarket {
   }
 
   @Override
-  public boolean implementsBaseFee() {
-    return true;
-  }
-
-  @Override
   public TransactionPriceCalculator getTransactionPriceCalculator() {
     return txPriceCalculator;
   }
