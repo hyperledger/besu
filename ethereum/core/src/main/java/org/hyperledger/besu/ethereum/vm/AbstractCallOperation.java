@@ -211,7 +211,8 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
       final Address to = to(frame);
       final Account contract = frame.getWorldState().get(to);
-      final Code contractCode = contract == null ? new Code() : this.codeCache.getUnchecked(contract);
+      final Code contractCode =
+          contract == null ? new Code() : this.codeCache.getUnchecked(contract);
 
       final Account account = frame.getWorldState().get(frame.getRecipientAddress());
       final Wei balance = account.getBalance();
