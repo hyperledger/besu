@@ -15,6 +15,7 @@
 
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 
@@ -29,4 +30,6 @@ public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
   protected Supplier<BftBlockInterface> bftBlockInterface() {
     return Suppliers.memoize(() -> new BftBlockInterface(bftExtraDataCodec().get()));
   }
+
+  protected abstract BftConfigOptions bftConfigOptions();
 }

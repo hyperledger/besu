@@ -37,6 +37,7 @@ public class BftConfigOptions {
   private static final int DEFAULT_DUPLICATE_MESSAGE_LIMIT = 100;
   private static final int DEFAULT_FUTURE_MESSAGES_LIMIT = 1000;
   private static final int DEFAULT_FUTURE_MESSAGES_MAX_DISTANCE = 10;
+  private static final long DEFAULT_BLOCK = 0;
 
   protected final ObjectNode bftConfigRoot;
 
@@ -94,6 +95,10 @@ public class BftConfigOptions {
     return new BigInteger(weiStr);
   }
 
+  public long getBlock() {
+    return JsonUtil.getLong(bftConfigRoot, "block", DEFAULT_BLOCK);
+  }
+
   Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     if (bftConfigRoot.has("epochlength")) {
@@ -119,6 +124,9 @@ public class BftConfigOptions {
     }
     if (bftConfigRoot.has("futuremessagesmaxdistance")) {
       builder.put("futureMessagesMaxDistance", getFutureMessagesMaxDistance());
+    }
+    if (bftConfigRoot.has("block")) {
+      builder.put("block", getBlock());
     }
     return builder.build();
   }

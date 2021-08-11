@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.List;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -50,6 +51,10 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
+  }
+
+  public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
+    return protocolSpecs.stream().collect(Collectors.toUnmodifiableList());
   }
 
   @Override

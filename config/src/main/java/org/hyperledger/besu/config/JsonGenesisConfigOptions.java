@@ -18,6 +18,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -137,6 +138,15 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isQbft() {
     return configRoot.has(QBFT_CONFIG_KEY);
+  }
+
+  @Override
+  public boolean isBftMigration() {
+    final List<Boolean> bftConfigs = new ArrayList<>();
+    bftConfigs.add(isIbftLegacy());
+    bftConfigs.add(isIbft2());
+    bftConfigs.add(isQbft());
+    return bftConfigs.stream().filter(b -> b.equals(true)).count() > 1;
   }
 
   @Override

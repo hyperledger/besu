@@ -35,10 +35,12 @@ import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -190,22 +192,39 @@ public class BesuController implements java.io.Closeable {
         final GenesisConfigFile genesisConfig, final Map<String, String> genesisConfigOverrides) {
       final GenesisConfigOptions configOptions =
           genesisConfig.getConfigOptions(genesisConfigOverrides);
-      final BesuControllerBuilder builder;
+      final List<BesuControllerBuilder> builders = new ArrayList<>();
 
       if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
-        builder = new MainnetBesuControllerBuilder();
-      } else if (configOptions.isIbft2()) {
-        builder = new IbftBesuControllerBuilder();
-      } else if (configOptions.isIbftLegacy()) {
-        builder = new IbftLegacyBesuControllerBuilder();
-      } else if (configOptions.isQbft()) {
-        builder = new QbftBesuControllerBuilder();
-      } else if (configOptions.isClique()) {
-        builder = new CliqueBesuControllerBuilder();
-      } else {
-        throw new IllegalArgumentException("Unknown consensus mechanism defined");
+        builders.add(new MainnetBesuControllerBuilder());
       }
-      return builder.genesisConfigFile(genesisConfig);
+      if (configOptions.isIbft2()) {
+        builders.add(new IbftBesuControllerBuilder());
+      }
+      if (configOptions.isIbftLegacy()) {
+        builders.add(new IbftLegacyBesuControllerBuilder());
+      }
+      if (configOptions.isQbft()) {
+        builders.add(new QbftBesuControllerBuilder());
+      }
+      if (configOptions.isClique()) {
+        builders.add(new CliqueBesuControllerBuilder());
+      }
+
+      builders.forEach(builder -> builder.genesisConfigFile(genesisConfig));
+
+      if (configOptions.isBftMigration()) {
+        // TODO throw error if not all bft besu controllers
+        final List<BftBesuControllerBuilder> bftBesuControllerBuilders =
+            builders.stream()
+                .map(BftBesuControllerBuilder.class::cast)
+                .collect(Collectors.toList());
+        return new ForkingBftControllerBuilder(bftBesuControllerBuilders)
+            .genesisConfigFile(genesisConfig);
+      } else if (builders.size() == 1) {
+        return builders.get(0).genesisConfigFile(genesisConfig);
+      } else {
+        throw new IllegalStateException("Unknown consensus mechanism");
+      }
     }
   }
 }

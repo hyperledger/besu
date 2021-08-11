@@ -93,6 +93,11 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   @Override
+  protected BftConfigOptions bftConfigOptions() {
+    return genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
+  }
+
+  @Override
   protected void prepForBuild() {
     qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());

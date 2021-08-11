@@ -83,6 +83,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isBftMigration() {
+    return false;
+  }
+
+  @Override
   public boolean isIbft2() {
     return false;
   }

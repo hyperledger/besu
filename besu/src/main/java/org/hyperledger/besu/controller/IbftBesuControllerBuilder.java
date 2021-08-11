@@ -92,6 +92,11 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   @Override
+  protected BftConfigOptions bftConfigOptions() {
+    return genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
+  }
+
+  @Override
   protected void prepForBuild() {
     bftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getBftConfigOptions();
     bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
