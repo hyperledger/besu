@@ -48,6 +48,7 @@ public class BftBlockCreatorFactory {
   private final BftExtraDataCodec bftExtraDataCodec;
   private final Address localAddress;
   final Address miningBeneficiary;
+  private final boolean extraDataWithRoundInformationOnly;
 
   private volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
@@ -61,7 +62,8 @@ public class BftBlockCreatorFactory {
       final MiningParameters miningParams,
       final Address localAddress,
       final Address miningBeneficiary,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final boolean extraDataWithRoundInformationOnly) {
     this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
@@ -72,6 +74,7 @@ public class BftBlockCreatorFactory {
     this.vanityData = miningParams.getExtraData();
     this.miningBeneficiary = miningBeneficiary;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.extraDataWithRoundInformationOnly = extraDataWithRoundInformationOnly;
   }
 
   public BftBlockCreator create(final BlockHeader parentHeader, final int round) {
@@ -102,22 +105,35 @@ public class BftBlockCreatorFactory {
   }
 
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
-    final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
-    checkState(validatorProvider.getVoteProvider().isPresent(), "Bft requires a vote provider");
-    final Optional<ValidatorVote> proposal =
-        validatorProvider.getVoteProvider().get().getVoteAfterBlock(parentHeader, localAddress);
+    final BftExtraData extraData;
+    if (extraDataWithRoundInformationOnly) {
+      // used in consensus mechanism such as QBFT where vote and validators may come from contract
+      // instead of block
+      extraData =
+          new BftExtraData(
+              ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataCodec.EXTRA_VANITY_LENGTH),
+              Collections.emptyList(),
+              Optional.empty(),
+              round,
+              Collections.emptyList());
+    } else {
+      final BftContext bftContext = protocolContext.getConsensusState(BftContext.class);
+      final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
+      checkState(validatorProvider.getVoteProvider().isPresent(), "Bft requires a vote provider");
+      final Optional<ValidatorVote> proposal =
+          validatorProvider.getVoteProvider().get().getVoteAfterBlock(parentHeader, localAddress);
 
-    final List<Address> validators =
-        new ArrayList<>(validatorProvider.getValidatorsAfterBlock(parentHeader));
+      final List<Address> validators =
+          new ArrayList<>(validatorProvider.getValidatorsAfterBlock(parentHeader));
 
-    final BftExtraData extraData =
-        new BftExtraData(
-            ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataCodec.EXTRA_VANITY_LENGTH),
-            Collections.emptyList(),
-            toVote(proposal),
-            round,
-            validators);
+      extraData =
+          new BftExtraData(
+              ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataCodec.EXTRA_VANITY_LENGTH),
+              Collections.emptyList(),
+              toVote(proposal),
+              round,
+              validators);
+    }
 
     return bftExtraDataCodec.encode(extraData);
   }

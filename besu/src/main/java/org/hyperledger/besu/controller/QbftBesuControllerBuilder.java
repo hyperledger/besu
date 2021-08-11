@@ -142,6 +142,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final BftExecutors bftExecutors = BftExecutors.create(metricsSystem);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
+    final boolean createExtraDataWithRoundInformationOnly =
+        qbftConfig.getValidatorContractAddress().isPresent();
     final BftBlockCreatorFactory blockCreatorFactory =
         new BftBlockCreatorFactory(
             gasLimitCalculator,
@@ -151,7 +153,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             miningParameters,
             localAddress,
             qbftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
-            bftExtraDataCodec().get());
+            bftExtraDataCodec().get(),
+            createExtraDataWithRoundInformationOnly);
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusState(BftContext.class).getValidatorProvider();

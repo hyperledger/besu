@@ -417,7 +417,8 @@ public class TestContextBuilder {
             miningParams,
             localAddress,
             localAddress,
-            BFT_EXTRA_DATA_ENCODER);
+            BFT_EXTRA_DATA_ENCODER,
+            useValidatorContract);
 
     final ProposerSelector proposerSelector =
         new ProposerSelector(blockChain, blockInterface, true, validatorProvider);
