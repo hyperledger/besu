@@ -15,20 +15,56 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
+/**
+ * A service that plugins can use to define how private transactions should be handled. <br>
+ * <br>
+ * You must register a {@link PrivacyPluginPayloadProvider} when using this plugin and can
+ * optionally register a {@link PrivateMarkerTransactionFactory} and a {@link
+ * PrivacyGroupGenesisProvider}
+ */
 public interface PrivacyPluginService extends BesuService {
+
+  /**
+   * Register a provider to use when handling privacy marker transactions.
+   *
+   * @param privacyPluginPayloadProvider the provider to use for the privacy marker payload
+   */
   void setPayloadProvider(PrivacyPluginPayloadProvider privacyPluginPayloadProvider);
 
   PrivacyPluginPayloadProvider getPayloadProvider();
 
+  /**
+   * Register a factory to specify your own method for signing and serializing privacy marker
+   * transactions.
+   *
+   * @param privateMarkerTransactionFactory the factory to use to build the privacy marker
+   *     transaction
+   */
+  void setPrivateMarkerTransactionFactory(
+      PrivateMarkerTransactionFactory privateMarkerTransactionFactory);
+
+  PrivateMarkerTransactionFactory getPrivateMarkerTransactionFactory();
+
+  /**
+   * Register a provider to use when auth requests for a multi-tenant environment. If you are not
+   * using a multi-tenant environment you always return true.
+   *
+   * @param privacyGroupAuthProvider the provider to use to determine authz
+   */
   void setPrivacyGroupAuthProvider(PrivacyGroupAuthProvider privacyGroupAuthProvider);
 
   PrivacyGroupAuthProvider getPrivacyGroupAuthProvider();
 
-  PrivateMarkerTransactionFactory getPrivateMarkerTransactionFactory();
+  /**
+   * Register a provider for initialising private state genesis
+   *
+   * @param privacyGroupAuthProvider the provider for the initial private state
+   */
+  void setPrivacyGroupGenesisProvider(PrivacyGroupGenesisProvider privacyGroupAuthProvider);
 
-  void setPrivateMarkerTransactionFactory(
-      PrivateMarkerTransactionFactory privateMarkerTransactionFactory);
+  PrivacyGroupGenesisProvider getPrivacyGroupGenesisProvider();
 }

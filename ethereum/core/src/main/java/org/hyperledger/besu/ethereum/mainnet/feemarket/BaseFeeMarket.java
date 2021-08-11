@@ -12,21 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config.experimental;
+package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import picocli.CommandLine.Option;
+public interface BaseFeeMarket extends FeeMarket {
 
-/**
- * Flags defined in this class must be used with caution, and strictly reserved to experimental
- * EIPs.
- */
-public class ExperimentalEIPs {
-  // To make it easier for tests to reset the value to default
-  public static final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
+  @Override
+  default boolean implementsBaseFee() {
+    return true;
+  }
 
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-initial-base-fee"},
-      arity = "1")
-  public static Long initialBasefee = EIP1559_BASEFEE_DEFAULT_VALUE;
+  long getBasefeeMaxChangeDenominator();
+
+  long getInitialBasefee();
+
+  long getSlackCoefficient();
 }

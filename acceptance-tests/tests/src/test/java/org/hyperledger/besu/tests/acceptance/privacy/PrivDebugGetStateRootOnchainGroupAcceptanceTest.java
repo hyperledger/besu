@@ -20,10 +20,12 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
+import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.besu.tests.web3j.privacy.OnChainPrivacyAcceptanceTestBase;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -76,6 +78,7 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
             false,
             enclaveType,
             Optional.of(containerNetwork));
+
     privacyCluster.start(aliceNode, bobNode);
   }
 
@@ -138,5 +141,41 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
 
     assertThat(aliceResultLatest).isEqualTo(bobResultLatest);
     assertThat(aliceResult1).isNotEqualTo(aliceResultLatest);
+  }
+
+  @Test
+  public void canInteractWithPrivateGenesisPreCompile() throws Exception {
+    final String privacyGroupId = createOnChainPrivacyGroup(aliceNode, bobNode);
+
+    final EventEmitter eventEmitter =
+        aliceNode.execute(
+            privateContractTransactions.loadSmartContractWithPrivacyGroupId(
+                "0x1000000000000000000000000000000000000001",
+                EventEmitter.class,
+                aliceNode.getTransactionSigningKey(),
+                aliceNode.getEnclaveKey(),
+                privacyGroupId));
+
+    eventEmitter.store(BigInteger.valueOf(42)).send();
+
+    final String aliceResponse =
+        aliceNode
+            .execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(new BigInteger(aliceResponse.substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(42));
+
+    final String bobResponse =
+        bobNode
+            .execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(new BigInteger(bobResponse.substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(42));
   }
 }

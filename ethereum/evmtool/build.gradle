@@ -120,7 +120,7 @@ task dockerUpload(type: Exec) {
   def cmd = "docker push '${image}'"
   def additionalTags = []
 
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+  if (project.hasProperty('branch') && project.property('branch') == 'main') {
     additionalTags.add('develop')
   }
 

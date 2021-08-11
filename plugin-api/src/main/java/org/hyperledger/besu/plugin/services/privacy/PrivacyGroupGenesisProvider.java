@@ -12,10 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
+package org.hyperledger.besu.plugin.services.privacy;
 
-public class EIP1559MissingBaseFeeFromBlockHeader extends Exception {
-  public EIP1559MissingBaseFeeFromBlockHeader() {
-    super("Invalid block header: basefee should be specified");
-  }
+import org.hyperledger.besu.plugin.data.PrivacyGenesis;
+
+import org.apache.tuweni.bytes.Bytes;
+
+/** A way to initiate private state with a genesis */
+@FunctionalInterface
+public interface PrivacyGroupGenesisProvider {
+  /**
+   * Allows you to specify a custom private genesis to apply when initialising a privacy group
+   *
+   * @param privacyGroupId the privacyGroupId
+   * @param blockNumber the block height
+   * @return the privacy genesis to apply
+   */
+  PrivacyGenesis getPrivacyGenesis(Bytes privacyGroupId, long blockNumber);
 }

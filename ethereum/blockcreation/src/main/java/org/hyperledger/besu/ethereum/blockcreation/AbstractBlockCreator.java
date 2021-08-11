@@ -219,7 +219,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
-            protocolSpec.getTransactionPriceCalculator());
+            protocolSpec.getFeeMarket());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
@@ -259,7 +259,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
     Long baseFee = null;
-    if (protocolSpec.isEip1559()) {
+    if (protocolSpec.getFeeMarket().implementsBaseFee()) {
+      // TODO roll eip1559 into feeMarket
       final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
       if (eip1559.isForkBlock(newBlockNumber)) {
         gasLimit = gasLimit * eip1559.getFeeMarket().getSlackCoefficient();
