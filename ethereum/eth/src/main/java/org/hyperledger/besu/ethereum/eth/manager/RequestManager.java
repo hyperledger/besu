@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -60,7 +61,7 @@ public class RequestManager {
   }
 
   public void dispatchResponse(final EthMessage ethMessage) {
-    final Collection<ResponseStream> streams = responseStreams.values();
+    final Collection<ResponseStream> streams = List.copyOf(responseStreams.values());
     final int count = outstandingRequests.decrementAndGet();
     if (supportsRequestId) {
       // If there's a requestId, find the specific stream it belongs to
