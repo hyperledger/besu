@@ -134,7 +134,7 @@ public class TransactionPoolTest {
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
-    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london());
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.legacy());
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
     syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);

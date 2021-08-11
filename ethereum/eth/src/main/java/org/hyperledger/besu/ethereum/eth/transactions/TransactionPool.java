@@ -76,10 +76,6 @@ public class TransactionPool implements BlockAddedObserver {
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
   private final PeerPendingTransactionTracker peerPendingTransactionTracker;
-  //  private final TransactionPriceCalculator frontierPriceCalculator =
-  //      TransactionPriceCalculator.frontier();
-  //  private final TransactionPriceCalculator eip1559PriceCalculator =
-  //      TransactionPriceCalculator.eip1559();
   private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
