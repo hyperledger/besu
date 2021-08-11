@@ -56,4 +56,8 @@ public class Util {
   public static int fastDivCeiling(final int numerator, final int denominator) {
     return ((numerator - 1) / denominator) + 1;
   }
+
+  public static String thisMethodName() {
+    return new Exception().getStackTrace()[1].getMethodName();
+  }
 }

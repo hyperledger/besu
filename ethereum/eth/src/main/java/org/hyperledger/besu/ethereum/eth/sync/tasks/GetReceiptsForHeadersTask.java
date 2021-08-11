@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.tasks;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static org.hyperledger.besu.ethereum.core.Util.thisMethodName;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Hash;
@@ -89,8 +90,9 @@ public class GetReceiptsForHeadersTask
   @Override
   protected CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
-    LOG.traceEntry();
-    return LOG.traceExit(requestReceipts(assignedPeer).thenCompose(this::processResponse));
+    LOG.traceEntry(thisMethodName());
+    return LOG.traceExit(
+        thisMethodName(), requestReceipts(assignedPeer).thenCompose(this::processResponse));
   }
 
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> requestReceipts(

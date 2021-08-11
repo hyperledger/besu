@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.ethereum.core.Util.thisMethodName;
 import static org.hyperledger.besu.ethereum.mainnet.BodyValidation.receiptsRoot;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -92,7 +93,7 @@ public class GetReceiptsFromPeerTask
   @Override
   protected Optional<Map<BlockHeader, List<TransactionReceipt>>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
-    LOG.traceEntry();
+    LOG.traceEntry(thisMethodName());
     if (streamClosed) {
       // All outstanding requests have been responded to and we still haven't found the response
       // we wanted. It must have been empty or contain data that didn't match.
@@ -118,6 +119,6 @@ public class GetReceiptsFromPeerTask
       }
       blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
     }
-    return LOG.traceExit(Optional.of(receiptsByHeader));
+    return LOG.traceExit(thisMethodName(), Optional.of(receiptsByHeader));
   }
 }

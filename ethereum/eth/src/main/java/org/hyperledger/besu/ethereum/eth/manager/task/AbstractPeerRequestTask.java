@@ -34,6 +34,8 @@ import java.util.concurrent.TimeoutException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import static org.hyperledger.besu.ethereum.core.Util.thisMethodName;
+
 public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   private static final Logger LOG = LogManager.getLogger();
   private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
@@ -55,7 +57,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
 
   @Override
   protected final void executeTask() {
-    LOG.traceExit();
+    LOG.traceEntry(thisMethodName());
     final CompletableFuture<R> promise = new CompletableFuture<>();
     responseStream = sendRequest();
     responseStream.then(
@@ -84,7 +86,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
             result.complete(new PeerTaskResult<>(responseStream.get().getPeer(), r));
           }
         });
-    LOG.traceExit();
+    LOG.traceExit(thisMethodName());
   }
 
   public PendingPeerRequest sendRequestToPeer(
@@ -97,7 +99,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       final boolean streamClosed,
       final MessageData message,
       final EthPeer peer) {
-    LOG.traceEntry();
+    LOG.traceEntry(thisMethodName());
     if (promise.isDone()) {
       // We've already got our response, don't pass on the stream closed event.
       return;
@@ -111,15 +113,15 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       promise.completeExceptionally(new PeerBreachedProtocolException());
     }
-    LOG.traceExit();
+    LOG.traceExit(thisMethodName());
   }
 
   @Override
   protected void cleanup() {
-    LOG.traceEntry();
+    LOG.traceEntry(thisMethodName());
     super.cleanup();
     responseStream.abort().ifPresent(RequestManager.ResponseStream::close);
-    LOG.traceExit();
+    LOG.traceEntry(thisMethodName());
   }
 
   protected abstract PendingPeerRequest sendRequest();

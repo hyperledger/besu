@@ -32,6 +32,8 @@ import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import static org.hyperledger.besu.ethereum.core.Util.thisMethodName;
+
 /**
  * A task that will retry a fixed number of times before completing the associated CompletableFuture
  * exceptionally with a new {@link MaxRetriesReachedException}. If the future returned from {@link
@@ -73,7 +75,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   @Override
   protected void executeTask() {
-    LOG.traceEntry();
+    LOG.traceEntry(thisMethodName());
     if (result.isDone()) {
       // Return if task is done
       return;
@@ -98,7 +100,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 executeTaskTimed();
               }
             });
-    LOG.traceEntry();
+    LOG.traceExit(thisMethodName());
   }
 
   protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);
