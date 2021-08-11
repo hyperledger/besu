@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -81,6 +82,9 @@ public class OnChainPrivacyPrecompiledContractTest {
   final PrivateStateStorage privateStateStorage = mock(PrivateStateStorage.class);
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
+
+  PrivateStateGenesisAllocator privateStateGenesisAllocator =
+      mock(PrivateStateGenesisAllocator.class);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
       final TransactionProcessingResult result) {
@@ -162,7 +166,6 @@ public class OnChainPrivacyPrecompiledContractTest {
     when(enclave.receive(any())).thenReturn(response);
 
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
-    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
     Mockito.doReturn(true)
         .when(contractSpy)
         .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
@@ -234,7 +237,6 @@ public class OnChainPrivacyPrecompiledContractTest {
     final Enclave enclave = mock(Enclave.class);
     final OnChainPrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
-    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
     Mockito.doReturn(false)
         .when(contractSpy)
         .isContractLocked(any(), any(), any(), any(), any(), any(), any());
@@ -272,7 +274,8 @@ public class OnChainPrivacyPrecompiledContractTest {
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
-            privateStateRootResolver);
+            privateStateRootResolver,
+            privateStateGenesisAllocator);
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
@@ -280,7 +283,6 @@ public class OnChainPrivacyPrecompiledContractTest {
                 ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE))));
 
     final OnChainPrivacyPrecompiledContract contractSpy = spy(contract);
-    Mockito.doNothing().when(contractSpy).maybeInjectDefaultManagementAndProxy(any(), any(), any());
     Mockito.doReturn(true)
         .when(contractSpy)
         .canExecute(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
@@ -310,6 +312,10 @@ public class OnChainPrivacyPrecompiledContractTest {
 
   private OnChainPrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
     return new OnChainPrivacyPrecompiledContract(
-        new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateRootResolver);
+        new SpuriousDragonGasCalculator(),
+        enclave,
+        worldStateArchive,
+        privateStateRootResolver,
+        privateStateGenesisAllocator);
   }
 }

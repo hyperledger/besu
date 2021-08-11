@@ -121,7 +121,7 @@ public class PrivateContractTransactions {
         contractAddress, clazz, transactionSigningKey, privateFrom, Arrays.asList(privateFor));
   }
 
-  private <T extends Contract> LoadPrivateSmartContractTransaction<T> loadSmartContract(
+  public <T extends Contract> LoadPrivateSmartContractTransaction<T> loadSmartContract(
       final String contractAddress,
       final Class<T> clazz,
       final String transactionSigningKey,
@@ -129,6 +129,17 @@ public class PrivateContractTransactions {
       final List<String> privateFor) {
     return new LoadPrivateSmartContractTransaction<>(
         contractAddress, clazz, transactionSigningKey, privateFrom, privateFor);
+  }
+
+  public <T extends Contract>
+      LoadPrivateSmartContractTransactionWithPrivacyGroupId<T> loadSmartContractWithPrivacyGroupId(
+          final String contractAddress,
+          final Class<T> clazz,
+          final String transactionSigningKey,
+          final String privateFrom,
+          final String privacyGroupId) {
+    return new LoadPrivateSmartContractTransactionWithPrivacyGroupId<>(
+        contractAddress, clazz, transactionSigningKey, privateFrom, privacyGroupId);
   }
 
   public CallOnChainPermissioningPrivateSmartContractFunction callOnChainPermissioningSmartContract(

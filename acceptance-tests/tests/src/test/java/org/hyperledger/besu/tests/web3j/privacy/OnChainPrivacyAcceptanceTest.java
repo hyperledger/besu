@@ -150,6 +150,50 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
   }
 
   @Test
+  public void canInteractWithPrivateGenesisPreCompile() throws Exception {
+    final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
+
+    final EventEmitter eventEmitter =
+        alice.execute(
+            privateContractTransactions.loadSmartContractWithPrivacyGroupId(
+                "0x1000000000000000000000000000000000000001",
+                EventEmitter.class,
+                alice.getTransactionSigningKey(),
+                alice.getEnclaveKey(),
+                privacyGroupId));
+
+    eventEmitter.store(BigInteger.valueOf(42)).send();
+
+    final String aliceResponse =
+        alice
+            .execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(new BigInteger(aliceResponse.substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(42));
+
+    final String bobResponse =
+        bob.execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(new BigInteger(bobResponse.substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(42));
+
+    final String charlieResponse =
+        charlie
+            .execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(charlieResponse).isEqualTo("0x");
+  }
+
+  @Test
   public void memberCanBeAddedAfterBeingRemoved() {
     final String privacyGroupId = createOnChainPrivacyGroup(alice);
 

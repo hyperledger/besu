@@ -16,6 +16,7 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
@@ -30,6 +31,7 @@ public class PrivacyPluginServiceImpl implements PrivacyPluginService {
 
   private PrivacyGroupAuthProvider privacyGroupAuthProvider =
       (privacyGroupId, privacyUserId, blockNumber) -> true;
+  private PrivacyGroupGenesisProvider privacyGroupGenesisProvider;
 
   @Override
   public void setPayloadProvider(final PrivacyPluginPayloadProvider privacyPluginPayloadProvider) {
@@ -64,5 +66,16 @@ public class PrivacyPluginServiceImpl implements PrivacyPluginService {
   public void setPrivateMarkerTransactionFactory(
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
     this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
+  }
+
+  @Override
+  public void setPrivacyGroupGenesisProvider(
+      final PrivacyGroupGenesisProvider privacyGroupGenesisProvider) {
+    this.privacyGroupGenesisProvider = privacyGroupGenesisProvider;
+  }
+
+  @Override
+  public PrivacyGroupGenesisProvider getPrivacyGroupGenesisProvider() {
+    return privacyGroupGenesisProvider;
   }
 }
