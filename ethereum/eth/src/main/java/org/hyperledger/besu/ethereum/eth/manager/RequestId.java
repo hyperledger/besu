@@ -1,7 +1,5 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -10,7 +8,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.AbstractMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class RequestId {
   public static MessageData wrapRequestId(final long requestId, final MessageData messageData) {

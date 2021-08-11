@@ -40,7 +40,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -287,8 +286,7 @@ public class EthPeer {
    */
   void dispatch(final EthMessage ethMessage) {
     checkArgument(
-        ethMessage.getPeer().equals(this),
-        "Mismatched Eth message sent to peer for dispatch");
+        ethMessage.getPeer().equals(this), "Mismatched Eth message sent to peer for dispatch");
     final int messageCode = ethMessage.getData().getCode();
     reputation.resetTimeoutCount(messageCode);
     switch (messageCode) {

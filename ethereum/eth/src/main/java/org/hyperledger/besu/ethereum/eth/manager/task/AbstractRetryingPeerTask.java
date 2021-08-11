@@ -32,7 +32,6 @@ import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
 /**
  * A task that will retry a fixed number of times before completing the associated CompletableFuture
  * exceptionally with a new {@link MaxRetriesReachedException}. If the future returned from {@link
