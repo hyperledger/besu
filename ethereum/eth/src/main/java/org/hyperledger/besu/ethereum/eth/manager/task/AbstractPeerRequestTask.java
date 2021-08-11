@@ -121,7 +121,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
     LOG.traceEntry(thisMethodName());
     super.cleanup();
     responseStream.abort().ifPresent(RequestManager.ResponseStream::close);
-    LOG.traceEntry(thisMethodName());
+    LOG.traceExit(thisMethodName());
   }
 
   protected abstract PendingPeerRequest sendRequest();
