@@ -249,11 +249,15 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
+    final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
+        new QbftBlockHeaderValidationRulesetFactory(
+            qbftConfig.getValidatorContractAddress().isPresent());
+
     return BftProtocolSchedule.create(
         genesisConfig.getConfigOptions(genesisConfigOverrides),
         privacyParameters,
         isRevertReasonEnabled,
-        QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+        qbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
         bftExtraDataCodec().get());
   }
 

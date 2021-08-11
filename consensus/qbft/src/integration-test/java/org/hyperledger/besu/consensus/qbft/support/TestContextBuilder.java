@@ -365,11 +365,12 @@ public class TestContextBuilder {
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.byzantiumBlock(0);
-
+    final QbftBlockHeaderValidationRulesetFactory qbftBlockHeaderValidationRulesetFactory =
+        new QbftBlockHeaderValidationRulesetFactory(useValidatorContract);
     final ProtocolSchedule protocolSchedule =
         BftProtocolSchedule.create(
             genesisConfigOptions,
-            QbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
+            qbftBlockHeaderValidationRulesetFactory::blockHeaderValidator,
             BFT_EXTRA_DATA_ENCODER);
 
     /////////////////////////////////////////////////////////////////////////////////////

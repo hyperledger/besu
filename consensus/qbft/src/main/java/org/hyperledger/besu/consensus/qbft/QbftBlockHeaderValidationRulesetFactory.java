@@ -30,6 +30,12 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class QbftBlockHeaderValidationRulesetFactory {
+  private final boolean extraDataContractBasedValidatorRule;
+
+  public QbftBlockHeaderValidationRulesetFactory(
+      final boolean extraDataContractBasedValidatorRule) {
+    this.extraDataContractBasedValidatorRule = extraDataContractBasedValidatorRule;
+  }
 
   /**
    * Produces a BlockHeaderValidator configured for assessing bft block headers which are to form
@@ -38,7 +44,7 @@ public class QbftBlockHeaderValidationRulesetFactory {
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @return BlockHeaderValidator configured for assessing bft block headers
    */
-  public static BlockHeaderValidator.Builder blockHeaderValidator(final long secondsBetweenBlocks) {
+  public BlockHeaderValidator.Builder blockHeaderValidator(final long secondsBetweenBlocks) {
     return new BlockHeaderValidator.Builder()
         .addRule(new AncestryValidationRule())
         .addRule(new GasUsageValidationRule())
@@ -51,7 +57,7 @@ public class QbftBlockHeaderValidationRulesetFactory {
         .addRule(
             new ConstantFieldValidationRule<>(
                 "Difficulty", BlockHeader::getDifficulty, UInt256.ONE))
-        .addRule(new BftValidatorsValidationRule())
+        .addRule(new BftValidatorsValidationRule(extraDataContractBasedValidatorRule))
         .addRule(new BftCoinbaseValidationRule())
         .addRule(new BftCommitSealsValidationRule());
   }

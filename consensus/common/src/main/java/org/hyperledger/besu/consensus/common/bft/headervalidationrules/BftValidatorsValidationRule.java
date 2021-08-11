@@ -37,6 +37,15 @@ import org.apache.logging.log4j.Logger;
 public class BftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOGGER = LogManager.getLogger();
+  private final boolean extraDataValidatorsAndVoteMustBeEmpty;
+
+  public BftValidatorsValidationRule() {
+    this(false);
+  }
+
+  public BftValidatorsValidationRule(final boolean extraDataValidatorsAndVoteMustBeEmpty) {
+    this.extraDataValidatorsAndVoteMustBeEmpty = extraDataValidatorsAndVoteMustBeEmpty;
+  }
 
   @Override
   public boolean validate(
@@ -45,27 +54,45 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
       final BftContext bftContext = context.getConsensusState(BftContext.class);
       final BftExtraData bftExtraData = bftContext.getBlockInterface().getExtraData(header);
 
-      final NavigableSet<Address> sortedReportedValidators =
-          new TreeSet<>(bftExtraData.getValidators());
+      // validators and vote may be empty if they are supplied by a contract.
+      if (extraDataValidatorsAndVoteMustBeEmpty) {
+        if (!bftExtraData.getValidators().isEmpty()) {
+          LOGGER.info(
+              "Invalid block header: Validators in extra data expected to be empty but got {}",
+              bftExtraData.getValidators());
+          return false;
+        }
 
-      if (!Iterables.elementsEqual(bftExtraData.getValidators(), sortedReportedValidators)) {
-        LOGGER.info(
-            "Invalid block header: Validators are not sorted in ascending order. Expected {} but got {}.",
-            sortedReportedValidators,
-            bftExtraData.getValidators());
-        return false;
+        if (bftExtraData.getVote().isPresent()) {
+          LOGGER.info(
+              "Invalid block header: Vote in extra data expected to be empty but got {}",
+              bftExtraData.getVote().get());
+          return false;
+        }
+      } else {
+        // are validators sorted?
+        final NavigableSet<Address> sortedReportedValidators =
+            new TreeSet<>(bftExtraData.getValidators());
+
+        if (!Iterables.elementsEqual(bftExtraData.getValidators(), sortedReportedValidators)) {
+          LOGGER.info(
+              "Invalid block header: Validators are not sorted in ascending order. Expected {} but got {}.",
+              sortedReportedValidators,
+              bftExtraData.getValidators());
+          return false;
+        }
+
+        // are validators same?
+        final Collection<Address> storedValidators =
+            bftContext.getValidatorProvider().getValidatorsAfterBlock(parent);
+        if (!Iterables.elementsEqual(bftExtraData.getValidators(), storedValidators)) {
+          LOGGER.info(
+              "Invalid block header: Incorrect validators. Expected {} but got {}.",
+              storedValidators,
+              bftExtraData.getValidators());
+          return false;
+        }
       }
-
-      final Collection<Address> storedValidators =
-          bftContext.getValidatorProvider().getValidatorsAfterBlock(parent);
-      if (!Iterables.elementsEqual(bftExtraData.getValidators(), storedValidators)) {
-        LOGGER.info(
-            "Invalid block header: Incorrect validators. Expected {} but got {}.",
-            storedValidators,
-            bftExtraData.getValidators());
-        return false;
-      }
-
     } catch (final RLPException ex) {
       LOGGER.info(
           "Invalid block header: ExtraData field was unable to be deserialized into an BFT Struct.",
