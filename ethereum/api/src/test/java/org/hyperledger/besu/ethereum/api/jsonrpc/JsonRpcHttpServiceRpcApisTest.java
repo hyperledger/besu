@@ -93,7 +93,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   private static final List<String> netServices =
       new ArrayList<>(Arrays.asList("jsonrpc", "ws", "p2p", "metrics"));
 
-  @Mock protected static BlockchainQueries blockchainQueries;
+  @Mock protected BlockchainQueries blockchainQueries;
 
   private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
   private final NatService natService = new NatService(Optional.empty());

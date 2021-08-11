@@ -47,11 +47,15 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupAuthProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyPluginPayloadProvider;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -133,6 +137,25 @@ public class PrivacyPluginPrecompiledContractTest {
                       public PrivacyGroupAuthProvider getPrivacyGroupAuthProvider() {
                         return (privacyGroupId, privacyUserId, blockNumber) -> true;
                       }
+
+                      @Override
+                      public void setPrivacyGroupGenesisProvider(
+                          final PrivacyGroupGenesisProvider privacyGroupAuthProvider) {}
+
+                      @Override
+                      public PrivacyGroupGenesisProvider getPrivacyGroupGenesisProvider() {
+                        return (privacyGroupId, blockNumber) ->
+                            (PrivacyGenesis) Collections::emptyList;
+                      }
+
+                      @Override
+                      public PrivateMarkerTransactionFactory getPrivateMarkerTransactionFactory() {
+                        return null;
+                      }
+
+                      @Override
+                      public void setPrivateMarkerTransactionFactory(
+                          final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {}
                     })
                 .setEnclaveFactory(mock(EnclaveFactory.class))
                 .build());

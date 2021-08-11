@@ -43,6 +43,8 @@ public interface GenesisConfigOptions {
 
   BftConfigOptions getBftConfigOptions();
 
+  QbftConfigOptions getQbftConfigOptions();
+
   EthashConfigOptions getEthashConfigOptions();
 
   Keccak256ConfigOptions getKeccak256ConfigOptions();

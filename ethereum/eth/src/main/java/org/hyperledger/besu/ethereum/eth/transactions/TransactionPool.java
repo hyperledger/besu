@@ -38,8 +38,10 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -47,7 +49,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -79,7 +80,6 @@ public class TransactionPool implements BlockAddedObserver {
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
   private final PeerPendingTransactionTracker peerPendingTransactionTracker;
-  private final Optional<EIP1559> eip1559;
   private final TransactionPriceCalculator frontierPriceCalculator =
       TransactionPriceCalculator.frontier();
   private final TransactionPriceCalculator eip1559PriceCalculator =
@@ -98,7 +98,6 @@ public class TransactionPool implements BlockAddedObserver {
       final PeerPendingTransactionTracker peerPendingTransactionTracker,
       final Wei minTransactionGasPrice,
       final MetricsSystem metricsSystem,
-      final Optional<EIP1559> eip1559,
       final TransactionPoolConfiguration configuration) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
@@ -109,7 +108,6 @@ public class TransactionPool implements BlockAddedObserver {
     this.peerTransactionTracker = peerTransactionTracker;
     this.peerPendingTransactionTracker = peerPendingTransactionTracker;
     this.minTransactionGasPrice = minTransactionGasPrice;
-    this.eip1559 = eip1559;
     this.configuration = configuration;
 
     duplicateTransactionCounter =
@@ -236,7 +234,7 @@ public class TransactionPool implements BlockAddedObserver {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
 
     // Check whether it's a GoQuorum transaction
-    if (isGoQuorumPrivateTransaction(transaction)) {
+    if (transaction.isGoQuorumPrivateTransaction()) {
       final Optional<Wei> weiValue = ofNullable(transaction.getValue());
       if (weiValue.isPresent() && !weiValue.get().isZero()) {
         return ValidationResult.invalid(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
@@ -260,13 +258,14 @@ public class TransactionPool implements BlockAddedObserver {
               "Transaction gas limit of %s exceeds block gas limit of %s",
               transaction.getGasLimit(), chainHeadBlockHeader.getGasLimit()));
     }
-    if (transaction.getType().equals(TransactionType.EIP1559)
-        && !eip1559
-            .map(eip1559 -> eip1559.isEIP1559(chainHeadBlockHeader.getNumber()))
-            .orElse(false)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          "EIP-1559 transaction are not allowed yet");
+    if (transaction.getType().equals(TransactionType.EIP1559)) {
+      final long blknum = chainHeadBlockHeader.getNumber();
+      ProtocolSpec spec = protocolSchedule.getByBlockNumber(blknum);
+      if (!spec.getEip1559().map(eip1559 -> eip1559.isEIP1559(blknum)).orElse(false)) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+            "EIP-1559 transaction are not allowed yet");
+      }
     }
 
     return protocolContext
@@ -291,11 +290,6 @@ public class TransactionPool implements BlockAddedObserver {
     return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
   }
 
-  private boolean isGoQuorumPrivateTransaction(final Transaction transaction) {
-    return (transaction.getV().equals(BigInteger.valueOf(37))
-        || (transaction.getV().equals(BigInteger.valueOf(38))));
-  }
-
   public interface TransactionBatchAddedListener {
 
     void onTransactionsAdded(Iterable<Transaction> transactions);
@@ -304,9 +298,17 @@ public class TransactionPool implements BlockAddedObserver {
   private Wei minTransactionGasPrice(final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     // Compute transaction price using EIP-1559 rules if chain head is after fork
-    if (eip1559.isPresent() && eip1559.get().isEIP1559(chainHeadBlockHeader.getNumber())) {
+    ProtocolSpec spec = protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber());
+    Optional<FeeMarket> feeMarket = spec.getFeeMarket();
+    // TODO: remove once eip1559 is part of FeeMarket
+    Optional<EIP1559> eip1559 = spec.getEip1559();
+
+    if (feeMarket
+        .flatMap(fm -> eip1559.map(e -> e.isEIP1559(chainHeadBlockHeader.getNumber())))
+        .orElse(Boolean.FALSE)) {
+      // TODO: remove eip1559PriceCalculator once it is rolled into fee market
       return BaseFee.minTransactionPriceInNextBlock(
-          transaction, eip1559PriceCalculator, chainHeadBlockHeader::getBaseFee);
+          transaction, feeMarket.get(), eip1559PriceCalculator, chainHeadBlockHeader::getBaseFee);
     } else { // Use frontier rules otherwise
       return frontierPriceCalculator.price(transaction, Optional.empty());
     }

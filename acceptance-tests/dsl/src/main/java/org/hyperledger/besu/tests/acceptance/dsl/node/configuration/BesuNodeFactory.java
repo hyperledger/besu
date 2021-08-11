@@ -22,9 +22,9 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
@@ -221,7 +221,11 @@ public class BesuNodeFactory {
             .build();
 
     final MiningParameters miningParameters =
-        new MiningParametersTestBuilder().minTransactionGasPrice(Wei.ZERO).enabled(true).build();
+        new MiningParameters.Builder()
+            .minTransactionGasPrice(Wei.ZERO)
+            .coinbase(AddressHelpers.ofValue(1))
+            .enabled(true)
+            .build();
 
     return create(
         new BesuNodeConfigurationBuilder()

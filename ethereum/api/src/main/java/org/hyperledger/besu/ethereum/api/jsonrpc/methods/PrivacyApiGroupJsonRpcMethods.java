@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyRpcMethod;
@@ -22,9 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiT
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
@@ -35,8 +32,9 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedMultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -88,14 +86,21 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return privacyParameters;
   }
 
+  public GasCalculator getGasCalculator() {
+    return protocolSchedule
+        .getByBlockNumber(blockchainQueries.headBlockNumber())
+        .getGasCalculator();
+  }
+
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final PrivateMarkerTransactionFactory markerTransactionFactory =
-        createPrivateMarkerTransactionFactory(
-            privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
+        createPrivateMarkerTransactionFactory();
     final PrivacyIdProvider enclavePublicProvider = PrivacyIdProvider.build(privacyParameters);
-    final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
-    return create(privacyController, enclavePublicProvider).entrySet().stream()
+    final PrivacyController privacyController = createPrivacyController();
+    return create(privacyController, enclavePublicProvider, markerTransactionFactory)
+        .entrySet()
+        .stream()
         .collect(
             Collectors.toMap(
                 Map.Entry::getKey,
@@ -103,26 +108,22 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   }
 
   protected abstract Map<String, JsonRpcMethod> create(
-      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider);
+      final PrivacyController privacyController,
+      final PrivacyIdProvider privacyIdProvider,
+      PrivateMarkerTransactionFactory markerTransactionFactory);
 
-  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
-      final PrivacyParameters privacyParameters,
-      final BlockchainQueries blockchainQueries,
-      final PendingTransactions pendingTransactions) {
-
-    final Address privateContractAddress = privacyParameters.getPrivacyAddress();
-
-    if (privacyParameters.getSigningKeyPair().isPresent()) {
+  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory() {
+    if (privacyParameters.getPrivacyService() != null
+        && privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory() != null) {
+      return privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory();
+    } else if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
-          privateContractAddress,
-          new LatestNonceProvider(blockchainQueries, pendingTransactions),
           privacyParameters.getSigningKeyPair().get());
     }
-    return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+    return new RandomSigningPrivateMarkerTransactionFactory();
   }
 
-  private PrivacyController createPrivacyController(
-      final PrivateMarkerTransactionFactory markerTransactionFactory) {
+  private PrivacyController createPrivacyController() {
     final Optional<BigInteger> chainId = protocolSchedule.getChainId();
 
     if (privacyParameters.isPrivacyPluginEnabled()) {
@@ -130,7 +131,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
           getBlockchainQueries().getBlockchain(),
           privacyParameters,
           chainId,
-          markerTransactionFactory,
           createPrivateTransactionSimulator(),
           privateNonceProvider,
           privacyParameters.getPrivateWorldStateReader());
@@ -140,7 +140,6 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
               getBlockchainQueries().getBlockchain(),
               privacyParameters,
               chainId,
-              markerTransactionFactory,
               createPrivateTransactionSimulator(),
               privateNonceProvider,
               privacyParameters.getPrivateWorldStateReader());

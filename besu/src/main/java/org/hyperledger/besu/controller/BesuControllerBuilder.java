@@ -17,7 +17,7 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -93,6 +92,8 @@ public abstract class BesuControllerBuilder {
   protected MiningParameters miningParameters;
   protected ObservableMetricsSystem metricsSystem;
   protected PrivacyParameters privacyParameters;
+  protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
+      Optional.empty();
   protected Path dataDirectory;
   protected Clock clock;
   protected NodeKey nodeKey;
@@ -159,6 +160,12 @@ public abstract class BesuControllerBuilder {
 
   public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = privacyParameters;
+    return this;
+  }
+
+  public BesuControllerBuilder pkiBlockCreationConfiguration(
+      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
+    this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
     return this;
   }
 
@@ -253,7 +260,11 @@ public abstract class BesuControllerBuilder {
         createWorldStateArchive(worldStateStorage, blockchain);
     final ProtocolContext protocolContext =
         ProtocolContext.init(
-            blockchain, worldStateArchive, genesisState, this::createConsensusContext);
+            blockchain,
+            worldStateArchive,
+            genesisState,
+            protocolSchedule,
+            this::createConsensusContext);
     validateContext(protocolContext);
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
@@ -295,14 +306,6 @@ public abstract class BesuControllerBuilder {
     final SyncState syncState = new SyncState(blockchain, ethPeers);
     final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
 
-    final Optional<EIP1559> eip1559;
-    final GenesisConfigOptions genesisConfigOptions =
-        genesisConfig.getConfigOptions(genesisConfigOverrides);
-    if (genesisConfigOptions.getEIP1559BlockNumber().isPresent()) {
-      eip1559 = Optional.of(new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().getAsLong()));
-    } else {
-      eip1559 = Optional.empty();
-    }
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -312,8 +315,7 @@ public abstract class BesuControllerBuilder {
             metricsSystem,
             syncState,
             miningParameters.getMinTransactionGasPrice(),
-            transactionPoolConfiguration,
-            eip1559);
+            transactionPoolConfiguration);
 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
@@ -351,7 +353,7 @@ public abstract class BesuControllerBuilder {
             ethProtocolManager);
 
     final PluginServiceFactory additionalPluginServices =
-        createAdditionalPluginServices(blockchain);
+        createAdditionalPluginServices(blockchain, protocolContext);
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager);
@@ -408,7 +410,9 @@ public abstract class BesuControllerBuilder {
   protected void validateContext(final ProtocolContext context) {}
 
   protected abstract Object createConsensusContext(
-      Blockchain blockchain, WorldStateArchive worldStateArchive);
+      Blockchain blockchain,
+      WorldStateArchive worldStateArchive,
+      ProtocolSchedule protocolSchedule);
 
   protected String getSupportedProtocol() {
     return EthProtocol.NAME;
@@ -482,5 +486,5 @@ public abstract class BesuControllerBuilder {
   }
 
   protected abstract PluginServiceFactory createAdditionalPluginServices(
-      final Blockchain blockchain);
+      final Blockchain blockchain, final ProtocolContext protocolContext);
 }

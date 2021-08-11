@@ -38,7 +38,7 @@ public class IbftGetPendingVotesTest extends AbstractVoteProposerMethodTest {
 
   @Before
   public void setup() {
-    method = new IbftGetPendingVotes(getVoteProposer());
+    method = new IbftGetPendingVotes(getValidatorProvider());
   }
 
   @Test

@@ -16,13 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import org.junit.Before;
@@ -37,31 +35,35 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   @Before
   public void before() {
-    method = new PluginEeaSendRawTransaction(transactionPool, privacyController, (user) -> "");
+    method =
+        new PluginEeaSendRawTransaction(
+            transactionPool,
+            user -> "",
+            privateMarkerTransactionFactory,
+            address -> 0,
+            privacyController,
+            gasCalculator);
   }
 
   @Test
   public void validUnrestrictedTransactionIsSentToTransactionPool() {
+
     when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
-        .thenReturn("");
+        .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(privacyController.createPrivateMarkerTransaction(any(), any(), any()))
-        .thenReturn(PUBLIC_TRANSACTION);
 
     when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            "0x221e930a2c18d91fca4d509eaa3512f3e01fef266f660e32473de67474b36c15");
+            "0x8d84a2d2158c9be3c18a8e6d064fd085e440d117294ba2e7f909e36bf192ffbd");
 
     final JsonRpcResponse actualResponse =
         method.response(validUnrestrictedPrivacyGroupTransactionRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(PUBLIC_TRANSACTION);
-    verify(privacyController)
-        .createPrivateMarkerTransaction(any(), any(), eq(Address.PLUGIN_PRIVACY));
+    verify(transactionPool).addLocalTransaction(PUBLIC_PLUGIN_TRANSACTION);
   }
 }

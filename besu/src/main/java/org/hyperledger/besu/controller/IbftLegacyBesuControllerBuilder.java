@@ -17,9 +17,8 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.IbftLegacyConfigOptions;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.IbftLegacyContext;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftLegacyBlockInterface;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
@@ -82,24 +81,22 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected IbftLegacyContext createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     final IbftLegacyConfigOptions ibftConfig =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getIbftLegacyConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
-    final VoteTallyCache voteTallyCache =
-        new VoteTallyCache(
-            blockchain,
-            new VoteTallyUpdater(epochManager, blockInterface),
-            epochManager,
-            blockInterface);
+    final ValidatorProvider validatorProvider =
+        BlockValidatorProvider.nonForkingValidatorProvider(
+            blockchain, epochManager, blockInterface);
 
-    final VoteProposer voteProposer = new VoteProposer();
-
-    return new IbftLegacyContext(voteTallyCache, voteProposer, epochManager, blockInterface);
+    return new IbftLegacyContext(validatorProvider, epochManager, blockInterface);
   }
 
   @Override
-  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+  protected PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain, final ProtocolContext protocolContext) {
     return new NoopPluginServiceFactory();
   }
 

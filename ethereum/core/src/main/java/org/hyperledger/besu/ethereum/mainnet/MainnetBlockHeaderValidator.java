@@ -19,10 +19,10 @@ import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxLengthValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.LondonFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
@@ -136,7 +136,7 @@ public final class MainnetBlockHeaderValidator {
                 true,
                 PoWHasher.ETHASH_LIGHT,
                 Optional.of(eip1559)))
-        .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
+        .addRule((new LondonFeeMarketBlockHeaderGasPriceValidationRule(eip1559)));
   }
 
   static BlockHeaderValidator.Builder createEip1559OmmerValidator(final EIP1559 eip1559) {
@@ -155,6 +155,6 @@ public final class MainnetBlockHeaderValidator {
                 true,
                 PoWHasher.ETHASH_LIGHT,
                 Optional.of(eip1559)))
-        .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559)));
+        .addRule((new LondonFeeMarketBlockHeaderGasPriceValidationRule(eip1559)));
   }
 }

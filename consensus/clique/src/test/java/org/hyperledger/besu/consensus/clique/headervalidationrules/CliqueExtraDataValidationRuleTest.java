@@ -24,8 +24,7 @@ import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -58,11 +57,10 @@ public class CliqueExtraDataValidationRuleTest {
     validatorList.add(localAddr);
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddr, 1));
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, null, null, blockInterface);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
   }
 

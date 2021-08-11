@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
+import static com.google.common.base.Preconditions.checkState;
+
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -23,10 +25,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.core.Address;
 
 public class Discard implements JsonRpcMethod {
-  private final VoteProposer proposer;
+  private final ValidatorProvider validatorProvider;
 
-  public Discard(final VoteProposer proposer) {
-    this.proposer = proposer;
+  public Discard(final ValidatorProvider validatorProvider) {
+    this.validatorProvider = validatorProvider;
   }
 
   @Override
@@ -36,8 +38,9 @@ public class Discard implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    checkState(validatorProvider.getVoteProvider().isPresent(), "Clique requires a vote provider");
     final Address address = requestContext.getRequiredParameter(0, Address.class);
-    proposer.discard(address);
+    validatorProvider.getVoteProvider().get().discardVote(address);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
   }
 }

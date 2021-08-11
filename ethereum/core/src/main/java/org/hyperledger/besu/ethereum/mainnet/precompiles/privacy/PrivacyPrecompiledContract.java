@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
+import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
+
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveIOException;
@@ -27,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -42,7 +45,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Base64;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -52,6 +54,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   private final Enclave enclave;
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
+  private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
   PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LogManager.getLogger();
@@ -65,16 +68,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
+        privacyParameters.getPrivateStateGenesisAllocator(),
         name);
-  }
-
-  @VisibleForTesting
-  PrivacyPrecompiledContract(
-      final GasCalculator gasCalculator,
-      final Enclave enclave,
-      final WorldStateArchive worldStateArchive,
-      final PrivateStateRootResolver privateStateRootResolver) {
-    this(gasCalculator, enclave, worldStateArchive, privateStateRootResolver, "Privacy");
   }
 
   protected PrivacyPrecompiledContract(
@@ -82,11 +77,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator,
       final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
+    this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
   public void setPrivateTransactionProcessor(
@@ -161,6 +158,13 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
+    maybeApplyGenesisToPrivateWorldState(
+        lastRootHash,
+        disposablePrivateState,
+        privateWorldStateUpdater,
+        privacyGroupId,
+        messageFrame.getBlockHeader().getNumber());
+
     final TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
@@ -186,6 +190,18 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     }
 
     return result.getOutput();
+  }
+
+  protected void maybeApplyGenesisToPrivateWorldState(
+      final Hash lastRootHash,
+      final MutableWorldState disposablePrivateState,
+      final WorldUpdater privateWorldStateUpdater,
+      final Bytes32 privacyGroupId,
+      final long blockNumber) {
+    if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
+      this.privateStateGenesisAllocator.applyGenesisToPrivateWorldState(
+          disposablePrivateState, privateWorldStateUpdater, privacyGroupId, blockNumber);
+    }
   }
 
   void storePrivateMetadata(

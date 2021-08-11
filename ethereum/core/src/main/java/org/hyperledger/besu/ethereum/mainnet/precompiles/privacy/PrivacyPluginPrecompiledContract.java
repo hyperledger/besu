@@ -79,6 +79,13 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
+    maybeApplyGenesisToPrivateWorldState(
+        lastRootHash,
+        disposablePrivateState,
+        privateWorldStateUpdater,
+        privacyGroupId,
+        messageFrame.getBlockHeader().getNumber());
+
     final TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);

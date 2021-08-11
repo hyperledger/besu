@@ -19,10 +19,6 @@ import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.ForkingVoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
@@ -43,6 +39,8 @@ import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.IbftGossip;
@@ -140,15 +138,15 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
             bftExtraDataCodec().get());
 
-    // NOTE: peers should not be used for accessing the network as it does not enforce the
-    // "only send once" filter applied by the UniqueMessageMulticaster.
-    final VoteTallyCache voteTallyCache =
-        protocolContext.getConsensusState(BftContext.class).getVoteTallyCache();
+    final ValidatorProvider validatorProvider =
+        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
 
     final ProposerSelector proposerSelector =
-        new ProposerSelector(blockchain, bftBlockInterface().get(), true, voteTallyCache);
+        new ProposerSelector(blockchain, bftBlockInterface().get(), true, validatorProvider);
 
-    peers = new ValidatorPeers(voteTallyCache, IbftSubProtocol.NAME);
+    // NOTE: peers should not be used for accessing the network as it does not enforce the
+    // "only send once" filter applied by the UniqueMessageMulticaster.
+    peers = new ValidatorPeers(validatorProvider, IbftSubProtocol.NAME);
 
     final UniqueMessageMulticaster uniqueMessageMulticaster =
         new UniqueMessageMulticaster(peers, bftConfig.getGossipedHistoryLimit());
@@ -157,7 +155,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
     final BftFinalState finalState =
         new BftFinalState(
-            voteTallyCache,
+            validatorProvider,
             nodeKey,
             Util.publicKeyToAddress(nodeKey.getPublicKey()),
             proposerSelector,
@@ -223,8 +221,12 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   @Override
-  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
-    return new IbftQueryPluginServiceFactory(blockchain, bftBlockInterface().get(), nodeKey);
+  protected PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain, final ProtocolContext protocolContext) {
+    final ValidatorProvider validatorProvider =
+        protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
+    return new IbftQueryPluginServiceFactory(
+        blockchain, bftBlockInterface().get(), validatorProvider, nodeKey);
   }
 
   @Override
@@ -248,33 +250,30 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected BftContext createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     final GenesisConfigOptions configOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides);
     final BftConfigOptions ibftConfig = configOptions.getBftConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
-    final Map<Long, List<Address>> ibftValidatorForkMap =
+    final BftValidatorOverrides validatorOverrides =
         convertIbftForks(configOptions.getTransitions().getIbftForks());
 
     return new BftContext(
-        new ForkingVoteTallyCache(
-            blockchain,
-            new VoteTallyUpdater(epochManager, bftBlockInterface().get()),
-            epochManager,
-            bftBlockInterface().get(),
-            new BftValidatorOverrides(ibftValidatorForkMap)),
-        new VoteProposer(),
+        BlockValidatorProvider.forkingValidatorProvider(
+            blockchain, epochManager, bftBlockInterface().get(), validatorOverrides),
         epochManager,
         bftBlockInterface().get());
   }
 
-  private Map<Long, List<Address>> convertIbftForks(final List<BftFork> bftForks) {
+  private BftValidatorOverrides convertIbftForks(final List<BftFork> bftForks) {
     final Map<Long, List<Address>> result = new HashMap<>();
 
     for (final BftFork fork : bftForks) {
       fork.getValidators()
-          .map(
+          .ifPresent(
               validators ->
                   result.put(
                       fork.getForkBlock(),
@@ -283,7 +282,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
                           .collect(Collectors.toList())));
     }
 
-    return result;
+    return new BftValidatorOverrides(result);
   }
 
   private static MinedBlockObserver blockLogger(

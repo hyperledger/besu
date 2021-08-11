@@ -37,6 +37,7 @@ import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -95,11 +96,11 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public boolean canHandle(final String initialMessage, final StratumConnection conn) {
+  public boolean maybeHandle(final String initialMessage, final StratumConnection conn) {
     final JsonRpcRequest requestBody;
     try {
       requestBody = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | DecodeException e) {
       LOG.debug(e.getMessage(), e);
       return false;
     }
@@ -123,7 +124,7 @@ public class Stratum1Protocol implements StratumProtocol {
       conn.send(notify + "\n");
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
-      conn.close(null);
+      conn.close();
     }
     return true;
   }
@@ -171,7 +172,7 @@ public class Stratum1Protocol implements StratumProtocol {
       }
     } catch (IllegalArgumentException | IOException e) {
       LOG.debug(e.getMessage(), e);
-      conn.close(null);
+      conn.close();
     }
   }
 
