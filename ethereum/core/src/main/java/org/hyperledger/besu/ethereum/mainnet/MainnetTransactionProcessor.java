@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -65,7 +65,7 @@ public class MainnetTransactionProcessor {
 
   protected final int createContractAccountVersion;
 
-  protected final TransactionPriceCalculator transactionPriceCalculator;
+  protected final FeeMarket feeMarket;
   protected final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
   /**
@@ -226,7 +226,7 @@ public class MainnetTransactionProcessor {
       final boolean clearEmptyAccounts,
       final int maxStackSize,
       final int createContractAccountVersion,
-      final TransactionPriceCalculator transactionPriceCalculator,
+      final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
@@ -235,7 +235,7 @@ public class MainnetTransactionProcessor {
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
     this.createContractAccountVersion = createContractAccountVersion;
-    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
   }
 
@@ -277,7 +277,7 @@ public class MainnetTransactionProcessor {
       final MutableAccount senderMutableAccount = sender.getMutable();
       final long previousNonce = senderMutableAccount.incrementNonce();
       final Wei transactionGasPrice =
-          transactionPriceCalculator.price(transaction, blockHeader.getBaseFee());
+          feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
           senderAddress,

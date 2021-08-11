@@ -34,10 +34,10 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -106,8 +106,7 @@ public class EthGetTransactionReceiptTest {
           null,
           false,
           null,
-          TransactionPriceCalculator.frontier(),
-          Optional.empty(),
+          FeeMarket.legacy(),
           Optional.empty(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT));
@@ -132,8 +131,7 @@ public class EthGetTransactionReceiptTest {
           null,
           false,
           null,
-          TransactionPriceCalculator.frontier(),
-          Optional.empty(),
+          FeeMarket.legacy(),
           Optional.empty(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT));
