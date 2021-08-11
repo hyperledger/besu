@@ -99,7 +99,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       final boolean streamClosed,
       final MessageData message,
       final EthPeer peer) {
-    LOG.traceEntry(thisMethodName());
+    LOG.traceEntry("{} {} {} {} {}",thisMethodName(), promise, streamClosed, message, peer);
     if (promise.isDone()) {
       // We've already got our response, don't pass on the stream closed event.
       return;
