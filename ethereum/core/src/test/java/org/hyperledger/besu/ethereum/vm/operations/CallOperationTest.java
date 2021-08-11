@@ -48,7 +48,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class CallOperationTest implements Consumer<MessageFrame> {
+public class CallOperationTest {
 
   private final GasCalculator gasCalculator = new LondonGasCalculator();
 
@@ -118,7 +118,12 @@ public class CallOperationTest implements Consumer<MessageFrame> {
             .apparentValue(Wei.ZERO)
             .blockHeader(mock(BlockHeader.class))
             .depth(1)
-            .completer(this)
+            .completer(new Consumer<MessageFrame>() {
+                  @Override
+                  public void accept(final MessageFrame messageFrame) {
+                    System.out.println(messageFrame);
+                  }
+                })
             .miningBeneficiary(Address.ZERO)
             .blockHashLookup(mock(BlockHashLookup.class))
             .contractAccountVersion(0)
@@ -141,8 +146,4 @@ public class CallOperationTest implements Consumer<MessageFrame> {
     }
   }
 
-  @Override
-  public void accept(final MessageFrame messageFrame) {
-    System.out.println(messageFrame.toString());
-  }
 }
