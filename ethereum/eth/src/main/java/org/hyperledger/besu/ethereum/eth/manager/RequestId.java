@@ -24,8 +24,6 @@ import java.math.BigInteger;
 import java.util.AbstractMap;
 import java.util.Map;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public class RequestId {
   public static MessageData wrapRequestId(
       final BigInteger requestId, final MessageData messageData) {
