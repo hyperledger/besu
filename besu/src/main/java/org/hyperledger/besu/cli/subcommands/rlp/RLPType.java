@@ -18,7 +18,8 @@ package org.hyperledger.besu.cli.subcommands.rlp;
 public enum RLPType {
   // Enum is used to enable the listing of the possible values in PicoCLI.
   IBFT_EXTRA_DATA(new IbftExtraDataCLIAdapter()),
-  QBFT_EXTRA_DATA(new QbftExtraDataCLIAdapter());
+  QBFT_EXTRA_DATA(new QbftExtraDataCLIAdapter()),
+  PKI_QBFT_EXTRA_DATA(new PkiQbftExtraDataCLIAdapter());
 
   private final JSONToRLP adapter;
 
