@@ -39,15 +39,13 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:secp256k1'
+  implementation 'org.hyperledger.besu:secp256r1:0.3.1-SNAPSHOT'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
-
-  compile files('../libs/besu-native-secp256r1-0.3.1-SNAPSHOT.jar')
-  runtime files('../libs/besu-native-secp256r1-0.3.1-SNAPSHOT.jar')
 }
 
 artifacts {

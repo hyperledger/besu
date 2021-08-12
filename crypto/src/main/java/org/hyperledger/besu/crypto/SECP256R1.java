@@ -20,20 +20,16 @@ import org.hyperledger.besu.nativelib.secp256r1.Signature;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-
 import org.bouncycastle.crypto.signers.DSAKCalculator;
 import org.bouncycastle.crypto.signers.RandomDSAKCalculator;
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve;
 
 public class SECP256R1 extends AbstractSECP256 {
 
-  private static final Logger LOG = LogManager.getLogger();
   public static final String CURVE_NAME = "secp256r1";
-  private final boolean useNative = true;
+  private boolean useNative = true;
   private final LibSECP256R1 libSECP256R1 = new LibSECP256R1();
 
   public SECP256R1() {
