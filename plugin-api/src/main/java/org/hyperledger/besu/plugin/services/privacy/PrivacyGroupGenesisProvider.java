@@ -12,21 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.config.experimental;
+package org.hyperledger.besu.plugin.services.privacy;
 
-import picocli.CommandLine.Option;
+import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 
-/**
- * Flags defined in this class must be used with caution, and strictly reserved to experimental
- * EIPs.
- */
-public class ExperimentalEIPs {
-  // To make it easier for tests to reset the value to default
-  public static final long EIP1559_BASEFEE_DEFAULT_VALUE = 1000000000L;
+import org.apache.tuweni.bytes.Bytes;
 
-  @Option(
-      hidden = true,
-      names = {"--Xeip1559-initial-base-fee"},
-      arity = "1")
-  public static Long initialBasefee = EIP1559_BASEFEE_DEFAULT_VALUE;
+/** A way to initiate private state with a genesis */
+@FunctionalInterface
+public interface PrivacyGroupGenesisProvider {
+  /**
+   * Allows you to specify a custom private genesis to apply when initialising a privacy group
+   *
+   * @param privacyGroupId the privacyGroupId
+   * @param blockNumber the block height
+   * @return the privacy genesis to apply
+   */
+  PrivacyGenesis getPrivacyGenesis(Bytes privacyGroupId, long blockNumber);
 }

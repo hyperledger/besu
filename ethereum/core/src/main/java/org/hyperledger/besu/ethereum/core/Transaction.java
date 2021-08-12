@@ -375,7 +375,7 @@ public class Transaction
         .map(
             maybeNegativeEffectivePriorityFeePerGas ->
                 Math.max(0, maybeNegativeEffectivePriorityFeePerGas))
-        .orElseGet(() -> getGasPrice().get().getValue().longValue());
+        .orElseGet(() -> getGasPrice().map(Wei::getValue).map(Number::longValue).orElse(0L));
   }
   /**
    * Returns the transaction gas limit.

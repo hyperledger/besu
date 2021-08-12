@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -84,6 +85,10 @@ public class PrivacyPrecompiledContractTest {
   final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
+
+  final PrivateStateGenesisAllocator privateStateGenesisAllocator =
+      new PrivateStateGenesisAllocator(
+          false, (privacyGroupId, blockNumber) -> Collections::emptyList);
 
   private PrivateTransactionProcessor mockPrivateTxProcessor(
       final TransactionProcessingResult result) {
@@ -284,7 +289,9 @@ public class PrivacyPrecompiledContractTest {
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
-            privateStateRootResolver);
+            privateStateRootResolver,
+            privateStateGenesisAllocator,
+            "RestrictedPrivacyTest");
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
@@ -308,7 +315,7 @@ public class PrivacyPrecompiledContractTest {
   @Test
   public void testSimulatedPublicTransactionIsSkipped() {
     final PrivacyPrecompiledContract emptyContract =
-        new PrivacyPrecompiledContract(null, null, null, null);
+        new PrivacyPrecompiledContract(null, null, null, null, null, null);
 
     // A simulated public transaction doesn't contain a PrivateMetadataUpdater
     final MessageFrame frame = mock(MessageFrame.class);
@@ -327,6 +334,11 @@ public class PrivacyPrecompiledContractTest {
 
   private PrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
     return new PrivacyPrecompiledContract(
-        new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateRootResolver);
+        new SpuriousDragonGasCalculator(),
+        enclave,
+        worldStateArchive,
+        privateStateRootResolver,
+        privateStateGenesisAllocator,
+        "PrivacyTests");
   }
 }

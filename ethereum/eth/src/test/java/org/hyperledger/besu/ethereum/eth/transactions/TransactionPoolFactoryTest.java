@@ -92,8 +92,7 @@ public class TransactionPoolFactoryTest {
             peerTransactionTracker,
             transactionsMessageSender,
             peerPendingTransactionTracker,
-            pendingTransactionsMessageSender,
-            Optional.empty());
+            pendingTransactionsMessageSender);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

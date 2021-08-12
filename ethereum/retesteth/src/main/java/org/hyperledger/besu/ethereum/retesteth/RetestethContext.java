@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -206,11 +205,7 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             Wei.ZERO,
-            transactionPoolConfiguration,
-            jsonGenesisConfigOptions.getEIP1559BlockNumber().isPresent()
-                ? Optional.of(
-                    new EIP1559(jsonGenesisConfigOptions.getEIP1559BlockNumber().getAsLong()))
-                : Optional.empty());
+            transactionPoolConfiguration);
 
     LOG.trace("Genesis Block {} ", genesisState::getBlock);
 

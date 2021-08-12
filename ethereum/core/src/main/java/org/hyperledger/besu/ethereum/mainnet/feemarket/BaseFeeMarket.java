@@ -12,20 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
+package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-public class LondonFeeMarketException extends Exception {
+public interface BaseFeeMarket extends FeeMarket {
 
-  public static LondonFeeMarketException MissingBaseFeeFromBlockHeader() {
-    return new LondonFeeMarketException("Invalid block header: basefee should be specified");
+  @Override
+  default boolean implementsBaseFee() {
+    return true;
   }
 
-  public static LondonFeeMarketException BaseFeePresentBeforeForkBlock() {
-    return new LondonFeeMarketException(
-        "Invalid block header: basefee should not be present before London fork block");
-  }
+  long getBasefeeMaxChangeDenominator();
 
-  private LondonFeeMarketException(final String reason) {
-    super(reason);
-  }
+  long getInitialBasefee();
+
+  long getSlackCoefficient();
 }
