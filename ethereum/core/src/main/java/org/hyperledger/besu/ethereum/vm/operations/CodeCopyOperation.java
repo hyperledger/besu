@@ -34,9 +34,9 @@ public class CodeCopyOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final UInt256 memOffset = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 sourceOffset = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 numBytes = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 memOffset = frame.popStackItem();
+    final UInt256 sourceOffset = frame.popStackItem();
+    final UInt256 numBytes = frame.popStackItem();
 
     final Gas cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
     final Optional<Gas> optionalCost = Optional.of(cost);

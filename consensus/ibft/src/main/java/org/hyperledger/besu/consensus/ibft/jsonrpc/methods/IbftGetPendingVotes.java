@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractVoteProposerMethod;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 public class IbftGetPendingVotes extends AbstractVoteProposerMethod implements JsonRpcMethod {
 
-  public IbftGetPendingVotes(final VoteProposer voteProposer) {
-    super(voteProposer);
+  public IbftGetPendingVotes(final ValidatorProvider validatorProvider) {
+    super(validatorProvider);
   }
 
   @Override

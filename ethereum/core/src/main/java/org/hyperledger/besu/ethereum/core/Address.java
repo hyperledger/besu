@@ -60,7 +60,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
   public static final Address ONCHAIN_PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
   public static final Address DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT = Address.precompiled(PRIVACY - 3);
 
-  public static final Address UNRESTRICTED_PRIVACY = Address.precompiled(PRIVACY - 4);
+  public static final Address PLUGIN_PRIVACY = Address.precompiled(PRIVACY - 4);
 
   public static final Address ZERO = Address.fromHexString("0x0");
 

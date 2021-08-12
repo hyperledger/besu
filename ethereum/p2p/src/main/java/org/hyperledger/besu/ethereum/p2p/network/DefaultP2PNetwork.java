@@ -205,10 +205,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     final int configuredRlpxPort = config.getRlpx().getBindPort();
     if (config.getDiscovery().getDNSDiscoveryURL() != null) {
       LOG.info("Starting DNS discovery with URL {}", config.getDiscovery().getDNSDiscoveryURL());
-      dnsDaemon = new DNSDaemon(config.getDiscovery().getDNSDiscoveryURL());
-      dnsDaemon
-          .getListeners()
-          .add(
+      dnsDaemon =
+          new DNSDaemon(
+              config.getDiscovery().getDNSDiscoveryURL(),
               (seq, records) -> {
                 List<DiscoveryPeer> peers = new ArrayList<>();
                 for (EthereumNodeRecord enr : records) {
@@ -224,7 +223,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
                   rlpxAgent.connect(peer);
                 }
                 dnsPeers.set(peers);
-                return null;
               });
     }
 

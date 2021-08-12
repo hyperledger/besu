@@ -70,7 +70,7 @@ class TlsEnabledHttpServerFactory {
         web3HttpServerOptions.setSsl(true);
         web3HttpServerOptions.setClientAuth(ClientAuth.REQUIRED);
         web3HttpServerOptions.setTrustOptions(
-            VertxTrustOptions.whitelistClients(serverFingerprintFile));
+            VertxTrustOptions.allowlistClients(serverFingerprintFile));
         web3HttpServerOptions.setPfxKeyCertOptions(
             new PfxOptions()
                 .setPath(serverCert.getPkcs12File().toString())

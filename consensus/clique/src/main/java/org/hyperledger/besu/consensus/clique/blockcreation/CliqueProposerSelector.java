@@ -16,8 +16,7 @@ package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -32,11 +31,11 @@ import java.util.List;
  */
 public class CliqueProposerSelector {
 
-  private final VoteTallyCache voteTallyCache;
+  private final ValidatorProvider validatorProvider;
 
-  public CliqueProposerSelector(final VoteTallyCache voteTallyCache) {
-    checkNotNull(voteTallyCache);
-    this.voteTallyCache = voteTallyCache;
+  public CliqueProposerSelector(final ValidatorProvider validatorProvider) {
+    checkNotNull(validatorProvider);
+    this.validatorProvider = validatorProvider;
   }
 
   /**
@@ -46,9 +45,8 @@ public class CliqueProposerSelector {
    * @return The address of the node which is to propose a block for the provided Round.
    */
   public Address selectProposerForNextBlock(final BlockHeader parentHeader) {
-
-    final VoteTally parentVoteTally = voteTallyCache.getVoteTallyAfterBlock(parentHeader);
-    final List<Address> validatorSet = new ArrayList<>(parentVoteTally.getValidators());
+    final List<Address> validatorSet =
+        new ArrayList<>(validatorProvider.getValidatorsAfterBlock(parentHeader));
 
     final long nextBlockNumber = parentHeader.getNumber() + 1L;
     final int indexIntoValidators = (int) (nextBlockNumber % validatorSet.size());

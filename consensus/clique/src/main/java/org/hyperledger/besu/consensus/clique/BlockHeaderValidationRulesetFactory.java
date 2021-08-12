@@ -26,9 +26,9 @@ import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.LondonFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 
@@ -74,7 +74,7 @@ public class BlockHeaderValidationRulesetFactory {
             .addRule(new CoinbaseHeaderValidationRule(epochManager));
     if (eip1559.isPresent()) {
       builder
-          .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559.get())))
+          .addRule((new LondonFeeMarketBlockHeaderGasPriceValidationRule(eip1559.get())))
           .addRule(new GasUsageValidationRule());
 
     } else {

@@ -15,13 +15,13 @@
 package org.hyperledger.besu.consensus.clique;
 
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueProposerSelector;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+
+import java.util.Collection;
 
 public class CliqueHelpers {
 
@@ -31,34 +31,32 @@ public class CliqueHelpers {
   }
 
   public static Address getProposerForBlockAfter(
-      final BlockHeader parent, final VoteTallyCache voteTallyCache) {
-    final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(voteTallyCache);
+      final BlockHeader parent, final ValidatorProvider validatorProvider) {
+    final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(validatorProvider);
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 
   public static boolean isSigner(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-    final VoteTally validatorProvider =
+    final Collection<Address> validators =
         protocolContext
             .getConsensusState(CliqueContext.class)
-            .getVoteTallyCache()
-            .getVoteTallyAfterBlock(parent);
-    return validatorProvider.getValidators().contains(candidate);
+            .getValidatorProvider()
+            .getValidatorsAfterBlock(parent);
+    return validators.contains(candidate);
   }
 
   public static boolean addressIsAllowedToProduceNextBlock(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-    final VoteTally validatorProvider =
-        protocolContext
-            .getConsensusState(CliqueContext.class)
-            .getVoteTallyCache()
-            .getVoteTallyAfterBlock(parent);
+    final ValidatorProvider validatorProvider =
+        protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider();
 
     if (!isSigner(candidate, protocolContext, parent)) {
       return false;
     }
 
-    final int minimumUnsignedPastBlocks = minimumBlocksSincePreviousSigning(validatorProvider);
+    final int minimumUnsignedPastBlocks =
+        minimumBlocksSincePreviousSigning(parent, validatorProvider);
 
     final Blockchain blockchain = protocolContext.getBlockchain();
     int unsignedBlockCount = 0;
@@ -85,8 +83,9 @@ public class CliqueHelpers {
     return true;
   }
 
-  private static int minimumBlocksSincePreviousSigning(final ValidatorProvider validatorProvider) {
-    final int validatorCount = validatorProvider.getValidators().size();
+  private static int minimumBlocksSincePreviousSigning(
+      final BlockHeader parent, final ValidatorProvider validatorProvider) {
+    final int validatorCount = validatorProvider.getValidatorsAfterBlock(parent).size();
     // The number of contiguous blocks in which a signer may only sign 1 (as taken from clique spec)
     final int signerLimit = (validatorCount / 2) + 1;
     return signerLimit - 1;

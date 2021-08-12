@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -39,7 +39,7 @@ import java.util.Set;
 public class MainnetTransactionValidator {
 
   private final GasCalculator gasCalculator;
-  private final Optional<TransactionPriceCalculator> transactionPriceCalculator;
+  private final FeeMarket feeMarket;
 
   private final boolean disallowSignatureMalleability;
 
@@ -70,7 +70,7 @@ public class MainnetTransactionValidator {
       final boolean quorumCompatibilityMode) {
     this(
         gasCalculator,
-        Optional.of(TransactionPriceCalculator.frontier()),
+        FeeMarket.legacy(),
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
@@ -79,13 +79,13 @@ public class MainnetTransactionValidator {
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
+      final FeeMarket feeMarket,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
       final boolean goQuorumCompatibilityMode) {
     this.gasCalculator = gasCalculator;
-    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.feeMarket = feeMarket;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
@@ -128,7 +128,7 @@ public class MainnetTransactionValidator {
     }
 
     if (baseFee.isPresent()) {
-      final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
+      final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
       if (!transactionValidationParams.isAllowMaxFeerGasBelowBaseFee()
           && price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         return ValidationResult.invalid(

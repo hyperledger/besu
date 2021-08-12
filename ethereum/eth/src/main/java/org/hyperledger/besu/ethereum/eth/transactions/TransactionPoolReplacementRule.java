@@ -25,4 +25,8 @@ public interface TransactionPoolReplacementRule {
       TransactionInfo existingTransactionInfo,
       TransactionInfo newTransactionInfo,
       Optional<Long> baseFee);
+
+  default boolean isNotGasPriced(final TransactionInfo tInfo) {
+    return tInfo.getTransaction().getType().supports1559FeeMarket();
+  }
 }

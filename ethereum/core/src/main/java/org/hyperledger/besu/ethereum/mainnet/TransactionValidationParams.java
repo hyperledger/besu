@@ -24,7 +24,7 @@ public interface TransactionValidationParams {
       ImmutableTransactionValidationParams.of(false, false, false, true, false);
 
   TransactionValidationParams transactionPoolParams =
-      ImmutableTransactionValidationParams.of(true, false, true, false, true);
+      ImmutableTransactionValidationParams.of(true, false, true, true, true);
 
   TransactionValidationParams miningParams =
       ImmutableTransactionValidationParams.of(false, false, false, true, true);

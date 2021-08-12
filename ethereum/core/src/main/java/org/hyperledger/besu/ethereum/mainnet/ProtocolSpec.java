@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
@@ -67,7 +67,7 @@ public class ProtocolSpec {
 
   private final PrivateTransactionProcessor privateTransactionProcessor;
 
-  private final TransactionPriceCalculator transactionPriceCalculator;
+  private final FeeMarket feeMarket;
 
   private final Optional<EIP1559> eip1559;
 
@@ -97,7 +97,7 @@ public class ProtocolSpec {
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
    * @param gasCalculator the gas calculator to use.
-   * @param transactionPriceCalculator the transaction price calculator to use.
+   * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
    * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param powHasher the proof-of-work hasher
@@ -122,7 +122,7 @@ public class ProtocolSpec {
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards,
       final GasCalculator gasCalculator,
-      final TransactionPriceCalculator transactionPriceCalculator,
+      final FeeMarket feeMarket,
       final Optional<EIP1559> eip1559,
       final BadBlockManager badBlockManager,
       final Optional<PoWHasher> powHasher) {
@@ -145,7 +145,7 @@ public class ProtocolSpec {
     this.precompileContractRegistry = precompileContractRegistry;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.gasCalculator = gasCalculator;
-    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.feeMarket = feeMarket;
     this.eip1559 = eip1559;
     this.badBlockManager = badBlockManager;
     this.powHasher = powHasher;
@@ -310,15 +310,6 @@ public class ProtocolSpec {
   }
 
   /**
-   * Returns the transaction price calculator used in this specification.
-   *
-   * @return the transaction price calculator
-   */
-  public TransactionPriceCalculator getTransactionPriceCalculator() {
-    return transactionPriceCalculator;
-  }
-
-  /**
    * Returns the EIP1559 manager used in this specification.
    *
    * @return the {@link Optional} wrapping EIP-1559 manager
@@ -327,8 +318,13 @@ public class ProtocolSpec {
     return eip1559;
   }
 
-  public boolean isEip1559() {
-    return eip1559.isPresent();
+  /**
+   * Returns the Fee Market used in this specification.
+   *
+   * @return the {@link FeeMarket} implementation.
+   */
+  public FeeMarket getFeeMarket() {
+    return feeMarket;
   }
 
   /**

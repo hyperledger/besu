@@ -44,9 +44,9 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
-import org.hyperledger.besu.ethereum.privacy.Restriction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.OrionTestHarness;
 import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
@@ -137,7 +137,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
 
     privacyController =
         new RestrictedDefaultPrivacyController(
-            blockchain, privateStateStorage, enclave, null, null, null, null, null, null);
+            blockchain, privateStateStorage, enclave, null, null, null, null, null);
   }
 
   @After

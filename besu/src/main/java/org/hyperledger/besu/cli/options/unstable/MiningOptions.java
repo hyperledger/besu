@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_MAX_OMMERS_DEPTH;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POW_JOB_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
 
@@ -34,6 +36,20 @@ public class MiningOptions {
       description =
           "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
   private final Long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xminer-pow-job-ttl"},
+      description =
+          "Specifies the time PoW jobs are kept in cache and will accept a solution from miners (default: ${DEFAULT-VALUE} milliseconds)")
+  private final Long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xmax-ommers-depth"},
+      description =
+          "Specifies the depth of ommer blocks to accept when receiving solutions (default: ${DEFAULT-VALUE})")
+  private final Integer maxOmmersDepth = DEFAULT_MAX_OMMERS_DEPTH;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
@@ -56,5 +72,13 @@ public class MiningOptions {
 
   public String getStratumExtranonce() {
     return stratumExtranonce;
+  }
+
+  public Long getPowJobTimeToLive() {
+    return powJobTimeToLive;
+  }
+
+  public int getMaxOmmersDepth() {
+    return maxOmmersDepth;
   }
 }

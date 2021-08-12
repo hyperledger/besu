@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.common.bft.network;
 
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
@@ -42,11 +42,11 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
   // It's possible for multiple connections between peers to exist for brief periods, so map each
   // address to a set of connections
   private final Map<Address, Set<PeerConnection>> connectionsByAddress = new ConcurrentHashMap<>();
-  private final VoteTallyCache voteTallyCache;
+  private final ValidatorProvider validatorProvider;
   private final String protocolName;
 
-  public ValidatorPeers(final VoteTallyCache voteTallyCache, final String protocolName) {
-    this.voteTallyCache = voteTallyCache;
+  public ValidatorPeers(final ValidatorProvider validatorProvider, final String protocolName) {
+    this.validatorProvider = validatorProvider;
     this.protocolName = protocolName;
   }
 
@@ -105,6 +105,6 @@ public class ValidatorPeers implements ValidatorMulticaster, PeerConnectionTrack
   }
 
   private Collection<Address> getLatestValidators() {
-    return voteTallyCache.getVoteTallyAtHead().getValidators();
+    return validatorProvider.getValidatorsAtHead();
   }
 }

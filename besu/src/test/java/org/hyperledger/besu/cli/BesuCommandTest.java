@@ -75,6 +75,7 @@ import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
+import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
@@ -99,6 +100,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
@@ -843,11 +845,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters(
-                Address.fromHexString(expectedCoinbase),
-                DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
-                DefaultCommandValues.DEFAULT_EXTRA_DATA,
-                false));
+            new MiningParameters.Builder()
+                .coinbase(Address.fromHexString(expectedCoinbase))
+                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+                .enabled(false)
+                .build());
   }
 
   @Test
@@ -859,11 +862,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verify(mockControllerBuilder)
         .miningParameters(
-            new MiningParameters(
-                Address.fromHexString(expectedCoinbase),
-                DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE,
-                DefaultCommandValues.DEFAULT_EXTRA_DATA,
-                false));
+            new MiningParameters.Builder()
+                .coinbase(Address.fromHexString(expectedCoinbase))
+                .minTransactionGasPrice(DefaultCommandValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE)
+                .extraData(DefaultCommandValues.DEFAULT_EXTRA_DATA)
+                .enabled(false)
+                .build());
   }
 
   @Test
@@ -3003,8 +3007,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void minGasPriceRequiresMainOption() {
     parseCommand("--min-gas-price", "0");
 
-    verifyMultiOptionsConstraintLoggerCall(
-        "--min-gas-price ignored because none of --miner-enabled or isQuorum (in genesis file) was defined.");
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
@@ -3660,7 +3663,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void transactionPoolTxFeeCap() {
     final Wei txFeeCap = Wei.fromEth(2);
-    parseCommand("--rpc-tx-feecap", txFeeCap.toString());
+    parseCommand("--rpc-tx-feecap", txFeeCap.toDecimalString());
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
     assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);
@@ -4310,5 +4313,74 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
     verify(mockLogger).info("Using LibEthPairings native alt bn128");
+  }
+
+  @Test
+  public void pkiBlockCreationIsDisabledByDefault() {
+    parseCommand();
+
+    verifyNoInteractions(mockPkiBlockCreationConfigProvider);
+  }
+
+  @Test
+  public void pkiBlockCreationKeyStoreFileRequired() {
+    parseCommand(
+        "--Xpki-block-creation-enabled",
+        "--Xpki-block-creation-keystore-password-file",
+        "/tmp/pwd");
+
+    assertThat(commandErrorOutput.toString())
+        .contains("KeyStore file is required when PKI Block Creation is enabled");
+  }
+
+  @Test
+  public void pkiBlockCreationPasswordFileRequired() {
+    parseCommand(
+        "--Xpki-block-creation-enabled", "--Xpki-block-creation-keystore-file", "/tmp/keystore");
+
+    assertThat(commandErrorOutput.toString())
+        .contains(
+            "File containing password to unlock keystore is required when PKI Block Creation is enabled");
+  }
+
+  @Rule public TemporaryFolder pkiTempFolder = new TemporaryFolder();
+
+  @Test
+  public void pkiBlockCreationFullConfig() throws Exception {
+    // Create temp file with password
+    final File pwdFile = pkiTempFolder.newFile("pwd");
+    FileUtils.writeStringToFile(pwdFile, "foo", UTF_8);
+
+    parseCommand(
+        "--Xpki-block-creation-enabled",
+        "--Xpki-block-creation-keystore-type",
+        "JKS",
+        "--Xpki-block-creation-keystore-file",
+        "/tmp/keystore",
+        "--Xpki-block-creation-keystore-password-file",
+        pwdFile.getAbsolutePath(),
+        "--Xpki-block-creation-keystore-certificate-alias",
+        "anAlias",
+        "--Xpki-block-creation-truststore-type",
+        "JKS",
+        "--Xpki-block-creation-truststore-file",
+        "/tmp/truststore",
+        "--Xpki-block-creation-truststore-password-file",
+        pwdFile.getAbsolutePath(),
+        "--Xpki-block-creation-crl-file",
+        "/tmp/crl");
+
+    final PkiKeyStoreConfiguration pkiKeyStoreConfig =
+        pkiKeyStoreConfigurationArgumentCaptor.getValue();
+
+    assertThat(pkiKeyStoreConfig).isNotNull();
+    assertThat(pkiKeyStoreConfig.getKeyStoreType()).isEqualTo("JKS");
+    assertThat(pkiKeyStoreConfig.getKeyStorePath()).isEqualTo(Path.of("/tmp/keystore"));
+    assertThat(pkiKeyStoreConfig.getKeyStorePassword()).isEqualTo("foo");
+    assertThat(pkiKeyStoreConfig.getCertificateAlias()).isEqualTo("anAlias");
+    assertThat(pkiKeyStoreConfig.getTrustStoreType()).isEqualTo("JKS");
+    assertThat(pkiKeyStoreConfig.getTrustStorePath()).isEqualTo(Path.of("/tmp/truststore"));
+    assertThat(pkiKeyStoreConfig.getTrustStorePassword()).isEqualTo("foo");
+    assertThat(pkiKeyStoreConfig.getCrlFilePath()).hasValue(Path.of("/tmp/crl"));
   }
 }

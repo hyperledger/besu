@@ -17,22 +17,49 @@ package org.hyperledger.besu.tests.acceptance.bft;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BftAcceptanceTestParameterization {
 
-  public static List<Object[]> FACTORIES =
-      List.of(
+  public static List<Object[]> getFactories() {
+    final List<Object[]> ret = new ArrayList<>();
+    ret.addAll(
+        List.of(
+            new Object[] {
+              "ibft",
+              new BftAcceptanceTestParameterization(
+                  BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)
+            },
+            new Object[] {
+              "ibft-tls-jks",
+              new BftAcceptanceTestParameterization(
+                  BesuNodeFactory::createIbft2NodeWithTLSJKS,
+                  BesuNodeFactory::createIbft2TLSJKSNodeWithValidators)
+            },
+            new Object[] {
+              "ibft-tls-pkcs12",
+              new BftAcceptanceTestParameterization(
+                  BesuNodeFactory::createIbft2NodeWithTLSPKCS12,
+                  BesuNodeFactory::createIbft2TLSPKCS12NodeWithValidators)
+            },
+            new Object[] {
+              "qbft",
+              new BftAcceptanceTestParameterization(
+                  BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators)
+            }));
+    if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
+      ret.add(
           new Object[] {
-            "ibft",
+            "ibft-tls-pkcs11",
             new BftAcceptanceTestParameterization(
-                BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)
-          },
-          new Object[] {
-            "qbft",
-            new BftAcceptanceTestParameterization(
-                BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators)
+                BesuNodeFactory::createIbft2NodeWithTLSPKCS11,
+                BesuNodeFactory::createIbft2TLSPKCS11NodeWithValidators)
           });
+    }
+
+    return ret;
+  }
 
   @FunctionalInterface
   public interface NodeCreator {

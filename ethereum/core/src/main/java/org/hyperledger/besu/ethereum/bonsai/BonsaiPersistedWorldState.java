@@ -170,10 +170,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
             storageTrie.remove(keyHash);
           } else {
-            final Bytes32 updatedStorageBytes = updatedStorage.toBytes();
-            stateUpdater.putStorageValueBySlotHash(
-                updatedAddressHash, keyHash, updatedStorageBytes);
-            storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorageBytes));
+            stateUpdater.putStorageValueBySlotHash(updatedAddressHash, keyHash, updatedStorage);
+            storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
           }
         }
 
@@ -391,7 +389,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
-    return getStorageValueBySlotHash(address, Hash.hash(storageKey.toBytes())).orElse(UInt256.ZERO);
+    return getStorageValueBySlotHash(address, Hash.hash(storageKey)).orElse(UInt256.ZERO);
   }
 
   @Override

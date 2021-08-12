@@ -141,7 +141,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
     agreement.init(privKeyP);
     final BigInteger agreed = agreement.calculateAgreement(pubKeyP);
 
-    return UInt256.valueOf(agreed).toBytes();
+    return UInt256.valueOf(agreed);
   }
 
   @Override

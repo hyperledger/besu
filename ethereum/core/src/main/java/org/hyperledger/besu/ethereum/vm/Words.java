@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.core.Address;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** Static utility methods to work with VM words (that is, {@link Bytes32} values). */
 public abstract class Words {
@@ -31,10 +31,8 @@ public abstract class Words {
    * @return A VM word containing {@code address} (left-padded as according to the VM specification
    *     (Appendix H. of the Yellow paper)).
    */
-  public static Bytes32 fromAddress(final Address address) {
-    final MutableBytes32 bytes = MutableBytes32.create();
-    address.copyTo(bytes, Bytes32.SIZE - Address.SIZE);
-    return bytes;
+  public static UInt256 fromAddress(final Address address) {
+    return UInt256.fromBytes(Bytes32.leftPad(address));
   }
 
   /**
@@ -45,7 +43,7 @@ public abstract class Words {
    *     VM specification (Appendix H. of the Yellow paper)).
    */
   public static Address toAddress(final Bytes32 bytes) {
-    return Address.wrap(bytes.slice(bytes.size() - Address.SIZE, Address.SIZE).copy());
+    return Address.wrap(bytes.slice(bytes.size() - Address.SIZE, Address.SIZE));
   }
 
   /**

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class PushOperation extends AbstractFixedCostOperation {
 
@@ -48,7 +49,7 @@ public class PushOperation extends AbstractFixedCostOperation {
     final int copyLength = min(length, code.size() - pc - 1);
     final MutableBytes32 bytes = MutableBytes32.create();
     code.slice(pc + 1, copyLength).copyTo(bytes, bytes.size() - length);
-    frame.pushStackItem(bytes);
+    frame.pushStackItem(UInt256.fromBytes(bytes));
 
     return successResponse;
   }
