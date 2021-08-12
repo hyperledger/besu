@@ -24,10 +24,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.CodeCache;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.vm.Code;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -55,6 +57,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   private Hash worldStateRootHash;
   private Hash worldStateBlockHash;
+  private final CodeCache codeCache = new CodeCache();
 
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
@@ -357,6 +360,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         .getAccount(Hash.hash(address))
         .map(bytes -> fromRLP(updater, address, bytes, true))
         .orElse(null);
+  }
+
+  @Override
+  public Optional<Code> getContract(final Account account) {
+    return this.codeCache.getContract(account);
   }
 
   private Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {

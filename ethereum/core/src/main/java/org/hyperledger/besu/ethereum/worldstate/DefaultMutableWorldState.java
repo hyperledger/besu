@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountState;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.CodeCache;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
 import org.hyperledger.besu.ethereum.core.WorldState;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.vm.Code;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +62,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final Map<Address, Bytes> updatedAccountCode = new HashMap<>();
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
+  private final CodeCache codeCache = new CodeCache();
 
   public DefaultMutableWorldState(
       final WorldStateStorage storage, final WorldStatePreimageStorage preimageStorage) {
@@ -124,6 +127,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .get(addressHash)
         .map(bytes -> deserializeAccount(address, addressHash, bytes))
         .orElse(null);
+  }
+
+  @Override
+  public Optional<Code> getContract(final Account account) {
+    return this.codeCache.getContract(account);
   }
 
   private WorldStateAccount deserializeAccount(

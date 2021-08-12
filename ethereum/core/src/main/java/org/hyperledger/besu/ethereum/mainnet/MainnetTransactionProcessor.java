@@ -363,14 +363,17 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
+        final Optional<Account> maybeAccount = Optional.ofNullable(worldState.get(to));
+        final Optional<Code> maybeContract = worldState.getContract(maybeAccount.get());
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .address(to)
                 .contract(to)
+                .contractAccountVersion(
+                    maybeAccount.map(AccountState::getVersion).orElse(Account.DEFAULT_VERSION))
                 .inputData(transaction.getPayload())
-                .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
+                .code(maybeContract.orElse(new Code(Bytes.EMPTY)))
                 .build();
       }
 

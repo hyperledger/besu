@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
+import org.hyperledger.besu.ethereum.vm.Code;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,6 +40,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
   protected Set<Address> deletedAccounts = new HashSet<>();
+  private final CodeCache codeCache = new CodeCache();
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
@@ -71,6 +74,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       return null;
     }
     return world.get(address);
+  }
+
+  @Override
+  public Optional<Code> getContract(final Account account) {
+    return this.codeCache.getContract(account);
   }
 
   @Override
