@@ -61,6 +61,7 @@ public class SelfDestructOperation extends AbstractOperation {
     final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
     frame.addSelfDestruct(address);
+    frame.getWorldState();
 
     final MutableAccount recipient =
         frame.getWorldUpdater().getOrCreate(recipientAddress).getMutable();

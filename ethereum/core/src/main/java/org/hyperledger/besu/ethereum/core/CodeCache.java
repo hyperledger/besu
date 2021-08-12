@@ -107,7 +107,15 @@ public class CodeCache implements LoadingCache<Account, Code> {
 
   @Override
   public void invalidate(final Object key) {
-    this.cache.invalidate(key);
+    if (key != null) {
+      this.cache.invalidate(key);
+    }
+  }
+
+  public void invalidate(final Account key) {
+    if (key != null) {
+      this.cache.invalidate(key);
+    }
   }
 
   @Override

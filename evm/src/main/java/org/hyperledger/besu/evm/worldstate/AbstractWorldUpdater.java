@@ -43,7 +43,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
   protected Set<Address> deletedAccounts = new HashSet<>();
-  private final CodeCache codeCache = new CodeCache();
+  protected final CodeCache codeCache = new CodeCache();
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
