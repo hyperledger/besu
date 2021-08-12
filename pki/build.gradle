@@ -38,3 +38,13 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.apache.logging.log4j:log4j-core'
 }
+
+configurations { testArtifacts }
+task testJar(type: Jar) {
+  archiveBaseName = "${project.name}-test"
+  from sourceSets.test.output
+}
+
+artifacts {
+  testArtifacts testJar
+}
