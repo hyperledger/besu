@@ -120,11 +120,7 @@ public class BesuEventsImplTest {
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
-    when(mockEthPeers.streamAvailablePeers())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty());
+    when(mockEthPeers.streamAvailablePeers()).thenAnswer(__ -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
@@ -436,7 +432,7 @@ public class BesuEventsImplTest {
     transactionPool.addLocalTransaction(TX2);
 
     assertThat(result.get()).isNotNull();
-    serviceImpl.removeTransactionAddedListener(id);
+    serviceImpl.removeTransactionDroppedListener(id);
     result.set(null);
 
     transactionPool.addLocalTransaction(TX2);
