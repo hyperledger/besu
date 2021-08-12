@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -136,7 +137,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   @Override
-  protected MiningCoordinator createMiningCoordinator(
+  protected BftMiningCoordinator createMiningCoordinator(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
@@ -227,7 +228,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(qbftController);
     final BftProcessor bftProcessor = new BftProcessor(bftEventQueue, eventMultiplexer);
 
-    final MiningCoordinator miningCoordinator =
+    final BftMiningCoordinator miningCoordinator =
         new BftMiningCoordinator(
             bftExecutors,
             qbftController,

@@ -16,6 +16,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.blockcreation.ForkingBftMiningCoordinator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -71,19 +72,16 @@ public class ForkingBftControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    final List<MiningCoordinator> miningCoordinators =
-        besuControllerBuilders.stream()
-            .map(
-                builder ->
-                    createMiningCoordinator(
-                        protocolSchedule,
-                        protocolContext,
-                        transactionPool,
-                        miningParameters,
-                        syncState,
-                        ethProtocolManager))
-            .collect(Collectors.toList());
-    return new ForkingBftMiningCoordinator(miningCoordinators);
+    final Map<Long, BftMiningCoordinator> miningCoordinatorForks = besuControllerBuilders.stream()
+        .collect(Collectors.toMap(builder -> builder.bftConfigOptions().getBlock(), builder ->
+            builder.createMiningCoordinator(
+                protocolSchedule,
+                protocolContext,
+                transactionPool,
+                miningParameters,
+                syncState,
+                ethProtocolManager)));
+    return new ForkingBftMiningCoordinator(miningCoordinatorForks);
   }
 
   @Override

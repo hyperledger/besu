@@ -121,7 +121,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   @Override
-  protected MiningCoordinator createMiningCoordinator(
+  protected BftMiningCoordinator createMiningCoordinator(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
@@ -212,7 +212,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(ibftController);
     final BftProcessor bftProcessor = new BftProcessor(bftEventQueue, eventMultiplexer);
 
-    final MiningCoordinator ibftMiningCoordinator =
+    final BftMiningCoordinator ibftMiningCoordinator =
         new BftMiningCoordinator(
             bftExecutors,
             ibftController,

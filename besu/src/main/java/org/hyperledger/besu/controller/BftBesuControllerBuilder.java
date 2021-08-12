@@ -22,6 +22,14 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
 
@@ -32,4 +40,12 @@ public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   protected abstract BftConfigOptions bftConfigOptions();
+
+  protected abstract BftMiningCoordinator createMiningCoordinator(
+      ProtocolSchedule protocolSchedule,
+      ProtocolContext protocolContext,
+      TransactionPool transactionPool,
+      MiningParameters miningParameters,
+      SyncState syncState,
+      EthProtocolManager ethProtocolManager);
 }

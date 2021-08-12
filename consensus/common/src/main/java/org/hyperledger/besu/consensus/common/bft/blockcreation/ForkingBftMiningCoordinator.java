@@ -14,7 +14,13 @@
  */
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
+import java.util.Map;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
+import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -26,26 +32,35 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class ForkingBftMiningCoordinator implements MiningCoordinator {
+public class ForkingBftMiningCoordinator implements MiningCoordinator, BlockAddedObserver {
+  private static final Logger LOG = getLogger();
 
-  private final List<MiningCoordinator> miningCoordinators;
+  private final Map<Long, BftMiningCoordinator> miningCoordinatorForks;
+  private BftMiningCoordinator activeMiningCoordinator;
 
-  public ForkingBftMiningCoordinator(final List<MiningCoordinator> miningCoordinators) {
-    this.miningCoordinators = miningCoordinators;
+  public ForkingBftMiningCoordinator(final Map<Long, BftMiningCoordinator> miningCoordinatorForks) {
+    this.miningCoordinatorForks = miningCoordinatorForks;
+    this.activeMiningCoordinator = miningCoordinatorForks.get(0L);
   }
 
   @Override
-  public void start() {}
+  public void start() {
+    activeMiningCoordinator.start();
+  }
 
   @Override
-  public void stop() {}
+  public void stop() {
+    activeMiningCoordinator.stop();
+  }
 
   @Override
-  public void awaitStop() throws InterruptedException {}
+  public void awaitStop() throws InterruptedException {
+    activeMiningCoordinator.awaitStop();
+  }
 
   @Override
   public boolean enable() {
-    return false;
+    return true;
   }
 
   @Override
@@ -55,20 +70,22 @@ public class ForkingBftMiningCoordinator implements MiningCoordinator {
 
   @Override
   public boolean isMining() {
-    return false;
+    return true;
   }
 
   @Override
   public Wei getMinTransactionGasPrice() {
-    return null;
+    return activeMiningCoordinator.getMinTransactionGasPrice();
   }
 
   @Override
-  public void setExtraData(final Bytes extraData) {}
+  public void setExtraData(final Bytes extraData) {
+    activeMiningCoordinator.setExtraData(extraData);
+  }
 
   @Override
   public Optional<Address> getCoinbase() {
-    return Optional.empty();
+    return activeMiningCoordinator.getCoinbase();
   }
 
   @Override
@@ -76,9 +93,29 @@ public class ForkingBftMiningCoordinator implements MiningCoordinator {
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    return Optional.empty();
+    return activeMiningCoordinator.createBlock(parentHeader, transactions, ommers);
   }
 
   @Override
-  public void changeTargetGasLimit(final Long targetGasLimit) {}
+  public void changeTargetGasLimit(final Long targetGasLimit) {
+    activeMiningCoordinator.changeTargetGasLimit(targetGasLimit);
+  }
+
+  @Override
+  public void onBlockAdded(final BlockAddedEvent event) {
+    // TODO how we make sure only this coordinator receives the event and not the delegate ones?
+
+    if (event.isNewCanonicalHead()) {
+      final long blockNumber = event.getBlock().getHeader().getNumber();
+      if (miningCoordinatorForks.containsKey(blockNumber)) {
+        final BftMiningCoordinator newMiningCoordinator = miningCoordinatorForks.get(blockNumber);
+
+        activeMiningCoordinator.stop();
+        newMiningCoordinator.start();
+        activeMiningCoordinator = newMiningCoordinator;
+      }
+      LOG.trace("New canonical head detected");
+      activeMiningCoordinator.onBlockAdded(event);
+    }
+  }
 }
