@@ -40,7 +40,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
   protected Set<Address> deletedAccounts = new HashSet<>();
-  private final CodeCache codeCache = new CodeCache();
+  protected final CodeCache codeCache = new CodeCache();
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
@@ -208,6 +208,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
       // may kill some of "their" updates, and our updates may review some of the account "they"
       // deleted.
       getDeletedAccounts().forEach(wrapped.updatedAccounts::remove);
+      getDeletedAccounts().stream().map(a -> get(a)).forEach(super.codeCache::invalidate);
       getUpdatedAccounts().forEach(a -> wrapped.deletedAccounts.remove(a.getAddress()));
 
       // Then push our deletes and updates to the stacked ones.
