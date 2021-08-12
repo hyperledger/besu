@@ -12,26 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.worldstate;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.account.Account;
+package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.vm.Code;
 
-import java.util.Optional;
+import com.google.common.cache.CacheLoader;
 
-/** Generic interface for a view over the accounts of the world state. */
-public interface WorldView {
-
-  /**
-   * Get an account provided its address.
-   *
-   * @param address the address of the account to retrieve.
-   * @return the {@link Account} corresponding to {@code address} or {@code null} if there is no
-   *     such account.
-   */
-  Account get(Address address);
-
-  public Optional<Code> getContract(final Account account);
+public class CodeLoader extends CacheLoader<Account, Code> {
+  @Override
+  public Code load(final Account key) throws Exception {
+    if (!key.hasCode()) {
+      throw new IllegalArgumentException("account " + key + " has no executable code");
+    }
+    return new Code(key.getCode());
+  }
 }
