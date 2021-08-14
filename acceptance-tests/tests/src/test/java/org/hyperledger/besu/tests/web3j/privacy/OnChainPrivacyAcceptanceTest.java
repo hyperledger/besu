@@ -62,8 +62,6 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
         .collect(Collectors.toList());
   }
 
-  protected static final long POW_CHAIN_ID = 1337;
-
   private PrivacyNode alice;
   private PrivacyNode bob;
   private PrivacyNode charlie;
@@ -149,6 +147,50 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
     assertThatThrownBy(() -> deployPrivateContract(EventEmitter.class, privacyGroupId, bob))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("Onchain Privacy group does not exist.");
+  }
+
+  @Test
+  public void canInteractWithPrivateGenesisPreCompile() throws Exception {
+    final String privacyGroupId = createOnChainPrivacyGroup(alice, bob);
+
+    final EventEmitter eventEmitter =
+        alice.execute(
+            privateContractTransactions.loadSmartContractWithPrivacyGroupId(
+                "0x1000000000000000000000000000000000000001",
+                EventEmitter.class,
+                alice.getTransactionSigningKey(),
+                alice.getEnclaveKey(),
+                privacyGroupId));
+
+    eventEmitter.store(BigInteger.valueOf(42)).send();
+
+    final String aliceResponse =
+        alice
+            .execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(new BigInteger(aliceResponse.substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(42));
+
+    final String bobResponse =
+        bob.execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(new BigInteger(bobResponse.substring(2), 16))
+        .isEqualByComparingTo(BigInteger.valueOf(42));
+
+    final String charlieResponse =
+        charlie
+            .execute(
+                privacyTransactions.privCall(
+                    privacyGroupId, eventEmitter, eventEmitter.value().encodeFunctionCall()))
+            .getValue();
+
+    assertThat(charlieResponse).isEqualTo("0x");
   }
 
   @Test

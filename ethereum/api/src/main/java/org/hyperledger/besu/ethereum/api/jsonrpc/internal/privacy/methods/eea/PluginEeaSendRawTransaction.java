@@ -60,7 +60,9 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   @Override
   protected Transaction createPrivateMarkerTransaction(
-      final PrivateTransaction privateTransaction, final Optional<User> user) {
+      final Address sender,
+      final PrivateTransaction privateTransaction,
+      final Optional<User> user) {
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
@@ -69,7 +71,7 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
             privateTransaction, privacyUserId, Optional.empty());
 
     return createPrivateMarkerTransaction(
-        Address.PLUGIN_PRIVACY, payloadFromPlugin, privateTransaction, privacyUserId);
+        sender, Address.PLUGIN_PRIVACY, payloadFromPlugin, privateTransaction, privacyUserId);
   }
 
   @Override

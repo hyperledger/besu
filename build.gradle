@@ -116,16 +116,7 @@ allprojects {
   spotless {
     java {
       // This path needs to be relative to each project
-      target fileTree('.') {
-        include '**/src/*/java/**/*.java'
-        exclude '**/generalstate/GeneralStateReferenceTest*.java'
-        exclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
-        exclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
-        exclude '**/blockchain/BlockchainReferenceTest*.java'
-        exclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
-        exclude '**/reference-test/resources/docker_interop/**'
-        exclude '**/.gradle/**'
-      }
+      target '**/src/*/java/**/*.java'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
       importOrder 'org.hyperledger', 'java', ''
@@ -137,20 +128,10 @@ allprojects {
       greclipse().configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
     }
-
     // Below this line are currently only license header tasks
     format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
-
-    // Currently disabled due to referencetest issues
-    //  format 'bash', {
-    //    target fileTree('.') {
-    //      include '**/*.sh'
-    //     exclude '**/ansible/**'
-    //    }
-    //  }
-    //  format 'sol', {
-    //    target fileTree('.') { include '**/*.sol' }
-    //  }
+    format 'bash', { target '**/*.sh' }
+    format 'sol', { target '**/*.sol' }
   }
 
   tasks.withType(JavaCompile) {

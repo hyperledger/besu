@@ -281,7 +281,11 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockBody body = block.getBody();
     final List<Transaction> transactions = body.getTransactions();
     final TransactionPriceCalculator transactionPriceCalculator =
-        TransactionPriceCalculator.eip1559();
+        protocolSchedule
+            .getByBlockNumber(block.getHeader().getNumber())
+            .getFeeMarket()
+            .getTransactionPriceCalculator();
+
     for (final Transaction transaction : transactions) {
       final Optional<Long> baseFee = block.getHeader().getBaseFee();
       final Wei price = transactionPriceCalculator.price(transaction, baseFee);
