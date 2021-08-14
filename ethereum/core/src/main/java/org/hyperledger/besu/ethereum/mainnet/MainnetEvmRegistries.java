@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.vm.operations.AddModOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AddOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AddressOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AndOperation;
+import org.hyperledger.besu.ethereum.vm.operations.AuthOperation;
 import org.hyperledger.besu.ethereum.vm.operations.BalanceOperation;
 import org.hyperledger.besu.ethereum.vm.operations.BaseFeeOperation;
 import org.hyperledger.besu.ethereum.vm.operations.BlockHashOperation;
@@ -149,6 +150,14 @@ abstract class MainnetEvmRegistries {
     final OperationRegistry registry = new OperationRegistry();
 
     registerLondonOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
+
+    return new EVM(registry, gasCalculator);
+  }
+
+  static EVM eip3074(final GasCalculator gasCalculator, final BigInteger chainId) {
+    final OperationRegistry registry = new OperationRegistry();
+
+    registerEIP3074Opcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
 
     return new EVM(registry, gasCalculator);
   }
@@ -295,5 +304,14 @@ abstract class MainnetEvmRegistries {
       final BigInteger chainId) {
     registerIstanbulOpcodes(registry, gasCalculator, accountVersion, chainId);
     registry.put(new BaseFeeOperation(gasCalculator), Account.DEFAULT_VERSION);
+  }
+
+  private static void registerEIP3074Opcodes(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final int accountVersion,
+      final BigInteger chainId) {
+    registerLondonOpcodes(registry, gasCalculator, accountVersion, chainId);
+    registry.put(new AuthOperation(gasCalculator), Account.DEFAULT_VERSION);
   }
 }

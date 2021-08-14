@@ -209,6 +209,7 @@ public class MessageFrame {
   private Bytes output;
   private Bytes returnData;
   private final boolean isStatic;
+  private Address authorized;
 
   // Transaction substate fields.
   private final List<Log> logs;
@@ -1079,6 +1080,14 @@ public class MessageFrame {
 
   Optional<MemoryEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
+  }
+
+  public void setAuthorized(final Address signerAddress) {
+    this.authorized = signerAddress;
+  }
+
+  public Address getAuthorized() {
+    return this.authorized;
   }
 
   public void reset() {
