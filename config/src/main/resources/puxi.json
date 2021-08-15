@@ -13,12 +13,14 @@
     "istanbulBlock": 0,
     "muirGlacierBlock": 0,
     "berlinBlock": 0,
+    "londonBlock": 0,
     "puxiBlock": 0,
     "clique": {
       "period": 15,
       "epoch": 30000
     }
   },
+  "baseFeePerGas": "0x3b9aca00",
   "nonce": "0x0",
   "timestamp": "0x60663018",
   "difficulty": "1",
