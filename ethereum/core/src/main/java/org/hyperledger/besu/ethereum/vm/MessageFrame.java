@@ -1126,6 +1126,7 @@ public class MessageFrame {
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
+    private Address authorized;
 
     public Builder type(final Type type) {
       this.type = type;
@@ -1273,6 +1274,11 @@ public class MessageFrame {
       return this;
     }
 
+    public Builder authorized(final Address authorized) {
+      this.authorized = authorized;
+      return this;
+    }
+
     private void validate() {
       checkState(type != null, "Missing message frame type");
       checkState(blockchain != null, "Missing message frame blockchain");
@@ -1300,36 +1306,41 @@ public class MessageFrame {
     public MessageFrame build() {
       validate();
 
-      return new MessageFrame(
-          type,
-          blockchain,
-          messageFrameStack,
-          worldState,
-          initialGas,
-          address,
-          originator,
-          contract,
-          contractAccountVersion,
-          gasPrice,
-          inputData,
-          sender,
-          value,
-          apparentValue,
-          code,
-          blockHeader,
-          depth,
-          isStatic,
-          completer,
-          miningBeneficiary,
-          blockHashLookup,
-          isPersistingPrivateState,
-          privateMetadataUpdater,
-          transactionHash,
-          transaction,
-          reason,
-          maxStackSize,
-          accessListWarmAddresses,
-          accessListWarmStorage);
+      MessageFrame frame =
+          new MessageFrame(
+              type,
+              blockchain,
+              messageFrameStack,
+              worldState,
+              initialGas,
+              address,
+              originator,
+              contract,
+              contractAccountVersion,
+              gasPrice,
+              inputData,
+              sender,
+              value,
+              apparentValue,
+              code,
+              blockHeader,
+              depth,
+              isStatic,
+              completer,
+              miningBeneficiary,
+              blockHashLookup,
+              isPersistingPrivateState,
+              privateMetadataUpdater,
+              transactionHash,
+              transaction,
+              reason,
+              maxStackSize,
+              accessListWarmAddresses,
+              accessListWarmStorage);
+      if (authorized != null) {
+        frame.setAuthorized(authorized);
+      }
+      return frame;
     }
   }
 }

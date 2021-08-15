@@ -176,6 +176,44 @@ public interface GasCalculator {
    * @param contract The address of the recipient (never null)
    * @return The gas cost for the CALL operation
    */
+  default Gas callOperationGasCost(
+      final MessageFrame frame,
+      final Gas stipend,
+      final UInt256 inputDataOffset,
+      final UInt256 inputDataLength,
+      final UInt256 outputDataOffset,
+      final UInt256 outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address contract) {
+    return callOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        transferValue,
+        recipient,
+        contract,
+        false);
+  }
+
+  /**
+   * Returns the gas cost for one of the various CALL operations.
+   *
+   * @param frame The current frame
+   * @param stipend The gas stipend being provided by the CALL caller
+   * @param inputDataOffset The offset in memory to retrieve the CALL input data
+   * @param inputDataLength The CALL input data length
+   * @param outputDataOffset The offset in memory to place the CALL output data
+   * @param outputDataLength The CALL output data length
+   * @param transferValue The wei being transferred
+   * @param recipient The CALL recipient (may be null if self destructed or new)
+   * @param contract The address of the recipient (never null)
+   * @param authCall whether the call operation is an AUTHCALL.
+   * @return The gas cost for the CALL operation
+   */
   Gas callOperationGasCost(
       MessageFrame frame,
       Gas stipend,
@@ -185,7 +223,8 @@ public interface GasCalculator {
       UInt256 outputDataLength,
       Wei transferValue,
       Account recipient,
-      Address contract);
+      Address contract,
+      boolean authCall);
 
   Gas getAdditionalCallStipend();
 

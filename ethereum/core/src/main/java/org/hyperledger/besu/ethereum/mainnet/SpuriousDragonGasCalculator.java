@@ -36,7 +36,8 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
       final UInt256 outputDataLength,
       final Wei transferValue,
       final Account recipient,
-      final Address to) {
+      final Address to,
+      final boolean authCall) {
     final Gas inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
     final Gas outputDataMemoryExpansionCost =
@@ -46,7 +47,7 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
     Gas cost = callOperationBaseGasCost().plus(memoryExpansionCost);
 
     if (!transferValue.isZero()) {
-      cost = cost.plus(callValueTransferGasCost());
+      cost = cost.plus(callValueTransferGasCost(authCall));
     }
 
     if ((recipient == null || recipient.isEmpty()) && !transferValue.isZero()) {

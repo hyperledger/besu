@@ -61,7 +61,8 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
       final UInt256 outputDataLength,
       final Wei transferValue,
       final Account recipient,
-      final Address to) {
+      final Address to,
+      final boolean authCall) {
     final Gas inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
     final Gas outputDataMemoryExpansionCost =
@@ -71,7 +72,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
     Gas cost = callOperationBaseGasCost().plus(memoryExpansionCost);
 
     if (!transferValue.isZero()) {
-      cost = cost.plus(callValueTransferGasCost());
+      cost = cost.plus(callValueTransferGasCost(authCall));
     }
 
     if (recipient == null) {

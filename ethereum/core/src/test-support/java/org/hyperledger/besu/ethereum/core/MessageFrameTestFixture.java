@@ -54,6 +54,7 @@ public class MessageFrameTestFixture {
   private int depth = 0;
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
   private ExecutionContextTestFixture executionContextTestFixture;
+  private Address authorized;
 
   public MessageFrameTestFixture type(final MessageFrame.Type type) {
     this.type = type;
@@ -156,6 +157,11 @@ public class MessageFrameTestFixture {
     return this;
   }
 
+  public MessageFrameTestFixture authorized(final Address authorized) {
+    this.authorized = authorized;
+    return this;
+  }
+
   public MessageFrame build() {
     final Blockchain blockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
     final BlockHeader blockHeader =
@@ -184,6 +190,7 @@ public class MessageFrameTestFixture {
             .blockHashLookup(
                 blockHashLookup.orElseGet(() -> new BlockHashLookup(blockHeader, blockchain)))
             .maxStackSize(maxStackSize)
+            .authorized(authorized)
             .build();
     stackItems.forEach(frame::pushStackItem);
     return frame;

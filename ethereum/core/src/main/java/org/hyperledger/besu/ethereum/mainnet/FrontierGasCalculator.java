@@ -220,9 +220,10 @@ public class FrontierGasCalculator implements GasCalculator {
   /**
    * Returns the gas cost to transfer funds in a call operation.
    *
+   * @param authCall whether the call operation is an AUTHCALL operation or not.
    * @return the gas cost to transfer funds in a call operation
    */
-  Gas callValueTransferGasCost() {
+  protected Gas callValueTransferGasCost(final boolean authCall) {
     return CALL_VALUE_TRANSFER_GAS_COST;
   }
 
@@ -245,7 +246,8 @@ public class FrontierGasCalculator implements GasCalculator {
       final UInt256 outputDataLength,
       final Wei transferValue,
       final Account recipient,
-      final Address to) {
+      final Address to,
+      final boolean authCall) {
     final Gas inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
     final Gas outputDataMemoryExpansionCost =
@@ -255,7 +257,7 @@ public class FrontierGasCalculator implements GasCalculator {
     Gas cost = callOperationBaseGasCost().plus(stipend).plus(memoryExpansionCost);
 
     if (!transferValue.isZero()) {
-      cost = cost.plus(callValueTransferGasCost());
+      cost = cost.plus(callValueTransferGasCost(authCall));
     }
 
     if (recipient == null) {
