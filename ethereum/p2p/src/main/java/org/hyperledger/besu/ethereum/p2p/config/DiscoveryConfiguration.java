@@ -212,6 +212,13 @@ public class DiscoveryConfiguration {
               .map(EnodeURLImpl::fromString)
               .collect(toList()));
 
+  public static final List<EnodeURL> PUXI_BOOTSTRAP_NODES =
+      Collections.unmodifiableList(
+          Stream.of(
+                  "enode://bfa4e628f8d2bca88e971142e58efe9ecb1e21b9bd702915089872168751dddba8bc2c116021265c6f17c5707de7ac033197fbf9af9ae3785a04e74e34f69cc5@144.91.103.6:12001")
+              .map(EnodeURLImpl::fromString)
+              .collect(toList()));
+
   private boolean active = true;
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;

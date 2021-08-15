@@ -154,10 +154,10 @@ abstract class MainnetEvmRegistries {
     return new EVM(registry, gasCalculator);
   }
 
-  static EVM eip3074(final GasCalculator gasCalculator, final BigInteger chainId) {
+  static EVM puxi(final GasCalculator gasCalculator, final BigInteger chainId) {
     final OperationRegistry registry = new OperationRegistry();
 
-    registerEIP3074Opcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
+    registerPuxiOpcodes(registry, gasCalculator, Account.DEFAULT_VERSION, chainId);
 
     return new EVM(registry, gasCalculator);
   }
@@ -306,7 +306,7 @@ abstract class MainnetEvmRegistries {
     registry.put(new BaseFeeOperation(gasCalculator), Account.DEFAULT_VERSION);
   }
 
-  private static void registerEIP3074Opcodes(
+  private static void registerPuxiOpcodes(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final int accountVersion,

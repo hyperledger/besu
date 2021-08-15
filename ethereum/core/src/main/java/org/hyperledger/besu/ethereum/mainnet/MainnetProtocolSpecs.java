@@ -67,6 +67,7 @@ public abstract class MainnetProtocolSpecs {
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
 
   public static final String LONDON_FORK_NAME = "London";
+  public static final String PUXI_FORK_NAME = "Puxi";
 
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
@@ -521,6 +522,24 @@ public abstract class MainnetProtocolSpecs {
         .ommerHeaderValidatorBuilder(
             MainnetBlockHeaderValidator.createEip1559OmmerValidator(eip1559))
         .name(LONDON_FORK_NAME);
+  }
+
+  static ProtocolSpecBuilder puxiDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode) {
+    return londonDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode)
+        .gasCalculator(PuxiGasCalculator::new)
+        .name(PUXI_FORK_NAME);
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

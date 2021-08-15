@@ -71,6 +71,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getLondonBlockNumber();
 
+  OptionalLong getPuxiBlockNumber();
+
   // TODO EIP-1559 change for the actual fork name when known
   OptionalLong getAleutBlockNumber();
 

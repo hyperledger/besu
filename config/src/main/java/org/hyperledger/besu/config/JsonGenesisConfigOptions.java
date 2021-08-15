@@ -265,6 +265,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getPuxiBlockNumber() {
+    return getOptionalLong("puxiblock");
+  }
+
+  @Override
   public OptionalLong getAleutBlockNumber() {
     return getOptionalLong("aleutblock");
   }

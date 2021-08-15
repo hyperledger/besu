@@ -40,9 +40,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BerlinGasCalculator extends IstanbulGasCalculator {
 
-  // TODO move to its own calculator class.
-  private static final Gas AUTH_CALL_VALUE_TRANSFER_GAS_COST = Gas.of(6700);
-
   // new constants for EIP-2929
   private static final Gas COLD_SLOAD_COST = Gas.of(2100);
   private static final Gas COLD_ACCOUNT_ACCESS_COST = Gas.of(2600);
@@ -185,14 +182,6 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
             authCall);
     final boolean accountIsWarm = frame.warmUpAddress(to) || isPrecompile(to);
     return baseCost.plus(accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
-  }
-
-  @Override
-  protected Gas callValueTransferGasCost(final boolean authCall) {
-    if (authCall) {
-      return AUTH_CALL_VALUE_TRANSFER_GAS_COST;
-    }
-    return super.callValueTransferGasCost(false);
   }
 
   // defined in Frontier, but re-implemented with no base cost.

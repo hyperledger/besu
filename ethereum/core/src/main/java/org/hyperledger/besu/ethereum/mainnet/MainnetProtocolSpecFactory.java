@@ -115,6 +115,16 @@ public class MainnetProtocolSpecFactory {
         quorumCompatibilityMode);
   }
 
+  public ProtocolSpecBuilder puxiDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.puxiDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Classic Protocol Specs

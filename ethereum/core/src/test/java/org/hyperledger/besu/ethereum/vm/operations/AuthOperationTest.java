@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.PuxiGasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -50,7 +51,7 @@ public class AuthOperationTest {
             .blockchain(blockchain)
             .initialGas(Gas.of(10000))
             .build();
-    AuthOperation authOperation = new AuthOperation(new IstanbulGasCalculator());
+    AuthOperation authOperation = new AuthOperation(new PuxiGasCalculator());
     messageFrame.pushStackItem(UInt256.ONE);
     messageFrame.pushStackItem(UInt256.ONE);
     messageFrame.pushStackItem(UInt256.valueOf(2));
@@ -61,7 +62,7 @@ public class AuthOperationTest {
 
   @Test
   public void testValidSignature() {
-    AuthOperation authOperation = new AuthOperation(new IstanbulGasCalculator());
+    AuthOperation authOperation = new AuthOperation(new PuxiGasCalculator());
     Address invokerAddress = Address.wrap(Bytes.random(20));
     BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     Blockchain blockchain = mock(Blockchain.class);
@@ -92,7 +93,7 @@ public class AuthOperationTest {
 
   @Test
   public void testBadCommit() {
-    AuthOperation authOperation = new AuthOperation(new IstanbulGasCalculator());
+    AuthOperation authOperation = new AuthOperation(new PuxiGasCalculator());
     Address invokerAddress = Address.wrap(Bytes.random(20));
     BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
     Blockchain blockchain = mock(Blockchain.class);

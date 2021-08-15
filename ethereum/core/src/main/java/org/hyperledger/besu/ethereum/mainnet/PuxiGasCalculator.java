@@ -12,19 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.config;
+package org.hyperledger.besu.ethereum.mainnet;
 
-public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  CALAVERAS,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  ECIP1049_DEV,
-  ASTOR,
-  PUXI
+import org.hyperledger.besu.ethereum.core.Gas;
+
+public class PuxiGasCalculator extends LondonGasCalculator {
+
+  private static final Gas AUTH_CALL_VALUE_TRANSFER_GAS_COST = Gas.of(6700);
+
+  @Override
+  protected Gas callValueTransferGasCost(final boolean authCall) {
+    if (authCall) {
+      return AUTH_CALL_VALUE_TRANSFER_GAS_COST;
+    }
+    return super.callValueTransferGasCost(false);
+  }
 }

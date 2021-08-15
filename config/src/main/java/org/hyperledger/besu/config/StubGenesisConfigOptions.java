@@ -37,6 +37,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong muirGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   private OptionalLong londonBlockNumber = OptionalLong.empty();
+  private OptionalLong puxiBlockNumber = OptionalLong.empty();
 
   // TODO EIP-1559 change for the actual fork name when known
   private final OptionalLong aleutBlockNumber = OptionalLong.empty();
@@ -175,6 +176,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getLondonBlockNumber() {
     return londonBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getPuxiBlockNumber() {
+    return puxiBlockNumber;
   }
 
   @Override
@@ -410,6 +416,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions londonBlock(final long blockNumber) {
     londonBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions puxiBlock(final long blockNumber) {
+    puxiBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 
