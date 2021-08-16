@@ -145,7 +145,7 @@ public class CmsValidator {
           new PKIXBuilderParameters(truststore.getKeyStore(), targetConstraints);
 
       // Adding CertStore with CRLs (if present, otherwise disabling revocation check)
-      loadCRLs(truststore)
+      createCRLCertStore(truststore)
           .ifPresentOrElse(
               CRLs -> {
                 params.addCertStore(CRLs);
@@ -179,7 +179,7 @@ public class CmsValidator {
     }
   }
 
-  private Optional<CertStore> loadCRLs(final KeyStoreWrapper truststore) {
+  private Optional<CertStore> createCRLCertStore(final KeyStoreWrapper truststore) {
     if (truststore.getCRLs() != null) {
       try {
         return Optional.of(
