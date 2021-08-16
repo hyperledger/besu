@@ -106,8 +106,9 @@ public class EthPeer {
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
-    // todo : make this robust to future protocols
-    final boolean supportsRequestId = getAgreedCapabilities().contains(EthProtocol.ETH66);
+    final boolean supportsRequestId =
+        getAgreedCapabilities().stream()
+            .anyMatch(capability -> capability.compareTo(EthProtocol.ETH66) >= 0);
     this.headersRequestManager = new RequestManager(this, supportsRequestId);
     this.bodiesRequestManager = new RequestManager(this, supportsRequestId);
     this.receiptsRequestManager = new RequestManager(this, supportsRequestId);
