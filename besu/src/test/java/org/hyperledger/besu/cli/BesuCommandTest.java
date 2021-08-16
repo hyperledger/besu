@@ -4288,7 +4288,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     SignatureAlgorithmFactory.resetInstance();
     parseCommand("--Xsecp256k1-native-enabled", "false");
 
-    verify(mockLogger).info("Using the Java implementation of secp256k1");
+    verify(mockLogger).info("Using the Java implementation of the signature algorithm");
     assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isFalse();
   }
 
@@ -4309,7 +4309,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
 
     assertThat(SignatureAlgorithmFactory.getInstance().isNative()).isTrue();
-    verify(mockLogger).info("Using native secp256k1");
+    verify(mockLogger).info("Using the native implementation of the signature algorithm");
 
     assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
     verify(mockLogger).info("Using LibEthPairings native alt bn128");
