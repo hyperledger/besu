@@ -14,29 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+public interface BaseFeeMarket extends FeeMarket {
 
-import java.util.Optional;
-import java.util.function.Supplier;
-
-public interface FeeMarket {
-
+  @Override
   default boolean implementsBaseFee() {
-    return false;
+    return true;
   }
 
-  TransactionPriceCalculator getTransactionPriceCalculator();
+  long getBasefeeMaxChangeDenominator();
 
-  Wei minTransactionPriceInNextBlock(
-      Transaction transaction, Supplier<Optional<Long>> baseFeeSupplier);
+  long getInitialBasefee();
 
-  static BaseFeeMarket london() {
-    return new LondonFeeMarket();
-  }
-
-  static FeeMarket legacy() {
-    return new LegacyFeeMarket();
-  }
+  long getSlackCoefficient();
 }

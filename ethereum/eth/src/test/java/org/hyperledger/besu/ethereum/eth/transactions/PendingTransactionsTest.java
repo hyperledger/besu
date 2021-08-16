@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -122,15 +122,30 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldDropOldestTransactionWhenLimitExceeded() {
-    final Transaction oldestTransaction = createTransaction(0);
+    final Transaction oldestTransaction =
+        new TransactionTestFixture()
+            .value(Wei.of(1L))
+            .nonce(0L)
+            .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
     transactions.addRemoteTransaction(oldestTransaction);
     for (int i = 1; i < MAX_TRANSACTIONS; i++) {
-      transactions.addRemoteTransaction(createTransaction(i));
+      final Transaction newerTransaction =
+          new TransactionTestFixture()
+              .value(Wei.of(1L))
+              .nonce(0L)
+              .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
+      transactions.addRemoteTransaction(newerTransaction);
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
 
-    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1));
+    final Transaction lastTransaction =
+        new TransactionTestFixture()
+            .value(Wei.of(1L))
+            .nonce(MAX_TRANSACTIONS + 1)
+            .createTransaction(SIGNATURE_ALGORITHM.get().generateKeyPair());
+
+    transactions.addRemoteTransaction(lastTransaction);
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(oldestTransaction);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
@@ -153,6 +168,11 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldPrioritizeLocalTransaction() {
+
+    transactions.subscribeDroppedTransactions(
+        transaction ->
+            assertThat(transactions.getLocalTransactions().contains(transaction)).isFalse());
+
     final Transaction localTransaction = createTransaction(0);
     transactions.addLocalTransaction(localTransaction);
 
@@ -165,9 +185,14 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
+    transactions.subscribeDroppedTransactions(
+        transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
     final List<Transaction> lowGasPriceTransactions =
         IntStream.range(0, MAX_TRANSACTIONS)
-            .mapToObj(i -> transactionWithNonceSenderAndGasPrice(i + 1, KEYS1, 10))
+            .mapToObj(
+                i ->
+                    transactionWithNonceSenderAndGasPrice(
+                        i + 1, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10 + i))
             .collect(Collectors.toUnmodifiableList());
 
     // Fill the pool
@@ -175,7 +200,8 @@ public class PendingTransactionsTest {
 
     // This should kick the oldest tx with the low gas price out, namely the first one we added
     final Transaction highGasPriceTransaction =
-        transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 1, KEYS1, 100);
+        transactionWithNonceSenderAndGasPrice(
+            MAX_TRANSACTIONS + 10, SIGNATURE_ALGORITHM.get().generateKeyPair(), 100);
     transactions.addRemoteTransaction(highGasPriceTransaction);
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
@@ -186,14 +212,12 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldStartDroppingLocalTransactionsWhenPoolIsFullOfLocalTransactions() {
-    final Transaction firstLocalTransaction = createTransaction(0);
-    transactions.addLocalTransaction(firstLocalTransaction);
+    transactions.subscribeDroppedTransactions(this::assertTransactionNotPending);
 
-    for (int i = 1; i <= MAX_TRANSACTIONS; i++) {
+    for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
       transactions.addLocalTransaction(createTransaction(i));
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(firstLocalTransaction);
   }
 
   @Test
@@ -207,6 +231,7 @@ public class PendingTransactionsTest {
 
   @Test
   public void shouldNotNotifyListenerAfterUnsubscribe() {
+
     final long id = transactions.subscribePendingTransactions(listener);
 
     transactions.addRemoteTransaction(transaction1);
@@ -214,10 +239,8 @@ public class PendingTransactionsTest {
     verify(listener).onTransactionAdded(transaction1);
 
     transactions.unsubscribePendingTransactions(id);
-
+    verifyNoMoreInteractions(listener);
     transactions.addRemoteTransaction(transaction2);
-
-    verifyZeroInteractions(listener);
   }
 
   @Test
@@ -277,7 +300,7 @@ public class PendingTransactionsTest {
 
     transactions.transactionAddedToBlock(transaction1);
 
-    verifyZeroInteractions(droppedListener);
+    verifyNoInteractions(droppedListener);
   }
 
   @Test
@@ -473,7 +496,7 @@ public class PendingTransactionsTest {
     assertTransactionNotPending(transaction1b);
     assertTransactionPending(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
-    verifyZeroInteractions(listener);
+    verifyNoInteractions(listener);
   }
 
   @Test
@@ -681,18 +704,18 @@ public class PendingTransactionsTest {
   @Test
   public void assertThatCorrectNonceIsReturned() {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(1, 2, 4, 5);
+    addLocalTransactions(1, 2, 4);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
     addLocalTransactions(3);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(6);
-    addLocalTransactions(6, 10);
+        .hasValue(5);
+    addLocalTransactions(5);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(7);
+        .hasValue(6);
   }
 
   @Test
@@ -725,5 +748,61 @@ public class PendingTransactionsTest {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
     return blockHeader;
+  }
+
+  @Test
+  public void shouldIgnoreFutureNoncedTxs() {
+
+    // create maxtx transactions with valid addresses/nonces
+    // all addresses should be unique, chained txs will be checked in another test.
+    // TODO: how do we test around reorgs? do we?
+    List<Transaction> toValidate = new ArrayList<>((int) transactions.maxSize());
+    for (int entries = 1; entries <= transactions.maxSize(); entries++) {
+      KeyPair kp = SIGNATURE_ALGORITHM.get().generateKeyPair();
+      Address a = Util.publicKeyToAddress(kp.getPublicKey());
+      Transaction t =
+          new TransactionTestFixture()
+              .sender(a)
+              .value(Wei.of(2))
+              .maxPriorityFeePerGas(Optional.of(Wei.of(2L)))
+              .nonce(entries)
+              .createTransaction(kp);
+      transactions.addRemoteTransaction(t);
+      toValidate.add(t);
+    }
+
+    // create maxtx transaction with nonces in the future, could be any volume though since pool
+    // already full
+    List<Transaction> attackTxs = new ArrayList<>();
+    KeyPair attackerKp = SIGNATURE_ALGORITHM.get().generateKeyPair();
+    Address attackerA = Util.publicKeyToAddress(attackerKp.getPublicKey());
+
+    for (int entries = 10;
+        entries < transactions.maxSize() + 10;
+        entries++) { // badguy nonces are 2 digits
+      Transaction t =
+          new TransactionTestFixture()
+              .sender(attackerA)
+              .value(Wei.of(2))
+              .nonce(entries)
+              .maxPriorityFeePerGas(Optional.of(Wei.of(2L)))
+              .createTransaction(attackerKp);
+      attackTxs.add(t);
+      transactions.addRemoteTransaction(t); // all but the last one of these should be dropped
+    }
+
+    // assert txpool contains 1st attack
+
+    assertThat(transactions.getTransactionByHash(attackTxs.get(0).getHash())).isNotEmpty();
+    // assert txpool does not contain rest of attack
+    attackTxs.stream()
+        .skip(1L)
+        .forEach(t -> assertThat(transactions.getTransactionByHash(t.getHash())).isEmpty());
+    // assert that only 1 of the valid batch was purged
+    long droppedValidCount =
+        toValidate.stream()
+            .filter(t -> transactions.getTransactionByHash(t.getHash()).isEmpty())
+            .count();
+    assertThat(droppedValidCount).isEqualTo(1L);
   }
 }

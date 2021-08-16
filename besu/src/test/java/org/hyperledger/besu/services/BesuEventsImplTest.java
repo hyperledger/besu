@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -121,17 +120,12 @@ public class BesuEventsImplTest {
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
-    when(mockEthPeers.streamAvailablePeers())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty());
+    when(mockEthPeers.streamAvailablePeers()).thenAnswer(__ -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
     when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
-    when(mockProtocolSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(0L)));
-    when(mockProtocolSpec.getFeeMarket()).thenReturn(Optional.of(FeeMarket.london()));
+    when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london());
     when(mockTransactionValidator.validate(any(), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
@@ -438,7 +432,7 @@ public class BesuEventsImplTest {
     transactionPool.addLocalTransaction(TX2);
 
     assertThat(result.get()).isNotNull();
-    serviceImpl.removeTransactionAddedListener(id);
+    serviceImpl.removeTransactionDroppedListener(id);
     result.set(null);
 
     transactionPool.addLocalTransaction(TX2);
