@@ -79,7 +79,8 @@ public class BesuNodeFactory {
         config.isDnsEnabled(),
         config.getPrivacyParameters(),
         config.getRunCommand(),
-        config.getKeyPair());
+        config.getKeyPair(),
+        config.getPkiBlockCreationConfiguration());
   }
 
   public BesuNode createMinerNode(final String name) throws IOException {
@@ -389,6 +390,19 @@ public class BesuNodeFactory {
             .build());
   }
 
+  public BesuNode createPkiQbftNode(final String name) throws IOException {
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .miningEnabled()
+            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
+            .webSocketConfiguration(node.createWebSocketEnabledConfig())
+            .devMode(false)
+            .genesisConfigProvider(genesis::createPkiQbftGenesisConfig)
+            .pkiBlockCreationEnabled()
+            .build());
+  }
+
   public BesuNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
     return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
@@ -494,6 +508,7 @@ public class BesuNodeFactory {
             .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
+            .pkiBlockCreationEnabled()
             .genesisConfigProvider(
                 nodes ->
                     node.createGenesisConfigForValidators(

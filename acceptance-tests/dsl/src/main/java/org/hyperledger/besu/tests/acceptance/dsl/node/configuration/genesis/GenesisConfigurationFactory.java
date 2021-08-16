@@ -79,6 +79,13 @@ public class GenesisConfigurationFactory {
         validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
   }
 
+  public Optional<String> createPkiQbftGenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/qbft/qbft.json");
+    return updateGenesisExtraData(
+        validators, template, QbftExtraDataCodec::createGenesisExtraDataString);
+  }
+
   private Optional<String> updateGenesisExtraData(
       final Collection<? extends RunnableNode> validators,
       final String genesisTemplate,

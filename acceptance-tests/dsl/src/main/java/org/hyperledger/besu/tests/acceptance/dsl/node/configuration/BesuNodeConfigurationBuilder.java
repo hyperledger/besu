@@ -16,8 +16,11 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
+import static org.hyperledger.besu.pki.util.TestCertificateUtils.createKeyPair;
+import static org.hyperledger.besu.pki.util.TestCertificateUtils.createSelfSignedCertificate;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -32,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
+import org.hyperledger.besu.pki.keystore.SoftwareKeyStoreWrapper;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.io.File;
@@ -40,6 +44,11 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -80,6 +89,7 @@ public class BesuNodeConfigurationBuilder {
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
+  private Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration = Optional.empty();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -349,6 +359,44 @@ public class BesuNodeConfigurationBuilder {
     return tempFile.toPath();
   }
 
+  public BesuNodeConfigurationBuilder pkiBlockCreationEnabled() {
+    // TODO-lucas ATs: should we generate all certs here instead of just one?
+
+    final KeyStoreWrapper keyStoreWrapper;
+    final KeyStoreWrapper trustStoreWrapper;
+    try {
+      final Instant notBefore = Instant.now().minus(1, ChronoUnit.DAYS);
+      final Instant notAfter = Instant.now().plus(1, ChronoUnit.DAYS);
+
+      final java.security.KeyPair selfsignedKeyPair = createKeyPair();
+      final X509Certificate selfsignedCertificate =
+          createSelfSignedCertificate("validator", notBefore, notAfter, selfsignedKeyPair);
+
+      final KeyStore truststore = KeyStore.getInstance("PKCS12");
+      truststore.load(null, null);
+      truststore.setCertificateEntry("validator", selfsignedCertificate);
+      trustStoreWrapper = new SoftwareKeyStoreWrapper(truststore, "");
+
+      final KeyStore keystore = KeyStore.getInstance("PKCS12");
+      keystore.load(null, null);
+      keystore.setKeyEntry(
+          "validator",
+          selfsignedKeyPair.getPrivate(),
+          "".toCharArray(),
+          new Certificate[] {selfsignedCertificate});
+      keyStoreWrapper = new SoftwareKeyStoreWrapper(keystore, "");
+
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    pkiBlockCreationConfiguration =
+        Optional.of(
+            new PkiBlockCreationConfiguration(keyStoreWrapper, trustStoreWrapper, "validator"));
+
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {
     this.discoveryEnabled = discoveryEnabled;
     return this;
@@ -433,6 +481,7 @@ public class BesuNodeConfigurationBuilder {
         isDnsEnabled,
         privacyParameters,
         runCommand,
-        keyPair);
+        keyPair,
+        pkiBlockCreationConfiguration);
   }
 }

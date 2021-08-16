@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -58,6 +59,7 @@ public class BesuNodeConfiguration {
   private final List<String> runCommand;
   private final NetworkName network;
   private final Optional<KeyPair> keyPair;
+  private final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration;
 
   BesuNodeConfiguration(
       final String name,
@@ -85,7 +87,8 @@ public class BesuNodeConfiguration {
       final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
-      final Optional<KeyPair> keyPair) {
+      final Optional<KeyPair> keyPair,
+      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -112,6 +115,7 @@ public class BesuNodeConfiguration {
     this.privacyParameters = privacyParameters;
     this.runCommand = runCommand;
     this.keyPair = keyPair;
+    this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
   }
 
   public String getName() {
@@ -216,5 +220,9 @@ public class BesuNodeConfiguration {
 
   public Optional<KeyPair> getKeyPair() {
     return keyPair;
+  }
+
+  public Optional<PkiBlockCreationConfiguration> getPkiBlockCreationConfiguration() {
+    return pkiBlockCreationConfiguration;
   }
 }

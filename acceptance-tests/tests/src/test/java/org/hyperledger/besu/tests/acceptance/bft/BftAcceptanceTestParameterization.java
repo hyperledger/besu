@@ -22,32 +22,42 @@ import java.util.List;
 
 public class BftAcceptanceTestParameterization {
 
+  // TODO-lucas We don't need to run all tests for TLS and PKI scenarios...
+
   public static List<Object[]> getFactories() {
     final List<Object[]> ret = new ArrayList<>();
-    ret.addAll(
-        List.of(
-            new Object[] {
-              "ibft",
-              new BftAcceptanceTestParameterization(
-                  BesuNodeFactory::createIbft2Node, BesuNodeFactory::createIbft2NodeWithValidators)
-            },
-            new Object[] {
-              "ibft-tls-jks",
-              new BftAcceptanceTestParameterization(
-                  BesuNodeFactory::createIbft2NodeWithTLSJKS,
-                  BesuNodeFactory::createIbft2TLSJKSNodeWithValidators)
-            },
-            new Object[] {
-              "ibft-tls-pkcs12",
-              new BftAcceptanceTestParameterization(
-                  BesuNodeFactory::createIbft2NodeWithTLSPKCS12,
-                  BesuNodeFactory::createIbft2TLSPKCS12NodeWithValidators)
-            },
-            new Object[] {
-              "qbft",
-              new BftAcceptanceTestParameterization(
-                  BesuNodeFactory::createQbftNode, BesuNodeFactory::createQbftNodeWithValidators)
-            }));
+    ret.add(
+        new Object[] {
+          "pki-qbft",
+          new BftAcceptanceTestParameterization(
+              BesuNodeFactory::createPkiQbftNode, BesuNodeFactory::createQbftNodeWithValidators)
+        });
+    //    ret.addAll(
+    //        List.of(
+    //            new Object[] {
+    //              "ibft",
+    //              new BftAcceptanceTestParameterization(
+    //                  BesuNodeFactory::createIbft2Node,
+    // BesuNodeFactory::createIbft2NodeWithValidators)
+    //            },
+    //            new Object[] {
+    //              "ibft-tls-jks",
+    //              new BftAcceptanceTestParameterization(
+    //                  BesuNodeFactory::createIbft2NodeWithTLSJKS,
+    //                  BesuNodeFactory::createIbft2TLSJKSNodeWithValidators)
+    //            },
+    //            new Object[] {
+    //              "ibft-tls-pkcs12",
+    //              new BftAcceptanceTestParameterization(
+    //                  BesuNodeFactory::createIbft2NodeWithTLSPKCS12,
+    //                  BesuNodeFactory::createIbft2TLSPKCS12NodeWithValidators)
+    //            },
+    //            new Object[] {
+    //              "qbft",
+    //              new BftAcceptanceTestParameterization(
+    //                  BesuNodeFactory::createQbftNode,
+    // BesuNodeFactory::createQbftNodeWithValidators)
+    //            }));
     if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
       ret.add(
           new Object[] {

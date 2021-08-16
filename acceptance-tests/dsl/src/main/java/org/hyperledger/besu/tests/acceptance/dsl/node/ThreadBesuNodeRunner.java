@@ -163,6 +163,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .isRevertReasonEnabled(node.isRevertReasonEnabled())
             .storageProvider(storageProvider)
             .gasLimitCalculator(GasLimitCalculator.constant())
+            .pkiBlockCreationConfiguration(node.getPkiBlockCreationConfiguration())
             .build();
 
     final RunnerBuilder runnerBuilder = new RunnerBuilder();

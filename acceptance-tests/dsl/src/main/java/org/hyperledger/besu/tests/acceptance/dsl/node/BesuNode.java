@@ -19,6 +19,7 @@ import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.apache.tuweni.io.file.Files.copyResource;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -118,6 +119,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> staticNodes;
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
+  private Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration = Optional.empty();
 
   public BesuNode(
       final String name,
@@ -145,7 +147,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
-      final Optional<KeyPair> keyPair)
+      final Optional<KeyPair> keyPair,
+      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     keyfilePath.ifPresent(
@@ -195,6 +198,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
+    this.pkiBlockCreationConfiguration = pkiBlockCreationConfiguration;
     LOG.info("Created BesuNode {}", this.toString());
   }
 
@@ -654,6 +658,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public List<String> getRunCommand() {
     return runCommand;
+  }
+
+  public Optional<PkiBlockCreationConfiguration> getPkiBlockCreationConfiguration() {
+    return pkiBlockCreationConfiguration;
   }
 
   @Override
