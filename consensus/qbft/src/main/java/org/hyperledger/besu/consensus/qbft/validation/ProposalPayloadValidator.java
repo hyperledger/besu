@@ -32,8 +32,6 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.pki.cms.CmsValidator;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 
-import java.security.cert.CertStore;
-import java.security.cert.CollectionCertStoreParameters;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -84,6 +82,7 @@ public class ProposalPayloadValidator {
       return false;
     }
 
+    // TODO-lucas Do we want to have a PkiProposalPayloadValidator or something?
     // Validate the CMS in the extraData (only for PKI-mode)
     if (!validateCms(block)) {
       return false;
@@ -108,12 +107,13 @@ public class ProposalPayloadValidator {
   /*
     Validate CMS in block header (only for PKI-mode)
   */
+  @SuppressWarnings("unused")
   private boolean validateCms(final Block block) {
     final PkiQbftContext pkiQbftContext;
     try {
       pkiQbftContext = protocolContext.getConsensusState(PkiQbftContext.class);
     } catch (final ClassCastException e) {
-      // TODO-lucas Do we have a better way of doing this?
+      // TODO-lucas Do we have a better way of doing this? This is nasty...
       // Not running on PKI-enabled mode
       return true;
     }
@@ -124,38 +124,20 @@ public class ProposalPayloadValidator {
     final KeyStoreWrapper trustStore =
         pkiQbftContext.getPkiBlockCreationConfiguration().getTrustStore();
 
-    if (pkiExtraData.getCms().isPresent()) {
-      // TODO-lucas Do we need to do this or could I just use 'block.getHeader().getHash()'
-      final Hash proposedBlockHash =
-          BftBlockHeaderFunctions.forOnChainBlock(new PkiQbftExtraDataCodec())
-              .hash(block.getHeader());
+    final Hash hashWithoutCms =
+        BftBlockHeaderFunctions.forCmsSignature(new PkiQbftExtraDataCodec())
+            .hash(block.getHeader());
 
-      LOG.info(">>> Validating CMS for block {}", proposedBlockHash);
+    final CmsValidator cmsValidator = new CmsValidator(trustStore);
 
-      CertStore crlCertStore = null;
-      if (trustStore.getCRLs() != null) {
-        try {
-          crlCertStore =
-              CertStore.getInstance(
-                  "Collection", new CollectionCertStoreParameters(trustStore.getCRLs()));
-        } catch (final Exception e) {
-          throw new RuntimeException("Error reading PKI Block Creation TrustStore CRL file", e);
-        }
-      }
+    LOG.info(">>> Validating CMS with signed hash {}", hashWithoutCms);
 
-      final CmsValidator cmsValidator = new CmsValidator(trustStore, crlCertStore);
-
-      if (!cmsValidator.validate(pkiExtraData.getCms().get(), proposedBlockHash)) {
-        LOG.info(">>> CMS Validation INVALID for block {}", proposedBlockHash);
-        return false;
-      } else {
-        LOG.info(">>> CMS Validation VALID for block {}", proposedBlockHash);
-        return true;
-      }
+    if (!cmsValidator.validate(pkiExtraData.getCms(), hashWithoutCms)) {
+      LOG.info(">>> CMS Validation INVALID for block {}", block.getHash());
+      return false;
     } else {
-      LOG.info(">>> Skipping CMS Validation for block {}", block.getHeader().getHash());
+      LOG.info(">>> CMS Validation VALID for block {}", block.getHash());
+      return true;
     }
-
-    return true;
   }
 }

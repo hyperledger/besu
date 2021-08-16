@@ -24,12 +24,9 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.pki.cms.CmsCreator;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
-
-import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,6 +60,8 @@ public class PkiQbftCreateBlockForProposalBehaviour implements CreateBlockForPro
     final PkiQbftContext pkiQbftContext = protocolContext.getConsensusState(PkiQbftContext.class);
     final PkiBlockCreationConfiguration pkiBlockCreationConfig =
         pkiQbftContext.getPkiBlockCreationConfiguration();
+
+    // TODO-lucas Should we do this as part of the block creation
     return replaceCmsInBlock(block, pkiBlockCreationConfig);
   }
 
@@ -72,28 +71,24 @@ public class PkiQbftCreateBlockForProposalBehaviour implements CreateBlockForPro
     final String certificateAlias = pkiBlockCreationConfig.getCertificateAlias();
     final CmsCreator cmsCreator = new CmsCreator(keyStore, certificateAlias);
 
-    final BlockHeaderFunctions blockHeaderFunctions =
-        BftBlockHeaderFunctions.forOnChainBlock(bftExtraDataCodec);
-    final Hash hash = blockHeaderFunctions.hash(block.getHeader());
+    // We need the blockchain hash w/o CMS (old blockchain hash...)
+    final Hash hashWithoutCms =
+        BftBlockHeaderFunctions.forCmsSignature(bftExtraDataCodec).hash(block.getHeader());
 
-    LOG.info(">>> Creating CMS for block {}", hash);
-    final Bytes cms = cmsCreator.create(hash);
+    LOG.info(">>> Creating CMS with signed hash {}", hashWithoutCms);
+    final Bytes cms = cmsCreator.create(hashWithoutCms);
 
     final BftExtraData prevExtraData = bftExtraDataCodec.decode(block.getHeader());
-    final BftExtraData substituteExtraData =
-        new PkiQbftExtraData(
-            prevExtraData.getVanityData(),
-            prevExtraData.getSeals(),
-            prevExtraData.getVote(),
-            prevExtraData.getRound(),
-            prevExtraData.getValidators(),
-            Optional.of(cms));
+    final BftExtraData substituteExtraData = new PkiQbftExtraData(prevExtraData, cms);
+    final Bytes substituteExtraDataBytes = bftExtraDataCodec.encode(substituteExtraData);
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder
-        .extraData(bftExtraDataCodec.encode(substituteExtraData))
-        .blockHeaderFunctions(blockHeaderFunctions);
+        .extraData(substituteExtraDataBytes)
+        .blockHeaderFunctions(BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
+
+    LOG.info(">>> Created CMS for block {}", newHeader.getHash());
 
     return new Block(newHeader, block.getBody());
   }
