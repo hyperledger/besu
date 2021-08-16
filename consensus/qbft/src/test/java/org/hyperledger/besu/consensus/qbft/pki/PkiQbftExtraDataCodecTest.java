@@ -1,13 +1,16 @@
 /*
  * Copyright ConsenSys AG.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with
  * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+ *  the License for the
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -41,25 +44,22 @@ public class PkiQbftExtraDataCodecTest {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  private final String EMPTY_CMS_RAW_HEX_ENCODING_STRING =
-      "0xf8f3f8f0a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea94000000000000"
-          + "0000000000000000000000000001940000000000000000000000000000000000000002d794000000000000"
-          + "000000000000000000000000000181ff83fedcbaf886b84100000000000000000000000000000000000000"
-          + "00000000000000000000000001000000000000000000000000000000000000000000000000000000000000"
-          + "000a00b841000000000000000000000000000000000000000000000000000000000000000a000000000000"
-          + "000000000000000000000000000000000000000000000000000100c0";
-
   // Arbitrary bytes representing a non-empty CMS
   private final Bytes cms = Bytes.fromHexString("0x01");
 
-  // Raw hex-encoded extra data with arbitrary CMS data (0x01)
-  private final String RAW_HEX_ENCODING_STRING =
-      "0xf8f4f8f0a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea94000000000000"
-          + "0000000000000000000000000001940000000000000000000000000000000000000002d794000000000000"
-          + "000000000000000000000000000181ff83fedcbaf886b84100000000000000000000000000000000000000"
-          + "00000000000000000000000001000000000000000000000000000000000000000000000000000000000000"
-          + "000a00b841000000000000000000000000000000000000000000000000000000000000000a000000000000"
-          + "000000000000000000000000000000000000000000000000000100c101";
+  private final String RAW_EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER_ENCODED_STRING =
+      "0xf867a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000"
+          + "000000000000000000000001940000000000000000000000000000000000000002d7940000000000000000"
+          + "00000000000000000000000181ff80c001";
+
+  private final String RAW_EXCLUDE_COMMIT_SEALS_ENCODED_STRING =
+      "0xf86aa00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000000000000000000000000001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff83fedcbac001";
+
+  private final String RAW_ALL_ENCODED_STRING =
+      "0xf8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000000000000000000000000001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff83fedcbaf886b8410000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000a00b841000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000010001";
+
+  private final String RAW_PROPOSAL_ENCODED_STRING =
+      "0xf8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000000000000000000000000001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff83fedcbaf886b8410000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000a00b841000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000010080";
 
   private final PkiQbftExtraDataCodec bftExtraDataCodec = new PkiQbftExtraDataCodec();
 
@@ -79,8 +79,6 @@ public class PkiQbftExtraDataCodecTest {
     final Bytes vanity_data = Bytes.wrap(vanity_bytes);
 
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
-    encoder.startList(); // start envelope list
-
     encoder.startList(); // start extra data list
     // vanity data
     encoder.writeBytes(vanity_data);
@@ -95,13 +93,9 @@ public class PkiQbftExtraDataCodecTest {
     encoder.writeIntScalar(round);
     // committer seals
     encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
-    encoder.endList(); // end extra data list
-
-    encoder.startList(); // start cms list
+    // cms
     encoder.writeBytes(cms);
-    encoder.endList(); // end cms list
-
-    encoder.endList(); // end envelope list
+    encoder.endList(); // end extra data list
 
     final Bytes bufferToInject = encoder.encoded();
 
@@ -112,30 +106,50 @@ public class PkiQbftExtraDataCodecTest {
     assertThat(extraData.getRound()).isEqualTo(round);
     assertThat(extraData.getSeals()).isEqualTo(committerSeals);
     assertThat(extraData.getValidators()).isEqualTo(validators);
-    assertThat(extraData.getCms()).hasValue(cms);
+    assertThat(extraData.getCms()).isEqualTo(cms);
   }
 
+  /*
+   When encoding for blockchain, we ignore commit seals and round number, but we include the CMS
+  */
   @Test
-  public void encodingExtraDataWithEmptyCmsMatchesKnownRawHexString() {
-    final Bytes expectedRawDecoding = Bytes.fromHexString(EMPTY_CMS_RAW_HEX_ENCODING_STRING);
-    final Bytes encoded = bftExtraDataCodec.encode(getDecodedExtraDataWithEmptyCms());
+  public void encodingForBlockchainShouldIncludeCms() {
+    final Bytes expectedRawDecoding =
+        Bytes.fromHexString(RAW_EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER_ENCODED_STRING);
+    final Bytes encoded =
+        bftExtraDataCodec.encodeWithoutCommitSealsAndRoundNumber(getDecodedExtraData(cms));
 
     assertThat(encoded).isEqualTo(expectedRawDecoding);
   }
 
   @Test
-  public void encodingMatchesKnownRawHexString() {
-    final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_HEX_ENCODING_STRING);
-    final Bytes encoded = bftExtraDataCodec.encode(getDecodedExtraData(Optional.of(cms)));
+  public void encodingWithoutCommitSealsShouldIncludeCms() {
+    final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_EXCLUDE_COMMIT_SEALS_ENCODED_STRING);
+    final Bytes encoded = bftExtraDataCodec.encodeWithoutCommitSeals(getDecodedExtraData(cms));
 
     assertThat(encoded).isEqualTo(expectedRawDecoding);
   }
 
-  private static PkiQbftExtraData getDecodedExtraDataWithEmptyCms() {
-    return getDecodedExtraData(Optional.empty());
+  @Test
+  public void encodingWithAllShouldIncludeCms() {
+    final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_ALL_ENCODED_STRING);
+    final Bytes encoded = bftExtraDataCodec.encode(getDecodedExtraData(cms));
+
+    assertThat(encoded).isEqualTo(expectedRawDecoding);
   }
 
-  private static PkiQbftExtraData getDecodedExtraData(final Optional<Bytes> cms) {
+  /*
+   When encoding for proposal, we include commit seals and round number, but we ignore the CMS
+  */
+  @Test
+  public void encodingForCreatingCmsProposal() {
+    final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_PROPOSAL_ENCODED_STRING);
+    final Bytes encoded = bftExtraDataCodec.encodeForProposal(getDecodedExtraData(cms));
+
+    assertThat(encoded).isEqualTo(expectedRawDecoding);
+  }
+
+  private static PkiQbftExtraData getDecodedExtraData(final Bytes cms) {
     final List<Address> validators =
         Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
     final Optional<Vote> vote = Optional.of(Vote.authVote(Address.fromHexString("1")));

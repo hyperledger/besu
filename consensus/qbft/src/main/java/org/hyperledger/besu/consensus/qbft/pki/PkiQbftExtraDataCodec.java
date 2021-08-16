@@ -20,14 +20,14 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.Optional;
+import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /*
  The PkiQbftExtraData encoding format is different from the "regular" QbftExtraData encoding.
  We have an "envelope" list, with two elements: the extra data and the cms message.
- The RLP encoding format is as follows: ["extra_data", ["cms"]]
+ The RLP encoding format is as follows: ["extra_data" || "cms"]
 */
 public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
@@ -37,20 +37,20 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
       throw new IllegalArgumentException("Invalid Bytes supplied - Bft Extra Data required.");
     }
 
+    final BftExtraData bftExtraData = super.decodeRaw(input);
+
     final RLPInput rlpInput = new BytesValueRLPInput(input, false);
     rlpInput.enterList();
-
-    // Consume all the ExtraData input from the envelope list, and decode it using the QBFT decoder
-    final Bytes extraDataListAsBytes = rlpInput.currentListAsBytes();
-    final BftExtraData bftExtraData = super.decodeRaw(extraDataListAsBytes);
-
-    final Optional<Bytes> cms;
-    if (rlpInput.nextIsList() && rlpInput.nextSize() == 0) {
-      cms = Optional.empty();
+    rlpInput.skipNext();
+    rlpInput.skipNext();
+    rlpInput.skipNext();
+    rlpInput.skipNext();
+    rlpInput.skipNext();
+    final Bytes cms;
+    if (!rlpInput.isEndOfCurrentList()) {
+      cms = rlpInput.readBytes();
     } else {
-      rlpInput.enterList();
-      cms = Optional.of(rlpInput.readBytes());
-      rlpInput.leaveList();
+      cms = Bytes.EMPTY;
     }
 
     return new PkiQbftExtraData(bftExtraData, cms);
@@ -58,32 +58,48 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
 
   @Override
   protected Bytes encode(final BftExtraData bftExtraData, final EncodingType encodingType) {
+    final PkiQbftExtraData extraData;
     if (!(bftExtraData instanceof PkiQbftExtraData)) {
-      throw new IllegalStateException(
-          "PkiQbftExtraDataCodec must be used only with PkiQbftExtraData");
+      return super.encode(bftExtraData, encodingType);
+    } else {
+      extraData = (PkiQbftExtraData) bftExtraData;
     }
-    final PkiQbftExtraData extraData = (PkiQbftExtraData) bftExtraData;
 
+    // TODO-lucas Instead of overriding the QbftExtraDataCodec method, we should just just do the
+    // extra
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
-    encoder.startList(); // start envelope list
+    encoder.startList();
+    encoder.writeBytes(bftExtraData.getVanityData());
+    encoder.writeList(bftExtraData.getValidators(), (validator, rlp) -> rlp.writeBytes(validator));
 
-    final Bytes encodedQbftExtraData = super.encode(bftExtraData, encodingType);
-    encoder.writeRaw(encodedQbftExtraData);
+    if (bftExtraData.getVote().isPresent()) {
+      encodeVote(encoder, bftExtraData.getVote().get());
+    } else {
+      encoder.writeList(Collections.emptyList(), (o, rlpOutput) -> {});
+    }
 
-    if (encodingType == EncodingType.ALL) {
-      if (extraData.getCms().isPresent()) {
-        Bytes cmsBytes = extraData.getCms().get();
-        encoder.startList();
-        encoder.writeBytes(cmsBytes);
-        encoder.endList();
+    // When encoding w/o CMS, we don't need 'commit seals' or 'round number'
+
+    if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER) {
+      encoder.writeIntScalar(bftExtraData.getRound());
+      if (encodingType != EncodingType.EXCLUDE_COMMIT_SEALS) {
+        encoder.writeList(
+            bftExtraData.getSeals(), (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
       } else {
         encoder.writeEmptyList();
       }
     } else {
+      encoder.writeIntScalar(0);
       encoder.writeEmptyList();
     }
 
-    encoder.endList(); // end envelope list
+    if (encodingType != EncodingType.WITHOUT_CMS) {
+      encoder.writeBytes(extraData.getCms());
+    } else {
+      encoder.writeBytes(Bytes.EMPTY);
+    }
+
+    encoder.endList();
 
     return encoder.encoded();
   }

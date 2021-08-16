@@ -221,6 +221,13 @@ public class CmsCreationAndValidationTest {
   }
 
   @Test
+  public void cmsValidationWithEmptyCmsMessage() {
+    final Bytes data = Bytes.random(32);
+
+    assertThat(cmsValidator.validate(Bytes.EMPTY, data)).isFalse();
+  }
+
+  @Test
   public void cmsValidationWithTrustedSelfSignedCertificate() {
     final CmsCreator cmsCreator = new CmsCreator(keystoreWrapper, "trusted_selfsigned");
     final Bytes data = Bytes.random(32);

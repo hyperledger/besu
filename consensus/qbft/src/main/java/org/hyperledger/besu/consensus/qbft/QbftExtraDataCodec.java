@@ -87,7 +87,7 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
     final List<SECPSignature> seals =
         rlpInput.readList(
             rlp -> SignatureAlgorithmFactory.getInstance().decodeSignature(rlp.readBytes()));
-    rlpInput.leaveList();
+    rlpInput.leaveListLenient();
 
     return new BftExtraData(vanityData, seals, vote, round, validators);
   }

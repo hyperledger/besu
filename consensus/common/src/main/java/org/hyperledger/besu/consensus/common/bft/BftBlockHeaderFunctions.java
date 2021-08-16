@@ -43,6 +43,12 @@ public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
         bftExtraDataCodec);
   }
 
+  public static BlockHeaderFunctions forCmsSignature(final BftExtraDataCodec bftExtraDataCodec) {
+    return new BftBlockHeaderFunctions(
+        h -> new BftBlockHashing(bftExtraDataCodec).calculateHashOfBftBlockForCmsSignature(h),
+        bftExtraDataCodec);
+  }
+
   @Override
   public Hash hash(final BlockHeader header) {
     return hashFunction.apply(header);
