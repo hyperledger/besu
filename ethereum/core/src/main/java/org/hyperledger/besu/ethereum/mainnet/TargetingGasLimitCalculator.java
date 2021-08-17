@@ -12,12 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.controller;
+package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 
 import java.util.Objects;
 

@@ -83,7 +83,7 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
-import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
+import org.hyperledger.besu.ethereum.mainnet.TargetingGasLimitCalculator;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -102,7 +102,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
@@ -1703,6 +1703,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .miningParameters(
             new MiningParameters.Builder()
                 .coinbase(coinbase)
+                .targetGasLimit(targetGasLimit)
                 .minTransactionGasPrice(minTransactionGasPrice)
                 .extraData(extraData)
                 .enabled(isMiningEnabled)
