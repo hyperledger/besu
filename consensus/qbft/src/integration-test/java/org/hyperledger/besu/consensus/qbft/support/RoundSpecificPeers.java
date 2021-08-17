@@ -18,10 +18,12 @@ import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
+import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
@@ -47,6 +49,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 public class RoundSpecificPeers {
+  private static final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
 
   private final ValidatorPeer proposer;
   private final Collection<ValidatorPeer> peers;
@@ -205,7 +208,8 @@ public class RoundSpecificPeers {
         actualSignedPayload = CommitMessageData.fromMessageData(actual).decode();
         break;
       case QbftV1.ROUND_CHANGE:
-        actualSignedPayload = RoundChangeMessageData.fromMessageData(actual).decode();
+        actualSignedPayload =
+            RoundChangeMessageData.fromMessageData(actual).decode(bftExtraDataCodec);
         break;
       default:
         fail("Illegal QBFTV1 message type.");

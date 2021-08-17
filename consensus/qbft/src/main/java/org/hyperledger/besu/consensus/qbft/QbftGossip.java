@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.common.bft.payload.Authored;
@@ -34,14 +35,17 @@ import com.google.common.collect.Lists;
 public class QbftGossip implements Gossiper {
 
   private final ValidatorMulticaster multicaster;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   /**
    * Constructor that attaches gossip logic to a set of multicaster
    *
    * @param multicaster Network connections to the remote validators
    */
-  public QbftGossip(final ValidatorMulticaster multicaster) {
+  public QbftGossip(
+      final ValidatorMulticaster multicaster, final BftExtraDataCodec bftExtraDataCodec) {
     this.multicaster = multicaster;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   /**
@@ -64,7 +68,8 @@ public class QbftGossip implements Gossiper {
         decodedMessage = CommitMessageData.fromMessageData(messageData).decode();
         break;
       case QbftV1.ROUND_CHANGE:
-        decodedMessage = RoundChangeMessageData.fromMessageData(messageData).decode();
+        decodedMessage =
+            RoundChangeMessageData.fromMessageData(messageData).decode(bftExtraDataCodec);
         break;
       default:
         throw new IllegalArgumentException(
