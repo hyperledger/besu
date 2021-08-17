@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
-import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 import org.hyperledger.besu.plugin.data.Hash;
@@ -232,13 +231,9 @@ public class MessageFrame {
   private final int depth;
   private final Deque<MessageFrame> messageFrameStack;
   private final Address miningBeneficiary;
-  private final Boolean isPersistingPrivateState;
-  private final PrivateMetadataUpdater privateMetadataUpdater;
   private Optional<Bytes> revertReason;
 
-  // Privacy Execution Environment fields.
-  private final Hash transactionHash;
-  private final Transaction transaction;
+  private final Map<String, Object> contextVariables;
 
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
@@ -273,10 +268,7 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
       final Function<Long, org.hyperledger.besu.plugin.data.Hash> blockHashLookup,
-      final Boolean isPersistingPrivateState,
-      final PrivateMetadataUpdater privateMetadataUpdater,
-      final Hash transactionHash,
-      final Transaction transaction,
+      final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
       final int maxStackSize,
       final Set<Address> accessListWarmAddresses,
@@ -312,10 +304,7 @@ public class MessageFrame {
     this.isStatic = isStatic;
     this.completer = completer;
     this.miningBeneficiary = miningBeneficiary;
-    this.isPersistingPrivateState = isPersistingPrivateState;
-    this.privateMetadataUpdater = privateMetadataUpdater;
-    this.transactionHash = transactionHash;
-    this.transaction = transaction;
+    this.contextVariables = contextVariables;
     this.revertReason = revertReason;
 
     this.warmedUpAddresses = new HashSet<>(accessListWarmAddresses);
@@ -1032,30 +1021,18 @@ public class MessageFrame {
     return maxStackSize;
   }
 
-  /**
-   * Returns whether Message calls will be persisted
-   *
-   * @return whether Message calls will be persisted
-   */
-  public Boolean isPersistingPrivateState() {
-    return isPersistingPrivateState;
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  public <T> T getContextVariable(final String name) {
+    return (T) contextVariables.get(name);
   }
 
-  public PrivateMetadataUpdater getPrivateMetadataUpdater() {
-    return privateMetadataUpdater;
+  @SuppressWarnings("unchecked")
+  public <T> T getContextVariable(final String name, final T defaultValue) {
+    return (T) contextVariables.getOrDefault(name, defaultValue);
   }
 
-  /**
-   * Returns the transaction hash of the transaction being processed
-   *
-   * @return the transaction hash of the transaction being processed
-   */
-  public Hash getTransactionHash() {
-    return transactionHash;
-  }
-
-  public Transaction getTransaction() {
-    return transaction;
+  public boolean hasContextVariable(final String name) {
+    return contextVariables.containsKey(name);
   }
 
   public void setCurrentOperation(final Operation currentOperation) {
@@ -1102,10 +1079,7 @@ public class MessageFrame {
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
     private Function<Long, Hash> blockHashLookup;
-    private Boolean isPersistingPrivateState = false;
-    private PrivateMetadataUpdater privateMetadataUpdater = null;
-    private Hash transactionHash;
-    private Transaction transaction;
+    private Map<String, Object> contextVariables;
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
@@ -1216,23 +1190,8 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder isPersistingPrivateState(final Boolean isPersistingPrivateState) {
-      this.isPersistingPrivateState = isPersistingPrivateState;
-      return this;
-    }
-
-    public Builder privateMetadataUpdater(final PrivateMetadataUpdater privateMetadataUpdater) {
-      this.privateMetadataUpdater = privateMetadataUpdater;
-      return this;
-    }
-
-    public Builder transactionHash(final Hash transactionHash) {
-      this.transactionHash = transactionHash;
-      return this;
-    }
-
-    public Builder transaction(final Transaction transaction) {
-      this.transaction = transaction;
+    public Builder contextVariables(final Map<String, Object> contextVariables) {
+      this.contextVariables = contextVariables;
       return this;
     }
 
@@ -1271,7 +1230,6 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
-      checkState(isPersistingPrivateState != null, "Missing isPersistingPrivateState");
     }
 
     public MessageFrame build() {
@@ -1298,10 +1256,7 @@ public class MessageFrame {
           completer,
           miningBeneficiary,
           blockHashLookup,
-          isPersistingPrivateState,
-          privateMetadataUpdater,
-          transactionHash,
-          transaction,
+          contextVariables == null ? Map.of() : contextVariables,
           reason,
           maxStackSize,
           accessListWarmAddresses,

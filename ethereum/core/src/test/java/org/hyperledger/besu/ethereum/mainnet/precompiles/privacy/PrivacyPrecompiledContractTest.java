@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -135,7 +137,10 @@ public class PrivacyPrecompiledContractTest {
     when(messageFrame.getBlockchain()).thenReturn(blockchain);
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
-    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
+    when(messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)).thenReturn(false);
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
+        .thenReturn(privateMetadataUpdater);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
   }
@@ -319,7 +324,7 @@ public class PrivacyPrecompiledContractTest {
 
     // A simulated public transaction doesn't contain a PrivateMetadataUpdater
     final MessageFrame frame = mock(MessageFrame.class);
-    when(frame.getPrivateMetadataUpdater()).thenReturn(null);
+    when(frame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(null);
 
     final Bytes result = emptyContract.compute(null, frame);
     assertThat(result).isEqualTo(Bytes.EMPTY);

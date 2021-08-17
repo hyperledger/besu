@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.hyperledger.besu.ethereum.core.Hash.fromPlugin;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -123,7 +126,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       return Bytes.EMPTY;
     }
 
-    final Hash pmtHash = messageFrame.getTransactionHash();
+    final Hash pmtHash = messageFrame.getContextVariable(KEY_TRANSACTION_HASH);
 
     final String key = input.slice(0, 32).toBase64String();
 
@@ -159,7 +162,8 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
 
-    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getPrivateMetadataUpdater();
+    final PrivateMetadataUpdater privateMetadataUpdater =
+        messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER);
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
@@ -209,7 +213,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     sendParticipantRemovedEvent(privateTransaction);
 
-    if (messageFrame.isPersistingPrivateState()) {
+    if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
 
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);
@@ -267,7 +271,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       LOG.debug(
           "Privacy Group {} is not locked while trying to add to group with commitment {}",
           privacyGroupId.toHexString(),
-          messageFrame.getTransactionHash());
+          messageFrame.getContextVariable(KEY_TRANSACTION_HASH));
       return false;
     }
 
@@ -275,7 +279,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       LOG.debug(
           "Privacy Group {} is locked while trying to execute transaction with commitment {}",
           privacyGroupId.toHexString(),
-          messageFrame.getTransactionHash());
+          messageFrame.getContextVariable(KEY_TRANSACTION_HASH));
       return false;
     }
 
@@ -290,7 +294,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         privateWorldStateUpdater)) {
       LOG.debug(
           "Privacy group version mismatch while trying to execute transaction with commitment {}",
-          messageFrame.getTransactionHash());
+          (Hash) messageFrame.getContextVariable(KEY_TRANSACTION_HASH));
       return false;
     }
 
@@ -308,7 +312,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       LOG.debug(
           "PrivateTransaction with hash {} cannot execute in privacy group {} because privateFrom"
               + " {} is not a member.",
-          messageFrame.getTransactionHash(),
+          messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
           privacyGroupId.toBase64String(),
           privateFrom.toBase64String());
       return false;
@@ -427,7 +431,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         publicWorldState,
         updater,
         currentBlockHeader,
-        messageFrame.getTransactionHash(),
+        messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
         buildSimulationTransaction(privacyGroupId, privateWorldStateUpdater, methodSignature),
         messageFrame.getMiningBeneficiary(),
         OperationTracer.NO_TRACING,
@@ -465,7 +469,7 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
     LOG.debug(
         "Privacy Group {} version mismatch for commitment {}: expecting {} but got {}",
         privacyGroupId.toBase64String(),
-        messageFrame.getTransactionHash(),
+        messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
         getVersionResult.getOutput(),
         version);
     return false;

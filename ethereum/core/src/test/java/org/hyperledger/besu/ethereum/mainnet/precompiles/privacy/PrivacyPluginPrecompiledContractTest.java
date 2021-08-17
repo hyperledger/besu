@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.serialize;
 import static org.mockito.ArgumentMatchers.any;
@@ -83,13 +86,18 @@ public class PrivacyPluginPrecompiledContractTest {
         blockGenerator.block(
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
 
-    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(mock(PrivateMetadataUpdater.class));
+    when(messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)).thenReturn(false);
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
+        .thenReturn(mock(PrivateMetadataUpdater.class));
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
         .thenReturn(Optional.of(PrivacyGroupHeadBlockMap.empty()));
 
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
-    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
+        .thenReturn(privateMetadataUpdater);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
 
@@ -175,7 +183,7 @@ public class PrivacyPluginPrecompiledContractTest {
 
     final Transaction transaction = Transaction.builder().payload(payload).build();
 
-    when(messageFrame.getTransaction()).thenReturn(transaction);
+    when(messageFrame.getContextVariable(KEY_TRANSACTION)).thenReturn(transaction);
 
     final Bytes actual = contract.compute(payload, messageFrame);
 

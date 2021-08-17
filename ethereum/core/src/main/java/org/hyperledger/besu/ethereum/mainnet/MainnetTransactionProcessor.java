@@ -14,6 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountState;
@@ -43,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Optional;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -305,6 +311,15 @@ public class MainnetTransactionProcessor {
 
       final WorldUpdater worldUpdater = worldState.updater();
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+      final var contextVariablesBuilder =
+          ImmutableMap.<String, Object>builder()
+              .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
+              .put(KEY_TRANSACTION, transaction)
+              .put(KEY_TRANSACTION_HASH, transaction.getHash());
+      if (privateMetadataUpdater != null) {
+        contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
+      }
+
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .messageFrameStack(messageFrameStack)
@@ -322,12 +337,9 @@ public class MainnetTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .isPersistingPrivateState(isPersistingPrivateState)
-              .transactionHash(transaction.getHash())
-              .transaction(transaction)
+              .contextVariables(contextVariablesBuilder.build())
               .accessListWarmAddresses(gasAndAccessedState.getAccessListAddressSet())
-              .accessListWarmStorage(gasAndAccessedState.getAccessListStorageByAddress())
-              .privateMetadataUpdater(privateMetadataUpdater);
+              .accessListWarmStorage(gasAndAccessedState.getAccessListStorageByAddress());
 
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {

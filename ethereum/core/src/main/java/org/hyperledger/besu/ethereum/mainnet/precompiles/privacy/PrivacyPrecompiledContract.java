@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.hyperledger.besu.ethereum.core.Hash.fromPlugin;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
 import org.hyperledger.besu.enclave.Enclave;
@@ -104,7 +107,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       return Bytes.EMPTY;
     }
 
-    final org.hyperledger.besu.plugin.data.Hash pmtHash = messageFrame.getTransactionHash();
+    final org.hyperledger.besu.plugin.data.Hash pmtHash =
+        messageFrame.getContextVariable(KEY_TRANSACTION_HASH);
 
     final String key = input.toBase64String();
     final ReceiveResponse receiveResponse;
@@ -150,7 +154,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     LOG.debug("Processing private transaction {} in privacy group {}", pmtHash, privacyGroupId);
 
-    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getPrivateMetadataUpdater();
+    final PrivateMetadataUpdater privateMetadataUpdater =
+        messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER);
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
@@ -181,8 +186,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       return Bytes.EMPTY;
     }
 
-    if (messageFrame.isPersistingPrivateState()) {
-
+    if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);
 
@@ -238,7 +242,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         messageFrame.getWorldState(),
         privateWorldStateUpdater,
         messageFrame.getBlockHeader(),
-        messageFrame.getTransactionHash(),
+        messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
         privateTransaction,
         messageFrame.getMiningBeneficiary(),
         OperationTracer.NO_TRACING,
@@ -268,19 +272,19 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     // If there's no PrivateMetadataUpdater, the precompile has not been called through the
     // PrivacyBlockProcessor. This indicates the PMT is being simulated and execution of the
     // precompile is not required.
-    return messageFrame.getPrivateMetadataUpdater() == null;
+    return !messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER);
   }
 
   boolean isMining(final MessageFrame messageFrame) {
     boolean isMining = false;
     final ProcessableBlockHeader currentBlockHeader = messageFrame.getBlockHeader();
     if (!BlockHeader.class.isAssignableFrom(currentBlockHeader.getClass())) {
-      if (!messageFrame.isPersistingPrivateState()) {
-        isMining = true;
-      } else {
+      if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
         throw new IllegalArgumentException(
             "The MessageFrame contains an illegal block header type. Cannot persist private block"
                 + " metadata without current block hash.");
+      } else {
+        isMining = true;
       }
     }
     return isMining;

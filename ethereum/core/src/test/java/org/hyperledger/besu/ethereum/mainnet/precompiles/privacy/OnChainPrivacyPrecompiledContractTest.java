@@ -18,6 +18,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.versionedPrivateTransactionBesu;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -141,7 +143,10 @@ public class OnChainPrivacyPrecompiledContractTest {
     when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap = mock(PrivacyGroupHeadBlockMap.class);
-    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
+        .thenReturn(privateMetadataUpdater);
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)).thenReturn(false);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap()).thenReturn(privacyGroupHeadBlockMap);
   }
 

@@ -15,6 +15,10 @@
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.hyperledger.besu.ethereum.core.Hash.fromPlugin;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -55,7 +59,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         privacyParameters
             .getPrivacyService()
             .getPayloadProvider()
-            .getPrivateTransactionFromPayload(messageFrame.getTransaction());
+            .getPrivateTransactionFromPayload(messageFrame.getContextVariable(KEY_TRANSACTION));
 
     if (pluginPrivateTransaction.isEmpty()) {
       return Bytes.EMPTY;
@@ -65,14 +69,15 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         PrivateTransaction.readFrom(pluginPrivateTransaction.get());
 
     final Bytes32 privacyGroupId = privateTransaction.determinePrivacyGroupId();
-    final Hash pmtHash = messageFrame.getTransactionHash();
+    final Hash pmtHash = messageFrame.getContextVariable(KEY_TRANSACTION_HASH);
 
     LOG.debug(
         "Processing unrestricted private transaction {} in privacy group {}",
         pmtHash,
         privacyGroupId);
 
-    final PrivateMetadataUpdater privateMetadataUpdater = messageFrame.getPrivateMetadataUpdater();
+    final PrivateMetadataUpdater privateMetadataUpdater =
+        messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER);
     final Hash lastRootHash =
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
@@ -103,7 +108,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
       return Bytes.EMPTY;
     }
 
-    if (messageFrame.isPersistingPrivateState()) {
+    if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
 
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);

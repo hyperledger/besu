@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountState;
@@ -39,6 +41,7 @@ import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -138,7 +141,7 @@ public class PrivateTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .transactionHash(pmtHash);
+              .contextVariables(Map.of(KEY_TRANSACTION_HASH, pmtHash));
 
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
