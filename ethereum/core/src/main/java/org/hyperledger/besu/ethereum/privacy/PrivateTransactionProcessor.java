@@ -137,6 +137,7 @@ public class PrivateTransactionProcessor {
               .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
+              .blockHashLookup(blockHashLookup)
               .transactionHash(pmtHash);
 
       final MessageFrame initialFrame;

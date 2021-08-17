@@ -83,9 +83,9 @@ public class BlockHashOperationTest {
   @Test
   public void shouldReturnBlockHashUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
     final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
-    when(blockHashLookup.apply(100)).thenReturn(blockHash);
+    when(blockHashLookup.apply(100L)).thenReturn(blockHash);
     assertBlockHash(100, blockHash, 200);
-    verify(blockHashLookup).apply(100);
+    verify(blockHashLookup).apply(100L);
   }
 
   private void assertBlockHash(

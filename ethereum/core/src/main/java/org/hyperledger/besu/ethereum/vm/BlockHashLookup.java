@@ -47,10 +47,6 @@ public class BlockHashLookup implements Function<Long, Hash> {
 
   @Override
   public Hash apply(final Long blockNumber) {
-    return apply(blockNumber.longValue());
-  }
-
-  public Hash apply(final long blockNumber) {
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
       return cachedHash;
