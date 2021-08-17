@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -106,7 +107,7 @@ public class PoWBlockCreatorTest {
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
+            GasLimitCalculator.constant(),
             solver,
             Wei.ZERO,
             0.8,
@@ -167,7 +168,7 @@ public class PoWBlockCreatorTest {
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
+            GasLimitCalculator.constant(),
             solver,
             Wei.ZERO,
             0.8,
@@ -223,7 +224,7 @@ public class PoWBlockCreatorTest {
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
+            GasLimitCalculator.constant(),
             solver,
             Wei.ZERO,
             0.8,
@@ -295,7 +296,7 @@ public class PoWBlockCreatorTest {
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
+            GasLimitCalculator.constant(),
             solver,
             Wei.ZERO,
             0.8,

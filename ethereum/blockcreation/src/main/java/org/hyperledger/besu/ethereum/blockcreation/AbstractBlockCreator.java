@@ -254,7 +254,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    long gasLimit = gasLimitCalculator.nextGasLimit(parentHeader.getGasLimit());
+    // TODO: use targetGasLimit supplier when we have it.  using parentHeader now for compilation
+    // reasons
+    long gasLimit =
+        gasLimitCalculator.nextGasLimit(
+            parentHeader.getGasLimit(), parentHeader.getGasLimit(), newBlockNumber);
+
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);

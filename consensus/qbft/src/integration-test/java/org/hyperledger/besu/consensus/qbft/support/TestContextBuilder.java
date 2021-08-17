@@ -60,6 +60,7 @@ import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -413,7 +414,7 @@ public class TestContextBuilder {
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory blockCreatorFactory =
         new BftBlockCreatorFactory(
-            (gasLimit) -> gasLimit,
+            GasLimitCalculator.constant(),
             pendingTransactions, // changed from IbftBesuController
             protocolContext,
             protocolSchedule,

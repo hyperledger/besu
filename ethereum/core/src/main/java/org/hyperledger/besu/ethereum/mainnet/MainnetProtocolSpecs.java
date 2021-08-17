@@ -93,6 +93,7 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
+        .gasLimitCalculator(new FrontierTargetingGasLimitCalculator())
         .evmBuilder(MainnetEvmRegistries::frontier)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
         .messageCallProcessorBuilder(MainnetMessageCallProcessor::new)
@@ -466,8 +467,9 @@ public abstract class MainnetProtocolSpecs {
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final FeeMarket londonFeeMarket = FeeMarket.london();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    final EIP1559 eip1559 =
-        new EIP1559(genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE));
+    final long londonForkBlockNumber =
+        genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE);
+    final EIP1559 eip1559 = new EIP1559(londonForkBlockNumber);
     return berlinDefinition(
             chainId,
             configContractSizeLimit,
@@ -475,6 +477,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             quorumCompatibilityMode)
         .gasCalculator(LondonGasCalculator::new)
+        .gasLimitCalculator(new LondonTargetingGasLimitCalculator(londonForkBlockNumber))
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(

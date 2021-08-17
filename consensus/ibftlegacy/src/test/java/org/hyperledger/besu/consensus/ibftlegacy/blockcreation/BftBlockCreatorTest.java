@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.ibftlegacy.IbftExtraData;
 import org.hyperledger.besu.consensus.ibftlegacy.IbftProtocolSchedule;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -111,7 +112,7 @@ public class BftBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protContext,
             protocolSchedule,
-            parentGasLimit -> parentGasLimit,
+            GasLimitCalculator.constant(),
             nodeKeys,
             Wei.ZERO,
             0.8,

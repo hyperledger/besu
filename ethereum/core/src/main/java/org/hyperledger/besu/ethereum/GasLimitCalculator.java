@@ -16,14 +16,15 @@ package org.hyperledger.besu.ethereum;
 
 public interface GasLimitCalculator {
 
-  long nextGasLimit(long currentGasLimit);
+  long nextGasLimit(long currentGasLimit, long targetGasLimit, long newBlockNumber);
 
+  // TODO: remove ME and defer to MiningCoordinators
   default void changeTargetGasLimit(final Long __) {
     throw new UnsupportedOperationException(
         "Can only change target gas limit on a Targeting Gas Limit Calculator");
   }
 
   static GasLimitCalculator constant() {
-    return currentGasLimit -> currentGasLimit;
+    return (currentGasLimit, targetGasLimit, newBlockNumber) -> currentGasLimit;
   }
 }
