@@ -45,7 +45,7 @@ public class BftBlockCreatorFactory {
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
-  private final BftExtraDataCodec bftExtraDataCodec;
+  protected final BftExtraDataCodec bftExtraDataCodec;
   private final Address localAddress;
   final Address miningBeneficiary;
 
@@ -128,10 +128,6 @@ public class BftBlockCreatorFactory {
 
   public Address getLocalAddress() {
     return localAddress;
-  }
-
-  protected BftExtraDataCodec getBftExtraDataCodec() {
-    return bftExtraDataCodec;
   }
 
   private static Optional<Vote> toVote(final Optional<ValidatorVote> input) {

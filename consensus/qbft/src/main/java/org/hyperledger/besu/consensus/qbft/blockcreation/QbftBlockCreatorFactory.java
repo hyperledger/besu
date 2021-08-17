@@ -1,3 +1,17 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.consensus.qbft.blockcreation;
 
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
@@ -46,7 +60,7 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
   @Override
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
     if (extraDataWithRoundInformationOnly) {
-      // vote and validators come from contract instead of block
+      // vote and validators will come from contract instead of block
       final BftExtraData extraData =
           new BftExtraData(
               ConsensusHelpers.zeroLeftPad(vanityData, BftExtraDataCodec.EXTRA_VANITY_LENGTH),
@@ -54,9 +68,9 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory {
               Optional.empty(),
               round,
               Collections.emptyList());
-      return getBftExtraDataCodec().encode(extraData);
-    } else {
-      return super.createExtraData(round, parentHeader);
+      return bftExtraDataCodec.encode(extraData);
     }
+
+    return super.createExtraData(round, parentHeader);
   }
 }
