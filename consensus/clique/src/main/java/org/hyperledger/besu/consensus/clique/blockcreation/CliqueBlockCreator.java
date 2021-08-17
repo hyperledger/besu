@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -51,7 +50,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final GasLimitCalculator gasLimitCalculator,
       final NodeKey nodeKey,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
@@ -63,7 +61,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
         pendingTransactions,
         protocolContext,
         protocolSchedule,
-        gasLimitCalculator,
         minTransactionGasPrice,
         Util.publicKeyToAddress(nodeKey.getPublicKey()),
         minBlockOccupancyRatio,

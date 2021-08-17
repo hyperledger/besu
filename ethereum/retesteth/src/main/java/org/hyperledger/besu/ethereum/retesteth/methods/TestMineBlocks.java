@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -67,7 +66,6 @@ public class TestMineBlocks implements JsonRpcMethod {
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,
             protocolSchedule,
-            GasLimitCalculator.constant(),
             context.getEthHashSolver(),
             Wei.ZERO,
             0.0,

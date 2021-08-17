@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -64,8 +63,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   protected final Address coinbase;
 
-  private final GasLimitCalculator gasLimitCalculator;
-
   private final ExtraDataCalculator extraDataCalculator;
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
@@ -85,7 +82,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final GasLimitCalculator gasLimitCalculator,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
       final Double minBlockOccupancyRatio,
@@ -95,7 +91,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.gasLimitCalculator = gasLimitCalculator;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
@@ -254,11 +249,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    // TODO: use targetGasLimit supplier when we have it.  using parentHeader now for compilation
-    // reasons
+    // TODO: FIXME BEFORE MERGE: use targetGasLimit supplier once we
+    //  have it. using parentHeader for now for compilation reasons
     long gasLimit =
-        gasLimitCalculator.nextGasLimit(
-            parentHeader.getGasLimit(), parentHeader.getGasLimit(), newBlockNumber);
+        protocolSpec
+            .getGasLimitCalculator()
+            .nextGasLimit(parentHeader.getGasLimit(), parentHeader.getGasLimit(), newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =

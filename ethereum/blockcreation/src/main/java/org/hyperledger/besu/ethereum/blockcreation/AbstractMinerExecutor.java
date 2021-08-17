@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -46,7 +45,6 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   protected final ProtocolSchedule protocolSchedule;
   protected final PendingTransactions pendingTransactions;
   protected final AbstractBlockScheduler blockScheduler;
-  protected final GasLimitCalculator gasLimitCalculator;
 
   protected volatile Bytes extraData;
   protected volatile Wei minTransactionGasPrice;
@@ -59,15 +57,13 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final ProtocolSchedule protocolSchedule,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
-      final AbstractBlockScheduler blockScheduler,
-      final GasLimitCalculator gasLimitCalculator) {
+      final AbstractBlockScheduler blockScheduler) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.pendingTransactions = pendingTransactions;
     this.extraData = miningParams.getExtraData();
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.blockScheduler = blockScheduler;
-    this.gasLimitCalculator = gasLimitCalculator;
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
   }
 
@@ -117,6 +113,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   public abstract Optional<Address> getCoinbase();
 
   public void changeTargetGasLimit(final Long targetGasLimit) {
-    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
+    // TODO: get rid of me, defer to MiningCoordinator
+    //    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
   }
 }

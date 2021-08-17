@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.common.ConsensusHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractMinerExecutor;
@@ -55,15 +54,8 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
       final NodeKey nodeKey,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final EpochManager epochManager,
-      final GasLimitCalculator gasLimitCalculator) {
-    super(
-        protocolContext,
-        protocolSchedule,
-        pendingTransactions,
-        miningParams,
-        blockScheduler,
-        gasLimitCalculator);
+      final EpochManager epochManager) {
+    super(protocolContext, protocolSchedule, pendingTransactions, miningParams, blockScheduler);
     this.nodeKey = nodeKey;
     this.localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     this.epochManager = epochManager;
@@ -82,7 +74,6 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
                 pendingTransactions,
                 protocolContext,
                 protocolSchedule,
-                gasLimitCalculator,
                 nodeKey,
                 minTransactionGasPrice,
                 minBlockOccupancyRatio,

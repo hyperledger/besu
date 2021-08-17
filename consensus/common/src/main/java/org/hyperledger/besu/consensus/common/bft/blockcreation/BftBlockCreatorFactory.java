@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,7 +40,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class BftBlockCreatorFactory {
 
-  private final GasLimitCalculator gasLimitCalculator;
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
@@ -54,7 +52,6 @@ public class BftBlockCreatorFactory {
   private volatile Double minBlockOccupancyRatio;
 
   public BftBlockCreatorFactory(
-      final GasLimitCalculator gasLimitCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -62,7 +59,6 @@ public class BftBlockCreatorFactory {
       final Address localAddress,
       final Address miningBeneficiary,
       final BftExtraDataCodec bftExtraDataCodec) {
-    this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -81,7 +77,6 @@ public class BftBlockCreatorFactory {
         pendingTransactions,
         protocolContext,
         protocolSchedule,
-        gasLimitCalculator,
         minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader,
@@ -123,7 +118,8 @@ public class BftBlockCreatorFactory {
   }
 
   public void changeTargetGasLimit(final Long targetGasLimit) {
-    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
+    //  TODO: defer to MiningCoordinator, remove this
+    //    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
   }
 
   public Address getLocalAddress() {

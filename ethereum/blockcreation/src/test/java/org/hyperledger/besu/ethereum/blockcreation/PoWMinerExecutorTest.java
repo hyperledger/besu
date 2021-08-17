@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
@@ -59,7 +58,6 @@ public class PoWMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            GasLimitCalculator.constant(),
             new EpochCalculator.DefaultEpochCalculator(),
             1000,
             8);
@@ -90,7 +88,6 @@ public class PoWMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            GasLimitCalculator.constant(),
             new EpochCalculator.DefaultEpochCalculator(),
             1000,
             8);

@@ -30,7 +30,6 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -108,8 +107,7 @@ public class CliqueMinerExecutorTest {
                 .enabled(false)
                 .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH - 1).buildHeader();
@@ -153,8 +151,7 @@ public class CliqueMinerExecutorTest {
                 .enabled(false)
                 .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     // Parent block was epoch, so the next block should contain no validators.
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH).buildHeader();
@@ -198,8 +195,7 @@ public class CliqueMinerExecutorTest {
                 .enabled(false)
                 .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     executor.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());

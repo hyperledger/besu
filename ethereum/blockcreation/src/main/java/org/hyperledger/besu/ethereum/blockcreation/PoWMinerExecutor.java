@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -45,17 +44,10 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final GasLimitCalculator gasLimitCalculator,
       final EpochCalculator epochCalculator,
       final long powJobTimeToLive,
       final int maxOmmerDepth) {
-    super(
-        protocolContext,
-        protocolSchedule,
-        pendingTransactions,
-        miningParams,
-        blockScheduler,
-        gasLimitCalculator);
+    super(protocolContext, protocolSchedule, pendingTransactions, miningParams, blockScheduler);
     this.coinbase = miningParams.getCoinbase();
     this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
     this.epochCalculator = epochCalculator;
@@ -96,7 +88,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
                 pendingTransactions,
                 protocolContext,
                 protocolSchedule,
-                gasLimitCalculator,
                 solver,
                 minTransactionGasPrice,
                 minBlockOccupancyRatio,

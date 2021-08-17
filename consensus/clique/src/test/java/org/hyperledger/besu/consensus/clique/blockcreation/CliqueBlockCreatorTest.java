@@ -37,7 +37,6 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -136,7 +135,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            (gasLimit, targetGasLimit, blockNumber) -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
             0.8,
@@ -172,7 +170,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            GasLimitCalculator.constant(),
             proposerNodeKey,
             Wei.ZERO,
             0.8,
@@ -210,7 +207,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            GasLimitCalculator.constant(),
             proposerNodeKey,
             Wei.ZERO,
             0.8,
