@@ -55,47 +55,6 @@ public class FrontierTargetingGasLimitCalculatorTest {
         .isEqualTo(target);
   }
 
-  //  TODO: incorporate these into MiningParameters tests
-  //  @Test
-  //  public void verifyMinGasLimit() {
-  //    assertThatThrownBy(
-  //            () ->
-  //                new FrontierTargetingGasLimitCalculator(ADJUSTMENT_FACTOR, 5000L,
-  // 0x7fffffffffffffffL))
-  //        .isInstanceOf(IllegalArgumentException.class);
-  //  }
-  //
-  //  @Test
-  //  public void verifyMaxGasLimit() {
-  //    assertThatThrownBy(
-  //            () -> new FrontierTargetingGasLimitCalculator(ADJUSTMENT_FACTOR, 5000L, 10000L))
-  //        .isInstanceOf(IllegalArgumentException.class);
-  //  }
-  //
-  //  @Test
-  //  public void changeTargetGasLimit() {
-  //    final long targetGasLimit = 10_000_000L;
-  //    final FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
-  //        new FrontierTargetingGasLimitCalculator(
-  //            targetGasLimit, ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL);
-  //
-  //
-  // assertThat(targetingGasLimitCalculator.nextGasLimit(targetGasLimit)).isEqualTo(targetGasLimit);
-  //    targetingGasLimitCalculator.changeTargetGasLimit(8_000_000L);
-  //    assertThat(targetingGasLimitCalculator.nextGasLimit(targetGasLimit))
-  //        .isEqualTo(targetGasLimit - ADJUSTMENT_FACTOR);
-  //  }
-  //
-  //  @Test
-  //  public void changeTargetGasLimitInvalidValue() {
-  //    assertThatThrownBy(() -> new FrontierTargetingGasLimitCalculator(-1L))
-  //        .isInstanceOf(IllegalArgumentException.class);
-  //
-  //    assertThatThrownBy(() -> new
-  // FrontierTargetingGasLimitCalculator(0L).changeTargetGasLimit(-1L))
-  //        .isInstanceOf(IllegalArgumentException.class);
-  //  }
-
   @Test
   public void verifyWithinGasLimitDelta() {
     final long targetGasLimit = 10_000_000L;
