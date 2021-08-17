@@ -136,8 +136,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
             miningParameters,
             localAddress,
             bftConfig.getMiningBeneficiary().map(Address::fromHexString).orElse(localAddress),
-            bftExtraDataCodec().get(),
-            false);
+            bftExtraDataCodec().get());
 
     final ValidatorProvider validatorProvider =
         protocolContext.getConsensusState(BftContext.class).getValidatorProvider();
