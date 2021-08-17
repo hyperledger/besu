@@ -35,6 +35,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -70,6 +71,7 @@ public class CliqueMinerExecutor extends AbstractMinerExecutor<CliqueBlockMiner>
         (header) ->
             new CliqueBlockCreator(
                 localAddress, // TOOD(tmm): This can be removed (used for voting not coinbase).
+                () -> targetGasLimit.map(AtomicLong::longValue),
                 this::calculateExtraData,
                 pendingTransactions,
                 protocolContext,

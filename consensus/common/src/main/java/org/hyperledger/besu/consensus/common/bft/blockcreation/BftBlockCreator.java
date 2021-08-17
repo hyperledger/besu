@@ -27,6 +27,9 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.util.Optional;
+import java.util.function.Supplier;
+
 // This class is responsible for creating a block without committer seals (basically it was just
 // too hard to coordinate with the state machine).
 public class BftBlockCreator extends AbstractBlockCreator {
@@ -35,6 +38,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
 
   public BftBlockCreator(
       final Address localAddress,
+      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
@@ -46,6 +50,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final BftExtraDataCodec bftExtraDataCodec) {
     super(
         localAddress,
+        targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,

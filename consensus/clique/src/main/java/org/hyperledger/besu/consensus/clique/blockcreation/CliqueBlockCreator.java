@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class CliqueBlockCreator extends AbstractBlockCreator {
 
@@ -46,6 +47,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
 
   public CliqueBlockCreator(
       final Address coinbase,
+      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
@@ -57,6 +59,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final EpochManager epochManager) {
     super(
         coinbase,
+        targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,

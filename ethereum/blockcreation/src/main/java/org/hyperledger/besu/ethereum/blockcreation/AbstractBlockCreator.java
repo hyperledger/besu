@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
@@ -62,6 +63,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final Address coinbase;
+  protected final Supplier<Optional<Long>> targetGasLimitSupplier;
 
   private final ExtraDataCalculator extraDataCalculator;
   private final PendingTransactions pendingTransactions;
@@ -78,6 +80,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   protected AbstractBlockCreator(
       final Address coinbase,
+      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
@@ -87,6 +90,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     this.coinbase = coinbase;
+    this.targetGasLimitSupplier = targetGasLimitSupplier;
     this.extraDataCalculator = extraDataCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
@@ -249,12 +253,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private ProcessableBlockHeader createPendingBlockHeader(final long timestamp) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
-    // TODO: FIXME BEFORE MERGE: use targetGasLimit supplier once we
-    //  have it. using parentHeader for now for compilation reasons
     long gasLimit =
         protocolSpec
             .getGasLimitCalculator()
-            .nextGasLimit(parentHeader.getGasLimit(), parentHeader.getGasLimit(), newBlockNumber);
+            .nextGasLimit(
+                parentHeader.getGasLimit(),
+                targetGasLimitSupplier.get().orElse(parentHeader.getGasLimit()),
+                newBlockNumber);
 
     final DifficultyCalculator difficultyCalculator = protocolSpec.getDifficultyCalculator();
     final BigInteger difficulty =

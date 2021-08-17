@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,6 +50,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
   protected volatile Bytes extraData;
   protected volatile Wei minTransactionGasPrice;
   protected volatile Double minBlockOccupancyRatio;
+  protected volatile Optional<AtomicLong> targetGasLimit;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -65,6 +67,7 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
     this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.blockScheduler = blockScheduler;
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
+    this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
   public Optional<M> startAsyncMining(

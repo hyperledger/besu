@@ -97,6 +97,7 @@ public class BftBlockCreatorTest {
     final IbftBlockCreator blockCreator =
         new IbftBlockCreator(
             Address.fromHexString(String.format("%020d", 0)),
+            () -> Optional.of(10_000_000L),
             parent ->
                 new IbftExtraData(
                         Bytes.wrap(new byte[32]), Lists.newArrayList(), null, initialValidatorList)

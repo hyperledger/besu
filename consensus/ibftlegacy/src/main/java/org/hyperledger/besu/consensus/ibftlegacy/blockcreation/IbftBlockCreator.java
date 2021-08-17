@@ -33,6 +33,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 
+import java.util.Optional;
+import java.util.function.Supplier;
+
 /**
  * Responsible for producing a Block which conforms to IBFT validation rules (other than missing
  * commit seals). Transactions and associated Hashes (stateroot, receipts etc.) are loaded into the
@@ -44,6 +47,7 @@ public class IbftBlockCreator extends AbstractBlockCreator {
 
   public IbftBlockCreator(
       final Address coinbase,
+      final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
@@ -54,6 +58,7 @@ public class IbftBlockCreator extends AbstractBlockCreator {
       final BlockHeader parentHeader) {
     super(
         coinbase,
+        targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,

@@ -84,8 +84,8 @@ public class MiningParameters {
     return coinbase;
   }
 
-  public Optional<Long> getTargetGasLimit() {
-    return targetGasLimit.map(AtomicLong::longValue);
+  public Optional<AtomicLong> getTargetGasLimit() {
+    return targetGasLimit;
   }
 
   public Wei getMinTransactionGasPrice() {

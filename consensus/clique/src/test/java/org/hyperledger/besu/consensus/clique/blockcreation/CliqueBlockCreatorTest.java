@@ -124,6 +124,7 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
@@ -159,6 +160,7 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
@@ -196,6 +198,7 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
             new PendingTransactions(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,

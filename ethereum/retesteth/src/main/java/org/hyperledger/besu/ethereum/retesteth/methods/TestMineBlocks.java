@@ -29,6 +29,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 
+import java.util.Optional;
+
 public class TestMineBlocks implements JsonRpcMethod {
   private final RetestethContext context;
 
@@ -62,6 +64,7 @@ public class TestMineBlocks implements JsonRpcMethod {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             context.getCoinbase(),
+            () -> Optional.of(10_000_000L),
             header -> context.getExtraData(),
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,

@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -50,6 +51,7 @@ public class BftBlockCreatorFactory {
   private volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
   private volatile Double minBlockOccupancyRatio;
+  private volatile Optional<AtomicLong> targetGasLimit;
 
   public BftBlockCreatorFactory(
       final PendingTransactions pendingTransactions,
@@ -68,11 +70,13 @@ public class BftBlockCreatorFactory {
     this.vanityData = miningParams.getExtraData();
     this.miningBeneficiary = miningBeneficiary;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
   public BftBlockCreator create(final BlockHeader parentHeader, final int round) {
     return new BftBlockCreator(
         localAddress,
+        () -> targetGasLimit.map(AtomicLong::longValue),
         ph -> createExtraData(round, ph),
         pendingTransactions,
         protocolContext,

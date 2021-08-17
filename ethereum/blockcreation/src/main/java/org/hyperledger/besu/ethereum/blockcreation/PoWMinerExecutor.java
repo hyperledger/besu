@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
@@ -84,6 +85,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
         (header) ->
             new PoWBlockCreator(
                 coinbase.get(),
+                () -> targetGasLimit.map(AtomicLong::longValue),
                 parent -> extraData,
                 pendingTransactions,
                 protocolContext,
