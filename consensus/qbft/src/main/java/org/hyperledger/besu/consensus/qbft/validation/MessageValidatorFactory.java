@@ -96,7 +96,7 @@ public class MessageValidatorFactory {
     return new MessageValidator(
         block ->
             new SubsequentMessageValidator(
-                validatorsForHeight, roundIdentifier, block, blockInterface),
+                validatorsForHeight, roundIdentifier, block, blockInterface, bftExtraDataCodec),
         proposalValidator);
   }
 

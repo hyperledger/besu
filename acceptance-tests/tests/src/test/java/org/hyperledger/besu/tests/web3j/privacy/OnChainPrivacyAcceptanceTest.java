@@ -162,7 +162,8 @@ public class OnChainPrivacyAcceptanceTest extends OnChainPrivacyAcceptanceTestBa
                 alice.getEnclaveKey(),
                 privacyGroupId));
 
-    eventEmitter.store(BigInteger.valueOf(42)).send();
+    privateTransactionVerifier.existingPrivateTransactionReceipt(
+        eventEmitter.store(BigInteger.valueOf(42)).send().getTransactionHash());
 
     final String aliceResponse =
         alice

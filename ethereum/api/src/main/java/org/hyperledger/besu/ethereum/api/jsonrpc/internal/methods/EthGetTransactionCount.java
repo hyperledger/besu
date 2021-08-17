@@ -61,11 +61,11 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
   protected Object pendingResult(final JsonRpcRequestContext request) {
     final Address address = request.getRequiredParameter(0, Address.class);
     final OptionalLong pendingNonce = pendingTransactions.get().getNextNonceForSender(address);
-    if (pendingNonce.isPresent()) {
-      return Quantity.create(pendingNonce.getAsLong());
-    } else {
-      return latestResult(request);
-    }
+    final long latestNonce =
+        getBlockchainQueries()
+            .getTransactionCount(
+                address, getBlockchainQueries().getBlockchain().getChainHead().getHash());
+    return Quantity.create(Math.max(pendingNonce.orElse(0), latestNonce));
   }
 
   @Override
