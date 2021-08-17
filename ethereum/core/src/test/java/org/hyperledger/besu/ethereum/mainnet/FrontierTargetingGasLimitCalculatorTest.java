@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -101,7 +103,7 @@ public class FrontierTargetingGasLimitCalculatorTest {
     final FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
         new FrontierTargetingGasLimitCalculator();
     final GasLimitRangeAndDeltaValidationRule rule =
-        new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL);
+        new GasLimitRangeAndDeltaValidationRule(DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT);
 
     // parent
     final BlockHeader parent = new BlockHeaderTestFixture().gasLimit(currentGasLimit).buildHeader();

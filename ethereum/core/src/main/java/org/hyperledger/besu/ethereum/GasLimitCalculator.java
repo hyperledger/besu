@@ -16,17 +16,9 @@ package org.hyperledger.besu.ethereum;
 
 public interface GasLimitCalculator {
 
-  long DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT = 1024L;
-  long DEFAULT_MIN_GAS_LIMIT = 5000L;
-  long DEFAULT_MAX_GAS_LIMIT = Long.MAX_VALUE;
-
   long nextGasLimit(long currentGasLimit, long targetGasLimit, long newBlockNumber);
 
   static GasLimitCalculator constant() {
     return (currentGasLimit, targetGasLimit, newBlockNumber) -> currentGasLimit;
-  }
-
-  static boolean validateTargetGasLimit(final long targetGasLimit) {
-    return DEFAULT_MIN_GAS_LIMIT <= targetGasLimit && DEFAULT_MAX_GAS_LIMIT >= targetGasLimit;
   }
 }

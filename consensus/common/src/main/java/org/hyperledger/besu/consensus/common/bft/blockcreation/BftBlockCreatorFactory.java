@@ -23,13 +23,13 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
@@ -123,7 +123,7 @@ public class BftBlockCreatorFactory {
   }
 
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
-    if (GasLimitCalculator.validateTargetGasLimit(newTargetGasLimit)) {
+    if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
       this.targetGasLimit.ifPresentOrElse(
           existing -> existing.set(newTargetGasLimit),
           () -> this.targetGasLimit = Optional.of(new AtomicLong(newTargetGasLimit)));

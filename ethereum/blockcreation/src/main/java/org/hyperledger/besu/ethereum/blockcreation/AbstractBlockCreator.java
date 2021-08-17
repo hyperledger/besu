@@ -269,9 +269,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     if (protocolSpec.getFeeMarket().implementsBaseFee()) {
       // TODO roll eip1559 into feeMarket
       final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
-      if (eip1559.isForkBlock(newBlockNumber)) {
-        gasLimit = gasLimit * eip1559.getFeeMarket().getSlackCoefficient();
-      }
       baseFee =
           eip1559.computeBaseFee(
               newBlockNumber,
