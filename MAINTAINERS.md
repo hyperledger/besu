@@ -9,6 +9,7 @@
 | Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antoine Toulme   | atoulme          | atoulme          |
+| Antony Denyer    | antonydenyer     | antonydenyer     |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
 | David Mechler    | davemec          | davemec          |
 | Edward Mack      | edwardmack       | mackcom          | 
