@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
+import static org.hyperledger.besu.ethereum.core.Hash.fromPlugin;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
 import org.hyperledger.besu.enclave.Enclave;
@@ -23,7 +24,6 @@ import org.hyperledger.besu.enclave.EnclaveServerException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
 
@@ -103,7 +104,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       return Bytes.EMPTY;
     }
 
-    final Hash pmtHash = messageFrame.getTransactionHash();
+    final org.hyperledger.besu.plugin.data.Hash pmtHash = messageFrame.getTransactionHash();
 
     final String key = input.toBase64String();
     final ReceiveResponse receiveResponse;
@@ -154,7 +155,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, privateMetadataUpdater);
 
     final MutableWorldState disposablePrivateState =
-        privateWorldStateArchive.getMutable(lastRootHash, null).get();
+        privateWorldStateArchive.getMutable(fromPlugin(lastRootHash), null).get();
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
@@ -205,7 +206,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   void storePrivateMetadata(
-      final Hash commitmentHash,
+      final org.hyperledger.besu.plugin.data.Hash commitmentHash,
       final Bytes32 privacyGroupId,
       final MutableWorldState disposablePrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
@@ -222,7 +223,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     privateMetadataUpdater.updatePrivacyGroupHeadBlockMap(privacyGroupId);
     privateMetadataUpdater.addPrivateTransactionMetadata(
         privacyGroupId,
-        new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
+        new PrivateTransactionMetadata(
+            fromPlugin(commitmentHash), disposablePrivateState.rootHash()));
   }
 
   TransactionProcessingResult processPrivateTransaction(

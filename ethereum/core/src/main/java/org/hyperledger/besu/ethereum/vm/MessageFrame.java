@@ -20,7 +20,6 @@ import static java.util.Collections.emptySet;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.vm.FixedStack.UnderflowException;
 import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
+import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -200,7 +201,7 @@ public class MessageFrame {
 
   // Machine state fields.
   private Gas gasRemaining;
-  private final BlockHashLookup blockHashLookup;
+  private final Function<Long, org.hyperledger.besu.plugin.data.Hash> blockHashLookup;
   private final int maxStackSize;
   private int pc;
   private final Memory memory;
@@ -271,7 +272,7 @@ public class MessageFrame {
       final boolean isStatic,
       final Consumer<MessageFrame> completer,
       final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
+      final Function<Long, org.hyperledger.besu.plugin.data.Hash> blockHashLookup,
       final Boolean isPersistingPrivateState,
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Hash transactionHash,
@@ -1015,7 +1016,7 @@ public class MessageFrame {
     return miningBeneficiary;
   }
 
-  public BlockHashLookup getBlockHashLookup() {
+  public Function<Long, org.hyperledger.besu.plugin.data.Hash> getBlockHashLookup() {
     return blockHashLookup;
   }
 
@@ -1100,7 +1101,7 @@ public class MessageFrame {
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
-    private BlockHashLookup blockHashLookup;
+    private Function<Long, Hash> blockHashLookup;
     private Boolean isPersistingPrivateState = false;
     private PrivateMetadataUpdater privateMetadataUpdater = null;
     private Hash transactionHash;
@@ -1209,7 +1210,8 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder blockHashLookup(final BlockHashLookup blockHashLookup) {
+    public Builder blockHashLookup(
+        final Function<Long, org.hyperledger.besu.plugin.data.Hash> blockHashLookup) {
       this.blockHashLookup = blockHashLookup;
       return this;
     }

@@ -15,12 +15,13 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.plugin.data.Hash;
+
+import java.util.function.Function;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -62,8 +63,8 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
         || soughtBlock > mostRecentBlockNumber) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
-      final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
-      final Hash blockHash = blockHashLookup.getBlockHash(soughtBlock);
+      final Function<Long, Hash> blockHashLookup = frame.getBlockHashLookup();
+      final Hash blockHash = blockHashLookup.apply(soughtBlock);
       frame.pushStackItem(UInt256.fromBytes(blockHash));
     }
 
