@@ -12,21 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
+package org.hyperledger.besu.consensus.qbft.headervalidationrules;
 
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.headervalidationrules.BftValidatorsValidationRule;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
-import java.util.Collection;
-import java.util.NavigableSet;
-import java.util.TreeSet;
-
-import com.google.common.collect.Iterables;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,40 +29,43 @@ import org.apache.logging.log4j.Logger;
  * Ensures the Validators listed in the block header match that tracked in memory (which was in-turn
  * created by tracking votes included on the block chain).
  */
-public class BftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
+public class QbftValidatorsValidationRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOGGER = LogManager.getLogger();
+  private final boolean extraDataValidatorsAndVoteMustBeEmpty;
+  private final BftValidatorsValidationRule bftValidatorsValidationRule =
+      new BftValidatorsValidationRule();
+
+  public QbftValidatorsValidationRule(final boolean extraDataValidatorsAndVoteMustBeEmpty) {
+    this.extraDataValidatorsAndVoteMustBeEmpty = extraDataValidatorsAndVoteMustBeEmpty;
+  }
 
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
+    if (!extraDataValidatorsAndVoteMustBeEmpty) {
+      // delegate to common BftValidatorsValidationRule
+      return bftValidatorsValidationRule.validate(header, parent, context);
+    }
+
+    // validators and votes must be empty if they are supplied by a contract.
     try {
       final BftContext bftContext = context.getConsensusState(BftContext.class);
       final BftExtraData bftExtraData = bftContext.getBlockInterface().getExtraData(header);
 
-      // are validators sorted?
-      final NavigableSet<Address> sortedReportedValidators =
-          new TreeSet<>(bftExtraData.getValidators());
-
-      if (!Iterables.elementsEqual(bftExtraData.getValidators(), sortedReportedValidators)) {
+      if (!bftExtraData.getValidators().isEmpty()) {
         LOGGER.info(
-            "Invalid block header: Validators are not sorted in ascending order. Expected {} but got {}.",
-            sortedReportedValidators,
+            "Invalid block header: Validators in extra data expected to be empty but got {}",
             bftExtraData.getValidators());
         return false;
       }
 
-      // are validators same?
-      final Collection<Address> storedValidators =
-          bftContext.getValidatorProvider().getValidatorsAfterBlock(parent);
-      if (!Iterables.elementsEqual(bftExtraData.getValidators(), storedValidators)) {
+      if (bftExtraData.getVote().isPresent()) {
         LOGGER.info(
-            "Invalid block header: Incorrect validators. Expected {} but got {}.",
-            storedValidators,
-            bftExtraData.getValidators());
+            "Invalid block header: Vote in extra data expected to be empty but got {}",
+            bftExtraData.getVote().get());
         return false;
       }
-
     } catch (final RLPException ex) {
       LOGGER.info(
           "Invalid block header: ExtraData field was unable to be deserialized into an BFT Struct.",
