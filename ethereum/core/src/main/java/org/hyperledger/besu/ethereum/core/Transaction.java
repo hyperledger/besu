@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -635,11 +636,10 @@ public class Transaction
     if (chainId.isPresent()) {
       return false;
     }
-    return v.map(
-            value ->
-                GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN.equals(value)
-                    || GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX.equals(value))
-        .orElse(false);
+    if (!v.isPresent()) {
+      return false;
+    }
+    return GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v.get());
   }
 
   private static Bytes32 computeSenderRecoveryHash(

@@ -156,7 +156,8 @@ public class PrivDebugGetStateRootOnchainGroupAcceptanceTest
                 aliceNode.getEnclaveKey(),
                 privacyGroupId));
 
-    eventEmitter.store(BigInteger.valueOf(42)).send();
+    privateTransactionVerifier.existingPrivateTransactionReceipt(
+        eventEmitter.store(BigInteger.valueOf(42)).send().getTransactionHash());
 
     final String aliceResponse =
         aliceNode
