@@ -199,7 +199,7 @@ public class RoundSpecificPeers {
 
     switch (expectedMessage.getMessageType()) {
       case QbftV1.PROPOSAL:
-        actualSignedPayload = ProposalMessageData.fromMessageData(actual).decode();
+        actualSignedPayload = ProposalMessageData.fromMessageData(actual).decode(bftExtraDataCodec);
         break;
       case QbftV1.PREPARE:
         actualSignedPayload = PrepareMessageData.fromMessageData(actual).decode();

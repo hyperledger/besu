@@ -59,7 +59,7 @@ public class QbftGossip implements Gossiper {
     final Authored decodedMessage;
     switch (messageData.getCode()) {
       case QbftV1.PROPOSAL:
-        decodedMessage = ProposalMessageData.fromMessageData(messageData).decode();
+        decodedMessage = ProposalMessageData.fromMessageData(messageData).decode(bftExtraDataCodec);
         break;
       case QbftV1.PREPARE:
         decodedMessage = PrepareMessageData.fromMessageData(messageData).decode();

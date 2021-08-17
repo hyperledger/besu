@@ -454,7 +454,7 @@ public class QbftControllerTest {
     when(proposal.getAuthor()).thenReturn(validator);
     when(proposal.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(proposalMessageData.getCode()).thenReturn(QbftV1.PROPOSAL);
-    when(proposalMessageData.decode()).thenReturn(proposal);
+    when(proposalMessageData.decode(bftExtraDataCodec)).thenReturn(proposal);
     proposalMessage = new DefaultMessage(null, proposalMessageData);
   }
 

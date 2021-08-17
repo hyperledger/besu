@@ -67,7 +67,7 @@ public class QbftController extends BaseBftController {
       case QbftV1.PROPOSAL:
         consumeMessage(
             message,
-            ProposalMessageData.fromMessageData(messageData).decode(),
+            ProposalMessageData.fromMessageData(messageData).decode(bftExtraDataCodec),
             currentHeightManager::handleProposalPayload);
         break;
 
