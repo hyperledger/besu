@@ -103,7 +103,7 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
-            () -> Optional.of(10_000_000L),
+            () -> Optional.empty(),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
@@ -164,7 +164,7 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
-            () -> Optional.of(10_000_000L),
+            () -> Optional.empty(),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),

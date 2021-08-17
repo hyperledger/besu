@@ -3738,8 +3738,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
 
-    assertThat(miningParametersArgumentCaptor.getValue().getTargetGasLimit())
-        .isEqualTo(Optional.of(10_000_000L));
+    assertThat(miningParametersArgumentCaptor.getValue().getTargetGasLimit().get())
+        .isEqualTo(10_000_000L);
   }
 
   @Test
