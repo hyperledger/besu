@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -121,9 +122,14 @@ public class BftBlockCreatorFactory {
     return bftExtraDataCodec.encode(extraData);
   }
 
-  public void changeTargetGasLimit(final Long targetGasLimit) {
-    //  TODO: defer to MiningCoordinator, remove this
-    //    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
+  public void changeTargetGasLimit(final Long newTargetGasLimit) {
+    if (GasLimitCalculator.validateTargetGasLimit(newTargetGasLimit)) {
+      this.targetGasLimit.ifPresentOrElse(
+          existing -> existing.set(newTargetGasLimit),
+          () -> this.targetGasLimit = Optional.of(new AtomicLong(newTargetGasLimit)));
+    } else {
+      throw new UnsupportedOperationException("Specified target gas limit is invalid");
+    }
   }
 
   public Address getLocalAddress() {

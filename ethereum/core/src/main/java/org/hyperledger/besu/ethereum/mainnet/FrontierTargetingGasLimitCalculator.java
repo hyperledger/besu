@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 
-import java.util.Objects;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,10 +23,9 @@ public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecifi
     implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
   private final long maxConstantAdjustmentIncrement;
-  private Long targetGasLimit;
 
   public FrontierTargetingGasLimitCalculator() {
-    this(1024L, 5000L, Long.MAX_VALUE);
+    this(DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT, DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT);
   }
 
   public FrontierTargetingGasLimitCalculator(
@@ -75,18 +72,5 @@ public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecifi
     } catch (final ArithmeticException ex) {
       return 0;
     }
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    FrontierTargetingGasLimitCalculator that = (FrontierTargetingGasLimitCalculator) o;
-    return Objects.equals(targetGasLimit, that.targetGasLimit);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(targetGasLimit);
   }
 }

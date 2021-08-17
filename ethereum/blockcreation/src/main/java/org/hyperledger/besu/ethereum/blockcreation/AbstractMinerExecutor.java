@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -115,8 +116,13 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
 
   public abstract Optional<Address> getCoinbase();
 
-  public void changeTargetGasLimit(final Long targetGasLimit) {
-    // TODO: get rid of me, defer to MiningCoordinator
-    //    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
+  public void changeTargetGasLimit(final Long newTargetGasLimit) {
+    if (GasLimitCalculator.validateTargetGasLimit(newTargetGasLimit)) {
+      this.targetGasLimit.ifPresentOrElse(
+          existing -> existing.set(newTargetGasLimit),
+          () -> this.targetGasLimit = Optional.of(new AtomicLong(newTargetGasLimit)));
+    } else {
+      throw new UnsupportedOperationException("Specified target gas limit is invalid");
+    }
   }
 }
