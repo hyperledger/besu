@@ -45,7 +45,6 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
       final BftContext bftContext = context.getConsensusState(BftContext.class);
       final BftExtraData bftExtraData = bftContext.getBlockInterface().getExtraData(header);
 
-      // are validators sorted?
       final NavigableSet<Address> sortedReportedValidators =
           new TreeSet<>(bftExtraData.getValidators());
 
@@ -57,7 +56,6 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
         return false;
       }
 
-      // are validators same?
       final Collection<Address> storedValidators =
           bftContext.getValidatorProvider().getValidatorsAfterBlock(parent);
       if (!Iterables.elementsEqual(bftExtraData.getValidators(), storedValidators)) {
