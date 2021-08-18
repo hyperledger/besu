@@ -52,6 +52,15 @@ public interface MetricsSystem extends BesuService {
   LabelledMetric<Counter> createLabelledCounter(
       MetricCategory category, String name, String help, String... labelNames);
 
+  /**
+   * Creates a Gauge with assigned labels.
+   *
+   * @param category The {@link MetricCategory} this gauge is assigned to.
+   * @param name A name for this metric.
+   * @param help A human readable description of the metric.
+   * @param labelNames An array of labels to assign to the Gauge.
+   * @return The created LabelledGauge instance.
+   */
   LabelledGauge createLabelledGauge(
       MetricCategory category, String name, String help, String... labelNames);
 
