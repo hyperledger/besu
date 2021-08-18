@@ -41,6 +41,7 @@ public class QbftGossip implements Gossiper {
    * Constructor that attaches gossip logic to a set of multicaster
    *
    * @param multicaster Network connections to the remote validators
+   * @param bftExtraDataCodec Codec used when decoding MessageData
    */
   public QbftGossip(
       final ValidatorMulticaster multicaster, final BftExtraDataCodec bftExtraDataCodec) {
