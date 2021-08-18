@@ -58,7 +58,6 @@ public class PoWMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            GasLimitCalculator.constant(),
             new EpochCalculator.DefaultEpochCalculator(),
             1000,
             8);
@@ -89,7 +88,6 @@ public class PoWMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            GasLimitCalculator.constant(),
             new EpochCalculator.DefaultEpochCalculator(),
             1000,
             8);

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -34,6 +35,8 @@ public class ProtocolSpec {
   private final EVM evm;
 
   private final GasCalculator gasCalculator;
+
+  private final GasLimitCalculator gasLimitCalculator;
 
   private final MainnetTransactionValidator transactionValidator;
 
@@ -97,6 +100,7 @@ public class ProtocolSpec {
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
    * @param gasCalculator the gas calculator to use.
+   * @param gasLimitCalculator the gas limit calculator to use.
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
    * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    * @param badBlockManager the cache to use to keep invalid blocks
@@ -122,6 +126,7 @@ public class ProtocolSpec {
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards,
       final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
       final Optional<EIP1559> eip1559,
       final BadBlockManager badBlockManager,
@@ -145,6 +150,7 @@ public class ProtocolSpec {
     this.precompileContractRegistry = precompileContractRegistry;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.gasCalculator = gasCalculator;
+    this.gasLimitCalculator = gasLimitCalculator;
     this.feeMarket = feeMarket;
     this.eip1559 = eip1559;
     this.badBlockManager = badBlockManager;
@@ -307,6 +313,15 @@ public class ProtocolSpec {
    */
   public GasCalculator getGasCalculator() {
     return gasCalculator;
+  }
+
+  /**
+   * Returns the gasLimitCalculator used in this specification.
+   *
+   * @return the gas limit calculator
+   */
+  public GasLimitCalculator getGasLimitCalculator() {
+    return gasLimitCalculator;
   }
 
   /**

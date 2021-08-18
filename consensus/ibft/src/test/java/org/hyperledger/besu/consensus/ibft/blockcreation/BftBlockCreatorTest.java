@@ -103,6 +103,7 @@ public class BftBlockCreatorTest {
     final BftBlockCreator blockCreator =
         new BftBlockCreator(
             initialValidatorList.get(0),
+            () -> Optional.of(10_000_000L),
             parent ->
                 bftExtraDataEncoder.encode(
                     new BftExtraData(
@@ -114,7 +115,6 @@ public class BftBlockCreatorTest {
             pendingTransactions,
             protContext,
             protocolSchedule,
-            parentGasLimit -> parentGasLimit,
             Wei.ZERO,
             0.8,
             parentHeader,
