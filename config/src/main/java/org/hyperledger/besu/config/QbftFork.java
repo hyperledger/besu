@@ -15,6 +15,7 @@
 
 package org.hyperledger.besu.config;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,8 +35,12 @@ public class QbftFork extends BftFork {
   }
 
   public Optional<VALIDATOR_MODE> getValidatorMode() {
-    // TODO-jf handle lowercase values, if not in set return optional.empty
-    return JsonUtil.getString(forkConfigRoot, VALIDATOR_MODE_KEY).map(VALIDATOR_MODE::valueOf);
+    final Optional<String> mode = JsonUtil.getString(forkConfigRoot, VALIDATOR_MODE_KEY);
+    return mode.flatMap(
+        m ->
+            Arrays.stream(VALIDATOR_MODE.values())
+                .filter(v -> v.name().equalsIgnoreCase(m))
+                .findFirst());
   }
 
   public Optional<String> getValidatorContractAddress() {

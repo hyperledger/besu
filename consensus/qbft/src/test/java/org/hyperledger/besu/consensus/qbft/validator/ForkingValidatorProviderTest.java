@@ -97,7 +97,7 @@ public class ForkingValidatorProviderTest {
   public void migratesFromBlockToContractValidatorProvider() {
     final ObjectNode config =
         JsonUtil.objectNodeFromMap(
-            Map.of("block", 1L, "validatorMode", "CONTRACT", "validatorContractAddress", "0x888"));
+            Map.of("block", 1L, "validatorMode", "contract", "validatorContractAddress", "0x888"));
     final QbftForksSchedule forksSchedule = new QbftForksSchedule(List.of(new QbftFork(config)));
 
     final List<Address> blockAddresses =
@@ -124,7 +124,7 @@ public class ForkingValidatorProviderTest {
   @Test
   public void migratesFromContractToBlockValidatorProvider() {
     final ObjectNode config =
-        JsonUtil.objectNodeFromMap(Map.of("block", 1L, "validatorMode", "BLOCK"));
+        JsonUtil.objectNodeFromMap(Map.of("block", 1L, "validatorMode", "block"));
     final QbftForksSchedule forksSchedule = new QbftForksSchedule(List.of(new QbftFork(config)));
 
     final List<Address> blockAddresses =
