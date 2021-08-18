@@ -343,7 +343,7 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            FeeMarket.london());
+            FeeMarket.london(0L));
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =

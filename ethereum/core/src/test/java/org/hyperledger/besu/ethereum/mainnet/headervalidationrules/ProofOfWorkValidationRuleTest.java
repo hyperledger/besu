@@ -53,7 +53,7 @@ public class ProofOfWorkValidationRuleTest {
     parentHeader = ValidationTestUtils.readHeader(blockNum);
     validationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.ETHASH_LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
   }
 
   @Parameters(name = "block {1}")
@@ -142,7 +142,7 @@ public class ProofOfWorkValidationRuleTest {
   public void failsWithNonEip1559BlockAfterFork() {
     final ProofOfWorkValidationRule proofOfWorkValidationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), true, PoWHasher.ETHASH_LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
 
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)
@@ -168,7 +168,7 @@ public class ProofOfWorkValidationRuleTest {
   public void failsWithEip1559BlockBeforeFork() {
     final ProofOfWorkValidationRule proofOfWorkValidationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), false, PoWHasher.ETHASH_LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
 
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)

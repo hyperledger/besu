@@ -25,7 +25,7 @@ public class EIP1559Test {
 
   private static final long FORK_BLOCK = 783L;
   private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
-  private final BaseFeeMarket feeMarket = FeeMarket.london();
+  private final BaseFeeMarket feeMarket = FeeMarket.london(FORK_BLOCK);
   private static final long TARGET_GAS_USED = 10000000L;
 
   @Test

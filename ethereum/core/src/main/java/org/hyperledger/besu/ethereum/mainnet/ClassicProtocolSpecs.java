@@ -232,10 +232,10 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createBlockHeaderValidator(
+            MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createOmmerValidator(
+            MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.ETHASH)))
         .name("Thanos");
   }
@@ -275,10 +275,10 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             quorumCompatibilityMode)
         .blockHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createBlockHeaderValidator(
+            MainnetBlockHeaderValidator.createLegacyBlockHeaderValidator(
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
         .ommerHeaderValidatorBuilder(
-            MainnetBlockHeaderValidator.createOmmerValidator(
+            MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
                 new EpochCalculator.Ecip1099EpochCalculator(), powHasher(PowAlgorithm.KECCAK256)))
         .powHasher(powHasher(PowAlgorithm.KECCAK256))
         .name("ecip1049");

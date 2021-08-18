@@ -32,8 +32,8 @@ public interface FeeMarket {
   Wei minTransactionPriceInNextBlock(
       Transaction transaction, Supplier<Optional<Long>> baseFeeSupplier);
 
-  static BaseFeeMarket london() {
-    return new LondonFeeMarket();
+  static BaseFeeMarket london(final long londonForkBlockNumber) {
+    return new LondonFeeMarket(londonForkBlockNumber);
   }
 
   static FeeMarket legacy() {

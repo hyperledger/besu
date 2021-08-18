@@ -34,7 +34,7 @@ public class EIP1559 {
 
   public EIP1559(final long forkBlockNumber) {
     this.initialForkBlknum = forkBlockNumber;
-    this.feeMarket = FeeMarket.london();
+    this.feeMarket = FeeMarket.london(forkBlockNumber);
   }
 
   public long computeBaseFee(
