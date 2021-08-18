@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockProcessorB
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.ethereum.mainnet.contractvalidation.PrefixCodeRule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -465,7 +466,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    final FeeMarket londonFeeMarket = FeeMarket.london();
+    final BaseFeeMarket londonFeeMarket = FeeMarket.london();
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber =
         genesisConfigOptions.getEIP1559BlockNumber().orElse(Long.MAX_VALUE);
@@ -477,7 +478,8 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             quorumCompatibilityMode)
         .gasCalculator(LondonGasCalculator::new)
-        .gasLimitCalculator(new LondonTargetingGasLimitCalculator(londonForkBlockNumber))
+        .gasLimitCalculator(
+            new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
         .transactionValidatorBuilder(
             gasCalculator ->
                 new MainnetTransactionValidator(

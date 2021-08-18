@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
+
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,18 +26,27 @@ import org.apache.logging.log4j.Logger;
 public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
   private final long londonForkBlock;
+  private final BaseFeeMarket feeMarket;
 
-  public LondonTargetingGasLimitCalculator(final long londonForkBlock) {
-    this(1024L, 5000L, Long.MAX_VALUE, londonForkBlock);
+  public LondonTargetingGasLimitCalculator(
+      final long londonForkBlock, final BaseFeeMarket feeMarket) {
+    this(
+        DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT,
+        DEFAULT_MIN_GAS_LIMIT,
+        DEFAULT_MAX_GAS_LIMIT,
+        londonForkBlock,
+        feeMarket);
   }
 
   public LondonTargetingGasLimitCalculator(
       final long maxConstantAdjustmentIncrement,
       final long minGasLimit,
       final long maxGasLimit,
-      final long londonForkBlock) {
+      final long londonForkBlock,
+      final BaseFeeMarket feeMarket) {
     super(maxConstantAdjustmentIncrement, minGasLimit, maxGasLimit);
     this.londonForkBlock = londonForkBlock;
+    this.feeMarket = feeMarket;
   }
 
   @Override
@@ -49,7 +62,7 @@ public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimit
     }
 
     if (londonForkBlock == newBlockNumber) {
-      nextGasLimit = nextGasLimit * LondonFeeMarket.DEFAULT_SLACK_COEFFICIENT;
+      nextGasLimit = nextGasLimit * feeMarket.getSlackCoefficient();
     }
 
     if (nextGasLimit != currentGasLimit) {
