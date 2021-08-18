@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 
-public class HomesteadGasCalculator extends FrontierGasCalculator {
+public class HomesteadTransactionGasCalculator extends FrontierTransactionGasCalculator {
 
   private static final Gas TX_CREATE_EXTRA = Gas.of(32_000L);
 

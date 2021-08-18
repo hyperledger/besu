@@ -36,6 +36,8 @@ public class ProtocolSpec {
 
   private final GasCalculator gasCalculator;
 
+  private final TransactionGasCalculator transactionGasCalculator;
+
   private final GasLimitCalculator gasLimitCalculator;
 
   private final MainnetTransactionValidator transactionValidator;
@@ -126,6 +128,7 @@ public class ProtocolSpec {
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards,
       final GasCalculator gasCalculator,
+      final TransactionGasCalculator transactionGasCalculator,
       final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
       final Optional<EIP1559> eip1559,
@@ -150,6 +153,7 @@ public class ProtocolSpec {
     this.precompileContractRegistry = precompileContractRegistry;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.gasCalculator = gasCalculator;
+    this.transactionGasCalculator = transactionGasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
     this.feeMarket = feeMarket;
     this.eip1559 = eip1559;
@@ -313,6 +317,15 @@ public class ProtocolSpec {
    */
   public GasCalculator getGasCalculator() {
     return gasCalculator;
+  }
+
+  /**
+   * Returns the transactionGasCalculator used in this specification.
+   *
+   * @return the transaction processing gas calculator
+   */
+  public TransactionGasCalculator getTransactionGasCalculator() {
+    return transactionGasCalculator;
   }
 
   /**

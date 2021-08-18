@@ -286,7 +286,7 @@ public class EvmToolCommand implements Runnable {
 
             final Gas intrinsicGasCost =
                 protocolSpec
-                    .getGasCalculator()
+                    .getTransactionGasCalculator()
                     .transactionIntrinsicGasCostAndAccessedState(tx)
                     .getGas();
             final Gas evmGas = gas.minus(messageFrame.getRemainingGas());

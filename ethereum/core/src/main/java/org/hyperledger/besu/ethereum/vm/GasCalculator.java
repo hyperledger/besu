@@ -17,10 +17,7 @@ package org.hyperledger.besu.ethereum.vm;
 import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.AbstractMessageProcessor;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.ECRECPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.IDPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.RIPEMD160PrecompiledContract;
@@ -55,26 +52,6 @@ import org.apache.tuweni.units.bigints.UInt256;
  * </ul>
  */
 public interface GasCalculator {
-
-  // Transaction Gas Calculations
-
-  /**
-   * Returns a {@link Transaction}s intrinsic gas cost
-   *
-   * @param transaction The transaction
-   * @return the transaction's intrinsic gas cost
-   */
-  GasAndAccessedState transactionIntrinsicGasCostAndAccessedState(Transaction transaction);
-
-  // Contract Creation Gas Calculations
-
-  /**
-   * Returns the cost for a {@link AbstractMessageProcessor} to deposit the code in storage
-   *
-   * @param codeSize The size of the code in bytes
-   * @return the code deposit cost
-   */
-  Gas codeDepositGasCost(int codeSize);
 
   // Precompiled Contract Gas Calculations
 
@@ -434,11 +411,4 @@ public interface GasCalculator {
   default Gas modExpGasCost(final Bytes input) {
     return Gas.ZERO;
   }
-
-  default long getMaxRefundQuotient() {
-    return 2;
-  }
-
-  // what would be the gas for a PMT with hash of all non-zeros
-  Gas getMaximumPmtCost();
 }

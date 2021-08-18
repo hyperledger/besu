@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
 import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.vm.EVM;
 import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.OperationTracer;
 
@@ -41,7 +40,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
 
   private final boolean requireCodeDepositToSucceed;
 
-  private final GasCalculator gasCalculator;
+  private final TransactionGasCalculator transactionGasCalculator;
 
   private final long initialContractNonce;
 
@@ -50,7 +49,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
   private final int accountVersion;
 
   public MainnetContractCreationProcessor(
-      final GasCalculator gasCalculator,
+      final TransactionGasCalculator transactionGasCalculator,
       final EVM evm,
       final boolean requireCodeDepositToSucceed,
       final List<ContractValidationRule> contractValidationRules,
@@ -58,7 +57,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
       final Collection<Address> forceCommitAddresses,
       final int accountVersion) {
     super(evm, forceCommitAddresses);
-    this.gasCalculator = gasCalculator;
+    this.transactionGasCalculator = transactionGasCalculator;
     this.requireCodeDepositToSucceed = requireCodeDepositToSucceed;
     this.contractValidationRules = contractValidationRules;
     this.initialContractNonce = initialContractNonce;
@@ -66,14 +65,14 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
   }
 
   public MainnetContractCreationProcessor(
-      final GasCalculator gasCalculator,
+      final TransactionGasCalculator transactionGasCalculator,
       final EVM evm,
       final boolean requireCodeDepositToSucceed,
       final List<ContractValidationRule> contractValidationRules,
       final long initialContractNonce,
       final Collection<Address> forceCommitAddresses) {
     this(
-        gasCalculator,
+        transactionGasCalculator,
         evm,
         requireCodeDepositToSucceed,
         contractValidationRules,
@@ -83,13 +82,13 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
   }
 
   public MainnetContractCreationProcessor(
-      final GasCalculator gasCalculator,
+      final TransactionGasCalculator transactionGasCalculator,
       final EVM evm,
       final boolean requireCodeDepositToSucceed,
       final List<ContractValidationRule> contractValidationRules,
       final long initialContractNonce) {
     this(
-        gasCalculator,
+        transactionGasCalculator,
         evm,
         requireCodeDepositToSucceed,
         contractValidationRules,
@@ -139,7 +138,7 @@ public class MainnetContractCreationProcessor extends AbstractMessageProcessor {
   protected void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode = frame.getOutputData();
 
-    final Gas depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
+    final Gas depositFee = transactionGasCalculator.codeDepositGasCost(contractCode.size());
 
     if (frame.getRemainingGas().compareTo(depositFee) < 0) {
       LOG.trace(
