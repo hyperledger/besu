@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.fees;
+package org.hyperledger.besu.ethereum.core.feemarket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,59 +21,48 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import org.junit.Test;
 
-public class EIP1559Test {
+public class BaseFeeMarketTest {
 
   private static final long FORK_BLOCK = 783L;
-  private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
-  private final BaseFeeMarket feeMarket = FeeMarket.london(FORK_BLOCK);
+  private final BaseFeeMarket baseFeeMarket = FeeMarket.london(FORK_BLOCK);
   private static final long TARGET_GAS_USED = 10000000L;
 
   @Test
   public void assertThatBaseFeeDecreasesWhenBelowTargetGasUsed() {
     assertThat(
-            eip1559.computeBaseFee(
+            baseFeeMarket.computeBaseFee(
                 FORK_BLOCK + 1,
-                feeMarket.getInitialBasefee(),
+                baseFeeMarket.getInitialBasefee(),
                 TARGET_GAS_USED - 1000000L,
                 TARGET_GAS_USED))
-        .isLessThan(feeMarket.getInitialBasefee())
+        .isLessThan(baseFeeMarket.getInitialBasefee())
         .isEqualTo(987500000L);
   }
 
   @Test
   public void assertThatBaseFeeIncreasesWhenAboveTargetGasUsed() {
     assertThat(
-            eip1559.computeBaseFee(
+            baseFeeMarket.computeBaseFee(
                 FORK_BLOCK + 1,
-                feeMarket.getInitialBasefee(),
+                baseFeeMarket.getInitialBasefee(),
                 TARGET_GAS_USED + 1000000L,
                 TARGET_GAS_USED))
-        .isGreaterThan(feeMarket.getInitialBasefee())
+        .isGreaterThan(baseFeeMarket.getInitialBasefee())
         .isEqualTo(1012500000L);
   }
 
   @Test
-  public void givenBlockAfterFork_whenIsEIP1559_returnsTrue() {
-    assertThat(eip1559.isEIP1559(FORK_BLOCK + 1)).isTrue();
-  }
-
-  @Test
-  public void givenBlockABeforeFork_whenIsEIP1559_returnsFalse() {
-    assertThat(eip1559.isEIP1559(FORK_BLOCK - 1)).isFalse();
-  }
-
-  @Test
   public void givenForkBlock_whenIsForkBlock_thenReturnsTrue() {
-    assertThat(eip1559.isForkBlock(FORK_BLOCK)).isTrue();
+    assertThat(baseFeeMarket.isForkBlock(FORK_BLOCK)).isTrue();
   }
 
   @Test
   public void givenNotForkBlock_whenIsForkBlock_thenReturnsFalse() {
-    assertThat(eip1559.isForkBlock(FORK_BLOCK + 1)).isFalse();
+    assertThat(baseFeeMarket.isForkBlock(FORK_BLOCK + 1)).isFalse();
   }
 
   @Test
   public void getForkBlock() {
-    assertThat(eip1559.getForkBlock()).isEqualTo(FORK_BLOCK);
+    assertThat(baseFeeMarket.isForkBlock(FORK_BLOCK)).isTrue();
   }
 }

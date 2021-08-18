@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-import static org.hyperledger.besu.ethereum.core.fees.FeeMarketException.MissingBaseFeeFromBlockHeader;
+import static org.hyperledger.besu.ethereum.core.feemarket.FeeMarketException.MissingBaseFeeFromBlockHeader;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarketException;
+import org.hyperledger.besu.ethereum.core.feemarket.FeeMarketException;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 

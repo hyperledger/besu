@@ -18,8 +18,8 @@ import static java.lang.Math.max;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.BaseFee;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.core.feemarket.BaseFee;
+import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
