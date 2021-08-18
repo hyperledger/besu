@@ -72,7 +72,6 @@ public class Benchmarks {
           .code(new Code(Bytes.EMPTY))
           .depth(1)
           .completer(__ -> {})
-          .contractAccountVersion(0)
           .address(Address.ZERO)
           .blockHashLookup(mock(BlockHashLookup.class))
           .blockHeader(mock(ProcessableBlockHeader.class))

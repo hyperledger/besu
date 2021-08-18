@@ -35,13 +35,6 @@ public interface PrivacyGenesisAccount {
   Map<UInt256, UInt256> getStorage();
 
   /**
-   * The version for the account.
-   *
-   * @return the version of the code being set
-   */
-  int getVersion();
-
-  /**
    * The initial nonce assigned to the account.
    *
    * @return the nonce
