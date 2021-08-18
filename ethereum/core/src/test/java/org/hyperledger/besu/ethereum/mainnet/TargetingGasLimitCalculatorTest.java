@@ -55,12 +55,11 @@ public class TargetingGasLimitCalculatorTest {
         .isEqualTo(target);
   }
 
-    @Test
-    public void verifyMinGasLimit() {
-      assertThat(AbstractGasLimitSpecification
-          .isValidTargetGasLimit(DEFAULT_MIN_GAS_LIMIT - 1))
-          .isFalse();
-    }
+  @Test
+  public void verifyMinGasLimit() {
+    assertThat(AbstractGasLimitSpecification.isValidTargetGasLimit(DEFAULT_MIN_GAS_LIMIT - 1))
+        .isFalse();
+  }
 
   @Test
   public void verifyWithinGasLimitDelta() {
