@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.messagedata;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.messagedata.AbstractBftMessageData;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -33,8 +34,8 @@ public class ProposalMessageData extends AbstractBftMessageData {
         messageData, MESSAGE_CODE, ProposalMessageData.class, ProposalMessageData::new);
   }
 
-  public Proposal decode() {
-    return Proposal.decode(data);
+  public Proposal decode(final BftExtraDataCodec bftExtraDataCodec) {
+    return Proposal.decode(data, bftExtraDataCodec);
   }
 
   public static ProposalMessageData create(final Proposal proposal) {

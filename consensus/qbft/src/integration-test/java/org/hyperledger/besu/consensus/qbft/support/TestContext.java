@@ -127,7 +127,7 @@ public class TestContext {
     final List<ValidatorPeer> nonProposers = new ArrayList<>(remotePeers.values());
     nonProposers.remove(proposer);
 
-    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers);
+    return new RoundSpecificPeers(proposer, remotePeers.values(), nonProposers, bftExtraDataCodec);
   }
 
   public NodeParams getLocalNodeParams() {
