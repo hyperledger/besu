@@ -539,6 +539,9 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode)
         .gasCalculator(PuxiGasCalculator::new)
+        .evmBuilder(
+            gasCalculator ->
+                MainnetEvmRegistries.puxi(gasCalculator, chainId.orElse(BigInteger.ZERO)))
         .name(PUXI_FORK_NAME);
   }
 

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.vm.operations.AddModOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AddOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AddressOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AndOperation;
+import org.hyperledger.besu.ethereum.vm.operations.AuthCallOperation;
 import org.hyperledger.besu.ethereum.vm.operations.AuthOperation;
 import org.hyperledger.besu.ethereum.vm.operations.BalanceOperation;
 import org.hyperledger.besu.ethereum.vm.operations.BaseFeeOperation;
@@ -313,5 +314,6 @@ abstract class MainnetEvmRegistries {
       final BigInteger chainId) {
     registerLondonOpcodes(registry, gasCalculator, accountVersion, chainId);
     registry.put(new AuthOperation(gasCalculator), Account.DEFAULT_VERSION);
+    registry.put(new AuthCallOperation(gasCalculator), Account.DEFAULT_VERSION);
   }
 }
