@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
+
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
@@ -35,8 +38,6 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 import java.util.Optional;
 
 public class BlockHeaderValidationRulesetFactory {
-
-  private static final int MIN_GAS_LIMIT = 5000;
 
   /**
    * Creates a set of rules which when executed will determine if a given block header is valid with
@@ -61,7 +62,7 @@ public class BlockHeaderValidationRulesetFactory {
             .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
             .addRule(
                 new GasLimitRangeAndDeltaValidationRule(
-                    MIN_GAS_LIMIT, 0x7fffffffffffffffL, eip1559))
+                    DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, eip1559))
             .addRule(
                 new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
             .addRule(

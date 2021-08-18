@@ -413,7 +413,6 @@ public class TestContextBuilder {
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory blockCreatorFactory =
         new BftBlockCreatorFactory(
-            (gasLimit) -> gasLimit,
             pendingTransactions, // changed from IbftBesuController
             protocolContext,
             protocolSchedule,

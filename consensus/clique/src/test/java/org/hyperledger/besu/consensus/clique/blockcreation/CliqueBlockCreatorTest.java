@@ -124,6 +124,7 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
             new FrontierPendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
@@ -135,7 +136,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
             0.8,
@@ -160,6 +160,7 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
             new FrontierPendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
@@ -171,7 +172,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
             0.8,
@@ -198,6 +198,7 @@ public class CliqueBlockCreatorTest {
     final CliqueBlockCreator blockCreator =
         new CliqueBlockCreator(
             coinbase,
+            () -> Optional.of(10_000_000L),
             parent -> extraData,
             new FrontierPendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
@@ -209,7 +210,6 @@ public class CliqueBlockCreatorTest {
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
             protocolContext,
             protocolSchedule,
-            gasLimit -> gasLimit,
             proposerNodeKey,
             Wei.ZERO,
             0.8,
