@@ -27,33 +27,20 @@ public class PkiQbftAcceptanceTestParameterization {
 
   public static List<Object[]> getFactories() {
     final List<Object[]> ret = new ArrayList<>();
-    ret.add(
-        new Object[] {
-          "pki-qbft",
-          new PkiQbftAcceptanceTestParameterization(
-              BesuNodeFactory::createPkiQbftNode, BesuNodeFactory::createPkiQbftNodeWithValidators)
-        });
-    //    ret.addAll(
-    //        List.of(
-    //            new Object[]{
-    //                "pki-qbft",
-    //                new PkiQbftAcceptanceTestParameterization(
-    //                    BesuNodeFactory::createPkiQbftNode,
-    //                    BesuNodeFactory::createPkiQbftNodeWithValidators)
-    //            },
-    //            new Object[]{
-    //                "ibft-tls-jks",
-    //                new PkiQbftAcceptanceTestParameterization(
-    //                    BesuNodeFactory::createIbft2NodeWithTLSJKS,
-    //                    BesuNodeFactory::createIbft2TLSJKSNodeWithValidators)
-    //            },
-    //            new Object[]{
-    //                "ibft-tls-pkcs12",
-    //                new PkiQbftAcceptanceTestParameterization(
-    //                    BesuNodeFactory::createIbft2NodeWithTLSPKCS12,
-    //                    BesuNodeFactory::createIbft2TLSPKCS12NodeWithValidators)
-    //            }
-    //            ));
+    ret.addAll(
+        List.of(
+            new Object[] {
+              "ibft-tls-jks",
+              new PkiQbftAcceptanceTestParameterization(
+                  BesuNodeFactory::createIbft2NodeWithTLSJKS,
+                  BesuNodeFactory::createIbft2TLSJKSNodeWithValidators)
+            },
+            new Object[] {
+              "ibft-tls-pkcs12",
+              new PkiQbftAcceptanceTestParameterization(
+                  BesuNodeFactory::createIbft2NodeWithTLSPKCS12,
+                  BesuNodeFactory::createIbft2TLSPKCS12NodeWithValidators)
+            }));
     if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
       ret.add(
           new Object[] {

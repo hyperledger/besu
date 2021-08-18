@@ -53,10 +53,9 @@ public class PkiQbftAcceptanceTest extends ParameterizedPkiQbftTestBase {
   public void shouldMineOnMultipleNodes() throws Exception {
     final BesuNode minerNode1 = nodeFactory.createNode(besu, "miner1");
     final BesuNode minerNode2 = nodeFactory.createNode(besu, "miner2");
-    //    final BesuNode minerNode3 = nodeFactory.createNode(besu, "miner3");
-    //    final BesuNode minerNode4 = nodeFactory.createNode(besu, "miner4");
-    //    cluster.start(minerNode1, minerNode2, minerNode3, minerNode4);
-    cluster.start(minerNode1, minerNode2);
+    final BesuNode minerNode3 = nodeFactory.createNode(besu, "miner3");
+    final BesuNode minerNode4 = nodeFactory.createNode(besu, "miner4");
+    cluster.start(minerNode1, minerNode2, minerNode3, minerNode4);
 
     cluster.verify(blockchain.reachesHeight(minerNode1, 1, 85));
 
@@ -69,11 +68,11 @@ public class PkiQbftAcceptanceTest extends ParameterizedPkiQbftTestBase {
     minerNode2.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 1));
     cluster.verify(receiver.balanceEquals(1));
 
-    //    minerNode3.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
-    //    cluster.verify(receiver.balanceEquals(3));
-    //
-    //    minerNode4.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 3));
-    //    cluster.verify(receiver.balanceEquals(6));
+    minerNode3.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 2));
+    cluster.verify(receiver.balanceEquals(3));
+
+    minerNode4.execute(accountTransactions.createIncrementalTransfers(sender, receiver, 3));
+    cluster.verify(receiver.balanceEquals(6));
   }
 
   @Test
