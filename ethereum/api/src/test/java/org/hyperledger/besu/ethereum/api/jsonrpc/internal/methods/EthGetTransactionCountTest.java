@@ -46,8 +46,9 @@ public class EthGetTransactionCountTest {
 
   @Test
   public void shouldUsePendingTransactionsWhenToldTo() {
-    when(pendingTransactions.getNextNonceForSender(Address.fromHexString(pendingTransactionString)))
-        .thenReturn(OptionalLong.of(12));
+    final Address address = Address.fromHexString(pendingTransactionString);
+    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(12));
+    mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));
@@ -60,15 +61,33 @@ public class EthGetTransactionCountTest {
   public void shouldUseLatestTransactionsWhenNoPendingTransactions() {
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.empty());
-    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
-    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
-    when(blockchainQueries.getTransactionCount(address, Hash.ZERO)).thenReturn(7L);
+    mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionCount.response(request);
     assertThat(response.getResult()).isEqualTo("0x7");
+  }
+
+  @Test
+  public void shouldUseLatestWhenItIsBiggerThanPending() {
+    final Address address = Address.fromHexString(pendingTransactionString);
+    mockGetTransactionCount(address, 8);
+    when(pendingTransactions.getNextNonceForSender(Address.fromHexString(pendingTransactionString)))
+        .thenReturn(OptionalLong.of(4));
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));
+    final JsonRpcSuccessResponse response =
+        (JsonRpcSuccessResponse) ethGetTransactionCount.response(request);
+    assertThat(response.getResult()).isEqualTo("0x8");
+  }
+
+  private void mockGetTransactionCount(final Address address, final long transactionCount) {
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
+    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.getTransactionCount(address, Hash.ZERO)).thenReturn(transactionCount);
   }
 }

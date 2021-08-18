@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -43,7 +44,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** An operation submitted by an external actor to be applied to the system. */
-public class Transaction implements org.hyperledger.besu.plugin.data.Transaction {
+public class Transaction
+    implements org.hyperledger.besu.plugin.data.Transaction,
+        org.hyperledger.besu.plugin.data.UnsignedPrivateMarkerTransaction {
 
   // Used for transactions that are not tied to a specific chain
   // (e.g. does not have a chain id associated with it).
@@ -102,6 +105,10 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public static Transaction readFrom(final Bytes rlpBytes) {
+    return readFrom(RLP.input(rlpBytes));
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
@@ -369,7 +376,7 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
         .map(
             maybeNegativeEffectivePriorityFeePerGas ->
                 Math.max(0, maybeNegativeEffectivePriorityFeePerGas))
-        .orElseGet(() -> getGasPrice().get().getValue().longValue());
+        .orElseGet(() -> getGasPrice().map(Wei::getValue).map(Number::longValue).orElse(0L));
   }
   /**
    * Returns the transaction gas limit.
@@ -620,16 +627,19 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
   /**
    * Returns whether or not the transaction is a GoQuorum private transaction. <br>
    * <br>
-   * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38.
+   * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38, and does not contain a
+   * chainId.
    *
    * @return true if GoQuorum private transaction, false otherwise
    */
   public boolean isGoQuorumPrivateTransaction() {
-    return v.map(
-            value ->
-                GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN.equals(value)
-                    || GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX.equals(value))
-        .orElse(false);
+    if (chainId.isPresent()) {
+      return false;
+    }
+    if (!v.isPresent()) {
+      return false;
+    }
+    return GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v.get());
   }
 
   private static Bytes32 computeSenderRecoveryHash(
@@ -768,11 +778,11 @@ public class Transaction implements org.hyperledger.besu.plugin.data.Transaction
     }
     final Transaction that = (Transaction) other;
     return Objects.equals(this.chainId, that.chainId)
-        && Objects.equals(this.gasLimit, that.gasLimit)
+        && this.gasLimit == that.gasLimit
         && Objects.equals(this.gasPrice, that.gasPrice)
         && Objects.equals(this.maxPriorityFeePerGas, that.maxPriorityFeePerGas)
         && Objects.equals(this.maxFeePerGas, that.maxFeePerGas)
-        && Objects.equals(this.nonce, that.nonce)
+        && this.nonce == that.nonce
         && Objects.equals(this.payload, that.payload)
         && Objects.equals(this.signature, that.signature)
         && Objects.equals(this.to, that.to)

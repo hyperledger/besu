@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Address;
@@ -38,14 +37,12 @@ public class BftCoinbaseValidationRule implements AttachedBlockHeaderValidationR
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
 
-    final ValidatorProvider validatorProvider =
+    final Collection<Address> storedValidators =
         context
             .getConsensusState(BftContext.class)
-            .getVoteTallyCache()
-            .getVoteTallyAfterBlock(parent);
+            .getValidatorProvider()
+            .getValidatorsAfterBlock(parent);
     final Address proposer = header.getCoinbase();
-
-    final Collection<Address> storedValidators = validatorProvider.getValidators();
 
     if (!storedValidators.contains(proposer)) {
       LOGGER.info(

@@ -22,22 +22,31 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.util.NonceProvider;
+import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.util.Optional;
 
 import io.vertx.ext.auth.User;
+import org.apache.tuweni.bytes.Bytes;
 
 public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
+  private final GasCalculator gasCalculator;
 
   public PluginEeaSendRawTransaction(
       final TransactionPool transactionPool,
+      final PrivacyIdProvider privacyIdProvider,
+      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
+      final NonceProvider publicNonceProvider,
       final PrivacyController privacyController,
-      final PrivacyIdProvider privacyIdProvider) {
-    super(transactionPool);
+      final GasCalculator gasCalculator) {
+    super(transactionPool, privacyIdProvider, privateMarkerTransactionFactory, publicNonceProvider);
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
+    this.gasCalculator = gasCalculator;
   }
 
   @Override
@@ -51,7 +60,9 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   @Override
   protected Transaction createPrivateMarkerTransaction(
-      final PrivateTransaction privateTransaction, final Optional<User> user) {
+      final Address sender,
+      final PrivateTransaction privateTransaction,
+      final Optional<User> user) {
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(user);
 
@@ -59,7 +70,24 @@ public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
         privacyController.createPrivateMarkerTransactionPayload(
             privateTransaction, privacyUserId, Optional.empty());
 
-    return privacyController.createPrivateMarkerTransaction(
-        payloadFromPlugin, privateTransaction, Address.PLUGIN_PRIVACY);
+    return createPrivateMarkerTransaction(
+        sender, Address.PLUGIN_PRIVACY, payloadFromPlugin, privateTransaction, privacyUserId);
+  }
+
+  @Override
+  protected long getGasLimit(final PrivateTransaction privateTransaction, final String pmtPayload) {
+    // The gas limit can not be determined by the sender because the payload could be changed by the
+    // plugin
+    // choose the highest of the two options
+    return Math.max(
+        privateTransaction.getGasLimit(),
+        gasCalculator
+            .transactionIntrinsicGasCostAndAccessedState(
+                new Transaction.Builder()
+                    .to(Address.PLUGIN_PRIVACY)
+                    .payload(Bytes.fromBase64String(pmtPayload))
+                    .build())
+            .getGas()
+            .toLong());
   }
 }

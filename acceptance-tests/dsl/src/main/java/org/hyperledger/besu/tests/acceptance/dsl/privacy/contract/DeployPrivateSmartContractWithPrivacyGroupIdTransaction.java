@@ -24,6 +24,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.tx.Contract;
+import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.tx.gas.ContractGasProvider;
@@ -60,11 +61,8 @@ public class DeployPrivateSmartContractWithPrivacyGroupIdTransaction<T extends C
   public T execute(final NodeRequests node) {
 
     final PrivateTransactionManager privateTransactionManager =
-        new PrivateTransactionManager.Builder(
-                node.privacy().getBesuClient(), senderCredentials, privateFrom)
-            .setPrivacyGroupId(privacyGroupId)
-            .setRestriction(restriction)
-            .build();
+        node.privacy()
+            .getTransactionManager(senderCredentials, privateFrom, privacyGroupId, restriction);
 
     try {
       final Method method =

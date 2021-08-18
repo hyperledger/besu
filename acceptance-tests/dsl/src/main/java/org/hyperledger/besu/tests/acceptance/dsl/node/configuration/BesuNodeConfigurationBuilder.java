@@ -22,16 +22,22 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -39,12 +45,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Charsets;
+
 public class BesuNodeConfigurationBuilder {
 
   private String name;
   private Optional<Path> dataPath = Optional.empty();
   private MiningParameters miningParameters =
-      new MiningParametersTestBuilder().enabled(false).build();
+      new MiningParameters.Builder()
+          .enabled(false)
+          .coinbase(AddressHelpers.ofValue(1))
+          .minTransactionGasPrice(Wei.of(1000))
+          .build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
@@ -53,6 +65,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
+  private Optional<TLSConfiguration> tlsConfiguration = Optional.empty();
   private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
@@ -90,7 +103,8 @@ public class BesuNodeConfigurationBuilder {
   }
 
   public BesuNodeConfigurationBuilder miningEnabled(final boolean enabled) {
-    this.miningParameters = new MiningParametersTestBuilder().enabled(enabled).build();
+    this.miningParameters =
+        new MiningParameters.Builder().enabled(enabled).coinbase(AddressHelpers.ofValue(1)).build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER);
     return this;
   }
@@ -250,6 +264,91 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  private static Path toPath(final String path) throws Exception {
+    return Path.of(BesuNodeConfigurationBuilder.class.getResource(path).toURI());
+  }
+
+  public BesuNodeConfigurationBuilder p2pTLSEnabled(final String name, final String type) {
+    final TLSConfiguration.Builder builder = TLSConfiguration.Builder.tlsConfiguration();
+    try {
+      final String nsspin = "/p2p-tls/%s/nsspin.txt";
+      final String truststore = "/p2p-tls/%s/truststore.jks";
+      final String crl = "/p2p-tls/%s/crl.pem";
+      switch (type) {
+        case KeyStoreWrapper.KEYSTORE_TYPE_JKS:
+          builder
+              .withKeyStoreType(type)
+              .withKeyStorePath(toPath(String.format("/p2p-tls/%s/keystore.jks", name)))
+              .withKeyStorePasswordSupplier(
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
+              .withTrustStoreType(type)
+              .withTrustStorePath(toPath(String.format(truststore, name)))
+              .withTrustStorePasswordSupplier(
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)))
+              .withCrlPath(toPath(String.format(crl, name)));
+          break;
+        case KeyStoreWrapper.KEYSTORE_TYPE_PKCS12:
+          builder
+              .withKeyStoreType(type)
+              .withKeyStorePath(toPath(String.format("/p2p-tls/%s/keys.p12", name)))
+              .withKeyStorePasswordSupplier(
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
+              .withTrustStoreType(KeyStoreWrapper.KEYSTORE_TYPE_JKS)
+              .withTrustStorePath(toPath(String.format(truststore, name)))
+              .withTrustStorePasswordSupplier(
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withTrustStorePasswordPath(toPath(String.format(nsspin, name)))
+              .withCrlPath(toPath(String.format(crl, name)));
+          break;
+        case KeyStoreWrapper.KEYSTORE_TYPE_PKCS11:
+          builder
+              .withKeyStoreType(type)
+              .withKeyStorePath(
+                  initNSSConfigFile(toPath(String.format("/p2p-tls/%s/nss.cfg", name))))
+              .withKeyStorePasswordSupplier(
+                  new FileBasedPasswordProvider(toPath(String.format(nsspin, name))))
+              .withKeyStorePasswordPath(toPath(String.format(nsspin, name)))
+              .withCrlPath(toPath(String.format(crl, name)));
+          break;
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    this.tlsConfiguration = Optional.of(builder.build());
+    return this;
+  }
+
+  private Path initNSSConfigFile(final Path srcFilePath) {
+    Path ret = null;
+    try {
+      final String content = Files.readString(srcFilePath);
+      final String updated =
+          content.replaceAll(
+              "(nssSecmodDirectory\\W*)(\\.\\/.*)",
+              "$1".concat(srcFilePath.toAbsolutePath().toString().replace("nss.cfg", "nssdb")));
+      final Path targetFilePath = createTemporaryFile("nsscfg");
+      Files.write(targetFilePath, updated.getBytes(Charsets.UTF_8));
+      ret = targetFilePath;
+    } catch (IOException e) {
+      throw new RuntimeException("Error populating nss config file", e);
+    }
+    return ret;
+  }
+
+  private Path createTemporaryFile(final String suffix) {
+    final File tempFile;
+    try {
+      tempFile = File.createTempFile("temp", suffix);
+      tempFile.deleteOnExit();
+    } catch (IOException e) {
+      throw new RuntimeException("Error creating temporary file", e);
+    }
+    return tempFile.toPath();
+  }
+
   public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {
     this.discoveryEnabled = discoveryEnabled;
     return this;
@@ -321,6 +420,7 @@ public class BesuNodeConfigurationBuilder {
         network,
         genesisConfigProvider,
         p2pEnabled,
+        tlsConfiguration,
         networkingConfiguration,
         discoveryEnabled,
         bootnodeEligible,

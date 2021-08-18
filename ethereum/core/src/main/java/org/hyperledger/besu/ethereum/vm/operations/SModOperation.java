@@ -22,7 +22,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SModOperation extends AbstractFixedCostOperation {
 
@@ -32,14 +32,14 @@ public class SModOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes32 value0 = frame.popStackItem();
-    final Bytes32 value1 = frame.popStackItem();
+    final UInt256 value0 = frame.popStackItem();
+    final UInt256 value1 = frame.popStackItem();
 
     if (value1.isZero()) {
-      frame.pushStackItem(Bytes32.ZERO);
+      frame.pushStackItem(UInt256.ZERO);
     } else {
-      final BigInteger b1 = value0.toBigInteger();
-      final BigInteger b2 = value1.toBigInteger();
+      final BigInteger b1 = value0.toSignedBigInteger();
+      final BigInteger b2 = value1.toSignedBigInteger();
       BigInteger result = b1.abs().mod(b2.abs());
       if (b1.signum() < 0) {
         result = result.negate();
@@ -53,7 +53,7 @@ public class SModOperation extends AbstractFixedCostOperation {
       final byte[] padding = new byte[32 - resultBytes.size()];
       Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
 
-      frame.pushStackItem(Bytes32.wrap(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
+      frame.pushStackItem(UInt256.fromBytes(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
     }
 
     return successResponse;

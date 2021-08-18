@@ -38,7 +38,7 @@ public class CliqueProposalsTest extends AbstractVoteProposerMethodTest {
 
   @Before
   public void setup() {
-    method = new CliqueProposals(getVoteProposer());
+    method = new CliqueProposals(getValidatorProvider());
   }
 
   @Test

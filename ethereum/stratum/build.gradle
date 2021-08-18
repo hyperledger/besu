@@ -34,11 +34,12 @@ dependencies {
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
   implementation project(':ethereum:blockcreation')
+  implementation project(':metrics:core')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   testImplementation project(':testutil')
 

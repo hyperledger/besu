@@ -80,5 +80,5 @@ public class LondonGasCalculator extends BerlinGasCalculator {
   @Override
   public long getMaxRefundQuotient() {
     return NEW_MAX_REFUND_QUOTIENT;
-  };
+  }
 }

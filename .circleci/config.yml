@@ -294,7 +294,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
                 - /^release-.*/
           requires:
             - integrationTests
@@ -307,7 +307,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
                 - /^release-.*/
           requires:
             - integrationTests

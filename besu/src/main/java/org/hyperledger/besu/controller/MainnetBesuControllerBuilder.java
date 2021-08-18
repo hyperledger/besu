@@ -54,7 +54,9 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
                 clock),
             gasLimitCalculator,
-            epochCalculator);
+            epochCalculator,
+            miningParameters.getPowJobTimeToLive(),
+            miningParameters.getMaxOmmerDepth());
 
     final PoWMiningCoordinator miningCoordinator =
         new PoWMiningCoordinator(
@@ -74,12 +76,15 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected Void createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     return null;
   }
 
   @Override
-  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+  protected PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain, final ProtocolContext protocolContext) {
     return new NoopPluginServiceFactory();
   }
 

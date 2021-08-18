@@ -30,7 +30,7 @@ public class PrivacyNodeConfiguration {
     this(false, false, false, besuConfig, keyConfig);
   }
 
-  PrivacyNodeConfiguration(
+  public PrivacyNodeConfiguration(
       final boolean isOnchainPrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
       final boolean isPrivacyPluginEnabled,
