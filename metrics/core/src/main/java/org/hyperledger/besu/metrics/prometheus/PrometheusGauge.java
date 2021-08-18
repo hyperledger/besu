@@ -16,30 +16,25 @@ package org.hyperledger.besu.metrics.prometheus;
 
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 import io.prometheus.client.Collector;
 
-public class PrometheusGauge implements LabelledGauge {
+public class PrometheusGauge extends Collector implements LabelledGauge {
   private final String metricName;
   private final String help;
   private final List<String> labelNames;
-  private final Consumer<Collector> collectorConsumer;
   private final Map<List<String>, DoubleSupplier> observationsMap = new ConcurrentHashMap<>();
 
   public PrometheusGauge(
-      final String metricName,
-      final String help,
-      final List<String> labelNames,
-      final Consumer<Collector> collectorConsumer) {
+      final String metricName, final String help, final List<String> labelNames) {
     this.metricName = metricName;
     this.help = help;
     this.labelNames = labelNames;
-    this.collectorConsumer = collectorConsumer;
   }
 
   @Override
@@ -53,9 +48,15 @@ public class PrometheusGauge implements LabelledGauge {
       throw new IllegalArgumentException(
           String.format("A gauge has already been created for label values %s", labelValuesString));
     }
+  }
 
-    collectorConsumer.accept(
-        new CurrentValueCollector(
-            metricName, help, labelNames, List.of(labelValues), valueSupplier));
+  @Override
+  public List<MetricFamilySamples> collect() {
+    final List<MetricFamilySamples.Sample> samples = new ArrayList<>();
+    observationsMap.forEach(
+        (k, v) ->
+            samples.add(
+                new MetricFamilySamples.Sample(metricName, labelNames, k, v.getAsDouble())));
+    return List.of(new MetricFamilySamples(metricName, Type.GAUGE, help, samples));
   }
 }

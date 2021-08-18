@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -151,14 +150,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String... labelNames) {
     final String metricName = convertToPrometheusName(category, name);
     if (isCategoryEnabled(category)) {
-      final Consumer<Collector> addCollectorLambda =
-          (collector ->
-              collectors
-                  .computeIfAbsent(
-                      category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-                  .add(collector));
-      final PrometheusGauge gauge =
-          new PrometheusGauge(metricName, help, List.of(labelNames), addCollectorLambda);
+      final PrometheusGauge gauge = new PrometheusGauge(metricName, help, List.of(labelNames));
+      addCollectorUnchecked(category, gauge);
       return gauge;
     }
     return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
