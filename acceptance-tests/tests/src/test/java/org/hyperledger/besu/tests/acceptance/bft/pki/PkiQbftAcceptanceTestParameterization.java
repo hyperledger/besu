@@ -30,24 +30,24 @@ public class PkiQbftAcceptanceTestParameterization {
     ret.addAll(
         List.of(
             new Object[] {
-              "ibft-tls-jks",
+              "qbft-tls-jks",
               new PkiQbftAcceptanceTestParameterization(
-                  BesuNodeFactory::createIbft2NodeWithTLSJKS,
-                  BesuNodeFactory::createIbft2TLSJKSNodeWithValidators)
+                  BesuNodeFactory::createQbftNodeWithTLSJKS,
+                  BesuNodeFactory::createQbftTLSJKSNodeWithValidators)
             },
             new Object[] {
-              "ibft-tls-pkcs12",
+              "qbft-tls-pkcs12",
               new PkiQbftAcceptanceTestParameterization(
-                  BesuNodeFactory::createIbft2NodeWithTLSPKCS12,
-                  BesuNodeFactory::createIbft2TLSPKCS12NodeWithValidators)
+                  BesuNodeFactory::createQbftNodeWithTLSPKCS12,
+                  BesuNodeFactory::createQbftTLSPKCS12NodeWithValidators)
             }));
     if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
       ret.add(
           new Object[] {
-            "ibft-tls-pkcs11",
+            "qbft-tls-pkcs11",
             new PkiQbftAcceptanceTestParameterization(
-                BesuNodeFactory::createIbft2NodeWithTLSPKCS11,
-                BesuNodeFactory::createIbft2TLSPKCS11NodeWithValidators)
+                BesuNodeFactory::createQbftNodeWithTLSPKCS11,
+                BesuNodeFactory::createQbftTLSPKCS11NodeWithValidators)
           });
     }
 
