@@ -76,8 +76,8 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
@@ -400,8 +400,8 @@ public class TestContextBuilder {
             worldStateArchive,
             new BftContext(validatorProvider, epochManager, blockInterface));
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
+    final FrontierPendingTransactionsSorter pendingTransactions =
+        new FrontierPendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             1,

@@ -35,8 +35,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -101,7 +101,7 @@ public class BftBlockCreatorTest {
                 new IbftExtraData(
                         Bytes.wrap(new byte[32]), Lists.newArrayList(), null, initialValidatorList)
                     .encode(),
-            new PendingTransactions(
+            new FrontierPendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
                 5,

@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 // This class is responsible for creating a block without committer seals (basically it was just
@@ -37,7 +37,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
   public BftBlockCreator(
       final Address localAddress,
       final ExtraDataCalculator extraDataCalculator,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final GasLimitCalculator gasLimitCalculator,

@@ -88,6 +88,11 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
+  public boolean hasMilestone(final String forkName) {
+    return delegate.hasMilestone(forkName);
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return delegate.getChainId();
   }

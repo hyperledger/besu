@@ -77,6 +77,11 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
+  public boolean hasMilestone(final String forkName) {
+    return protocolSpecs.stream().anyMatch(spec -> spec.getSpec().getName().equals(forkName));
+  }
+
+  @Override
   public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream()
         .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))

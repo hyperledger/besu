@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.methods.fork.frontier;
+package org.hyperledger.besu.ethereum.api.jsonrpc.methods.fork.london;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -53,7 +53,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.LondonPendingTransactionsSorter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -82,7 +82,7 @@ public class EthGetFilterChangesIntegrationTest {
   private TransactionPool transactionPool;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  private FrontierPendingTransactionsSorter transactions;
+  private LondonPendingTransactionsSorter transactions;
 
   private static final int MAX_TRANSACTIONS = 5;
   private static final int MAX_HASHES = 5;
@@ -97,7 +97,7 @@ public class EthGetFilterChangesIntegrationTest {
     final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
     blockchain = executionContext.getBlockchain();
     transactions =
-        new FrontierPendingTransactionsSorter(
+        new LondonPendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             MAX_TRANSACTIONS,
             MAX_HASHES,

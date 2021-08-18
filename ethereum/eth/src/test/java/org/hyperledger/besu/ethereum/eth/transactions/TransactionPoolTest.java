@@ -61,6 +61,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -109,7 +110,7 @@ public class TransactionPoolTest {
       mock(MainnetTransactionValidator.class);
   private MutableBlockchain blockchain;
 
-  private PendingTransactions transactions;
+  private FrontierPendingTransactionsSorter transactions;
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
@@ -126,7 +127,7 @@ public class TransactionPoolTest {
   public void setUp() {
     blockchain = executionContext.getBlockchain();
     transactions =
-        new PendingTransactions(
+        new FrontierPendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
@@ -426,7 +427,8 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldDiscardRemoteTransactionThatAlreadyExistsBeforeValidation() {
-    final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
+    final FrontierPendingTransactionsSorter pendingTransactions =
+        mock(FrontierPendingTransactionsSorter.class);
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,

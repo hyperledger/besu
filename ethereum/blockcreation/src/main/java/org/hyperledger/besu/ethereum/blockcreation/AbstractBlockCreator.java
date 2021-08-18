@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
@@ -66,7 +66,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private final GasLimitCalculator gasLimitCalculator;
 
   private final ExtraDataCalculator extraDataCalculator;
-  private final PendingTransactions pendingTransactions;
+  private final AbstractPendingTransactionsSorter pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
@@ -81,7 +81,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected AbstractBlockCreator(
       final Address coinbase,
       final ExtraDataCalculator extraDataCalculator,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final GasLimitCalculator gasLimitCalculator,

@@ -14,12 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.LONDON_FORK_NAME;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.LondonPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -38,15 +43,9 @@ public class TransactionPoolFactory {
       final Wei minTransactionGasPrice,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
-    final PendingTransactions pendingTransactions =
-        new PendingTransactions(
-            transactionPoolConfiguration.getPendingTxRetentionPeriod(),
-            transactionPoolConfiguration.getTxPoolMaxSize(),
-            transactionPoolConfiguration.getPooledTransactionHashesSize(),
-            clock,
-            metricsSystem,
-            protocolContext.getBlockchain()::getChainHeadHeader,
-            transactionPoolConfiguration.getPriceBump());
+    final AbstractPendingTransactionsSorter pendingTransactions =
+        createPendingTransactionsSorter(
+            protocolSchedule, protocolContext, clock, metricsSystem, transactionPoolConfiguration);
 
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =
@@ -80,7 +79,7 @@ public class TransactionPoolFactory {
       final SyncState syncState,
       final Wei minTransactionGasPrice,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PendingTransactions pendingTransactions,
+      final AbstractPendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final PeerPendingTransactionTracker pendingTransactionTracker,
@@ -135,5 +134,32 @@ public class TransactionPoolFactory {
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
     return transactionPool;
+  }
+
+  private static AbstractPendingTransactionsSorter createPendingTransactionsSorter(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final TransactionPoolConfiguration transactionPoolConfiguration) {
+    if (protocolSchedule.hasMilestone(LONDON_FORK_NAME)) {
+      return new LondonPendingTransactionsSorter(
+          transactionPoolConfiguration.getPendingTxRetentionPeriod(),
+          transactionPoolConfiguration.getTxPoolMaxSize(),
+          transactionPoolConfiguration.getPooledTransactionHashesSize(),
+          clock,
+          metricsSystem,
+          protocolContext.getBlockchain()::getChainHeadHeader,
+          transactionPoolConfiguration.getPriceBump());
+    } else {
+      return new FrontierPendingTransactionsSorter(
+          transactionPoolConfiguration.getPendingTxRetentionPeriod(),
+          transactionPoolConfiguration.getTxPoolMaxSize(),
+          transactionPoolConfiguration.getPooledTransactionHashesSize(),
+          clock,
+          metricsSystem,
+          protocolContext.getBlockchain()::getChainHeadHeader,
+          transactionPoolConfiguration.getPriceBump());
+    }
   }
 }
