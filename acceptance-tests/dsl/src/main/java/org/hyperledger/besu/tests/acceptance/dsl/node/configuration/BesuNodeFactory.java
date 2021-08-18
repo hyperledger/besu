@@ -1,13 +1,16 @@
 /*
  * Copyright ConsenSys AG.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with
  * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See
+ *  the License for the
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -352,29 +355,29 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createIbft2NodeWithTLS(final String name, final String type) throws IOException {
+  public BesuNode createQbftNodeWithTLS(final String name, final String type) throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .p2pTLSEnabled(name, type)
-            .jsonRpcConfiguration(node.createJsonRpcWithIbft2EnabledConfig(false))
+            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .genesisConfigProvider(genesis::createIbft2GenesisConfig)
+            .genesisConfigProvider(genesis::createQbftGenesisConfig)
             .build());
   }
 
-  public BesuNode createIbft2NodeWithTLSJKS(final String name) throws IOException {
-    return createIbft2NodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS);
+  public BesuNode createQbftNodeWithTLSJKS(final String name) throws IOException {
+    return createQbftNodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS);
   }
 
-  public BesuNode createIbft2NodeWithTLSPKCS12(final String name) throws IOException {
-    return createIbft2NodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS12);
+  public BesuNode createQbftNodeWithTLSPKCS12(final String name) throws IOException {
+    return createQbftNodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS12);
   }
 
-  public BesuNode createIbft2NodeWithTLSPKCS11(final String name) throws IOException {
-    return createIbft2NodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11);
+  public BesuNode createQbftNodeWithTLSPKCS11(final String name) throws IOException {
+    return createQbftNodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11);
   }
 
   public BesuNode createQbftNode(final String name) throws IOException {
@@ -451,7 +454,7 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createIbft2TLSNodeWithValidators(
+  public BesuNode createQbftTLSNodeWithValidators(
       final String name, final String type, final String... validators) throws IOException {
 
     return create(
@@ -469,19 +472,19 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createIbft2TLSJKSNodeWithValidators(final String name, final String... validators)
+  public BesuNode createQbftTLSJKSNodeWithValidators(final String name, final String... validators)
       throws IOException {
-    return createIbft2TLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS, validators);
+    return createQbftTLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS, validators);
   }
 
-  public BesuNode createIbft2TLSPKCS12NodeWithValidators(
+  public BesuNode createQbftTLSPKCS12NodeWithValidators(
       final String name, final String... validators) throws IOException {
-    return createIbft2TLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, validators);
+    return createQbftTLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, validators);
   }
 
-  public BesuNode createIbft2TLSPKCS11NodeWithValidators(
+  public BesuNode createQbftTLSPKCS11NodeWithValidators(
       final String name, final String... validators) throws IOException {
-    return createIbft2TLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, validators);
+    return createQbftTLSNodeWithValidators(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, validators);
   }
 
   public BesuNode createQbftNodeWithValidators(final String name, final String... validators)
