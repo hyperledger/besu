@@ -24,13 +24,13 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRange
 
 import org.junit.Test;
 
-public class FrontierTargetingGasLimitCalculatorTest {
+public class TargetingGasLimitCalculatorTest {
   private static final long ADJUSTMENT_FACTOR = 1024L;
 
   @Test
   public void verifyGasLimitIsIncreasedWithinLimits() {
     FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
-        new FrontierTargetingGasLimitCalculator(ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL);
+        new FrontierTargetingGasLimitCalculator();
     assertThat(targetingGasLimitCalculator.nextGasLimit(8_000_000L, 10_000_000L, 1L))
         .isEqualTo(8_000_000L + ADJUSTMENT_FACTOR);
   }
@@ -38,7 +38,7 @@ public class FrontierTargetingGasLimitCalculatorTest {
   @Test
   public void verifyGasLimitIsDecreasedWithinLimits() {
     FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
-        new FrontierTargetingGasLimitCalculator(ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL);
+        new FrontierTargetingGasLimitCalculator();
     assertThat(targetingGasLimitCalculator.nextGasLimit(12_000_000L, 10_000_000L, 1L))
         .isEqualTo(12_000_000L - ADJUSTMENT_FACTOR);
   }
@@ -48,12 +48,19 @@ public class FrontierTargetingGasLimitCalculatorTest {
     final long target = 10_000_000L;
     final long offset = ADJUSTMENT_FACTOR / 2;
     FrontierTargetingGasLimitCalculator targetingGasLimitCalculator =
-        new FrontierTargetingGasLimitCalculator(ADJUSTMENT_FACTOR, 5000L, 0x7fffffffffffffffL);
+        new FrontierTargetingGasLimitCalculator();
     assertThat(targetingGasLimitCalculator.nextGasLimit(target - offset, target, 1L))
         .isEqualTo(target);
     assertThat(targetingGasLimitCalculator.nextGasLimit(target + offset, target, 1L))
         .isEqualTo(target);
   }
+
+    @Test
+    public void verifyMinGasLimit() {
+      assertThat(AbstractGasLimitSpecification
+          .isValidTargetGasLimit(DEFAULT_MIN_GAS_LIMIT - 1))
+          .isFalse();
+    }
 
   @Test
   public void verifyWithinGasLimitDelta() {
