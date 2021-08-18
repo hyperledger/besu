@@ -21,6 +21,7 @@ package org.hyperledger.besu.consensus.qbft.pki;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.qbft.QbftExtraDataCodecTestUtils.createNonEmptyVanityData;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -60,6 +61,9 @@ public class PkiQbftExtraDataCodecTest {
 
   private final String RAW_PROPOSAL_ENCODED_STRING =
       "0xf8f1a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000000000000000000000000001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff83fedcbaf886b8410000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000a00b841000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000010080";
+
+  private final String RAW_QBFT_EXTRA_DATA =
+      "0xf8f0a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000000000000000000000000001940000000000000000000000000000000000000002d794000000000000000000000000000000000000000181ff83fedcbaf886b8410000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000a00b841000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000100";
 
   private final PkiQbftExtraDataCodec bftExtraDataCodec = new PkiQbftExtraDataCodec();
 
@@ -109,6 +113,51 @@ public class PkiQbftExtraDataCodecTest {
     assertThat(extraData.getCms()).isEqualTo(cms);
   }
 
+  @Test
+  public void decodingQbftExtraDataDelegatesToQbftCodec() {
+    final List<Address> validators =
+        Arrays.asList(Address.fromHexString("1"), Address.fromHexString("2"));
+    final int round = 0x00FEDCBA;
+    final List<SECPSignature> committerSeals =
+        Arrays.asList(
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+
+    // Create randomised vanity data.
+    final byte[] vanity_bytes = createNonEmptyVanityData();
+    new Random().nextBytes(vanity_bytes);
+    final Bytes vanity_data = Bytes.wrap(vanity_bytes);
+
+    final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
+    encoder.startList(); // start extra data list
+    // vanity data
+    encoder.writeBytes(vanity_data);
+    // validators
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    // votes
+    encoder.startList();
+    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeByte(Vote.ADD_BYTE_VALUE);
+    encoder.endList();
+    // rounds
+    encoder.writeIntScalar(round);
+    // committer seals
+    encoder.writeList(committerSeals, (committer, rlp) -> rlp.writeBytes(committer.encodedBytes()));
+    // Not including the CMS in the list (to generate a non-pki QBFT extra data)
+    encoder.endList(); // end extra data list
+
+    final Bytes bufferToInject = encoder.encoded();
+
+    final PkiQbftExtraData extraData =
+        (PkiQbftExtraData) bftExtraDataCodec.decodeRaw(bufferToInject);
+
+    assertThat(extraData.getVanityData()).isEqualTo(vanity_data);
+    assertThat(extraData.getRound()).isEqualTo(round);
+    assertThat(extraData.getSeals()).isEqualTo(committerSeals);
+    assertThat(extraData.getValidators()).isEqualTo(validators);
+    assertThat(extraData.getCms()).isEqualTo(Bytes.EMPTY);
+  }
+
   /*
    When encoding for blockchain, we ignore commit seals and round number, but we include the CMS
   */
@@ -145,6 +194,26 @@ public class PkiQbftExtraDataCodecTest {
   public void encodingForCreatingCmsProposal() {
     final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_PROPOSAL_ENCODED_STRING);
     final Bytes encoded = bftExtraDataCodec.encodeForProposal(getDecodedExtraData(cms));
+
+    assertThat(encoded).isEqualTo(expectedRawDecoding);
+  }
+
+  /*
+   When encoding non-pki extra data, we delegate to the regular QBFT encoder
+  */
+  @Test
+  public void encodingQbftExtraData() {
+    final Bytes expectedRawDecoding = Bytes.fromHexString(RAW_QBFT_EXTRA_DATA);
+    final PkiQbftExtraData pkiBftExtraData = getDecodedExtraData(cms);
+    final BftExtraData bftExtraData =
+        new BftExtraData(
+            pkiBftExtraData.getVanityData(),
+            pkiBftExtraData.getSeals(),
+            pkiBftExtraData.getVote(),
+            pkiBftExtraData.getRound(),
+            pkiBftExtraData.getValidators());
+
+    final Bytes encoded = bftExtraDataCodec.encode(bftExtraData);
 
     assertThat(encoded).isEqualTo(expectedRawDecoding);
   }

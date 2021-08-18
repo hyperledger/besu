@@ -26,7 +26,7 @@ public abstract class BftExtraDataCodec {
     ALL,
     EXCLUDE_COMMIT_SEALS,
     EXCLUDE_COMMIT_SEALS_AND_ROUND_NUMBER,
-    WITHOUT_CMS //TODO-lucas How can we achieve this w/o changing the BftExtraDataCodec base class
+    WITHOUT_CMS // TODO-lucas How can we achieve this w/o changing the BftExtraDataCodec base class
   }
 
   private static final Logger LOG = LogManager.getLogger();
