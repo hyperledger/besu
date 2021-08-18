@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.QbftConfigOptions;
+import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
@@ -40,7 +41,6 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.QbftBlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
@@ -53,8 +53,9 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFa
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
-import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
+import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedule;
+import org.hyperledger.besu.consensus.qbft.validator.ValidatorProviderFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -273,23 +274,32 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final QbftConfigOptions qbftConfig = configOptions.getQbftConfigOptions();
     final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
 
-    final BftValidatorOverrides validatorOverrides =
-        convertBftForks(configOptions.getTransitions().getQbftForks());
+    final List<QbftFork> qbftForks = configOptions.getTransitions().getQbftForks();
+    final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
+    final TransactionSimulator transactionSimulator =
+        new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
+    final ValidatorProviderFactory validatorProviderFactory =
+        new ValidatorProviderFactory(
+            blockchain,
+            epochManager,
+            bftBlockInterface().get(),
+            validatorOverrides,
+            transactionSimulator);
 
-    final ValidatorProvider validatorProvider;
-    if (qbftConfig.getValidatorContractAddress().isEmpty()) {
-      validatorProvider =
-          BlockValidatorProvider.forkingValidatorProvider(
-              blockchain, epochManager, bftBlockInterface().get(), validatorOverrides);
-    } else {
-      final Address contractAddress =
-          Address.fromHexString(qbftConfig.getValidatorContractAddress().get());
-      final TransactionSimulator transactionSimulator =
-          new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
-      final ValidatorContractController validatorContractController =
-          new ValidatorContractController(contractAddress, transactionSimulator);
-      validatorProvider = new TransactionValidatorProvider(blockchain, validatorContractController);
-    }
+    final ValidatorProvider initialValidatorProvider =
+        qbftConfig
+            .getValidatorContractAddress()
+            .map(
+                address ->
+                    validatorProviderFactory.createTransactionValidatorProvider(
+                        Address.fromHexString(address)))
+            .orElse(validatorProviderFactory.createBlockValidatorProvider());
+    final ValidatorProvider validatorProvider =
+        new ForkingValidatorProvider(
+            blockchain,
+            new QbftForksSchedule(qbftForks),
+            validatorProviderFactory,
+            initialValidatorProvider);
 
     if (pkiBlockCreationConfiguration.isPresent()) {
       return new PkiQbftContext(
@@ -302,7 +312,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     }
   }
 
-  private BftValidatorOverrides convertBftForks(final List<BftFork> bftForks) {
+  private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {
     final Map<Long, List<Address>> result = new HashMap<>();
 
     for (final BftFork fork : bftForks) {

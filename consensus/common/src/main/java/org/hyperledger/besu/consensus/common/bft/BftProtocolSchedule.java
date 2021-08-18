@@ -60,7 +60,7 @@ public class BftProtocolSchedule {
                 bftExtraDataCodec,
                 config.getBftConfigOptions().getBlockRewardWei()));
 
-    final Supplier<List<BftFork>> forks;
+    final Supplier<List<? extends BftFork>> forks;
     if (config.isIbft2()) {
       forks = () -> config.getTransitions().getIbftForks();
     } else {

@@ -32,7 +32,7 @@ public class BftFork {
   private static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
   private static final String BLOCK_REWARD_KEY = "blockreward";
 
-  private final ObjectNode forkConfigRoot;
+  protected final ObjectNode forkConfigRoot;
 
   @JsonCreator
   public BftFork(final ObjectNode forkConfigRoot) {
