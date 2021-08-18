@@ -16,8 +16,9 @@ package org.hyperledger.besu.metrics.prometheus;
 
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
@@ -28,7 +29,7 @@ public class PrometheusGauge implements LabelledGauge {
   private final String help;
   private final List<String> labelNames;
   private final Consumer<Collector> collectorConsumer;
-  private final List<String> labelValuesCreated = new ArrayList<>();
+  private final Map<List<String>, DoubleSupplier> observationsMap = new ConcurrentHashMap<>();
 
   public PrometheusGauge(
       final String metricName,
@@ -43,13 +44,16 @@ public class PrometheusGauge implements LabelledGauge {
 
   @Override
   public synchronized void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
-    final String labelValuesString = String.join(",", labelValues);
-    if (labelValuesCreated.contains(labelValuesString)) {
+    if (labelValues.length != labelNames.size()) {
+      throw new IllegalArgumentException(
+          "Label values and label names must be the same cardinality");
+    }
+    if (observationsMap.putIfAbsent(List.of(labelValues), valueSupplier) != null) {
+      final String labelValuesString = String.join(",", labelValues);
       throw new IllegalArgumentException(
           String.format("A gauge has already been created for label values %s", labelValuesString));
     }
 
-    labelValuesCreated.add(labelValuesString);
     collectorConsumer.accept(
         new CurrentValueCollector(
             metricName, help, labelNames, List.of(labelValues), valueSupplier));

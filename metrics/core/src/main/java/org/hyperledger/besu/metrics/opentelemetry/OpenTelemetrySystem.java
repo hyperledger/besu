@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
@@ -251,9 +250,9 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final String... labelNames) {
     LOG.trace("Creating a labelled gauge {}", name);
     if (isCategoryEnabled(category)) {
-      final Supplier<Meter> meterSupplier = () -> meterSdkProvider.get(category.getName());
       final OpenTelemetryGauge gauge =
-          new OpenTelemetryGauge(name, help, meterSupplier, List.of(labelNames));
+          new OpenTelemetryGauge(
+              name, help, meterSdkProvider.get(category.getName()), List.of(labelNames));
       return gauge;
     }
     return NoOpMetricsSystem.getLabelledGauge(labelNames.length);

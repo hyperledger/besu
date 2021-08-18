@@ -16,11 +16,11 @@ package org.hyperledger.besu.metrics.opentelemetry;
 
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 
 import com.google.common.base.Preconditions;
 import io.opentelemetry.api.metrics.AsynchronousInstrument;
@@ -35,12 +35,11 @@ public class OpenTelemetryGauge implements LabelledGauge {
   public OpenTelemetryGauge(
       final String metricName,
       final String help,
-      final Supplier<Meter> meterSupplier,
+      final Meter meter,
       final List<String> labelNames) {
     this.labelNames = labelNames;
 
-    meterSupplier
-        .get()
+    meter
         .doubleValueObserverBuilder(metricName)
         .setDescription(help)
         .setUpdater(this::updater)
@@ -53,8 +52,9 @@ public class OpenTelemetryGauge implements LabelledGauge {
         labelValues.length == labelNames.size(),
         "label values and label names need the same number of elements");
     final Labels labels = getLabels(labelValues);
-    if (!observationsMap.containsKey(labels)) {
-      observationsMap.put(labels, valueSupplier);
+    if (observationsMap.putIfAbsent(labels, valueSupplier) != null) {
+      throw new IllegalStateException(
+          "Already registered a gauge with labels " + Arrays.toString(labelValues));
     }
   }
 
