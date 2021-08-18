@@ -18,6 +18,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -139,6 +141,27 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final Collector collector = new CurrentValueCollector(metricName, help, valueSupplier);
       addCollectorUnchecked(category, collector);
     }
+  }
+
+  @Override
+  public LabelledGauge createLabelledGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    final String metricName = convertToPrometheusName(category, name);
+    if (isCategoryEnabled(category)) {
+      final Consumer<Collector> addCollectorLambda =
+          (collector ->
+              collectors
+                  .computeIfAbsent(
+                      category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                  .add(collector));
+      final PrometheusGauge gauge =
+          new PrometheusGauge(metricName, help, List.of(labelNames), addCollectorLambda);
+      return gauge;
+    }
+    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
   }
 
   public void addCollector(

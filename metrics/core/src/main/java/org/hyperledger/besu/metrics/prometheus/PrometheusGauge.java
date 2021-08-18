@@ -14,46 +14,44 @@
  */
 package org.hyperledger.besu.metrics.prometheus;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 import io.prometheus.client.Collector;
-import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 
-class CurrentValueCollector extends Collector {
-
+public class PrometheusGauge implements LabelledGauge {
   private final String metricName;
   private final String help;
-  private final DoubleSupplier valueSupplier;
   private final List<String> labelNames;
-  private final List<String> labelValues;
+  private final Consumer<Collector> collectorConsumer;
+  private final List<String> labelValuesCreated = new ArrayList<>();
 
-  public CurrentValueCollector(
-      final String metricName, final String help, final DoubleSupplier valueSupplier) {
-    this(metricName, help, emptyList(), emptyList(), valueSupplier);
-  }
-
-  public CurrentValueCollector(
+  public PrometheusGauge(
       final String metricName,
       final String help,
       final List<String> labelNames,
-      final List<String> labelValues,
-      final DoubleSupplier valueSupplier) {
+      final Consumer<Collector> collectorConsumer) {
     this.metricName = metricName;
     this.help = help;
-    this.valueSupplier = valueSupplier;
     this.labelNames = labelNames;
-    this.labelValues = labelValues;
+    this.collectorConsumer = collectorConsumer;
   }
 
   @Override
-  public List<MetricFamilySamples> collect() {
-    final Sample sample =
-        new Sample(metricName, labelNames, labelValues, valueSupplier.getAsDouble());
-    return singletonList(
-        new MetricFamilySamples(metricName, Type.GAUGE, help, singletonList(sample)));
+  public synchronized void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
+    final String labelValuesString = String.join(",", labelValues);
+    if (labelValuesCreated.contains(labelValuesString)) {
+      throw new IllegalArgumentException(
+          String.format("A gauge has already been created for label values %s", labelValuesString));
+    }
+
+    labelValuesCreated.add(labelValuesString);
+    collectorConsumer.accept(
+        new CurrentValueCollector(
+            metricName, help, labelNames, List.of(labelValues), valueSupplier));
   }
 }
