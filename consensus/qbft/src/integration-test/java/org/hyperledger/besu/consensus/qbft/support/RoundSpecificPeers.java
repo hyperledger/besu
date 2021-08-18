@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.qbft.messagedata.ProposalMessageData;
@@ -49,19 +48,21 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 public class RoundSpecificPeers {
-  private static final BftExtraDataCodec bftExtraDataCodec = new QbftExtraDataCodec();
 
   private final ValidatorPeer proposer;
   private final Collection<ValidatorPeer> peers;
   private final List<ValidatorPeer> nonProposingPeers;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
   public RoundSpecificPeers(
       final ValidatorPeer proposer,
       final Collection<ValidatorPeer> peers,
-      final List<ValidatorPeer> nonProposingPeers) {
+      final List<ValidatorPeer> nonProposingPeers,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.proposer = proposer;
     this.peers = peers;
     this.nonProposingPeers = nonProposingPeers;
+    this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
   public ValidatorPeer getProposer() {
