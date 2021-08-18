@@ -495,7 +495,7 @@ public class QbftBlockHeightManagerTest {
     assertThat(capturedMessageData).isInstanceOf(RoundChangeMessageData.class);
     final RoundChangeMessageData roundChange = (RoundChangeMessageData) capturedMessageData;
 
-    final RoundChange receivedRoundChange = roundChange.decode();
+    final RoundChange receivedRoundChange = roundChange.decode(bftExtraDataCodec);
 
     Assertions.assertThat(receivedRoundChange.getPreparedRoundMetadata()).isNotEmpty();
 
