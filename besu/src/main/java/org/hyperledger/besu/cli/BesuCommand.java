@@ -1433,7 +1433,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Using the Java implementation of alt bn128");
     }
 
-    if (unstableNativeLibraryOptions.getNativeSecp256k1()
+    if (unstableNativeLibraryOptions.getNativeSecp()
         && SignatureAlgorithmFactory.getInstance().isNative()) {
       logger.info("Using the native implementation of the signature algorithm");
     } else {
