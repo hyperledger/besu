@@ -49,15 +49,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.controller.TargetingGasLimitCalculator;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -3730,17 +3729,17 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--target-gas-limit=10000000");
 
     @SuppressWarnings("unchecked")
-    final ArgumentCaptor<GasLimitCalculator> gasLimitCalculatorArgumentCaptor =
-        ArgumentCaptor.forClass(GasLimitCalculator.class);
+    final ArgumentCaptor<MiningParameters> miningParametersArgumentCaptor =
+        ArgumentCaptor.forClass(MiningParameters.class);
 
-    verify(mockControllerBuilder).gasLimitCalculator(gasLimitCalculatorArgumentCaptor.capture());
+    verify(mockControllerBuilder).miningParameters(miningParametersArgumentCaptor.capture());
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString()).isEmpty();
     assertThat(commandErrorOutput.toString()).isEmpty();
 
-    assertThat(gasLimitCalculatorArgumentCaptor.getValue())
-        .isEqualTo(new TargetingGasLimitCalculator(10_000_000L));
+    assertThat(miningParametersArgumentCaptor.getValue().getTargetGasLimit().get().longValue())
+        .isEqualTo(10_000_000L);
   }
 
   @Test

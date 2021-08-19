@@ -55,7 +55,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -916,7 +915,7 @@ public class RunnerBuilder {
                   .getProtocolSchedule()
                   .getByBlockNumber(1)
                   .getPrecompileContractRegistry()
-                  .get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+                  .get(Address.ONCHAIN_PRIVACY);
       onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }
