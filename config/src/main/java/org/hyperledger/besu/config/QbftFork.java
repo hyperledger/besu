@@ -23,18 +23,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class QbftFork extends BftFork {
 
   public enum VALIDATOR_MODE {
-    BLOCK,
+    BLOCKHEADER,
     CONTRACT
   }
 
-  private static final String VALIDATOR_MODE_KEY = "validatorMode";
-  private static final String VALIDATOR_CONTRACT_ADDRESS_KEY = "validatorContractAddress";
+  private static final String VALIDATOR_MODE_KEY = "validatorselectionmode";
+  private static final String VALIDATOR_CONTRACT_ADDRESS_KEY = "validatorcontractaddress";
 
   public QbftFork(final ObjectNode forkConfigRoot) {
     super(forkConfigRoot);
   }
 
-  public Optional<VALIDATOR_MODE> getValidatorMode() {
+  public Optional<VALIDATOR_MODE> getValidatorSelectionMode() {
     final Optional<String> mode = JsonUtil.getString(forkConfigRoot, VALIDATOR_MODE_KEY);
     return mode.flatMap(
         m ->
