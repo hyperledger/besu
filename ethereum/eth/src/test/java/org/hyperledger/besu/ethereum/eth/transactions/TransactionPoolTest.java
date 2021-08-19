@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -65,6 +66,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -77,6 +79,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -133,6 +136,7 @@ public class TransactionPoolTest {
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.legacy());
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
     syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
@@ -154,9 +158,30 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.of(2),
             metricsSystem,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT);
     blockchain.observeBlockAdded(transactionPool);
+  }
+
+  @After
+  public void tearDown() {
+    GoQuorumOptions.goQuorumCompatibilityMode =
+        GoQuorumOptions.GOQUORUM_COMPATIBILITY_MODE_DEFAULT_VALUE;
+  }
+
+  @Test
+  public void mainNetValueTransferSucceeds() {
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .value(Wei.ONE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
   }
 
   @Test
@@ -415,7 +440,6 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT);
 
     when(pendingTransactions.containsTransaction(transaction1.getHash())).thenReturn(true);
@@ -555,7 +579,6 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
@@ -627,7 +650,6 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem,
-            Optional.empty(),
             TransactionPoolConfiguration.DEFAULT);
 
     final TransactionTestFixture builder = new TransactionTestFixture();
@@ -689,7 +711,6 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem,
-            Optional.empty(),
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
@@ -727,7 +748,6 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem,
-            Optional.empty(),
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
@@ -770,8 +790,8 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem,
-            Optional.of(new EIP1559(100)),
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
+    when(protocolSpec.getEip1559()).thenReturn(Optional.of(new EIP1559(100L)));
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
     when(transactionValidator.validateForSender(
@@ -814,7 +834,6 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem,
-            Optional.empty(),
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
 
     final TransactionTestFixture builder = new TransactionTestFixture();
@@ -836,6 +855,8 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldRejectGoQuorumTransactionWithNonZeroValue() {
+    GoQuorumOptions.goQuorumCompatibilityMode = true;
+
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
     final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
@@ -854,7 +875,6 @@ public class TransactionPoolTest {
             peerPendingTransactionTracker,
             Wei.ZERO,
             metricsSystem,
-            Optional.empty(),
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
 
     final Transaction transaction37 =

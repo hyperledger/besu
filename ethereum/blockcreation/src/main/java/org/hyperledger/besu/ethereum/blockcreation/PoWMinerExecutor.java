@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
@@ -35,6 +36,8 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
   protected boolean stratumMiningEnabled;
   protected final Iterable<Long> nonceGenerator;
   protected final EpochCalculator epochCalculator;
+  protected final long powJobTimeToLive;
+  protected final int maxOmmerDepth;
 
   public PoWMinerExecutor(
       final ProtocolContext protocolContext,
@@ -42,18 +45,15 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
-      final GasLimitCalculator gasLimitCalculator,
-      final EpochCalculator epochCalculator) {
-    super(
-        protocolContext,
-        protocolSchedule,
-        pendingTransactions,
-        miningParams,
-        blockScheduler,
-        gasLimitCalculator);
+      final EpochCalculator epochCalculator,
+      final long powJobTimeToLive,
+      final int maxOmmerDepth) {
+    super(protocolContext, protocolSchedule, pendingTransactions, miningParams, blockScheduler);
     this.coinbase = miningParams.getCoinbase();
     this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
     this.epochCalculator = epochCalculator;
+    this.powJobTimeToLive = powJobTimeToLive;
+    this.maxOmmerDepth = maxOmmerDepth;
   }
 
   @Override
@@ -78,16 +78,18 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
             protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1).getPoWHasher().get(),
             stratumMiningEnabled,
             ethHashObservers,
-            epochCalculator);
+            epochCalculator,
+            powJobTimeToLive,
+            maxOmmerDepth);
     final Function<BlockHeader, PoWBlockCreator> blockCreator =
         (header) ->
             new PoWBlockCreator(
                 coinbase.get(),
+                () -> targetGasLimit.map(AtomicLong::longValue),
                 parent -> extraData,
                 pendingTransactions,
                 protocolContext,
                 protocolSchedule,
-                gasLimitCalculator,
                 solver,
                 minTransactionGasPrice,
                 minBlockOccupancyRatio,

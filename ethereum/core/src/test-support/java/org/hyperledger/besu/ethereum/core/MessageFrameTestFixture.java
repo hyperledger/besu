@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class MessageFrameTestFixture {
 
@@ -44,12 +44,11 @@ public class MessageFrameTestFixture {
   private Address sender = DEFAUT_ADDRESS;
   private Address originator = DEFAUT_ADDRESS;
   private Address contract = DEFAUT_ADDRESS;
-  private int contractAccountVersion = Account.DEFAULT_VERSION;
   private Wei gasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
   private Bytes inputData = Bytes.EMPTY;
   private Code code = new Code(Bytes.EMPTY);
-  private final List<Bytes32> stackItems = new ArrayList<>();
+  private final List<UInt256> stackItems = new ArrayList<>();
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private int depth = 0;
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
@@ -111,11 +110,6 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture contractAccountVersion(final int contractAccountVersion) {
-    this.contractAccountVersion = contractAccountVersion;
-    return this;
-  }
-
   public MessageFrameTestFixture gasPrice(final Wei gasPrice) {
     this.gasPrice = gasPrice;
     return this;
@@ -146,7 +140,7 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture pushStackItem(final Bytes32 item) {
+  public MessageFrameTestFixture pushStackItem(final UInt256 item) {
     stackItems.add(item);
     return this;
   }
@@ -175,7 +169,6 @@ public class MessageFrameTestFixture {
             .value(value)
             .apparentValue(value)
             .contract(contract)
-            .contractAccountVersion(contractAccountVersion)
             .code(code)
             .blockHeader(blockHeader)
             .depth(depth)

@@ -42,18 +42,18 @@ public class Stratum1EthProxyProtocolTest {
 
   @Test
   public void testCanHandleEmptyString() {
-    assertThat(protocol.canHandle("", conn)).isFalse();
+    assertThat(protocol.maybeHandle("", conn)).isFalse();
   }
 
   @Test
   public void testCanHandleMalformedJSON() {
-    assertThat(protocol.canHandle("{[\"foo\",", conn)).isFalse();
+    assertThat(protocol.maybeHandle("{[\"foo\",", conn)).isFalse();
   }
 
   @Test
   public void testCanHandleWrongMethod() {
     assertThat(
-            protocol.canHandle(
+            protocol.maybeHandle(
                 "{\"id\":0,\"method\":\"eth_byebye\",\"params\":[\"0xdeadbeefdeadbeef.worker\"]}",
                 conn))
         .isFalse();
@@ -62,7 +62,7 @@ public class Stratum1EthProxyProtocolTest {
   @Test
   public void testCanHandleWellFormedRequest() {
     assertThat(
-            protocol.canHandle(
+            protocol.maybeHandle(
                 "{\"id\":0,\"method\":\"eth_submitLogin\",\"params\":[\"0xdeadbeefdeadbeef.worker\"]}",
                 conn))
         .isTrue();

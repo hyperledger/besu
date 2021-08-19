@@ -55,7 +55,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -76,6 +75,7 @@ import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -143,6 +143,7 @@ public class RunnerBuilder {
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
+  private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
   private boolean discovery;
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
@@ -187,6 +188,18 @@ public class RunnerBuilder {
 
   public RunnerBuilder p2pEnabled(final boolean p2pEnabled) {
     this.p2pEnabled = p2pEnabled;
+    return this;
+  }
+
+  public RunnerBuilder p2pTLSConfiguration(final TLSConfiguration p2pTLSConfiguration) {
+    this.p2pTLSConfiguration = Optional.of(p2pTLSConfiguration);
+    return this;
+  }
+
+  public RunnerBuilder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
+    if (null != p2pTLSConfiguration) {
+      this.p2pTLSConfiguration = p2pTLSConfiguration;
+    }
     return this;
   }
 
@@ -442,6 +455,7 @@ public class RunnerBuilder {
                 .randomPeerPriority(randomPeerPriority)
                 .storageProvider(storageProvider)
                 .forkIdSupplier(forkIdSupplier)
+                .p2pTLSConfiguration(p2pTLSConfiguration)
                 .build();
 
     final NetworkRunner networkRunner =
@@ -506,7 +520,8 @@ public class RunnerBuilder {
                   miningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
-                  miningParameters.getStratumExtranonce()));
+                  miningParameters.getStratumExtranonce(),
+                  metricsSystem));
       miningCoordinator.addEthHashObserver(stratumServer.get());
     }
 
@@ -644,8 +659,7 @@ public class RunnerBuilder {
                   webSocketsJsonRpcMethods,
                   privacyParameters,
                   protocolSchedule,
-                  blockchainQueries,
-                  transactionPool));
+                  blockchainQueries));
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
     }
@@ -901,7 +915,7 @@ public class RunnerBuilder {
                   .getProtocolSchedule()
                   .getByBlockNumber(1)
                   .getPrecompileContractRegistry()
-                  .get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+                  .get(Address.ONCHAIN_PRIVACY);
       onchainPrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);
     }
   }
@@ -928,8 +942,7 @@ public class RunnerBuilder {
       final Map<String, JsonRpcMethod> jsonRpcMethods,
       final PrivacyParameters privacyParameters,
       final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries blockchainQueries,
-      final TransactionPool transactionPool) {
+      final BlockchainQueries blockchainQueries) {
 
     final WebSocketMethodsFactory websocketMethodsFactory =
         new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
@@ -937,11 +950,7 @@ public class RunnerBuilder {
     if (privacyParameters.isEnabled()) {
       final PrivateWebSocketMethodsFactory privateWebSocketMethodsFactory =
           new PrivateWebSocketMethodsFactory(
-              privacyParameters,
-              subscriptionManager,
-              protocolSchedule,
-              blockchainQueries,
-              transactionPool);
+              privacyParameters, subscriptionManager, protocolSchedule, blockchainQueries);
 
       privateWebSocketMethodsFactory.methods().forEach(websocketMethodsFactory::addMethods);
     }

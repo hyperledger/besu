@@ -218,7 +218,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
         existing.setBalance(update.getBalance());
         if (update.codeWasUpdated()) {
           existing.setCode(update.getCode());
-          existing.setVersion(update.getVersion());
         }
         if (update.getStorageWasCleared()) {
           existing.clearStorage();

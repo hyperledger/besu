@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.EvmAccount;
@@ -51,7 +50,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private Wei balance;
   private Hash storageRoot;
   private Bytes code;
-  private int version;
 
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
@@ -63,7 +61,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
       final Wei balance,
       final Hash storageRoot,
       final Hash codeHash,
-      final int version,
       final boolean mutable) {
     this.context = context;
     this.address = address;
@@ -72,7 +69,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.balance = balance;
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
-    this.version = version;
 
     this.mutable = mutable;
   }
@@ -90,7 +86,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
         stateTrieAccount.getBalance(),
         stateTrieAccount.getStorageRoot(),
         stateTrieAccount.getCodeHash(),
-        stateTrieAccount.getVersion(),
         mutable);
   }
 
@@ -107,7 +102,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.storageRoot = toCopy.storageRoot;
     this.codeHash = toCopy.codeHash;
     this.code = toCopy.code;
-    this.version = toCopy.version;
     updatedStorage.putAll(toCopy.updatedStorage);
 
     this.mutable = mutable;
@@ -122,7 +116,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.storageRoot = Hash.EMPTY_TRIE_HASH;
     this.codeHash = tracked.getCodeHash();
     this.code = tracked.getCode();
-    this.version = tracked.getVersion();
     updatedStorage.putAll(tracked.getUpdatedStorage());
 
     this.mutable = true;
@@ -141,25 +134,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     final Wei balance = Wei.of(in.readUInt256Scalar());
     final Hash storageRoot = Hash.wrap(in.readBytes32());
     final Hash codeHash = Hash.wrap(in.readBytes32());
-    final int version;
-    if (!in.isEndOfCurrentList()) {
-      version = in.readIntScalar();
-    } else {
-      version = Account.DEFAULT_VERSION;
-    }
 
     in.leaveList();
 
     return new BonsaiAccount(
-        context,
-        address,
-        Hash.hash(address),
-        nonce,
-        balance,
-        storageRoot,
-        codeHash,
-        version,
-        mutable);
+        context, address, Hash.hash(address), nonce, balance, storageRoot, codeHash, mutable);
   }
 
   @Override
@@ -225,19 +204,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   @Override
-  public int getVersion() {
-    return version;
-  }
-
-  @Override
-  public void setVersion(final int version) {
-    if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
-    }
-    this.version = version;
-  }
-
-  @Override
   public UInt256 getStorageValue(final UInt256 key) {
     return context.getStorageValue(address, key);
   }
@@ -261,11 +227,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
-
-    if (version != Account.DEFAULT_VERSION) {
-      // version of zero is never written out.
-      out.writeIntScalar(version);
-    }
 
     out.endList();
     return out.encoded();
@@ -322,8 +283,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
         + storageRoot
         + ", codeHash="
         + codeHash
-        + ", version="
-        + version
         + '}';
   }
 
@@ -348,9 +307,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
       }
       if (!Objects.equals(source.storageRoot, account.getStorageRoot())) {
         throw new IllegalStateException(context + ": Storage Roots differ");
-      }
-      if (source.version != account.getVersion()) {
-        throw new IllegalStateException(context + ": versions differ");
       }
     }
   }

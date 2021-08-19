@@ -24,10 +24,12 @@ import java.util.List;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.tx.Contract;
+import org.web3j.tx.PrivateTransactionManager;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.BesuPrivacyGasProvider;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
 public class LoadPrivateSmartContractTransaction<T extends Contract> implements Transaction<T> {
   private static final BesuPrivacyGasProvider GAS_PROVIDER =
@@ -58,10 +60,9 @@ public class LoadPrivateSmartContractTransaction<T extends Contract> implements 
   @Override
   public T execute(final NodeRequests node) {
     final PrivateTransactionManager privateTransactionManager =
-        new PrivateTransactionManager.Builder(
-                node.privacy().getBesuClient(), senderCredentials, privateFrom)
-            .setPrivateFor(privateFor)
-            .build();
+        node.privacy()
+            .getTransactionManager(
+                senderCredentials, privateFrom, privateFor, Restriction.RESTRICTED);
 
     try {
       final Method method =

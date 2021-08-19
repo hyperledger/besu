@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
@@ -39,7 +39,7 @@ public class PoWMinerExecutorTest {
   @Test
   public void startingMiningWithoutCoinbaseThrowsException() {
     final MiningParameters miningParameters =
-        new MiningParametersTestBuilder().coinbase(null).build();
+        new MiningParameters.Builder().coinbase(null).minTransactionGasPrice(Wei.of(1000)).build();
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -58,8 +58,9 @@ public class PoWMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            GasLimitCalculator.constant(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
         .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
@@ -68,7 +69,7 @@ public class PoWMinerExecutorTest {
 
   @Test
   public void settingCoinbaseToNullThrowsException() {
-    final MiningParameters miningParameters = new MiningParametersTestBuilder().build();
+    final MiningParameters miningParameters = new MiningParameters.Builder().build();
 
     final PendingTransactions pendingTransactions =
         new PendingTransactions(
@@ -87,8 +88,9 @@ public class PoWMinerExecutorTest {
             pendingTransactions,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
-            GasLimitCalculator.constant(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            1000,
+            8);
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))

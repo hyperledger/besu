@@ -16,7 +16,18 @@ package org.hyperledger.besu.plugin.services.privacy;
 
 import java.util.Optional;
 
+/**
+ * When in a multi-tenant environment you need to decided if an authz user can access a privacyGroup
+ */
 @FunctionalInterface
 public interface PrivacyGroupAuthProvider {
+  /**
+   * Should this privacyUserId be able to access this privacyGroupId at this blockNumber
+   *
+   * @param privacyGroupId the privacyGroupId
+   * @param privacyUserId the authz privacyUserId when in a multi-tenant environment
+   * @param blockNumber the block height it's happening at
+   * @return if the can access that privacyUserId
+   */
   boolean canAccess(String privacyGroupId, String privacyUserId, Optional<Long> blockNumber);
 }

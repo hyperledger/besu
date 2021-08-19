@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
-import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
-
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -24,14 +22,13 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.EvmAccount;
 import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionEvent;
@@ -88,18 +85,25 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
       final GasCalculator gasCalculator,
       final Enclave enclave,
       final WorldStateArchive worldStateArchive,
-      final PrivateStateRootResolver privateStateRootResolver) {
-    super(gasCalculator, enclave, worldStateArchive, privateStateRootResolver, "OnChainPrivacy");
+      final PrivateStateRootResolver privateStateRootResolver,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
+    super(
+        gasCalculator,
+        enclave,
+        worldStateArchive,
+        privateStateRootResolver,
+        privateStateGenesisAllocator,
+        "OnChainPrivacy");
   }
 
   public OnChainPrivacyPrecompiledContract(
       final GasCalculator gasCalculator, final PrivacyParameters privacyParameters) {
-    super(
+    this(
         gasCalculator,
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
-        "OnChainPrivacy");
+        privacyParameters.getPrivateStateGenesisAllocator());
   }
 
   public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {
@@ -162,11 +166,15 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
+    maybeApplyGenesisToPrivateWorldState(
+        lastRootHash,
+        disposablePrivateState,
+        privateWorldStateUpdater,
+        privacyGroupId,
+        currentBlockHeader.getNumber());
+
     final WorldUpdater publicWorldState = messageFrame.getWorldState();
     final Blockchain blockchain = messageFrame.getBlockchain();
-
-    maybeInjectDefaultManagementAndProxy(
-        lastRootHash, disposablePrivateState, privateWorldStateUpdater);
 
     if (!canExecute(
         messageFrame,
@@ -423,35 +431,6 @@ public class OnChainPrivacyPrecompiledContract extends PrivacyPrecompiledContrac
         OperationTracer.NO_TRACING,
         messageFrame.getBlockHashLookup(),
         privacyGroupId);
-  }
-
-  protected void maybeInjectDefaultManagementAndProxy(
-      final Hash lastRootHash,
-      final MutableWorldState disposablePrivateState,
-      final WorldUpdater privateWorldStateUpdater) {
-    if (lastRootHash.equals(EMPTY_ROOT_HASH)) {
-      // inject management
-      final EvmAccount managementPrecompile =
-          privateWorldStateUpdater.createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
-      final MutableAccount mutableManagementPrecompiled = managementPrecompile.getMutable();
-      // this is the code for the simple management contract
-      mutableManagementPrecompiled.setCode(
-          OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
-
-      // inject proxy
-      final EvmAccount proxyPrecompile =
-          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY);
-      final MutableAccount mutableProxyPrecompiled = proxyPrecompile.getMutable();
-      // this is the code for the proxy contract
-      mutableProxyPrecompiled.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
-      // manually set the management contract address so the proxy can trust it
-      mutableProxyPrecompiled.setStorageValue(
-          UInt256.ZERO,
-          UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
-
-      privateWorldStateUpdater.commit();
-      disposablePrivateState.persist(null);
-    }
   }
 
   protected boolean onChainPrivacyGroupVersionMatches(

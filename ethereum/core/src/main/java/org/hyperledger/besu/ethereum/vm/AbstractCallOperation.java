@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Wei;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -179,7 +178,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
         frame.incrementRemainingGas(gasAvailableForChildCall(frame).plus(cost));
         frame.popStackItems(getStackItemsConsumed());
-        frame.pushStackItem(Bytes32.ZERO);
+        frame.pushStackItem(UInt256.ZERO);
         return new OperationResult(optionalCost, Optional.empty());
       }
 
@@ -195,8 +194,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
               .address(address(frame))
               .originator(frame.getOriginatorAddress())
               .contract(to)
-              .contractAccountVersion(
-                  contract != null ? contract.getVersion() : Account.DEFAULT_VERSION)
               .gasPrice(frame.getGasPrice())
               .inputData(inputData)
               .sender(sender(frame))
@@ -248,9 +245,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.popStackItems(getStackItemsConsumed());
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       frame.mergeWarmedUpFields(childFrame);
-      frame.pushStackItem(UInt256.ONE.toBytes());
+      frame.pushStackItem(UInt256.ONE);
     } else {
-      frame.pushStackItem(Bytes32.ZERO);
+      frame.pushStackItem(UInt256.ZERO);
     }
 
     final int currentPC = frame.getPC();

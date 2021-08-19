@@ -25,8 +25,8 @@ import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -194,6 +194,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .permissioningService(new PermissioningServiceImpl())
             .metricsConfiguration(node.getMetricsConfiguration())
             .p2pEnabled(node.isP2pEnabled())
+            .p2pTLSConfiguration(node.getTLSConfiguration())
             .graphQLConfiguration(GraphQLConfiguration.createDefault())
             .staticNodes(
                 node.getStaticNodes().stream()

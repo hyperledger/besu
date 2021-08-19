@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.vm.OperationRegistry;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -74,8 +74,8 @@ public class JumpOperationTest {
     worldStateUpdater.commit();
 
     final OperationRegistry registry = new OperationRegistry();
-    registry.put(new JumpOperation(gasCalculator), 0);
-    registry.put(new JumpDestOperation(gasCalculator), 0);
+    registry.put(new JumpOperation(gasCalculator));
+    registry.put(new JumpDestOperation(gasCalculator));
     evm = new EVM(registry, gasCalculator);
   }
 
@@ -84,7 +84,7 @@ public class JumpOperationTest {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(10_000))
-            .pushStackItem(Bytes32.fromHexString("0x03"))
+            .pushStackItem(UInt256.fromHexString("0x03"))
             .code(new Code(Bytes.fromHexString("0x6003565b00")))
             .build();
     frame.setPC(CURRENT_PC);
@@ -98,7 +98,7 @@ public class JumpOperationTest {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrameBuilder(Gas.of(10_000))
-            .pushStackItem(Bytes32.fromHexString("0x03"))
+            .pushStackItem(UInt256.fromHexString("0x03"))
             .code(new Code(Bytes.fromHexString("0x6003565b")))
             .build();
     frame.setPC(CURRENT_PC);
@@ -112,7 +112,7 @@ public class JumpOperationTest {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(Gas.of(100))
-            .pushStackItem(Bytes32.fromHexString("0xFFFFFFFF"))
+            .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
             .code(new Code(Bytes.fromHexString("0x6801000000000000000c565b00")))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
@@ -122,7 +122,7 @@ public class JumpOperationTest {
 
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(Gas.of(100))
-            .pushStackItem(Bytes32.fromHexString("0x04"))
+            .pushStackItem(UInt256.fromHexString("0x04"))
             .code(new Code(Bytes.fromHexString("0x60045600")))
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);

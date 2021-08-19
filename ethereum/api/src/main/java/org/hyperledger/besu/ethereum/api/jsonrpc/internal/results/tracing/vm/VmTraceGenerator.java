@@ -264,7 +264,7 @@ public class VmTraceGenerator {
             entry ->
                 report.setStore(
                     new Store(
-                        entry.getOffset().toBytes().toQuantityHexString(),
+                        entry.getOffset().toQuantityHexString(),
                         entry.getValue().toQuantityHexString())));
   }
 

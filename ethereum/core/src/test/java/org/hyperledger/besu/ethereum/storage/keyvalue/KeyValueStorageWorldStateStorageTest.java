@@ -193,7 +193,7 @@ public class KeyValueStorageWorldStateStorageTest {
 
   @Test
   public void isWorldStateAvailable_defaultIsFalse() {
-    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1).toBytes(), null)).isFalse();
+    assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), null)).isFalse();
   }
 
   @Test

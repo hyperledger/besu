@@ -92,6 +92,7 @@ public class PendingTransactions {
                           .get()
                           .getValue()
                           .longValue())
+              .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
@@ -105,8 +106,23 @@ public class PendingTransactions {
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
+              .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
+
+  private Long distanceFromNextNonce(final TransactionInfo incomingTx) {
+    final TransactionsForSenderInfo inPool = transactionsBySender.get(incomingTx.getSender());
+    if ((inPool == null)
+        || (inPool.streamTransactionInfos().count() < 1)) { // nothing in pool, you're next
+      return 0L;
+    }
+    long minNonceForAccount =
+        inPool.streamTransactionInfos().mapToLong(TransactionInfo::getNonce).min().getAsLong();
+    // despite this looking backwards, it produces the sort order we want.
+    // greater distances produce more negative results, which are then .reversed()
+    return minNonceForAccount - incomingTx.getNonce();
+  }
+
   private Optional<Long> baseFee;
   private final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();

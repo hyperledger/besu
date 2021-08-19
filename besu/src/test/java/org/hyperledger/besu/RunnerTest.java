@@ -27,16 +27,16 @@ import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockSyncTestUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -162,7 +162,7 @@ public final class RunnerTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
             .networkId(networkId)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().enabled(false).build())
             .nodeKey(aheadDbNodeKey)
             .metricsSystem(noOpMetricsSystem)
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -182,7 +182,7 @@ public final class RunnerTest {
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .dataDirectory(dataDirAhead)
             .networkId(networkId)
-            .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+            .miningParameters(new MiningParameters.Builder().enabled(false).build())
             .nodeKey(aheadDbNodeKey)
             .metricsSystem(noOpMetricsSystem)
             .privacyParameters(PrivacyParameters.DEFAULT)
@@ -249,7 +249,7 @@ public final class RunnerTest {
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .dataDirectory(dataDirBehind)
               .networkId(networkId)
-              .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+              .miningParameters(new MiningParameters.Builder().enabled(false).build())
               .nodeKey(NodeKeyUtils.generate())
               .storageProvider(new InMemoryKeyValueStorageProvider())
               .metricsSystem(noOpMetricsSystem)

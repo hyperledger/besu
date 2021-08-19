@@ -45,11 +45,11 @@ public class ContainerTestBase {
   // A docker image can be built using `./gradlew clean distDocker`
   // check the status of local images with `docker images`
   // To use that local image, change besuImage below eg
-  // private final String besuImage = "hyperledger/besu:21.7.0-RC1-SNAPSHOT";
+  //  private final String besuImage = "hyperledger/besu:21.7.0-SNAPSHOT";
   private final String besuImage = System.getProperty("containertest.imagename");
 
   private final String goQuorumVersion = "21.1.0";
-  private final String tesseraVersion = "21.1.1";
+  private final String tesseraVersion = "21.7.0";
 
   protected final String goQuorumTesseraPubKey = "3XGBIf+x8IdVQOVfIsbRnHwTYOJP/Fx84G8gMmy8qDM=";
   protected final String besuTesseraPubKey = "8JJLEAbq6o9m4Kqm++v0Y1n9Z2ryAFtZTyhnxSKWgws=";
@@ -114,7 +114,7 @@ public class ContainerTestBase {
 
   @Rule
   public final GenericContainer goQuorumContainer =
-      buildGoQuorumContainer(ipcDirPath, ipcBindDir, containerIpcPath);;
+      buildGoQuorumContainer(ipcDirPath, ipcBindDir, containerIpcPath);
 
   @Before
   public void setUp() throws IOException, InterruptedException {

@@ -19,14 +19,15 @@ import org.hyperledger.besu.ethereum.vm.GasCalculator;
 import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ChainIdOperation extends AbstractFixedCostOperation {
 
-  private final Bytes32 chainId;
+  private final UInt256 chainId;
 
   public ChainIdOperation(final GasCalculator gasCalculator, final Bytes32 chainId) {
     super(0x46, "CHAINID", 0, 1, false, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
-    this.chainId = chainId;
+    this.chainId = UInt256.fromBytes(chainId);
   }
 
   @Override

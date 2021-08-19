@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -43,7 +42,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class PluginPrivacyController implements PrivacyController {
-  private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final PrivateTransactionValidator privateTransactionValidator;
   private final PrivateStateRootResolver privateStateRootResolver;
   private final Blockchain blockchain;
@@ -56,11 +54,9 @@ public class PluginPrivacyController implements PrivacyController {
       final Blockchain blockchain,
       final PrivacyParameters privacyParameters,
       final Optional<BigInteger> chainId,
-      final PrivateMarkerTransactionFactory privateMarkerTransactionFactory,
       final PrivateTransactionSimulator privateTransactionSimulator,
       final PrivateNonceProvider privateNonceProvider,
       final PrivateWorldStateReader privateWorldStateReader) {
-    this.privateMarkerTransactionFactory = privateMarkerTransactionFactory;
     this.privateTransactionValidator = new PrivateTransactionValidator(chainId);
     this.blockchain = blockchain;
     this.privateTransactionSimulator = privateTransactionSimulator;
@@ -80,22 +76,6 @@ public class PluginPrivacyController implements PrivacyController {
         .getPayloadProvider()
         .generateMarkerPayload(privateTransaction, privacyUserId)
         .toBase64String();
-  }
-
-  @Override
-  public Transaction createPrivateMarkerTransaction(
-      final String unrestrictedTransactionPayload, final PrivateTransaction privateTransaction) {
-    return privateMarkerTransactionFactory.create(
-        unrestrictedTransactionPayload, privateTransaction);
-  }
-
-  @Override
-  public Transaction createPrivateMarkerTransaction(
-      final String unrestrictedTransactionPayload,
-      final PrivateTransaction privateTransaction,
-      final Address privacyPrecompileAddress) {
-    return privateMarkerTransactionFactory.create(
-        unrestrictedTransactionPayload, privateTransaction, privacyPrecompileAddress);
   }
 
   @Override

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.vm.MessageFrame;
 import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -59,7 +60,7 @@ public class ChainIdOperationTest {
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @Test
   public void shouldReturnChainId() {
-    final ArgumentCaptor<Bytes32> arg = ArgumentCaptor.forClass(Bytes32.class);
+    final ArgumentCaptor<UInt256> arg = ArgumentCaptor.forClass(UInt256.class);
     when(messageFrame.getRemainingGas()).thenReturn(Gas.of(100));
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).getRemainingGas();

@@ -20,17 +20,23 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.NetServer;
 import io.vertx.core.net.NetServerOptions;
 import io.vertx.core.net.NetSocket;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * TCP server allowing miners to connect to the client over persistent TCP connections, using the
@@ -39,12 +45,17 @@ import org.apache.logging.log4j.Logger;
 public class StratumServer implements PoWObserver {
 
   private static final Logger logger = getLogger();
+  private static final UInt256 DIFFICULTY_1_TARGET = UInt256.valueOf(2).pow(256);
 
   private final Vertx vertx;
   private final int port;
   private final String networkInterface;
   private final AtomicBoolean started = new AtomicBoolean(false);
+  private final AtomicLong numberOfMiners = new AtomicLong(0);
+  private final AtomicDouble currentDifficulty = new AtomicDouble(0.0);
   private final StratumProtocol[] protocols;
+  private final Counter connectionsCount;
+  private final Counter disconnectionsCount;
   private NetServer server;
 
   public StratumServer(
@@ -52,15 +63,30 @@ public class StratumServer implements PoWObserver {
       final MiningCoordinator miningCoordinator,
       final int port,
       final String networkInterface,
-      final String extraNonce) {
+      final String extraNonce,
+      final MetricsSystem metricsSystem) {
     this.vertx = vertx;
     this.port = port;
     this.networkInterface = networkInterface;
     protocols =
         new StratumProtocol[] {
+          new GetWorkProtocol(miningCoordinator),
           new Stratum1Protocol(extraNonce, miningCoordinator),
           new Stratum1EthProxyProtocol(miningCoordinator)
         };
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.STRATUM, "miners", "Number of miners connected", numberOfMiners::get);
+    metricsSystem.createGauge(
+        BesuMetricCategory.STRATUM,
+        "difficulty",
+        "Current mining difficulty",
+        currentDifficulty::get);
+    this.connectionsCount =
+        metricsSystem.createCounter(
+            BesuMetricCategory.STRATUM, "connections", "Number of connections over time");
+    this.disconnectionsCount =
+        metricsSystem.createCounter(
+            BesuMetricCategory.STRATUM, "disconnections", "Number of disconnections over time");
   }
 
   public CompletableFuture<?> start() {
@@ -89,11 +115,18 @@ public class StratumServer implements PoWObserver {
   }
 
   private void handle(final NetSocket socket) {
+    connectionsCount.inc();
+    numberOfMiners.incrementAndGet();
     StratumConnection conn =
         new StratumConnection(
             protocols, socket::close, bytes -> socket.write(Buffer.buffer(bytes)));
     socket.handler(conn::handleBuffer);
-    socket.closeHandler(conn::close);
+    socket.closeHandler(
+        (aVoid) -> {
+          conn.close();
+          numberOfMiners.decrementAndGet();
+          disconnectionsCount.inc();
+        });
   }
 
   public CompletableFuture<?> stop() {
@@ -126,6 +159,8 @@ public class StratumServer implements PoWObserver {
     for (StratumProtocol protocol : protocols) {
       protocol.setCurrentWorkTask(poWSolverInputs);
     }
+    UInt256 difficulty = poWSolverInputs.getTarget().divide(DIFFICULTY_1_TARGET);
+    currentDifficulty.set(difficulty.toUnsignedBigInteger().doubleValue());
   }
 
   @Override
