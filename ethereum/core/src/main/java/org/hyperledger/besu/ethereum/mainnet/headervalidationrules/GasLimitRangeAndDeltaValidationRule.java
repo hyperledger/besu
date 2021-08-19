@@ -67,7 +67,7 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
 
     long parentGasLimit =
         baseFeeMarket
-            .filter(baseFeeMarket -> baseFeeMarket.isForkBlock(parent.getNumber()))
+            .filter(baseFeeMarket -> baseFeeMarket.isForkBlock(header.getNumber()))
             .map(baseFeeMarket -> parent.getGasLimit() * baseFeeMarket.getSlackCoefficient())
             .orElse(parent.getGasLimit());
 

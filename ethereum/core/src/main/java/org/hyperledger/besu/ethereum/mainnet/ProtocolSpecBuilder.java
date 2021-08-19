@@ -255,7 +255,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(privacyParameters, "Missing privacy parameters");
-    checkNotNull(feeMarket, "Missing fee market optional wrapper");
+    checkNotNull(feeMarket, "Missing fee market");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();

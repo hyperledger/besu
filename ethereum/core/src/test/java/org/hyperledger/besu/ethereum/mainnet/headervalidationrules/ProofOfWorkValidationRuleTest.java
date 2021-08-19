@@ -28,11 +28,13 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ValidationTestUtils;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
@@ -142,7 +144,9 @@ public class ProofOfWorkValidationRuleTest {
   public void failsWithNonEip1559BlockAfterFork() {
     final ProofOfWorkValidationRule proofOfWorkValidationRule =
         new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
+            new EpochCalculator.DefaultEpochCalculator(),
+            PoWHasher.ETHASH_LIGHT,
+            Optional.of(FeeMarket.london(0L)));
 
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)

@@ -39,14 +39,20 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRuleTest {
   }
 
   @Test
-  public void shouldReturnTrueBeforeFork() {
-    assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
-        .isTrue();
+  public void shouldTReturnFalseIfParentMissingBaseFeePostFork() {
+    assertThat(
+            validationRule.validate(
+                blockHeader(FORK_BLOCK - 1, 0, Optional.of(10_000L)),
+                blockHeader(FORK_BLOCK - 2, 0, Optional.empty())))
+        .isFalse();
   }
 
   @Test
-  public void shouldReturnFalseBeforeFork() {
-    assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.of(10L)), null))
+  public void shouldThrowIfMissingBaseFee() {
+    assertThat(
+            validationRule.validate(
+                blockHeader(FORK_BLOCK - 2, 0, Optional.empty()),
+                blockHeader(FORK_BLOCK - 1, 0, Optional.of(10_000L))))
         .isFalse();
   }
 
