@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Gas;
 
-public class HomesteadGasCalculator extends FrontierGasCalculator {
+public class HomesteadTransactionGasCalculator extends FrontierTransactionGasCalculator {
 
   private static final Gas TX_CREATE_EXTRA = Gas.of(32_000L);
 
