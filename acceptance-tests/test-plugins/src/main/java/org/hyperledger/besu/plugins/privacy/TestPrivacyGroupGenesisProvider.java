@@ -55,11 +55,6 @@ public class TestPrivacyGroupGenesisProvider implements PrivacyGroupGenesisProvi
               }
 
               @Override
-              public int getVersion() {
-                return 0;
-              }
-
-              @Override
               public Long getNonce() {
                 return 0L;
               }

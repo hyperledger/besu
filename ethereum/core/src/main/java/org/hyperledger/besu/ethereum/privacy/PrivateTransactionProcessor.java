@@ -64,8 +64,6 @@ public class PrivateTransactionProcessor {
 
   private final int maxStackSize;
 
-  private final int createContractAccountVersion;
-
   @SuppressWarnings("unused")
   private final boolean clearEmptyAccounts;
 
@@ -76,7 +74,6 @@ public class PrivateTransactionProcessor {
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final int createContractAccountVersion,
       final PrivateTransactionValidator privateTransactionValidator) {
     this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
@@ -84,7 +81,6 @@ public class PrivateTransactionProcessor {
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
-    this.createContractAccountVersion = createContractAccountVersion;
     this.privateTransactionValidator = privateTransactionValidator;
   }
 
@@ -162,7 +158,6 @@ public class PrivateTransactionProcessor {
                 .type(MessageFrame.Type.CONTRACT_CREATION)
                 .address(privateContractAddress)
                 .contract(privateContractAddress)
-                .contractAccountVersion(createContractAccountVersion)
                 .inputData(Bytes.EMPTY)
                 .code(new Code(transaction.getPayload()))
                 .build();
@@ -174,8 +169,6 @@ public class PrivateTransactionProcessor {
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .address(to)
                 .contract(to)
-                .contractAccountVersion(
-                    maybeContract.map(AccountState::getVersion).orElse(Account.DEFAULT_VERSION))
                 .inputData(transaction.getPayload())
                 .code(new Code(maybeContract.map(AccountState::getCode).orElse(Bytes.EMPTY)))
                 .build();
