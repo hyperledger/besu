@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -66,8 +66,8 @@ public class FrontierPendingTransactionsTest {
 
   private final TestClock clock = new TestClock();
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
-  private final FrontierPendingTransactionsSorter transactions =
-      new FrontierPendingTransactionsSorter(
+  private final GasPricePendingTransactionsSorter transactions =
+      new GasPricePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
           MAX_TRANSACTION_HASHES,
@@ -590,8 +590,8 @@ public class FrontierPendingTransactionsTest {
   @Test
   public void shouldEvictMultipleOldTransactions() {
     final int maxTransactionRetentionHours = 1;
-    final FrontierPendingTransactionsSorter transactions =
-        new FrontierPendingTransactionsSorter(
+    final GasPricePendingTransactionsSorter transactions =
+        new GasPricePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
@@ -614,8 +614,8 @@ public class FrontierPendingTransactionsTest {
   @Test
   public void shouldEvictSingleOldTransaction() {
     final int maxTransactionRetentionHours = 1;
-    final FrontierPendingTransactionsSorter transactions =
-        new FrontierPendingTransactionsSorter(
+    final GasPricePendingTransactionsSorter transactions =
+        new GasPricePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
@@ -634,8 +634,8 @@ public class FrontierPendingTransactionsTest {
   @Test
   public void shouldEvictExclusivelyOldTransactions() {
     final int maxTransactionRetentionHours = 2;
-    final FrontierPendingTransactionsSorter transactions =
-        new FrontierPendingTransactionsSorter(
+    final GasPricePendingTransactionsSorter transactions =
+        new GasPricePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,

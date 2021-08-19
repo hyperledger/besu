@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.LondonPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,8 +54,8 @@ public class PeerPendingTransactionTrackerTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {mock(FrontierPendingTransactionsSorter.class)},
-          {mock(LondonPendingTransactionsSorter.class)}
+          {mock(GasPricePendingTransactionsSorter.class)},
+          {mock(BaseFeePendingTransactionsSorter.class)}
         });
   }
 

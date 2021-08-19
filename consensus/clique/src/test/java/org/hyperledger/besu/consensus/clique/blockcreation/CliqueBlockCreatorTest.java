@@ -48,7 +48,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -126,7 +126,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new FrontierPendingTransactionsSorter(
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 5,
@@ -162,7 +162,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new FrontierPendingTransactionsSorter(
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 5,
@@ -200,7 +200,7 @@ public class CliqueBlockCreatorTest {
             coinbase,
             () -> Optional.of(10_000_000L),
             parent -> extraData,
-            new FrontierPendingTransactionsSorter(
+            new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
                 5,

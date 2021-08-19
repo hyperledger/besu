@@ -35,16 +35,17 @@ import java.util.function.Supplier;
  *
  * <p>This class is safe for use across multiple threads.
  */
-public class FrontierPendingTransactionsSorter extends AbstractPendingTransactionsSorter {
+public class GasPricePendingTransactionsSorter extends AbstractPendingTransactionsSorter {
 
   private final NavigableSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
+              .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
-  public FrontierPendingTransactionsSorter(
+  public GasPricePendingTransactionsSorter(
       final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
       final int maxPooledTransactionHashes,

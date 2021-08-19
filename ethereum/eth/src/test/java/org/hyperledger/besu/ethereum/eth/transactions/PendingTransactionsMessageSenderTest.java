@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.LondonPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import java.util.Arrays;
@@ -69,8 +69,8 @@ public class PendingTransactionsMessageSenderTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {mock(FrontierPendingTransactionsSorter.class)},
-          {mock(LondonPendingTransactionsSorter.class)}
+          {mock(GasPricePendingTransactionsSorter.class)},
+          {mock(BaseFeePendingTransactionsSorter.class)}
         });
   }
 

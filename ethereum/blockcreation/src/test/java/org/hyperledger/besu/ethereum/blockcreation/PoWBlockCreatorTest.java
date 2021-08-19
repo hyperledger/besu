@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.LondonPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
@@ -90,8 +90,8 @@ public class PoWBlockCreatorTest {
             1000,
             8);
 
-    final LondonPendingTransactionsSorter pendingTransactions =
-        new LondonPendingTransactionsSorter(
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,
@@ -151,8 +151,8 @@ public class PoWBlockCreatorTest {
             1000,
             8);
 
-    final LondonPendingTransactionsSorter pendingTransactions =
-        new LondonPendingTransactionsSorter(
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,
@@ -207,8 +207,8 @@ public class PoWBlockCreatorTest {
             1000,
             8);
 
-    final LondonPendingTransactionsSorter pendingTransactions =
-        new LondonPendingTransactionsSorter(
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,
@@ -279,8 +279,8 @@ public class PoWBlockCreatorTest {
             1000,
             8);
 
-    final LondonPendingTransactionsSorter pendingTransactions =
-        new LondonPendingTransactionsSorter(
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
             5,

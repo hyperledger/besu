@@ -27,8 +27,6 @@ public interface ProtocolSchedule {
 
   Stream<Long> streamMilestoneBlocks();
 
-  boolean hasMilestone(final String forkName);
-
   Optional<BigInteger> getChainId();
 
   void setTransactionFilter(TransactionFilter transactionFilter);

@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPend
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -47,13 +46,13 @@ import org.apache.logging.log4j.Logger;
  *
  * <p>This class is safe for use across multiple threads.
  */
-public class LondonPendingTransactionsSorter extends AbstractPendingTransactionsSorter {
+public class BaseFeePendingTransactionsSorter extends AbstractPendingTransactionsSorter {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private Optional<Long> baseFee;
 
-  public LondonPendingTransactionsSorter(
+  public BaseFeePendingTransactionsSorter(
       final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
       final int maxPooledTransactionHashes,
@@ -105,19 +104,6 @@ public class LondonPendingTransactionsSorter extends AbstractPendingTransactions
               .thenComparing(this::distanceFromNextNonce)
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
-
-  private Long distanceFromNextNonce(final TransactionInfo incomingTx) {
-    final TransactionsForSenderInfo inPool = transactionsBySender.get(incomingTx.getSender());
-    if ((inPool == null)
-        || (inPool.streamTransactionInfos().count() < 1)) { // nothing in pool, you're next
-      return 0L;
-    }
-    long minNonceForAccount =
-        inPool.streamTransactionInfos().mapToLong(TransactionInfo::getNonce).min().getAsLong();
-    // despite this looking backwards, it produces the sort order we want.
-    // greater distances produce more negative results, which are then .reversed()
-    return minNonceForAccount - incomingTx.getNonce();
-  }
 
   @Override
   public void evictOldTransactions() {

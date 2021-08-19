@@ -21,8 +21,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.FrontierPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.LondonPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,8 +47,8 @@ public class LatestNonceProviderTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {mock(FrontierPendingTransactionsSorter.class)},
-          {mock(LondonPendingTransactionsSorter.class)}
+          {mock(GasPricePendingTransactionsSorter.class)},
+          {mock(BaseFeePendingTransactionsSorter.class)}
         });
   }
 

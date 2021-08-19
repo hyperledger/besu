@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.LondonPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -66,8 +66,8 @@ public class LondonPendingTransactionsTest {
 
   private final TestClock clock = new TestClock();
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
-  private final LondonPendingTransactionsSorter transactions =
-      new LondonPendingTransactionsSorter(
+  private final BaseFeePendingTransactionsSorter transactions =
+      new BaseFeePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
           MAX_TRANSACTION_HASHES,
@@ -613,8 +613,8 @@ public class LondonPendingTransactionsTest {
   @Test
   public void shouldEvictMultipleOldTransactions() {
     final int maxTransactionRetentionHours = 1;
-    final LondonPendingTransactionsSorter transactions =
-        new LondonPendingTransactionsSorter(
+    final BaseFeePendingTransactionsSorter transactions =
+        new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
@@ -637,8 +637,8 @@ public class LondonPendingTransactionsTest {
   @Test
   public void shouldEvictSingleOldTransaction() {
     final int maxTransactionRetentionHours = 1;
-    final LondonPendingTransactionsSorter transactions =
-        new LondonPendingTransactionsSorter(
+    final BaseFeePendingTransactionsSorter transactions =
+        new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
@@ -657,8 +657,8 @@ public class LondonPendingTransactionsTest {
   @Test
   public void shouldEvictExclusivelyOldTransactions() {
     final int maxTransactionRetentionHours = 2;
-    final LondonPendingTransactionsSorter transactions =
-        new LondonPendingTransactionsSorter(
+    final BaseFeePendingTransactionsSorter transactions =
+        new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
             MAX_TRANSACTION_HASHES,
