@@ -27,7 +27,7 @@ public class FeeMarketException extends Exception {
 
   public static FeeMarketException MissingBaseFeeMarket() {
     return new FeeMarketException(
-        "Incorrectly configured ProtocolSchedule: BaseFeeBlockBodyValidator requires BaseFeeMarket");
+        "Incorrectly configured ProtocolSchedule: requires BaseFeeMarket");
   }
 
   private FeeMarketException(final String reason) {
