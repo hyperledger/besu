@@ -19,20 +19,19 @@ import org.hyperledger.besu.ethereum.core.GasAndAccessedState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 /**
- * Provides various gas cost lookups and calculations used during block processing.
+ * Provides various gas cost lookups and calculations used during transaction processing outside the
+ * EVM.
  *
- * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations except
- * for the following "safe" operations:
- *
- * <ul>
- *   <li><b>Operation Gas Deductions:</b> Deducting the operation's gas cost from the VM's current
- *       message frame because the
- * </ul>
+ * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations not
+ * needed during EVM execution or caused by EVM execution. EVM Relevant or caused gas calculations
+ * live in the {@link org.hyperledger.besu.ethereum.vm.GasCalculator}. Current calculations revolve
+ * around block encoding of transactions, account creation, how much refund to apply, and private
+ * transaction gas reservations.
  */
 public interface TransactionGasCalculator {
 
   /**
-   * Returns a {@link Transaction}s intrinsic gas cost, i.e. the cost deriving from it's encoded
+   * Returns a {@link Transaction}s intrinsic gas cost, i.e. the cost deriving from its encoded
    * binary representation when stored on-chain.
    *
    * @param transaction The transaction
@@ -51,7 +50,7 @@ public interface TransactionGasCalculator {
   /**
    * A measure of the maximum amount of refunded gas a transaction will be credited with.
    *
-   * @return the quotient of the equation `txGasCost / refundQuotent`.
+   * @return the quotient of the equation `txGasCost / refundQuotient`.
    */
   default long getMaxRefundQuotient() {
     return 2;

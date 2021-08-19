@@ -41,15 +41,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * Provides various gas cost lookups and calculations used during block processing.
+ * Provides various gas cost lookups and calculations used during EVM Execution.
  *
- * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations except
- * for the following "safe" operations:
- *
- * <ul>
- *   <li><b>Operation Gas Deductions:</b> Deducting the operation's gas cost from the VM's current
- *       message frame because the
- * </ul>
+ * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations needed
+ * during EVM execution or caused by EVM execution. Hence, refund calculation is part of this as the
+ * EVM should report the refund counter at the end of execution. However, the amount to apply to a
+ * transaction is out of scope and part of the {@link
+ * org.hyperledger.besu.ethereum.mainnet.TransactionGasCalculator}.
  */
 public interface GasCalculator {
 
