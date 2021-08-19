@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 public class LondonFeeMarket implements BaseFeeMarket {
   static final Long DEFAULT_BASEFEE_INITIAL_VALUE = 1000000000L;
   static final Long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
-  static final Long DEFAULT_SLACK_COEFFICIENT = 2L;
+  public static final Long DEFAULT_SLACK_COEFFICIENT = 2L;
   private final TransactionPriceCalculator txPriceCalculator;
 
   public LondonFeeMarket() {

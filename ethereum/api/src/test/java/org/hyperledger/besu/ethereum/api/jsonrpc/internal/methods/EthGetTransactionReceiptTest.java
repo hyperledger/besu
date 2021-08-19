@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -106,6 +107,7 @@ public class EthGetTransactionReceiptTest {
           null,
           false,
           null,
+          GasLimitCalculator.constant(),
           FeeMarket.legacy(),
           Optional.empty(),
           null,
@@ -131,6 +133,7 @@ public class EthGetTransactionReceiptTest {
           null,
           false,
           null,
+          GasLimitCalculator.constant(),
           FeeMarket.legacy(),
           Optional.empty(),
           null,

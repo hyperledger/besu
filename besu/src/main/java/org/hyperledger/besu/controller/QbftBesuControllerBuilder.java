@@ -149,7 +149,6 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory blockCreatorFactory =
         new BftBlockCreatorFactory(
-            gasLimitCalculator,
             transactionPool.getPendingTransactions(),
             protocolContext,
             protocolSchedule,

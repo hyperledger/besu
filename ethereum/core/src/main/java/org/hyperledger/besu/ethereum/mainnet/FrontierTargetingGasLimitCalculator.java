@@ -12,40 +12,31 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.controller;
+package org.hyperledger.besu.ethereum.mainnet;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
-
-import java.util.Objects;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
+public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecification
     implements GasLimitCalculator {
   private static final Logger LOG = LogManager.getLogger();
   private final long maxConstantAdjustmentIncrement;
-  private Long targetGasLimit;
 
-  public TargetingGasLimitCalculator(final long targetGasLimit) {
-    this(targetGasLimit, 1024L, 5000L, Long.MAX_VALUE);
+  public FrontierTargetingGasLimitCalculator() {
+    this(DEFAULT_MAX_CONSTANT_ADMUSTMENT_INCREMENT, DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT);
   }
 
-  public TargetingGasLimitCalculator(
-      final long targetGasLimit,
-      final long maxConstantAdjustmentIncrement,
-      final long minGasLimit,
-      final long maxGasLimit) {
+  public FrontierTargetingGasLimitCalculator(
+      final long maxConstantAdjustmentIncrement, final long minGasLimit, final long maxGasLimit) {
     super(minGasLimit, maxGasLimit);
     this.maxConstantAdjustmentIncrement = maxConstantAdjustmentIncrement;
-    changeTargetGasLimit(targetGasLimit);
   }
 
   @Override
-  public long nextGasLimit(final long currentGasLimit) {
+  public long nextGasLimit(
+      final long currentGasLimit, final long targetGasLimit, final long newBlockNumber) {
     final long nextGasLimit;
     if (targetGasLimit > currentGasLimit) {
       nextGasLimit = Math.min(targetGasLimit, safeAddAtMost(currentGasLimit));
@@ -62,24 +53,12 @@ public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
     return nextGasLimit;
   }
 
-  @Override
-  public void changeTargetGasLimit(final Long targetGasLimit) {
-    checkArgument(
-        targetGasLimit >= minGasLimit,
-        "targetGasLimit of " + targetGasLimit + " is below the minGasLimit of " + minGasLimit);
-
-    checkArgument(
-        targetGasLimit <= maxGasLimit,
-        "targetGasLimit of " + targetGasLimit + " is above the maxGasLimit of " + maxGasLimit);
-    this.targetGasLimit = targetGasLimit;
-  }
-
   private long adjustAmount(final long currentGasLimit) {
     final long maxProportionalAdjustmentLimit = Math.max(deltaBound(currentGasLimit) - 1, 0);
     return Math.min(maxConstantAdjustmentIncrement, maxProportionalAdjustmentLimit);
   }
 
-  private long safeAddAtMost(final long gasLimit) {
+  protected long safeAddAtMost(final long gasLimit) {
     try {
       return Math.addExact(gasLimit, adjustAmount(gasLimit));
     } catch (final ArithmeticException ex) {
@@ -87,24 +66,11 @@ public class TargetingGasLimitCalculator extends AbstractGasLimitSpecification
     }
   }
 
-  private long safeSubAtMost(final long gasLimit) {
+  protected long safeSubAtMost(final long gasLimit) {
     try {
       return Math.max(Math.subtractExact(gasLimit, adjustAmount(gasLimit)), 0);
     } catch (final ArithmeticException ex) {
       return 0;
     }
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    TargetingGasLimitCalculator that = (TargetingGasLimitCalculator) o;
-    return Objects.equals(targetGasLimit, that.targetGasLimit);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(targetGasLimit);
   }
 }

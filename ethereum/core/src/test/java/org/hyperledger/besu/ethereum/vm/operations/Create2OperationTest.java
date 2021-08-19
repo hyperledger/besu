@@ -143,7 +143,6 @@ public class Create2OperationTest {
             .code(new Code(codeBytes))
             .depth(1)
             .completer(__ -> {})
-            .contractAccountVersion(0)
             .address(Address.fromHexString(sender))
             .blockHashLookup(mock(BlockHashLookup.class))
             .blockHeader(mock(ProcessableBlockHeader.class))

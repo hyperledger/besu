@@ -66,11 +66,6 @@ public class PrivateStateGenesisAllocatorTest {
                 }
 
                 @Override
-                public int getVersion() {
-                  return 0;
-                }
-
-                @Override
                 public Long getNonce() {
                   return 0L;
                 }

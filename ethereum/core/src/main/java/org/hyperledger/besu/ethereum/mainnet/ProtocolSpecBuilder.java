@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 
 public class ProtocolSpecBuilder {
   private Supplier<GasCalculator> gasCalculatorBuilder;
+  private GasLimitCalculator gasLimitCalculator;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
   private BlockHeaderFunctions blockHeaderFunctions;
@@ -73,6 +74,11 @@ public class ProtocolSpecBuilder {
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
+    return this;
+  }
+
+  public ProtocolSpecBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
+    this.gasLimitCalculator = gasLimitCalculator;
     return this;
   }
 
@@ -147,9 +153,7 @@ public class ProtocolSpecBuilder {
               precompileContractRegistryBuilder.apply(precompiledContractConfiguration);
           if (precompiledContractConfiguration.getPrivacyParameters().isEnabled()) {
             MainnetPrecompiledContractRegistries.appendPrivacy(
-                registry, precompiledContractConfiguration, Account.DEFAULT_VERSION);
-            MainnetPrecompiledContractRegistries.appendPrivacy(
-                registry, precompiledContractConfiguration, 1);
+                registry, precompiledContractConfiguration);
           }
           return registry;
         };
@@ -236,6 +240,7 @@ public class ProtocolSpecBuilder {
 
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
+    checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
     checkNotNull(transactionValidatorBuilder, "Missing transaction validator");
     checkNotNull(privateTransactionValidatorBuilder, "Missing private transaction validator");
@@ -308,19 +313,18 @@ public class ProtocolSpecBuilder {
       if (privacyParameters.isPrivacyPluginEnabled()) {
         final PrivacyPluginPrecompiledContract privacyPluginPrecompiledContract =
             (PrivacyPluginPrecompiledContract)
-                precompileContractRegistry.get(Address.PLUGIN_PRIVACY, Account.DEFAULT_VERSION);
+                precompileContractRegistry.get(Address.PLUGIN_PRIVACY);
         privacyPluginPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else if (privacyParameters.isOnchainPrivacyGroupsEnabled()) {
         final OnChainPrivacyPrecompiledContract onChainPrivacyPrecompiledContract =
             (OnChainPrivacyPrecompiledContract)
-                precompileContractRegistry.get(Address.ONCHAIN_PRIVACY, Account.DEFAULT_VERSION);
+                precompileContractRegistry.get(Address.ONCHAIN_PRIVACY);
         onChainPrivacyPrecompiledContract.setPrivateTransactionProcessor(
             privateTransactionProcessor);
       } else {
         final PrivacyPrecompiledContract privacyPrecompiledContract =
-            (PrivacyPrecompiledContract)
-                precompileContractRegistry.get(Address.DEFAULT_PRIVACY, Account.DEFAULT_VERSION);
+            (PrivacyPrecompiledContract) precompileContractRegistry.get(Address.DEFAULT_PRIVACY);
         privacyPrecompiledContract.setPrivateTransactionProcessor(privateTransactionProcessor);
       }
 
@@ -363,6 +367,7 @@ public class ProtocolSpecBuilder {
         precompileContractRegistry,
         skipZeroBlockRewards,
         gasCalculator,
+        gasLimitCalculator,
         feeMarket,
         eip1559,
         badBlockManager,

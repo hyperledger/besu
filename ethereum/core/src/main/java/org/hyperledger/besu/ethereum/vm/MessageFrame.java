@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
@@ -222,7 +221,6 @@ public class MessageFrame {
   private final Address recipient;
   private final Address originator;
   private final Address contract;
-  private final int contractAccountVersion;
   private final Wei gasPrice;
   private final Bytes inputData;
   private final Address sender;
@@ -262,7 +260,6 @@ public class MessageFrame {
       final Address recipient,
       final Address originator,
       final Address contract,
-      final int contractAccountVersion,
       final Wei gasPrice,
       final Bytes inputData,
       final Address sender,
@@ -302,7 +299,6 @@ public class MessageFrame {
     this.recipient = recipient;
     this.originator = originator;
     this.contract = contract;
-    this.contractAccountVersion = contractAccountVersion;
     this.gasPrice = gasPrice;
     this.inputData = inputData;
     this.sender = sender;
@@ -1069,10 +1065,6 @@ public class MessageFrame {
     this.gasCost = gasCost;
   }
 
-  public int getContractAccountVersion() {
-    return contractAccountVersion;
-  }
-
   Optional<MemoryEntry> getMaybeUpdatedMemory() {
     return maybeUpdatedMemory;
   }
@@ -1096,7 +1088,6 @@ public class MessageFrame {
     private Address address;
     private Address originator;
     private Address contract;
-    private int contractAccountVersion = -1;
     private Wei gasPrice;
     private Bytes inputData;
     private Address sender;
@@ -1155,12 +1146,6 @@ public class MessageFrame {
 
     public Builder contract(final Address contract) {
       this.contract = contract;
-      return this;
-    }
-
-    public Builder contractAccountVersion(final int contractAccountVersion) {
-      checkArgument(contractAccountVersion >= 0, "Contract account version cannot be negative");
-      this.contractAccountVersion = contractAccountVersion;
       return this;
     }
 
@@ -1285,7 +1270,6 @@ public class MessageFrame {
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
       checkState(isPersistingPrivateState != null, "Missing isPersistingPrivateState");
-      checkState(contractAccountVersion != -1, "Missing contractAccountVersion");
     }
 
     public MessageFrame build() {
@@ -1300,7 +1284,6 @@ public class MessageFrame {
           address,
           originator,
           contract,
-          contractAccountVersion,
           gasPrice,
           inputData,
           sender,
