@@ -19,7 +19,12 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.config.QbftFork;
+import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
@@ -57,6 +62,8 @@ import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFa
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRoundFactory;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.consensus.qbft.validator.ForkingValidatorProvider;
+import org.hyperledger.besu.consensus.qbft.validator.QbftForksSchedule;
 import org.hyperledger.besu.consensus.qbft.validator.TransactionValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorContractController;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -381,18 +388,23 @@ public class TestContextBuilder {
 
     final BftBlockInterface blockInterface = new BftBlockInterface(BFT_EXTRA_DATA_ENCODER);
 
-    final ValidatorProvider validatorProvider;
-    if (useValidatorContract) {
-      final TransactionSimulator transactionSimulator =
-          new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
-      final ValidatorContractController validatorContractController =
-          new ValidatorContractController(VALIDATOR_CONTRACT_ADDRESS, transactionSimulator);
-      validatorProvider = new TransactionValidatorProvider(blockChain, validatorContractController);
-    } else {
-      validatorProvider =
-          BlockValidatorProvider.nonForkingValidatorProvider(
-              blockChain, epochManager, blockInterface);
-    }
+    final BftValidatorOverrides validatorOverrides =
+        new BftValidatorOverrides(Collections.emptyMap());
+    final TransactionSimulator transactionSimulator =
+        new TransactionSimulator(blockChain, worldStateArchive, protocolSchedule);
+
+    final QbftFork genesisFork = createGenesisFork(useValidatorContract);
+    final QbftForksSchedule forksSchedule =
+        new QbftForksSchedule(genesisFork, Collections.emptyList());
+    final BlockValidatorProvider blockValidatorProvider =
+        BlockValidatorProvider.forkingValidatorProvider(
+            blockChain, epochManager, blockInterface, validatorOverrides);
+    final TransactionValidatorProvider transactionValidatorProvider =
+        new TransactionValidatorProvider(
+            blockChain, new ValidatorContractController(transactionSimulator, forksSchedule));
+    final ValidatorProvider validatorProvider =
+        new ForkingValidatorProvider(
+            blockChain, forksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
     final ProtocolContext protocolContext =
         new ProtocolContext(
@@ -485,5 +497,25 @@ public class TestContextBuilder {
         eventMultiplexer,
         messageFactory,
         validatorProvider);
+  }
+
+  private static QbftFork createGenesisFork(final boolean useValidatorContract) {
+    return useValidatorContract
+        ? new QbftFork(
+            JsonUtil.objectNodeFromMap(
+                Map.of(
+                    BftFork.FORK_BLOCK_KEY,
+                    0L,
+                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                    VALIDATOR_SELECTION_MODE.CONTRACT,
+                    QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
+                    VALIDATOR_CONTRACT_ADDRESS.toHexString())))
+        : new QbftFork(
+            JsonUtil.objectNodeFromMap(
+                Map.of(
+                    BftFork.FORK_BLOCK_KEY,
+                    0L,
+                    QbftFork.VALIDATOR_SELECTION_MODE_KEY,
+                    VALIDATOR_SELECTION_MODE.BLOCKHEADER)));
   }
 }
