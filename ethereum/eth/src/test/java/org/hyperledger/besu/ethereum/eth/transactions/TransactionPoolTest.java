@@ -790,7 +790,8 @@ public class TransactionPoolTest {
             Wei.ZERO,
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
-    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(100L));
+    // pre-London feemarket
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.legacy());
     when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
         .thenReturn(valid());
     when(transactionValidator.validateForSender(
