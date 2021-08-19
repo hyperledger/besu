@@ -24,24 +24,24 @@ import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class BftBlockCreatorFactory {
 
-  private final GasLimitCalculator gasLimitCalculator;
   private final PendingTransactions pendingTransactions;
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
@@ -52,9 +52,9 @@ public class BftBlockCreatorFactory {
   protected volatile Bytes vanityData;
   private volatile Wei minTransactionGasPrice;
   private volatile Double minBlockOccupancyRatio;
+  private volatile Optional<AtomicLong> targetGasLimit;
 
   public BftBlockCreatorFactory(
-      final GasLimitCalculator gasLimitCalculator,
       final PendingTransactions pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -62,7 +62,6 @@ public class BftBlockCreatorFactory {
       final Address localAddress,
       final Address miningBeneficiary,
       final BftExtraDataCodec bftExtraDataCodec) {
-    this.gasLimitCalculator = gasLimitCalculator;
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -72,16 +71,17 @@ public class BftBlockCreatorFactory {
     this.vanityData = miningParams.getExtraData();
     this.miningBeneficiary = miningBeneficiary;
     this.bftExtraDataCodec = bftExtraDataCodec;
+    this.targetGasLimit = miningParams.getTargetGasLimit();
   }
 
   public BftBlockCreator create(final BlockHeader parentHeader, final int round) {
     return new BftBlockCreator(
         localAddress,
+        () -> targetGasLimit.map(AtomicLong::longValue),
         ph -> createExtraData(round, ph),
         pendingTransactions,
         protocolContext,
         protocolSchedule,
-        gasLimitCalculator,
         minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader,
@@ -122,8 +122,14 @@ public class BftBlockCreatorFactory {
     return bftExtraDataCodec.encode(extraData);
   }
 
-  public void changeTargetGasLimit(final Long targetGasLimit) {
-    gasLimitCalculator.changeTargetGasLimit(targetGasLimit);
+  public void changeTargetGasLimit(final Long newTargetGasLimit) {
+    if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
+      this.targetGasLimit.ifPresentOrElse(
+          existing -> existing.set(newTargetGasLimit),
+          () -> this.targetGasLimit = Optional.of(new AtomicLong(newTargetGasLimit)));
+    } else {
+      throw new UnsupportedOperationException("Specified target gas limit is invalid");
+    }
   }
 
   public Address getLocalAddress() {

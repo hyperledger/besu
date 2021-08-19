@@ -12,18 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.blockcreation;
+package org.hyperledger.besu.ethereum;
 
 public interface GasLimitCalculator {
 
-  long nextGasLimit(long currentGasLimit);
-
-  default void changeTargetGasLimit(final Long __) {
-    throw new UnsupportedOperationException(
-        "Can only change target gas limit on a Targeting Gas Limit Calculator");
-  }
+  long nextGasLimit(long currentGasLimit, long targetGasLimit, long newBlockNumber);
 
   static GasLimitCalculator constant() {
-    return currentGasLimit -> currentGasLimit;
+    return (currentGasLimit, targetGasLimit, newBlockNumber) -> currentGasLimit;
   }
 }
