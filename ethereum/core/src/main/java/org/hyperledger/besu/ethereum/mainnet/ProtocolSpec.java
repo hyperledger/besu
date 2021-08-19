@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.vm.EVM;
@@ -74,8 +73,6 @@ public class ProtocolSpec {
 
   private final FeeMarket feeMarket;
 
-  private final Optional<EIP1559> eip1559;
-
   private final BadBlockManager badBlockManager;
 
   private final Optional<PoWHasher> powHasher;
@@ -105,7 +102,6 @@ public class ProtocolSpec {
    * @param transactionGasCalculator the transaction gas calculator to use.
    * @param gasLimitCalculator the gas limit calculator to use.
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
-   * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param powHasher the proof-of-work hasher
    */
@@ -132,7 +128,6 @@ public class ProtocolSpec {
       final TransactionGasCalculator transactionGasCalculator,
       final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
-      final Optional<EIP1559> eip1559,
       final BadBlockManager badBlockManager,
       final Optional<PoWHasher> powHasher) {
     this.name = name;
@@ -157,7 +152,6 @@ public class ProtocolSpec {
     this.transactionGasCalculator = transactionGasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
     this.feeMarket = feeMarket;
-    this.eip1559 = eip1559;
     this.badBlockManager = badBlockManager;
     this.powHasher = powHasher;
   }
@@ -336,15 +330,6 @@ public class ProtocolSpec {
    */
   public GasLimitCalculator getGasLimitCalculator() {
     return gasLimitCalculator;
-  }
-
-  /**
-   * Returns the EIP1559 manager used in this specification.
-   *
-   * @return the {@link Optional} wrapping EIP-1559 manager
-   */
-  public Optional<EIP1559> getEip1559() {
-    return eip1559;
   }
 
   /**

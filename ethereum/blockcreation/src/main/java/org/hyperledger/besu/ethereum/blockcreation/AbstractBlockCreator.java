@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -39,6 +38,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.math.BigInteger;
@@ -265,17 +266,19 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final BigInteger difficulty =
         difficultyCalculator.nextDifficulty(timestamp, parentHeader, protocolContext);
 
-    Long baseFee = null;
-    if (protocolSpec.getFeeMarket().implementsBaseFee()) {
-      // TODO roll eip1559 into feeMarket
-      final EIP1559 eip1559 = protocolSpec.getEip1559().orElseThrow();
-      baseFee =
-          eip1559.computeBaseFee(
-              newBlockNumber,
-              parentHeader.getBaseFee().orElse(0L),
-              parentHeader.getGasUsed(),
-              eip1559.targetGasUsed(parentHeader));
-    }
+    final Long baseFee =
+        Optional.of(protocolSpec.getFeeMarket())
+            .filter(FeeMarket::implementsBaseFee)
+            .map(BaseFeeMarket.class::cast)
+            .map(
+                feeMarket ->
+                    feeMarket.computeBaseFee(
+                        newBlockNumber,
+                        parentHeader.getBaseFee().orElse(0L),
+                        parentHeader.getGasUsed(),
+                        feeMarket.targetGasUsed(parentHeader)))
+            .orElse(null);
+
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)

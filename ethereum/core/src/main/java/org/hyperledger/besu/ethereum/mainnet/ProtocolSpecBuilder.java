@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
@@ -71,7 +70,6 @@ public class ProtocolSpecBuilder {
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
   private FeeMarket feeMarket = FeeMarket.legacy();
-  private Optional<EIP1559> eip1559 = Optional.empty();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
 
@@ -233,11 +231,6 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder eip1559(final Optional<EIP1559> eip1559) {
-    this.eip1559 = eip1559;
-    return this;
-  }
-
   public ProtocolSpecBuilder badBlocksManager(final BadBlockManager badBlockManager) {
     this.badBlockManager = badBlockManager;
     return this;
@@ -273,8 +266,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(miningBeneficiaryCalculator, "Missing Mining Beneficiary Calculator");
     checkNotNull(protocolSchedule, "Missing protocol schedule");
     checkNotNull(privacyParameters, "Missing privacy parameters");
-    checkNotNull(feeMarket, "Missing fee market optional wrapper");
-    checkNotNull(eip1559, "Missing eip1559 optional wrapper");
+    checkNotNull(feeMarket, "Missing fee market");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
@@ -385,7 +377,6 @@ public class ProtocolSpecBuilder {
         transactionGasCalculator,
         gasLimitCalculator,
         feeMarket,
-        eip1559,
         badBlockManager,
         Optional.ofNullable(powHasher));
   }

@@ -14,36 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-import static org.hyperledger.besu.ethereum.core.fees.FeeMarketException.MissingBaseFeeFromBlockHeader;
+import static org.hyperledger.besu.ethereum.core.feemarket.FeeMarketException.MissingBaseFeeFromBlockHeader;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
-import org.hyperledger.besu.ethereum.core.fees.FeeMarketException;
+import org.hyperledger.besu.ethereum.core.feemarket.FeeMarketException;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class LondonFeeMarketBlockHeaderGasPriceValidationRule
+public class BaseFeeMarketBlockHeaderGasPriceValidationRule
     implements DetachedBlockHeaderValidationRule {
   private static final Logger LOG = LogManager.getLogger();
-  private final EIP1559 eip1559;
+  private final BaseFeeMarket baseFeeMarket;
 
-  public LondonFeeMarketBlockHeaderGasPriceValidationRule(final EIP1559 eip1559) {
-    this.eip1559 = eip1559;
+  public BaseFeeMarketBlockHeaderGasPriceValidationRule(final BaseFeeMarket baseFeeMarket) {
+    this.baseFeeMarket = baseFeeMarket;
   }
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     try {
-      if (!eip1559.isEIP1559(header.getNumber())) {
-        if (header.getBaseFee().isPresent()) {
-          throw FeeMarketException.BaseFeePresentBeforeForkBlock();
-        }
-        return true;
-      }
-      if (eip1559.isForkBlock(header.getNumber())) {
-        return eip1559.getFeeMarket().getInitialBasefee()
+      // if this is the fork block, baseFee should be the initial baseFee
+      if (baseFeeMarket.isForkBlock(header.getNumber())) {
+        return baseFeeMarket.getInitialBasefee()
             == header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
       }
 
@@ -51,9 +46,9 @@ public class LondonFeeMarketBlockHeaderGasPriceValidationRule
           parent.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
       final Long currentBaseFee =
           header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
-      final long targetGasUsed = eip1559.targetGasUsed(parent);
+      final long targetGasUsed = baseFeeMarket.targetGasUsed(parent);
       final long expectedBaseFee =
-          eip1559.computeBaseFee(
+          baseFeeMarket.computeBaseFee(
               header.getNumber(), parentBaseFee, parent.getGasUsed(), targetGasUsed);
       if (expectedBaseFee != currentBaseFee) {
         LOG.info(
