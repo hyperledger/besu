@@ -17,36 +17,42 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559Helper.blockHeader;
 
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 
 import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class LondonFeeMarketBlockHeaderGasPriceValidationRuleTest {
+public class BaseFeeMarketBlockHeaderGasPriceValidationRuleTest {
 
   private static final long FORK_BLOCK = 800L;
-  private final EIP1559 eip1559 = new EIP1559(FORK_BLOCK);
-  private LondonFeeMarketBlockHeaderGasPriceValidationRule validationRule;
-  private final BaseFeeMarket feeMarket = FeeMarket.london();
+  private final BaseFeeMarket baseFeeMarket = new LondonFeeMarket(FORK_BLOCK);
+  private BaseFeeMarketBlockHeaderGasPriceValidationRule validationRule;
+  private final BaseFeeMarket feeMarket = FeeMarket.london(FORK_BLOCK);
 
   @Before
   public void setUp() {
-    validationRule = new LondonFeeMarketBlockHeaderGasPriceValidationRule(eip1559);
+    validationRule = new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket);
   }
 
   @Test
-  public void shouldReturnTrueBeforeFork() {
-    assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.empty()), null))
-        .isTrue();
+  public void shouldTReturnFalseIfParentMissingBaseFeePostFork() {
+    assertThat(
+            validationRule.validate(
+                blockHeader(FORK_BLOCK - 1, 0, Optional.of(10_000L)),
+                blockHeader(FORK_BLOCK - 2, 0, Optional.empty())))
+        .isFalse();
   }
 
   @Test
-  public void shouldReturnFalseBeforeFork() {
-    assertThat(validationRule.validate(blockHeader(FORK_BLOCK - 1, 0, Optional.of(10L)), null))
+  public void shouldThrowIfMissingBaseFee() {
+    assertThat(
+            validationRule.validate(
+                blockHeader(FORK_BLOCK - 2, 0, Optional.empty()),
+                blockHeader(FORK_BLOCK - 1, 0, Optional.of(10_000L))))
         .isFalse();
   }
 

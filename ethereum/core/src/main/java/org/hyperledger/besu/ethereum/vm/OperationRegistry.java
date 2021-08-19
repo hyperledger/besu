@@ -14,39 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import com.google.common.base.Preconditions;
-
 /** Encapsulates a group of {@link Operation}s used together. */
 public class OperationRegistry {
 
   private static final int NUM_OPERATIONS = 256;
 
-  private final Operation[][] operations;
+  private final Operation[] operations;
 
   public OperationRegistry() {
-    this(1);
+    this.operations = new Operation[NUM_OPERATIONS];
   }
 
-  public OperationRegistry(final int numVersions) {
-    Preconditions.checkArgument(numVersions >= 1);
-    this.operations = new Operation[numVersions][NUM_OPERATIONS];
+  public Operation get(final byte opcode) {
+    return get(opcode & 0xff);
   }
 
-  public Operation get(final byte opcode, final int version) {
-    return get(opcode & 0xff, version);
+  public Operation get(final int opcode) {
+    return operations[opcode];
   }
 
-  public Operation get(final int opcode, final int version) {
-    return operations[version][opcode];
+  public void put(final Operation operation) {
+    operations[operation.getOpcode()] = operation;
   }
 
-  public void put(final Operation operation, final int version) {
-    operations[version][operation.getOpcode()] = operation;
-  }
-
-  public Operation getOrDefault(
-      final byte opcode, final int version, final Operation defaultOperation) {
-    final Operation operation = get(opcode, version);
+  public Operation getOrDefault(final byte opcode, final Operation defaultOperation) {
+    final Operation operation = get(opcode);
 
     if (operation == null) {
       return defaultOperation;

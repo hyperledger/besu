@@ -79,7 +79,6 @@ public class PrivateStateGenesisAllocator {
                 account.setNonce(genesisAccount.getNonce());
                 account.setBalance(Wei.fromQuantity(genesisAccount.getBalance()));
                 account.setCode(genesisAccount.getCode());
-                account.setVersion(genesisAccount.getVersion());
 
                 genesisAccount.getStorage().forEach(account::setStorageValue);
               });

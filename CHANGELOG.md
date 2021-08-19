@@ -9,9 +9,11 @@
 - Support for mining ommers [#2576](https://github.com/hyperledger/besu/pull/2576)
 - Updated onchain permissioning to validate permissions on transaction submission [\#2595](https://github.com/hyperledger/besu/pull/2595)
 - Removed deprecated CLI option `--privacy-precompiled-address` [#2605](https://github.com/hyperledger/besu/pull/2605)
+- Removed code supporting EIP-1702. [#2657](https://github.com/hyperledger/besu/pull/2657)
 
 ### Bug Fixes
 - Consider effective price and effective priority fee in transaction replacement rules [\#2529](https://github.com/hyperledger/besu/issues/2529)
+- GetTransactionCount should return the latest transaction count if it is greater than the transaction pool [\#2633](https://github.com/hyperledger/besu/pull/2633) 
 
 ### Early Access Features
 

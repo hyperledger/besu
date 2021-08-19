@@ -262,7 +262,10 @@ public class TestContextBuilder {
     final UniqueMessageMulticaster uniqueMulticaster =
         new UniqueMessageMulticaster(multicaster, GOSSIPED_HISTORY_LIMIT);
 
-    final Gossiper gossiper = useGossip ? new QbftGossip(uniqueMulticaster) : mock(Gossiper.class);
+    final Gossiper gossiper =
+        useGossip
+            ? new QbftGossip(uniqueMulticaster, BFT_EXTRA_DATA_ENCODER)
+            : mock(Gossiper.class);
 
     final StubbedSynchronizerUpdater synchronizerUpdater = new StubbedSynchronizerUpdater();
 
@@ -410,7 +413,6 @@ public class TestContextBuilder {
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory blockCreatorFactory =
         new BftBlockCreatorFactory(
-            (gasLimit) -> gasLimit,
             pendingTransactions, // changed from IbftBesuController
             protocolContext,
             protocolSchedule,
@@ -469,7 +471,8 @@ public class TestContextBuilder {
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,
-            synchronizerUpdater);
+            synchronizerUpdater,
+            BFT_EXTRA_DATA_ENCODER);
 
     final EventMultiplexer eventMultiplexer = new EventMultiplexer(qbftController);
     //////////////////////////// END IBFT BesuController ////////////////////////////

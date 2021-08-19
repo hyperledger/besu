@@ -89,8 +89,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 protocolContext.getConsensusState(CliqueContext.class).getValidatorProvider(),
                 localAddress,
                 secondsBetweenBlocks),
-            epochManager,
-            gasLimitCalculator);
+            epochManager);
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
             protocolContext.getBlockchain(),

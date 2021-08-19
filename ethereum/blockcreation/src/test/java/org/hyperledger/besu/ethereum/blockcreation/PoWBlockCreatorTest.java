@@ -44,6 +44,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
@@ -102,11 +103,11 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
+            () -> Optional.empty(),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
             0.8,
@@ -163,11 +164,11 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
+            () -> Optional.empty(),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
             0.8,
@@ -219,11 +220,11 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
+            () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
             0.8,
@@ -291,11 +292,11 @@ public class PoWBlockCreatorTest {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
+            () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
             pendingTransactions,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
-            gasLimit -> gasLimit,
             solver,
             Wei.ZERO,
             0.8,

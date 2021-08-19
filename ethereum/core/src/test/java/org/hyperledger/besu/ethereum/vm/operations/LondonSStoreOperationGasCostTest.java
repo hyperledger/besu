@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.TestCodeExecutor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -88,7 +87,6 @@ public class LondonSStoreOperationGasCostTest {
     final MessageFrame frame =
         codeExecutor.executeCode(
             code,
-            Account.DEFAULT_VERSION,
             gasLimit,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);

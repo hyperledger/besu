@@ -76,8 +76,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getPrecompileContractRegistry(),
         original.isSkipZeroBlockRewards(),
         original.getGasCalculator(),
+        original.getGasLimitCalculator(),
         original.getFeeMarket(),
-        original.getEip1559(),
         original.getBadBlocksManager(),
         Optional.empty());
   }
